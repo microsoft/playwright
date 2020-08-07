@@ -15,23 +15,38 @@
  */
 
 import { Download } from '../../download';
-import { DownloadChannel, DownloadInitializer } from '../channels';
+import { DownloadChannel, DownloadInitializer, StreamChannel } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
+import { StreamDispatcher } from './streamDispatcher';
 
 export class DownloadDispatcher extends Dispatcher<Download, DownloadInitializer> implements DownloadChannel {
   constructor(scope: DispatcherScope, download: Download) {
-    super(scope, download, 'download', {
+    super(scope, download, 'Download', {
       url: download.url(),
       suggestedFilename: download.suggestedFilename(),
     });
   }
 
-  async path(): Promise<string | null> {
-    return this._object.path();
+  async path(): Promise<{ value?: string }> {
+    const path = await this._object.path();
+    return { value: path || undefined };
   }
 
-  async failure(): Promise<string | null> {
-    return this._object.failure();
+  async saveAs(params: { path: string }): Promise<void> {
+    await this._object.saveAs(params.path);
+  }
+
+  async stream(): Promise<{ stream?: StreamChannel }> {
+    const stream = await this._object.createReadStream();
+    if (!stream)
+      return {};
+    await new Promise(f => stream.on('readable', f));
+    return { stream: new StreamDispatcher(this._scope, stream) };
+  }
+
+  async failure(): Promise<{ error?: string }> {
+    const error = await this._object.failure();
+    return { error: error || undefined };
   }
 
   async delete(): Promise<void> {

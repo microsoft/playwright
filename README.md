@@ -1,18 +1,18 @@
 # 🎭 Playwright
 
-[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-85.0.4182.0-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-78.0b5-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> [![WebKit version](https://img.shields.io/badge/webkit-13.2-blue.svg?logo=safari)](https://webkit.org/)
+[![npm version](https://img.shields.io/npm/v/playwright.svg?style=flat)](https://www.npmjs.com/package/playwright) [![Join Slack](https://img.shields.io/badge/join-slack-infomational)](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg) <!-- GEN:chromium-version-badge -->[![Chromium version](https://img.shields.io/badge/chromium-86.0.4217.0-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)<!-- GEN:stop --> <!-- GEN:firefox-version-badge -->[![Firefox version](https://img.shields.io/badge/firefox-79.0a1-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)<!-- GEN:stop --> [![WebKit version](https://img.shields.io/badge/webkit-14.0-blue.svg?logo=safari)](https://webkit.org/)
 
-##### [Docs](docs/README.md) | [API reference](docs/api.md) | [Changelog](https://github.com/microsoft/playwright/releases)
+## [Documentation](https://playwright.dev) | [API reference](https://playwright.dev/#?path=docs/api.md)
 
-Playwright is a Node library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API. Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
+Playwright is a Node.js library to automate [Chromium](https://www.chromium.org/Home), [Firefox](https://www.mozilla.org/en-US/firefox/new/) and [WebKit](https://webkit.org/) with a single API. Playwright is built to enable cross-browser web automation that is **ever-green**, **capable**, **reliable** and **fast**.
 
 |          | Linux | macOS | Windows |
 |   :---   | :---: | :---: | :---:   |
-| Chromium <!-- GEN:chromium-version -->85.0.4182.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| WebKit 13.2 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Firefox <!-- GEN:firefox-version -->78.0b5<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Chromium <!-- GEN:chromium-version -->86.0.4217.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| WebKit 14.0 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Firefox <!-- GEN:firefox-version -->79.0a1<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
 
-Headless execution is supported for all the browsers on all platforms.
+Headless execution is supported for all the browsers on all platforms. Check out [system requirements](https://playwright.dev/#?path=docs/intro.md&q=system-requirements) for details.
 
 ## Usage
 
@@ -22,9 +22,9 @@ npm i -D playwright
 
 This installs Playwright and browser binaries for Chromium, Firefox and WebKit. Once installed, you can `require` Playwright in a Node.js script and automate web browser interactions.
 
-* [Getting started](docs/intro.md)
-* [Installation configuration](docs/installation.md)
-* [API reference](docs/api.md)
+* [Getting started](https://playwright.dev/#?path=docs/intro.md)
+* [Installation configuration](https://playwright.dev/#?path=docs/installation.md)
+* [API reference](https://playwright.dev/#?path=docs/api.md)
 
 ## Capabilities
 
@@ -71,6 +71,7 @@ const iPhone11 = devices['iPhone 11 Pro'];
   const browser = await webkit.launch();
   const context = await browser.newContext({
     ...iPhone11,
+    locale: 'en-US',
     geolocation: { longitude: 12.492507, latitude: 41.889938 },
     permissions: ['geolocation']
   });
@@ -133,8 +134,8 @@ const { webkit } = require('playwright');
 
 ## Resources
 
-* [Documentation](docs/README.md)
-* [API reference](docs/api.md)
-* [Example recipes](docs/examples/README.md)
-* [Contributing](CONTRIBUTING.md)
-* [Community showcase](docs/showcase.md)
+* [Documentation](https://playwright.dev/#?path=docs/README.md)
+* [API reference](https://playwright.dev/#?path=docs/api.md)
+* [Community showcase](https://playwright.dev/#?path=docs/showcase.md)
+* [Contribution guide](CONTRIBUTING.md)
+* [Changelog](https://github.com/microsoft/playwright/releases)

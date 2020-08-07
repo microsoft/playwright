@@ -1,0 +1,30 @@
+name: "devrelease"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+
+env:
+  CI: true
+
+jobs:
+  publish-canary-npm:
+    name: "publish to NPM"
+    runs-on: ubuntu-18.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+        registry-url: 'https://registry.npmjs.org'
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: node utils/update_version.js --next
+    - run: utils/publish_all_packages.sh --tip-of-tree
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+

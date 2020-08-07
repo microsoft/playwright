@@ -123,12 +123,6 @@ export type PDFOptions = {
   path?: string,
 }
 
-export type CoverageEntry = {
-  url: string,
-  text: string,
-  ranges: {start: number, end: number}[]
-};
-
 export type CSSCoverageOptions = {
   resetOnNavigation?: boolean,
 };
@@ -136,6 +130,32 @@ export type CSSCoverageOptions = {
 export type JSCoverageOptions = {
   resetOnNavigation?: boolean,
   reportAnonymousScripts?: boolean,
+};
+
+export type JSRange = {
+  startOffset: number,
+  endOffset: number,
+  count: number
+};
+
+export type CSSCoverageEntry = {
+  url: string,
+  text?: string,
+  ranges: {
+    start: number,
+    end: number
+  }[]
+};
+
+export type JSCoverageEntry = {
+  url: string,
+  scriptId: string,
+  source?: string,
+  functions: {
+    functionName: string,
+    isBlockCoverage: boolean,
+    ranges: JSRange[]
+  }[]
 };
 
 export type InjectedScriptProgress = {
@@ -184,6 +204,7 @@ export type MouseMultiClickOptions = PointerActionOptions & {
 export type World = 'main' | 'utility';
 
 export type Headers = { [key: string]: string };
+export type HeadersArray = { name: string, value: string }[];
 
 export type GotoOptions = NavigateOptions & {
   referer?: string,
@@ -198,9 +219,21 @@ export type FulfillResponse = {
 
 export type NormalizedFulfillResponse = {
   status: number,
-  headers: Headers,
+  headers: HeadersArray,
   body: string,
   isBase64: boolean,
+};
+
+export type ContinueOverrides = {
+  method?: string,
+  headers?: Headers,
+  postData?: string | Buffer,
+};
+
+export type NormalizedContinueOverrides = {
+  method?: string,
+  headers?: HeadersArray,
+  postData?: Buffer,
 };
 
 export type NetworkCookie = {
@@ -247,6 +280,7 @@ export type BrowserContextOptions = {
 };
 
 export type Env = {[key: string]: string | number | boolean | undefined};
+export type EnvArray = { name: string, value: string }[];
 
 export type LaunchOptionsBase = {
   executablePath?: string,
@@ -261,6 +295,7 @@ export type LaunchOptionsBase = {
   devtools?: boolean,
   proxy?: ProxySettings,
   downloadsPath?: string,
+  chromiumSandbox?: boolean,
 };
 
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
@@ -308,14 +343,13 @@ export type SerializedAXNode = {
 };
 
 export type ConsoleMessageLocation = {
-  url?: string,
-  lineNumber?: number,
-  columnNumber?: number,
+  url: string,
+  lineNumber: number,
+  columnNumber: number,
 };
 
 export type Error = {
-  message?: string,
-  name?: string,
+  message: string,
+  name: string,
   stack?: string,
-  value?: any
 };

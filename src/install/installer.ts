@@ -26,6 +26,7 @@ import * as browserFetcher from './browserFetcher';
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
+const fsExistsAsync = (filePath: string) => fsReadFileAsync(filePath).then(() => true).catch(e => false);
 const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const removeFolderAsync = util.promisify(removeFolder);
@@ -44,15 +45,24 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
 }
 
 async function validateCache(packagePath: string, browsersPath: string, linksDir: string) {
-  // 1. Collect unused downloads and package descriptors.
-  const allBrowsers: browserPaths.BrowserDescriptor[] = [];
+  // 1. Collect used downloads and package descriptors.
+  const usedBrowserPaths: Set<string> = new Set();
   for (const fileName of await fsReaddirAsync(linksDir)) {
     const linkPath = path.join(linksDir, fileName);
     let linkTarget = '';
     try {
       linkTarget = (await fsReadFileAsync(linkPath)).toString();
-      const browsers = JSON.parse((await fsReadFileAsync(path.join(linkTarget, 'browsers.json'))).toString())['browsers'];
-      allBrowsers.push(...browsers);
+      const browsersToDownload = await readBrowsersToDownload(linkTarget);
+      for (const browser of browsersToDownload) {
+        const usedBrowserPath = browserPaths.browserDirectory(browsersPath, browser);
+        const browserRevision = parseInt(browser.revision, 10);
+        // Old browser installations don't have marker file.
+        const shouldHaveMarkerFile = (browser.name === 'chromium' && browserRevision >= 786218) ||
+            (browser.name === 'firefox' && browserRevision >= 1128) ||
+            (browser.name === 'webkit' && browserRevision >= 1307);
+        if (!shouldHaveMarkerFile || (await fsExistsAsync(browserPaths.markerFilePath(browsersPath, browser))))
+          usedBrowserPaths.add(usedBrowserPath);
+      }
     } catch (e) {
       if (linkTarget)
         logPolitely('Failed to process descriptor at ' + linkTarget);
@@ -64,19 +74,26 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   let downloadedBrowsers = (await fsReaddirAsync(browsersPath)).map(file => path.join(browsersPath, file));
   downloadedBrowsers = downloadedBrowsers.filter(file => browserPaths.isBrowserDirectory(file));
   const directories = new Set<string>(downloadedBrowsers);
-  for (const browser of allBrowsers)
-    directories.delete(browserPaths.browserDirectory(browsersPath, browser));
+  for (const browserPath of usedBrowserPaths)
+    directories.delete(browserPath);
   for (const directory of directories) {
     logPolitely('Removing unused browser at ' + directory);
     await removeFolderAsync(directory).catch(e => {});
   }
 
   // 3. Install missing browsers for this package.
-  const myBrowsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
-  for (const browser of myBrowsers) {
-    const browserPath = browserPaths.browserDirectory(browsersPath, browser);
-    await browserFetcher.downloadBrowserWithProgressBar(browserPath, browser);
+  const myBrowsersToDownload = await readBrowsersToDownload(packagePath);
+  for (const browser of myBrowsersToDownload) {
+    await browserFetcher.downloadBrowserWithProgressBar(browsersPath, browser);
+    await fsWriteFileAsync(browserPaths.markerFilePath(browsersPath, browser), '');
   }
+}
+
+async function readBrowsersToDownload(packagePath: string) {
+  const browsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
+  // Older versions do not have "download" field. We assume they need all browsers
+  // from the list. So we want to skip all browsers that are explicitly marked as "download: false".
+  return browsers.filter(browser => browser.download !== false);
 }
 
 function sha1(data: string): string {

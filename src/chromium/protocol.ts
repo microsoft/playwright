@@ -734,12 +734,31 @@ some CSP errors in the future.
        */
       frame: AffectedFrame;
     }
+    export type ContentSecurityPolicyViolationType = "kInlineViolation"|"kEvalViolation"|"kURLViolation"|"kTrustedTypesSinkViolation"|"kTrustedTypesPolicyViolation";
+    export interface SourceCodeLocation {
+      url: string;
+      lineNumber: number;
+      columnNumber: number;
+    }
+    export interface ContentSecurityPolicyIssueDetails {
+      /**
+       * The url not included in allowed sources.
+       */
+      blockedURL?: string;
+      /**
+       * Specific directive that is violated, causing the CSP issue.
+       */
+      violatedDirective: string;
+      contentSecurityPolicyViolationType: ContentSecurityPolicyViolationType;
+      frameAncestor?: AffectedFrame;
+      sourceCodeLocation?: SourceCodeLocation;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -750,6 +769,7 @@ add a new optional field to this type.
       mixedContentIssueDetails?: MixedContentIssueDetails;
       blockedByResponseIssueDetails?: BlockedByResponseIssueDetails;
       heavyAdIssueDetails?: HeavyAdIssueDetails;
+      contentSecurityPolicyIssueDetails?: ContentSecurityPolicyIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -1657,7 +1677,33 @@ available).
       glyphCount: number;
     }
     /**
+     * Information about font variation axes for variable fonts
+     */
+    export interface FontVariationAxis {
+      /**
+       * The font-variation-setting tag (a.k.a. "axis tag").
+       */
+      tag: string;
+      /**
+       * Human-readable variation name in the default language (normally, "en").
+       */
+      name: string;
+      /**
+       * The minimum value (inclusive) the font supports for this tag.
+       */
+      minValue: number;
+      /**
+       * The maximum value (inclusive) the font supports for this tag.
+       */
+      maxValue: number;
+      /**
+       * The default value.
+       */
+      defaultValue: number;
+    }
+    /**
      * Properties of a web font: https://www.w3.org/TR/2008/REC-CSS2-20080411/fonts.html#font-descriptions
+and additional information such as platformFontFamily and fontVariationAxes.
      */
     export interface FontFace {
       /**
@@ -1692,6 +1738,10 @@ available).
        * The resolved platform font family
        */
       platformFontFamily: string;
+      /**
+       * Available variation settings (a.k.a. "axes").
+       */
+      fontVariationAxes?: FontVariationAxis[];
     }
     /**
      * CSS keyframes rule representation.
@@ -2096,6 +2146,17 @@ instrumentation)
        * Monotonically increasing time, in seconds.
        */
       timestamp: number;
+    }
+    /**
+     * Enables/disables rendering of local CSS fonts (enabled by default).
+     */
+    export type setLocalFontsEnabledParameters = {
+      /**
+       * Whether rendering of local fonts is enabled.
+       */
+      enabled: boolean;
+    }
+    export type setLocalFontsEnabledReturnValue = {
     }
   }
   
@@ -4469,6 +4530,23 @@ flattened.
        */
       angle: number;
     }
+    export interface DisplayFeature {
+      /**
+       * Orientation of a display feature in relation to screen
+       */
+      orientation: "vertical"|"horizontal";
+      /**
+       * The offset from the screen origin in either the x (for vertical
+orientation) or y (for horizontal orientation) direction.
+       */
+      offset: number;
+      /**
+       * A display feature may mask content such that it is not physically
+displayed - this length along with the offset describes this area.
+A display feature that only splits content will have a 0 mask_length.
+       */
+      maskLength: number;
+    }
     export interface MediaFeature {
       name: string;
       value: string;
@@ -4628,6 +4706,11 @@ autosizing and more.
 change is not observed by the page, e.g. viewport-relative elements do not change positions.
        */
       viewport?: Page.Viewport;
+      /**
+       * If set, the display feature of a multi-segment screen. If not set, multi-segment support
+is turned-off.
+       */
+      displayFeature?: DisplayFeature;
     }
     export type setDeviceMetricsOverrideReturnValue = {
     }
@@ -6423,6 +6506,12 @@ milliseconds relatively to this requestTime.
      */
     export type ResourcePriority = "VeryLow"|"Low"|"Medium"|"High"|"VeryHigh";
     /**
+     * Post data entry for HTTP request
+     */
+    export interface PostDataEntry {
+      bytes?: binary;
+    }
+    /**
      * HTTP request data.
      */
     export interface Request {
@@ -6450,6 +6539,10 @@ milliseconds relatively to this requestTime.
        * True when the request has POST data. Note that postData might still be omitted when this flag is true when the data is too long.
        */
       hasPostData?: boolean;
+      /**
+       * Request body elements. This will be converted from base64 to binary
+       */
+      postDataEntries?: PostDataEntry[];
       /**
        * The mixed content type of the request.
        */
@@ -7723,7 +7816,9 @@ detailed cookie information in the `cookies` field.
      */
     export type getCookiesParameters = {
       /**
-       * The list of URLs for which applicable cookies will be fetched
+       * The list of URLs for which applicable cookies will be fetched.
+If not specified, it's assumed to be set to the list containing
+the URLs of the page and all of its subframes.
        */
       urls?: string[];
     }
@@ -8019,6 +8114,18 @@ continueInterceptedRequest call.
        */
       showNegativeLineNumbers?: boolean;
       /**
+       * Show area name labels (default: false).
+       */
+      showAreaNames?: boolean;
+      /**
+       * Show line name labels (default: false).
+       */
+      showLineNames?: boolean;
+      /**
+       * Show track size labels (default: false).
+       */
+      showTrackSizes?: boolean;
+      /**
        * The grid container border highlight color (default: transparent).
        */
       gridBorderColor?: DOM.RGBA;
@@ -8050,6 +8157,10 @@ continueInterceptedRequest call.
        * The column gap hatching fill color (default: transparent).
        */
       columnHatchColor?: DOM.RGBA;
+      /**
+       * The named grid areas border color (Default: transparent).
+       */
+      areaBorderColor?: DOM.RGBA;
     }
     /**
      * Configuration data for the highlighting of page elements.
@@ -8117,6 +8228,19 @@ continueInterceptedRequest call.
       gridHighlightConfig?: GridHighlightConfig;
     }
     export type ColorFormat = "rgb"|"hsl"|"hex";
+    /**
+     * Configurations for Persistent Grid Highlight
+     */
+    export interface GridNodeHighlightConfig {
+      /**
+       * A descriptor for the highlight appearance.
+       */
+      gridHighlightConfig: GridHighlightConfig;
+      /**
+       * Identifier of the node to highlight.
+       */
+      nodeId: DOM.NodeId;
+    }
     /**
      * Configuration for dual screen hinge
      */
@@ -8210,6 +8334,21 @@ user manually inspects an element.
        * Highlight data for the node.
        */
       highlight: { [key: string]: string };
+    }
+    /**
+     * For Persistent Grid testing.
+     */
+    export type getGridHighlightObjectsForTestParameters = {
+      /**
+       * Ids of the node to get highlight object for.
+       */
+      nodeIds: DOM.NodeId[];
+    }
+    export type getGridHighlightObjectsForTestReturnValue = {
+      /**
+       * Grid Highlight data for the node ids provided.
+       */
+      highlights: { [key: string]: string };
     }
     /**
      * Hides any highlight.
@@ -8374,6 +8513,17 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type setShowFPSCounterReturnValue = {
     }
     /**
+     * Highlight multiple elements with the CSS Grid overlay.
+     */
+    export type setShowGridOverlaysParameters = {
+      /**
+       * An array of node identifiers and descriptors for the highlight appearance.
+       */
+      gridNodeHighlightConfigs: GridNodeHighlightConfig[];
+    }
+    export type setShowGridOverlaysReturnValue = {
+    }
+    /**
      * Requests that backend shows paint rectangles
      */
     export type setShowPaintRectsParameters = {
@@ -8450,6 +8600,10 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      */
     export type FrameId = string;
     /**
+     * Indicates whether a frame has been identified as an ad.
+     */
+    export type AdFrameType = "none"|"child"|"root";
+    /**
      * Information about the Frame on the page.
      */
     export interface Frame {
@@ -8489,6 +8643,10 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
        * If the frame failed to load, this contains the URL that could not be loaded. Note that unlike url above, this URL may contain a fragment.
        */
       unreachableUrl?: string;
+      /**
+       * Indicates whether this frame was tagged as an ad.
+       */
+      adFrameType?: AdFrameType;
     }
     /**
      * Information about the Resource on the page.
@@ -11700,7 +11858,7 @@ If absent, a standard phrase matching responseCode is used.
       /**
        * If set, overrides the post data in the request.
        */
-      postData?: string;
+      postData?: binary;
       /**
        * If set, overrides the request headers.
        */
@@ -12148,6 +12306,16 @@ The default is true.
     }
     export type setUserVerifiedReturnValue = {
     }
+    /**
+     * Sets whether tests of user presence will succeed immediately (if true) or fail to resolve (if false) for an authenticator.
+The default is true.
+     */
+    export type setAutomaticPresenceSimulationParameters = {
+      authenticatorId: AuthenticatorId;
+      enabled: boolean;
+    }
+    export type setAutomaticPresenceSimulationReturnValue = {
+    }
   }
   
   /**
@@ -12592,6 +12760,10 @@ variables as its properties.
        * The language of the script.
        */
       scriptLanguage?: Debugger.ScriptLanguage;
+      /**
+       * The name the embedder supplied for this script.
+       */
+      embedderName?: string;
     }
     /**
      * Fired when virtual machine parses script. This event is also fired for all known and uncollected
@@ -12670,6 +12842,10 @@ scripts upon enabling debugger.
        * If the scriptLanguage is WebASsembly, the source of debug symbols for the module.
        */
       debugSymbols?: Debugger.DebugSymbols;
+      /**
+       * The name the embedder supplied for this script.
+       */
+      embedderName?: string;
     }
     
     /**
@@ -14956,6 +15132,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.startRuleUsageTracking": CSS.startRuleUsageTrackingParameters;
     "CSS.stopRuleUsageTracking": CSS.stopRuleUsageTrackingParameters;
     "CSS.takeCoverageDelta": CSS.takeCoverageDeltaParameters;
+    "CSS.setLocalFontsEnabled": CSS.setLocalFontsEnabledParameters;
     "CacheStorage.deleteCache": CacheStorage.deleteCacheParameters;
     "CacheStorage.deleteEntry": CacheStorage.deleteEntryParameters;
     "CacheStorage.requestCacheNames": CacheStorage.requestCacheNamesParameters;
@@ -15140,6 +15317,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.disable": Overlay.disableParameters;
     "Overlay.enable": Overlay.enableParameters;
     "Overlay.getHighlightObjectForTest": Overlay.getHighlightObjectForTestParameters;
+    "Overlay.getGridHighlightObjectsForTest": Overlay.getGridHighlightObjectsForTestParameters;
     "Overlay.hideHighlight": Overlay.hideHighlightParameters;
     "Overlay.highlightFrame": Overlay.highlightFrameParameters;
     "Overlay.highlightNode": Overlay.highlightNodeParameters;
@@ -15150,6 +15328,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setPausedInDebuggerMessage": Overlay.setPausedInDebuggerMessageParameters;
     "Overlay.setShowDebugBorders": Overlay.setShowDebugBordersParameters;
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterParameters;
+    "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysParameters;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsParameters;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsParameters;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsParameters;
@@ -15287,6 +15466,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "WebAuthn.removeCredential": WebAuthn.removeCredentialParameters;
     "WebAuthn.clearCredentials": WebAuthn.clearCredentialsParameters;
     "WebAuthn.setUserVerified": WebAuthn.setUserVerifiedParameters;
+    "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationParameters;
     "Media.enable": Media.enableParameters;
     "Media.disable": Media.disableParameters;
     "Console.clearMessages": Console.clearMessagesParameters;
@@ -15437,6 +15617,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "CSS.startRuleUsageTracking": CSS.startRuleUsageTrackingReturnValue;
     "CSS.stopRuleUsageTracking": CSS.stopRuleUsageTrackingReturnValue;
     "CSS.takeCoverageDelta": CSS.takeCoverageDeltaReturnValue;
+    "CSS.setLocalFontsEnabled": CSS.setLocalFontsEnabledReturnValue;
     "CacheStorage.deleteCache": CacheStorage.deleteCacheReturnValue;
     "CacheStorage.deleteEntry": CacheStorage.deleteEntryReturnValue;
     "CacheStorage.requestCacheNames": CacheStorage.requestCacheNamesReturnValue;
@@ -15621,6 +15802,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.disable": Overlay.disableReturnValue;
     "Overlay.enable": Overlay.enableReturnValue;
     "Overlay.getHighlightObjectForTest": Overlay.getHighlightObjectForTestReturnValue;
+    "Overlay.getGridHighlightObjectsForTest": Overlay.getGridHighlightObjectsForTestReturnValue;
     "Overlay.hideHighlight": Overlay.hideHighlightReturnValue;
     "Overlay.highlightFrame": Overlay.highlightFrameReturnValue;
     "Overlay.highlightNode": Overlay.highlightNodeReturnValue;
@@ -15631,6 +15813,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setPausedInDebuggerMessage": Overlay.setPausedInDebuggerMessageReturnValue;
     "Overlay.setShowDebugBorders": Overlay.setShowDebugBordersReturnValue;
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterReturnValue;
+    "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysReturnValue;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsReturnValue;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsReturnValue;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsReturnValue;
@@ -15768,6 +15951,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "WebAuthn.removeCredential": WebAuthn.removeCredentialReturnValue;
     "WebAuthn.clearCredentials": WebAuthn.clearCredentialsReturnValue;
     "WebAuthn.setUserVerified": WebAuthn.setUserVerifiedReturnValue;
+    "WebAuthn.setAutomaticPresenceSimulation": WebAuthn.setAutomaticPresenceSimulationReturnValue;
     "Media.enable": Media.enableReturnValue;
     "Media.disable": Media.disableReturnValue;
     "Console.clearMessages": Console.clearMessagesReturnValue;

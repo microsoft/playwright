@@ -27,7 +27,8 @@ import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
 
-const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.2 Safari/605.1.15';
+const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15';
+const BROWSER_VERSION = '14.0';
 
 export class WKBrowser extends BrowserBase {
   private readonly _connection: WKConnection;
@@ -85,18 +86,22 @@ export class WKBrowser extends BrowserBase {
     return Array.from(this._contexts.values());
   }
 
+  version(): string {
+    return BROWSER_VERSION;
+  }
+
   _onDownloadCreated(payload: Protocol.Playwright.downloadCreatedPayload) {
     const page = this._wkPages.get(payload.pageProxyId);
     if (!page)
       return;
-    const frameManager = page._page._frameManager;
-    const frame = frameManager.frame(payload.frameId);
-    if (frame) {
-      // In some cases, e.g. blob url download, we receive only frameScheduledNavigation
-      // but no signals that the navigation was canceled and replaced by download. Fix it
-      // here by simulating cancelled provisional load which matches downloads from network.
-      frameManager.provisionalLoadFailed(frame, '', 'Download is starting');
-    }
+    // In some cases, e.g. blob url download, we receive only frameScheduledNavigation
+    // but no signals that the navigation was canceled and replaced by download. Fix it
+    // here by simulating cancelled provisional load which matches downloads from network.
+    //
+    // TODO: this is racy, because download might be unrelated any navigation, and we will
+    // abort navgitation that is still running. We should be able to fix this by
+    // instrumenting policy decision start/proceed/cancel.
+    page._page._frameManager.frameAbortedNavigation(payload.frameId, 'Download is starting');
     let originPage = page._initializedPage;
     // If it's a new window download, report it on the opener page.
     if (!originPage) {
@@ -140,8 +145,10 @@ export class WKBrowser extends BrowserBase {
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
 
-    wkPage.pageOrError().then(async () => {
+    wkPage.pageOrError().then(async pageOrError => {
       const page = wkPage._page;
+      if (pageOrError instanceof Error)
+        page._setIsError();
       context!.emit(Events.BrowserContext.Page, page);
       if (!opener)
         return;

@@ -146,8 +146,9 @@ class TargetRegistry {
         let tab;
         let gBrowser;
         const windowsIt = Services.wm.getEnumerator('navigator:browser');
+        let window;
         while (windowsIt.hasMoreElements()) {
-          const window = windowsIt.getNext();
+          window = windowsIt.getNext();
           // gBrowser is always created before tabs. If gBrowser is not
           // initialized yet the browser belongs to another window.
           if (!window.gBrowser)
@@ -172,7 +173,7 @@ class TargetRegistry {
           openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
         }
         const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-        const target = new PageTarget(this, gBrowser, tab, linkedBrowser, browserContext, openerTarget);
+        const target = new PageTarget(this, window, gBrowser, tab, linkedBrowser, browserContext, openerTarget);
 
         const sessions = [];
         const readyData = { sessions, target };
@@ -187,12 +188,12 @@ class TargetRegistry {
       },
     });
 
-    const onTabOpenListener = event => {
+    const onTabOpenListener = (window, event) => {
       const tab = event.target;
       const userContextId = tab.userContextId;
       const browserContext = this._userContextIdToBrowserContext.get(userContextId);
       if (browserContext && browserContext.defaultViewportSize)
-        setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser);
+        setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
     };
 
     const onTabCloseListener = event => {
@@ -220,7 +221,7 @@ class TargetRegistry {
         });
         if (!domWindow.gBrowser)
           return;
-        domWindow.gBrowser.tabContainer.addEventListener('TabOpen', onTabOpenListener);
+        domWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => onTabOpenListener(domWindow, event));
         domWindow.gBrowser.tabContainer.addEventListener('TabClose', onTabCloseListener);
       },
       onCloseWindow: window => {
@@ -304,7 +305,7 @@ class TargetRegistry {
       });
     });
     if (browserContext && browserContext.defaultViewportSize)
-      setViewportSizeForBrowser(browserContext.defaultViewportSize, browser);
+      setViewportSizeForBrowser(browserContext.defaultViewportSize, browser, window);
     browser.focus();
     if (browserContext.settings.timezoneId) {
       if (await target.hasFailedToOverrideTimezone())
@@ -332,11 +333,12 @@ class TargetRegistry {
 }
 
 class PageTarget {
-  constructor(registry, gBrowser, tab, linkedBrowser, browserContext, opener) {
+  constructor(registry, win, gBrowser, tab, linkedBrowser, browserContext, opener) {
     EventEmitter.decorate(this);
 
     this._targetId = helper.generateId();
     this._registry = registry;
+    this._window = win;
     this._gBrowser = gBrowser;
     this._tab = tab;
     this._linkedBrowser = linkedBrowser;
@@ -348,7 +350,7 @@ class PageTarget {
     this._channelIds = new Set();
 
     const navigationListener = {
-      QueryInterface: ChromeUtils.generateQI([ Ci.nsIWebProgressListener]),
+      QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
       onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
     };
     this._eventListeners = [
@@ -374,7 +376,7 @@ class PageTarget {
 
   async setViewportSize(viewportSize) {
     this._viewportSize = viewportSize;
-    const actualSize = setViewportSizeForBrowser(viewportSize, this._linkedBrowser);
+    const actualSize = setViewportSizeForBrowser(viewportSize, this._linkedBrowser, this._window);
     await this._channel.connect('').send('awaitViewportDimensions', {
       width: actualSize.width,
       height: actualSize.height
@@ -626,6 +628,7 @@ class BrowserContext {
         cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires,
         { userContextId: this.userContextId || undefined } /* originAttributes */,
         protocolToSameSite[cookie.sameSite],
+        Ci.nsICookie.SCHEME_UNSET
       );
     }
   }
@@ -690,9 +693,11 @@ async function waitForWindowReady(window) {
   }
 }
 
-function setViewportSizeForBrowser(viewportSize, browser) {
+function setViewportSizeForBrowser(viewportSize, browser, window) {
   if (viewportSize) {
     const {width, height} = viewportSize;
+    const rect = browser.getBoundingClientRect();
+    window.resizeBy(width - rect.width, height - rect.height);
     browser.style.setProperty('min-width', width + 'px');
     browser.style.setProperty('min-height', height + 'px');
     browser.style.setProperty('max-width', width + 'px');

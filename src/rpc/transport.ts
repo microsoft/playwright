@@ -23,12 +23,13 @@ export class Transport {
   private _closed = false;
   private _bytesLeft = 0;
 
-  onmessage?: (message: any) => void;
+  onmessage?: (message: string) => void;
   onclose?: () => void;
 
   constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
     this._pipeWrite = pipeWrite;
     pipeRead.on('data', buffer => this._dispatch(buffer));
+    pipeRead.on('close', () => this.onclose && this.onclose());
     this.onmessage = undefined;
     this.onclose = undefined;
   }

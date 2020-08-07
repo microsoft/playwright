@@ -1,0 +1,35 @@
+name: "devrelease"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+    paths:
+      - docs/docker/**
+      - browsers.json
+
+jobs:
+  publish-canary-docker:
+    name: "publish to DockerHub"
+    runs-on: ubuntu-18.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - run: npm ci
+    - run: npm run build
+    - run: ./docs/docker/build.sh --prepare-context
+    - uses: docker/build-push-action@v1
+      with:
+        username: playwright
+        password: ${{ secrets.DOCKER_PASSWORD }}
+        registry: playwright.azurecr.io
+        repository: public/playwright
+        path: docs/docker/
+        dockerfile: docs/docker/Dockerfile.bionic
+        tags: next
+        tag_with_sha: true
+

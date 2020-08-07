@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
-import { BrowserTypeChannel, BrowserTypeInitializer } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchServerParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { ConnectionScope } from './connection';
 import { BrowserServer } from './browserServer';
+import { headersObjectToArray, envObjectToArray } from '../../converters';
+import { serializeArgument } from './jsHandle';
+import { assert } from '../../helper';
+import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
-  constructor(scope: ConnectionScope, guid: string, initializer: BrowserTypeInitializer) {
-    super(scope, guid, initializer);
+
+  static from(browserType: BrowserTypeChannel): BrowserType {
+    return (browserType as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserTypeInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   executablePath(): string {
@@ -35,23 +42,68 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._initializer.name;
   }
 
-  async launch(options: types.LaunchOptions = {}): Promise<Browser> {
-    delete (options as any).logger;
-    return Browser.from(await this._channel.launch({ options }));
+  async launch(options: LaunchOptions = {}): Promise<Browser> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    return this._wrapApiCall('browserType.launch', async () => {
+      assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+      assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
+      const launchOptions: BrowserTypeLaunchParams = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+        firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
+      };
+      const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
+      browser._logger = logger;
+      return browser;
+    }, logger);
   }
 
-  async launchServer(options?: types.LaunchServerOptions): Promise<BrowserServer> {
-    delete (options as any).logger;
-    return BrowserServer.from(await this._channel.launchServer({ options }));
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    return this._wrapApiCall('browserType.launchServer', async () => {
+      const launchServerOptions: BrowserTypeLaunchServerParams = {
+        ...options,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+        firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
+      };
+      return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
+    }, logger);
   }
 
-  async launchPersistentContext(userDataDir: string, options: types.LaunchOptions & types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    delete (options as any).logger;
-    return BrowserContext.from(await this._channel.launchPersistentContext({ userDataDir, options }));
+  async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    return this._wrapApiCall('browserType.launchPersistentContext', async () => {
+      const persistentOptions: BrowserTypeLaunchPersistentContextParams = {
+        ...options,
+        viewport: options.viewport === null ? undefined : options.viewport,
+        noDefaultViewport: options.viewport === null,
+        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+        env: options.env ? envObjectToArray(options.env) : undefined,
+        extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+        userDataDir,
+      };
+      const result = await this._channel.launchPersistentContext(persistentOptions);
+      const context = BrowserContext.from(result.context);
+      context._logger = logger;
+      return context;
+    }, logger);
   }
 
-  async connect(options: types.ConnectOptions): Promise<Browser> {
-    delete (options as any).logger;
-    return Browser.from(await this._channel.connect({ options }));
+  async connect(options: ConnectOptions): Promise<Browser> {
+    const logger = options.logger;
+    options = { ...options, logger: undefined };
+    return this._wrapApiCall('browserType.connect', async () => {
+      const browser = Browser.from((await this._channel.connect(options)).browser);
+      browser._logger = logger;
+      return browser;
+    }, logger);
   }
 }

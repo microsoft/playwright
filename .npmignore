@@ -7,6 +7,8 @@
 
 # include sources from lib except for injected, but not map files
 !lib/**/*.js
+# Include Windows dependency checker executable.
+!bin/PrintDeps.exe
 # Injected files are included via lib/generated, see src/injected/README.md
 lib/injected/
 #types
@@ -14,10 +16,13 @@ lib/injected/
 !index.d.ts
 
 !index.js
+!index.mjs
 !install.js
 !README.md
 !LICENSE
 !NOTICE
+!api.md
+!protocol.yml
 
 # browser descriptor
 !browsers.json

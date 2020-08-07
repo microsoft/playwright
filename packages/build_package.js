@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const rmSync = require('rimraf').sync;
 const ncp = require('ncp');
@@ -27,7 +28,7 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PLAYWRIGHT_CORE_FILES = ['lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
+const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
 
 const PACKAGES = {
   'playwright': {
@@ -64,8 +65,6 @@ const PACKAGES = {
   },
 };
 
-const cleanupPaths = [];
-
 // 1. Parse CLI arguments
 const args = process.argv.slice(2);
 if (args.some(arg => arg === '--help')) {
@@ -81,10 +80,19 @@ if (args.some(arg => arg === '--help')) {
   process.exit(1);
 }
 
+const packageName = args[0];
+const outputPath = path.resolve(args[1]);
+const packagePath = path.join(__dirname, 'output', packageName);
+const package = PACKAGES[packageName];
+if (!package) {
+  console.log(`ERROR: unknown package ${packageName}`);
+  process.exit(1);
+}
+
 // 2. Setup cleanup if needed
 if (!args.some(arg => arg === '--no-cleanup')) {
-  process.on('exit', () => { 
-    cleanupPaths.forEach(cleanupPath => rmSync(cleanupPath, {}));
+  process.on('exit', () => {
+    rmSync(packagePath, {});
   });
   process.on('SIGINT', () => process.exit(2));
   process.on('SIGHUP', () => process.exit(3));
@@ -99,19 +107,20 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   });
 }
 
-const packageName = args[0];
-const outputPath = path.resolve(args[1]);
-const packagePath = path.join(__dirname, packageName);
-const package = PACKAGES[packageName];
-if (!package) {
-  console.log(`ERROR: unknown package ${packageName}`);
-  process.exit(1);
-}
-
 (async () => {
   // 3. Copy package files.
+  rmSync(packagePath, {});
+  fs.mkdirSync(packagePath, { recursive: true });
+  await copyToPackage(path.join(__dirname, 'common') + path.sep, packagePath + path.sep);
+  if (fs.existsSync(path.join(__dirname, packageName))) {
+    // Copy package-specific files, these can overwrite common ones.
+    await copyToPackage(path.join(__dirname, packageName) + path.sep, packagePath + path.sep);
+  }
   for (const file of package.files)
-    await copyToPackage(file);
+    await copyToPackage(path.join(ROOT_PATH, file), path.join(packagePath, file));
+
+  await copyToPackage(path.join(ROOT_PATH, 'docs/api.md'), path.join(packagePath, 'api.md'));
+  await copyToPackage(path.join(ROOT_PATH, 'src/rpc/protocol.yml'), path.join(packagePath, 'protocol.yml'));
 
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));
@@ -123,6 +132,17 @@ if (!package) {
     engines: pwInternalJSON.engines,
     homepage: pwInternalJSON.homepage,
     main: 'index.js',
+    exports: {
+      // Root import: we have a wrapper ES Module to support the following syntax.
+      // const { chromium } = require('playwright');
+      // import { chromium } from 'playwright';
+      '.': {
+        import: './index.mjs',
+        require: './index.js',
+      },
+      // Anything else can be required/imported by providing a relative path.
+      './': './',
+    },
     scripts: {
       install: 'node install.js',
     },
@@ -133,11 +153,13 @@ if (!package) {
 
   // 5. Generate browsers.json
   const browsersJSON = require(path.join(ROOT_PATH, 'browsers.json'));
-  browsersJSON.browsers = browsersJSON.browsers.filter(browser => package.browsers.includes(browser.name));
+  for (const browser of browsersJSON.browsers)
+    browser.download = package.browsers.includes(browser.name);
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
   // 6. Run npm pack
-  const {stdout, stderr, status} = spawnSync('npm', ['pack'], {cwd: packagePath, encoding: 'utf8'});
+  const shell = os.platform() === 'win32';
+  const {stdout, stderr, status} = spawnSync('npm', ['pack'], {cwd: packagePath, encoding: 'utf8', shell});
   if (status !== 0) {
     console.log(`ERROR: "npm pack" failed`);
     console.log(stderr);
@@ -152,15 +174,11 @@ if (!package) {
 
 async function writeToPackage(fileName, content) {
   const toPath = path.join(packagePath, fileName);
-  cleanupPaths.push(toPath);
   console.error(`- generating: //${path.relative(ROOT_PATH, toPath)}`);
   await writeFileAsync(toPath, content);
 }
 
-async function copyToPackage(fileOrDirectoryName) {
-  const fromPath = path.join(ROOT_PATH, fileOrDirectoryName);
-  const toPath = path.join(packagePath, fileOrDirectoryName);
-  cleanupPaths.push(toPath);
+async function copyToPackage(fromPath, toPath) {
   console.error(`- copying: //${path.relative(ROOT_PATH, fromPath)} -> //${path.relative(ROOT_PATH, toPath)}`);
   await cpAsync(fromPath, toPath);
 }

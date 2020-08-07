@@ -14,25 +14,30 @@
  * limitations under the License.
  */
 
-import { Events } from '../../events';
+import { Events } from './events';
 import { assertMaxArguments } from '../../helper';
 import { WorkerChannel, WorkerInitializer } from '../channels';
-import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 import { Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';
+import { BrowserContext } from './browserContext';
+import { ChromiumBrowserContext } from './chromiumBrowserContext';
 
 export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
-  _page: Page | undefined;
+  _page: Page | undefined;  // Set for web workers.
+  _context: BrowserContext | undefined;  // Set for service workers.
 
   static from(worker: WorkerChannel): Worker {
     return (worker as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: WorkerInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: WorkerInitializer) {
+    super(parent, type, guid, initializer);
     this._channel.on('close', () => {
-      this._page!._workers.delete(this);
+      if (this._page)
+        this._page._workers.delete(this);
+      if (this._context)
+        (this._context as ChromiumBrowserContext)._serviceWorkers.delete(this);
       this.emit(Events.Worker.Close, this);
     });
   }
@@ -45,13 +50,15 @@ export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
   async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return parseResult(await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) }));
+    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return parseResult(result.value);
   }
 
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return JSHandle.from(await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) })) as SmartHandle<R>;
+    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+    return JSHandle.from(result.handle) as SmartHandle<R>;
   }
 }

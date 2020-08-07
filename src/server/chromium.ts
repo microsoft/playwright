@@ -16,11 +16,13 @@
  */
 
 import * as path from 'path';
-import { assert, getFromENV, logPolitely, helper } from '../helper';
+import * as os from 'os';
+import { getFromENV, logPolitely, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 import { BrowserTypeBase } from './browserType';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Logger } from '../logger';
@@ -62,10 +64,40 @@ export class Chromium extends BrowserTypeBase {
     return CRBrowser.connect(transport, options, devtools);
   }
 
+  _rewriteStartupError(error: Error, prefix: string): Error {
+    // These error messages are taken from Chromium source code as of July, 2020:
+    // https://github.com/chromium/chromium/blob/70565f67e79f79e17663ad1337dc6e63ee207ce9/content/browser/zygote_host/zygote_host_impl_linux.cc
+    if (!error.message.includes('crbug.com/357670') && !error.message.includes('No usable sandbox!') && !error.message.includes('crbug.com/638180'))
+      return error;
+    return rewriteErrorMessage(error, [
+      `${prefix}: Chromium sandboxing failed!`,
+      `================================`,
+      `To workaround sandboxing issues, do either of the following:`,
+      `  - (preferred): Configure environment to support sandboxing: https://github.com/microsoft/playwright/blob/master/docs/troubleshooting.md`,
+      `  - (alternative): Launch Chromium without sandbox using 'chromiumSandbox: false' option`,
+      `================================`,
+      ``,
+    ].join('\n'));
+  }
+
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
-    const runningAsRoot = process.geteuid && process.geteuid() === 0;
-    assert(!runningAsRoot || browserArguments.includes('--no-sandbox'), 'Cannot launch Chromium as root without --no-sandbox. See https://crbug.com/638180.');
     return env;
+  }
+
+  _amendArguments(browserArguments: string[]): string[] {
+    // We currently only support Linux.
+    if (os.platform() !== 'linux')
+      return browserArguments;
+
+    // If there's already --no-sandbox passed in, do nothing.
+    if (browserArguments.indexOf('--no-sandbox') !== -1)
+      return browserArguments;
+    const runningAsRoot = process.geteuid && process.geteuid() === 0;
+    if (runningAsRoot) {
+      console.warn('WARNING: Playwright is being run under "root" user - disabling Chromium sandbox! Run under regular user to get rid of this warning.');
+      return ['--no-sandbox', ...browserArguments];
+    }
+    return browserArguments;
   }
 
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
@@ -101,6 +133,8 @@ export class Chromium extends BrowserTypeBase {
           '--mute-audio'
       );
     }
+    if (options.chromiumSandbox === false)
+      chromeArguments.push('--no-sandbox');
     if (proxy) {
       const proxyURL = new URL(proxy.server);
       const isSocks = proxyURL.protocol === 'socks5:';

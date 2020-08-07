@@ -18,13 +18,14 @@
 import { execSync } from 'child_process';
 import * as os from 'os';
 import * as path from 'path';
-import { getFromENV } from '../helper';
+import { getFromENV, getUbuntuVersionSync } from '../helper';
 
 export type BrowserName = 'chromium'|'webkit'|'firefox';
-export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'linux';
+export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'ubuntu18.04'|'ubuntu20.04';
 export type BrowserDescriptor = {
-	name: BrowserName,
-	revision: string
+  name: BrowserName,
+  revision: string,
+  download: boolean,
 };
 
 export const hostPlatform = ((): BrowserPlatform => {
@@ -33,18 +34,49 @@ export const hostPlatform = ((): BrowserPlatform => {
     const macVersion = execSync('sw_vers -productVersion').toString('utf8').trim().split('.').slice(0, 2).join('.');
     return `mac${macVersion}` as BrowserPlatform;
   }
-  if (platform === 'linux')
-    return 'linux';
+  if (platform === 'linux') {
+    const ubuntuVersion = getUbuntuVersionSync();
+    if (ubuntuVersion === '20.04')
+      return 'ubuntu20.04';
+    // For the sake of downloading logic, consider any other Linux distribution
+    // to be "ubuntu18.04".
+    return 'ubuntu18.04';
+  }
   if (platform === 'win32')
     return os.arch() === 'x64' ? 'win64' : 'win32';
   return platform as BrowserPlatform;
 })();
 
+export function linuxLddDirectories(browserPath: string, browser: BrowserDescriptor): string[] {
+  if (browser.name === 'chromium')
+    return [path.join(browserPath, 'chrome-linux')];
+  if (browser.name === 'firefox')
+    return [path.join(browserPath, 'firefox')];
+  if (browser.name === 'webkit') {
+    return [
+      path.join(browserPath, 'minibrowser-gtk'),
+      path.join(browserPath, 'minibrowser-wpe'),
+    ];
+  }
+  return [];
+}
+
+export function windowsExeAndDllDirectories(browserPath: string, browser: BrowserDescriptor): string[] {
+  if (browser.name === 'chromium')
+    return [path.join(browserPath, 'chrome-win')];
+  if (browser.name === 'firefox')
+    return [path.join(browserPath, 'firefox')];
+  if (browser.name === 'webkit')
+    return [browserPath];
+  return [];
+}
+
 export function executablePath(browserPath: string, browser: BrowserDescriptor): string | undefined {
   let tokens: string[] | undefined;
   if (browser.name === 'chromium') {
     tokens = new Map<BrowserPlatform, string[]>([
-      ['linux', ['chrome-linux', 'chrome']],
+      ['ubuntu18.04', ['chrome-linux', 'chrome']],
+      ['ubuntu20.04', ['chrome-linux', 'chrome']],
       ['mac10.13', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac10.14', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac10.15', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
@@ -55,7 +87,8 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
 
   if (browser.name === 'firefox') {
     tokens = new Map<BrowserPlatform, string[]>([
-      ['linux', ['firefox', 'firefox']],
+      ['ubuntu18.04', ['firefox', 'firefox']],
+      ['ubuntu20.04', ['firefox', 'firefox']],
       ['mac10.13', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac10.14', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac10.15', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
@@ -66,7 +99,8 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
 
   if (browser.name === 'webkit') {
     tokens = new Map<BrowserPlatform, string[] | undefined>([
-      ['linux', ['pw_run.sh']],
+      ['ubuntu18.04', ['pw_run.sh']],
+      ['ubuntu20.04', ['pw_run.sh']],
       ['mac10.13', undefined],
       ['mac10.14', ['pw_run.sh']],
       ['mac10.15', ['pw_run.sh']],
@@ -102,6 +136,10 @@ export function browsersPath(packagePath: string): string {
 
 export function browserDirectory(browsersPath: string, browser: BrowserDescriptor): string {
   return path.join(browsersPath, `${browser.name}-${browser.revision}`);
+}
+
+export function markerFilePath(browsersPath: string, browser: BrowserDescriptor): string {
+  return path.join(browserDirectory(browsersPath, browser), 'INSTALLATION_COMPLETE');
 }
 
 export function isBrowserDirectory(browserPath: string): boolean {

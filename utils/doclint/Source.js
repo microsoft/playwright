@@ -25,12 +25,14 @@ const writeFileAsync = util.promisify(fs.writeFile);
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
-async function recursiveReadDir(dirPath) {
+async function recursiveReadDir(dirPath, exclude) {
   const files = [];
+  if (exclude.includes(dirPath))
+    return files;
   for (const file of await readdirAsync(dirPath)) {
     const fullPath = path.join(dirPath, file);
     if ((await statAsync(fullPath)).isDirectory())
-      files.push(...await recursiveReadDir(fullPath))
+      files.push(...await recursiveReadDir(fullPath, exclude))
     else
       files.push(fullPath);
   }
@@ -100,7 +102,7 @@ class Source {
   async save() {
     await writeFileAsync(this.filePath(), this.text());
   }
-  
+
   async saveAs(path) {
     await writeFileAsync(path, this.text());
   }
@@ -118,11 +120,12 @@ class Source {
   /**
    * @param {string} dirPath
    * @param {string=} extension
+   * @param {Array<string>=} exclude
    * @return {!Promise<!Array<!Source>>}
    */
-  static async readdir(dirPath, extension = '') {
+  static async readdir(dirPath, extension = '', exclude = []) {
     extension = extension.toLowerCase();
-    const filePaths = (await recursiveReadDir(dirPath)).filter(fileName => fileName.toLowerCase().endsWith(extension));
+    const filePaths = (await recursiveReadDir(dirPath, exclude)).filter(fileName => fileName.toLowerCase().endsWith(extension));
     return Promise.all(filePaths.map(filePath => Source.readFile(filePath)));
   }
 }

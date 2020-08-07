@@ -36,6 +36,12 @@ class Test {
     this.Expectations = { ...TestExpectation };
   }
 
+  titles() {
+    if (!this._name)
+      return this._suite.titles();
+    return [...this._suite.titles(), this._name];
+  }
+
   suite() {
     return this._suite;
   }
@@ -101,13 +107,14 @@ class Suite {
   constructor(parentSuite, name, location) {
     this._parentSuite = parentSuite;
     this._name = name;
-    this._fullName = (parentSuite ? parentSuite.fullName() + ' ' + name : name).trim();
+    const fullName = (parentSuite ? parentSuite.fullName() + ' ' + name : name).trim();
+    this._fullName = fullName;
     this._location = location;
     this._skipped = false;
     this._expectation = TestExpectation.Ok;
 
     this._defaultEnvironment = {
-      name() { return this._fullName; },
+      name() { return fullName; },
     };
 
     this._environments = [this._defaultEnvironment];
@@ -126,6 +133,12 @@ class Suite {
   afterAll(callback) { this._addHook('afterAll', callback); }
   globalSetup(callback) { this._addHook('globalSetup', callback); }
   globalTeardown(callback) { this._addHook('globalTeardown', callback); }
+
+  titles() {
+    if (!this._parentSuite)
+      return this._name ? [this._name] : [];
+    return this._name ? [...this._parentSuite.titles(), this._name] : this._parentSuite.titles();
+  }
 
   parentSuite() { return this._parentSuite; }
 

@@ -18,6 +18,7 @@ import { EventEmitter } from 'events';
 import { helper, debugAssert, assert } from '../../helper';
 import { Channel } from '../channels';
 import { serializeError } from '../serializers';
+import { createScheme, Validator, ValidationError } from '../validator';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -31,157 +32,160 @@ export function existingDispatcher<DispatcherType>(object: any): DispatcherType 
   return object[dispatcherSymbol];
 }
 
-export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | null {
-  return object ? lookupDispatcher(object) : null;
+export function lookupNullableDispatcher<DispatcherType>(object: any | null): DispatcherType | undefined {
+  return object ? lookupDispatcher(object) : undefined;
 }
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {
+  private _connection: DispatcherConnection;
+  private _isScope: boolean;
+  // Parent is always "isScope".
+  private _parent: Dispatcher<any, any> | undefined;
+  // Only "isScope" channel owners have registered dispatchers inside.
+  private _dispatchers = new Map<string, Dispatcher<any, any>>();
+  private _disposed = false;
+
   readonly _guid: string;
   readonly _type: string;
-  protected _scope: DispatcherScope;
+  readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(scope: DispatcherScope, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + helper.guid()) {
+  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + helper.guid()) {
     super();
+
+    this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
+    this._isScope = !!isScope;
+    this._parent = parent instanceof DispatcherConnection ? undefined : parent;
+    this._scope = isScope ? this : this._parent!;
+
+    assert(!this._connection._dispatchers.has(guid));
+    this._connection._dispatchers.set(guid, this);
+    if (this._parent) {
+      assert(!this._parent._dispatchers.has(guid));
+      this._parent._dispatchers.set(guid, this);
+    }
+
     this._type = type;
     this._guid = guid;
     this._object = object;
-    this._scope = isScope ? scope.createChild(guid) : scope;
-    scope.bind(this._guid, this);
+
     (object as any)[dispatcherSymbol] = this;
-    this._scope.sendMessageToClient(scope.guid, '__create__', { type, initializer, guid });
+    if (this._parent)
+      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid }, !!isScope);
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
-    this._scope.sendMessageToClient(this._guid, method, params);
+    this._connection.sendMessageToClient(this._guid, method, params);
+  }
+
+  _dispose() {
+    assert(!this._disposed);
+
+    // Clean up from parent and connection.
+    if (this._parent)
+      this._parent._dispatchers.delete(this._guid);
+    this._connection._dispatchers.delete(this._guid);
+
+    // Dispose all children.
+    for (const dispatcher of [...this._dispatchers.values()])
+      dispatcher._dispose();
+    this._dispatchers.clear();
+
+    if (this._isScope)
+      this._connection.sendMessageToClient(this._guid, '__dispose__', {});
+  }
+
+  _debugScopeState(): any {
+    return {
+      _guid: this._guid,
+      objects: Array.from(this._dispatchers.values()).map(o => o._debugScopeState()),
+    };
   }
 }
 
-export class DispatcherScope {
-  private _connection: DispatcherConnection;
-  private _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _parent: DispatcherScope | undefined;
-  readonly _children = new Set<DispatcherScope>();
-  readonly guid: string;
+export type DispatcherScope = Dispatcher<any, any>;
 
-  constructor(connection: DispatcherConnection, guid: string, parent?: DispatcherScope) {
-    this._connection = connection;
-    this._parent = parent;
-    this.guid = guid;
-    if (parent)
-      parent._children.add(this);
-  }
-
-  createChild(guid: string): DispatcherScope {
-    return new DispatcherScope(this._connection, guid, this);
-  }
-
-  bind(guid: string, arg: Dispatcher<any, any>) {
-    assert(!this._dispatchers.has(guid));
-    this._dispatchers.set(guid, arg);
-    this._connection._dispatchers.set(guid, arg);
-  }
-
-  dispose() {
-    // Take care of hierarchy.
-    for (const child of [...this._children])
-      child.dispose();
-    this._children.clear();
-
-    // Delete self from scopes and objects.
-    this._connection._dispatchers.delete(this.guid);
-
-    // Delete all of the objects from connection.
-    for (const guid of this._dispatchers.keys())
-      this._connection._dispatchers.delete(guid);
-
-    if (this._parent) {
-      this._parent._children.delete(this);
-      this._parent._dispatchers.delete(this.guid);
-    }
-  }
-
-  async sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
-    this._connection._sendMessageToClient(guid, method, params);
-  }
-
-  _dumpScopeState(scopes: any[]): any {
-    const scopeState: any = { _guid: this.guid };
-    scopeState.objects = [...this._dispatchers.keys()];
-    scopes.push(scopeState);
-    [...this._children].map(c => c._dumpScopeState(scopes));
-    return scopeState;
+class Root extends Dispatcher<{}, {}> {
+  constructor(connection: DispatcherConnection) {
+    super(connection, {}, '', {}, true, '');
   }
 }
 
 export class DispatcherConnection {
   readonly _dispatchers = new Map<string, Dispatcher<any, any>>();
-  private _rootScope: DispatcherScope;
-  onmessage = (message: string) => {};
+  private _rootDispatcher: Root;
+  onmessage = (message: object) => {};
+  private _validateParams: (type: string, method: string, params: any) => any;
 
-  async _sendMessageToClient(guid: string, method: string, params: any): Promise<any> {
-    this.onmessage(JSON.stringify({ guid, method, params: this._replaceDispatchersWithGuids(params) }));
+  async sendMessageToClient(guid: string, method: string, params: any, disallowDispatchers?: boolean): Promise<any> {
+    const allowDispatchers = !disallowDispatchers;
+    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params, allowDispatchers) });
   }
 
   constructor() {
-    this._rootScope = new DispatcherScope(this, '');
+    this._rootDispatcher = new Root(this);
+
+    const tChannel = (name: string): Validator => {
+      return (arg: any, path: string) => {
+        if (arg && typeof arg === 'object' && typeof arg.guid === 'string') {
+          const guid = arg.guid;
+          const dispatcher = this._dispatchers.get(guid);
+          if (!dispatcher)
+            throw new ValidationError(`${path}: no object with guid ${guid}`);
+          if (name !== '*' && dispatcher._type !== name)
+            throw new ValidationError(`${path}: object with guid ${guid} has type ${dispatcher._type}, expected ${name}`);
+          return dispatcher;
+        }
+        throw new ValidationError(`${path}: expected ${name}`);
+      };
+    };
+    const scheme = createScheme(tChannel);
+    this._validateParams = (type: string, method: string, params: any): any => {
+      const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
+      if (!scheme[name])
+        throw new ValidationError(`Unknown scheme for ${type}.${method}`);
+      return scheme[name](params, '');
+    };
   }
 
-  rootScope(): DispatcherScope {
-    return this._rootScope;
+  rootDispatcher(): Dispatcher<any, any> {
+    return this._rootDispatcher;
   }
 
-  async dispatch(message: string) {
-    const parsedMessage = JSON.parse(message);
-    const { id, guid, method, params } = parsedMessage;
+  async dispatch(message: object) {
+    const { id, guid, method, params } = message as any;
     const dispatcher = this._dispatchers.get(guid);
     if (!dispatcher) {
-      this.onmessage(JSON.stringify({ id, error: serializeError(new Error('Target browser or context has been closed')) }));
+      this.onmessage({ id, error: serializeError(new Error('Target browser or context has been closed')) });
       return;
     }
     if (method === 'debugScopeState') {
-      const dispatcherState: any = {};
-      dispatcherState.objects = [...this._dispatchers.keys()];
-      dispatcherState.scopes = [];
-      this._rootScope._dumpScopeState(dispatcherState.scopes);
-      this.onmessage(JSON.stringify({ id, result: dispatcherState }));
+      this.onmessage({ id, result: this._rootDispatcher._debugScopeState() });
       return;
     }
     try {
-      const result = await (dispatcher as any)[method](this._replaceGuidsWithDispatchers(params));
-      this.onmessage(JSON.stringify({ id, result: this._replaceDispatchersWithGuids(result) }));
+      const validated = this._validateParams(dispatcher._type, method, params);
+      const result = await (dispatcher as any)[method](validated);
+      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result, true) });
     } catch (e) {
-      this.onmessage(JSON.stringify({ id, error: serializeError(e) }));
+      this.onmessage({ id, error: serializeError(e) });
     }
   }
 
-  _replaceDispatchersWithGuids(payload: any): any {
+  private _replaceDispatchersWithGuids(payload: any, allowDispatchers: boolean): any {
     if (!payload)
       return payload;
-    if (payload instanceof Dispatcher)
+    if (payload instanceof Dispatcher) {
+      if (!allowDispatchers)
+        throw new Error(`Channels are not allowed in the scope's initialzier`);
       return { guid: payload._guid };
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceDispatchersWithGuids(p));
-    if (typeof payload === 'object') {
-      const result: any = {};
-      for (const key of Object.keys(payload))
-        result[key] = this._replaceDispatchersWithGuids(payload[key]);
-      return result;
     }
-    return payload;
-  }
-
-  private _replaceGuidsWithDispatchers(payload: any): any {
-    if (!payload)
-      return payload;
     if (Array.isArray(payload))
-      return payload.map(p => this._replaceGuidsWithDispatchers(p));
-    if (payload.guid && this._dispatchers.has(payload.guid))
-      return this._dispatchers.get(payload.guid);
+      return payload.map(p => this._replaceDispatchersWithGuids(p, allowDispatchers));
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))
-        result[key] = this._replaceGuidsWithDispatchers(payload[key]);
+        result[key] = this._replaceDispatchersWithGuids(payload[key], allowDispatchers);
       return result;
     }
     return payload;

@@ -40,6 +40,8 @@ export class CRBrowser extends BrowserBase {
   _backgroundPages = new Map<string, CRPage>();
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
+  _isMac = false;
+  private _version = '';
 
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
@@ -50,6 +52,9 @@ export class CRBrowser extends BrowserBase {
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
     const session = connection.rootSession;
+    const version = await session.send('Browser.getVersion');
+    browser._isMac = version.userAgent.includes('Macintosh');
+    browser._version = version.product.substring(version.product.indexOf('/') + 1);
     if (!options.persistent) {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
@@ -107,6 +112,10 @@ export class CRBrowser extends BrowserBase {
     return Array.from(this._contexts.values());
   }
 
+  version(): string {
+    return this._version;
+  }
+
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
     if (targetInfo.type === 'browser')
       return;
@@ -142,21 +151,24 @@ export class CRBrowser extends BrowserBase {
       const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       backgroundPage.pageOrError().then(() => {
-        context!.emit(Events.CRBrowserContext.BackgroundPage, backgroundPage._page);
+        context!.emit(Events.ChromiumBrowserContext.BackgroundPage, backgroundPage._page);
       });
       return;
     }
 
     if (targetInfo.type === 'page') {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, !!this._options.headful);
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, true);
       this._crPages.set(targetInfo.targetId, crPage);
-      crPage.pageOrError().then(() => {
-        context!.emit(CommonEvents.BrowserContext.Page, crPage._page);
+      crPage.pageOrError().then(pageOrError => {
+        const page = crPage._page;
+        if (pageOrError instanceof Error)
+          page._setIsError();
+        context!.emit(CommonEvents.BrowserContext.Page, page);
         if (opener) {
           opener.pageOrError().then(openerPage => {
             if (openerPage instanceof Page && !openerPage.isClosed())
-              openerPage.emit(CommonEvents.Page.Popup, crPage._page);
+              openerPage.emit(CommonEvents.Page.Popup, page);
           });
         }
       });
@@ -166,7 +178,7 @@ export class CRBrowser extends BrowserBase {
     if (targetInfo.type === 'service_worker') {
       const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
-      context.emit(Events.CRBrowserContext.ServiceWorker, serviceWorker);
+      context.emit(Events.ChromiumBrowserContext.ServiceWorker, serviceWorker);
       return;
     }
 
@@ -425,6 +437,16 @@ export class CRBrowserContext extends BrowserContextBase {
     assert(this._browserContextId);
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
+    for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
+      if (serviceWorker._browserContext !== this)
+        continue;
+      // When closing a browser context, service workers are shutdown
+      // asynchronously and we get detached from them later.
+      // To avoid the wrong order of notifications, we manually fire
+      // "close" event here and forget about the serivce worker.
+      serviceWorker.emit(CommonEvents.Worker.Close);
+      this._browser._serviceWorkers.delete(targetId);
+    }
   }
 
   backgroundPages(): Page[] {

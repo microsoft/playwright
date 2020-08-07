@@ -16,193 +16,320 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = require('./utils').testOptions(browserType);
+const util = require('util');
+const os = require('os');
+const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
-describe('Download', function() {
-  beforeEach(async(state) => {
-    state.server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment');
-      res.end(`Hello world`);
-    });
-    state.server.setRoute('/downloadWithFilename', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-      res.end(`Hello world`);
-    });
+const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
+
+registerFixture('persistentDirectory', async ({}, test) => {
+  const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+  try {
+    await test(persistentDirectory);
+  } finally {
+    await removeFolderAsync(persistentDirectory);
+  }
+});
+
+beforeEach(async ({server}) => {
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment');
+    res.end(`Hello world`);
+  });
+  server.setRoute('/downloadWithFilename', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end(`Hello world`);
+  });
+});
+
+it('should report downloads with acceptDownloads: false', async({page, server}) => {
+  await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  let error;
+  expect(download.url()).toBe(`${server.PREFIX}/downloadWithFilename`);
+  expect(download.suggestedFilename()).toBe(`file.txt`);
+  await download.path().catch(e => error = e);
+  expect(await download.failure()).toContain('acceptDownloads');
+  expect(error.message).toContain('acceptDownloads: true');
+});
+
+it('should report downloads with acceptDownloads: true', async({browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const path = await download.path();
+  expect(fs.existsSync(path)).toBeTruthy();
+  expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it('should save to user-specified path', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(persistentDirectory, "download.txt");
+  await download.saveAs(userPath);
+  expect(fs.existsSync(userPath)).toBeTruthy();
+  expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(persistentDirectory, "download.txt");
+  await download.saveAs(userPath);
+  expect(fs.existsSync(userPath)).toBeTruthy();
+  expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+
+  const originalPath = await download.path();
+  expect(fs.existsSync(originalPath)).toBeTruthy();
+  expect(fs.readFileSync(originalPath).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it('should save to two different paths with multiple saveAs calls', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(persistentDirectory, "download.txt");
+  await download.saveAs(userPath);
+  expect(fs.existsSync(userPath)).toBeTruthy();
+  expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+
+  const anotherUserPath = path.join(persistentDirectory, "download (2).txt");
+  await download.saveAs(anotherUserPath);
+  expect(fs.existsSync(anotherUserPath)).toBeTruthy();
+  expect(fs.readFileSync(anotherUserPath).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it('should save to overwritten filepath', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(persistentDirectory, "download.txt");
+  await download.saveAs(userPath);
+  expect((await util.promisify(fs.readdir)(persistentDirectory)).length).toBe(1);
+  await download.saveAs(userPath);
+  expect((await util.promisify(fs.readdir)(persistentDirectory)).length).toBe(1);
+  expect(fs.existsSync(userPath)).toBeTruthy();
+  expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it('should create subdirectories when saving to non-existent user-specified path', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const nestedPath = path.join(persistentDirectory, "these", "are", "directories", "download.txt");
+  await download.saveAs(nestedPath)
+  expect(fs.existsSync(nestedPath)).toBeTruthy();
+  expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it('should error when saving with downloads disabled', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: false });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(persistentDirectory, "download.txt");
+  const { message } = await download.saveAs(userPath).catch(e => e);
+  expect(message).toContain('Pass { acceptDownloads: true } when you are creating your browser context');
+  await page.close();
+});
+
+it('should error when saving after deletion', async({persistentDirectory, browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(persistentDirectory, "download.txt");
+  await download.delete();
+  const { message } = await download.saveAs(userPath).catch(e => e);
+  expect(message).toContain('Download already deleted. Save before deleting.');
+  await page.close();
+});
+
+it('should report non-navigation downloads', async({browser, server}) => {
+  // Mac WebKit embedder does not download in this case, although Safari does.
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.end(`Hello world`);
   });
 
-  it('should report downloads with acceptDownloads: false', async({page, server}) => {
-    await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    let error;
-    expect(download.url()).toBe(`${server.PREFIX}/downloadWithFilename`);
-    expect(download.suggestedFilename()).toBe(`file.txt`);
-    await download.path().catch(e => error = e);
-    expect(await download.failure()).toContain('acceptDownloads');
-    expect(error.message).toContain('acceptDownloads: true');
-  });
-  it('should report downloads with acceptDownloads: true', async({browser, server}) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const path = await download.path();
-    expect(fs.existsSync(path)).toBeTruthy();
-    expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await page.close();
-  });
-  it('should report non-navigation downloads', async({browser, server}) => {
-    // Mac WebKit embedder does not download in this case, although Safari does.
-    server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.end(`Hello world`);
-    });
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a download="file.txt" href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  expect(download.suggestedFilename()).toBe(`file.txt`);
+  const path = await download.path();
+  expect(fs.existsSync(path)).toBeTruthy();
+  expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  await page.close();
+});
 
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<a download="file.txt" href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    expect(download.suggestedFilename()).toBe(`file.txt`);
-    const path = await download.path();
-    expect(fs.existsSync(path)).toBeTruthy();
-    expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await page.close();
+it(`should report download path within page.on('download', …) handler for Files`, async({browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  const onDownloadPath = new Promise((res) => {
+    page.on('download', dl => {
+      dl.path().then(res);
+    });
   });
-  it(`should report download path within page.on('download', …) handler for Files`, async({browser, server}) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    const onDownloadPath = new Promise((res) => {
-      page.on('download', dl => {
-        dl.path().then(res);
-      });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  await page.click('a');
+  const path = await onDownloadPath;
+  expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  await page.close();
+})
+it(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  const onDownloadPath = new Promise((res) => {
+    page.on('download', dl => {
+      dl.path().then(res);
     });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    await page.click('a');
-    const path = await onDownloadPath;
-    expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await page.close();
-  })
-  it(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    const onDownloadPath = new Promise((res) => {
-      page.on('download', dl => {
-        dl.path().then(res);
-      });
-    });
-    await page.goto(server.PREFIX + '/download-blob.html');
-    await page.click('a');
-    const path = await onDownloadPath;
-    expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await page.close();
-  })
-  it.skip(FFOX).fail(WEBKIT)('should report alt-click downloads', async({browser, server}) => {
-    // Firefox does not download on alt-click by default.
-    // Our WebKit embedder does not download on alt-click, although Safari does.
-    server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.end(`Hello world`);
-    });
+  });
+  await page.goto(server.PREFIX + '/download-blob.html');
+  await page.click('a');
+  const path = await onDownloadPath;
+  expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  await page.close();
+})
+it.fail(FFOX || WEBKIT)('should report alt-click downloads', async({browser, server}) => {
+  // Firefox does not download on alt-click by default.
+  // Our WebKit embedder does not download on alt-click, although Safari does.
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.end(`Hello world`);
+  });
 
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a', { modifiers: ['Alt']})
-    ]);
-    const path = await download.path();
-    expect(fs.existsSync(path)).toBeTruthy();
-    expect(fs.readFileSync(path).toString()).toBe('Hello world');
-    await page.close();
-  });
-  it.fail(CHROMIUM && !HEADLESS)('should report new window downloads', async({browser, server}) => {
-    // TODO: - the test fails in headful Chromium as the popup page gets closed along
-    // with the session before download completed event arrives.
-    // - WebKit doesn't close the popup page
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a target=_blank href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const path = await download.path();
-    expect(fs.existsSync(path)).toBeTruthy();
-    await page.close();
-  });
-  it('should delete file', async({browser, server}) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const path = await download.path();
-    expect(fs.existsSync(path)).toBeTruthy();
-    await download.delete();
-    expect(fs.existsSync(path)).toBeFalsy();
-    await page.close();
-  });
-  it('should expose stream', async({browser, server}) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const stream = await download.createReadStream();
-    let content = '';
-    stream.on('data', data => content += data.toString());
-    await new Promise(f => stream.on('end', f));
-    expect(content).toBe('Hello world');
-    stream.close();
-    await page.close();
-  });
-  it('should delete downloads on context destruction', async({browser, server}) => {
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download1 ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const [ download2 ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const path1 = await download1.path();
-    const path2 = await download2.path();
-    expect(fs.existsSync(path1)).toBeTruthy();
-    expect(fs.existsSync(path2)).toBeTruthy();
-    await page.context().close();
-    expect(fs.existsSync(path1)).toBeFalsy();
-    expect(fs.existsSync(path2)).toBeFalsy();
-  });
-  it('should delete downloads on browser gone', async ({ server, browserType, defaultBrowserOptions }) => {
-    const browser = await browserType.launch(defaultBrowserOptions);
-    const page = await browser.newPage({ acceptDownloads: true });
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    const [ download1 ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const [ download2 ] = await Promise.all([
-      page.waitForEvent('download'),
-      page.click('a')
-    ]);
-    const path1 = await download1.path();
-    const path2 = await download2.path();
-    expect(fs.existsSync(path1)).toBeTruthy();
-    expect(fs.existsSync(path2)).toBeTruthy();
-    await browser.close();
-    expect(fs.existsSync(path1)).toBeFalsy();
-    expect(fs.existsSync(path2)).toBeFalsy();
-    expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
-  });
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a', { modifiers: ['Alt']})
+  ]);
+  const path = await download.path();
+  expect(fs.existsSync(path)).toBeTruthy();
+  expect(fs.readFileSync(path).toString()).toBe('Hello world');
+  await page.close();
+});
+
+it.fail(CHROMIUM && !HEADLESS)('should report new window downloads', async({browser, server}) => {
+  // TODO: - the test fails in headful Chromium as the popup page gets closed along
+  // with the session before download completed event arrives.
+  // - WebKit doesn't close the popup page
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a target=_blank href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const path = await download.path();
+  expect(fs.existsSync(path)).toBeTruthy();
+  await page.close();
+});
+
+it('should delete file', async({browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const path = await download.path();
+  expect(fs.existsSync(path)).toBeTruthy();
+  await download.delete();
+  expect(fs.existsSync(path)).toBeFalsy();
+  await page.close();
+});
+
+it('should expose stream', async({browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const stream = await download.createReadStream();
+  let content = '';
+  stream.on('data', data => content += data.toString());
+  await new Promise(f => stream.on('end', f));
+  expect(content).toBe('Hello world');
+  await page.close();
+});
+
+it('should delete downloads on context destruction', async({browser, server}) => {
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download1 ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const [ download2 ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const path1 = await download1.path();
+  const path2 = await download2.path();
+  expect(fs.existsSync(path1)).toBeTruthy();
+  expect(fs.existsSync(path2)).toBeTruthy();
+  await page.context().close();
+  expect(fs.existsSync(path1)).toBeFalsy();
+  expect(fs.existsSync(path2)).toBeFalsy();
+});
+
+it('should delete downloads on browser gone', async ({ server, browserType, defaultBrowserOptions }) => {
+  const browser = await browserType.launch(defaultBrowserOptions);
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download1 ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const [ download2 ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const path1 = await download1.path();
+  const path2 = await download2.path();
+  expect(fs.existsSync(path1)).toBeTruthy();
+  expect(fs.existsSync(path2)).toBeTruthy();
+  await browser.close();
+  expect(fs.existsSync(path1)).toBeFalsy();
+  expect(fs.existsSync(path2)).toBeFalsy();
+  expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
 });

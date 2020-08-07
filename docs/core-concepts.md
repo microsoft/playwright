@@ -70,6 +70,10 @@ const context = await browser.newContext({
 });
 ```
 
+#### Example
+
+[This script](examples/authentication.js) logs in on GitHub.com through Chromium, and then reuses the login cookies state in WebKit. This recipe can be used to speed up tests by logging in once and reusing login state.
+
 #### API reference
 
 - [class `BrowserContext`](./api.md#class-browsercontext)
@@ -281,6 +285,7 @@ const result = await page.evaluate(() => {
 
 - [`page.evaluate(pageFunction[, arg])`](api.md#pageevaluatepagefunction-arg)
 - [`frame.evaluate(pageFunction[, arg])`](api.md#frameevaluatepagefunction-arg)
+- Evaluation argument [examples](api.md#evaluationargument)
 
 <br/>
 

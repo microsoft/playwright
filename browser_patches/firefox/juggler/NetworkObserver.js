@@ -215,29 +215,35 @@ class NetworkRequest {
     // interception and service workers.
     // An internal redirect has the same channelId, inherits notificationCallbacks and
     // listener, and should be used instead of an old channel.
-
     this._networkObserver._channelToRequest.delete(this.httpChannel);
     this.httpChannel = newChannel;
     this._networkObserver._channelToRequest.set(this.httpChannel, this);
+  }
 
-    if (this._expectingResumedRequest) {
-      const { method, headers, postData } = this._expectingResumedRequest;
-      this._expectingResumedRequest = undefined;
+  // Instrumentation called by NetworkObserver.
+  _onInternalRedirectReady() {
+    // Resumed request is first internally redirected to a new request,
+    // and then the new request is ready to be updated.
+    if (!this._expectingResumedRequest)
+      return;
+    const { method, headers, postData } = this._expectingResumedRequest;
+    this._expectingResumedRequest = undefined;
 
-      if (headers) {
-        // Apply new request headers from interception resume.
-        for (const header of requestHeaders(newChannel))
-          newChannel.setRequestHeader(header.name, '', false /* merge */);
-        for (const header of headers)
-          newChannel.setRequestHeader(header.name, header.value, false /* merge */);
-      }
-      if (method)
-        newChannel.requestMethod = method;
-      if (postData && newChannel instanceof Ci.nsIUploadChannel) {
-        const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
-        synthesized.data = atob(postData);
-        newChannel.setUploadStream(synthesized, 'application/octet-stream', -1);
-      }
+    if (headers) {
+      for (const header of requestHeaders(this.httpChannel))
+        this.httpChannel.setRequestHeader(header.name, '', false /* merge */);
+      for (const header of headers)
+        this.httpChannel.setRequestHeader(header.name, header.value, false /* merge */);
+    }
+    if (method)
+      this.httpChannel.requestMethod = method;
+    if (postData && this.httpChannel instanceof Ci.nsIUploadChannel2) {
+      const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
+      const body = atob(postData);
+      synthesized.setData(body, body.length);
+      // Clear content-length, so that upload stream resets it.
+      this.httpChannel.setRequestHeader('content-length', '', false /* merge */);
+      this.httpChannel.explicitSetUploadStream(synthesized, 'application/octet-stream', -1, this.httpChannel.requestMethod, false);
     }
   }
 
@@ -443,7 +449,7 @@ class NetworkRequest {
   }
 
   _fallThroughInterceptController() {
-    if (!this._previousCallbacks || !(this._previousCallbacks instanceof Ci.nsIInterfaceRequestor))
+    if (!this._previousCallbacks || !(this._previousCallbacks instanceof Ci.nsINetworkInterceptController))
       return undefined;
     return this._previousCallbacks.getInterface(Ci.nsINetworkInterceptController);
   }
@@ -646,11 +652,11 @@ class NetworkObserver {
       this._expectedRedirect.delete(channelId);
       new NetworkRequest(this, httpChannel, redirectedFrom);
     } else {
-      if (this._channelToRequest.has(httpChannel)) {
-        // This happens for resumed requests.
-        return;
-      }
-      new NetworkRequest(this, httpChannel);
+      const redirectedRequest = this._channelToRequest.get(httpChannel);
+      if (redirectedRequest)
+        redirectedRequest._onInternalRedirectReady();
+      else
+        new NetworkRequest(this, httpChannel);
     }
   }
 
@@ -708,15 +714,16 @@ function readRequestPostData(httpChannel) {
   }
 
   // Read data from the stream.
-  let text = undefined;
+  let result = undefined;
   try {
-    text = NetUtil.readInputStreamToString(iStream, iStream.available());
-    const converter = Cc['@mozilla.org/intl/scriptableunicodeconverter']
-        .createInstance(Ci.nsIScriptableUnicodeConverter);
-    converter.charset = 'UTF-8';
-    text = converter.ConvertToUnicode(text);
+    const buffer = NetUtil.readInputStream(iStream, iStream.available());
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++)
+        binary += String.fromCharCode(bytes[i]);
+    result = btoa(binary);
   } catch (err) {
-    text = undefined;
+    result = '';
   }
 
   // Seek locks the file, so seek to the beginning only if necko hasn't
@@ -724,7 +731,7 @@ function readRequestPostData(httpChannel) {
   // not till 459384 is fixed).
   if (isSeekableStream && prevOffset == 0)
     iStream.seek(Ci.nsISeekableStream.NS_SEEK_SET, 0);
-  return text;
+  return result;
 }
 
 function requestHeaders(httpChannel) {

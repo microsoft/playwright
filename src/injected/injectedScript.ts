@@ -357,12 +357,22 @@ export default class InjectedScript {
     });
   }
 
-  focusNode(node: Node): FatalDOMError | 'error:notconnected' | 'done' {
+  focusNode(node: Node, resetSelectionIfNotFocused?: boolean): FatalDOMError | 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'error:notelement';
+    const wasFocused = (node.getRootNode() as (Document | ShadowRoot)).activeElement === node && node.ownerDocument && node.ownerDocument.hasFocus();
     (node as HTMLElement | SVGElement).focus();
+
+    if (resetSelectionIfNotFocused && !wasFocused && node.nodeName.toLowerCase() === 'input') {
+      try {
+        const input = node as HTMLInputElement;
+        input.setSelectionRange(0, 0);
+      } catch (e) {
+        // Some inputs do not allow selection.
+      }
+    }
     return 'done';
   }
 
@@ -412,7 +422,7 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  waitForDisplayedAtStablePositionAndEnabled(node: Node, rafCount: number): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+  waitForDisplayedAtStablePosition(node: Node, rafCount: number, waitForEnabled: boolean): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
     let lastRect: types.Rect | undefined;
     let counter = 0;
     let samePositionCounter = 0;
@@ -454,7 +464,7 @@ export default class InjectedScript {
       const isVisible = !!style && style.visibility !== 'hidden';
 
       const elementOrButton = element.closest('button, [role=button]') || element;
-      const isDisabled = ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+      const isDisabled = waitForEnabled && ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
 
       if (isDisplayed && isStable && isVisible && !isDisabled)
         return 'done';

@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-import { Writable } from 'stream';
 import { BrowserContextBase } from '../browserContext';
 import { Events } from '../events';
 import * as frames from '../frames';
+import * as js from '../javascript';
 import { Page } from '../page';
-import { RecorderController } from './recorderController';
+import DebugScript from './injected/debugScript';
 
 export class DebugController {
-  constructor(context: BrowserContextBase, options: { recorderOutput?: Writable | undefined }) {
-    const installInFrame = async (frame: frames.Frame) => {
-      try {
-        const mainContext = await frame._mainContext();
-        await mainContext.createDebugScript({ console: true, record: !!options.recorderOutput });
-      } catch (e) {
-      }
-    };
-
-    if (options.recorderOutput)
-      new RecorderController(context, options.recorderOutput);
-
+  constructor(context: BrowserContextBase) {
     context.on(Events.BrowserContext.Page, (page: Page) => {
       for (const frame of page.frames())
-        installInFrame(frame);
-      page.on(Events.Page.FrameNavigated, installInFrame);
+        this.ensureInstalledInFrame(frame);
+      page.on(Events.Page.FrameNavigated, frame => this.ensureInstalledInFrame(frame));
     });
+  }
+
+  private async ensureInstalledInFrame(frame: frames.Frame): Promise<js.JSHandle<DebugScript> | undefined> {
+    try {
+      const mainContext = await frame._mainContext();
+      return await mainContext.createDebugScript({ console: true });
+    } catch (e) {
+    }
   }
 }

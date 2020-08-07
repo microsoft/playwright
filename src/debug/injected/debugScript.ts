@@ -15,20 +15,13 @@
  */
 
 import { ConsoleAPI } from './consoleApi';
-import { Recorder } from './recorder';
 import InjectedScript from '../../injected/injectedScript';
 
 export default class DebugScript {
   consoleAPI: ConsoleAPI | undefined;
-  recorder: Recorder | undefined;
 
-  constructor() {
-  }
-
-  initialize(injectedScript: InjectedScript, options: { console?: boolean, record?: boolean }) {
+  initialize(injectedScript: InjectedScript, options: { console?: boolean }) {
     if (options.console)
       this.consoleAPI = new ConsoleAPI(injectedScript);
-    if (options.record)
-      this.recorder = new Recorder(injectedScript);
   }
 }

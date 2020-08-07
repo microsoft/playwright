@@ -183,8 +183,8 @@ class TestServer {
   }
 
   /**
-   * @param {http.IncomingMessage} request 
-   * @param {http.ServerResponse} response 
+   * @param {http.IncomingMessage} request
+   * @param {http.ServerResponse} response
    */
   _onRequest(request, response) {
     request.on('error', error => {
@@ -194,12 +194,12 @@ class TestServer {
         throw error;
     });
     request.postBody = new Promise(resolve => {
-      let body = '';
-      request.on('data', chunk => body += chunk);
+      let body = Buffer.from([]);
+      request.on('data', chunk => body = Buffer.concat([body, chunk]));
       request.on('end', () => resolve(body));
     });
     const pathName = url.parse(request.url).path;
-    this.debugServer(`request ${pathName}`);
+    this.debugServer(`request ${request.method} ${pathName}`);
     if (this._auths.has(pathName)) {
       const auth = this._auths.get(pathName);
       const credentials = Buffer.from((request.headers.authorization || '').split(' ')[1] || '', 'base64').toString();

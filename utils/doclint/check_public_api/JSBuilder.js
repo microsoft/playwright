@@ -80,7 +80,7 @@ function checkSources(sources) {
           visit(classesByName.get(parent));
       };
       visit(cls);
-      return new Documentation.Class(expandPrefix(cls.name), Array.from(membersMap.values()), undefined, cls.comment, cls.templates);
+      return new Documentation.Class(cls.name, Array.from(membersMap.values()), undefined, cls.comment, cls.templates);
     });
   }
 
@@ -99,10 +99,11 @@ function checkSources(sources) {
           parent = parent.parent;
         className = path.basename(parent.fileName,  '.js');
       }
-      if (className && !excludeClasses.has(className)) {
-        classes.push(serializeClass(className, symbol, node));
-        inheritance.set(className, parentClasses(node));
+      if (className && !excludeClasses.has(className) && !fileName.endsWith('/protocol.ts')) {
         excludeClasses.add(className);
+        const renamed = expandPrefix(className);
+        classes.push(serializeClass(renamed, symbol, node));
+        inheritance.set(renamed, parentClasses(node).map(expandPrefix));
       }
     }
     if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
@@ -184,25 +185,16 @@ function checkSources(sources) {
    */
   function serializeType(type, circular = []) {
     let typeName = checker.typeToString(type).replace(/SmartHandle/g, 'Handle');
-    if (typeName === 'any') 
+    if (typeName === 'any')
       typeName = 'Object';
     const nextCircular = [typeName].concat(circular);
-
-    if (typeName === 'Selector') {
-      if (!excludeClasses.has(typeName)) {
-        const properties = type.getProperties().map(property => serializeSymbol(property, nextCircular));
-        classes.push(new Documentation.Class(typeName, properties));
-        excludeClasses.add(typeName);
-      }
-      return new Documentation.Type(typeName, []);
-    }
     const stringIndexType = type.getStringIndexType();
     if (stringIndexType) {
       return new Documentation.Type(`Object<string, ${serializeType(stringIndexType, circular).name}>`);
     } else if (isRegularObject(type)) {
       let properties = undefined;
       if (!circular.includes(typeName))
-        properties = type.getProperties().map(property => serializeSymbol(property, nextCircular));
+        properties = getTypeProperties(type).map(property => serializeSymbol(property, nextCircular));
       return new Documentation.Type('Object', properties);
     }
     if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral() || type.intrinsicName === 'number'))) {
@@ -245,14 +237,6 @@ function checkSources(sources) {
         continue;
       if (EventEmitter.prototype.hasOwnProperty(name))
         continue;
-      if (className === 'CDPSession' && name === 'send') {
-        // special case CDPSession.send, which has a stricter private API than the public API
-        members.push(Documentation.Member.createMethod('send', [
-          Documentation.Member.createProperty('method', new Documentation.Type('string')),
-          Documentation.Member.createProperty('params', new Documentation.Type('Object')),
-        ], new Documentation.Type('Promise<Object>')));
-        continue;
-      }
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
       const signature = signatureForType(memberType);
       if (member.flags & ts.SymbolFlags.TypeParameter)
@@ -299,6 +283,26 @@ function checkSources(sources) {
    */
   function serializeProperty(name, type) {
     return Documentation.Member.createProperty(name, serializeType(type));
+  }
+
+  /**
+   * @param {!ts.Type} type
+   */
+  function getTypeProperties(type) {
+    if (type.aliasSymbol && type.aliasSymbol.escapedName === 'Pick') {
+      const props = getTypeProperties(type.aliasTypeArguments[0]);
+      const pickNames = type.aliasTypeArguments[1].types.map(t => t.value);
+      return props.filter(p => pickNames.includes(p.getName()));
+    }
+    if (!type.isIntersection())
+      return type.getProperties();
+    let props = [];
+    for (const innerType of type.types) {
+      let innerProps = getTypeProperties(innerType);
+      props = props.filter(p => !innerProps.find(e => e.getName() === p.getName()));
+      props.push(...innerProps);
+    }
+    return props;
   }
 }
 

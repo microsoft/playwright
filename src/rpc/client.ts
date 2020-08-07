@@ -22,12 +22,13 @@ import { Transport } from './transport';
 (async () => {
   const spawnedProcess = childProcess.fork(path.join(__dirname, 'server'), [], { stdio: 'pipe' });
   const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
+  transport.onclose = () => process.exit(0);
   const connection = new Connection();
-  connection.onmessage = message => transport.send(message);
-  transport.onmessage = message => connection.dispatch(message);
+  connection.onmessage = message => transport.send(JSON.stringify(message));
+  transport.onmessage = message => connection.dispatch(JSON.parse(message));
 
-  const chromium = await connection.waitForObjectWithKnownName('chromium');
-  const browser = await chromium.launch({ headless: false });
+  const playwright = await connection.waitForObjectWithKnownName('Playwright');
+  const browser = await playwright.chromium.launch({ headless: false });
   const page = await browser.newPage();
   await page.goto('https://example.com');
 })();

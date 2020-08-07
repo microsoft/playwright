@@ -17,7 +17,7 @@
 import { ElementHandle } from '../../dom';
 import * as js from '../../javascript';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel } from '../channels';
+import { ElementHandleChannel, FrameChannel, Binary, SerializedArgument, SerializedValue } from '../channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -29,129 +29,135 @@ export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHan
 export class ElementHandleDispatcher extends JSHandleDispatcher implements ElementHandleChannel {
   readonly _elementHandle: ElementHandle;
 
-  static createNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | null {
+  static createNullable(scope: DispatcherScope, handle: ElementHandle | null): ElementHandleDispatcher | undefined {
     if (!handle)
-      return null;
+      return undefined;
     return new ElementHandleDispatcher(scope, handle);
   }
 
   constructor(scope: DispatcherScope, elementHandle: ElementHandle) {
     super(scope, elementHandle);
     this._elementHandle = elementHandle;
-    this._elementHandle = elementHandle;
   }
 
-  async ownerFrame(): Promise<FrameChannel | null> {
-    return lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.ownerFrame());
+  async ownerFrame(): Promise<{ frame?: FrameChannel }> {
+    return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.ownerFrame()) };
   }
 
-  async contentFrame(): Promise<FrameChannel | null> {
-    return lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame());
+  async contentFrame(): Promise<{ frame?: FrameChannel }> {
+    return { frame: lookupNullableDispatcher<FrameDispatcher>(await this._elementHandle.contentFrame()) };
   }
 
-  async getAttribute(params: { name: string }): Promise<string | null> {
-    return this._elementHandle.getAttribute(params.name);
+  async getAttribute(params: { name: string }): Promise<{ value?: string }> {
+    const value = await this._elementHandle.getAttribute(params.name);
+    return { value: value === null ? undefined : value };
   }
 
-  async textContent(): Promise<string | null> {
-    return this._elementHandle.textContent();
+  async textContent(): Promise<{ value?: string }> {
+    const value = await this._elementHandle.textContent();
+    return { value: value === null ? undefined : value };
   }
 
-  async innerText(): Promise<string> {
-    return this._elementHandle.innerText();
+  async innerText(): Promise<{ value: string }> {
+    return { value: await this._elementHandle.innerText() };
   }
 
-  async innerHTML(): Promise<string> {
-    return this._elementHandle.innerHTML();
+  async innerHTML(): Promise<{ value: string }> {
+    return { value: await this._elementHandle.innerHTML() };
   }
 
-  async dispatchEvent(params: { type: string, eventInit: Object }) {
-    await this._elementHandle.dispatchEvent(params.type, params.eventInit);
+  async dispatchEvent(params: { type: string, eventInit: SerializedArgument }) {
+    await this._elementHandle.dispatchEvent(params.type, parseArgument(params.eventInit));
   }
 
-  async scrollIntoViewIfNeeded(params: { options?: types.TimeoutOptions }) {
-    await this._elementHandle.scrollIntoViewIfNeeded(params.options);
+  async scrollIntoViewIfNeeded(params: types.TimeoutOptions) {
+    await this._elementHandle.scrollIntoViewIfNeeded(params);
   }
 
-  async hover(params: { options?: types.PointerActionOptions & types.PointerActionWaitOptions }) {
-    await this._elementHandle.hover(params.options);
+  async hover(params: types.PointerActionOptions & types.PointerActionWaitOptions) {
+    await this._elementHandle.hover(params);
   }
 
-  async click(params: { options?: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.click(params.options);
+  async click(params: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.click(params);
   }
 
-  async dblclick(params: { options?: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.dblclick(params.options);
+  async dblclick(params: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.dblclick(params);
   }
 
-  async selectOption(params: { values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions }): Promise<string[]> {
-    return this._elementHandle.selectOption(convertSelectOptionValues(params.values), params.options);
+  async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
+    return { values: await this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params) };
   }
 
-  async fill(params: { value: string, options: types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.fill(params.value, params.options);
+  async fill(params: { value: string } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.fill(params.value, params);
   }
 
-  async selectText(params: { options?: types.TimeoutOptions }) {
-    await this._elementHandle.selectText(params.options);
+  async selectText(params: types.TimeoutOptions) {
+    await this._elementHandle.selectText(params);
   }
 
-  async setInputFiles(params: { files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.setInputFiles(params.files, params.options);
+  async setInputFiles(params: { files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.setInputFiles(convertInputFiles(params.files), params);
   }
 
   async focus() {
     await this._elementHandle.focus();
   }
 
-  async type(params: { text: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.type(params.text, params.options);
+  async type(params: { text: string } & { delay?: number } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.type(params.text, params);
   }
 
-  async press(params: { key: string, options: { delay?: number } & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.press(params.key, params.options);
+  async press(params: { key: string } & { delay?: number } & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.press(params.key, params);
   }
 
-  async check(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.check(params.options);
+  async check(params: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.check(params);
   }
 
-  async uncheck(params: { options?: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions }) {
-    await this._elementHandle.uncheck(params.options);
+  async uncheck(params: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    await this._elementHandle.uncheck(params);
   }
 
-  async boundingBox(): Promise<types.Rect | null> {
-    return await this._elementHandle.boundingBox();
+  async boundingBox(): Promise<{ value?: types.Rect }> {
+    const value = await this._elementHandle.boundingBox();
+    return { value: value || undefined };
   }
 
-  async screenshot(params: { options?: types.ElementScreenshotOptions }): Promise<string> {
-    return (await this._elementHandle.screenshot(params.options)).toString('base64');
+  async screenshot(params: types.ElementScreenshotOptions): Promise<{ binary: Binary }> {
+    return { binary: (await this._elementHandle.screenshot(params)).toString('base64') };
   }
 
-  async querySelector(params: { selector: string }): Promise<ElementHandleChannel | null> {
+  async querySelector(params: { selector: string }): Promise<{ element?: ElementHandleChannel }> {
     const handle = await this._elementHandle.$(params.selector);
-    return handle ? new ElementHandleDispatcher(this._scope, handle) : null;
+    return { element: handle ? new ElementHandleDispatcher(this._scope, handle) : undefined };
   }
 
-  async querySelectorAll(params: { selector: string }): Promise<ElementHandleChannel[]> {
+  async querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }> {
     const elements = await this._elementHandle.$$(params.selector);
-    return elements.map(e => new ElementHandleDispatcher(this._scope, e));
+    return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
   }
 
-  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return serializeResult(await this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
+  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+    return { value: serializeResult(await this._elementHandle._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: any }): Promise<any> {
-    return serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg)));
+  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+    return { value: serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 
-export function convertSelectOptionValues(values: string | ElementHandleChannel | types.SelectOption | string[] | ElementHandleChannel[] | types.SelectOption[] | null): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {
-  if (values instanceof ElementHandleDispatcher)
-    return values._elementHandle;
-  if (Array.isArray(values) && values.length && values[0] instanceof ElementHandle)
-    return (values as ElementHandleDispatcher[]).map((v: ElementHandleDispatcher) => v._elementHandle);
-  return values as any;
+export function convertSelectOptionValues(elements?: ElementHandleChannel[], options?: types.SelectOption[]): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {
+  if (elements)
+    return elements.map(v => (v as ElementHandleDispatcher)._elementHandle);
+  if (options)
+    return options;
+  return null;
+}
+
+export function convertInputFiles(files: { name: string, mimeType: string, buffer: string }[]): types.FilePayload[] {
+  return files.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: Buffer.from(f.buffer, 'base64') }));
 }

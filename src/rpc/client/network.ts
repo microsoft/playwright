@@ -15,12 +15,11 @@
  */
 
 import { URLSearchParams } from 'url';
-import * as types from '../../types';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { ConnectionScope } from './connection';
-import { normalizeFulfillParameters } from '../serializers';
+import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../../converters';
+import { Headers } from './types';
 
 export type NetworkCookie = {
   name: string,
@@ -45,24 +44,41 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
+type FulfillResponse = {
+  status?: number,
+  headers?: Headers,
+  contentType?: string,
+  body?: string | Buffer,
+};
+
+type ContinueOverrides = {
+  method?: string,
+  headers?: Headers,
+  postData?: string | Buffer,
+};
+
 export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
+  private _headers: Headers;
+  private _postData: Buffer | null;
 
   static from(request: RequestChannel): Request {
     return (request as any)._object;
   }
 
-  static fromNullable(request: RequestChannel | null): Request | null {
+  static fromNullable(request: RequestChannel | undefined): Request | null {
     return request ? Request.from(request) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: RequestInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: RequestInitializer) {
+    super(parent, type, guid, initializer);
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
+    this._headers = headersArrayToObject(initializer.headers);
+    this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
   }
 
   url(): string {
@@ -78,11 +94,16 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   }
 
   postData(): string | null {
-    return this._initializer.postData;
+    return this._postData ? this._postData.toString('utf8') : null;
+  }
+
+  postDataBuffer(): Buffer | null {
+    return this._postData;
   }
 
   postDataJSON(): Object | null {
-    if (!this._initializer.postData)
+    const postData = this.postData();
+    if (!postData)
       return null;
 
     const contentType = this.headers()['content-type'];
@@ -91,21 +112,21 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
 
     if (contentType === 'application/x-www-form-urlencoded') {
       const entries: Record<string, string> = {};
-      const parsed = new URLSearchParams(this._initializer.postData);
+      const parsed = new URLSearchParams(postData);
       for (const [k, v] of parsed.entries())
         entries[k] = v;
       return entries;
     }
 
-    return JSON.parse(this._initializer.postData);
+    return JSON.parse(postData);
   }
 
-  headers(): {[key: string]: string} {
-    return { ...this._initializer.headers };
+  headers(): Headers {
+    return { ...this._headers };
   }
 
   async response(): Promise<Response | null> {
-    return Response.fromNullable(await this._channel.response());
+    return Response.fromNullable((await this._channel.response()).response);
   }
 
   frame(): Frame {
@@ -131,6 +152,10 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
       errorText: this._failureText
     };
   }
+
+  _finalRequest(): Request {
+    return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
+  }
 }
 
 export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
@@ -138,41 +163,49 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     return (route as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: RouteInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: RouteInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   request(): Request {
     return Request.from(this._initializer.request);
   }
 
-  async abort(errorCode: string = 'failed') {
+  async abort(errorCode?: string) {
     await this._channel.abort({ errorCode });
   }
 
-  async fulfill(response: types.FulfillResponse & { path?: string }) {
+  async fulfill(response: FulfillResponse & { path?: string }) {
     const normalized = await normalizeFulfillParameters(response);
-    await this._channel.fulfill({ response: normalized });
+    await this._channel.fulfill(normalized);
   }
 
-  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
-    await this._channel.continue({ overrides });
+  async continue(overrides: ContinueOverrides = {}) {
+    const normalized = normalizeContinueOverrides(overrides);
+    await this._channel.continue({
+      method: normalized.method,
+      headers: normalized.headers,
+      postData: normalized.postData ? normalized.postData.toString('base64') : undefined
+    });
   }
 }
 
 export type RouteHandler = (route: Route, request: Request) => void;
 
 export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer> {
+  private _headers: Headers;
+
   static from(response: ResponseChannel): Response {
     return (response as any)._object;
   }
 
-  static fromNullable(response: ResponseChannel | null): Response | null {
+  static fromNullable(response: ResponseChannel | undefined): Response | null {
     return response ? Response.from(response) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: ResponseInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ResponseInitializer) {
+    super(parent, type, guid, initializer);
+    this._headers = headersArrayToObject(initializer.headers);
   }
 
   url(): string {
@@ -191,16 +224,19 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
     return this._initializer.statusText;
   }
 
-  headers(): object {
-    return { ...this._initializer.headers };
+  headers(): Headers {
+    return { ...this._headers };
   }
 
   async finished(): Promise<Error | null> {
-    return await this._channel.finished();
+    const result = await this._channel.finished();
+    if (result.error)
+      return new Error(result.error);
+    return null;
   }
 
   async body(): Promise<Buffer> {
-    return Buffer.from(await this._channel.body(), 'base64');
+    return Buffer.from((await this._channel.body()).binary, 'base64');
   }
 
   async text(): Promise<string> {

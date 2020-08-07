@@ -71,107 +71,11 @@ module.exports = {
   specs: [
     {
       files: [
-        './accessibility.spec.js',
-        './autowaiting.spec.js',
-        './click.spec.js',
-        './cookies.spec.js',
-        './dialog.spec.js',
-        './dispatchevent.spec.js',
-        './download.spec.js',
-        './elementhandle.spec.js',
-        './emulation.spec.js',
-        './evaluation.spec.js',
-        './frame.spec.js',
-        './focus.spec.js',
-        './input.spec.js',
-        './jshandle.spec.js',
-        './keyboard.spec.js',
-        './mouse.spec.js',
-        './navigation.spec.js',
-        './network.spec.js',
-        './page.spec.js',
-        './queryselector.spec.js',
-        './screenshot.spec.js',
-        './waittask.spec.js',
-        './interception.spec.js',
-        './geolocation.spec.js',
-        './workers.spec.js',
-        './capabilities.spec.js',
-        './permissions.spec.js',
-      ],
-      environments: [customEnvironment,  'page'],
-    },
-
-    {
-      files: [
-        './chromium/chromium.spec.js',
-        './chromium/coverage.spec.js',
-        './chromium/pdf.spec.js',
-        './chromium/session.spec.js',
-      ],
-      browsers: ['chromium'],
-      title: '[Chromium]',
-      environments: [customEnvironment, 'page'],
-    },
-
-    {
-      files: [
-        './browser.spec.js',
-        './browsercontext.spec.js',
-        './channels.spec.js',
-        './ignorehttpserrors.spec.js',
-        './popup.spec.js',
-        './recorder.spec.js',
-      ],
-      environments: [customEnvironment, 'browser'],
-    },
-
-    {
-      files: [
-        './defaultbrowsercontext.spec.js',
-        './downloadsPath.spec.js',
-        './fixtures.spec.js',
-        './launcher.spec.js',
-        './logger.spec.js',
-        './headful.spec.js',
-        './multiclient.spec.js',
-        './proxy.spec.js',
       ],
       environments: [customEnvironment],
     },
-
     {
       files: [
-        './chromium/launcher.spec.js',
-        './chromium/oopif.spec.js',
-        './chromium/tracing.spec.js',
-      ],
-      browsers: ['chromium'],
-      title: '[Chromium]',
-      environments: [customEnvironment],
-    },
-
-    {
-      files: [
-        './firefox/launcher.spec.js',
-      ],
-      browsers: ['firefox'],
-      title: '[Firefox]',
-      environments: [customEnvironment],
-    },
-
-    {
-      files: [
-        './electron/electron.spec.js',
-      ],
-      browsers: ['chromium'],
-      title: '[Electron]',
-      environments: [customEnvironment],
-    },
-
-    {
-      files: [
-        './apicoverage.spec.js',
       ],
       environments: [],
     },

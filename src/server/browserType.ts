@@ -33,6 +33,7 @@ import * as types from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketServer } from './webSocketServer';
 import { LoggerSink } from '../loggerSink';
+import { validateHostRequirements } from './validateDependencies';
 
 type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
 type LaunchOptions = types.LaunchOptions & { logger?: LoggerSink };
@@ -54,6 +55,7 @@ export interface BrowserType {
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
+const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
 type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
@@ -62,11 +64,13 @@ export abstract class BrowserTypeBase implements BrowserType {
   private _name: string;
   private _executablePath: string | undefined;
   private _webSocketNotPipe: WebSocketNotPipe | null;
+  private _browserDescriptor: browserPaths.BrowserDescriptor;
   readonly _browserPath: string;
 
   constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, webSocketOrPipe: WebSocketNotPipe | null) {
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
+    this._browserDescriptor = browser;
     this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
     this._executablePath = browserPaths.executablePath(this._browserPath, browser);
     this._webSocketNotPipe = webSocketOrPipe;
@@ -87,7 +91,8 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
     const loggers = new Loggers(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, undefined), loggers.browser, TimeoutSettings.timeout(options), `browserType.launch`);
+    const label = 'browserType.launch';
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, undefined), loggers.browser, TimeoutSettings.timeout(options), label).catch(e => { throw this._rewriteStartupError(e, label); });
     return browser;
   }
 
@@ -96,7 +101,8 @@ export abstract class BrowserTypeBase implements BrowserType {
     options = validateLaunchOptions(options);
     const persistent = validateBrowserContextOptions(options);
     const loggers = new Loggers(options.logger);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, persistent, userDataDir), loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchPersistentContext');
+    const label = 'browserType.launchPersistentContext';
+    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, loggers, persistent, userDataDir), loggers.browser, TimeoutSettings.timeout(options), label).catch(e => { throw this._rewriteStartupError(e, label); });
     return browser._defaultContext!;
   }
 
@@ -106,6 +112,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
+      name: this._name,
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
@@ -142,7 +149,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       progress.cleanupWhenAborted(() => transport.closeAndWait());
       if ((options as any).__testHookBeforeCreateBrowser)
         await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await this._connectToTransport(transport, { slowMo: options.slowMo, loggers });
+      const browser = await this._connectToTransport(transport, { name: this._name, slowMo: options.slowMo, loggers });
       return browser;
     }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.connect');
   }
@@ -184,6 +191,18 @@ export abstract class BrowserTypeBase implements BrowserType {
     const executable = executablePath || this.executablePath();
     if (!executable)
       throw new Error(`No executable path is specified. Pass "executablePath" option directly.`);
+    if (!(await existsAsync(executable))) {
+      const errorMessageLines = [`Failed to launch ${this._name} because executable doesn't exist at ${executable}`];
+      // If we tried using stock downloaded browser, suggest re-installing playwright.
+      if (!executablePath)
+        errorMessageLines.push(`Try re-installing playwright with "npm install playwright"`);
+      throw new Error(errorMessageLines.join('\n'));
+    }
+
+    if (!executablePath) {
+      // We can only validate dependencies for bundled browsers.
+      await validateHostRequirements(this._browserPath, this._browserDescriptor);
+    }
 
     // Note: it is important to define these variables before launchProcess, so that we don't get
     // "Cannot access 'browserServer' before initialization" if something went wrong.
@@ -191,7 +210,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     let browserServer: BrowserServer | undefined = undefined;
     const { launchedProcess, gracefullyClose, kill } = await launchProcess({
       executablePath: executable,
-      args: browserArguments,
+      args: this._amendArguments(browserArguments),
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
       handleSIGINT,
       handleSIGTERM,
@@ -230,6 +249,8 @@ export abstract class BrowserTypeBase implements BrowserType {
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
   abstract _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
+  abstract _amendArguments(browserArguments: string[]): string[];
+  abstract _rewriteStartupError(error: Error, prefix: string): Error;
   abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
 

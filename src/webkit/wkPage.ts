@@ -248,7 +248,7 @@ export class WKPage implements PageDelegate {
     let errorText = event.error;
     if (errorText.includes('cancelled'))
       errorText += '; maybe frame was detached?';
-    this._page._frameManager.provisionalLoadFailed(this._page.mainFrame(), event.loaderId, errorText);
+    this._page._frameManager.frameAbortedNavigation(this._page.mainFrame()._id, errorText, event.loaderId);
   }
 
   handleWindowOpen(event: Protocol.Playwright.windowOpenPayload) {
@@ -366,7 +366,7 @@ export class WKPage implements PageDelegate {
   }
 
   private _onFrameScheduledNavigation(frameId: string) {
-    this._page._frameManager.frameRequestedNavigation(frameId, '');
+    this._page._frameManager.frameRequestedNavigation(frameId);
   }
 
   private _onFrameStoppedLoading(frameId: string) {
@@ -455,7 +455,10 @@ export class WKPage implements PageDelegate {
     if (level === 'debug' && parameters && parameters[0].value === BINDING_CALL_MESSAGE) {
       const parsedObjectId = JSON.parse(parameters[1].objectId!);
       const context = this._contextIdToContext.get(parsedObjectId.injectedScriptId)!;
-      this._page._onBindingCalled(parameters[2].value, context);
+      this.pageOrError().then(pageOrError => {
+        if (!(pageOrError instanceof Error))
+          this._page._onBindingCalled(parameters[2].value, context);
+      });
       return;
     }
     if (level === 'error' && source === 'javascript') {
@@ -494,7 +497,7 @@ export class WKPage implements PageDelegate {
       handles,
       count: 0,
       location: {
-        url,
+        url: url || '',
         lineNumber: (lineNumber || 1) - 1,
         columnNumber: (columnNumber || 1) - 1,
       }
@@ -571,6 +574,12 @@ export class WKPage implements PageDelegate {
   async setViewportSize(viewportSize: types.Size): Promise<void> {
     assert(this._page._state.viewportSize === viewportSize);
     await this._updateViewport();
+  }
+
+  async bringToFront(): Promise<void> {
+    this._pageProxySession.send('Target.activate', {
+      targetId: this._session.sessionId
+    });
   }
 
   async _updateViewport(): Promise<void> {
@@ -835,8 +844,6 @@ export class WKPage implements PageDelegate {
     // TODO(einbinder) this will fail if we are an XHR document request
     const isNavigationRequest = event.type === 'Document';
     const documentId = isNavigationRequest ? event.loaderId : undefined;
-    if (isNavigationRequest)
-      this._page._frameManager.frameUpdatedDocumentIdForNavigation(event.frameId, documentId!);
     // We do not support intercepting redirects.
     const allowInterception = this._page._needsRequestInterception() && !redirectedFrom;
     const request = new WKInterceptableRequest(session, allowInterception, frame, event, redirectedFrom, documentId);
@@ -846,7 +853,7 @@ export class WKPage implements PageDelegate {
 
   private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response) {
     const response = request.createResponse(responsePayload);
-    response._requestFinished(new Error('Response body is unavailable for redirect responses'));
+    response._requestFinished('Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);
     this._page._frameManager.requestFinished(request.request);

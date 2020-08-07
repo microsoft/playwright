@@ -85,6 +85,7 @@ WebKitBrowserWindow::WebKitBrowserWindow(BrowserWindowClient& client, HWND mainW
     uiClient.runJavaScriptPrompt = runJavaScriptPrompt;
     uiClient.runBeforeUnloadConfirmPanel = runBeforeUnloadConfirmPanel;
     uiClient.handleJavaScriptDialog = handleJavaScriptDialog;
+    uiClient.getWindowFrame = getWindowFrame;
     WKPageSetPageUIClient(page, &uiClient.base);
 
     WKPageStateClientV0 stateClient = { };
@@ -336,6 +337,19 @@ void WebKitBrowserWindow::handleJavaScriptDialog(WKPageRef page, bool accept, WK
         WKRelease(thisWindow.m_beforeUnloadDialog);
         thisWindow.m_beforeUnloadDialog = NULL;
     }
+}
+
+WKRect WebKitBrowserWindow::getWindowFrame(WKPageRef page, const void *clientInfo) {
+    auto& thisWindow = toWebKitBrowserWindow(clientInfo);
+    WKRect wkFrame { };
+    RECT r;
+    if (::GetWindowRect(thisWindow.m_hMainWnd, &r)) {
+        wkFrame.origin.x = r.left;
+        wkFrame.origin.y = r.top;
+        wkFrame.size.width = r.right - r.left;
+        wkFrame.size.height = r.bottom - r.top;
+    }
+    return wkFrame;
 }
 
 WKPageRef WebKitBrowserWindow::createPageCallback(WKPageConfigurationRef configuration)

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Writable } from 'stream';
 import { isUnderTest, helper, deprecate} from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
@@ -62,14 +61,13 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _options: BrowserContextOptions;
   _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   private _isPersistentContext: boolean;
-  private _startedClosing = false;
+  private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
   readonly _closePromise: Promise<Error>;
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
   readonly _apiLogger: Logger;
-  private _debugController: DebugController | undefined;
 
   constructor(browserBase: BrowserBase, options: BrowserContextOptions, isPersistentContext: boolean) {
     super();
@@ -82,16 +80,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   async _initialize() {
-    if (helper.isDebugMode() || helper.isRecordMode()) {
-      this._debugController = new DebugController(this, {
-        recorderOutput: helper.isRecordMode() ? process.stdout : undefined
-      });
-    }
-  }
-
-  _initDebugModeForTest(options: { recorderOutput: Writable }): DebugController {
-    this._debugController = new DebugController(this, options);
-    return this._debugController;
+    if (helper.isDebugMode())
+      new DebugController(this);
   }
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
@@ -99,7 +89,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options), 'browserContext.waitForEvent');
     if (event !== Events.BrowserContext.Close)
       this._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate));
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
   }
 
   _browserClosed() {
@@ -109,6 +99,12 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   private _didCloseInternal() {
+    if (this._closedStatus === 'closed') {
+      // We can come here twice if we close browser context and browser
+      // at the same time.
+      return;
+    }
+    this._closedStatus = 'closed';
     this._downloads.clear();
     this._closePromiseFulfill!(new Error('Context closed'));
     this.emit(Events.BrowserContext.Close);
@@ -235,8 +231,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
       await this._browserBase.close();
       return;
     }
-    if (!this._startedClosing) {
-      this._startedClosing = true;
+    if (this._closedStatus === 'open') {
+      this._closedStatus = 'closing';
       await this._doClose();
       await Promise.all([...this._downloads].map(d => d.delete()));
       this._didCloseInternal();
@@ -294,12 +290,18 @@ export function verifyGeolocation(geolocation: types.Geolocation): types.Geoloca
   const result = { ...geolocation };
   result.accuracy = result.accuracy || 0;
   const { longitude, latitude, accuracy } = result;
-  if (!helper.isNumber(longitude) || longitude < -180 || longitude > 180)
-    throw new Error(`Invalid longitude "${longitude}": precondition -180 <= LONGITUDE <= 180 failed.`);
-  if (!helper.isNumber(latitude) || latitude < -90 || latitude > 90)
-    throw new Error(`Invalid latitude "${latitude}": precondition -90 <= LATITUDE <= 90 failed.`);
-  if (!helper.isNumber(accuracy) || accuracy < 0)
-    throw new Error(`Invalid accuracy "${accuracy}": precondition 0 <= ACCURACY failed.`);
+  if (!helper.isNumber(longitude))
+    throw new Error(`geolocation.longitude: expected number, got ${typeof longitude}`);
+  if (longitude < -180 || longitude > 180)
+    throw new Error(`geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
+  if (!helper.isNumber(latitude))
+    throw new Error(`geolocation.latitude: expected number, got ${typeof latitude}`);
+  if (latitude < -90 || latitude > 90)
+    throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
+  if (!helper.isNumber(accuracy))
+    throw new Error(`geolocation.accuracy: expected number, got ${typeof accuracy}`);
+  if (accuracy < 0)
+    throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
   return result;
 }
 

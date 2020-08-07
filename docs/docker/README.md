@@ -2,7 +2,7 @@
 
 [Dockerfile.bionic](Dockerfile.bionic) is a playwright-ready image of playwright.
 This image includes all the dependencies needed to run browsers in a Docker
-container.
+container, including browsers.
 
 <!-- GEN:toc -->
 - [Usage](#usage)
@@ -31,13 +31,30 @@ $ docker pull mcr.microsoft.com/playwright:bionic
 ### Run the image
 
 ```
-$ docker container run -it --rm --ipc=host --security-opt seccomp=chrome.json mcr.microsoft.com/playwright:bionic /bin/bash
+$ docker container run -it --rm --ipc=host --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
 ```
 
-Note that:
+[`seccomp_profile.json`](seccomp_profile.json) is needed to run Chromium with sandbox. This is
+a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b04cf6e00ed3fc27e81fc3d94e7eda70af3/profiles/seccomp/default.json) with extra user namespace cloning permissions:
 
-* The seccomp profile is required to run Chrome without sandbox. Thanks to [Jessie Frazelle](https://github.com/jessfraz/dotfiles/blob/master/etc/docker/seccomp/chrome.json).
-* Using `--ipc=host` is also recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
+```json
+[
+  {
+    "comment": "Allow create user namespaces",
+    "names": [
+      "clone",
+      "setns",
+      "unshare"
+    ],
+    "action": "SCMP_ACT_ALLOW",
+    "args": [],
+    "includes": {},
+    "excludes": {}
+  }
+]
+```
+
+> **NOTE**: Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
 
 ### Using on CI
 
@@ -47,17 +64,29 @@ See our [Continuous Integration guides](../ci.md) for sample configs.
 
 ### Build the image
 
+Use [`//docs/docker/build.sh`](build.sh) to build the image.
+
 ```
-$ docker build -t mcr.microsoft.com/playwright:bionic -f Dockerfile.bionic .
+$ ./docs/docker/build.sh
 ```
+
+The image will be tagged as `playwright:localbuild` and could be run as:
+
+```
+$ docker run --rm -it playwright:localbuild /bin/bash
+```
+
+> **NOTE**: any commit that changes docker image should also update [`//docs/docker/CURRENT_DOCKER_IMAGE_SIZE`](CURRENT_DOCKER_IMAGE_SIZE). Please run [`//docs/docker/docker-image-size.sh`](docker-image-size.sh) locally and commit updated number.
 
 ### Push
 
-Playwright on Docker Hub relies on
+Docker images are published automatically by Github Actions. We currently publish the following
+images:
+- `mcr.microsoft.com/playwright:dev` - tip-of-tree image version.
+- `mcr.microsoft.com/playwright:bionic` - last Playwright release docker image.
+- `mcr.microsoft.com/playwright:sha-XXXXXXX` - docker image for every commit that changed
+  docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
-```
-$ docker push playwright.azurecr.io/public/playwright:bionic
-```
 
 ## Base images
 

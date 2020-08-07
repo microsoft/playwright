@@ -39,12 +39,20 @@ export class Firefox extends BrowserTypeBase {
     return FFBrowser.connect(transport, options);
   }
 
+  _rewriteStartupError(error: Error, prefix: string): Error {
+    return error;
+  }
+
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     return os.platform() === 'linux' ? {
       ...env,
       // On linux Juggler ships the libstdc++ it was linked against.
       LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
     } : env;
+  }
+
+  _amendArguments(browserArguments: string[]): string[] {
+    return browserArguments;
   }
 
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
@@ -65,26 +73,28 @@ export class Firefox extends BrowserTypeBase {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
+    let firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
     if (proxy) {
-      options.firefoxUserPrefs = options.firefoxUserPrefs || {};
-      options.firefoxUserPrefs['network.proxy.type'] = 1;
+      // TODO: we should support proxy in persistent context without overriding user prefs.
+      firefoxUserPrefs = firefoxUserPrefs || {};
+      firefoxUserPrefs['network.proxy.type'] = 1;
       const proxyServer = new URL(proxy.server);
       const isSocks = proxyServer.protocol === 'socks5:';
       if (isSocks) {
-        options.firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
-        options.firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
+        firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
+        firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
       } else {
-        options.firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
-        options.firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);
-        options.firefoxUserPrefs['network.proxy.ssl'] = proxyServer.hostname;
-        options.firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyServer.port, 10);
+        firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
+        firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);
+        firefoxUserPrefs['network.proxy.ssl'] = proxyServer.hostname;
+        firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyServer.port, 10);
       }
       if (proxy.bypass)
-        options.firefoxUserPrefs['network.proxy.no_proxies_on'] = proxy.bypass;
+        firefoxUserPrefs['network.proxy.no_proxies_on'] = proxy.bypass;
     }
-    if (options.firefoxUserPrefs) {
+    if (firefoxUserPrefs) {
       const lines: string[] = [];
-      for (const [name, value] of Object.entries(options.firefoxUserPrefs))
+      for (const [name, value] of Object.entries(firefoxUserPrefs))
         lines.push(`user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
       fs.writeFileSync(path.join(userDataDir, 'user.js'), lines.join('\n'));
     }

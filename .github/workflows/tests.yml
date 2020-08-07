@@ -16,9 +16,14 @@ env:
   FORCE_COLOR: 1
 
 jobs:
-  chromium_linux:
-    name: "Chromium Linux"
-    runs-on: ubuntu-18.04
+  test_linux:
+    name: ${{ matrix.os }} (${{ matrix.browser }})
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        os: [ubuntu-18.04, ubuntu-20.04]
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
@@ -33,27 +38,33 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run ccoverage 2>./chromium-linux-testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000 && npm run coverage"
       env:
-        DEBUG: "*"
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-${{ matrix.os }}-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: chromium-linux-output
-        path: test/output-chromium
+        name: ${{ matrix.browser }}-${{ matrix.os }}-output
+        path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: chromium-linux-testrun.log
-        path: chromium-linux-testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: chromium-linux-coredumps
-        path: coredumps
+        name: ${{ matrix.browser }}-${{ matrix.os }}-testrun.log
+        path: testrun.log
 
-  chromium_mac:
-    name: "Chromium Mac"
+  test_mac:
+    name: "macOS"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
@@ -63,24 +74,38 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run ctest 2>./chromium-mac-testrun.log
+    - run: npm run jest -- --testTimeout=30000
       env:
-        DEBUG: "*"
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-mac-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: chromium-mac-output
-        path: test/output-chromium
+        name: ${{ matrix.browser }}-mac-output
+        path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: chromium-mac-testrun.log
-        path: chromium-mac-testrun.log
+        name: ${{ matrix.browser }}-mac-testrun.log
+        path: testrun.log
 
-  chromium_win:
-    name: "Chromium Win"
+  test_win:
+    name: "Windows"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: windows-latest
     steps:
+    - name: Install Media Pack
+      shell: powershell
+      run: Install-WindowsFeature Server-Media-Foundation
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
       with:
@@ -88,198 +113,32 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run ctest 2>./chromium-win-testrun.log
+    - run: npm run jest -- --testTimeout=30000
       shell: bash
       env:
-        DEBUG: "*"
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-win-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: chromium-win-output
-        path: test/output-chromium
+        name: ${{ matrix.browser }}-win-output
+        path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: chromium-win-testrun.log
-        path: chromium-win-testrun.log
-
-  webkit_linux:
-    name: "WebKit Linux"
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run wcoverage 2>./webkit-linux-testrun.log"
-      env:
-        DEBUG: "*,-pw:wrapped*"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-linux-output
-        path: test/output-webkit
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-linux-testrun.log
-        path: webkit-linux-testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-linux-coredumps
-        path: coredumps
-
-  webkit_mac:
-    name: "WebKit Mac"
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: npm run wtest 2>./webkit-mac-testrun.log
-      env:
-        DEBUG: "*,-pw:wrapped*"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-mac-output
-        path: test/output-webkit
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-mac-testrun.log
-        path: webkit-mac-testrun.log
-
-  webkit_win:
-    name: "WebKit Win"
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: npm run wtest 2>./webkit-win-testrun.log
-      shell: bash
-      env:
-        DEBUG: "*,-pw:wrapped*"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-win-output
-        path: test/output-webkit
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: webkit-win-testrun.log
-        path: webkit-win-testrun.log
-
-  firefox_linux:
-    name: "Firefox Linux"
-    runs-on: ubuntu-18.04
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: mkdir -p coredumps
-    # Set core dump file name pattern
-    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
-    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
-    # Wrap `npm run` in a subshell to redirect STDERR to file.
-    # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run fcoverage 2>./firefox-linux-testrun.log"
-      env:
-        DEBUG: "*"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-linux-output
-        path: test/output-firefox
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-linux-testrun.log
-        path: firefox-linux-testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-linux-coredumps
-        path: coredumps
-
-  firefox_mac:
-    name: "Firefox Mac"
-    runs-on: macos-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: npm run ftest 2>./firefox-mac-testrun.log
-      env:
-        DEBUG: "*"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-mac-output
-        path: test/output-firefox
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-mac-testrun.log
-        path: firefox-mac-testrun.log
-
-  firefox_win:
-    name: "Firefox Win"
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-node@v1
-      with:
-        node-version: 10
-    - uses: microsoft/playwright-github-action@v1
-    - run: npm ci
-    - run: npm run build
-    - run: npm run ftest 2>./firefox-win-testrun.log
-      shell: bash
-      env:
-        DEBUG: "*"
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-win-output
-        path: test/output-firefox
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: firefox-win-testrun.log
-        path: firefox-win-testrun.log
+        name: ${{ matrix.browser }}-win-testrun.log
+        path: testrun.log
 
   test-package-installations:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         node_version:
         - "^10.17.0" # pre 10.17, --unhandled-rejections=strict was not an option (https://github.com/nodejs/node/pull/26599) which we need in our tests
@@ -297,6 +156,10 @@ jobs:
 
   headful_linux:
     name: "Headful Linux"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -312,23 +175,30 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run test -- --line-break=100 2>./headful-linux-testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+      if: ${{ always() }}
       env:
-        DEBUG: "*"
+        BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
+        DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: headful-linux-testrun.log
-        path: headful-linux-testrun.log
+        name: headful-${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: headful-linux-coredumps
-        path: coredumps
+        name: headful-${{ matrix.browser }}-linux-testrun.log
+        path: testrun.log
 
-  channel_linux:
-    name: "Channel Chromium Linux"
+  rpc_linux:
+    name: "RPC Linux"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+        transport: [wire, object]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -344,25 +214,24 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run ctest 2>./channel-linux-testrun.log"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
       env:
-        DEBUG: "*"
-        PWCHANNEL: "1"
-    # Ensure output folder exists just in case it was not created by the test run.
-    - run: node -e "require('fs').mkdirSync(require('path').join('test', 'output-chromium'), {recursive:true})"
-      if: failure()
+        BROWSER: ${{ matrix.browser }}
+        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG_FILE: "testrun.log"
+        PWCHANNEL: ${{ matrix.transport }}
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-jest-report
+        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: channel-linux-output
-        path: test/output-channel
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-output
+        path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
-        name: channel-linux-testrun.log
-        path: channel-linux-testrun.log
-    - uses: actions/upload-artifact@v1
-      if: failure()
-      with:
-        name: channel-linux-coredumps
-        path: coredumps
+        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-testrun.log
+        path: testrun.log

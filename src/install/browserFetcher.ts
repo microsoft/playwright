@@ -55,10 +55,11 @@ const ENV_DOWNLOAD_HOSTS: { [key: string]: string } = {
   webkit: 'PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST',
 };
 
-function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): string | undefined {
+function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
     return new Map<BrowserPlatform, string>([
-      ['linux', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+      ['ubuntu18.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+      ['ubuntu20.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
       ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
       ['mac10.14', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
       ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
@@ -68,36 +69,61 @@ function getDownloadUrl(browserName: BrowserName, platform: BrowserPlatform): st
   }
 
   if (browserName === 'firefox') {
-    return new Map<BrowserPlatform, string>([
-      ['linux', '%s/builds/firefox/%s/firefox-linux.zip'],
-      ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
-      ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
-      ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
-      ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
-      ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
-    ]).get(platform);
+    const FIREFOX_NORMALIZE_CDN_NAMES_REVISION = 1140;
+    return revision < FIREFOX_NORMALIZE_CDN_NAMES_REVISION ?
+      new Map<BrowserPlatform, string>([
+        ['ubuntu18.04', '%s/builds/firefox/%s/firefox-linux.zip'],
+        ['ubuntu20.04', '%s/builds/firefox/%s/firefox-linux.zip'],
+        ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
+        ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
+      ]).get(platform) :
+      new Map<BrowserPlatform, string>([
+        ['ubuntu18.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+        ['ubuntu20.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+        ['mac10.13', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
+        ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
+      ]).get(platform);
   }
 
   if (browserName === 'webkit') {
-    return new Map<BrowserPlatform, string | undefined>([
-      ['linux', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
-      ['mac10.13', undefined],
-      ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
-      ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
-      ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-      ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-    ]).get(platform);
+    const WEBKIT_NORMALIZE_CDN_NAMES_REVISION = 1317;
+    return revision < WEBKIT_NORMALIZE_CDN_NAMES_REVISION ?
+      new Map<BrowserPlatform, string | undefined>([
+        ['ubuntu18.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
+        ['ubuntu20.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
+        ['mac10.13', undefined],
+        ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
+        ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+        ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
+      ]).get(platform) :
+      new Map<BrowserPlatform, string | undefined>([
+        ['ubuntu18.04', '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip'],
+        ['ubuntu20.04', '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip'],
+        ['mac10.13', undefined],
+        ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
+        ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
+        ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
+        ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
+      ]).get(platform);
   }
 }
 
 function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
   const serverHost = getFromENV(ENV_DOWNLOAD_HOSTS[browser.name]) || getFromENV(ENV_DOWNLOAD_HOSTS.default) || DEFAULT_DOWNLOAD_HOSTS[browser.name];
-  const urlTemplate = getDownloadUrl(browser.name, platform);
+  const urlTemplate = getDownloadUrl(browser.name, parseInt(browser.revision, 10), platform);
   assert(urlTemplate, `ERROR: Playwright does not support ${browser.name} on ${platform}`);
   return util.format(urlTemplate, serverHost, browser.revision);
 }
 
-export async function downloadBrowserWithProgressBar(browserPath: string, browser: BrowserDescriptor): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(browsersPath: string, browser: BrowserDescriptor): Promise<boolean> {
+  const browserPath = browserPaths.browserDirectory(browsersPath, browser);
   const progressBarName = `${browser.name} v${browser.revision}`;
   if (await existsAsync(browserPath)) {
     // Already downloaded.
@@ -143,8 +169,8 @@ function toMegabytes(bytes: number) {
   return `${Math.round(mb * 10) / 10} Mb`;
 }
 
-export async function canDownload(browserName: BrowserName, browserRevision: string, platform: BrowserPlatform): Promise<boolean> {
-  const url = revisionURL({ name: browserName, revision: browserRevision }, platform);
+export async function canDownload(browser: BrowserDescriptor, platform: BrowserPlatform): Promise<boolean> {
+  const url = revisionURL(browser, platform);
   let resolve: (result: boolean) => void = () => {};
   const promise = new Promise<boolean>(x => resolve = x);
   const request = httpRequest(url, 'HEAD', response => {

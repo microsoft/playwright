@@ -15,26 +15,33 @@
  * limitations under the License.
  */
 
-import { assertMaxArguments } from '../../helper';
-import * as types from '../../types';
-import { FrameChannel, FrameInitializer } from '../channels';
+import { assertMaxArguments, helper, assert } from '../../helper';
+import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { ElementHandle, convertSelectOptionValues } from './elementHandle';
+import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
+import * as fs from 'fs';
 import * as network from './network';
-import { Response } from './network';
+import * as util from 'util';
 import { Page } from './page';
-import { ConnectionScope } from './connection';
-import { normalizeFilePayloads } from '../serializers';
+import { EventEmitter } from 'events';
+import { Waiter } from './waiter';
+import { Events } from './events';
+import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kLifecycleEvents } from './types';
 
-export type GotoOptions = types.NavigateOptions & {
-  referer?: string,
-};
+const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame }, ...args: any) => any;
+export type WaitForNavigationOptions = {
+  timeout?: number,
+  waitUntil?: LifecycleEvent,
+  url?: URLMatch,
+};
 
 export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
+  _eventEmitter: EventEmitter;
+  _loadStates: Set<LifecycleEvent>;
   _parentFrame: Frame | null = null;
   _url = '';
   _name = '';
@@ -46,86 +53,196 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return (frame as any)._object;
   }
 
-  static fromNullable(frame: FrameChannel | null): Frame | null {
+  static fromNullable(frame: FrameChannel | undefined): Frame | null {
     return frame ? Frame.from(frame) : null;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: FrameInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: FrameInitializer) {
+    super(parent, type, guid, initializer);
+    this._eventEmitter = new EventEmitter();
+    this._eventEmitter.setMaxListeners(0);
     this._parentFrame = Frame.fromNullable(initializer.parentFrame);
     if (this._parentFrame)
       this._parentFrame._childFrames.add(this);
     this._name = initializer.name;
     this._url = initializer.url;
+    this._loadStates = new Set(initializer.loadStates);
+    this._channel.on('loadstate', event => {
+      if (event.add) {
+        this._loadStates.add(event.add);
+        this._eventEmitter.emit('loadstate', event.add);
+      }
+      if (event.remove)
+        this._loadStates.delete(event.remove);
+    });
+    this._channel.on('navigated', event => {
+      this._url = event.url;
+      this._name = event.name;
+      this._eventEmitter.emit('navigated', event);
+      if (!event.error && this._page)
+        this._page.emit(Events.Page.FrameNavigated, this);
+    });
   }
 
-  async goto(url: string, options: GotoOptions = {}): Promise<network.Response | null> {
-    return Response.fromNullable(await this._channel.goto({ url, options, isPage: this._page!._isPageCall }));
+  private _apiName(method: string) {
+    return this._page!._isPageCall ? 'page.' + method : 'frame.' + method;
   }
 
-  async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
-    return Response.fromNullable(await this._channel.waitForNavigation({ options, isPage: this._page!._isPageCall }));
+  async goto(url: string, options: FrameGotoOptions = {}): Promise<network.Response | null> {
+    return this._wrapApiCall(this._apiName('goto'), async () => {
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil })).response);
+    });
   }
 
-  async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    await this._channel.waitForLoadState({ state, options, isPage: this._page!._isPageCall });
+  private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
+    const waiter = new Waiter();
+    waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
+    waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
+    waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
+    const timeout = this._page!._timeoutSettings.navigationTimeout(options);
+    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded.`);
+
+    return waiter;
+  }
+
+  async waitForNavigation(options: WaitForNavigationOptions = {}): Promise<network.Response | null> {
+    return this._wrapApiCall(this._apiName('waitForNavigation'), async () => {
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      const waiter = this._setupNavigationWaiter(options);
+
+      const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
+      waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
+
+      const navigatedEvent = await waiter.waitForEvent<FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
+        // Any failed navigation results in a rejection.
+        if (event.error)
+          return true;
+        waiter.log(`  navigated to "${event.url}"`);
+        return helper.urlMatches(event.url, options.url);
+      });
+      if (navigatedEvent.error) {
+        const e = new Error(navigatedEvent.error);
+        e.stack = '';
+        await waiter.waitForPromise(Promise.reject(e));
+      }
+
+      if (!this._loadStates.has(waitUntil)) {
+        await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+          waiter.log(`  "${s}" event fired`);
+          return s === waitUntil;
+        });
+      }
+
+      const request = navigatedEvent.newDocument ? network.Request.fromNullable(navigatedEvent.newDocument.request) : null;
+      const response = request ? await waiter.waitForPromise(request._finalRequest().response()) : null;
+      waiter.dispose();
+      return response;
+    });
+  }
+
+  async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
+    state = verifyLoadState('state', state);
+    if (this._loadStates.has(state))
+      return;
+    return this._wrapApiCall(this._apiName('waitForLoadState'), async () => {
+      const waiter = this._setupNavigationWaiter(options);
+      await waiter.waitForEvent<LifecycleEvent>(this._eventEmitter, 'loadstate', s => {
+        waiter.log(`  "${s}" event fired`);
+        return s === state;
+      });
+      waiter.dispose();
+    });
   }
 
   async frameElement(): Promise<ElementHandle> {
-    return ElementHandle.from(await this._channel.frameElement());
+    return this._wrapApiCall(this._apiName('frameElement'), async () => {
+      return ElementHandle.from((await this._channel.frameElement()).element);
+    });
   }
 
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
   async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
   async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
-    return JSHandle.from(await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall })) as SmartHandle<R>;
+    return this._wrapApiCall(this._apiName('evaluateHandle'), async () => {
+      const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+      return JSHandle.from(result.handle) as SmartHandle<R>;
+    });
   }
 
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
   async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
   async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
-    return parseResult(await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall }));
+    return this._wrapApiCall(this._apiName('evaluate'), async () => {
+      const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+      return parseResult(result.value);
+    });
   }
 
   async $(selector: string): Promise<ElementHandle<Element> | null> {
-    return ElementHandle.fromNullable(await this._channel.querySelector({ selector, isPage: this._page!._isPageCall })) as ElementHandle<Element> | null;
+    return this._wrapApiCall(this._apiName('$'), async () => {
+      const result = await this._channel.querySelector({ selector });
+      return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
+    });
   }
 
-  async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
-    return ElementHandle.fromNullable(await this._channel.waitForSelector({ selector, options, isPage: this._page!._isPageCall })) as ElementHandle<Element> | null;
+  async waitForSelector(selector: string, options: FrameWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
+    return this._wrapApiCall(this._apiName('waitForSelector'), async () => {
+      if ((options as any).visibility)
+        throw new Error('options.visibility is not supported, did you mean options.state?');
+      if ((options as any).waitFor && (options as any).waitFor !== 'visible')
+        throw new Error('options.waitFor is not supported, did you mean options.state?');
+      const result = await this._channel.waitForSelector({ selector, ...options });
+      return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
+    });
   }
 
-  async dispatchEvent(selector: string, type: string, eventInit?: any, options: types.TimeoutOptions = {}): Promise<void> {
-    await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), options, isPage: this._page!._isPageCall });
+  async dispatchEvent(selector: string, type: string, eventInit?: any, options: FrameDispatchEventOptions = {}): Promise<void> {
+    return this._wrapApiCall(this._apiName('dispatchEvent'), async () => {
+      await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options });
+    });
   }
 
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
   async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
   async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    return this._wrapApiCall(this._apiName('$eval'), async () => {
+      const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+      return parseResult(result.value);
+    });
   }
 
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
   async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
   async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
-    return await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), isPage: this._page!._isPageCall });
+    return this._wrapApiCall(this._apiName('$$eval'), async () => {
+      const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+      return parseResult(result.value);
+    });
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
-    const result = await this._channel.querySelectorAll({ selector, isPage: this._page!._isPageCall });
-    return result.map(c => ElementHandle.from(c) as ElementHandle<Element>);
+    return this._wrapApiCall(this._apiName('$$'), async () => {
+      const result = await this._channel.querySelectorAll({ selector });
+      return result.elements.map(e => ElementHandle.from(e) as ElementHandle<Element>);
+    });
   }
 
   async content(): Promise<string> {
-    return await this._channel.content();
+    return this._wrapApiCall(this._apiName('content'), async () => {
+      return (await this._channel.content()).value;
+    });
   }
 
-  async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
-    await this._channel.setContent({ html, options, isPage: this._page!._isPageCall });
+  async setContent(html: string, options: FrameSetContentOptions = {}): Promise<void> {
+    return this._wrapApiCall(this._apiName('setContent'), async () => {
+      const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      await this._channel.setContent({ html, ...options, waitUntil });
+    });
   }
 
   name(): string {
@@ -149,85 +266,151 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   }
 
   async addScriptTag(options: { url?: string, path?: string, content?: string, type?: string }): Promise<ElementHandle> {
-    return ElementHandle.from(await this._channel.addScriptTag({ options, isPage: this._page!._isPageCall }));
+    return this._wrapApiCall(this._apiName('addScriptTag'), async () => {
+      const copy = { ...options };
+      if (copy.path) {
+        copy.content = (await fsReadFileAsync(copy.path)).toString();
+        copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
+      }
+      return ElementHandle.from((await this._channel.addScriptTag({ ...copy })).element);
+    });
   }
 
   async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    return ElementHandle.from(await this._channel.addStyleTag({ options, isPage: this._page!._isPageCall }));
+    return this._wrapApiCall(this._apiName('addStyleTag'), async () => {
+      const copy = { ...options };
+      if (copy.path) {
+        copy.content = (await fsReadFileAsync(copy.path)).toString();
+        copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
+      }
+      return ElementHandle.from((await this._channel.addStyleTag({ ...copy })).element);
+    });
   }
 
-  async click(selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return await this._channel.click({ selector, options, isPage: this._page!._isPageCall });
+  async click(selector: string, options: FrameClickOptions = {}) {
+    return this._wrapApiCall(this._apiName('click'), async () => {
+      return await this._channel.click({ selector, ...options });
+    });
   }
 
-  async dblclick(selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return await this._channel.dblclick({ selector, options, isPage: this._page!._isPageCall });
+  async dblclick(selector: string, options: FrameDblclickOptions = {}) {
+    return this._wrapApiCall(this._apiName('dblclick'), async () => {
+      return await this._channel.dblclick({ selector, ...options });
+    });
   }
 
-  async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    return await this._channel.fill({ selector, value, options, isPage: this._page!._isPageCall });
+  async fill(selector: string, value: string, options: FrameFillOptions = {}) {
+    return this._wrapApiCall(this._apiName('fill'), async () => {
+      return await this._channel.fill({ selector, value, ...options });
+    });
   }
 
-  async focus(selector: string, options: types.TimeoutOptions = {}) {
-    await this._channel.focus({ selector, options, isPage: this._page!._isPageCall });
+  async focus(selector: string, options: FrameFocusOptions = {}) {
+    return this._wrapApiCall(this._apiName('focus'), async () => {
+      await this._channel.focus({ selector, ...options });
+    });
   }
 
-  async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<null|string> {
-    return await this._channel.textContent({ selector, options, isPage: this._page!._isPageCall });
+  async textContent(selector: string, options: FrameTextContentOptions = {}): Promise<null|string> {
+    return this._wrapApiCall(this._apiName('textContent'), async () => {
+      const value = (await this._channel.textContent({ selector, ...options })).value;
+      return value === undefined ? null : value;
+    });
   }
 
-  async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._channel.innerText({ selector, options, isPage: this._page!._isPageCall });
+  async innerText(selector: string, options: FrameInnerTextOptions = {}): Promise<string> {
+    return this._wrapApiCall(this._apiName('innerText'), async () => {
+      return (await this._channel.innerText({ selector, ...options })).value;
+    });
   }
 
-  async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    return await this._channel.innerHTML({ selector, options, isPage: this._page!._isPageCall });
+  async innerHTML(selector: string, options: FrameInnerHTMLOptions = {}): Promise<string> {
+    return this._wrapApiCall(this._apiName('innerHTML'), async () => {
+      return (await this._channel.innerHTML({ selector, ...options })).value;
+    });
   }
 
-  async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    return await this._channel.getAttribute({ selector, name, options, isPage: this._page!._isPageCall });
+  async getAttribute(selector: string, name: string, options: FrameGetAttributeOptions = {}): Promise<string | null> {
+    return this._wrapApiCall(this._apiName('getAttribute'), async () => {
+      const value = (await this._channel.getAttribute({ selector, name, ...options })).value;
+      return value === undefined ? null : value;
+    });
   }
 
-  async hover(selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
-    await this._channel.hover({ selector, options, isPage: this._page!._isPageCall });
+  async hover(selector: string, options: FrameHoverOptions = {}) {
+    return this._wrapApiCall(this._apiName('hover'), async () => {
+      await this._channel.hover({ selector, ...options });
+    });
   }
 
-  async selectOption(selector: string, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._channel.selectOption({ selector, values: convertSelectOptionValues(values), options, isPage: this._page!._isPageCall });
+  async selectOption(selector: string, values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
+    return this._wrapApiCall(this._apiName('selectOption'), async () => {
+      return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options })).values;
+    });
   }
 
-  async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    const filePayloads = await normalizeFilePayloads(files);
-    await this._channel.setInputFiles({ selector, files: filePayloads.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: f.buffer.toString('base64') })), options, isPage: this._page!._isPageCall });
+  async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: FrameSetInputFilesOptions = {}): Promise<void> {
+    return this._wrapApiCall(this._apiName('setInputFiles'), async () => {
+      await this._channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options });
+    });
   }
 
-  async type(selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._channel.type({ selector, text, options, isPage: this._page!._isPageCall });
+  async type(selector: string, text: string, options: FrameTypeOptions = {}) {
+    return this._wrapApiCall(this._apiName('type'), async () => {
+      await this._channel.type({ selector, text, ...options });
+    });
   }
 
-  async press(selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    await this._channel.press({ selector, key, options, isPage: this._page!._isPageCall });
+  async press(selector: string, key: string, options: FramePressOptions = {}) {
+    return this._wrapApiCall(this._apiName('press'), async () => {
+      await this._channel.press({ selector, key, ...options });
+    });
   }
 
-  async check(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._channel.check({ selector, options, isPage: this._page!._isPageCall });
+  async check(selector: string, options: FrameCheckOptions = {}) {
+    return this._wrapApiCall(this._apiName('check'), async () => {
+      await this._channel.check({ selector, ...options });
+    });
   }
 
-  async uncheck(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._channel.uncheck({ selector, options, isPage: this._page!._isPageCall });
+  async uncheck(selector: string, options: FrameUncheckOptions = {}) {
+    return this._wrapApiCall(this._apiName('uncheck'), async () => {
+      await this._channel.uncheck({ selector, ...options });
+    });
   }
 
   async waitForTimeout(timeout: number) {
     await new Promise(fulfill => setTimeout(fulfill, timeout));
   }
 
-  async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
-  async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<SmartHandle<R>>;
-  async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
-    return JSHandle.from(await this._channel.waitForFunction({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), options, isPage: this._page!._isPageCall })) as SmartHandle<R>;
+  async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: WaitForFunctionOptions): Promise<SmartHandle<R>>;
+  async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: WaitForFunctionOptions): Promise<SmartHandle<R>>;
+  async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
+    return this._wrapApiCall(this._apiName('waitForFunction'), async () => {
+      if (typeof options.polling === 'string')
+        assert(options.polling === 'raf', 'Unknown polling option: ' + options.polling);
+      const result = await this._channel.waitForFunction({
+        ...options,
+        pollingInterval: options.polling === 'raf' ? undefined : options.polling,
+        expression: String(pageFunction),
+        isFunction: typeof pageFunction === 'function',
+        arg: serializeArgument(arg),
+      });
+      return JSHandle.from(result.handle) as SmartHandle<R>;
+    });
   }
 
   async title(): Promise<string> {
-    return await this._channel.title();
+    return this._wrapApiCall(this._apiName('title'), async () => {
+      return (await this._channel.title()).value;
+    });
   }
+}
+
+export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
+  if (waitUntil as unknown === 'networkidle0')
+    waitUntil = 'networkidle';
+  if (!kLifecycleEvents.has(waitUntil))
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
+  return waitUntil;
 }

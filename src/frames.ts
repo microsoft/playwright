@@ -28,12 +28,20 @@ import { selectors } from './selectors';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
+import { EventEmitter } from 'events';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
   contextResolveCallback: (c: dom.FrameExecutionContext) => void;
   context: dom.FrameExecutionContext | null;
   rerunnableTasks: Set<RerunnableTask>;
+};
+
+type DocumentInfo = {
+  // Unfortunately, we don't have documentId when we find out about
+  // a pending navigation from things like frameScheduledNavigaiton.
+  documentId: string | undefined,
+  request: network.Request | undefined,
 };
 
 export type GotoResult = {
@@ -43,6 +51,22 @@ export type GotoResult = {
 type ConsoleTagHandler = () => void;
 
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
+
+export const kNavigationEvent = Symbol('navigation');
+export type NavigationEvent = {
+  // New frame url after navigation.
+  url: string,
+  // New frame name after navigation.
+  name: string,
+  // Information about the new document for cross-document navigations.
+  // Undefined for same-document navigations.
+  newDocument?: DocumentInfo,
+  // Error for cross-document navigations if any. When error is present,
+  // the navigation did not commit.
+  error?: Error,
+};
+export const kAddLifecycleEvent = Symbol('addLifecycle');
+export const kRemoveLifecycleEvent = Symbol('removeLifecycle');
 
 export class FrameManager {
   private _page: Page;
@@ -54,6 +78,11 @@ export class FrameManager {
   constructor(page: Page) {
     this._page = page;
     this._mainFrame = undefined as any as Frame;
+  }
+
+  dispose() {
+    for (const frame of this._frames.values())
+      frame._stopNetworkIdleTimer();
   }
 
   mainFrame(): Frame {
@@ -125,20 +154,17 @@ export class FrameManager {
       barrier.release();
   }
 
-  frameRequestedNavigation(frameId: string, documentId: string) {
+  frameRequestedNavigation(frameId: string, documentId?: string) {
     const frame = this._frames.get(frameId);
     if (!frame)
       return;
     for (const barrier of this._signalBarriers)
       barrier.addFrameNavigation(frame);
-    frame._pendingDocumentId = documentId;
-  }
-
-  frameUpdatedDocumentIdForNavigation(frameId: string, documentId: string) {
-    const frame = this._frames.get(frameId);
-    if (!frame)
+    if (frame._pendingDocument && frame._pendingDocument.documentId === documentId) {
+      // Do not override request with undefined.
       return;
-    frame._pendingDocumentId = documentId;
+    }
+    frame._pendingDocument = { documentId, request: undefined };
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
@@ -146,14 +172,21 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
-    debugAssert(!frame._pendingDocumentId || frame._pendingDocumentId === documentId);
-    frame._lastDocumentId = documentId;
-    frame._pendingDocumentId = '';
-    for (const task of frame._frameTasks)
-      task.onNewDocument(documentId);
-    this.clearFrameLifecycle(frame);
-    if (!initial)
+    if (frame._pendingDocument && frame._pendingDocument.documentId === undefined)
+      frame._pendingDocument.documentId = documentId;
+    debugAssert(!frame._pendingDocument || frame._pendingDocument.documentId === documentId);
+    if (frame._pendingDocument && frame._pendingDocument.documentId === documentId)
+      frame._currentDocument = frame._pendingDocument;
+    else
+      frame._currentDocument = { documentId, request: undefined };
+    frame._pendingDocument = undefined;
+    frame._onClearLifecycle();
+    const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
+    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
+    if (!initial) {
+      this._page._logger.info(`  navigated to "${url}"`);
       this._page.emit(Events.Page.FrameNavigated, frame);
+    }
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {
@@ -161,9 +194,26 @@ export class FrameManager {
     if (!frame)
       return;
     frame._url = url;
-    for (const task of frame._frameTasks)
-      task.onSameDocument();
+    const navigationEvent: NavigationEvent = { url, name: frame._name };
+    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
+    this._page._logger.info(`  navigated to "${url}"`);
     this._page.emit(Events.Page.FrameNavigated, frame);
+  }
+
+  frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
+    const frame = this._frames.get(frameId);
+    if (!frame || !frame._pendingDocument)
+      return;
+    if (documentId !== undefined && frame._pendingDocument.documentId !== documentId)
+      return;
+    const navigationEvent: NavigationEvent = {
+      url: frame._url,
+      name: frame._name,
+      newDocument: frame._pendingDocument,
+      error: new Error(errorText),
+    };
+    frame._pendingDocument = undefined;
+    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
   }
 
   frameDetached(frameId: string) {
@@ -179,31 +229,15 @@ export class FrameManager {
 
   frameLifecycleEvent(frameId: string, event: types.LifecycleEvent) {
     const frame = this._frames.get(frameId);
-    if (!frame)
-      return;
-    if (frame._firedLifecycleEvents.has(event))
-      return;
-    frame._firedLifecycleEvents.add(event);
-    this._notifyLifecycle(frame, event);
-    if (frame === this._mainFrame && event === 'load')
-      this._page.emit(Events.Page.Load);
-    if (frame === this._mainFrame && event === 'domcontentloaded')
-      this._page.emit(Events.Page.DOMContentLoaded);
-  }
-
-  clearFrameLifecycle(frame: Frame) {
-    frame._firedLifecycleEvents.clear();
-    // Keep the current navigation request if any.
-    frame._inflightRequests = new Set(Array.from(frame._inflightRequests).filter(request => request._documentId === frame._lastDocumentId));
-    frame._stopNetworkIdleTimer();
-    if (frame._inflightRequests.size === 0)
-      frame._startNetworkIdleTimer();
+    if (frame)
+      frame._onLifecycleEvent(event);
   }
 
   requestStarted(request: network.Request) {
+    const frame = request.frame();
     this._inflightRequestStarted(request);
-    for (const task of request.frame()._frameTasks)
-      task.onRequest(request);
+    if (request._documentId)
+      frame._pendingDocument = { documentId: request._documentId, request };
     if (request._isFavicon) {
       const route = request._route();
       if (route)
@@ -225,32 +259,16 @@ export class FrameManager {
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
+    const frame = request.frame();
     this._inflightRequestFinished(request);
-    if (request._documentId) {
-      const isPendingDocument = request.frame()._pendingDocumentId === request._documentId;
-      if (isPendingDocument) {
-        request.frame()._pendingDocumentId = '';
-        let errorText = request.failure()!.errorText;
-        if (canceled)
-          errorText += '; maybe frame was detached?';
-        for (const task of request.frame()._frameTasks)
-          task.onNewDocument(request._documentId, new Error(errorText));
-      }
+    if (frame._pendingDocument && frame._pendingDocument.request === request) {
+      let errorText = request.failure()!.errorText;
+      if (canceled)
+        errorText += '; maybe frame was detached?';
+      this.frameAbortedNavigation(frame._id, errorText, frame._pendingDocument.documentId);
     }
     if (!request._isFavicon)
       this._page.emit(Events.Page.RequestFailed, request);
-  }
-
-  provisionalLoadFailed(frame: Frame, documentId: string, error: string) {
-    for (const task of frame._frameTasks)
-      task.onNewDocument(documentId, new Error(error));
-  }
-
-  private _notifyLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
-    for (let parent: Frame | null = frame; parent; parent = parent.parentFrame()) {
-      for (const frameTask of parent._frameTasks)
-        frameTask.onLifecycle(frame, lifecycleEvent);
-    }
   }
 
   removeChildFramesRecursively(frame: Frame) {
@@ -299,11 +317,12 @@ export class FrameManager {
 }
 
 export class Frame {
+  readonly _eventEmitter: EventEmitter;
   _id: string;
-  readonly _firedLifecycleEvents: Set<types.LifecycleEvent>;
-  _lastDocumentId = '';
-  _pendingDocumentId = '';
-  _frameTasks = new Set<FrameTask>();
+  private _firedLifecycleEvents = new Set<types.LifecycleEvent>();
+  _subtreeLifecycleEvents = new Set<types.LifecycleEvent>();
+  _currentDocument: DocumentInfo;
+  _pendingDocument?: DocumentInfo;
   readonly _page: Page;
   private _parentFrame: Frame | null;
   _url = '';
@@ -318,10 +337,12 @@ export class Frame {
   private _detachedCallback = () => {};
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
+    this._eventEmitter = new EventEmitter();
+    this._eventEmitter.setMaxListeners(0);
     this._id = id;
-    this._firedLifecycleEvents = new Set();
     this._page = page;
     this._parentFrame = parentFrame;
+    this._currentDocument = { documentId: undefined, request: undefined };
 
     this._detachedPromise = new Promise<void>(x => this._detachedCallback = x);
 
@@ -339,9 +360,60 @@ export class Frame {
     return `${subject}.${method}`;
   }
 
+  _onLifecycleEvent(event: types.LifecycleEvent) {
+    if (this._firedLifecycleEvents.has(event))
+      return;
+    this._firedLifecycleEvents.add(event);
+    // Recalculate subtree lifecycle for the whole tree - it should not be that big.
+    this._page.mainFrame()._recalculateLifecycle();
+  }
+
+  _onClearLifecycle() {
+    this._firedLifecycleEvents.clear();
+    // Recalculate subtree lifecycle for the whole tree - it should not be that big.
+    this._page.mainFrame()._recalculateLifecycle();
+    // Keep the current navigation request if any.
+    this._inflightRequests = new Set(Array.from(this._inflightRequests).filter(request => request === this._currentDocument.request));
+    this._stopNetworkIdleTimer();
+    if (this._inflightRequests.size === 0)
+      this._startNetworkIdleTimer();
+  }
+
+  private _recalculateLifecycle() {
+    const events = new Set<types.LifecycleEvent>(this._firedLifecycleEvents);
+    for (const child of this._childFrames) {
+      child._recalculateLifecycle();
+      // We require a particular lifecycle event to be fired in the whole
+      // frame subtree, and then consider it done.
+      for (const event of events) {
+        if (!child._subtreeLifecycleEvents.has(event))
+          events.delete(event);
+      }
+    }
+    const mainFrame = this._page.mainFrame();
+    for (const event of events) {
+      // Checking whether we have already notified about this event.
+      if (!this._subtreeLifecycleEvents.has(event)) {
+        this._eventEmitter.emit(kAddLifecycleEvent, event);
+        if (this === mainFrame && this._url !== 'about:blank')
+          this._page._logger.info(`  "${event}" event fired`);
+        if (this === mainFrame && event === 'load')
+          this._page.emit(Events.Page.Load);
+        if (this === mainFrame && event === 'domcontentloaded')
+          this._page.emit(Events.Page.DOMContentLoaded);
+      }
+    }
+    for (const event of this._subtreeLifecycleEvents) {
+      if (!events.has(event))
+        this._eventEmitter.emit(kRemoveLifecycleEvent, event);
+    }
+    this._subtreeLifecycleEvents = events;
+  }
+
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, this._apiName('goto'), async progress => {
-      progress.logger.info(`navigating to "${url}", waiting until "${options.waitUntil || 'load'}"`);
+      const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      progress.logger.info(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
       let referer = headers['referer'] || headers['Referer'];
       if (options.referer !== undefined) {
@@ -351,23 +423,33 @@ export class Frame {
       }
       url = helper.completeUserURL(url);
 
-      const frameTask = new FrameTask(this, progress);
-      const sameDocumentPromise = frameTask.waitForSameDocumentNavigation();
-      const navigateResult = await this._page._delegate.navigateFrame(this, url, referer).catch(e => {
-        // Do not leave sameDocumentPromise unhandled.
-        sameDocumentPromise.catch(e => {});
-        throw e;
-      });
+      const sameDocument = helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (e: NavigationEvent) => !e.newDocument);
+      const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
+
+      let event: NavigationEvent;
       if (navigateResult.newDocumentId) {
-        // Do not leave sameDocumentPromise unhandled.
-        sameDocumentPromise.catch(e => {});
-        await frameTask.waitForSpecificDocument(navigateResult.newDocumentId);
+        sameDocument.dispose();
+        event = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
+          // We are interested either in this specific document, or any other document that
+          // did commit and replaced the expected document.
+          return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
+        }).promise;
+
+        if (event.newDocument!.documentId !== navigateResult.newDocumentId) {
+          // This is just a sanity check. In practice, new navigation should
+          // cancel the previous one and report "request cancelled"-like error.
+          throw new Error('Navigation interrupted by another one');
+        }
+        if (event.error)
+          throw event.error;
       } else {
-        await sameDocumentPromise;
+        event = await sameDocument.promise;
       }
-      const request = (navigateResult && navigateResult.newDocumentId) ? frameTask.request(navigateResult.newDocumentId) : null;
-      await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
-      frameTask.done();
+
+      if (!this._subtreeLifecycleEvents.has(waitUntil))
+        await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+
+      const request = event.newDocument ? event.newDocument.request : undefined;
       return request ? request._finalRequest().response() : null;
     });
   }
@@ -375,16 +457,23 @@ export class Frame {
   async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, this._apiName('waitForNavigation'), async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
-      progress.logger.info(`waiting for navigation${toUrl} until "${options.waitUntil || 'load'}"`);
-      const frameTask = new FrameTask(this, progress);
-      let documentId: string | undefined;
-      await Promise.race([
-        frameTask.waitForNewDocument(options.url).then(id => documentId = id),
-        frameTask.waitForSameDocumentNavigation(options.url),
-      ]);
-      const request = documentId ? frameTask.request(documentId) : null;
-      await frameTask.waitForLifecycle(options.waitUntil === undefined ? 'load' : options.waitUntil);
-      frameTask.done();
+      const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+      progress.logger.info(`waiting for navigation${toUrl} until "${waitUntil}"`);
+
+      const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
+        // Any failed navigation results in a rejection.
+        if (event.error)
+          return true;
+        progress.logger.info(`  navigated to "${this._url}"`);
+        return helper.urlMatches(this._url, options.url);
+      }).promise;
+      if (navigationEvent.error)
+        throw navigationEvent.error;
+
+      if (!this._subtreeLifecycleEvents.has(waitUntil))
+        await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+
+      const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
       return request ? request._finalRequest().response() : null;
     });
   }
@@ -394,9 +483,9 @@ export class Frame {
   }
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
-    const frameTask = new FrameTask(this, progress);
-    await frameTask.waitForLifecycle(state);
-    frameTask.done();
+    const waitUntil = verifyLifecycle('state', state);
+    if (!this._subtreeLifecycleEvents.has(waitUntil))
+      await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -454,7 +543,7 @@ export class Frame {
       throw new Error('options.waitFor is not supported, did you mean options.state?');
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
-      throw new Error(`Unsupported state option "${state}"`);
+      throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     const info = selectors._parseSelector(selector);
     const task = dom.waitForSelectorTask(info, state);
     return this._page._runAbortableTask(async progress => {
@@ -540,7 +629,7 @@ export class Frame {
       const lifecyclePromise = new Promise((resolve, reject) => {
         this._page._frameManager._consoleMessageTags.set(tag, () => {
           // Clear lifecycle right after document.open() - see 'tag' below.
-          this._page._frameManager.clearFrameLifecycle(this);
+          this._onClearLifecycle();
           this._waitForLoadState(progress, waitUntil).then(resolve).catch(reject);
         });
       });
@@ -596,7 +685,7 @@ export class Frame {
       let result;
       if (path !== null) {
         let contents = await util.promisify(fs.readFile)(path, 'utf8');
-        contents += '//# sourceURL=' + path.replace(/\n/g, '');
+        contents += '\n//# sourceURL=' + path.replace(/\n/g, '');
         result = (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
       } else {
         result = (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
@@ -651,7 +740,7 @@ export class Frame {
 
       if (path !== null) {
         let contents = await util.promisify(fs.readFile)(path, 'utf8');
-        contents += '/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
+        contents += '\n/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
         return (await context.evaluateHandleInternal(addStyleContent, contents)).asElement()!;
       }
 
@@ -860,6 +949,7 @@ export class Frame {
   }
 
   _onDetached() {
+    this._stopNetworkIdleTimer();
     this._detached = true;
     this._detachedCallback();
     for (const data of this._contextData.values()) {
@@ -926,7 +1016,7 @@ export class Frame {
     assert(!this._networkIdleTimer);
     if (this._firedLifecycleEvents.has('networkidle'))
       return;
-    this._networkIdleTimer = setTimeout(() => { this._page._frameManager.frameLifecycleEvent(this._id, 'networkidle'); }, 500);
+    this._networkIdleTimer = setTimeout(() => this._onLifecycleEvent('networkidle'), 500);
   }
 
   _stopNetworkIdleTimer() {
@@ -1001,15 +1091,18 @@ class SignalBarrier {
 
   async addFrameNavigation(frame: Frame) {
     this.retain();
-    const frameTask = new FrameTask(frame, this._progress);
+    const waiter = helper.waitForEvent(null, frame._eventEmitter, kNavigationEvent, (e: NavigationEvent) => {
+      if (!e.error && this._progress)
+        this._progress.logger.info(`  navigated to "${frame._url}"`);
+      return true;
+    });
     await Promise.race([
       frame._page._disconnectedPromise,
       frame._page._crashedPromise,
       frame._detachedPromise,
-      frameTask.waitForNewDocument(),
-      frameTask.waitForSameDocumentNavigation(),
+      waiter.promise,
     ]).catch(e => {});
-    frameTask.done();
+    waiter.dispose();
     this.release();
   }
 
@@ -1024,117 +1117,6 @@ class SignalBarrier {
   }
 }
 
-class FrameTask {
-  private readonly _frame: Frame;
-  private readonly _requestMap = new Map<string, network.Request>();
-  private readonly _progress: Progress | null = null;
-  private _onSameDocument?: { url?: types.URLMatch, resolve: () => void };
-  private _onSpecificDocument?: { expectedDocumentId: string, resolve: () => void, reject: (error: Error) => void };
-  private _onNewDocument?: { url?: types.URLMatch, resolve: (documentId: string) => void, reject: (error: Error) => void };
-  private _onLifecycle?: { waitUntil: types.LifecycleEvent, resolve: () => void };
-
-  constructor(frame: Frame, progress: Progress | null) {
-    this._frame = frame;
-    frame._frameTasks.add(this);
-    this._progress = progress;
-    if (progress)
-      progress.cleanupWhenAborted(() => this.done());
-  }
-
-  onRequest(request: network.Request) {
-    if (!request._documentId || request.redirectedFrom())
-      return;
-    this._requestMap.set(request._documentId, request);
-  }
-
-  request(documentId: string): network.Request | undefined {
-    return this._requestMap.get(documentId);
-  }
-
-  onSameDocument() {
-    if (this._progress)
-      this._progress.logger.info(`navigated to "${this._frame._url}"`);
-    if (this._onSameDocument && helper.urlMatches(this._frame.url(), this._onSameDocument.url))
-      this._onSameDocument.resolve();
-  }
-
-  onNewDocument(documentId: string, error?: Error) {
-    if (this._progress && !error)
-      this._progress.logger.info(`navigated to "${this._frame._url}"`);
-    if (this._onSpecificDocument) {
-      if (documentId === this._onSpecificDocument.expectedDocumentId) {
-        if (error)
-          this._onSpecificDocument.reject(error);
-        else
-          this._onSpecificDocument.resolve();
-      } else if (!error) {
-        this._onSpecificDocument.reject(new Error('Navigation interrupted by another one'));
-      }
-    }
-    if (this._onNewDocument) {
-      if (error)
-        this._onNewDocument.reject(error);
-      else if (helper.urlMatches(this._frame.url(), this._onNewDocument.url))
-        this._onNewDocument.resolve(documentId);
-    }
-  }
-
-  onLifecycle(frame: Frame, lifecycleEvent: types.LifecycleEvent) {
-    if (this._progress && frame === this._frame && frame._url !== 'about:blank')
-      this._progress.logger.info(`"${lifecycleEvent}" event fired`);
-    if (this._onLifecycle && this._checkLifecycleRecursively(this._frame, this._onLifecycle.waitUntil))
-      this._onLifecycle.resolve();
-  }
-
-  waitForSameDocumentNavigation(url?: types.URLMatch): Promise<void> {
-    return new Promise(resolve => {
-      assert(!this._onSameDocument);
-      this._onSameDocument = { url, resolve };
-    });
-  }
-
-  waitForSpecificDocument(expectedDocumentId: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      assert(!this._onSpecificDocument);
-      this._onSpecificDocument = { expectedDocumentId, resolve, reject };
-    });
-  }
-
-  waitForNewDocument(url?: types.URLMatch): Promise<string> {
-    return new Promise((resolve, reject) => {
-      assert(!this._onNewDocument);
-      this._onNewDocument = { url, resolve, reject };
-    });
-  }
-
-  waitForLifecycle(waitUntil: types.LifecycleEvent): Promise<void> {
-    if (waitUntil as unknown === 'networkidle0')
-      waitUntil = 'networkidle';
-    if (!types.kLifecycleEvents.has(waitUntil))
-      throw new Error(`Unsupported waitUntil option ${String(waitUntil)}`);
-    if (this._checkLifecycleRecursively(this._frame, waitUntil))
-      return Promise.resolve();
-    return new Promise(resolve => {
-      assert(!this._onLifecycle);
-      this._onLifecycle = { waitUntil, resolve };
-    });
-  }
-
-  private _checkLifecycleRecursively(frame: Frame, waitUntil: types.LifecycleEvent): boolean {
-    if (!frame._firedLifecycleEvents.has(waitUntil))
-      return false;
-    for (const child of frame.childFrames()) {
-      if (!this._checkLifecycleRecursively(child, waitUntil))
-        return false;
-    }
-    return true;
-  }
-
-  done() {
-    this._frame._frameTasks.delete(this);
-  }
-}
-
 async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions, apiName: string, task: (progress: Progress) => Promise<T>): Promise<T> {
   const page = frame._page;
   const controller = new ProgressController(page._logger, page._timeoutSettings.navigationTimeout(options), apiName);
@@ -1142,4 +1124,12 @@ async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions,
   page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
   frame._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));
   return controller.run(task);
+}
+
+function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {
+  if (waitUntil as unknown === 'networkidle0')
+    waitUntil = 'networkidle';
+  if (!types.kLifecycleEvents.has(waitUntil))
+    throw new Error(`${name}: expected one of (load|domcontentloaded|networkidle)`);
+  return waitUntil;
 }

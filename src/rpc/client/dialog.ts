@@ -15,7 +15,6 @@
  */
 
 import { DialogChannel, DialogInitializer } from '../channels';
-import { ConnectionScope } from './connection';
 import { ChannelOwner } from './channelOwner';
 
 export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
@@ -23,8 +22,8 @@ export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
     return (dialog as any)._object;
   }
 
-  constructor(scope: ConnectionScope, guid: string, initializer: DialogInitializer) {
-    super(scope, guid, initializer);
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: DialogInitializer) {
+    super(parent, type, guid, initializer);
   }
 
   type(): string {
@@ -40,10 +39,14 @@ export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
   }
 
   async accept(promptText: string | undefined) {
-    await this._channel.accept({ promptText });
+    return this._wrapApiCall('dialog.accept', async () => {
+      await this._channel.accept({ promptText });
+    });
   }
 
   async dismiss() {
-    await this._channel.dismiss();
+    return this._wrapApiCall('dialog.dismiss', async () => {
+      await this._channel.dismiss();
+    });
   }
 }

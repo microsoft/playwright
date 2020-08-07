@@ -16,62 +16,58 @@
 
 const fs = require('fs');
 const path = require('path');
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = require('../utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = testOptions;
 
-describe.skip(CHANNEL)('Chromium.startTracing', function() {
-  beforeEach(async function(state) {
-    state.outputFile = path.join(OUTPUT_DIR, `trace-${state.parallelIndex}.json`);
-    state.browser = await state.browserType.launch(state.defaultBrowserOptions);
-    state.page = await state.browser.newPage();
-  });
-  afterEach(async function(state) {
-    await state.browser.close();
-    state.browser = null;
-    state.page = null;
-    if (fs.existsSync(state.outputFile)) {
-      fs.unlinkSync(state.outputFile);
-      state.outputFile = null;
-    }
-  });
-  it('should output a trace', async({browser, page, server, outputFile}) => {
-    await browser.startTracing(page, {screenshots: true, path: outputFile});
-    await page.goto(server.PREFIX + '/grid.html');
-    await browser.stopTracing();
-    expect(fs.existsSync(outputFile)).toBe(true);
-  });
-  it('should run with custom categories if provided', async({browser, page, outputFile}) => {
-    await browser.startTracing(page, {path: outputFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
-    await browser.stopTracing();
+registerFixture('outputFile', async ({parallelIndex}, test) => {
+  const outputFile = path.join(OUTPUT_DIR, `trace-${parallelIndex}.json`);
+  await test(outputFile);
+  if (fs.existsSync(outputFile))
+    fs.unlinkSync(outputFile);
+});
 
-    const traceJson = JSON.parse(fs.readFileSync(outputFile).toString());
-    expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires', 'Does not contain expected category');
-  });
-  it('should throw if tracing on two pages', async({browser, page, server, outputFile}) => {
-    await browser.startTracing(page, {path: outputFile});
-    const newPage = await browser.newPage();
-    let error = null;
-    await browser.startTracing(newPage, {path: outputFile}).catch(e => error = e);
-    await newPage.close();
-    expect(error).toBeTruthy();
-    await browser.stopTracing();
-  });
-  it('should return a buffer', async({browser, page, server, outputFile}) => {
-    await browser.startTracing(page, {screenshots: true, path: outputFile});
-    await page.goto(server.PREFIX + '/grid.html');
-    const trace = await browser.stopTracing();
-    const buf = fs.readFileSync(outputFile);
-    expect(trace.toString()).toEqual(buf.toString(), 'Tracing buffer mismatch');
-  });
-  it('should work without options', async({browser, page, server, outputFile}) => {
-    await browser.startTracing(page);
-    await page.goto(server.PREFIX + '/grid.html');
-    const trace = await browser.stopTracing();
-    expect(trace).toBeTruthy();
-  });
-  it('should support a buffer without a path', async({browser, page, server}) => {
-    await browser.startTracing(page, {screenshots: true});
-    await page.goto(server.PREFIX + '/grid.html');
-    const trace = await browser.stopTracing();
-    expect(trace.toString()).toContain('screenshot', 'Does not contain screenshot');
-  });
+it.skip(!CHROMIUM)('should output a trace', async({browser, page, server, outputFile}) => {
+  await browser.startTracing(page, {screenshots: true, path: outputFile});
+  await page.goto(server.PREFIX + '/grid.html');
+  await browser.stopTracing();
+  expect(fs.existsSync(outputFile)).toBe(true);
+});
+
+it.skip(!CHROMIUM)('should run with custom categories if provided', async({browser, page, outputFile}) => {
+  await browser.startTracing(page, {path: outputFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
+  await browser.stopTracing();
+
+  const traceJson = JSON.parse(fs.readFileSync(outputFile).toString());
+  expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires', 'Does not contain expected category');
+});
+
+it.skip(!CHROMIUM)('should throw if tracing on two pages', async({browser, page, outputFile}) => {
+  await browser.startTracing(page, {path: outputFile});
+  const newPage = await browser.newPage();
+  let error = null;
+  await browser.startTracing(newPage, {path: outputFile}).catch(e => error = e);
+  await newPage.close();
+  expect(error).toBeTruthy();
+  await browser.stopTracing();
+});
+
+it.skip(!CHROMIUM)('should return a buffer', async({browser, page, server, outputFile}) => {
+  await browser.startTracing(page, {screenshots: true, path: outputFile});
+  await page.goto(server.PREFIX + '/grid.html');
+  const trace = await browser.stopTracing();
+  const buf = fs.readFileSync(outputFile);
+  expect(trace.toString()).toEqual(buf.toString(), 'Tracing buffer mismatch');
+});
+
+it.skip(!CHROMIUM)('should work without options', async({browser, page, server}) => {
+  await browser.startTracing(page);
+  await page.goto(server.PREFIX + '/grid.html');
+  const trace = await browser.stopTracing();
+  expect(trace).toBeTruthy();
+});
+
+it.skip(!CHROMIUM)('should support a buffer without a path', async({browser, page, server}) => {
+  await browser.startTracing(page, {screenshots: true});
+  await page.goto(server.PREFIX + '/grid.html');
+  const trace = await browser.stopTracing();
+  expect(trace.toString()).toContain('screenshot', 'Does not contain screenshot');
 });

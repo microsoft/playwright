@@ -35,6 +35,10 @@ run();
 
 async function run() {
   const startTime = Date.now();
+  const onlyBrowserVersions = process.argv.includes('--only-browser-versions');
+  const channel = process.argv.includes('--channel');
+  if (channel)
+    console.warn(`${YELLOW_COLOR}NOTE: checking documentation against //src/rpc/client${RESET_COLOR}`);
 
   /** @type {!Array<!Message>} */
   const messages = [];
@@ -54,17 +58,27 @@ async function run() {
       libversion: VERSION,
       chromiumVersion: browserVersions.chromium,
       firefoxVersion: browserVersions.firefox,
+      onlyBrowserVersions,
     })));
-    messages.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
-    for (const source of mdSources.filter(source => source.hasUpdatedText()))
-      messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
 
-    const browser = await playwright.chromium.launch();
-    const page = await browser.newPage();
-    const checkPublicAPI = require('./check_public_api');
-    const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'));
-    messages.push(...await checkPublicAPI(page, [api], jsSources));
-    await browser.close();
+    if (!onlyBrowserVersions) {
+      messages.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
+      for (const source of mdSources.filter(source => source.hasUpdatedText()))
+        messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
+
+      const browser = await playwright.chromium.launch();
+      const page = await browser.newPage();
+      const checkPublicAPI = require('./check_public_api');
+      let jsSources;
+      if (channel) {
+        jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'rpc', 'client'), '', []);
+      } else {
+        const rpcDir = path.join(PROJECT_DIR, 'src', 'rpc');
+        jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src'), '', [rpcDir]);
+      }
+      messages.push(...await checkPublicAPI(page, [api], jsSources));
+      await browser.close();
+    }
 
     for (const source of mdSources) {
       if (!source.hasUpdatedText())
@@ -102,7 +116,7 @@ async function run() {
   console.log(`${errors.length} failures, ${warnings.length} warnings.`);
   const runningTime = Date.now() - startTime;
   console.log(`DocLint Finished in ${runningTime / 1000} seconds`);
-  process.exit(clearExit ? 0 : 1);
+  process.exit(clearExit || onlyBrowserVersions ? 0 : 1);
 }
 
 async function getBrowserVersions() {

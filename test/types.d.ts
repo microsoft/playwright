@@ -1,30 +1,16 @@
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 
-type Falsy = false|""|0|null|undefined;
-interface Expect<T> {
-    toBe(other: T, message?: string): void;
-    toBeFalsy(message?: string): void;
-    toBeTruthy(message?: string): void;
-    toContain(other: any, message?: string): void;
-    toEqual(other: T, message?: string): void;
-    toBeNull(message?: string): void;
-    toBeInstanceOf(other: Function, message?: string): void;
-
-    toBeGreaterThan(other: number, message?: string): void;
-    toBeGreaterThanOrEqual(other: number, message?: string): void;
-    toBeLessThan(other: number, message?: string): void;
-    toBeLessThanOrEqual(other: number, message?: string): void;
-    toBeCloseTo(other: number, precision: number, message?: string): void;
-
-    toBeGolden(golden: {goldenPath: string, outputPath: string, goldenName: string}): void;
-
-    not: Expect<T>;
-}
+type Falsy = false|''|0|null|undefined;
 
 type DescribeFunction = ((name: string, inner: () => void) => void) & {fail(condition: boolean): DescribeFunction};
 
-type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {fail(condition: boolean): ItFunction<STATE>; repeat(n: number): ItFunction<STATE>};
+type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
+    fail(condition: boolean): ItFunction<STATE>;
+    skip(condition: boolean): ItFunction<STATE>;
+    slow(): ItFunction<STATE>;
+    repeat(n: number): ItFunction<STATE>;
+};
 
 type TestRunner<STATE> = {
     describe: DescribeFunction;
@@ -42,20 +28,8 @@ type TestRunner<STATE> = {
 interface TestSetup<STATE> {
     testRunner: TestRunner<STATE>;
     product: 'Chromium'|'Firefox'|'WebKit';
-    FFOX: boolean;
-    WEBKIT: boolean;
-    CHROMIUM: boolean;
-    MAC: boolean;
-    LINUX: boolean;
-    WIN: boolean;
-    playwright: typeof import('../index');
-    browserType: import('../index').BrowserType<import('../index').Browser>;
-    selectors: import('../src/selectors').Selectors;
-    expect<T>(value: T): Expect<T>;
-    defaultBrowserOptions: import('../src/server/browserType').LaunchOptions;
+    selectors: import('../index').Selectors;
     playwrightPath;
-    headless: boolean;
-    ASSETS_DIR: string;
 }
 
 type TestState = {
@@ -65,8 +39,11 @@ type TestState = {
 };
 
 type BrowserState = TestState & {
+    playwright: typeof import('../index');
+    browserType: import('../index').BrowserType<import('../index').Browser>;
     browser: import('../index').Browser;
     browserServer: import('../index').BrowserServer;
+    defaultBrowserOptions: import('../index').LaunchOptions;
 };
 
 type PageState = BrowserState & {
@@ -76,10 +53,6 @@ type PageState = BrowserState & {
 type ChromiumPageState = PageState & {
     browser: import('../index').ChromiumBrowser;
 };
-type TestSuite = (setup: TestSetup<TestState>) => void;
-type BrowserTestSuite = (setup: TestSetup<BrowserState>) => void;
-type PageTestSuite = (setup: TestSetup<PageState>) => void;
-type ChromiumTestSuite = (setup: TestSetup<ChromiumPageState>) => void;
 
 
 interface TestServer {
@@ -98,5 +71,33 @@ interface TestServer {
     PREFIX: string;
     CROSS_PROCESS_PREFIX: string;
     EMPTY_PAGE: string;
-
 }
+
+declare const describe: DescribeFunction;
+declare const fdescribe: DescribeFunction;
+declare const xdescribe: DescribeFunction;
+declare const expect: typeof import('expect');
+declare const it: ItFunction<PageState>;
+declare const fit: ItFunction<PageState>;
+declare const dit: ItFunction<PageState>;
+declare const xit: ItFunction<PageState>;
+
+declare const browserType: import('../index').BrowserType<import('../index').Browser>;
+
+// global variables in assets
+declare const testOptions: {
+    FFOX: boolean;
+    WEBKIT: boolean;
+    CHROMIUM: boolean;
+    MAC: boolean;
+    LINUX: boolean;
+    WIN: boolean;
+    HEADLESS: boolean;
+    OUTPUT_DIR: string;
+    USES_HOOKS: boolean;
+    CHANNEL: boolean;
+    ASSETS_DIR: string;
+};
+
+// keyboard.html
+declare function getResult(): string;

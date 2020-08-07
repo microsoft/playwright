@@ -18,12 +18,14 @@
 import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as removeFolder from 'rimraf';
 import * as util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
 
 const removeFolderAsync = util.promisify(removeFolder);
+const readFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -33,8 +35,7 @@ export type RegisteredListener = {
 
 export type Listener = (...args: any[]) => void;
 
-let isInDebugMode = !!getFromENV('PWDEBUG');
-let isInRecordMode = false;
+const isInDebugMode = !!getFromENV('PWDEBUG');
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {
@@ -131,6 +132,10 @@ class Helper {
 
   static isRegExp(obj: any): obj is RegExp {
     return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+  }
+
+  static isError(obj: any): obj is Error {
+    return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
   }
 
   static isObject(obj: any): obj is NonNullable<object> {
@@ -296,40 +301,69 @@ class Helper {
     }));
   }
 
-  static async waitForEvent(progress: Progress, emitter: EventEmitter, event: string, predicate?: Function): Promise<any> {
+  static waitForEvent(progress: Progress | null, emitter: EventEmitter, event: string | symbol, predicate?: Function): { promise: Promise<any>, dispose: () => void } {
     const listeners: RegisteredListener[] = [];
     const promise = new Promise((resolve, reject) => {
       listeners.push(helper.addEventListener(emitter, event, eventArg => {
         try {
           if (predicate && !predicate(eventArg))
             return;
+          helper.removeEventListeners(listeners);
           resolve(eventArg);
         } catch (e) {
+          helper.removeEventListeners(listeners);
           reject(e);
         }
       }));
     });
-    progress.cleanupWhenAborted(() => helper.removeEventListeners(listeners));
-    const result = await promise;
-    helper.removeEventListeners(listeners);
-    return result;
+    const dispose = () => helper.removeEventListeners(listeners);
+    if (progress)
+      progress.cleanupWhenAborted(dispose);
+    return { promise, dispose };
   }
 
   static isDebugMode(): boolean {
     return isInDebugMode;
   }
+}
 
-  static setDebugMode(enabled: boolean) {
-    isInDebugMode = enabled;
-  }
+export async function getUbuntuVersion(): Promise<string> {
+  if (os.platform() !== 'linux')
+    return '';
+  const osReleaseText = await readFileAsync('/etc/os-release', 'utf8').catch(e => '');
+  if (!osReleaseText)
+    return '';
+  return getUbuntuVersionInternal(osReleaseText);
+}
 
-  static isRecordMode(): boolean {
-    return isInRecordMode;
+export function getUbuntuVersionSync(): string {
+  if (os.platform() !== 'linux')
+    return '';
+  try {
+    const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
+    if (!osReleaseText)
+      return '';
+    return getUbuntuVersionInternal(osReleaseText);
+  } catch (e) {
+    return '';
   }
+}
 
-  static setRecordMode(enabled: boolean) {
-    isInRecordMode = enabled;
+function getUbuntuVersionInternal(osReleaseText: string): string {
+  const fields = new Map();
+  for (const line of osReleaseText.split('\n')) {
+    const tokens = line.split('=');
+    const name = tokens.shift();
+    let value = tokens.join('=').trim();
+    if (value.startsWith('"') && value.endsWith('"'))
+      value = value.substring(1, value.length - 1);
+    if (!name)
+      continue;
+    fields.set(name.toLowerCase(), value);
   }
+  if (!fields.get('name') || fields.get('name').toLowerCase() !== 'ubuntu')
+    return '';
+  return fields.get('version_id') || '';
 }
 
 export function assert(value: any, message?: string): asserts value {

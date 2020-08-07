@@ -140,9 +140,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onNavigationAborted(params: Protocol.Page.navigationAbortedPayload) {
-    const frame = this._page._frameManager.frame(params.frameId)!;
-    for (const task of frame._frameTasks)
-      task.onNewDocument(params.navigationId, new Error(params.errorText));
+    this._page._frameManager.frameAbortedNavigation(params.frameId, params.errorText, params.navigationId);
   }
 
   _onNavigationCommitted(params: Protocol.Page.navigationCommittedPayload) {
@@ -197,9 +195,11 @@ export class FFPage implements PageDelegate {
         params.defaultValue));
   }
 
-  _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
+  async _onBindingCalled(event: Protocol.Page.bindingCalledPayload) {
     const context = this._contextIdToContext.get(event.executionContextId)!;
-    this._page._onBindingCalled(event.payload, context);
+    const pageOrError = await this.pageOrError();
+    if (!(pageOrError instanceof Error))
+      this._page._onBindingCalled(event.payload, context);
   }
 
   async _onFileChooserOpened(payload: Protocol.Page.fileChooserOpenedPayload) {
@@ -286,10 +286,15 @@ export class FFPage implements PageDelegate {
     });
   }
 
+  async bringToFront(): Promise<void> {
+    await this._session.send('Page.bringToFront', {});
+  }
+
   async updateEmulateMedia(): Promise<void> {
     const colorScheme = this._page._state.colorScheme || this._browserContext._options.colorScheme || 'light';
     await this._session.send('Page.setEmulatedMedia', {
-      type: this._page._state.mediaType === null ? undefined : this._page._state.mediaType,
+      // Empty string means reset.
+      type: this._page._state.mediaType === null ? '' : this._page._state.mediaType,
       colorScheme
     });
   }

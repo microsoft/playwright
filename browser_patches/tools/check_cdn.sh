@@ -23,37 +23,35 @@ HOST="https://playwright2.blob.core.windows.net/builds"
 
 FFOX_REVISION=$(head -1 ../firefox/BUILD_NUMBER)
 FFOX_ARCHIVES=(
-  "$HOST/firefox/%s/firefox-mac.zip"
-  "$HOST/firefox/%s/firefox-linux.zip"
+  "$HOST/firefox/%s/firefox-mac-10.14.zip"
+  "$HOST/firefox/%s/firefox-ubuntu-18.04.zip"
   "$HOST/firefox/%s/firefox-win32.zip"
   "$HOST/firefox/%s/firefox-win64.zip"
 )
 FFOX_ALIASES=(
   "FF-MAC"
-  "FF-LINUX"
+  "FF-UBUNTU-18.04"
   "FF-WIN32"
   "FF-WIN64"
 )
 
 WK_REVISION=$(head -1 ../webkit/BUILD_NUMBER)
 WK_ARCHIVES=(
-  "$HOST/webkit/%s/minibrowser-gtk.zip"
-  "$HOST/webkit/%s/minibrowser-wpe.zip"
-  "$HOST/webkit/%s/minibrowser-gtk-wpe.zip"
-  "$HOST/webkit/%s/minibrowser-mac-10.14.zip"
-  "$HOST/webkit/%s/minibrowser-mac-10.15.zip"
-  "$HOST/webkit/%s/minibrowser-win64.zip"
+  "$HOST/webkit/%s/webkit-ubuntu-18.04.zip"
+  "$HOST/webkit/%s/webkit-ubuntu-20.04.zip"
+  "$HOST/webkit/%s/webkit-mac-10.14.zip"
+  "$HOST/webkit/%s/webkit-mac-10.15.zip"
+  "$HOST/webkit/%s/webkit-win64.zip"
 )
 WK_ALIASES=(
-  "WK-GTK"
-  "WK-WPE"
-  "WK-GTK+WPE"
+  "WK-UBUNTU-18.04"
+  "WK-UBUNTU-20.04"
   "WK-MAC-10.14"
   "WK-MAC-10.15"
   "WK-WIN64"
 )
 
-COLUMN="%-15s"
+COLUMN="%-18s"
 # COLORS
 RED=$'\e[1;31m'
 GRN=$'\e[1;32m'

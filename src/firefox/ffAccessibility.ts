@@ -148,7 +148,7 @@ class FFAXNode implements accessibility.AXNode {
     // Here and below: Android heuristics
     if (this._hasFocusableChild())
       return false;
-    if (this._focusable && this._name)
+    if (this._focusable && this._role !== 'document' && this._name)
       return true;
     if (this._role === 'heading' && this._name)
       return true;

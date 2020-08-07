@@ -30,18 +30,34 @@ import { Dialog } from './dialog';
 import { Download } from './download';
 import { parseError } from '../serializers';
 import { BrowserServer } from './browserServer';
+import { CDPSession } from './cdpSession';
+import { Playwright } from './playwright';
+import { Electron, ElectronApplication } from './electron';
+import { Channel } from '../channels';
+import { ChromiumBrowser } from './chromiumBrowser';
+import { ChromiumBrowserContext } from './chromiumBrowserContext';
+import { Selectors } from './selectors';
+import { Stream } from './stream';
+import { createScheme, Validator, ValidationError } from '../validator';
+import { WebKitBrowser } from './webkitBrowser';
+import { FirefoxBrowser } from './firefoxBrowser';
+
+class Root extends ChannelOwner<Channel, {}> {
+  constructor(connection: Connection) {
+    super(connection, '', '', {});
+  }
+}
 
 export class Connection {
-  readonly _objects = new Map<string, ChannelOwner<any, any>>();
-  readonly _waitingForObject = new Map<string, any>();
-  onmessage = (message: string): void => {};
+  readonly _objects = new Map<string, ChannelOwner>();
+  private _waitingForObject = new Map<string, any>();
+  onmessage = (message: object): void => {};
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
-  readonly _scopes = new Map<string, ConnectionScope>();
-  private _rootScript: ConnectionScope;
+  private _rootObject: ChannelOwner;
 
   constructor() {
-    this._rootScript = this.createScope('');
+    this._rootObject = new Root(this);
   }
 
   async waitForObjectWithKnownName(guid: string): Promise<any> {
@@ -50,29 +66,27 @@ export class Connection {
     return new Promise(f => this._waitingForObject.set(guid, f));
   }
 
-  async sendMessageToServer(message: { guid: string, method: string, params: any }): Promise<any> {
+  getObjectWithKnownName(guid: string): any {
+    return this._objects.get(guid)!;
+  }
+
+  async sendMessageToServer(type: string, guid: string, method: string, params: any): Promise<any> {
     const id = ++this._lastId;
-    const converted = { id, ...message, params: this._replaceChannelsWithGuids(message.params) };
+    const validated = method === 'debugScopeState' ? params : validateParams(type, method, params);
+    const converted = { id, guid, method, params: validated };
     debug('pw:channel:command')(converted);
-    this.onmessage(JSON.stringify(converted));
+    this.onmessage(converted);
     return new Promise((resolve, reject) => this._callbacks.set(id, { resolve, reject }));
   }
 
   _debugScopeState(): any {
-    const scopeState: any = {};
-    scopeState.objects = [...this._objects.keys()];
-    scopeState.scopes = [...this._scopes.values()].map(scope => ({
-      _guid: scope._guid,
-      objects: [...scope._objects.keys()]
-    }));
-    return scopeState;
+    return this._rootObject._debugScopeState();
   }
 
-  dispatch(message: string) {
-    const parsedMessage = JSON.parse(message);
-    const { id, guid, method, params, result, error } = parsedMessage;
+  dispatch(message: object) {
+    const { id, guid, method, params, result, error } = message as any;
     if (id) {
-      debug('pw:channel:response')(parsedMessage);
+      debug('pw:channel:response')(message);
       const callback = this._callbacks.get(id)!;
       this._callbacks.delete(id);
       if (error)
@@ -82,34 +96,20 @@ export class Connection {
       return;
     }
 
-    debug('pw:channel:event')(parsedMessage);
+    debug('pw:channel:event')(message);
     if (method === '__create__') {
-      const scope = this._scopes.get(guid)!;
-      scope.createRemoteObject(params.type, params.guid, params.initializer);
+      this._createRemoteObject(guid, params.type, params.guid, params.initializer);
+      return;
+    }
+    if (method === '__dispose__') {
+      this._objects.get(guid)!._dispose();
       return;
     }
     const object = this._objects.get(guid)!;
     object._channel.emit(method, this._replaceGuidsWithChannels(params));
   }
 
-
-  private _replaceChannelsWithGuids(payload: any): any {
-    if (!payload)
-      return payload;
-    if (Array.isArray(payload))
-      return payload.map(p => this._replaceChannelsWithGuids(p));
-    if (payload._object instanceof ChannelOwner)
-      return { guid: payload._object.guid };
-    if (typeof payload === 'object') {
-      const result: any = {};
-      for (const key of Object.keys(payload))
-        result[key] = this._replaceChannelsWithGuids(payload[key]);
-      return result;
-    }
-    return payload;
-  }
-
-  _replaceGuidsWithChannels(payload: any): any {
+  private _replaceGuidsWithChannels(payload: any): any {
     if (!payload)
       return payload;
     if (Array.isArray(payload))
@@ -125,119 +125,123 @@ export class Connection {
     return payload;
   }
 
-  createScope(guid: string): ConnectionScope {
-    const scope = new ConnectionScope(this, guid);
-    this._scopes.set(guid, scope);
-    return scope;
-  }
-}
-
-export class ConnectionScope {
-  private _connection: Connection;
-  readonly _objects = new Map<string, ChannelOwner<any, any>>();
-  private _children = new Set<ConnectionScope>();
-  private _parent: ConnectionScope | undefined;
-  readonly _guid: string;
-
-  constructor(connection: Connection, guid: string) {
-    this._connection = connection;
-    this._guid = guid;
-  }
-
-  createChild(guid: string): ConnectionScope {
-    const scope = this._connection.createScope(guid);
-    this._children.add(scope);
-    scope._parent = this;
-    return scope;
-  }
-
-  dispose() {
-    // Take care of hierarchy.
-    for (const child of [...this._children])
-      child.dispose();
-    this._children.clear();
-
-    // Delete self from scopes and objects.
-    this._connection._scopes.delete(this._guid);
-    this._connection._objects.delete(this._guid);
-
-    // Delete all of the objects from connection.
-    for (const guid of this._objects.keys())
-      this._connection._objects.delete(guid);
-
-    // Clean up from parent.
-    if (this._parent) {
-      this._parent._objects.delete(this._guid);
-      this._parent._children.delete(this);
-    }
-  }
-
-  async sendMessageToServer(message: { guid: string, method: string, params: any }): Promise<any> {
-    return this._connection.sendMessageToServer(message);
-  }
-
-  createRemoteObject(type: string, guid: string, initializer: any): any {
+  private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
+    const parent = this._objects.get(parentGuid)!;
     let result: ChannelOwner<any, any>;
-    initializer = this._connection._replaceGuidsWithChannels(initializer);
+    initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
-      case 'bindingCall':
-        result = new BindingCall(this, guid, initializer);
+      case 'BindingCall':
+        result = new BindingCall(parent, type, guid, initializer);
         break;
-      case 'browser':
-        result = new Browser(this, guid, initializer);
+      case 'Browser':
+        if ((parent as BrowserType).name() === 'chromium')
+          result = new ChromiumBrowser(parent, type, guid, initializer);
+        else if ((parent as BrowserType).name() === 'webkit')
+          result = new WebKitBrowser(parent, type, guid, initializer);
+        else if ((parent as BrowserType).name() === 'firefox')
+          result = new FirefoxBrowser(parent, type, guid, initializer);
+        else
+          result = new Browser(parent, type, guid, initializer);
         break;
-      case 'browserServer':
-        result = new BrowserServer(this, guid, initializer);
+      case 'BrowserContext':
+        let browserName = '';
+        if (parent instanceof ElectronApplication) {
+          // Launching electron produces ElectronApplication parent for BrowserContext.
+          browserName = 'electron';
+        } else if (parent instanceof Browser) {
+          // Launching a browser produces Browser parent for BrowserContext.
+          browserName = parent._browserType.name();
+        } else {
+          // Launching persistent context produces BrowserType parent for BrowserContext.
+          browserName = (parent as BrowserType).name();
+        }
+        if (browserName === 'chromium')
+          result = new ChromiumBrowserContext(parent, type, guid, initializer);
+        else
+          result = new BrowserContext(parent, type, guid, initializer, browserName);
         break;
-      case 'browserType':
-        result = new BrowserType(this, guid, initializer);
+      case 'BrowserServer':
+        result = new BrowserServer(parent, type, guid, initializer);
         break;
-      case 'context':
-        result = new BrowserContext(this, guid, initializer);
+      case 'BrowserType':
+        result = new BrowserType(parent, type, guid, initializer);
         break;
-      case 'consoleMessage':
-        result = new ConsoleMessage(this, guid, initializer);
+      case 'CDPSession':
+        result = new CDPSession(parent, type, guid, initializer);
         break;
-      case 'dialog':
-        result = new Dialog(this, guid, initializer);
+      case 'ConsoleMessage':
+        result = new ConsoleMessage(parent, type, guid, initializer);
         break;
-      case 'download':
-        result = new Download(this, guid, initializer);
+      case 'Dialog':
+        result = new Dialog(parent, type, guid, initializer);
         break;
-      case 'elementHandle':
-        result = new ElementHandle(this, guid, initializer);
+      case 'Download':
+        result = new Download(parent, type, guid, initializer);
         break;
-      case 'frame':
-        result = new Frame(this, guid, initializer);
+      case 'Electron':
+        result = new Electron(parent, type, guid, initializer);
         break;
-      case 'jsHandle':
-        result = new JSHandle(this, guid, initializer);
+      case 'ElectronApplication':
+        result = new ElectronApplication(parent, type, guid, initializer);
         break;
-      case 'page':
-        result = new Page(this, guid, initializer);
+      case 'ElementHandle':
+        result = new ElementHandle(parent, type, guid, initializer);
         break;
-      case 'request':
-        result = new Request(this, guid, initializer);
+      case 'Frame':
+        result = new Frame(parent, type, guid, initializer);
         break;
-      case 'response':
-        result = new Response(this, guid, initializer);
+      case 'JSHandle':
+        result = new JSHandle(parent, type, guid, initializer);
         break;
-      case 'route':
-        result = new Route(this, guid, initializer);
+      case 'Page':
+        result = new Page(parent, type, guid, initializer);
         break;
-      case 'worker':
-        result = new Worker(this, guid, initializer);
+      case 'Playwright':
+        result = new Playwright(parent, type, guid, initializer);
+        break;
+      case 'Request':
+        result = new Request(parent, type, guid, initializer);
+        break;
+      case 'Stream':
+        result = new Stream(parent, type, guid, initializer);
+        break;
+      case 'Response':
+        result = new Response(parent, type, guid, initializer);
+        break;
+      case 'Route':
+        result = new Route(parent, type, guid, initializer);
+        break;
+      case 'Selectors':
+        result = new Selectors(parent, type, guid, initializer);
+        break;
+      case 'Worker':
+        result = new Worker(parent, type, guid, initializer);
         break;
       default:
         throw new Error('Missing type ' + type);
     }
-    this._connection._objects.set(guid, result);
-    this._objects.set(guid, result);
-    const callback = this._connection._waitingForObject.get(guid);
+    const callback = this._waitingForObject.get(guid);
     if (callback) {
       callback(result);
-      this._connection._waitingForObject.delete(guid);
+      this._waitingForObject.delete(guid);
     }
     return result;
   }
+}
+
+const tChannel = (name: string): Validator => {
+  return (arg: any, path: string) => {
+    if (arg._object instanceof ChannelOwner && (name === '*' || arg._object._type === name))
+      return { guid: arg._object._guid };
+    throw new ValidationError(`${path}: expected ${name}`);
+  };
+};
+
+const scheme = createScheme(tChannel);
+
+function validateParams(type: string, method: string, params: any): any {
+  const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
+  if (!scheme[name])
+    throw new ValidationError(`Unknown scheme for ${type}.${method}`);
+  return scheme[name](params, '');
 }

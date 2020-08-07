@@ -168,7 +168,13 @@ export interface CDPSession {
   ): Promise<Protocol.CommandReturnValues[T]>;
 }
 
-type DeviceDescriptor = {viewport: BrowserNewContextOptionsViewport, userAgent: string};
+type DeviceDescriptor = {
+  viewport: BrowserNewContextOptionsViewport;
+  userAgent: string;
+  deviceScaleFactor: number;
+  isMobile: boolean;
+  hasTouch: boolean;
+};
 
 export namespace errors {
 

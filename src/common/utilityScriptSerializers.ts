@@ -14,45 +14,71 @@
  * limitations under the License.
  */
 
-export function parseEvaluationResultValue(value: any, handles: any[] = []): any {
-  if (value === undefined)
+export type SerializedValue =
+    undefined | boolean | number | string |
+    { v: 'null' | 'undefined' | 'NaN' | 'Infinity' | '-Infinity' | '-0' } |
+    { d: string } |
+    { r: { p: string, f: string} } |
+    { a: SerializedValue[] } |
+    { o: { k: string, v: SerializedValue }[] } |
+    { h: number };
+
+function isRegExp(obj: any): obj is RegExp {
+  return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
+}
+
+function isDate(obj: any): obj is Date {
+  return obj instanceof Date || Object.prototype.toString.call(obj) === '[object Date]';
+}
+
+function isError(obj: any): obj is Error {
+  return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
+}
+
+export function parseEvaluationResultValue(value: SerializedValue, handles: any[] = []): any {
+  if (Object.is(value, undefined))
     return undefined;
-  if (typeof value === 'object') {
-    if (value.v === 'undefined')
+  if (typeof value === 'object' && value) {
+    if ('v' in value) {
+      if (value.v === 'undefined')
+        return undefined;
+      if (value.v === 'null')
+        return null;
+      if (value.v === 'NaN')
+        return NaN;
+      if (value.v === 'Infinity')
+        return Infinity;
+      if (value.v === '-Infinity')
+        return -Infinity;
+      if (value.v === '-0')
+        return -0;
       return undefined;
-    if (value.v === null)
-      return null;
-    if (value.v === 'NaN')
-      return NaN;
-    if (value.v === 'Infinity')
-      return Infinity;
-    if (value.v === '-Infinity')
-      return -Infinity;
-    if (value.v === '-0')
-      return -0;
-    if (value.d)
-      return new Date(value.d);
-    if (value.r)
-      return new RegExp(value.r[0], value.r[1]);
-    if (value.a)
-      return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
-    if (value.o) {
-      for (const name of Object.keys(value.o))
-        value.o[name] = parseEvaluationResultValue(value.o[name], handles);
-      return value.o;
     }
-    if (typeof value.h === 'number')
+    if ('d' in value)
+      return new Date(value.d);
+    if ('r' in value)
+      return new RegExp(value.r.p, value.r.f);
+    if ('a' in value)
+      return value.a.map((a: any) => parseEvaluationResultValue(a, handles));
+    if ('o' in value) {
+      const result: any = {};
+      for (const { k, v } of value.o)
+        result[k] = parseEvaluationResultValue(v, handles);
+      return result;
+    }
+    if ('h' in value)
       return handles[value.h];
   }
   return value;
 }
 
-export function serializeAsCallArgument(value: any, jsHandleSerializer: (value: any) => { fallThrough?: any }): any {
-  return serialize(value, jsHandleSerializer, new Set());
+export type HandleOrValue = { h: number } | { fallThrough: any };
+export function serializeAsCallArgument(value: any, handleSerializer: (value: any) => HandleOrValue): SerializedValue {
+  return serialize(value, handleSerializer, new Set());
 }
 
-function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough?: any }, visited: Set<any>): any {
-  const result = jsHandleSerializer(value);
+function serialize(value: any, handleSerializer: (value: any) => HandleOrValue, visited: Set<any>): SerializedValue {
+  const result = handleSerializer(value);
   if ('fallThrough' in result)
     value = result.fallThrough;
   else
@@ -65,7 +91,7 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
   if (Object.is(value, undefined))
     return { v: 'undefined' };
   if (Object.is(value, null))
-    return { v: null };
+    return { v: 'null' };
   if (Object.is(value, NaN))
     return { v: 'NaN' };
   if (Object.is(value, Infinity))
@@ -74,33 +100,38 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
     return { v: '-Infinity' };
   if (Object.is(value, -0))
     return { v: '-0' };
-  if (isPrimitiveValue(value))
+
+  if (typeof value === 'boolean')
+    return value;
+  if (typeof value === 'number')
+    return value;
+  if (typeof value === 'string')
     return value;
 
-  if (value instanceof Error) {
+  if (isError(value)) {
     const error = value;
     if ('captureStackTrace' in global.Error) {
       // v8
-      return error.stack;
+      return error.stack || '';
     }
     return `${error.name}: ${error.message}\n${error.stack}`;
   }
-  if (value instanceof Date)
+  if (isDate(value))
     return { d: value.toJSON() };
-  if (value instanceof RegExp)
-    return { r: [ value.source, value.flags ] };
+  if (isRegExp(value))
+    return { r: { p: value.source, f: value.flags } };
 
   if (Array.isArray(value)) {
-    const result = [];
+    const a = [];
     visited.add(value);
     for (let i = 0; i < value.length; ++i)
-      result.push(serialize(value[i], jsHandleSerializer, visited));
+      a.push(serialize(value[i], handleSerializer, visited));
     visited.delete(value);
-    return { a: result };
+    return { a };
   }
 
   if (typeof value === 'object') {
-    const result: any = {};
+    const o: { k: string, v: SerializedValue }[] = [];
     visited.add(value);
     for (const name of Object.keys(value)) {
       let item;
@@ -110,22 +141,11 @@ function serialize(value: any, jsHandleSerializer: (value: any) => { fallThrough
         continue;  // native bindings will throw sometimes
       }
       if (name === 'toJSON' && typeof item === 'function')
-        result[name] = {};
+        o.push({ k: name, v: { o: [] } });
       else
-        result[name] = serialize(item, jsHandleSerializer, visited);
+        o.push({ k: name, v: serialize(item, handleSerializer, visited) });
     }
     visited.delete(value);
-    return { o: result };
-  }
-}
-
-export function isPrimitiveValue(value: any): boolean {
-  switch (typeof value) {
-    case 'boolean':
-    case 'number':
-    case 'string':
-      return true;
-    default:
-      return false;
+    return { o };
   }
 }

@@ -17,6 +17,9 @@
 
 const fs = require('fs');
 const utils = require('./utils');
+const path = require('path');
+const pirates = require('pirates');
+const babel = require('@babel/core');
 const TestRunner = require('../utils/testrunner/');
 const { PlaywrightEnvironment, BrowserTypeEnvironment, BrowserEnvironment, PageEnvironment} = require('./environments.js');
 
@@ -79,15 +82,17 @@ function collect(browserNames) {
   const { setUnderTest } = require(require('path').join(playwrightPath, 'lib/helper.js'));
   setUnderTest();
 
-  testRunner.collector().useEnvironment(new PlaywrightEnvironment(playwright));
+  const playwrightEnvironment = new PlaywrightEnvironment(playwright);
+  testRunner.collector().useEnvironment(playwrightEnvironment);
   for (const e of config.globalEnvironments || [])
     testRunner.collector().useEnvironment(e);
 
+  // TODO(rpc): do not use global playwright and browserType, rely solely on environments.
   global.playwright = playwright;
 
   for (const browserName of browserNames) {
     const browserType = playwright[browserName];
-    const browserTypeEnvironment = new BrowserTypeEnvironment(browserType);
+    const browserTypeEnvironment = new BrowserTypeEnvironment(browserName);
 
     // TODO: maybe launch options per browser?
     const launchOptions = {
@@ -122,9 +127,7 @@ function collect(browserNames) {
         const skip = spec.browsers && !spec.browsers.includes(browserName);
         (skip ? xdescribe : describe)(spec.title || '', () => {
           for (const e of spec.environments || ['page']) {
-            if (e === 'browser') {
-              testRunner.collector().useEnvironment(browserEnvironment);
-            } else if (e === 'page') {
+            if (e === 'page') {
               testRunner.collector().useEnvironment(browserEnvironment);
               testRunner.collector().useEnvironment(pageEnvironment);
             } else {
@@ -132,7 +135,18 @@ function collect(browserNames) {
             }
           }
           for (const file of spec.files || []) {
+            const revert = pirates.addHook((code, filename) => {
+              const result = babel.transformFileSync(filename, {
+                presets: [
+                  ['@babel/preset-env', {targets: {node: 'current'}}],
+                  '@babel/preset-typescript']
+              });
+              return result.code;
+            }, {
+              exts: ['.ts']
+            });
             require(file);
+            revert();
             delete require.cache[require.resolve(file)];
           }
         });
@@ -156,7 +170,7 @@ module.exports = collect;
 if (require.main === module) {
   console.log('Testing on Node', process.version);
   const browserNames = ['chromium', 'firefox', 'webkit'].filter(name => {
-    return process.env.BROWSER === name || process.env.BROWSER === 'all';
+    return process.env.BROWSER === name || !process.env.BROWSER;
   });
   const testRunner = collect(browserNames);
 

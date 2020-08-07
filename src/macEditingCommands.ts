@@ -17,7 +17,6 @@
 
 export const macEditingCommands: {[key: string]: string|string[]} = {
   'Backspace': 'deleteBackward:',
-  'Tab': 'insertTab:',
   'Enter': 'insertNewline:',
   'NumpadEnter': 'insertNewline:',
   'Escape': 'cancelOperation:',
@@ -34,7 +33,6 @@ export const macEditingCommands: {[key: string]: string|string[]} = {
   'Shift+Backspace': 'deleteBackward:',
   'Shift+Enter': 'insertNewline:',
   'Shift+NumpadEnter': 'insertNewline:',
-  'Shift+Tab': 'insertBacktab:',
   'Shift+Escape': 'cancelOperation:',
   'Shift+ArrowUp': 'moveUpAndModifySelection:',
   'Shift+ArrowDown': 'moveDownAndModifySelection:',
@@ -87,7 +85,6 @@ export const macEditingCommands: {[key: string]: string|string[]} = {
   'Shift+Control+ArrowLeft': 'moveToLeftEndOfLineAndModifySelection:',
   'Shift+Control+ArrowRight': 'moveToRightEndOfLineAndModifySelection:',
   'Alt+Backspace': 'deleteWordBackward:',
-  'Alt+Tab': 'insertTabIgnoringFieldEditor:',
   'Alt+Enter': 'insertNewlineIgnoringFieldEditor:',
   'Alt+NumpadEnter': 'insertNewlineIgnoringFieldEditor:',
   'Alt+Escape': 'complete:',
@@ -99,7 +96,6 @@ export const macEditingCommands: {[key: string]: string|string[]} = {
   'Alt+PageUp': 'pageUp:',
   'Alt+PageDown': 'pageDown:',
   'Shift+Alt+Backspace': 'deleteWordBackward:',
-  'Shift+Alt+Tab': 'insertTabIgnoringFieldEditor:',
   'Shift+Alt+Enter': 'insertNewlineIgnoringFieldEditor:',
   'Shift+Alt+NumpadEnter': 'insertNewlineIgnoringFieldEditor:',
   'Shift+Alt+Escape': 'complete:',

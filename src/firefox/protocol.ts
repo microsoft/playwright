@@ -409,6 +409,9 @@ export module Protocol {
       }|null;
     };
     export type setViewportSizeReturnValue = void;
+    export type bringToFrontParameters = {
+    };
+    export type bringToFrontReturnValue = void;
     export type setEmulatedMediaParameters = {
       type?: ("screen"|"print"|"");
       colorScheme?: ("dark"|"light"|"no-preference");
@@ -594,6 +597,15 @@ export module Protocol {
       message: string;
     };
     export type sendMessageToWorkerReturnValue = void;
+    export type startVideoRecordingParameters = {
+      file: string;
+      width: number;
+      height: number;
+      scale?: number;
+    };
+    export type startVideoRecordingReturnValue = void;
+    export type stopVideoRecordingParameters = void;
+    export type stopVideoRecordingReturnValue = void;
   }
   export module Runtime {
     export type RemoteObject = {
@@ -954,6 +966,7 @@ export module Protocol {
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
     "Page.setViewportSize": Page.setViewportSizeParameters;
+    "Page.bringToFront": Page.bringToFrontParameters;
     "Page.setEmulatedMedia": Page.setEmulatedMediaParameters;
     "Page.setCacheDisabled": Page.setCacheDisabledParameters;
     "Page.describeNode": Page.describeNodeParameters;
@@ -976,6 +989,8 @@ export module Protocol {
     "Page.handleDialog": Page.handleDialogParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.sendMessageToWorker": Page.sendMessageToWorkerParameters;
+    "Page.startVideoRecording": Page.startVideoRecordingParameters;
+    "Page.stopVideoRecording": Page.stopVideoRecordingParameters;
     "Runtime.evaluate": Runtime.evaluateParameters;
     "Runtime.callFunction": Runtime.callFunctionParameters;
     "Runtime.disposeObject": Runtime.disposeObjectParameters;
@@ -1022,6 +1037,7 @@ export module Protocol {
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
     "Page.setViewportSize": Page.setViewportSizeReturnValue;
+    "Page.bringToFront": Page.bringToFrontReturnValue;
     "Page.setEmulatedMedia": Page.setEmulatedMediaReturnValue;
     "Page.setCacheDisabled": Page.setCacheDisabledReturnValue;
     "Page.describeNode": Page.describeNodeReturnValue;
@@ -1044,6 +1060,8 @@ export module Protocol {
     "Page.handleDialog": Page.handleDialogReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.sendMessageToWorker": Page.sendMessageToWorkerReturnValue;
+    "Page.startVideoRecording": Page.startVideoRecordingReturnValue;
+    "Page.stopVideoRecording": Page.stopVideoRecordingReturnValue;
     "Runtime.evaluate": Runtime.evaluateReturnValue;
     "Runtime.callFunction": Runtime.callFunctionReturnValue;
     "Runtime.disposeObject": Runtime.disposeObjectReturnValue;

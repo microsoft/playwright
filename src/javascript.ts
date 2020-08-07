@@ -196,7 +196,7 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
     return handles.length - 1;
   };
 
-  args = args.map(arg => serializeAsCallArgument(arg, (handle: any): { h?: number, fallThrough?: any } => {
+  args = args.map(arg => serializeAsCallArgument(arg, handle => {
     if (handle instanceof JSHandle) {
       if (!handle._objectId)
         return { fallThrough: handle._value };

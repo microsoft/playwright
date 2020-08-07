@@ -17,24 +17,26 @@
 
 const path = require('path');
 const {spawn, execSync} = require('child_process');
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = require('./utils').testOptions(browserType);
+const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, HEADLESS} = testOptions;
+
+const playwrightPath = path.join(__dirname, '..');
 
 class Wrapper {
-  constructor(state, extraOptions) {
+  constructor(browserType, defaultBrowserOptions, extraOptions) {
     this._output = new Map();
     this._outputCallback = new Map();
 
-    this._browserType = state.browserType;
-    const launchOptions = {...state.defaultBrowserOptions,
+    this._browserType = browserType;
+    const launchOptions = {...defaultBrowserOptions,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
-      executablePath: state.browserType.executablePath(),
+      executablePath: browserType.executablePath(),
       logger: undefined,
     };
     const options = {
-      playwrightFile: path.join(state.playwrightPath, 'index'),
-      browserTypeName: state.browserType.name(),
+      playwrightPath,
+      browserTypeName: browserType.name(),
       launchOptions,
       ...extraOptions,
     };
@@ -89,102 +91,103 @@ class Wrapper {
   }
 }
 
-async function setup(state, options = {}) {
-  const wrapper = new Wrapper(state, options);
+registerFixture('wrapper', async ({browserType, defaultBrowserOptions}, test) => {
+  const wrapper = new Wrapper(browserType, defaultBrowserOptions);
   await wrapper.connect();
-  return wrapper;
-}
-
-describe('Fixtures', function() {
-  it.slow()('should close the browser when the node process closes', async state => {
-    const wrapper = await setup(state);
-    if (WIN)
-      execSync(`taskkill /pid ${wrapper.child().pid} /T /F`);
-    else
-      process.kill(wrapper.child().pid);
-    expect(await wrapper.childExitCode()).toBe(WIN ? 1 : 0);
-    // We might not get browser exitCode in time when killing the parent node process,
-    // so we don't check it here.
-  });
-
-  describe.skip(WIN).skip(!HEADLESS)('signals', () => {
-    // Cannot reliably send signals on Windows.
-    it.slow()('should report browser close signal', async state => {
-      const wrapper = await setup(state);
-      const pid = await wrapper.out('pid');
-      process.kill(-pid, 'SIGTERM');
-      expect(await wrapper.out('exitCode')).toBe('null');
-      expect(await wrapper.out('signal')).toBe('SIGTERM');
-      process.kill(wrapper.child().pid);
-      await wrapper.childExitCode();
-    });
-    it.slow()('should report browser close signal 2', async state => {
-      const wrapper = await setup(state);
-      const pid = await wrapper.out('pid');
-      process.kill(-pid, 'SIGKILL');
-      expect(await wrapper.out('exitCode')).toBe('null');
-      expect(await wrapper.out('signal')).toBe('SIGKILL');
-      process.kill(wrapper.child().pid);
-      await wrapper.childExitCode();
-    });
-    it.slow()('should close the browser on SIGINT', async state => {
-      const wrapper = await setup(state);
-      process.kill(wrapper.child().pid, 'SIGINT');
-      expect(await wrapper.out('exitCode')).toBe('0');
-      expect(await wrapper.out('signal')).toBe('null');
-      expect(await wrapper.childExitCode()).toBe(130);
-    });
-    it.slow()('should close the browser on SIGTERM', async state => {
-      const wrapper = await setup(state);
-      process.kill(wrapper.child().pid, 'SIGTERM');
-      expect(await wrapper.out('exitCode')).toBe('0');
-      expect(await wrapper.out('signal')).toBe('null');
-      expect(await wrapper.childExitCode()).toBe(0);
-    });
-    it.slow()('should close the browser on SIGHUP', async state => {
-      const wrapper = await setup(state);
-      process.kill(wrapper.child().pid, 'SIGHUP');
-      expect(await wrapper.out('exitCode')).toBe('0');
-      expect(await wrapper.out('signal')).toBe('null');
-      expect(await wrapper.childExitCode()).toBe(0);
-    });
-    it.slow()('should kill the browser on double SIGINT', async state => {
-      const wrapper = await setup(state, { stallOnClose: true });
-      process.kill(wrapper.child().pid, 'SIGINT');
-      await wrapper.out('stalled');
-      process.kill(wrapper.child().pid, 'SIGINT');
-      expect(await wrapper.out('exitCode')).toBe('null');
-      expect(await wrapper.out('signal')).toBe('SIGKILL');
-      expect(await wrapper.childExitCode()).toBe(130);
-    });
-    it.slow()('should kill the browser on SIGINT + SIGTERM', async state => {
-      const wrapper = await setup(state, { stallOnClose: true });
-      process.kill(wrapper.child().pid, 'SIGINT');
-      await wrapper.out('stalled');
-      process.kill(wrapper.child().pid, 'SIGTERM');
-      expect(await wrapper.out('exitCode')).toBe('null');
-      expect(await wrapper.out('signal')).toBe('SIGKILL');
-      expect(await wrapper.childExitCode()).toBe(0);
-    });
-    it.slow()('should kill the browser on SIGTERM + SIGINT', async state => {
-      const wrapper = await setup(state, { stallOnClose: true });
-      process.kill(wrapper.child().pid, 'SIGTERM');
-      await wrapper.out('stalled');
-      process.kill(wrapper.child().pid, 'SIGINT');
-      expect(await wrapper.out('exitCode')).toBe('null');
-      expect(await wrapper.out('signal')).toBe('SIGKILL');
-      expect(await wrapper.childExitCode()).toBe(130);
-    });
-  });
+  await test(wrapper);
 });
 
-describe('StackTrace', () => {
-  it('caller file path', async state => {
-    const stackTrace = require(path.join(state.playwrightPath, 'lib', 'utils', 'stackTrace'));
-    const callme = require('./fixtures/callback');
-    const filePath = callme(() => {
-      return stackTrace.getCallerFilePath(path.join(__dirname, 'fixtures') + path.sep);
-    });
-    expect(filePath).toBe(__filename);
+registerFixture('stallingWrapper', async ({browserType, defaultBrowserOptions}, test) => {
+  const wrapper = new Wrapper(browserType, defaultBrowserOptions, { stallOnClose: true });
+  await wrapper.connect();
+  await test(wrapper);
+});
+
+it.slow()('should close the browser when the node process closes', async ({wrapper}) => {
+  if (WIN)
+    execSync(`taskkill /pid ${wrapper.child().pid} /T /F`);
+  else
+    process.kill(wrapper.child().pid);
+  expect(await wrapper.childExitCode()).toBe(WIN ? 1 : 0);
+  // We might not get browser exitCode in time when killing the parent node process,
+  // so we don't check it here.
+});
+
+// Cannot reliably send signals on Windows.
+it.skip(WIN || !HEADLESS).slow()('should report browser close signal', async ({wrapper}) => {
+  const pid = await wrapper.out('pid');
+  process.kill(-pid, 'SIGTERM');
+  expect(await wrapper.out('exitCode')).toBe('null');
+  expect(await wrapper.out('signal')).toBe('SIGTERM');
+  process.kill(wrapper.child().pid);
+  await wrapper.childExitCode();
+});
+
+it.skip(WIN || !HEADLESS).slow()('should report browser close signal 2', async ({wrapper}) => {
+  const pid = await wrapper.out('pid');
+  process.kill(-pid, 'SIGKILL');
+  expect(await wrapper.out('exitCode')).toBe('null');
+  expect(await wrapper.out('signal')).toBe('SIGKILL');
+  process.kill(wrapper.child().pid);
+  await wrapper.childExitCode();
+});
+
+it.skip(WIN || !HEADLESS).slow()('should close the browser on SIGINT', async ({wrapper}) => {
+  process.kill(wrapper.child().pid, 'SIGINT');
+  expect(await wrapper.out('exitCode')).toBe('0');
+  expect(await wrapper.out('signal')).toBe('null');
+  expect(await wrapper.childExitCode()).toBe(130);
+});
+
+it.skip(WIN || !HEADLESS).slow()('should close the browser on SIGTERM', async ({wrapper}) => {
+  process.kill(wrapper.child().pid, 'SIGTERM');
+  expect(await wrapper.out('exitCode')).toBe('0');
+  expect(await wrapper.out('signal')).toBe('null');
+  expect(await wrapper.childExitCode()).toBe(0);
+});
+
+it.skip(WIN || !HEADLESS).slow()('should close the browser on SIGHUP', async ({wrapper}) => {
+  process.kill(wrapper.child().pid, 'SIGHUP');
+  expect(await wrapper.out('exitCode')).toBe('0');
+  expect(await wrapper.out('signal')).toBe('null');
+  expect(await wrapper.childExitCode()).toBe(0);
+});
+
+it.skip(WIN || !HEADLESS).slow()('should kill the browser on double SIGINT', async ({stallingWrapper}) => {
+  const wrapper = stallingWrapper;
+  process.kill(wrapper.child().pid, 'SIGINT');
+  await wrapper.out('stalled');
+  process.kill(wrapper.child().pid, 'SIGINT');
+  expect(await wrapper.out('exitCode')).toBe('null');
+  expect(await wrapper.out('signal')).toBe('SIGKILL');
+  expect(await wrapper.childExitCode()).toBe(130);
+});
+
+it.skip(WIN || !HEADLESS).slow()('should kill the browser on SIGINT + SIGTERM', async ({stallingWrapper}) => {
+  const wrapper = stallingWrapper;
+  process.kill(wrapper.child().pid, 'SIGINT');
+  await wrapper.out('stalled');
+  process.kill(wrapper.child().pid, 'SIGTERM');
+  expect(await wrapper.out('exitCode')).toBe('null');
+  expect(await wrapper.out('signal')).toBe('SIGKILL');
+  expect(await wrapper.childExitCode()).toBe(0);
+});
+
+it.skip(WIN || !HEADLESS).slow()('should kill the browser on SIGTERM + SIGINT', async ({stallingWrapper}) => {
+  const wrapper = stallingWrapper;
+  process.kill(wrapper.child().pid, 'SIGTERM');
+  await wrapper.out('stalled');
+  process.kill(wrapper.child().pid, 'SIGINT');
+  expect(await wrapper.out('exitCode')).toBe('null');
+  expect(await wrapper.out('signal')).toBe('SIGKILL');
+  expect(await wrapper.childExitCode()).toBe(130);
+});
+
+it('caller file path', async ({}) => {
+  const stackTrace = require(path.join(playwrightPath, 'lib', 'utils', 'stackTrace'));
+  const callme = require('./fixtures/callback');
+  const filePath = callme(() => {
+    return stackTrace.getCallerFilePath(path.join(__dirname, 'fixtures') + path.sep);
   });
+  expect(filePath).toBe(__filename);
 });

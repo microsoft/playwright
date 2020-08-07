@@ -23,13 +23,15 @@ const removeFolder = require('rimraf');
 
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
-
-const mkdtempAsync = util.promisify(require('fs').mkdtemp);
-const removeFolderAsync = util.promisify(removeFolder);
+const browserName = process.env.BROWSER || 'chromium';
 
 let platform = os.platform();
 
 const utils = module.exports = {
+  mkdtempAsync: util.promisify(fs.mkdtemp),
+
+  removeFolderAsync: util.promisify(removeFolder),
+
   /**
    * @return {string}
    */
@@ -94,7 +96,7 @@ const utils = module.exports = {
     expect(await page.evaluate('window.innerHeight')).toBe(height);
   },
 
-  registerEngine: async (name, script, options) => {
+  registerEngine: async (playwright, name, script, options) => {
     try {
       await playwright.selectors.register(name, script, options);
     } catch (e) {
@@ -180,11 +182,11 @@ const utils = module.exports = {
   },
 
   makeUserDataDir: async function() {
-    return await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
+    return await utils.mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
   },
 
   removeUserDataDir: async function(dir) {
-    await removeFolderAsync(dir).catch(e => {});
+    await utils.removeFolderAsync(dir).catch(e => {});
   },
 
   testOptions(browserType) {
@@ -202,8 +204,9 @@ const utils = module.exports = {
       GOLDEN_DIR,
       OUTPUT_DIR,
       ASSETS_DIR,
-      USES_HOOKS: !!process.env.PWCHANNEL,
+      USES_HOOKS: process.env.PWCHANNEL === 'wire',
       CHANNEL: !!process.env.PWCHANNEL,
+      HEADLESS: !!valueFromEnv('HEADLESS', true),
     };
   },
 
@@ -244,4 +247,25 @@ const utils = module.exports = {
     };
     return logger;
   },
+
+  expectSSLError(errorMessage) {
+    if (browserName === 'chromium') {
+      expect(errorMessage).toContain('net::ERR_CERT_AUTHORITY_INVALID');
+    } else if (browserName === 'webkit') {
+      if (platform === 'darwin')
+        expect(errorMessage).toContain('The certificate for this server is invalid');
+      else if (platform === 'win32')
+        expect(errorMessage).toContain('SSL peer certificate or SSH remote key was not OK');
+      else
+        expect(errorMessage).toContain('Unacceptable TLS certificate');
+    } else {
+      expect(errorMessage).toContain('SSL_ERROR_UNKNOWN');
+    }
+  },
 };
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
+}

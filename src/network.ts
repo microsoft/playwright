@@ -18,7 +18,7 @@ import * as frames from './frames';
 import * as types from './types';
 import { assert, helper } from './helper';
 import { URLSearchParams } from 'url';
-import { normalizeFulfillParameters } from './rpc/serializers';
+import { normalizeFulfillParameters, normalizeContinueOverrides } from './converters';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -78,14 +78,14 @@ export class Request {
   private _url: string;
   private _resourceType: string;
   private _method: string;
-  private _postData: string | null;
+  private _postData: Buffer | null;
   private _headers: types.Headers;
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
 
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: string | null, headers: types.Headers) {
+    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.Headers) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
     this._routeDelegate = routeDelegate;
@@ -121,11 +121,16 @@ export class Request {
   }
 
   postData(): string | null {
+    return this._postData ? this._postData.toString('utf8') : null;
+  }
+
+  postDataBuffer(): Buffer | null {
     return this._postData;
   }
 
   postDataJSON(): Object | null {
-    if (!this._postData)
+    const postData = this.postData();
+    if (!postData)
       return null;
 
     const contentType = this.headers()['content-type'];
@@ -134,13 +139,13 @@ export class Request {
 
     if (contentType === 'application/x-www-form-urlencoded') {
       const entries: Record<string, string> = {};
-      const parsed = new URLSearchParams(this._postData);
+      const parsed = new URLSearchParams(postData);
       for (const [k, v] of parsed.entries())
         entries[k] = v;
       return entries;
     }
 
-    return JSON.parse(this._postData);
+    return JSON.parse(postData);
   }
 
   headers(): {[key: string]: string} {
@@ -221,9 +226,9 @@ export class Route {
     await this._delegate.fulfill(await normalizeFulfillParameters(response));
   }
 
-  async continue(overrides: { method?: string; headers?: types.Headers; postData?: string } = {}) {
+  async continue(overrides: types.ContinueOverrides = {}) {
     assert(!this._handled, 'Route is already handled!');
-    await this._delegate.continue(overrides);
+    await this._delegate.continue(normalizeContinueOverrides(overrides));
   }
 }
 
@@ -234,8 +239,8 @@ type GetResponseBodyCallback = () => Promise<Buffer>;
 export class Response {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  _finishedPromise: Promise<Error | null>;
-  private _finishedPromiseCallback: any;
+  _finishedPromise: Promise<{ error?: string }>;
+  private _finishedPromiseCallback: (arg: { error?: string }) => void = () => {};
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -255,8 +260,8 @@ export class Response {
     this._request._setResponse(this);
   }
 
-  _requestFinished(error?: Error) {
-    this._finishedPromiseCallback.call(null, error);
+  _requestFinished(error?: string) {
+    this._finishedPromiseCallback({ error });
   }
 
   url(): string {
@@ -280,14 +285,14 @@ export class Response {
   }
 
   finished(): Promise<Error | null> {
-    return this._finishedPromise;
+    return this._finishedPromise.then(({ error }) => error ? new Error(error) : null);
   }
 
   body(): Promise<Buffer> {
     if (!this._contentPromise) {
-      this._contentPromise = this._finishedPromise.then(async error => {
+      this._contentPromise = this._finishedPromise.then(async ({ error }) => {
         if (error)
-          throw error;
+          throw new Error(error);
         return this._getResponseBodyCallback();
       });
     }
@@ -316,7 +321,7 @@ export class Response {
 export interface RouteDelegate {
   abort(errorCode: string): Promise<void>;
   fulfill(response: types.NormalizedFulfillResponse): Promise<void>;
-  continue(overrides: { method?: string; headers?: types.Headers; postData?: string; }): Promise<void>;
+  continue(overrides: types.NormalizedContinueOverrides): Promise<void>;
 }
 
 // List taken from https://www.iana.org/assignments/http-status-codes/http-status-codes.xhtml with extra 306 and 418 codes.

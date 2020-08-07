@@ -26,6 +26,7 @@ import { ProxySettings } from './types';
 import { LoggerSink } from './loggerSink';
 
 export type BrowserOptions = {
+  name: string,
   loggers: Loggers,
   downloadsPath?: string,
   headful?: boolean,
@@ -43,6 +44,7 @@ export interface Browser extends EventEmitter {
   newPage(options?: BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
+  version(): string;
 }
 
 export abstract class BrowserBase extends EventEmitter implements Browser {
@@ -60,6 +62,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract _disconnect(): void;
+  abstract version(): string;
 
   async newPage(options?: BrowserContextOptions): Promise<Page> {
     const context = await this.newContext(options);
@@ -91,6 +94,8 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   _didClose() {
     for (const context of this.contexts())
       (context as BrowserContextBase)._browserClosed();
+    if (this._defaultContext)
+      this._defaultContext._browserClosed();
     this.emit(Events.Browser.Disconnected);
   }
 
