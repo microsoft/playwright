@@ -8117,6 +8117,18 @@ index 3627660395cb5f44e77a9f861d42e971dba1bbfc..4a1fb710da6b69be39c5b6bf54ee2b86
  
      // Save base64-encoded file contents to a local file path and return the path.
      // This reuses the basename of the remote file path so that the filename exposed to DOM API remains the same.
+diff --git a/Source/WebKit/UIProcess/BackingStore.h b/Source/WebKit/UIProcess/BackingStore.h
+index fe3c63e61f778762dc2c2080c74ec53fdf8c2e5f..c43a8226c9be702e248f1712e465efa396ee8969 100644
+--- a/Source/WebKit/UIProcess/BackingStore.h
++++ b/Source/WebKit/UIProcess/BackingStore.h
+@@ -60,6 +60,7 @@ public:
+ 
+ #if USE(CAIRO)
+     typedef cairo_t* PlatformGraphicsContext;
++    cairo_surface_t* surface() const;
+ #elif USE(DIRECT2D)
+     struct DXConnections {
+         ID3D11DeviceContext1* immediateContext { nullptr };
 diff --git a/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp b/Source/WebKit/UIProcess/BrowserInspectorPipe.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..dc8af6fe1c57bcd62d605fd1daa3da13361858bb
@@ -8381,7 +8393,7 @@ index 0f9e8fcde5e5137b687468621ed6f5c54d720a5d..a821adf0c49730c8de93e7adb04be8d1
  {
      NSWindow *window = [m_view window];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 61e3f6050d7f819a479cf511625320e3f6204ee9..fb1c024d4e8e7d42360e009f097b4533b22e4fa0 100644
+index 61e3f6050d7f819a479cf511625320e3f6204ee9..f80e5d8426c68a70a834a43d2f7aa33739da079a 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -8430,26 +8442,33 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..fb1c024d4e8e7d42360e009f097b4533
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
  {
      m_hasReceivedFirstUpdate = true;
-@@ -238,6 +256,25 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
+@@ -238,6 +256,32 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
      updateAcceleratedCompositingMode(layerTreeContext);
  }
  
 +#if PLATFORM(WIN)
-+void DrawingAreaProxyCoordinatedGraphics::didCompositeLayersToContext()
++void DrawingAreaProxyCoordinatedGraphics::didChangeAcceleratedCompositingMode(bool enabled)
 +{
-+    HWndDC dc(m_webPageProxy.viewWidget());
-+    RefPtr<cairo_surface_t> surface = adoptRef(cairo_win32_surface_create(dc));
-+    if (!surface) {
-+        fprintf(stderr, "didCompositeLayersToContext() failed to create surface\n");
-+        return;
-+    }
-+
-+    m_webPageProxy.inspectorController().didPaint(surface.get());
++    m_isInAcceleratedCompositingMode = enabled;
 +}
 +
-+void DrawingAreaProxyCoordinatedGraphics::setReportAcceleratedCompositingEnabled(bool enabled)
++void DrawingAreaProxyCoordinatedGraphics::captureFrame()
 +{
-+    send(Messages::DrawingArea::SetReportAcceleratedCompositing(enabled));
++    RefPtr<cairo_surface_t> surface;
++    if (m_isInAcceleratedCompositingMode) {
++        HWndDC dc(m_webPageProxy.viewWidget());
++        surface = adoptRef(cairo_win32_surface_create(dc));
++    } else {
++        if (!m_backingStore)
++            return;
++
++        surface = m_backingStore->surface();
++    }
++
++    if (!surface)
++        return;
++
++    m_webPageProxy.inspectorController().didPaint(surface.get());
 +}
 +#endif
 +
@@ -8457,7 +8476,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..fb1c024d4e8e7d42360e009f097b4533
  void DrawingAreaProxyCoordinatedGraphics::incorporateUpdate(const UpdateInfo& updateInfo)
  {
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..9778271c520667e955bc510c6deb591accfbbe47 100644
+index d7695088e7cfc4f638f157338754f9f157489749..0d2bf6d026bd3418870eb30078c95ab7bb25e507 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,7 @@
@@ -8474,7 +8493,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..9778271c520667e955bc510c6deb591a
      const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
 +    void waitForSizeUpdate(Function<void ()>&&);
 +#if PLATFORM(WIN)
-+    void setReportAcceleratedCompositingEnabled(bool enabled);
++    void captureFrame();
 +#endif
  
  private:
@@ -8484,12 +8503,12 @@ index d7695088e7cfc4f638f157338754f9f157489749..9778271c520667e955bc510c6deb591a
      void exitAcceleratedCompositingMode(uint64_t backingStoreStateID, const UpdateInfo&) override;
      void updateAcceleratedCompositingMode(uint64_t backingStoreStateID, const LayerTreeContext&) override;
 +#if PLATFORM(WIN)
-+    void didCompositeLayersToContext() override;
++    void didChangeAcceleratedCompositingMode(bool enabled) override;
 +#endif
  
  #if !PLATFORM(WPE)
      void incorporateUpdate(const UpdateInfo&);
-@@ -126,6 +134,8 @@ private:
+@@ -126,12 +134,18 @@ private:
      // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
      bool m_hasReceivedFirstUpdate { false };
  
@@ -8498,6 +8517,16 @@ index d7695088e7cfc4f638f157338754f9f157489749..9778271c520667e955bc510c6deb591a
  #if !PLATFORM(WPE)
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
+     RunLoop::Timer<DrawingAreaProxyCoordinatedGraphics> m_discardBackingStoreTimer;
+ #endif
+     std::unique_ptr<DrawingMonitor> m_drawingMonitor;
++
++#if PLATFORM(WIN)
++    bool m_isInAcceleratedCompositingMode { false };
++#endif
+ };
+ 
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b9917e7ac 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
@@ -8593,7 +8622,7 @@ index b19499a662b48e10e876b403c168dbde9bf9f3ec..2a0384a1936471f27727a6c06905704a
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.h b/Source/WebKit/UIProcess/DrawingAreaProxy.h
-index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..37592791af8d1e567ca332423eee00c8567c125f 100644
+index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..2c9d8122919bed0b6d7e6f600e5b0c0f9732d1ff 100644
 --- a/Source/WebKit/UIProcess/DrawingAreaProxy.h
 +++ b/Source/WebKit/UIProcess/DrawingAreaProxy.h
 @@ -75,6 +75,7 @@ public:
@@ -8610,12 +8639,12 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..37592791af8d1e567ca332423eee00c8
      virtual void exitAcceleratedCompositingMode(uint64_t /* backingStoreStateID */, const UpdateInfo&) { }
 +#endif
 +#if PLATFORM(WIN)
-+    virtual void didCompositeLayersToContext() { }
++    virtual void didChangeAcceleratedCompositingMode(bool) { }
  #endif
      bool m_startedReceivingMessages { false };
  };
 diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in b/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
-index b0722e7da81e56530deb570b82ed7cfece970362..1d1463231269363939e4c746a6dada5e29f3fd18 100644
+index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c507d9318 100644
 --- a/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
 +++ b/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
 @@ -36,4 +36,7 @@ messages -> DrawingAreaProxy NotRefCounted {
@@ -8623,15 +8652,15 @@ index b0722e7da81e56530deb570b82ed7cfece970362..1d1463231269363939e4c746a6dada5e
      ExitAcceleratedCompositingMode(uint64_t backingStoreStateID, WebKit::UpdateInfo updateInfo)
  #endif
 +#if PLATFORM(WIN)
-+    DidCompositeLayersToContext()
++    DidChangeAcceleratedCompositingMode(bool enabled)
 +#endif
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e9da8d390
+index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad072308c77861
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,163 @@
+@@ -0,0 +1,157 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8712,17 +8741,6 @@ index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e
 +}
 +#endif
 +
-+#if PLATFORM(WIN)
-+void InspectorScreencastAgent::didCommitProvisionalPage()
-+{
-+    if (!m_encoder)
-+        return;
-+
-+    if (auto* drawingArea = m_page.drawingArea())
-+        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->setReportAcceleratedCompositingEnabled(true);
-+}
-+#endif
-+
 +void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale)
 +{
 +    if (m_encoder) {
@@ -8747,12 +8765,8 @@ index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e
 +    if (!m_encoder)
 +        return;
 +
-+#if PLATFORM(MAC)
++#if PLATFORM(MAC) || PLATFORM(WIN)
 +    scheduleFrameEncoding();
-+#endif
-+#if PLATFORM(WIN)
-+    if (auto* drawingArea = m_page.drawingArea())
-+        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->setReportAcceleratedCompositingEnabled(true);
 +#endif
 +}
 +
@@ -8762,17 +8776,13 @@ index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e
 +        callback->sendFailure("Not recording"_s);
 +        return;
 +    }
-+#if PLATFORM(WIN)
-+    if (auto* drawingArea = m_page.drawingArea())
-+        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->setReportAcceleratedCompositingEnabled(false);
-+#endif
 +    m_encoder->finish([protectRef = m_encoder.copyRef(), callback = WTFMove(callback)] {
 +        callback->sendSuccess();
 +    });
 +    m_encoder = nullptr;
 +}
 +
-+#if PLATFORM(MAC)
++#if PLATFORM(MAC) || PLATFORM(WIN)
 +void InspectorScreencastAgent::scheduleFrameEncoding()
 +{
 +    if (!m_encoder)
@@ -8786,7 +8796,9 @@ index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e
 +        agent->scheduleFrameEncoding();
 +    });
 +}
++#endif
 +
++#if PLATFORM(MAC)
 +void InspectorScreencastAgent::encodeFrame()
 +{
 +    if (m_encoder)
@@ -8794,13 +8806,24 @@ index 0000000000000000000000000000000000000000..de9e93e295e3af981965f9fd85f7f89e
 +}
 +#endif
 +
++#if PLATFORM(WIN)
++void InspectorScreencastAgent::encodeFrame()
++{
++    if (!m_encoder)
++        return;
++
++    if (auto* drawingArea = m_page.drawingArea())
++        static_cast<DrawingAreaProxyCoordinatedGraphics*>(drawingArea)->captureFrame();
++}
++#endif
++
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..003ad364d76071ce30d11cce7d1b61a66e2c4d77
+index 0000000000000000000000000000000000000000..85ceb59f9901e956faba5dad5fa08ca11732a27d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,76 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8860,16 +8883,13 @@ index 0000000000000000000000000000000000000000..003ad364d76071ce30d11cce7d1b61a6
 +#if USE(CAIRO)
 +    void didPaint(cairo_surface_t*);
 +#endif
-+#if PLATFORM(WIN)
-+    void didCommitProvisionalPage();
-+#endif
 +
 +    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
 +    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
 +
 +
 +private:
-+#if PLATFORM(MAC)
++#if PLATFORM(MAC) || PLATFORM(WIN)
 +    void scheduleFrameEncoding();
 +    void encodeFrame();
 +#endif
@@ -9593,7 +9613,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1861cff806131196ea49b4f8aca6665beebbf6e8..da16f176bb7273727cea3046d2ec66a81fc53bb9 100644
+index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19301f1b35 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,12 +26,20 @@
@@ -9874,19 +9894,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..da16f176bb7273727cea3046d2ec66a8
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -212,6 +399,11 @@ void WebPageInspectorController::didCommitProvisionalPage(WebCore::PageIdentifie
-         m_targetAgent->targetDestroyed(*target);
-     m_targets.clear();
-     m_targets.set(newTarget->identifier(), WTFMove(newTarget));
-+
-+#if PLATFORM(WIN)
-+    if (m_frontendRouter->hasFrontends() && m_screecastAgent)
-+        m_screecastAgent->didCommitProvisionalPage();
-+#endif
- }
- 
- WebPageAgentContext WebPageInspectorController::webPageAgentContext()
-@@ -241,4 +433,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -241,4 +428,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -12849,7 +12857,7 @@ index 0a7f83d2b7dc63538c8578800e617affc5d3f19d..b31ac558c47b6430b563076741e9d992
      UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
  #endif
 diff --git a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
-index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..9642cf27c33ec4b707bd588e0d2670770f9718bf 100644
+index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..a7ff849219a504725284022c5fcfddff64a5e27e 100644
 --- a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 +++ b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 @@ -27,9 +27,11 @@
@@ -12864,11 +12872,27 @@ index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..9642cf27c33ec4b707bd588e0d267077
  #include <WebCore/BackingStoreBackendCairoImpl.h>
  #include <WebCore/CairoUtilities.h>
  #include <WebCore/GraphicsContextImplCairo.h>
-@@ -72,6 +74,7 @@ void BackingStore::paint(cairo_t* context, const IntRect& rect)
+@@ -62,6 +64,13 @@ std::unique_ptr<BackingStoreBackendCairo> BackingStore::createBackend()
+     return makeUnique<BackingStoreBackendCairoImpl>(m_size, m_deviceScaleFactor);
+ }
+ 
++cairo_surface_t* BackingStore::surface() const {
++    if (!m_backend)
++        return nullptr;
++
++    return m_backend->surface();
++}
++
+ void BackingStore::paint(cairo_t* context, const IntRect& rect)
+ {
+     ASSERT(m_backend);
+@@ -72,6 +81,9 @@ void BackingStore::paint(cairo_t* context, const IntRect& rect)
      cairo_rectangle(context, rect.x(), rect.y(), rect.width(), rect.height());
      cairo_fill(context);
      cairo_restore(context);
++#if !PLATFORM(WIN)
 +    m_webPageProxy.inspectorController().didPaint(m_backend->surface());
++#endif
  }
  
  void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& updateInfo)
@@ -14839,7 +14863,7 @@ index b56571babb8ebd8997a81fe9e3a6cb51e531907a..d0f2cdaeb999c1086adaeff91138c2ce
  
  void WebFrameLoaderClient::didRestoreFromBackForwardCache()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 5abd86a534ba5f66d88094d407f3f4facf8a5521..e166b477538720974ca2fc4eeda81230228aff36 100644
+index 5abd86a534ba5f66d88094d407f3f4facf8a5521..492f53b90833d7b260e9f16ed77afb7e5cf27448 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -14875,6 +14899,30 @@ index 5abd86a534ba5f66d88094d407f3f4facf8a5521..e166b477538720974ca2fc4eeda81230
      settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
      // Fixed position elements need to be composited and create stacking contexts
      // in order to be scrolled by the ScrollingCoordinator.
+@@ -615,6 +627,11 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
+     m_scrollOffset = IntSize();
+     m_displayTimer.stop();
+     m_isWaitingForDidUpdate = false;
++// Playwright begin
++#if PLATFORM(WIN)
++    didChangeAcceleratedCompositingMode(true);
++#endif
++// Playwright end
+ }
+ 
+ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
+@@ -664,6 +681,11 @@ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
+         // UI process, we still need to let it know about the new contents, so send an Update message.
+         send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
+     }
++// Playwright begin
++#if PLATFORM(WIN)
++    didChangeAcceleratedCompositingMode(false);
++#endif
++// Playwright end
+ }
+ 
+ void DrawingAreaCoordinatedGraphics::scheduleDisplay()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 index 8685e23d0d468601c459954775fe6f565b0ce7ac..f9d49292837bf390b81eadeaebe2d4d599bc236c 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
@@ -14897,7 +14945,7 @@ index 8685e23d0d468601c459954775fe6f565b0ce7ac..f9d49292837bf390b81eadeaebe2d4d5
      m_viewportController.didScroll(rect.location());
      if (m_isDiscardable)
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
-index 87b864636e3b863425a6259f0e52864bbc9f5148..0ae141af6a821e4aea3f257c825b90c94e3883c7 100644
+index 87b864636e3b863425a6259f0e52864bbc9f5148..c12a369a3b9500ac84ac8d45033eb0f78f082797 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
 @@ -29,6 +29,7 @@
@@ -14908,17 +14956,8 @@ index 87b864636e3b863425a6259f0e52864bbc9f5148..0ae141af6a821e4aea3f257c825b90c9
  #include "WebPage.h"
  #include <GLES2/gl2.h>
  #include <WebCore/Document.h>
-@@ -72,6 +73,8 @@ void LayerTreeHost::compositeLayersToContext()
-     m_textureMapper->endPainting();
- 
-     m_context->swapBuffers();
-+    if (auto* drawingArea = m_webPage.drawingArea())
-+        drawingArea->didCompositeLayersToContext();
- }
- 
- bool LayerTreeHost::flushPendingLayerChanges()
 diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp b/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
-index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..ae2fc8308acf53931e00c2ed9a1563f464fb4975 100644
+index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..eda4008b60b4f28958e246ae9aea773b4407769e 100644
 --- a/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
 @@ -27,6 +27,7 @@
@@ -14929,15 +14968,14 @@ index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..ae2fc8308acf53931e00c2ed9a1563f4
  #include "WebPage.h"
  #include "WebPageCreationParameters.h"
  #include "WebProcess.h"
-@@ -89,6 +90,14 @@ RefPtr<WebCore::DisplayRefreshMonitor> DrawingArea::createDisplayRefreshMonitor(
+@@ -89,6 +90,13 @@ RefPtr<WebCore::DisplayRefreshMonitor> DrawingArea::createDisplayRefreshMonitor(
  }
  #endif
  
 +#if PLATFORM(WIN)
-+void DrawingArea::didCompositeLayersToContext()
++void DrawingArea::didChangeAcceleratedCompositingMode(bool enabled)
 +{
-+    if (m_isReportingAcceleratedCompositing)
-+        send(Messages::DrawingAreaProxy::DidCompositeLayersToContext());
++    send(Messages::DrawingAreaProxy::DidChangeAcceleratedCompositingMode(enabled));
 +}
 +#endif
 +
@@ -14945,7 +14983,7 @@ index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..ae2fc8308acf53931e00c2ed9a1563f4
  {
      if (m_hasRemovedMessageReceiver)
 diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.h b/Source/WebKit/WebProcess/WebPage/DrawingArea.h
-index ce7758d0b9468d9b7f6f845b4deaf5671274fecd..59a40482dad05dad593997c23a0b5125a961c164 100644
+index ce7758d0b9468d9b7f6f845b4deaf5671274fecd..83d9f92f2eb245ba73c7a31375d6885df122f031 100644
 --- a/Source/WebKit/WebProcess/WebPage/DrawingArea.h
 +++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.h
 @@ -144,6 +144,9 @@ public:
@@ -14953,45 +14991,11 @@ index ce7758d0b9468d9b7f6f845b4deaf5671274fecd..59a40482dad05dad593997c23a0b5125
      virtual void deviceOrPageScaleFactorChanged() = 0;
  #endif
 +#if PLATFORM(WIN)
-+    void didCompositeLayersToContext();
++    void didChangeAcceleratedCompositingMode(bool enabled);
 +#endif
  
      virtual void adoptLayersFromDrawingArea(DrawingArea&) { }
      virtual void adoptDisplayRefreshMonitorsFromDrawingArea(DrawingArea&) { }
-@@ -171,6 +174,9 @@ private:
- #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
-     virtual void updateBackingStoreState(uint64_t /*backingStoreStateID*/, bool /*respondImmediately*/, float /*deviceScaleFactor*/, const WebCore::IntSize& /*size*/,
-                                          const WebCore::IntSize& /*scrollOffset*/) { }
-+#endif
-+#if PLATFORM(WIN)
-+    void setReportAcceleratedCompositing(bool enabled) { m_isReportingAcceleratedCompositing = enabled; }
- #endif
-     virtual void didUpdate() { }
- 
-@@ -186,6 +192,9 @@ private:
- #endif
- 
-     bool m_hasRemovedMessageReceiver { false };
-+#if PLATFORM(WIN)
-+    bool m_isReportingAcceleratedCompositing { false };
-+#endif
- };
- 
- } // namespace WebKit
-diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in b/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in
-index f207e107e95270a7f9189cba9ab677534aa22792..cb7d776279c97db54eae7748019c47846193923f 100644
---- a/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in
-+++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.messages.in
-@@ -24,6 +24,9 @@ messages -> DrawingArea NotRefCounted {
- #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
-     UpdateBackingStoreState(uint64_t backingStoreStateID, bool respondImmediately, float deviceScaleFactor, WebCore::IntSize size, WebCore::IntSize scrollOffset)
- #endif
-+#if PLATFORM(WIN)
-+    SetReportAcceleratedCompositing(bool enabled)
-+#endif
- 
-     DidUpdate()
- 
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
