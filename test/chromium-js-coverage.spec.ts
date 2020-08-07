@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 it.skip(CHROMIUM)('should be missing', async function({page, server}) {

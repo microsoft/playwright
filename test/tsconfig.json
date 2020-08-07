@@ -8,5 +8,5 @@
         "strictNullChecks": false,
         "allowSyntheticDefaultImports": true,
     },
-    "include": ["*.spec.js", "types.d.ts", "*.spec.ts"]
+    "include": ["**/*.spec.js", "types.d.ts", "**/*.spec.ts"]
   }

@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
-const path = require('path');
-const util = require('util');
-const os = require('os');
-const {mkdtempAsync, removeFolderAsync} = require('./utils');
+import fs from 'fs';
+import path from 'path';
+import util from 'util';
+import os from 'os';
+import {mkdtempAsync, removeFolderAsync} from './utils';
 
 const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 
+declare global {
+  interface FixtureState {
+    persistentDirectory: string;
+  }
+}
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   try {
@@ -203,7 +208,7 @@ it('should report non-navigation downloads', async({browser, server}) => {
 
 it(`should report download path within page.on('download', …) handler for Files`, async({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
-  const onDownloadPath = new Promise((res) => {
+  const onDownloadPath = new Promise<string>((res) => {
     page.on('download', dl => {
       dl.path().then(res);
     });
@@ -216,7 +221,7 @@ it(`should report download path within page.on('download', …) handler for File
 })
 it(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
-  const onDownloadPath = new Promise((res) => {
+  const onDownloadPath = new Promise<string>((res) => {
     page.on('download', dl => {
       dl.path().then(res);
     });

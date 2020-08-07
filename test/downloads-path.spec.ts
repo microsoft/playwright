@@ -14,11 +14,19 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
-const {mkdtempAsync, removeFolderAsync} = require('./utils');
+import path from 'path';
+import fs from 'fs';
+import os from 'os';
+import {mkdtempAsync, removeFolderAsync} from './utils';
+import { Browser, BrowserContext } from '..';
 
+declare global {
+  interface FixtureState {
+    downloadsPath: string;
+    downloadsBrowser: Browser;
+    persistentDownloadsContext: BrowserContext;
+  }
+}
 registerFixture('downloadsPath', async ({}, test) => {
   const downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   try {
@@ -66,7 +74,6 @@ registerFixture('persistentDownloadsContext', async ({server, browserType, defau
     await test(context);
   } finally {
     await context.close();
-    await state.context.close();
     await removeFolderAsync(userDataDir);
   }
 });
@@ -80,7 +87,7 @@ it('should keep downloadsPath folder', async({downloadsBrowser, downloadsPath, s
   ]);
   expect(download.url()).toBe(`${server.PREFIX}/download`);
   expect(download.suggestedFilename()).toBe(`file.txt`);
-  await download.path().catch(e => error = e);
+  await download.path().catch(e => void 0);
   await page.close();
   await downloadsBrowser.close();
   expect(fs.existsSync(downloadsPath)).toBeTruthy();

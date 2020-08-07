@@ -15,14 +15,21 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const {spawn, execSync} = require('child_process');
+import path from 'path';
+import {spawn, execSync} from 'child_process';
+import { BrowserType, Browser, LaunchOptions } from '..';
 const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, HEADLESS} = testOptions;
 
 const playwrightPath = path.join(__dirname, '..');
 
 class Wrapper {
-  constructor(browserType, defaultBrowserOptions, extraOptions) {
+  _output: Map<any, any>;
+  _outputCallback: Map<any, any>;
+  _browserType: BrowserType<Browser>;
+  _child: import("child_process").ChildProcess;
+  _exitPromise: Promise<unknown>;
+  _exitAndDisconnectPromise: Promise<any>;
+  constructor(browserType: BrowserType<Browser>, defaultBrowserOptions: LaunchOptions, extraOptions?: { stallOnClose: boolean; }) {
     this._output = new Map();
     this._outputCallback = new Map();
 
@@ -91,6 +98,12 @@ class Wrapper {
   }
 }
 
+declare global {
+  interface FixtureState {
+    wrapper: Wrapper;
+    stallingWrapper: Wrapper;
+  }
+}
 registerFixture('wrapper', async ({browserType, defaultBrowserOptions}, test) => {
   const wrapper = new Wrapper(browserType, defaultBrowserOptions);
   await wrapper.connect();
