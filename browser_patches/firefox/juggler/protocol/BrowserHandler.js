@@ -155,6 +155,10 @@ class BrowserHandler {
     this._targetRegistry.browserContextForId(browserContextId).proxy = { type, host, port, bypass };
   }
 
+  async setGlobalProxy({type, host, port, bypass}) {
+    this._targetRegistry.setGlobalProxy({ type, host, port, bypass });
+  }
+
   setRequestInterception({browserContextId, enabled}) {
     this._targetRegistry.browserContextForId(browserContextId).requestInterceptionEnabled = enabled;
   }

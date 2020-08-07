@@ -258,6 +258,14 @@ const Browser = {
         headers: t.Array(networkTypes.HTTPHeader),
       },
     },
+    'setGlobalProxy': {
+      params: {
+        type: t.Enum(['http', 'https', 'socks', 'socks4']),
+        bypass: t.Array(t.String),
+        host: t.String,
+        port: t.Number,
+      },
+    },
     'setProxy': {
       params: {
         browserContextId: t.Optional(t.String),

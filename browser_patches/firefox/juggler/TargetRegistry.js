@@ -113,6 +113,8 @@ class TargetRegistry {
     this._browserToTarget = new Map();
     this._browserBrowsingContextToTarget = new Map();
 
+    this._globalProxy = null;
+
     // Cleanup containers from previous runs (if any)
     for (const identity of ContextualIdentityService.getPublicIdentities()) {
       if (identity.name && identity.name.startsWith(IDENTITY_NAME)) {
@@ -239,6 +241,14 @@ class TargetRegistry {
 
     const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
     extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
+  }
+
+  setGlobalProxy(proxy) {
+    this._globalProxy = proxy;
+  }
+
+  globalProxy(proxy) {
+    return this._globalProxy;
   }
 
   defaultContext() {

@@ -571,7 +571,7 @@ class NetworkObserver {
       applyFilter: (channel, defaultProxyInfo, proxyFilter) => {
         const originAttributes = channel.loadInfo && channel.loadInfo.originAttributes;
         const browserContext = originAttributes ? this._targetRegistry.browserContextForUserContextId(originAttributes.userContextId) : null;
-        const proxy = browserContext ? browserContext.proxy : null;
+        const proxy = (browserContext ? browserContext.proxy : undefined) || this._targetRegistry.globalProxy();
         if (!proxy) {
           proxyFilter.onProxyFilterResult(defaultProxyInfo);
           return;
