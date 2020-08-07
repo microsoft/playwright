@@ -67,3 +67,9 @@ git pull origin master
 
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-ubuntu-18.04 >/tmp/$(basename $0)--webkit.log || true
+
+git pull origin master
+../checkout_build_archive_upload.sh chromium-linux-mirror-to-cdn >/tmp/$(basename $0)--chromium-linux.log || true
+../checkout_build_archive_upload.sh chromium-mac-mirror-to-cdn >/tmp/$(basename $0)--chromium-mac.log || true
+../checkout_build_archive_upload.sh chromium-win32-mirror-to-cdn >/tmp/$(basename $0)--chromium-win32.log || true
+../checkout_build_archive_upload.sh chromium-win64-mirror-to-cdn >/tmp/$(basename $0)--chromium-win64.log || true
