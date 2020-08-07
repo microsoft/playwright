@@ -247,8 +247,20 @@ class TargetRegistry {
     this._browserProxy = proxy;
   }
 
-  browserProxy() {
-    return this._browserProxy;
+  getProxyInfo(channel) {
+    const originAttributes = channel.loadInfo && channel.loadInfo.originAttributes;
+    const browserContext = originAttributes ? this.browserContextForUserContextId(originAttributes.userContextId) : null;
+    // Prefer context proxy and fallback to browser-level proxy.
+    const proxyInfo = (browserContext && browserContext._proxy) || this._browserProxy;
+    dump(`
+
+      bypass: ${JSON.stringify(proxyInfo.bypass)}
+      host: ${channel.URI.host}
+
+    `);
+    if (!proxyInfo || proxyInfo.bypass.some(domainSuffix => channel.URI.host.endsWith(domainSuffix)))
+      return null;
+    return proxyInfo;
   }
 
   defaultContext() {
@@ -519,10 +531,6 @@ class BrowserContext {
 
   setProxy(proxy) {
     this._proxy = proxy;
-  }
-
-  proxy() {
-    return this._proxy;
   }
 
   setIgnoreHTTPSErrors(ignoreHTTPSErrors) {

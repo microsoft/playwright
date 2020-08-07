@@ -264,6 +264,8 @@ const Browser = {
         bypass: t.Array(t.String),
         host: t.String,
         port: t.Number,
+        username: t.Optional(t.String),
+        password: t.Optional(t.String),
       },
     },
     'setContextProxy': {
@@ -273,6 +275,8 @@ const Browser = {
         bypass: t.Array(t.String),
         host: t.String,
         port: t.Number,
+        username: t.Optional(t.String),
+        password: t.Optional(t.String),
       },
     },
     'setHTTPCredentials': {
