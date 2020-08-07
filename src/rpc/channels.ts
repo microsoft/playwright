@@ -1591,9 +1591,11 @@ export type WorkerInitializer = {
   url: string,
 };
 export interface WorkerChannel extends Channel {
+  on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
   evaluateExpression(params: WorkerEvaluateExpressionParams): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams): Promise<WorkerEvaluateExpressionHandleResult>;
 }
+export type WorkerCloseEvent = {};
 export type WorkerEvaluateExpressionParams = {
   expression: string,
   isFunction: boolean,

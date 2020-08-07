@@ -50,6 +50,4 @@ export class BrowserServer extends ChannelOwner<BrowserServerChannel, BrowserSer
       await this._channel.close();
     });
   }
-
-  _checkLeaks() {}
 }
