@@ -51,6 +51,20 @@ WK_ALIASES=(
   "WK-WIN64"
 )
 
+CR_REVISION=$(head -1 ../chromium/BUILD_NUMBER)
+CR_ARCHIVES=(
+  "$HOST/chromium/%s/chromium-mac.zip"
+  "$HOST/chromium/%s/chromium-linux.zip"
+  "$HOST/chromium/%s/chromium-win32.zip"
+  "$HOST/chromium/%s/chromium-win64.zip"
+)
+CR_ALIASES=(
+  "CR-MAC"
+  "CR-LINUX"
+  "CR-WIN32"
+  "CR-WIN64"
+)
+
 COLUMN="%-18s"
 # COLORS
 RED=$'\e[1;31m'
@@ -69,6 +83,10 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") ]]; then
   REVISION=$WK_REVISION
   ARCHIVES=("${WK_ARCHIVES[@]}")
   ALIASES=("${WK_ALIASES[@]}")
+elif [[ ("$1" == "chromium") || ("$1" == "chromium/") ]]; then
+  REVISION=$CR_REVISION
+  ARCHIVES=("${CR_ARCHIVES[@]}")
+  ALIASES=("${CR_ALIASES[@]}")
 else
   echo ERROR: unknown browser - "$1"
   exit 1
