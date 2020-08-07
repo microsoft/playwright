@@ -1117,7 +1117,7 @@ Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclicksele
 #### page.dispatchEvent(selector, type[, eventInit, options])
 - `selector` <[string]> A selector to search for element to use. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[Object]> event-specific initialization properties.
+- `eventInit` <[Serializable]> event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -1826,7 +1826,7 @@ Removes a route created with [page.route(url, handler)](#pagerouteurl-handler). 
 This is a shortcut for [page.mainFrame().url()](#frameurl)
 
 #### page.viewportSize()
-- returns: <?[Object]>
+- returns: <[null]|[Object]>
   - `width` <[number]> page width in pixels.
   - `height` <[number]> page height in pixels.
 
@@ -2210,7 +2210,7 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 #### frame.dispatchEvent(selector, type[, eventInit, options])
 - `selector` <[string]> A selector to search for element to use. If there are multiple elements satisfying the selector, the first will be double clicked. See [working with selectors](#working-with-selectors) for more details.
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[Object]> event-specific initialization properties.
+- `eventInit` <[EvaluationArgument]> event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -2813,7 +2813,7 @@ Bear in mind that if the first click of the `dblclick()` triggers a navigation e
 
 #### elementHandle.dispatchEvent(type[, eventInit])
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[Object]> event-specific initialization properties.
+- `eventInit` <[EvaluationArgument]> event-specific initialization properties.
 - returns: <[Promise]>
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click` is dispatched. This is equivalend to calling [`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
@@ -3049,7 +3049,7 @@ Returns either `null` or the object handle itself, if the object handle is an in
 The `jsHandle.dispose` method stops referencing the element handle.
 
 #### jsHandle.evaluate(pageFunction[, arg])
-- `pageFunction` <[function]\([Object]\)> Function to be evaluated in browser context
+- `pageFunction` <[function]> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
 
@@ -3096,7 +3096,7 @@ await handle.dispose();
 Fetches a single property from the referenced object.
 
 #### jsHandle.jsonValue()
-- returns: <[Promise]<[Object]>>
+- returns: <[Promise]<[Serializable]>>
 
 Returns a JSON representation of the object. If the object has a
 [`toJSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#toJSON()_behavior)
@@ -3523,7 +3523,7 @@ If request gets a 'redirect' response, the request is successfully finished with
 <!-- GEN:stop -->
 
 #### request.failure()
-- returns: <?[Object]> Object describing request failure, if any
+- returns: <[null]|[Object]> Object describing request failure, if any
   - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
 
 The method returns `null` unless this request has failed, as reported by
@@ -3630,7 +3630,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - returns: <[Object]<[string], [string]>> An object with HTTP headers associated with the response. All header names are lower-case.
 
 #### response.json()
-- returns: <[Promise]<[Object]>> Promise which resolves to a JSON representation of response body.
+- returns: <[Promise]<[Serializable]>> Promise which resolves to a JSON representation of response body.
 
 This method will throw if the response body is not parsable via `JSON.parse`.
 
@@ -4022,7 +4022,7 @@ This methods attaches Playwright to an existing browser instance.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
-  - `firefoxUserPrefs` <[Object]> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+  - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
@@ -4113,7 +4113,7 @@ Launches browser that uses persistent storage located at `userDataDir` and retur
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
-  - `firefoxUserPrefs` <[Object]> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
+  - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
