@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import utils from './utils';
 const {USES_HOOKS} = testOptions;
 
 it('should timeout waiting for display:none to be gone', async({page, server}) => {

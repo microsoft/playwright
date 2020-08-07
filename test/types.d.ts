@@ -1,8 +1,6 @@
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 
-type Falsy = false|''|0|null|undefined;
-
 type DescribeFunction = ((name: string, inner: () => void) => void) & {fail(condition: boolean): DescribeFunction};
 
 type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
@@ -12,48 +10,20 @@ type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>)
     repeat(n: number): ItFunction<STATE>;
 };
 
-type TestRunner<STATE> = {
-    describe: DescribeFunction;
-    xdescribe: DescribeFunction;
-    fdescribe: DescribeFunction;
-
-    it: ItFunction<STATE>;
-    xit: ItFunction<STATE>;
-    fit: ItFunction<STATE>;
-    dit: ItFunction<STATE>;
-
-    beforeAll, beforeEach, afterAll, afterEach;
-};
-
-interface TestSetup<STATE> {
-    testRunner: TestRunner<STATE>;
-    product: 'Chromium'|'Firefox'|'WebKit';
-    selectors: import('../index').Selectors;
-    playwrightPath;
-}
-
-type TestState = {
-    server: TestServer;
-    httpsServer: TestServer;
-    sourceServer: TestServer;
-};
-
-type BrowserState = TestState & {
+interface FixtureState {
+    parallelIndex: number;
+    http_server: {server: TestServer, httpsServer: TestServer};
+    defaultBrowserOptions: import('../index').LaunchOptions;
     playwright: typeof import('../index');
     browserType: import('../index').BrowserType<import('../index').Browser>;
     browser: import('../index').Browser;
-    browserServer: import('../index').BrowserServer;
-    defaultBrowserOptions: import('../index').LaunchOptions;
-};
-
-type PageState = BrowserState & {
+    toImpl: (rpcObject: any) => any;
     context: import('../index').BrowserContext;
+    server: TestServer;
     page: import('../index').Page;
-};
-type ChromiumPageState = PageState & {
-    browser: import('../index').ChromiumBrowser;
-};
-
+    httpsServer: TestServer;
+    browserServer: import('../index').BrowserServer;
+}
 
 interface TestServer {
     enableHTTPCache(pathPrefix: string);
@@ -72,16 +42,33 @@ interface TestServer {
     CROSS_PROCESS_PREFIX: string;
     EMPTY_PAGE: string;
 }
+declare module '' {
+    module 'expect/build/types' {
+        interface Matchers<R> {
+            toBeGolden(name: string): R;
+        }
+    }
+}
+
+
+declare const expect: typeof import('expect');
+
 
 declare const describe: DescribeFunction;
 declare const fdescribe: DescribeFunction;
 declare const xdescribe: DescribeFunction;
-declare const expect: typeof import('expect');
-declare const it: ItFunction<PageState>;
-declare const fit: ItFunction<PageState>;
-declare const dit: ItFunction<PageState>;
-declare const xit: ItFunction<PageState>;
+declare const it: ItFunction<FixtureState>;
+declare const fit: ItFunction<FixtureState>;
+declare const dit: ItFunction<FixtureState>;
+declare const xit: ItFunction<FixtureState>;
 
+declare const beforeEach: (inner: (state: FixtureState) => Promise<void>) => void;
+declare const afterEach: (inner: (state: FixtureState) => Promise<void>) => void;
+declare const beforeAll: (inner: (state: FixtureState) => Promise<void>) => void;
+declare const afterAll: (inner: (state: FixtureState) => Promise<void>) => void;
+
+declare const registerFixture: <T extends keyof FixtureState>(name: T, inner: (state: FixtureState, test: (arg: FixtureState[T]) => Promise<void>) => Promise<void>) => void;
+  
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
 
 // global variables in assets

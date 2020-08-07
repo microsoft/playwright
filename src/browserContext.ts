@@ -30,7 +30,7 @@ import { ProgressController } from './progress';
 import { DebugController } from './debug/debugController';
 import { LoggerSink } from './loggerSink';
 
-export interface BrowserContext {
+export interface BrowserContext extends EventEmitter {
   setDefaultNavigationTimeout(timeout: number): void;
   setDefaultTimeout(timeout: number): void;
   pages(): Page[];

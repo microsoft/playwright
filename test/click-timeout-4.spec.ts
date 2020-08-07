@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import utils from './utils';
 
 it('should timeout waiting for stable position', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

@@ -15,14 +15,20 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
-const path = require('path');
-const utils = require('./utils');
-const os = require('os');
-
-const {mkdtempAsync, makeUserDataDir, removeUserDataDir} = utils;
+import fs from 'fs';
+import path from 'path';
+import utils from './utils';
+import os from 'os';
+import { BrowserType, Browser, BrowserContext, Page } from '..';
+const {removeFolderAsync, mkdtempAsync, removeUserDataDir, makeUserDataDir} = utils;
 const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
 
+declare global {
+  interface FixtureState {
+    userDataDir: string;
+    launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
+  }
+}
 registerFixture('userDataDir', async ({}, test) => {
   const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
   try {
@@ -173,7 +179,7 @@ it('should support bypassCSP option', async ({server, launchPersistent}) => {
   const {page, context} = await launchPersistent({bypassCSP: true});
   await page.goto(server.PREFIX + '/csp.html');
   await page.addScriptTag({content: 'window.__injected = 42;'});
-  expect(await page.evaluate(() => window.__injected)).toBe(42);
+  expect(await page.evaluate('__injected')).toBe(42);
 });
 
 it('should support javascriptEnabled option', async ({server, launchPersistent}) => {

@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import utils from './utils';
 const {USES_HOOKS} = testOptions;
 
 it.skip(USES_HOOKS)('should fail when element jumps during hit testing', async({page, server}) => {
@@ -22,13 +23,13 @@ it.skip(USES_HOOKS)('should fail when element jumps during hit testing', async({
   let clicked = false;
   const handle = await page.$('button');
   const __testHookBeforeHitTarget = () => page.evaluate(() => {
-    const margin = parseInt(document.querySelector('button').style.marginLeft || 0) + 100;
+    const margin = parseInt(document.querySelector('button').style.marginLeft || '0') + 100;
     document.querySelector('button').style.marginLeft = margin + 'px';
   });
-  const promise = handle.click({ timeout: 5000, __testHookBeforeHitTarget }).then(() => clicked = true).catch(e => e);
+  const promise = handle.click({ timeout: 5000, __testHookBeforeHitTarget } as any).then(() => clicked = true).catch(e => e);
   const error = await promise;
   expect(clicked).toBe(false);
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
   expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
   expect(error.message).toContain('element does not receive pointer events');
   expect(error.message).toContain('retrying click action');
