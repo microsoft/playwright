@@ -22,6 +22,10 @@ import { Readable } from 'stream';
  * Can be converted to JSON
  */
 type Serializable = {};
+/**
+ * Can be converted to JSON, but may also contain JSHandles.
+ */
+type EvaluationArgument = {};
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =

@@ -198,7 +198,7 @@ Indicates that the browser is connected.
   - `acceptDownloads` <[boolean]> Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
   - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `viewport` <[null]|[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
   - `userAgent` <[string]> Specific user agent to use in this context.
@@ -240,7 +240,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `acceptDownloads` <[boolean]> Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
   - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `viewport` <[null]|[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
   - `userAgent` <[string]> Specific user agent to use in this context.
@@ -595,7 +595,7 @@ The extra HTTP headers will be sent with every request initiated by any page in 
 > **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
 
 #### browserContext.setGeolocation(geolocation)
-- `geolocation` <?[Object]>
+- `geolocation` <[null]|[Object]>
   - `latitude` <[number]> Latitude between -90 and 90. **required**
   - `longitude` <[number]> Longitude between -180 and 180. **required**
   - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
@@ -610,7 +610,7 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 > **NOTE** Consider using [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) to grant permissions for the browser context pages to read its geolocation.
 
 #### browserContext.setHTTPCredentials(httpCredentials)
-- `httpCredentials` <?[Object]>
+- `httpCredentials` <[null]|[Object]>
   - `username` <[string]> **required**
   - `password` <[string]> **required**
 - returns: <[Promise]>
@@ -916,7 +916,7 @@ Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/We
 
 #### page.$(selector)
 - `selector` <[string]> A selector to query page for. See [working with selectors](#working-with-selectors) for more details.
-- returns: <[Promise]<?[ElementHandle]>>
+- returns: <[Promise]<[null]|[ElementHandle]>>
 
 The method finds an element matching the specified selector within the page. If no elements match the selector, the return value resolves to `null`.
 
@@ -1085,7 +1085,7 @@ Get the browser context that the page belongs to.
 
 #### page.coverage
 
-- returns: <?[ChromiumCoverage]>
+- returns: <[null]|[ChromiumCoverage]>
 
 Browser-specific Coverage implementation, only available for Chromium atm. See [ChromiumCoverage](#class-chromiumcoverage) for more details.
 
@@ -1117,7 +1117,7 @@ Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclicksele
 #### page.dispatchEvent(selector, type[, eventInit, options])
 - `selector` <[string]> A selector to search for element to use. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[Serializable]> event-specific initialization properties.
+- `eventInit` <[EvaluationArgument]> event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -1371,7 +1371,7 @@ Shortcut for [page.mainFrame().focus(selector)](#framefocusselector-options).
 - `options` <[string]|[Object]> Frame name or other frame lookup options.
   - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
-- returns: <?[Frame]> frame matching the criteria. Returns `null` if no frame matches.
+- returns: <[null]|[Frame]> frame matching the criteria. Returns `null` if no frame matches.
 
 ```js
 const frame = page.frame('frame-name');
@@ -1402,7 +1402,7 @@ Returns element attribute value.
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
 can not go back, resolves to `null`.
 
 Navigate to the previous page in history.
@@ -1414,7 +1414,7 @@ Navigate to the previous page in history.
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If
 can not go forward, resolves to `null`.
 
 Navigate to the next page in history.
@@ -1428,7 +1428,7 @@ Navigate to the next page in history.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 `page.goto` will throw an error if:
 - there's an SSL error (e.g. in case of self-signed certificates).
@@ -1499,7 +1499,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.opener()
 
-- returns: <[Promise]<?[Page]>> Promise which resolves to the opener for popup pages and `null` for others. If the opener has been closed already the promise may resolve to `null`.
+- returns: <[Promise]<[null]|[Page]>> Promise which resolves to the opener for popup pages and `null` for others. If the opener has been closed already the promise may resolve to `null`.
 
 #### page.pdf([options])
 - `options` <[Object]> Options object which might have the following properties:
@@ -1611,7 +1611,7 @@ await browser.close();
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 #### page.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -1906,7 +1906,7 @@ Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadsta
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
 
 This resolves when the page navigates to a new URL or reloads. It is useful for when you run code
 which will indirectly cause the page to navigate. Consider this example:
@@ -1959,7 +1959,7 @@ return finalResponse.ok();
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
+- returns: <[Promise]<[null]|[ElementHandle]>> Promise which resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
 
 Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
 
@@ -2085,7 +2085,7 @@ console.log(text);
 
 #### frame.$(selector)
 - `selector` <[string]> A selector to query frame for. See [working with selectors](#working-with-selectors) for more details.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves to ElementHandle pointing to the frame element.
+- returns: <[Promise]<[null]|[ElementHandle]>> Promise which resolves to ElementHandle pointing to the frame element.
 
 The method finds an element matching the specified selector within the frame. See [Working with selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to `null`.
 
@@ -2351,7 +2351,7 @@ Returns element attribute value.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 `frame.goto` will throw an error if:
 - there's an SSL error (e.g. in case of self-signed certificates).
@@ -2413,7 +2413,7 @@ If the name is empty, returns the id attribute instead.
 > **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed later.
 
 #### frame.parentFrame()
-- returns: <?[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
+- returns: <[null]|[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
 #### frame.press(selector, key[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2586,7 +2586,7 @@ await frame.waitForLoadState(); // The promise resolves after 'load' event.
     - `'domcontentloaded'` - consider navigation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider navigation to be finished when the `load` event is fired.
     - `'networkidle'` - consider navigation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<?[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
+- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
 
 This resolves when the frame navigates to a new URL. It is useful for when you run code
 which will indirectly cause the frame to navigate. Consider this example:
@@ -2609,7 +2609,7 @@ const [response] = await Promise.all([
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<?[ElementHandle]>> Promise which resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
+- returns: <[Promise]<[null]|[ElementHandle]>> Promise which resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
 
 Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
 
@@ -2702,7 +2702,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 
 #### elementHandle.$(selector)
 - `selector` <[string]> A selector to query element for. See [working with selectors](#working-with-selectors) for more details.
-- returns: <[Promise]<?[ElementHandle]>>
+- returns: <[Promise]<[null]|[ElementHandle]>>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See [Working with selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to `null`.
 
@@ -2752,7 +2752,7 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 ```
 
 #### elementHandle.boundingBox()
-- returns: <[Promise]<?[Object]>>
+- returns: <[Promise]<[null]|[Object]>>
   - `x` <[number]> the x coordinate of the element in pixels.
   - `y` <[number]> the y coordinate of the element in pixels.
   - width <[number]> the width of the element in pixels.
@@ -2788,7 +2788,7 @@ This method waits for [actionability](./actionability.md) checks, then scrolls t
 If the element is detached from DOM, the method throws an error.
 
 #### elementHandle.contentFrame()
-- returns: <[Promise]<?[Frame]>> Resolves to the content frame for element handles referencing iframe nodes, or `null` otherwise
+- returns: <[Promise]<[null]|[Frame]>> Resolves to the content frame for element handles referencing iframe nodes, or `null` otherwise
 
 #### elementHandle.dblclick([options])
 - `options` <[Object]>
@@ -2884,7 +2884,7 @@ If the element is detached from DOM, the method throws an error.
 - returns: <[Promise]<[string]>> Resolves to the `element.innerText`.
 
 #### elementHandle.ownerFrame()
-- returns: <[Promise]<?[Frame]>> Returns the frame containing the given element.
+- returns: <[Promise]<[null]|[Frame]>> Returns the frame containing the given element.
 
 #### elementHandle.press(key[, options])
 - `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
@@ -3039,7 +3039,7 @@ JSHandle instances can be used as an argument in [`page.$eval()`](#pageevalselec
 <!-- GEN:stop -->
 
 #### jsHandle.asElement()
-- returns: <?[ElementHandle]>
+- returns: <[null]|[ElementHandle]>
 
 Returns either `null` or the object handle itself, if the object handle is an instance of [ElementHandle].
 
@@ -3552,18 +3552,18 @@ Whether this request is driving frame's navigation.
 - returns: <[string]> Request's method (GET, POST, etc.)
 
 #### request.postData()
-- returns: <?[string]> Request's post body, if any.
+- returns: <[null]|[string]> Request's post body, if any.
 
 #### request.postDataBuffer()
-- returns: <?[Buffer]> Request's post body in a binary form, if any.
+- returns: <[null]|[Buffer]> Request's post body in a binary form, if any.
 
 #### request.postDataJSON()
-- returns: <?[Object]> Parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+- returns: <[null]|[Object]> Parsed request's body for `form-urlencoded` and JSON as a fallback if any.
 
 When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned. Otherwise it will be parsed as JSON.
 
 #### request.redirectedFrom()
-- returns: <?[Request]> Request that was redirected by the server to this one, if any.
+- returns: <[null]|[Request]> Request that was redirected by the server to this one, if any.
 
 When the server responds with a redirect, Playwright creates a new [Request] object. The two requests are connected by `redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to construct the whole redirect chain by repeatedly calling `redirectedFrom()`.
 
@@ -3580,7 +3580,7 @@ console.log(response.request().redirectedFrom()); // null
 ```
 
 #### request.redirectedTo()
-- returns: <?[Request]> New request issued by the browser if the server responded with redirect.
+- returns: <[null]|[Request]> New request issued by the browser if the server responded with redirect.
 
 This method is the opposite of [request.redirectedFrom()](#requestredirectedfrom):
 ```js
@@ -3594,7 +3594,7 @@ Contains the request's resource type as it was perceived by the rendering engine
 ResourceType will be one of the following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`, `websocket`, `manifest`, `other`.
 
 #### request.response()
-- returns: <[Promise]<?[Response]>> A matching [Response] object, or `null` if the response was not received due to error.
+- returns: <[Promise]<[null]|[Response]>> A matching [Response] object, or `null` if the response was not received due to error.
 
 #### request.url()
 - returns: <[string]> URL of the request.
@@ -3621,7 +3621,7 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 - returns: <[Promise]<[Buffer]>> Promise which resolves to a buffer with response body.
 
 #### response.finished()
-- returns: <[Promise]<?[Error]>> Waits for this response to finish, returns failure error if request failed.
+- returns: <[Promise]<[null]|[Error]>> Waits for this response to finish, returns failure error if request failed.
 
 #### response.frame()
 - returns: <[Frame]> A [Frame] that initiated this response.
@@ -3831,7 +3831,7 @@ Most of the accessibility tree gets filtered out when converting from Blink AX T
 - `options` <[Object]>
   - `interestingOnly` <[boolean]> Prune uninteresting nodes from the tree. Defaults to `true`.
   - `root` <[ElementHandle]> The root DOM element for the snapshot. Defaults to the whole page.
-- returns: <[Promise]<?[Object]>> An [AXNode] object with the following properties:
+- returns: <[Promise]<[null]|[Object]>> An [AXNode] object with the following properties:
   - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage_intro).
   - `name` <[string]> A human readable name for the node.
   - `value` <[string]|[number]> The current value of the node, if applicable.
@@ -4074,7 +4074,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
   - `ignoreHTTPSErrors` <[boolean]> Whether to ignore HTTPS errors during navigation. Defaults to `false`.
   - `bypassCSP` <[boolean]> Toggles bypassing page's Content-Security-Policy.
-  - `viewport` <?[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+  - `viewport` <[null]|[Object]> Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
     - `width` <[number]> page width in pixels.
     - `height` <[number]> page height in pixels.
   - `userAgent` <[string]> Specific user agent to use in this context.
