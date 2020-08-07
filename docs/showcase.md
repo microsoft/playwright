@@ -14,6 +14,7 @@
 
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
 * [dom-to-playwright](https://github.com/Xiphe/dom-to-playwright) to copy a JSDOM snapshot into a Playwright page.
+* [expected-condition-playwright](https://github.com/elaichenkov/expected-condition-playwright): Supplies a set of common expected conditions that can wait for certain states and conditions
 * [Headless Testing](https://headlesstesting.com/support/start/playwright.html): Run Playwright tests on browsers in the cloud
 * [Lumberjack](https://github.com/JakePartusch/lumberjack): Automated accessibility scanner to run checks on your entire website
 * [mockiavelli](https://github.com/HLTech/mockiavelli) Request mocking library for Playwright to test SPA in isolation from backend APIs.
