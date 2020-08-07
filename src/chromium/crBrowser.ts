@@ -463,6 +463,8 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async newCDPSession(page: Page): Promise<CRSession> {
+    if (!(page instanceof Page))
+      throw new Error('page: expected Page');
     const targetId = (page._delegate as CRPage)._targetId;
     const rootSession = await this._browser._clientRootSession();
     const { sessionId } = await rootSession.send('Target.attachToTarget', { targetId, flatten: true });
