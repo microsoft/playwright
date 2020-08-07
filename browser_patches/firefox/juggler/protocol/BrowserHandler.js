@@ -151,12 +151,13 @@ class BrowserHandler {
     this._targetRegistry.browserContextForId(browserContextId).httpCredentials = nullToUndefined(credentials);
   }
 
-  async setProxy({browserContextId, type, host, port, bypass}) {
-    this._targetRegistry.browserContextForId(browserContextId).proxy = { type, host, port, bypass };
+  async setBrowserProxy({type, host, port, bypass}) {
+    this._targetRegistry.setBrowserProxy({ type, host, port, bypass });
   }
 
-  async setGlobalProxy({type, host, port, bypass}) {
-    this._targetRegistry.setGlobalProxy({ type, host, port, bypass });
+  async setContextProxy({browserContextId, type, host, port, bypass}) {
+    const browserContext = this._targetRegistry.browserContextForId(browserContextId);
+    browserContext.setProxy({ type, host, port, bypass });
   }
 
   setRequestInterception({browserContextId, enabled}) {

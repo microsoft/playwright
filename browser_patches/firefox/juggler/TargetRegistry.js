@@ -113,7 +113,7 @@ class TargetRegistry {
     this._browserToTarget = new Map();
     this._browserBrowsingContextToTarget = new Map();
 
-    this._globalProxy = null;
+    this._browserProxy = null;
 
     // Cleanup containers from previous runs (if any)
     for (const identity of ContextualIdentityService.getPublicIdentities()) {
@@ -243,12 +243,12 @@ class TargetRegistry {
     extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
   }
 
-  setGlobalProxy(proxy) {
-    this._globalProxy = proxy;
+  setBrowserProxy(proxy) {
+    this._browserProxy = proxy;
   }
 
-  globalProxy(proxy) {
-    return this._globalProxy;
+  browserProxy() {
+    return this._browserProxy;
   }
 
   defaultContext() {
@@ -483,8 +483,8 @@ class BrowserContext {
     this._permissions = new Map();
     this._registry._browserContextIdToBrowserContext.set(this.browserContextId, this);
     this._registry._userContextIdToBrowserContext.set(this.userContextId, this);
+    this._proxy = null;
     this.removeOnDetach = removeOnDetach;
-    this.proxy = undefined;
     this.extraHTTPHeaders = undefined;
     this.httpCredentials = undefined;
     this.requestInterceptionEnabled = undefined;
@@ -515,6 +515,14 @@ class BrowserContext {
     }
     this._registry._browserContextIdToBrowserContext.delete(this.browserContextId);
     this._registry._userContextIdToBrowserContext.delete(this.userContextId);
+  }
+
+  setProxy(proxy) {
+    this._proxy = proxy;
+  }
+
+  proxy() {
+    return this._proxy;
   }
 
   setIgnoreHTTPSErrors(ignoreHTTPSErrors) {
