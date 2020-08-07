@@ -83,6 +83,7 @@ if (args.some(arg => arg === '--help')) {
 const packageName = args[0];
 const outputPath = path.resolve(args[1]);
 const packagePath = path.join(__dirname, 'output', packageName);
+const typesPath = path.join(ROOT_PATH, 'types');
 const package = PACKAGES[packageName];
 if (!package) {
   console.log(`ERROR: unknown package ${packageName}`);
@@ -111,6 +112,9 @@ if (!args.some(arg => arg === '--no-cleanup')) {
   // 3. Copy package files.
   rmSync(packagePath, {});
   fs.mkdirSync(packagePath, { recursive: true });
+  if (!fs.existsSync(typesPath)) {
+    fs.mkdirSync(typesPath);
+  }
   await copyToPackage(path.join(__dirname, 'common') + path.sep, packagePath + path.sep);
   if (fs.existsSync(path.join(__dirname, packageName))) {
     // Copy package-specific files, these can overwrite common ones.
