@@ -117,7 +117,7 @@ it('should return response when page changes its URL after load', async({page, s
   expect(response.status()).toBe(200);
 });
 
-it('should work with subframes return 204', async({page, server}) => {
+it.fail(FFOX)('should work with subframes return 204', async({page, server}) => {
   server.setRoute('/frames/frame.html', (req, res) => {
     res.statusCode = 204;
     res.end();

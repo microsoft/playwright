@@ -16,7 +16,7 @@
  */
 
 import utils from './utils';
-const {WEBKIT, WIN} = testOptions;
+const {FFOX, WEBKIT, WIN} = testOptions;
 
 it('should return no cookies in pristine browser context', async({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);
@@ -37,7 +37,7 @@ it('should get a cookie', async({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: FFOX ? 'Lax' : 'None',
   }]);
 });
 
@@ -59,7 +59,7 @@ it('should get a non-session cookie', async({context, page, server}) => {
     expires: date / 1000,
     httpOnly: false,
     secure: false,
-    sameSite: 'None',
+    sameSite: FFOX ? 'Lax' : 'None',
   }]);
 });
 
@@ -115,7 +115,7 @@ it('should get multiple cookies', async({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: 'None',
+      sameSite: FFOX ? 'Lax' : 'None',
     },
     {
       name: 'username',
@@ -125,7 +125,7 @@ it('should get multiple cookies', async({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: 'None',
+      sameSite: FFOX ? 'Lax' : 'None',
     },
   ]);
 });

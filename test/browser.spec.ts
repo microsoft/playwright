@@ -44,5 +44,5 @@ it('version should work', async function({browser}) {
   if (CHROMIUM)
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
   else
-    expect(version.match(/^\d+\.\d+$/)).toBeTruthy();
+    expect(version.match(/^\d+\.\d+/)).toBeTruthy();
 });

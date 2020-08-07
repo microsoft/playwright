@@ -87,7 +87,10 @@ it('should exclude patterns', async ({browserType, defaultBrowserOptions, server
 
 it('should use socks proxy', async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
   const server = socks.createServer((info, accept, deny) => {
+    let socket;
     if (socket = accept(true)) {
+      // Catch and ignore ECONNRESET errors.
+      socket.on('error', () => {});
       const body = '<html><title>Served by the SOCKS proxy</title></html>';
       socket.end([
         'HTTP/1.1 200 OK',
