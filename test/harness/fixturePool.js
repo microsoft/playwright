@@ -106,6 +106,25 @@ class FixturePool {
       params[n] = this.instances.get(n).value;
     return fn(params);
   }
+
+  patchToEnableFixtures(object, name) {
+    const original = object[name];
+    object[name] = fn => {
+      return original(async () => {
+        return await this.resolveParametersAndRun(fn);
+      });
+    }
+  }
+
+  wrapTestCallback(callback) {
+    return async() => {
+      try {
+        return await this.resolveParametersAndRun(callback);
+      } finally {
+        await this.teardownScope('test');
+      }
+    };
+  }
 }
 
 function fixtureParameterNames(fn) {
@@ -117,8 +136,16 @@ function fixtureParameterNames(fn) {
   return signature.split(',').map(t => t.trim());
 }
 
-function registerFixture(name, scope, fn) {
+function innerRegisterFixture(name, scope, fn) {
   registrations.set(name, { scope, fn });
-}
+};
 
-module.exports = { FixturePool, registerFixture };
+function registerFixture(name, fn) {
+  innerRegisterFixture(name, 'test', fn);
+};
+
+function registerWorkerFixture (name, fn) {
+  innerRegisterFixture(name, 'worker', fn);
+};
+
+module.exports = { FixturePool, registerFixture, registerWorkerFixture };

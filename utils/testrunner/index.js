@@ -40,6 +40,8 @@ class DefaultTestRunner {
       verbose,
       summary,
       lineBreak,
+      goldenPath,
+      outputPath,
     } = options;
 
     this._crashIfTestsAreFocusedOnCI = crashIfTestsAreFocusedOnCI;
@@ -61,7 +63,7 @@ class DefaultTestRunner {
 
     this._api = {
       ...this._collector.api(),
-      expect: new Matchers().expect,
+      expect: new Matchers({ goldenPath, outputPath }).expect,
     };
     this._collector.addSuiteAttribute('only', s => this._filter.focusSuite(s));
     this._collector.addSuiteAttribute('skip', s => s.setSkipped(true));

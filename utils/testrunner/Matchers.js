@@ -20,15 +20,88 @@ const Diff = require('text-diff');
 const GoldenUtils = require('./GoldenUtils');
 
 class Matchers {
-  constructor(customMatchers = {}) {
-    this._matchers = {};
-    Object.assign(this._matchers, DefaultMatchers);
-    Object.assign(this._matchers, customMatchers);
+  constructor(config) {
     this.expect = this.expect.bind(this);
-  }
 
-  addMatcher(name, matcher) {
-    this._matchers[name] = matcher;
+    this._matchers = {
+      toBe: function(received, expected, message) {
+        message = message || `${received} == ${expected}`;
+        return { pass: received === expected, message, formatter: toBeFormatter.bind(null, received, expected) };
+      },
+
+      toBeFalsy: function(received, message) {
+        message = message || `${received}`;
+        return { pass: !received, message };
+      },
+    
+      toBeTruthy: function(received, message) {
+        message = message || `${received}`;
+        return { pass: !!received, message };
+      },
+    
+      toBeGreaterThan: function(received, other, message) {
+        message = message || `${received} > ${other}`;
+        return { pass: received > other, message };
+      },
+    
+      toBeGreaterThanOrEqual: function(received, other, message) {
+        message = message || `${received} >= ${other}`;
+        return { pass: received >= other, message };
+      },
+    
+      toBeLessThan: function(received, other, message) {
+        message = message || `${received} < ${other}`;
+        return { pass: received < other, message };
+      },
+    
+      toBeLessThanOrEqual: function(received, other, message) {
+        message = message || `${received} <= ${other}`;
+        return { pass: received <= other, message };
+      },
+    
+      toBeNull: function(received, message) {
+        message = message || `${received} == null`;
+        return { pass: received === null, message };
+      },
+    
+      toContain: function(received, other, message) {
+        message = message || `${received} ⊇ ${other}`;
+        return { pass: received.includes(other), message };
+      },
+    
+      toEqual: function(received, other, message) {
+        let receivedJson = stringify(received);
+        let otherJson = stringify(other);
+        let formatter = objectFormatter.bind(null, receivedJson, otherJson);
+        if (receivedJson.length < 40 && otherJson.length < 40) {
+          receivedJson = receivedJson.split('\n').map(line => line.trim()).join(' ');
+          otherJson = otherJson.split('\n').map(line => line.trim()).join(' ');
+          formatter = stringFormatter.bind(null, receivedJson, otherJson);
+        }
+        message = message || `\n${receivedJson} ≈ ${otherJson}`;
+        return { pass: receivedJson === otherJson, message, formatter };
+      },
+    
+      toBeCloseTo: function(received, other, precision, message) {
+        return {
+          pass: Math.abs(received - other) < Math.pow(10, -precision),
+          message
+        };
+      },
+    
+      toBeInstanceOf: function(received, other, message) {
+        message = message || `${received.constructor.name} instanceof ${other.name}`;
+        return { pass: received instanceof other, message };
+      },
+    
+      toBeGolden: function(received, goldenName) {
+        return GoldenUtils.compare(received, {
+          goldenPath: config.goldenPath,
+          outputPath: config.outputPath,
+          goldenName
+        });
+      }    
+    }
   }
 
   expect(received) {
@@ -154,82 +227,6 @@ function toBeFormatter(received, expected) {
     `Received: ${colors.red(JSON.stringify(received))}`,
   ].join('\n');
 }
-
-const DefaultMatchers = {
-  toBe: function(received, expected, message) {
-    message = message || `${received} == ${expected}`;
-    return { pass: received === expected, message, formatter: toBeFormatter.bind(null, received, expected) };
-  },
-
-  toBeFalsy: function(received, message) {
-    message = message || `${received}`;
-    return { pass: !received, message };
-  },
-
-  toBeTruthy: function(received, message) {
-    message = message || `${received}`;
-    return { pass: !!received, message };
-  },
-
-  toBeGreaterThan: function(received, other, message) {
-    message = message || `${received} > ${other}`;
-    return { pass: received > other, message };
-  },
-
-  toBeGreaterThanOrEqual: function(received, other, message) {
-    message = message || `${received} >= ${other}`;
-    return { pass: received >= other, message };
-  },
-
-  toBeLessThan: function(received, other, message) {
-    message = message || `${received} < ${other}`;
-    return { pass: received < other, message };
-  },
-
-  toBeLessThanOrEqual: function(received, other, message) {
-    message = message || `${received} <= ${other}`;
-    return { pass: received <= other, message };
-  },
-
-  toBeNull: function(received, message) {
-    message = message || `${received} == null`;
-    return { pass: received === null, message };
-  },
-
-  toContain: function(received, other, message) {
-    message = message || `${received} ⊇ ${other}`;
-    return { pass: received.includes(other), message };
-  },
-
-  toEqual: function(received, other, message) {
-    let receivedJson = stringify(received);
-    let otherJson = stringify(other);
-    let formatter = objectFormatter.bind(null, receivedJson, otherJson);
-    if (receivedJson.length < 40 && otherJson.length < 40) {
-      receivedJson = receivedJson.split('\n').map(line => line.trim()).join(' ');
-      otherJson = otherJson.split('\n').map(line => line.trim()).join(' ');
-      formatter = stringFormatter.bind(null, receivedJson, otherJson);
-    }
-    message = message || `\n${receivedJson} ≈ ${otherJson}`;
-    return { pass: receivedJson === otherJson, message, formatter };
-  },
-
-  toBeCloseTo: function(received, other, precision, message) {
-    return {
-      pass: Math.abs(received - other) < Math.pow(10, -precision),
-      message
-    };
-  },
-
-  toBeInstanceOf: function(received, other, message) {
-    message = message || `${received.constructor.name} instanceof ${other.name}`;
-    return { pass: received instanceof other, message };
-  },
-
-  toBeGolden: function(received, golden) {
-    return GoldenUtils.compare(received, golden);
-  },
-};
 
 function stringify(value) {
   function stabilize(key, object) {

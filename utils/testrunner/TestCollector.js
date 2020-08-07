@@ -172,6 +172,7 @@ class TestCollector {
     this._suiteAttributes = new Map();
     this._testModifiers = new Map();
     this._testAttributes = new Map();
+    this._testCallbackWrappers = [];
     this._api = {};
 
     this._currentSuite = new Suite(null, '', new Location());
@@ -189,6 +190,8 @@ class TestCollector {
     });
     this._api.it = specBuilder(this._testModifiers, this._testAttributes, (specs, name, testCallback) => {
       const location = Location.getCallerLocation();
+      for (const wrapper of this._testCallbackWrappers)
+        testCallback = wrapper(testCallback);
       const test = new Test(this._currentSuite, name, testCallback, location);
       test.setTimeout(timeout);
       for (const { callback, args } of specs)
@@ -205,6 +208,10 @@ class TestCollector {
 
   useEnvironment(environment) {
     return this._currentSuite.addEnvironment(environment);
+  }
+
+  addTestCallbackWrapper(wrapper) {
+    this._testCallbackWrappers.push(wrapper);
   }
 
   addTestModifier(name, callback) {
