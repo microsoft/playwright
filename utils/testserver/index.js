@@ -83,6 +83,13 @@ class TestServer {
     this._gzipRoutes = new Set();
     /** @type {!Map<string, !Promise>} */
     this._requestSubscribers = new Map();
+
+    const protocol = sslOptions ? 'https' : 'http';
+    this.PORT = port;
+    this.PREFIX = `${protocol}://localhost:${port}`;
+    this.CROSS_PROCESS_PREFIX = `${protocol}://127.0.0.1:${port}`;
+    this.EMPTY_PAGE = `${protocol}://localhost:${port}/empty.html`;
+  
   }
 
   _onSocket(socket) {

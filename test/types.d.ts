@@ -10,13 +10,10 @@ type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>)
     repeat(n: number): ItFunction<STATE>;
 };
 
+interface WorkerState {
+}
+
 interface FixtureState {
-    parallelIndex: number;
-    http_server: {server: TestServer, httpsServer: TestServer};
-    defaultBrowserOptions: import('../index').LaunchOptions;
-    playwright: typeof import('../index');
-    browserType: import('../index').BrowserType<import('../index').Browser>;
-    browser: import('../index').Browser;
     toImpl: (rpcObject: any) => any;
     context: import('../index').BrowserContext;
     server: TestServer;
@@ -24,6 +21,7 @@ interface FixtureState {
     httpsServer: TestServer;
     browserServer: import('../index').BrowserServer;
 }
+
 
 interface TestServer {
     enableHTTPCache(pathPrefix: string);
@@ -57,18 +55,19 @@ declare const expect: typeof import('expect');
 declare const describe: DescribeFunction;
 declare const fdescribe: DescribeFunction;
 declare const xdescribe: DescribeFunction;
-declare const it: ItFunction<FixtureState>;
-declare const fit: ItFunction<FixtureState>;
-declare const dit: ItFunction<FixtureState>;
-declare const xit: ItFunction<FixtureState>;
+declare const it: ItFunction<FixtureState & WorkerState>;
+declare const fit: ItFunction<FixtureState & WorkerState>;
+declare const dit: ItFunction<FixtureState & WorkerState>;
+declare const xit: ItFunction<FixtureState & WorkerState>;
 
-declare const beforeEach: (inner: (state: FixtureState) => Promise<void>) => void;
-declare const afterEach: (inner: (state: FixtureState) => Promise<void>) => void;
-declare const beforeAll: (inner: (state: FixtureState) => Promise<void>) => void;
-declare const afterAll: (inner: (state: FixtureState) => Promise<void>) => void;
+declare const beforeEach: (inner: (state: FixtureState & WorkerState) => Promise<void>) => void;
+declare const afterEach: (inner: (state: FixtureState & WorkerState) => Promise<void>) => void;
+declare const beforeAll: (inner: (state: WorkerState) => Promise<void>) => void;
+declare const afterAll: (inner: (state: WorkerState) => Promise<void>) => void;
 
-declare const registerFixture: <T extends keyof FixtureState>(name: T, inner: (state: FixtureState, test: (arg: FixtureState[T]) => Promise<void>) => Promise<void>) => void;
-  
+declare const registerFixture: <T extends keyof FixtureState>(name: T, inner: (state: FixtureState & WorkerState, test: (arg: FixtureState[T]) => Promise<void>) => Promise<void>) => void;
+declare const registerWorkerFixture: <T extends keyof WorkerState>(name: T, inner: (state: WorkerState, test: (arg: WorkerState[T]) => Promise<void>) => Promise<void>) => void;
+
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
 
 // global variables in assets

@@ -15,7 +15,6 @@
  */
 
 const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
-const registerFixtures = require('../harness/fixtures');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
@@ -29,8 +28,6 @@ const { ModuleMocker } = require('jest-mock');
 global.testOptions = require('../harness/testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
-
-registerFixtures(global);
 
 const browserName = process.env.BROWSER || 'chromium';
 
