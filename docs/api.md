@@ -3309,14 +3309,20 @@ await page.keyboard.press('Backspace');
 // Result text will end up saying 'Hello!'
 ```
 
-An example of pressing `A`
+An example of pressing uppercase `A`
 ```js
 await page.keyboard.press('Shift+KeyA');
 // or
 await page.keyboard.press('Shift+A');
 ```
 
-> **NOTE** On MacOS, keyboard shortcuts like `⌘ A` -> Select All do not work. See [#1313](https://github.com/GoogleChrome/puppeteer/issues/1313)
+An example to trigger select-all with the keyboard
+```js
+// on Windows and Linux
+await page.keyboard.press('Control+A');
+// on macOS
+await page.keyboard.press('Meta+A');
+```
 
 <!-- GEN:toc -->
 - [keyboard.down(key)](#keyboarddownkey)
