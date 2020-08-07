@@ -470,6 +470,64 @@ it('should support cors with POST', async({page, server}) => {
   expect(resp).toEqual(['electric', 'gas']);
 });
 
+it('should support cors with credentials', async({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/cars', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      headers: {
+        'Access-Control-Allow-Origin': server.PREFIX,
+        'Access-Control-Allow-Credentials': 'true'
+      },
+      status: 200,
+      body: JSON.stringify(['electric', 'gas']),
+    });
+  });
+  const resp = await page.evaluate(async () => {
+    const response = await fetch('https://example.com/cars', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      mode: 'cors',
+      body: JSON.stringify({ 'number': 1 }),
+      credentials: 'include'
+    });
+    return response.json();
+  });
+  expect(resp).toEqual(['electric', 'gas']);
+});
+
+it('should reject cors with disallowed credentials', async({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.route('**/cars', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      headers: {
+        'Access-Control-Allow-Origin': server.PREFIX,
+        // Should fail without this line below!
+        // 'Access-Control-Allow-Credentials': 'true'
+      },
+      status: 200,
+      body: JSON.stringify(['electric', 'gas']),
+    });
+  });
+  let error = '';
+  try {
+    const resp = await page.evaluate(async () => {
+      const response = await fetch('https://example.com/cars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+        body: JSON.stringify({ 'number': 1 }),
+        credentials: 'include'
+      });
+      return response.json();
+    });
+  } catch (e) {
+    error = e;
+  }
+  expect(error).toBeTruthy();
+});
+
 it('should support cors for different methods', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars', async (route, request) => {

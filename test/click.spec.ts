@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-const utils = require('./utils');
+import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, HEADLESS, USES_HOOKS} = testOptions;
 
 async function giveItAChanceToClick(page) {
@@ -26,7 +26,7 @@ async function giveItAChanceToClick(page) {
 it('should click the button', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should click svg', async({page, server}) => {
@@ -36,14 +36,14 @@ it('should click svg', async({page, server}) => {
     </svg>
   `);
   await page.click('circle');
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(42);
+  expect(await page.evaluate('__CLICKED')).toBe(42);
 });
 
 it('should click the button if window.Node is removed', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => delete window.Node);
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 // @see https://github.com/GoogleChrome/puppeteer/issues/4281
@@ -57,7 +57,7 @@ it('should click on a span with an inline element inside', async({page, server})
     <span onclick='javascript:window.CLICKED=42'></span>
   `);
   await page.click('span');
-  expect(await page.evaluate(() => window.CLICKED)).toBe(42);
+  expect(await page.evaluate('CLICKED')).toBe(42);
 });
 
 it('should not throw UnhandledPromiseRejection when page closes', async({browser, server}) => {
@@ -75,7 +75,7 @@ it('should click the button after navigation ', async({page, server}) => {
   await page.click('button');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should click the button after a cross origin navigation ', async({page, server}) => {
@@ -83,7 +83,7 @@ it('should click the button after a cross origin navigation ', async({page, serv
   await page.click('button');
   await page.goto(server.CROSS_PROCESS_PREFIX + '/input/button.html');
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should click with disabled javascript', async({browser, server}) => {
@@ -109,7 +109,7 @@ it('should click when one of inline box children is outside of viewport', async(
     <span onclick='javascript:window.CLICKED = 42;'><i>woof</i><b>doggo</b></span>
   `);
   await page.click('span');
-  expect(await page.evaluate(() => window.CLICKED)).toBe(42);
+  expect(await page.evaluate('CLICKED')).toBe(42);
 });
 
 it('should select the text by triple clicking', async({page, server}) => {
@@ -150,7 +150,7 @@ it('should click offscreen buttons', async({page, server}) => {
 it('should waitFor visible when already visible', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should not wait with force', async({page, server}) => {
@@ -159,7 +159,7 @@ it('should not wait with force', async({page, server}) => {
   await page.$eval('button', b => b.style.display = 'none');
   await page.click('button', { force: true }).catch(e => error = e);
   expect(error.message).toContain('Element is not visible');
-  expect(await page.evaluate(() => result)).toBe('Was not clicked');
+  expect(await page.evaluate('result')).toBe('Was not clicked');
 });
 
 it('should waitFor display:none to be gone', async({page, server}) => {
@@ -168,12 +168,12 @@ it('should waitFor display:none to be gone', async({page, server}) => {
   await page.$eval('button', b => b.style.display = 'none');
   const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
   await giveItAChanceToClick(page);
-  expect(await page.evaluate(() => result)).toBe('Was not clicked');
+  expect(await page.evaluate('result')).toBe('Was not clicked');
   expect(done).toBe(false);
   await page.$eval('button', b => b.style.display = 'block');
   await clicked;
   expect(done).toBe(true);
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should waitFor visibility:hidden to be gone', async({page, server}) => {
@@ -182,12 +182,12 @@ it('should waitFor visibility:hidden to be gone', async({page, server}) => {
   await page.$eval('button', b => b.style.visibility = 'hidden');
   const clicked = page.click('button', { timeout: 0 }).then(() => done = true);
   await giveItAChanceToClick(page);
-  expect(await page.evaluate(() => result)).toBe('Was not clicked');
+  expect(await page.evaluate('result')).toBe('Was not clicked');
   expect(done).toBe(false);
   await page.$eval('button', b => b.style.visibility = 'visible');
   await clicked;
   expect(done).toBe(true);
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should waitFor visible when parent is hidden', async({page, server}) => {
@@ -200,21 +200,21 @@ it('should waitFor visible when parent is hidden', async({page, server}) => {
   await page.$eval('button', b => b.parentElement.style.display = 'block');
   await clicked;
   expect(done).toBe(true);
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should click wrapped links', async({page, server}) => {
   await page.goto(server.PREFIX + '/wrappedlink.html');
   await page.click('a');
-  expect(await page.evaluate(() => window.__clicked)).toBe(true);
+  expect(await page.evaluate('__clicked')).toBe(true);
 });
 
 it('should click on checkbox input and toggle', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/checkbox.html');
-  expect(await page.evaluate(() => result.check)).toBe(null);
+  expect(await page.evaluate(() => window['result'].check)).toBe(null);
   await page.click('input#agree');
-  expect(await page.evaluate(() => result.check)).toBe(true);
-  expect(await page.evaluate(() => result.events)).toEqual([
+  expect(await page.evaluate(() => window['result'].check)).toBe(true);
+  expect(await page.evaluate(() => window['result'].events)).toEqual([
     'mouseover',
     'mouseenter',
     'mousemove',
@@ -225,21 +225,21 @@ it('should click on checkbox input and toggle', async({page, server}) => {
     'change',
   ]);
   await page.click('input#agree');
-  expect(await page.evaluate(() => result.check)).toBe(false);
+  expect(await page.evaluate(() => window['result'].check)).toBe(false);
 });
 
 it('should click on checkbox label and toggle', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/checkbox.html');
-  expect(await page.evaluate(() => result.check)).toBe(null);
+  expect(await page.evaluate(() => window['result'].check)).toBe(null);
   await page.click('label[for="agree"]');
-  expect(await page.evaluate(() => result.check)).toBe(true);
-  expect(await page.evaluate(() => result.events)).toEqual([
+  expect(await page.evaluate(() => window['result'].check)).toBe(true);
+  expect(await page.evaluate(() => window['result'].events)).toEqual([
     'click',
     'input',
     'change',
   ]);
   await page.click('label[for="agree"]');
-  expect(await page.evaluate(() => result.check)).toBe(false);
+  expect(await page.evaluate(() => window['result'].check)).toBe(false);
 });
 
 it('should not hang with touch-enabled viewports', async({browser, playwright}) => {
@@ -264,10 +264,10 @@ it('should scroll and click the button', async({page, server}) => {
 it('should double click the button', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {
-    window.double = false;
+    window['double'] = false;
     const button = document.querySelector('button');
     button.addEventListener('dblclick', event => {
-      window.double = true;
+      window['double'] = true;
     });
   });
   await page.dblclick('button');
@@ -284,13 +284,13 @@ it('should click a partially obscured button', async({page, server}) => {
     button.style.left = '368px';
   });
   await page.click('button');
-  expect(await page.evaluate(() => window.result)).toBe('Clicked');
+  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
 it('should click a rotated button', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/rotatedButton.html');
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });
 
 it('should fire contextmenu event on right click', async({page, server}) => {
@@ -313,7 +313,7 @@ it('should click the button inside an iframe', async({page, server}) => {
   const frame = page.frames()[1];
   const button = await frame.$('button');
   await button.click();
-  expect(await frame.evaluate(() => window.result)).toBe('Clicked');
+  expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
 it.fail(CHROMIUM || WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
@@ -327,7 +327,7 @@ it.fail(CHROMIUM || WEBKIT)('should click the button with fixed position inside 
   const frame = page.frames()[1];
   await frame.$eval('button', button => button.style.setProperty('position', 'fixed'));
   await frame.click('button');
-  expect(await frame.evaluate(() => window.result)).toBe('Clicked');
+  expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
 it('should click the button with deviceScaleFactor set', async({browser, server}) => {
@@ -339,7 +339,7 @@ it('should click the button with deviceScaleFactor set', async({browser, server}
   const frame = page.frames()[1];
   const button = await frame.$('button');
   await button.click();
-  expect(await frame.evaluate(() => window.result)).toBe('Clicked');
+  expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
   await context.close();
 });
 
@@ -347,10 +347,10 @@ it('should click the button with px border with offset', async({page, server}) =
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.click('button', { position: { x: 20, y: 10 } });
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 20 + 8 : 20);
-  expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 10 + 8 : 10);
+  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 20 + 8 : 20);
+  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 10 + 8 : 10);
 });
 
 it('should click the button with em border with offset', async({page, server}) => {
@@ -358,10 +358,10 @@ it('should click the button with em border with offset', async({page, server}) =
   await page.$eval('button', button => button.style.borderWidth = '2em');
   await page.$eval('button', button => button.style.fontSize = '12px');
   await page.click('button', { position: { x: 20, y: 10 } });
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 12 * 2 + 20 : 20);
-  expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 12 * 2 + 10 : 10);
+  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 12 * 2 + 20 : 20);
+  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 12 * 2 + 10 : 10);
 });
 
 it('should click a very large button with offset', async({page, server}) => {
@@ -369,10 +369,10 @@ it('should click a very large button with offset', async({page, server}) => {
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.$eval('button', button => button.style.height = button.style.width = '2000px');
   await page.click('button', { position: { x: 1900, y: 1910 } });
-  expect(await page.evaluate(() => window.result)).toBe('Clicked');
+  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
-  expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 1900 + 8 : 1900);
+  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 1910 + 8 : 1910);
 });
 
 it('should click a button in scrolling container with offset', async({page, server}) => {
@@ -389,10 +389,10 @@ it('should click a button in scrolling container with offset', async({page, serv
     button.style.borderWidth = '8px';
   });
   await page.click('button', { position: { x: 1900, y: 1910 } });
-  expect(await page.evaluate(() => window.result)).toBe('Clicked');
+  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate(() => offsetX)).toBe(WEBKIT ? 1900 + 8 : 1900);
-  expect(await page.evaluate(() => offsetY)).toBe(WEBKIT ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 1900 + 8 : 1900);
+  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 1910 + 8 : 1910);
 });
 
 it.skip(FFOX)('should click the button with offset with page scale', async({browser, server}) => {
@@ -404,7 +404,7 @@ it.skip(FFOX)('should click the button with offset with page scale', async({brow
     document.body.style.margin = '0';
   });
   await page.click('button', { position: { x: 20, y: 10 } });
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
   const round = x => Math.round(x + 0.01);
   let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
   if (WEBKIT) {
@@ -414,8 +414,8 @@ it.skip(FFOX)('should click the button with offset with page scale', async({brow
     // Headless Chromium rounds down during css -> dip -> css conversion.
     expected = { x: 27, y: 18 };
   }
-  expect(round(await page.evaluate(() => pageX))).toBe(expected.x);
-  expect(round(await page.evaluate(() => pageY))).toBe(expected.y);
+  expect(round(await page.evaluate('pageX'))).toBe(expected.x);
+  expect(round(await page.evaluate('pageY'))).toBe(expected.y);
   await context.close();
 });
 
@@ -433,9 +433,9 @@ it('should wait for stable position', async({page, server}) => {
     document.body.style.margin = '0';
   });
   await page.click('button');
-  expect(await page.evaluate(() => window.result)).toBe('Clicked');
-  expect(await page.evaluate(() => pageX)).toBe(300);
-  expect(await page.evaluate(() => pageY)).toBe(10);
+  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
+  expect(await page.evaluate('pageX')).toBe(300);
+  expect(await page.evaluate('pageY')).toBe(10);
 });
 
 it('should wait for becoming hit target', async({page, server}) => {
@@ -467,7 +467,7 @@ it('should wait for becoming hit target', async({page, server}) => {
   await page.$eval('.flyover', flyOver => flyOver.style.left = '200px');
   await clickPromise;
   expect(clicked).toBe(true);
-  expect(await page.evaluate(() => window.result)).toBe('Clicked');
+  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
 it('should fail when obscured and not waiting for hit target', async({page, server}) => {
@@ -484,7 +484,7 @@ it('should fail when obscured and not waiting for hit target', async({page, serv
     document.body.appendChild(blocker);
   });
   await button.click({ force: true });
-  expect(await page.evaluate(() => window.result)).toBe('Was not clicked');
+  expect(await page.evaluate(() => window['result'])).toBe('Was not clicked');
 });
 
 it('should wait for button to be enabled', async({page, server}) => {
@@ -492,11 +492,11 @@ it('should wait for button to be enabled', async({page, server}) => {
   let done = false;
   const clickPromise = page.click('text=Click target').then(() => done = true);
   await giveItAChanceToClick(page);
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
   expect(done).toBe(false);
   await page.evaluate(() => document.querySelector('button').removeAttribute('disabled'));
   await clickPromise;
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should wait for input to be enabled', async({page, server}) => {
@@ -504,11 +504,11 @@ it('should wait for input to be enabled', async({page, server}) => {
   let done = false;
   const clickPromise = page.click('input').then(() => done = true);
   await giveItAChanceToClick(page);
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
   expect(done).toBe(false);
   await page.evaluate(() => document.querySelector('input').removeAttribute('disabled'));
   await clickPromise;
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should wait for select to be enabled', async({page, server}) => {
@@ -516,29 +516,29 @@ it('should wait for select to be enabled', async({page, server}) => {
   let done = false;
   const clickPromise = page.click('select').then(() => done = true);
   await giveItAChanceToClick(page);
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
   expect(done).toBe(false);
   await page.evaluate(() => document.querySelector('select').removeAttribute('disabled'));
   await clickPromise;
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should click disabled div', async({page, server}) => {
   await page.setContent('<div onclick="javascript:window.__CLICKED=true;" disabled>Click target</div>');
   await page.click('text=Click target');
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should climb dom for inner label with pointer-events:none', async({page, server}) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;"><label style="pointer-events:none">Click target</label></button>');
   await page.click('text=Click target');
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should climb up to [role=button]', async({page, server}) => {
   await page.setContent('<div role=button onclick="javascript:window.__CLICKED=true;"><div style="pointer-events:none"><span><div>Click target</div></span></div>');
   await page.click('text=Click target');
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should wait for BUTTON to be clickable when it has pointer-events:none', async({page, server}) => {
@@ -546,11 +546,11 @@ it('should wait for BUTTON to be clickable when it has pointer-events:none', asy
   let done = false;
   const clickPromise = page.click('text=Click target').then(() => done = true);
   await giveItAChanceToClick(page);
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+  expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
   expect(done).toBe(false);
   await page.evaluate(() => document.querySelector('button').style.removeProperty('pointer-events'));
   await clickPromise;
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should wait for LABEL to be clickable when it has pointer-events:none', async({page, server}) => {
@@ -558,28 +558,28 @@ it('should wait for LABEL to be clickable when it has pointer-events:none', asyn
   const clickPromise = page.click('text=Click target');
   // Do a few roundtrips to the page.
   for (let i = 0; i < 5; ++i)
-    expect(await page.evaluate(() => window.__CLICKED)).toBe(undefined);
+    expect(await page.evaluate('window.__CLICKED')).toBe(undefined);
   // remove `pointer-events: none` css from button.
   await page.evaluate(() => document.querySelector('label').style.removeProperty('pointer-events'));
   await clickPromise;
-  expect(await page.evaluate(() => window.__CLICKED)).toBe(true);
+  expect(await page.evaluate('__CLICKED')).toBe(true);
 });
 
 it('should update modifiers correctly', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button', { modifiers: ['Shift'] });
-  expect(await page.evaluate(() => shiftKey)).toBe(true);
+  expect(await page.evaluate('shiftKey')).toBe(true);
   await page.click('button', { modifiers: [] });
-  expect(await page.evaluate(() => shiftKey)).toBe(false);
+  expect(await page.evaluate('shiftKey')).toBe(false);
 
   await page.keyboard.down('Shift');
   await page.click('button', { modifiers: [] });
-  expect(await page.evaluate(() => shiftKey)).toBe(false);
+  expect(await page.evaluate('shiftKey')).toBe(false);
   await page.click('button');
-  expect(await page.evaluate(() => shiftKey)).toBe(true);
+  expect(await page.evaluate('shiftKey')).toBe(true);
   await page.keyboard.up('Shift');
   await page.click('button');
-  expect(await page.evaluate(() => shiftKey)).toBe(false);
+  expect(await page.evaluate('shiftKey')).toBe(false);
 });
 
 it('should click an offscreen element when scroll-behavior is smooth', async({page}) => {
@@ -594,45 +594,45 @@ it('should click an offscreen element when scroll-behavior is smooth', async({pa
 
 it('should report nice error when element is detached and force-clicked', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/animating-button.html');
-  await page.evaluate(() => addButton());
+  await page.evaluate('addButton()');
   const handle = await page.$('button');
-  await page.evaluate(() => stopButton(true));
+  await page.evaluate('stopButton(true)');
   const promise = handle.click({ force: true }).catch(e => e);
   const error = await promise;
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
 it('should fail when element detaches after animation', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/animating-button.html');
-  await page.evaluate(() => addButton());
+  await page.evaluate('addButton()');
   const handle = await page.$('button');
   const promise = handle.click().catch(e => e);
-  await page.evaluate(() => stopButton(true));
+  await page.evaluate('stopButton(true)');
   const error = await promise;
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
 it('should retry when element detaches after animation', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/animating-button.html');
-  await page.evaluate(() => addButton());
+  await page.evaluate('addButton()');
   let clicked = false;
   const promise = page.click('button').then(() => clicked = true);
   expect(clicked).toBe(false);
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-  await page.evaluate(() => stopButton(true));
-  await page.evaluate(() => addButton());
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
+  await page.evaluate('stopButton(true)');
+  await page.evaluate('addButton()');
   expect(clicked).toBe(false);
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-  await page.evaluate(() => stopButton(true));
-  await page.evaluate(() => addButton());
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
+  await page.evaluate('stopButton(true)');
+  await page.evaluate('addButton()');
   expect(clicked).toBe(false);
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
-  await page.evaluate(() => stopButton(false));
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
+  await page.evaluate('stopButton(false)');
   await promise;
   expect(clicked).toBe(true);
-  expect(await page.evaluate(() => window.clicked)).toBe(true);
+  expect(await page.evaluate('clicked')).toBe(true);
 });
 
 it('should retry when element is animating from outside the viewport', async({page, server}) => {
@@ -660,7 +660,7 @@ it('should retry when element is animating from outside the viewport', async({pa
   const promise = handle.click();
   await handle.evaluate(button => button.className = 'animated');
   await promise;
-  expect(await page.evaluate(() => window.clicked)).toBe(true);
+  expect(await page.evaluate('clicked')).toBe(true);
 });
 
 it('should fail when element is animating from outside the viewport with force', async({page, server}) => {
@@ -688,7 +688,7 @@ it('should fail when element is animating from outside the viewport with force',
   const promise = handle.click({ force: true }).catch(e => e);
   await handle.evaluate(button => button.className = 'animated');
   const error = await promise;
-  expect(await page.evaluate(() => window.clicked)).toBe(undefined);
+  expect(await page.evaluate('window.clicked')).toBe(undefined);
   expect(error.message).toContain('Element is outside of the viewport');
 });
 
@@ -707,70 +707,17 @@ it('should dispatch microtasks in order', async({page, server}) => {
         document.body.appendChild(document.createElement('div'));
       });
       button.addEventListener('mouseup', () => {
-        window.result = mutationCount;
+        window['result'] = mutationCount;
       });
     </script>
   `);
   await page.click('button');
-  expect(await page.evaluate(() => window.result)).toBe(1);
-});
-
-it.fail(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
-  await page.goto(server.PREFIX + '/react.html');
-  await page.evaluate(() => {
-    renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })] ));
-  });
-  const __testHookAfterStable = () => page.evaluate(() => {
-    window.counter = (window.counter || 0) + 1;
-    if (window.counter === 1)
-      renderComponent(e('div', {}, [e(MyButton, { name: 'button2' }), e(MyButton, { name: 'button1' })] ));
-  });
-  await page.click('text=button1', { __testHookAfterStable });
-  expect(await page.evaluate(() => window.button1)).toBe(true);
-  expect(await page.evaluate(() => window.button2)).toBe(undefined);
-});
-
-it.fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
-  await page.goto(server.PREFIX + '/react.html');
-  await page.evaluate(() => {
-    renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
-  });
-  const __testHookBeforeStable = () => page.evaluate(() => {
-    window.counter = (window.counter || 0) + 1;
-    if (window.counter === 1)
-      renderComponent(e('div', {}, [e(MyButton, { name: 'button2', disabled: true }), e(MyButton, { name: 'button1' })] ));
-  });
-  await page.click('text=button1', { __testHookBeforeStable });
-  expect(await page.evaluate(() => window.button1)).toBe(true);
-  expect(await page.evaluate(() => window.button2)).toBe(undefined);
-});
-
-it('should not retarget when element changes on hover', async ({page, server}) => {
-  await page.goto(server.PREFIX + '/react.html');
-  await page.evaluate(() => {
-    renderComponent(e('div', {}, [e(MyButton, { name: 'button1', renameOnHover: true }), e(MyButton, { name: 'button2' })] ));
-  });
-  await page.click('text=button1');
-  expect(await page.evaluate(() => window.button1)).toBe(true);
-  expect(await page.evaluate(() => window.button2)).toBe(undefined);
-});
-
-it('should not retarget when element is recycled on hover', async ({page, server}) => {
-  await page.goto(server.PREFIX + '/react.html');
-  await page.evaluate(() => {
-    function shuffle() {
-      renderComponent(e('div', {}, [e(MyButton, { name: 'button2' }), e(MyButton, { name: 'button1' })] ));
-    }
-    renderComponent(e('div', {}, [e(MyButton, { name: 'button1', onHover: shuffle }), e(MyButton, { name: 'button2' })] ));
-  });
-  await page.click('text=button1');
-  expect(await page.evaluate(() => window.button1)).toBe(undefined);
-  expect(await page.evaluate(() => window.button2)).toBe(true);
+  expect(await page.evaluate(() => window['result'])).toBe(1);
 });
 
 it('should click the button when window.innerWidth is corrupted', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
-  await page.evaluate(() => window.innerWidth = 0);
+  await page.evaluate(() => Object.defineProperty(window, 'innerWidth', {value: 0}));
   await page.click('button');
-  expect(await page.evaluate(() => result)).toBe('Clicked');
+  expect(await page.evaluate('result')).toBe('Clicked');
 });

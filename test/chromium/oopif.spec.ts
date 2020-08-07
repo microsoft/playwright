@@ -13,9 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { Page, Browser, BrowserContext } from '../../types/types';
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 
+declare global {
+  interface FixtureState {
+    sppBrowser: Browser;
+    sppContext: BrowserContext;
+    sppPage: Page;
+  }
+}
 registerFixture('sppBrowser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
@@ -76,13 +84,13 @@ it.skip(!CHROMIUM)('should handle remote -> local -> remote transitions', async 
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
   await Promise.all([
     page.frames()[1].waitForNavigation(),
-    page.evaluate(() => goLocal()),
+    page.evaluate('goLocal()'),
   ]);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.PREFIX + '/grid.html');
   expect(await countOOPIFs(browser)).toBe(0);
   await Promise.all([
     page.frames()[1].waitForNavigation(),
-    page.evaluate(() => goRemote()),
+    page.evaluate('goRemote()'),
   ]);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
   expect(await countOOPIFs(browser)).toBe(1);
@@ -118,7 +126,7 @@ it.skip(!CHROMIUM)('should expose function', async({sppBrowser, sppPage, server}
   const oopif = page.frames()[1];
   await page.exposeFunction('mul', (a, b) => a * b);
   const result = await oopif.evaluate(async function() {
-    return await mul(9, 4);
+    return await window['mul'](9, 4);
   });
   expect(result).toBe(36);
 });
@@ -252,25 +260,25 @@ it.skip(!CHROMIUM)('should support exposeFunction', async function({sppBrowser, 
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   expect(page.frames().length).toBe(2);
-  expect(await page.frames()[0].evaluate(() => inc(3))).toBe(4);
-  expect(await page.frames()[1].evaluate(() => inc(4))).toBe(5);
-  expect(await page.frames()[0].evaluate(() => dec(3))).toBe(2);
-  expect(await page.frames()[1].evaluate(() => dec(4))).toBe(3);
+  expect(await page.frames()[0].evaluate(() => window['inc'](3))).toBe(4);
+  expect(await page.frames()[1].evaluate(() => window['inc'](4))).toBe(5);
+  expect(await page.frames()[0].evaluate(() => window['dec'](3))).toBe(2);
+  expect(await page.frames()[1].evaluate(() => window['dec'](4))).toBe(3);
 });
 
 it.skip(!CHROMIUM)('should support addInitScript', async function({sppBrowser, sppContext, sppPage, server}) {
   const browser = sppBrowser;
   const context = sppContext;
   const page = sppPage;
-  await context.addInitScript(() => window.bar = 17);
-  await page.addInitScript(() => window.foo = 42);
+  await context.addInitScript(() => window['bar'] = 17);
+  await page.addInitScript(() => window['foo'] = 42);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   expect(page.frames().length).toBe(2);
-  expect(await page.frames()[0].evaluate(() => window.foo)).toBe(42);
-  expect(await page.frames()[1].evaluate(() => window.foo)).toBe(42);
-  expect(await page.frames()[0].evaluate(() => window.bar)).toBe(17);
-  expect(await page.frames()[1].evaluate(() => window.bar)).toBe(17);
+  expect(await page.frames()[0].evaluate(() => window['foo'])).toBe(42);
+  expect(await page.frames()[1].evaluate(() => window['foo'])).toBe(42);
+  expect(await page.frames()[0].evaluate(() => window['bar'])).toBe(17);
+  expect(await page.frames()[1].evaluate(() => window['bar'])).toBe(17);
 });
 // @see https://github.com/microsoft/playwright/issues/1240
 it.skip(!CHROMIUM)('should click a button when it overlays oopif', async function({sppBrowser, sppPage, server}) {
@@ -279,7 +287,7 @@ it.skip(!CHROMIUM)('should click a button when it overlays oopif', async functio
   await page.goto(server.PREFIX + '/button-overlay-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   await page.click('button');
-  expect(await page.evaluate(() => window.BUTTON_CLICKED)).toBe(true);
+  expect(await page.evaluate(() => window['BUTTON_CLICKED'])).toBe(true);
 });
 
 it.skip(!CHROMIUM)('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
@@ -325,7 +333,7 @@ it.skip(!CHROMIUM)('ElementHandle.boundingBox() should work', async function({sp
 
   await Promise.all([
     page.frames()[1].waitForNavigation(),
-    page.evaluate(() => goLocal()),
+    page.evaluate('goLocal()'),
   ]);
   expect(await countOOPIFs(browser)).toBe(0);
   const handle2 = await page.frames()[1].$('.box:nth-of-type(13)');
@@ -346,9 +354,9 @@ it.skip(!CHROMIUM)('should click', async function({sppBrowser, sppPage, server})
 
   expect(await countOOPIFs(browser)).toBe(1);
   const handle1 = await page.frames()[1].$('.box:nth-of-type(13)');
-  await handle1.evaluate(div => div.addEventListener('click', () => window._clicked = true, false));
+  await handle1.evaluate(div => div.addEventListener('click', () => window['_clicked'] = true, false));
   await handle1.click();
-  expect(await handle1.evaluate(() => window._clicked)).toBe(true);
+  expect(await handle1.evaluate(() => window['_clicked'])).toBe(true);
 });
 
 async function countOOPIFs(browser) {

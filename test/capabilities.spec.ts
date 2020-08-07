@@ -50,9 +50,10 @@ it('should respect CSP', async({page, server}) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it.fail(WEBKIT && WIN)('should play video', async({page}) => {
+it.fail(WEBKIT && (WIN || LINUX))('should play video', async({page}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
+  // Also the test is very flaky on Linux WebKit.
   //
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
   const fileName = WEBKIT ? 'video_mp4.html' : 'video.html';

@@ -36,6 +36,11 @@ it.skip(!CHROMIUM)('should send events', async function({page, server}) {
   expect(events.length).toBe(1);
 });
 
+it.skip(!CHROMIUM)('should only accept a page', async function({page}) {
+  const error = await page.context().newCDPSession(page.context()).catch(e => e);
+  expect(error.message).toContain('page: expected Page');
+});
+
 it.skip(!CHROMIUM)('should enable and disable domains independently', async function({page}) {
   const client = await page.context().newCDPSession(page);
   await client.send('Runtime.enable');

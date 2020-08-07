@@ -1343,6 +1343,9 @@ Worker:
       returns:
         handle: JSHandle
 
+  events:
+
+    close:
 
 
 JSHandle:

@@ -18,7 +18,7 @@
 import utils from './utils';
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
-it.slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
+it.slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server, toImpl}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   {
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -34,26 +34,29 @@ it.slow()('should be able to reconnect to a browser', async({browserType, defaul
     await page.goto(server.EMPTY_PAGE);
     await browser.close();
   }
-  await (browserServer as any)._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it.fail(USES_HOOKS || (CHROMIUM && WIN)).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, server}) => {
+it.fail(USES_HOOKS || (CHROMIUM && WIN)).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, toImpl}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
   const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);
-  await (browserServer as any)._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
   expect(error.message).toContain('Dummy');
 });
 
-it('should set the browser connected state', async ({browserType, defaultBrowserOptions}) => {
+it('should set the browser connected state', async ({browserType, defaultBrowserOptions, toImpl}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   expect(remote.isConnected()).toBe(true);
   await remote.close();
   expect(remote.isConnected()).toBe(false);
-  await (browserServer as any)._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 

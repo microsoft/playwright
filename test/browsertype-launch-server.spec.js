@@ -20,7 +20,7 @@ const fs = require('fs');
 const utils = require('./utils');
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
-it('should work', async({browserType, defaultBrowserOptions}) => {
+it('should work', async({browserType, defaultBrowserOptions, toImpl}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const browserContext = await browser.newContext();
@@ -30,7 +30,8 @@ it('should work', async({browserType, defaultBrowserOptions}) => {
   expect(await page.evaluate('11 * 11')).toBe(121);
   await page.close();
   await browser.close();
-  await browserServer._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
@@ -76,7 +77,7 @@ it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
   expect(result.signal).toBe(null);
 });
 
-it('should reject navigation when browser closes', async({browserType, defaultBrowserOptions, server}) => {
+it('should reject navigation when browser closes', async({browserType, defaultBrowserOptions, server, toImpl}) => {
   server.setRoute('/one-style.css', () => {});
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -86,11 +87,12 @@ it('should reject navigation when browser closes', async({browserType, defaultBr
   await remote.close();
   const error = await navigationPromise;
   expect(error.message).toContain('Navigation failed because page was closed!');
-  await browserServer._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should reject waitForSelector when browser closes', async({browserType, defaultBrowserOptions, server}) => {
+it('should reject waitForSelector when browser closes', async({browserType, defaultBrowserOptions, server, toImpl}) => {
   server.setRoute('/empty.html', () => {});
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -103,18 +105,20 @@ it('should reject waitForSelector when browser closes', async({browserType, defa
   await remote.close();
   const error = await watchdog;
   expect(error.message).toContain('Protocol error');
-  await browserServer._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should throw if used after disconnect', async({browserType, defaultBrowserOptions}) => {
+it('should throw if used after disconnect', async({browserType, defaultBrowserOptions, toImpl}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const page = await remote.newPage();
   await remote.close();
   const error = await page.evaluate('1 + 1').catch(e => e);
   expect(error.message).toContain('has been closed');
-  await browserServer._checkLeaks();
+  if (toImpl)
+    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
