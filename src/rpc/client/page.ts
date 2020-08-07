@@ -422,9 +422,12 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     });
   }
 
-  async screenshot(options: PageScreenshotOptions = {}): Promise<Buffer> {
+  async screenshot(options: PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('page.screenshot', async () => {
-      return Buffer.from((await this._channel.screenshot(options)).binary, 'base64');
+      const buffer = Buffer.from((await this._channel.screenshot(options)).binary, 'base64');
+      if (options.path)
+        await fsWriteFileAsync(options.path, buffer);
+      return buffer;
     });
   }
 
@@ -541,10 +544,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   async _pdf(options: PDFOptions = {}): Promise<Buffer> {
-    const path = options.path;
     const transportOptions: PagePdfParams = { ...options } as PagePdfParams;
-    if (path)
-      delete (transportOptions as any).path;
     if (transportOptions.margin)
       transportOptions.margin = { ...transportOptions.margin };
     if (typeof options.width === 'number')
@@ -558,8 +558,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     }
     const result = await this._channel.pdf(transportOptions);
     const buffer = Buffer.from(result.pdf, 'base64');
-    if (path)
-      await fsWriteFileAsync(path, buffer);
+    if (options.path)
+      await fsWriteFileAsync(options.path, buffer);
     return buffer;
   }
 }
