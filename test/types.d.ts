@@ -14,32 +14,8 @@ interface WorkerState {
 }
 
 interface FixtureState {
-    toImpl: (rpcObject: any) => any;
-    context: import('../index').BrowserContext;
-    server: TestServer;
-    page: import('../index').Page;
-    httpsServer: TestServer;
-    browserServer: import('../index').BrowserServer;
 }
 
-
-interface TestServer {
-    enableHTTPCache(pathPrefix: string);
-    setAuth(path: string, username: string, password: string);
-    enableGzip(path: string);
-    setCSP(path: string, csp: string);
-    stop(): Promise<void>;
-    setRoute(path: string, handler: (message: IncomingMessage, response: ServerResponse) => void);
-    setRedirect(from: string, to: string);
-    waitForRequest(path: string): Promise<IncomingMessage>;
-    reset();
-    serveFile(request: IncomingMessage, response: ServerResponse, pathName: string);
-
-    PORT: number;
-    PREFIX: string;
-    CROSS_PROCESS_PREFIX: string;
-    EMPTY_PAGE: string;
-}
 declare module '' {
     module 'expect/build/types' {
         interface Matchers<R> {
