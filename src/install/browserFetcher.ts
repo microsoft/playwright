@@ -78,7 +78,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
         ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
         ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
-      ]).get(platform)
+      ]).get(platform);
   }
 
   if (browserName === 'firefox') {
