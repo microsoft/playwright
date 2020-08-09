@@ -18,20 +18,24 @@ const path = require('path');
 const childProcess = require('child_process');
 const playwrightImpl = require('../../index');
 
-const { TestServer } = require('../../utils/testserver/');
+const { TestServer } = require('../../utils/testserver');
 const { Connection } = require('../../lib/rpc/client/connection');
 const { Transport } = require('../../lib/rpc/transport');
 const { setupInProcess } = require('../../lib/rpc/inprocess');
 const { setUnderTest } = require('../../lib/helper');
+const { valueFromEnv } = require('./utils');
+const { registerFixture, registerWorkerFixture } = require('./fixturePool');
+
 setUnderTest();
 
 const browserName = process.env.BROWSER || 'chromium';
 
 module.exports = function registerFixtures(global) {
-  global.registerWorkerFixture('parallelIndex', async ({}, test) => {
+  registerWorkerFixture('parallelIndex', async ({}, test) => {
     await test(process.env.JEST_WORKER_ID - 1);
   });
-  global.registerWorkerFixture('http_server', async ({parallelIndex}, test) => {
+
+  registerWorkerFixture('http_server', async ({parallelIndex}, test) => {
     const assetsPath = path.join(__dirname, '..', 'assets');
     const cachedPath = path.join(__dirname, '..', 'assets', 'cached');
 
@@ -59,7 +63,7 @@ module.exports = function registerFixtures(global) {
     ]);
   });
 
-  global.registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
+  registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
     let executablePath = undefined;
     if (browserName === 'chromium' && process.env.CRPATH)
       executablePath = process.env.CRPATH;
@@ -77,7 +81,7 @@ module.exports = function registerFixtures(global) {
     });
   });
 
-  global.registerWorkerFixture('playwright', async({}, test) => {
+  registerWorkerFixture('playwright', async({}, test) => {
     if (process.env.PWCHANNEL === 'wire') {
       const connection = new Connection();
       const spawnedProcess = childProcess.fork(path.join(__dirname, '..', '..', 'lib', 'rpc', 'server'), [], {
@@ -108,15 +112,15 @@ module.exports = function registerFixtures(global) {
     }
   });
 
-  global.registerFixture('toImpl', async ({playwright}, test) => {
+  registerFixture('toImpl', async ({playwright}, test) => {
     await test(playwright._toImpl);
   });
 
-  global.registerWorkerFixture('browserType', async ({playwright}, test) => {
+  registerWorkerFixture('browserType', async ({playwright}, test) => {
     await test(playwright[process.env.BROWSER || 'chromium']);
   });
 
-  global.registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
+  registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
     const browser = await browserType.launch(defaultBrowserOptions);
     try {
       await test(browser);
@@ -129,7 +133,7 @@ module.exports = function registerFixtures(global) {
     }
   });
 
-  global.registerFixture('context', async ({browser}, test) => {
+  registerFixture('context', async ({browser}, test) => {
     const context = await browser.newContext();
     try {
       await test(context);
@@ -138,24 +142,18 @@ module.exports = function registerFixtures(global) {
     }
   });
 
-  global.registerFixture('page', async ({context}, test) => {
+  registerFixture('page', async ({context}, test) => {
     const page = await context.newPage();
     await test(page);
   });
 
-  global.registerFixture('server', async ({http_server}, test) => {
+  registerFixture('server', async ({http_server}, test) => {
     http_server.server.reset();
     await test(http_server.server);
   });
 
-  global.registerFixture('httpsServer', async ({http_server}, test) => {
+  registerFixture('httpsServer', async ({http_server}, test) => {
     http_server.httpsServer.reset();
     await test(http_server.httpsServer);
   });
-}
-
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
 }

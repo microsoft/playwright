@@ -22,7 +22,10 @@ const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
 
 const TestRunner  = require('../../../testrunner/');
-const runner = new TestRunner();
+const runner = new TestRunner({
+  goldenPath: __dirname,
+  outputPath: __dirname
+});
 
 const {describe, xdescribe, fdescribe} = runner.api();
 const {it, fit, xit} = runner.api();
@@ -66,14 +69,14 @@ async function testLint(state, testRun) {
   const jsSources = await Source.readdir(dirPath, '.js');
   const messages = await checkPublicAPI(page, mdSources, jsSources.concat(tsSources));
   const errors = messages.map(message => message.text);
-  expect(errors.join('\n')).toBeGolden({goldenPath: dirPath, outputPath: dirPath, goldenName: 'result.txt'});
+  expect(errors.join('\n')).toBeGolden(path.join(testRun.test().name(), 'result.txt'));
 }
 
 async function testMDBuilder(state, testRun) {
   const dirPath = path.join(__dirname, testRun.test().name());
   const sources = await Source.readdir(dirPath, '.md');
   const {documentation} = await mdBuilder(page, sources);
-  expect(serialize(documentation)).toBeGolden({goldenPath: dirPath, outputPath: dirPath, goldenName: 'result.txt'});
+  expect(serialize(documentation)).toBeGolden(path.join(testRun.test().name(), 'result.txt'));
 }
 
 async function testJSBuilder(state, testRun) {
@@ -81,7 +84,7 @@ async function testJSBuilder(state, testRun) {
   const jsSources = await Source.readdir(dirPath, '.js');
   const tsSources = await Source.readdir(dirPath, '.ts');
   const {documentation} = await jsBuilder.checkSources(jsSources.concat(tsSources));
-  expect(serialize(documentation)).toBeGolden({goldenPath: dirPath, outputPath: dirPath, goldenName: 'result.txt'});
+  expect(serialize(documentation)).toBeGolden(path.join(testRun.test().name(), 'result.txt'));
 }
 
 /**

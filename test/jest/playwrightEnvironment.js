@@ -14,44 +14,28 @@
  * limitations under the License.
  */
 
-const registerFixtures = require('./fixtures');
-const { FixturePool, registerFixture } = require('./fixturePool');
+const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
+const registerFixtures = require('../harness/fixtures');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const debug = require('debug');
 const util = require('util');
-const platform = process.env.REPORT_ONLY_PLATFORM || os.platform();
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 const {installCoverageHooks} = require('./coverage');
-const browserName = process.env.BROWSER || 'chromium';
 const reportOnly = !!process.env.REPORT_ONLY_PLATFORM;
 const { ModuleMocker } = require('jest-mock');
 
-const testOptions = {};
-testOptions.MAC = platform === 'darwin';
-testOptions.LINUX = platform === 'linux';
-testOptions.WIN = platform === 'win32';
-testOptions.CHROMIUM = browserName === 'chromium';
-testOptions.FFOX = browserName === 'firefox';
-testOptions.WEBKIT = browserName === 'webkit';
-testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
-testOptions.CHANNEL = !!process.env.PWCHANNEL;
-testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
-testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
-testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
-testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
-global.testOptions = testOptions;
-
-global.registerFixture = (name, fn) => {
-  registerFixture(name, 'test', fn);
-};
-
-global.registerWorkerFixture = (name, fn) => {
-  registerFixture(name, 'worker', fn);
-};
-
+Error.stackTraceLimit = 15;
+global.testOptions = require('../harness/testOptions');
+global.registerFixture = registerFixture;
+global.registerWorkerFixture = registerWorkerFixture;
 registerFixtures(global);
+
+const browserName = process.env.BROWSER || 'chromium';
+
+const goldenPath = path.join(__dirname, '..', 'golden-' + browserName);
+const outputPath = path.join(__dirname, '..', 'output-' + browserName);
 
 let currentFixturePool = null;
 
@@ -89,7 +73,7 @@ class PlaywrightEnvironment {
     this.uninstallCoverage();
     const testRoot = path.join(__dirname, '..');
     const relativeTestPath = path.relative(testRoot, this.testPath);
-    const coveragePath = path.join(this.global.testOptions.OUTPUT_DIR, 'coverage', relativeTestPath + '.json');
+    const coveragePath = path.join(outputPath, 'coverage', relativeTestPath + '.json');
     const coverageJSON = [...this.coverage.keys()].filter(key => this.coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
@@ -101,19 +85,10 @@ class PlaywrightEnvironment {
     return script.runInThisContext();
   }
 
-  patchToEnableFixtures(object, name) {
-    const original = object[name];
-    object[name] = fn => {
-      return original(async () => {
-        return await this.fixturePool.resolveParametersAndRun(fn);
-      });
-    }
-  }
-
   async handleTestEvent(event, state) {
     if (event.name === 'setup') {
-      this.patchToEnableFixtures(this.global, 'beforeEach');
-      this.patchToEnableFixtures(this.global, 'afterEach');
+      this.fixturePool.patchToEnableFixtures(this.global, 'beforeEach');
+      this.fixturePool.patchToEnableFixtures(this.global, 'afterEach');
 
       const describeSkip = this.global.describe.skip;
       this.global.describe.skip = (...args) => {
@@ -152,7 +127,7 @@ class PlaywrightEnvironment {
       function toBeGolden(received, goldenName) {
         const {snapshotState} = this;
         const updateSnapshot = snapshotState._updateSnapshot;
-        const expectedPath = path.join(testOptions.GOLDEN_DIR, goldenName);
+        const expectedPath = path.join(goldenPath, goldenName);
         const fileExists = fs.existsSync(expectedPath);
         if (updateSnapshot === 'all' || (updateSnapshot === 'new' && !fileExists)) {
           fs.writeFileSync(expectedPath, received);
@@ -166,8 +141,8 @@ class PlaywrightEnvironment {
         };
 
         const {pass, message} =  GoldenUtils.compare(received, {
-          goldenPath: testOptions.GOLDEN_DIR,
-          outputPath: testOptions.OUTPUT_DIR,
+          goldenPath,
+          outputPath,
           goldenName
         });
         if (pass)
@@ -208,12 +183,6 @@ class PlaywrightEnvironment {
       await this.fixturePool.teardownScope('worker');
     }
   }
-}
-
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
 }
 
 function testOrSuiteName(o) {
