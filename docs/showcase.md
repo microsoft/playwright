@@ -9,6 +9,7 @@
 * [Codex](https://github.com/codex-src/codex-app): Playwright is used to run functional and performance tests
 * [Instakittens React admin](https://github.com/fredericbonnet/instakittens-react-admin): Playwright is used to run end-to-end test scenarios written with Cucumber
 * [xterm.js](https://github.com/xtermjs/xterm.js): Playwright is used to run cross-browser integration tests
+* [Accessibility Insights for Web](https://github.com/microsoft/accessibility-insights-web): Playwright is used with Jest and axe-core to run end-to-end functional and accessibility tests of a WebExtension-based browser extension
 
 ## Tools
 
