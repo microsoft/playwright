@@ -24,6 +24,7 @@
 function traceAPICoverage(apiCoverage, api, events) {
   const uninstalls = [];
   for (const [name, classType] of Object.entries(api)) {
+    // console.log('trace', name);
     const className = name.substring(0, 1).toLowerCase() + name.substring(1);
     for (const methodName of Reflect.ownKeys(classType.prototype)) {
       const method = Reflect.get(classType.prototype, methodName);

@@ -15,7 +15,7 @@
  */
 const path = require('path');
 const fs = require('fs');
-const {installCoverageHooks} = require('./coverage');
+const {installCoverageHooks} = require('../harness/coverage');
 
 const browserName = process.env.BROWSER || 'chromium';
 

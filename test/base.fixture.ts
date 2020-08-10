@@ -15,13 +15,14 @@
  */
 
 import path from 'path';
+import fs from 'fs';
 import childProcess from 'child_process';
 import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver/';
 import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
-import { setupInProcess } from '../lib/rpc/inprocess';
 import { setUnderTest } from '../lib/helper';
+import { installCoverageHooks } from './harness/coverage';
 
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 
@@ -89,6 +90,7 @@ registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
 });
 
 registerWorkerFixture('playwright', async({}, test) => {
+  const {coverage, uninstall} = installCoverageHooks(browserName);
   if (process.env.PWCHANNEL === 'wire') {
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
@@ -104,14 +106,32 @@ registerWorkerFixture('playwright', async({}, test) => {
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));
     const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
-    await test(playwrightObject);
-    spawnedProcess.removeListener('exit', onExit);
-    spawnedProcess.stdin.destroy();
-    spawnedProcess.stdout.destroy();
-    spawnedProcess.stderr.destroy();
+    try {
+      await test(playwrightObject);
+    } finally {
+      spawnedProcess.removeListener('exit', onExit);
+      spawnedProcess.stdin.destroy();
+      spawnedProcess.stdout.destroy();
+      spawnedProcess.stderr.destroy();
+      await teardownCoverage();
+    }
   } else {
-    await test(require('../index'))
+    try {
+      await test(require('../index'))
+    } finally {
+      await teardownCoverage();
+    }
   }
+
+  async function teardownCoverage() {
+    uninstall();
+    const relativeTestPath = path.relative(__dirname, testPath);
+    const coveragePath = path.join(path.join(__dirname, 'output-' + browserName), 'coverage', relativeTestPath + '.json');
+    const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
+    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
+    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
+  }
+
 });
 
 registerFixture('toImpl', async ({playwright}, test) => {

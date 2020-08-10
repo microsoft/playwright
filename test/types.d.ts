@@ -61,5 +61,7 @@ declare const testOptions: {
     ASSETS_DIR: string;
 };
 
+declare const testPath : string;
+
 // keyboard.html
 declare function getResult(): string;
