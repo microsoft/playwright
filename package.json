@@ -80,6 +80,7 @@
     "jest": "^26.2.2",
     "jest-circus": "^26.2.2",
     "jest-image-snapshot": "^4.0.2",
+    "mocha": "^8.1.1",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
     "pirates": "^4.0.1",

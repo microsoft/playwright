@@ -22,7 +22,6 @@ const pirates = require('pirates');
 const babel = require('@babel/core');
 const TestRunner = require('../../utils/testrunner');
 const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
-const testOptions = require('../harness/testOptions');
 
 Error.stackTraceLimit = 15;
 global.testOptions = require('../harness/testOptions');

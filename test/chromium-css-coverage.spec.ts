@@ -72,8 +72,25 @@ it.skip(!CHROMIUM)('should work with media queries', async function({page, serve
 it.skip(!CHROMIUM)('should work with complicated usecases', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/involved.html');
-  const coverage = await page.coverage.stopCSSCoverage();
-  expect(JSON.stringify(coverage, null, 2).replace(/:\d{4}\//g, ':<PORT>/')).toMatchSnapshot();
+  const coverage: any = await page.coverage.stopCSSCoverage();
+  delete coverage[0].text;
+  delete coverage[0].url;
+  expect(coverage).toEqual(
+    [
+      {
+        "ranges": [
+          {
+            "start": 149,
+            "end": 297
+          },
+          {
+            "start": 327,
+            "end": 433
+          }
+        ]
+      }
+    ]
+  );
 });
 
 it.skip(!CHROMIUM)('should ignore injected stylesheets', async function({page, server}) {
