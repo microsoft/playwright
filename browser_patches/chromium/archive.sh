@@ -31,4 +31,4 @@ fi
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
-cp output/archive.zip $ZIP_PATH
+cp output/build.zip $ZIP_PATH
