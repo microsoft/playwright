@@ -215,7 +215,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
-        firefoxUserPrefs: SerializedValue?
+        firefoxUserPrefs: json?
         chromiumSandbox: boolean?
         slowMo: number?
       returns:
@@ -252,7 +252,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
-        firefoxUserPrefs: SerializedValue?
+        firefoxUserPrefs: json?
         chromiumSandbox: boolean?
         port: number?
       returns:
@@ -1849,9 +1849,9 @@ CDPSession:
     send:
       parameters:
         method: string
-        params: SerializedValue?
+        params: json?
       returns:
-        result: SerializedValue
+        result: json
 
     detach:
 
@@ -1860,7 +1860,7 @@ CDPSession:
     event:
       parameters:
         method: string
-        params: SerializedValue?
+        params: json?
 
 
 

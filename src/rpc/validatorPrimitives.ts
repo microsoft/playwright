@@ -52,6 +52,9 @@ export const tUndefined: Validator = (arg: any, path: string) => {
     return arg;
   throw new ValidationError(`${path}: expected undefined, got ${typeof arg}`);
 };
+export const tAny: Validator = (arg: any, path: string) => {
+  return arg;
+};
 export const tOptional = (v: Validator): Validator => {
   return (arg: any, path: string) => {
     if (Object.is(arg, undefined))

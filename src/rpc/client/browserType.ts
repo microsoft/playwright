@@ -20,7 +20,6 @@ import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { headersObjectToArray, envObjectToArray } from '../../converters';
-import { serializeArgument } from './jsHandle';
 import { assert } from '../../helper';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 
@@ -53,7 +52,6 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
-        firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
       };
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
       browser._logger = logger;
@@ -70,7 +68,6 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
         env: options.env ? envObjectToArray(options.env) : undefined,
-        firefoxUserPrefs: options.firefoxUserPrefs ? serializeArgument(options.firefoxUserPrefs).value : undefined,
       };
       return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
     }, logger);

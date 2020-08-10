@@ -180,7 +180,7 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
-  firefoxUserPrefs?: SerializedValue,
+  firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
 };
@@ -206,7 +206,7 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
-  firefoxUserPrefs?: SerializedValue,
+  firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
 };
@@ -235,7 +235,7 @@ export type BrowserTypeLaunchServerParams = {
     password?: string,
   },
   downloadsPath?: string,
-  firefoxUserPrefs?: SerializedValue,
+  firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   port?: number,
 };
@@ -261,7 +261,7 @@ export type BrowserTypeLaunchServerOptions = {
     password?: string,
   },
   downloadsPath?: string,
-  firefoxUserPrefs?: SerializedValue,
+  firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   port?: number,
 };
@@ -2228,17 +2228,17 @@ export interface CDPSessionChannel extends Channel {
 }
 export type CDPSessionEventEvent = {
   method: string,
-  params?: SerializedValue,
+  params?: any,
 };
 export type CDPSessionSendParams = {
   method: string,
-  params?: SerializedValue,
+  params?: any,
 };
 export type CDPSessionSendOptions = {
-  params?: SerializedValue,
+  params?: any,
 };
 export type CDPSessionSendResult = {
-  result: SerializedValue,
+  result: any,
 };
 export type CDPSessionDetachParams = {};
 export type CDPSessionDetachOptions = {};
