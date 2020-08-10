@@ -24,7 +24,6 @@ import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { BrowserServerDispatcher } from './browserServerDispatcher';
 import { headersArrayToObject, envArrayToObject } from '../../converters';
-import { parseValue } from './jsHandleDispatcher';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
@@ -39,7 +38,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
       ...params,
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
       env: params.env ? envArrayToObject(params.env) : undefined,
-      firefoxUserPrefs: params.firefoxUserPrefs ? parseValue(params.firefoxUserPrefs) : undefined,
     };
     const browser = await this._object.launch(options);
     return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
@@ -61,7 +59,6 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     const options = {
       ...params,
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
-      firefoxUserPrefs: params.firefoxUserPrefs ? parseValue(params.firefoxUserPrefs) : undefined,
       env: params.env ? envArrayToObject(params.env) : undefined,
     };
     return { server: new BrowserServerDispatcher(this._scope, await this._object.launchServer(options)) };

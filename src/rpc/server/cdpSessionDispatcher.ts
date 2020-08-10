@@ -15,23 +15,20 @@
  */
 
 import { CRSession, CRSessionEvents } from '../../chromium/crConnection';
-import { CDPSessionChannel, CDPSessionInitializer, SerializedValue } from '../channels';
+import { CDPSessionChannel, CDPSessionInitializer } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { serializeResult, parseValue } from './jsHandleDispatcher';
 
 export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitializer> implements CDPSessionChannel {
   constructor(scope: DispatcherScope, crSession: CRSession) {
     super(scope, crSession, 'CDPSession', {}, true);
-    crSession._eventListener = (method, cdpParams) => {
-      const params = cdpParams ? serializeResult(cdpParams) : undefined;
+    crSession._eventListener = (method, params) => {
       this._dispatchEvent('event', { method, params });
     };
     crSession.on(CRSessionEvents.Disconnected, () => this._dispose());
   }
 
-  async send(params: { method: string, params?: SerializedValue }): Promise<{ result: SerializedValue }> {
-    const cdpParams = params.params ? parseValue(params.params) : undefined;
-    return { result: serializeResult(await this._object.send(params.method as any, cdpParams)) };
+  async send(params: { method: string, params?: any }): Promise<{ result: any }> {
+    return { result: await this._object.send(params.method as any, params.params) };
   }
 
   async detach(): Promise<void> {
