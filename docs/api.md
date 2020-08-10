@@ -1030,11 +1030,18 @@ Brings page to front (activates tab).
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully checked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully checked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already checked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method checks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+1. Ensure that the element is now checked. If not, this method rejects.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-options).
 
@@ -1051,12 +1058,16 @@ Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-o
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully clicked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to click in the center of the element.
+This method clicks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
-
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for [page.mainFrame().click(selector[, options])](#frameclickselector-options).
 
@@ -1101,13 +1112,16 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully double clicked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to double click in the center of the element.
+This method double clicks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
-
-Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
@@ -1454,11 +1468,16 @@ Shortcut for [page.mainFrame().goto(url[, options])](#framegotourl-options)
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully hovered.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to hover over the center of the element.
+This method hovers over an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for [page.mainFrame().hover(selector[, options])](#framehoverselector-options).
 
@@ -1805,11 +1824,18 @@ Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselect
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully unchecked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully unchecked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already unchecked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method unchecks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+1. Ensure that the element is now unchecked. If not, this method rejects.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselector-options).
 
@@ -2152,11 +2178,18 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully checked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully checked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already checked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method checks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+1. Ensure that the element is now checked. If not, this method rejects.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### frame.childFrames()
 - returns: <[Array]<[Frame]>>
@@ -2174,11 +2207,16 @@ If there's no element matching `selector`, the method waits until a matching ele
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully clicked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully clicked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to click in the center of the element.
+This method clicks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### frame.content()
 - returns: <[Promise]<[string]>>
@@ -2197,13 +2235,16 @@ Gets the full HTML contents of the frame, including the doctype.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully double clicked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully double clicked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to double click in the center of the element.
+This method double clicks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the actionability checks, the action is retried.
-
-Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
@@ -2376,11 +2417,16 @@ Returns element attribute value.
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully hovered. Promise gets rejected if there's no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully hovered.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to hover over the center of the element.
+This method hovers over an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### frame.innerHTML(selector[, options])
 - `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
@@ -2522,11 +2568,18 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully unchecked. The Promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully unchecked.
 
-This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks. Then, if the element is not already unchecked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method checks an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+1. Ensure that the element is now unchecked. If not, this method rejects.
 
-If there's no element matching `selector`, the method waits until a matching element appears in the DOM. If the element is detached during the [actionability](./actionability.md) checks, the action is retried.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### frame.url()
 - returns: <[string]>
@@ -2765,9 +2818,19 @@ This method returns the bounding box of the element (relative to the main frame)
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully checked. Promise gets rejected if the operation fails.
+- returns: <[Promise]> Promise that resolves when the element is successfully checked.
 
-This method waits for [actionability](./actionability.md) checks. Then, if the element is not already checked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method checks the element by performing the following steps:
+1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+1. Ensure that the element is now checked. If not, this method rejects.
+
+If the element is detached from the DOM at any moment during the action, this method rejects.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### elementHandle.click([options])
 - `options` <[Object]>
@@ -2781,11 +2844,17 @@ This method waits for [actionability](./actionability.md) checks. Then, if the e
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully clicked. Promise gets rejected if the element is detached from DOM.
+- returns: <[Promise]> Promise that resolves when the element is successfully clicked.
 
-This method waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to click in the center of the element.
+This method clicks the element by performing the following steps:
+1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-If the element is detached from DOM, the method throws an error.
+If the element is detached from the DOM at any moment during the action, this method rejects.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### elementHandle.contentFrame()
 - returns: <[Promise]<[null]|[Frame]>> Resolves to the content frame for element handles referencing iframe nodes, or `null` otherwise
@@ -2801,13 +2870,17 @@ If the element is detached from DOM, the method throws an error.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully double clicked. Promise gets rejected if the element is detached from DOM.
+- returns: <[Promise]> Promise that resolves when the element is successfully double clicked.
 
-This method waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to double click in the center of the element.
+This method double clicks the element by performing the following steps:
+1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
-If the element is detached from DOM, the method throws an error.
+If the element is detached from the DOM at any moment during the action, this method rejects.
 
-Bear in mind that if the first click of the `dblclick()` triggers a navigation event, there will be an exception.
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
@@ -2871,11 +2944,17 @@ Returns element attribute value.
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the hover, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully hovered.
+- returns: <[Promise]> Promise that resolves when the element is successfully hovered.
 
-This method waits for [actionability](./actionability.md) checks, then scrolls the element into view if needed and uses [page.mouse](#pagemouse) to hover over the center of the element.
+This method hovers over the element by performing the following steps:
+1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-If the element is detached from DOM, the method throws an error.
+If the element is detached from the DOM at any moment during the action, this method rejects.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### elementHandle.innerHTML()
 - returns: <[Promise]<[string]>> Resolves to the `element.innerHTML`.
@@ -3011,9 +3090,19 @@ await elementHandle.press('Enter');
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element is successfully unchecked. Promise gets rejected if the operation fails.
+- returns: <[Promise]> Promise that resolves when the element is successfully unchecked.
 
-This method waits for [actionability](./actionability.md) checks. Then, if the element is not already unchecked, this method scrolls the element into view and uses [elementHandle.click](#elementhandleclickoptions) to click in the center of the element.
+This method checks the element by performing the following steps:
+1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+1. Scroll the element into view if needed.
+1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+1. Ensure that the element is now unchecked. If not, this method rejects.
+
+If the element is detached from the DOM at any moment during the action, this method rejects.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 ### class: JSHandle
 
