@@ -147,7 +147,15 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
   Maybe<double> maybeScale;
   if (scale)
     maybeScale = Some(scale);
-  RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), width, height, maybeScale, offsetTop);
+
+  auto bounds = widget->GetScreenBounds().ToUnknownRect();
+  auto clientBounds = widget->GetClientBounds().ToUnknownRect();
+  // Crop the image to exclude frame (if any).
+  gfx::IntMargin margin = bounds - clientBounds;
+  // Crop the image to exclude controls.
+  margin.top += offsetTop;
+
+  RefPtr<ScreencastEncoder> encoder = ScreencastEncoder::create(error, PromiseFlatCString(aFileName), width, height, maybeScale, margin);
   if (!encoder) {
     fprintf(stderr, "Failed to create ScreencastEncoder: %s\n", error.get());
     return NS_ERROR_FAILURE;
