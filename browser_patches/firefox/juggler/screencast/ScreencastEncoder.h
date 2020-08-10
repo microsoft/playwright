@@ -6,6 +6,7 @@
 
 #include <functional>
 #include <memory>
+#include "mozilla/gfx/Rect.h"
 #include "mozilla/Maybe.h"
 #include "mozilla/TimeStamp.h"
 #include "nsISupportsImpl.h"
@@ -21,10 +22,10 @@ class ScreencastEncoder {
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ScreencastEncoder)
 public:
 
-    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, int offsetTop);
+    static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, const gfx::IntMargin& margin);
 
     class VPXCodec;
-    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, Maybe<double> scale, int offsetTop);
+    ScreencastEncoder(std::unique_ptr<VPXCodec>&&, Maybe<double> scale, const gfx::IntMargin& margin);
 
     void encodeFrame(const webrtc::VideoFrame& videoFrame);
 
@@ -37,7 +38,7 @@ private:
 
     std::unique_ptr<VPXCodec> m_vpxCodec;
     Maybe<double> m_scale;
-    int m_offsetTop;
+    gfx::IntMargin m_margin;
     TimeStamp m_lastFrameTimestamp;
     class VPXFrame;
     std::unique_ptr<VPXFrame> m_lastFrame;
