@@ -23,6 +23,7 @@ import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './harness/coverage';
+import { valueFromEnv } from './harness/utils';
 
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 
@@ -178,9 +179,3 @@ registerFixture('httpsServer', async ({http_server}, test) => {
   http_server.httpsServer.reset();
   await test(http_server.httpsServer);
 });
-
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
-}
