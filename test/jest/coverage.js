@@ -81,9 +81,7 @@ function apiForBrowser(browserName) {
   const events = browserConfig.events;
   // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
   const api = {
-    ...require('../../lib/api'),
-    Browser: require('../../lib/browser').BrowserBase,
-    BrowserContext: require('../../lib/browserContext').BrowserContextBase,
+    ...require('../../lib/rpc/client/api'),
   };
 
   const filteredKeys = Object.keys(api).filter(apiName => {

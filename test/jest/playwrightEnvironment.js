@@ -26,10 +26,10 @@ const {installCoverageHooks} = require('./coverage');
 const reportOnly = !!process.env.REPORT_ONLY_PLATFORM;
 const { ModuleMocker } = require('jest-mock');
 
-Error.stackTraceLimit = 15;
 global.testOptions = require('../harness/testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
+
 registerFixtures(global);
 
 const browserName = process.env.BROWSER || 'chromium';
@@ -42,7 +42,7 @@ let currentFixturePool = null;
 process.on('SIGINT', async () => {
   if (currentFixturePool) {
     await currentFixturePool.teardownScope('test');
-    await currentFixturePool.teardownScope('worker');  
+    await currentFixturePool.teardownScope('worker');
   }
   process.exit(130);
 });

@@ -15,5 +15,6 @@
  */
 
 const { Playwright } = require('./lib/server/playwright');
+const { setupInProcess } = require('./lib/rpc/inprocess');
 
-module.exports = new Playwright(__dirname, require('./browsers.json')['browsers']);
+module.exports = setupInProcess(new Playwright(__dirname, require('./browsers.json')['browsers']));
