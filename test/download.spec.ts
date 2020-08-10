@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import './base.fixture';
 
 import fs from 'fs';
 import path from 'path';

@@ -22,14 +22,12 @@ const pirates = require('pirates');
 const babel = require('@babel/core');
 const TestRunner = require('../../utils/testrunner');
 const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
-const registerFixtures = require('../harness/fixtures');
 const testOptions = require('../harness/testOptions');
 
 Error.stackTraceLimit = 15;
 global.testOptions = require('../harness/testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
-registerFixtures(global);
 process.env.JEST_WORKER_ID = 1;
 const browserName = process.env.BROWSER || 'chromium';
 const goldenPath = path.join(__dirname, '..', 'golden-' + browserName);

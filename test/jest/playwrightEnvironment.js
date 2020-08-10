@@ -15,22 +15,19 @@
  */
 
 const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
-const registerFixtures = require('../harness/fixtures');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const debug = require('debug');
 const util = require('util');
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
-const {installCoverageHooks} = require('./coverage');
 const reportOnly = !!process.env.REPORT_ONLY_PLATFORM;
 const { ModuleMocker } = require('jest-mock');
 
 global.testOptions = require('../harness/testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
-
-registerFixtures(global);
+global.testPath = null;
 
 const browserName = process.env.BROWSER || 'chromium';
 
@@ -53,32 +50,16 @@ class PlaywrightEnvironment {
     this.fixturePool = new FixturePool();
     this.global = global;
     this.global.testOptions = testOptions;
-    this.testPath = context.testPath;
+    this.global.testPath = context.testPath;
   }
 
   async setup() {
-    const {coverage, uninstall} = installCoverageHooks(browserName);
-    this.coverage = coverage;
-    this.uninstallCoverage = uninstall;
     currentFixturePool = this.fixturePool;
   }
 
   async teardown() {
     currentFixturePool = null;
     await this.fixturePool.teardownScope('worker');
-    // If the setup throws an error, we don't want to override it
-    // with a useless error about this.coverage not existing.
-    if (!this.coverage)
-      return;
-    this.uninstallCoverage();
-    const testRoot = path.join(__dirname, '..');
-    const relativeTestPath = path.relative(testRoot, this.testPath);
-    const coveragePath = path.join(outputPath, 'coverage', relativeTestPath + '.json');
-    const coverageJSON = [...this.coverage.keys()].filter(key => this.coverage.get(key));
-    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
-    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-    delete this.coverage;
-    delete this.uninstallCoverage;
   }
 
   runScript(script) {
