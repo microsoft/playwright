@@ -13,50 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require('../base.fixture');
-
-const path = require('path');
-const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
+import './electron.fixture';
 
 const { CHROMIUM } = testOptions;
-
-registerFixture('application', async ({playwright}, test) => {
-  const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-  const application = await playwright.electron.launch(electronPath, {
-    args: [path.join(__dirname, 'testApp.js')],
-  });
-  try {
-    await test(application);
-  } finally {
-    await application.close();
-  }
-});
-
-registerFixture('window', async ({application}, test) => {
-  const page = await application.newBrowserWindow({ width: 800, height: 600 });
-  try {
-    await test(page);
-  } finally {
-    await page.close();
-  }
-});
 
 it.skip(!CHROMIUM)('should click the button', async({window, server}) => {
   await window.goto(server.PREFIX + '/input/button.html');
   await window.click('button');
-  expect(await window.evaluate(() => result)).toBe('Clicked');
+  expect(await window.evaluate('result')).toBe('Clicked');
 });
 
 it.skip(!CHROMIUM)('should check the box', async({window}) => {
   await window.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await window.check('input');
-  expect(await window.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await window.evaluate('checkbox.checked')).toBe(true);
 });
 
 it.skip(!CHROMIUM)('should not check the checked box', async({window}) => {
   await window.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await window.check('input');
-  expect(await window.evaluate(() => checkbox.checked)).toBe(true);
+  expect(await window.evaluate('checkbox.checked')).toBe(true);
 });
 
 it.skip(!CHROMIUM)('should type into a textarea', async({window, server}) => {
