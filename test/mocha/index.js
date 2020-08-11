@@ -14,38 +14,42 @@
  * limitations under the License.
  */
 
+const builtinReporters = require('mocha/lib/reporters');
 const fs = require('fs');
 const path = require('path');
-const Mocha = require('mocha');
-const { fixturesUI, fixturePool } = require('./fixturesUI');
-const dot = require('./dot');
-const { Matchers } = require('../../utils/testrunner/Matchers');
+const program = require('commander');
+const { Runner } = require('./runner');
+const DotRunner = require('./dotReporter');
 
-const browserName = process.env.BROWSER || 'chromium';
-const goldenPath = path.join(__dirname, '..', 'golden-' + browserName);
-const outputPath = path.join(__dirname, '..', 'output-' + browserName);
-global.expect = new Matchers({ goldenPath, outputPath }).expect;
-global.testOptions = require('../harness/testOptions');
 
-const mocha = new Mocha({
-	ui: fixturesUI,
-	reporter: dot,
-	timeout: 10000,
-});
-const testDir = path.join(process.cwd(), 'test');
+program
+  .version('Version ' + require('../../package.json').version)
+  .option('--reporter <reporter>', 'reporter to use', '')
+  .option('--max-workers <maxWorkers>', 'reporter to use', '')
+  .action(async (command, args) => {
+    const testDir = path.join(process.cwd(), 'test');
+    const files = [];
+    for (const name of fs.readdirSync(testDir)) {
+      if (!name.includes('.spec.'))
+        continue;
+      if (!command.args.length) {
+        files.push(path.join(testDir, name));
+        continue;
+      }
+      for (const filter of command.args) {
+        if (name.includes(filter)) {
+          files.push(path.join(testDir, name));
+          break;
+        }
+      }
+    }
 
-const filter = process.argv[2];
+    const runner = new Runner({
+      reporter: command.reporter ? builtinReporters[command.reporter] : DotRunner,
+      maxWorkers: command.maxWorkers || Math.ceil(require('os').cpus().length / 2)
+    });
+    await runner.run(files);
+    await runner.stop();
+  });
 
-fs.readdirSync(testDir).filter(function(file) {
-  return file.includes('.spec.') && (!filter || file.includes(filter));
-}).forEach(function(file) {
-  mocha.addFile(path.join(testDir, file));
-});
-
-const runner = mocha.run((failures) => {
-  process.exitCode = failures ? 1 : 0;
-});
-const constants = Mocha.Runner.constants;
-runner.on(constants.EVENT_RUN_END, test => {
-  fixturePool.teardownScope('worker');
-});
+program.parse(process.argv);
