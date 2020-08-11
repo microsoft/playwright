@@ -21,9 +21,9 @@ export class TestServer {
   enableGzip(path: string);
   setCSP(path: string, csp: string);
   stop(): Promise<void>;
-  setRoute(path: string, handler: (message: IncomingMessage, response: ServerResponse) => void);
+  setRoute(path: string, handler: (message: IncomingMessage & {postBody: Buffer}, response: ServerResponse) => void);
   setRedirect(from: string, to: string);
-  waitForRequest(path: string): Promise<IncomingMessage>;
+  waitForRequest(path: string): Promise<IncomingMessage & {postBody: Buffer}>;
   reset();
   serveFile(request: IncomingMessage, response: ServerResponse, pathName: string);
 

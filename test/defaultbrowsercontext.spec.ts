@@ -179,7 +179,7 @@ it('should support userAgent option', async ({server, launchPersistent}) => {
 it('should support bypassCSP option', async ({server, launchPersistent}) => {
   const {page, context} = await launchPersistent({bypassCSP: true});
   await page.goto(server.PREFIX + '/csp.html');
-  await page.addScriptTag({content: 'window.__injected = 42;'});
+  await page.addScriptTag({content: 'window["__injected"] = 42;'});
   expect(await page.evaluate('__injected')).toBe(42);
 });
 

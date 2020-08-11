@@ -83,7 +83,7 @@ it('should format number in popups', async({browser, server}) => {
     page.evaluate(url => window.open(url), server.PREFIX + '/formatted-number.html'),
   ]);
   await popup.waitForLoadState('domcontentloaded');
-  const result = await popup.evaluate('window.result');
+  const result = await popup.evaluate('window["result"]');
   expect(result).toBe('1 000 000,5');
   await context.close();
 });

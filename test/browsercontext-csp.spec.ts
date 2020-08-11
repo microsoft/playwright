@@ -24,8 +24,8 @@ it('should bypass CSP meta tag', async({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/csp.html');
-    await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-    expect(await page.evaluate('window.__injected')).toBe(undefined);
+    await page.addScriptTag({content: 'window["__injected"] = 42;'}).catch(e => void e);
+    expect(await page.evaluate('window["__injected"]')).toBe(undefined);
     await context.close();
   }
 
@@ -34,8 +34,8 @@ it('should bypass CSP meta tag', async({browser, server}) => {
     const context = await browser.newContext({ bypassCSP: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/csp.html');
-    await page.addScriptTag({content: 'window.__injected = 42;'});
-    expect(await page.evaluate('window.__injected')).toBe(42);
+    await page.addScriptTag({content: 'window["__injected"] = 42;'});
+    expect(await page.evaluate('window["__injected"]')).toBe(42);
     await context.close();
   }
 });
@@ -48,8 +48,8 @@ it('should bypass CSP header', async({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await page.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-    expect(await page.evaluate('window.__injected')).toBe(undefined);
+    await page.addScriptTag({content: 'window["__injected"] = 42;'}).catch(e => void e);
+    expect(await page.evaluate('window["__injected"]')).toBe(undefined);
     await context.close();
   }
 
@@ -58,8 +58,8 @@ it('should bypass CSP header', async({browser, server}) => {
     const context = await browser.newContext({ bypassCSP: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await page.addScriptTag({content: 'window.__injected = 42;'});
-    expect(await page.evaluate('window.__injected')).toBe(42);
+    await page.addScriptTag({content: 'window["__injected"] = 42;'});
+    expect(await page.evaluate('window["__injected"]')).toBe(42);
     await context.close();
   }
 });
@@ -68,12 +68,12 @@ it('should bypass after cross-process navigation', async({browser, server}) => {
   const context = await browser.newContext({ bypassCSP: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/csp.html');
-  await page.addScriptTag({content: 'window.__injected = 42;'});
-  expect(await page.evaluate('window.__injected')).toBe(42);
+  await page.addScriptTag({content: 'window["__injected"] = 42;'});
+  expect(await page.evaluate('window["__injected"]')).toBe(42);
 
   await page.goto(server.CROSS_PROCESS_PREFIX + '/csp.html');
-  await page.addScriptTag({content: 'window.__injected = 42;'});
-  expect(await page.evaluate('window.__injected')).toBe(42);
+  await page.addScriptTag({content: 'window["__injected"] = 42;'});
+  expect(await page.evaluate('window["__injected"]')).toBe(42);
   await context.close();
 });
 
@@ -84,8 +84,8 @@ it('should bypass CSP in iframes as well', async({browser, server}) => {
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
-    await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-    expect(await frame.evaluate('window.__injected')).toBe(undefined);
+    await frame.addScriptTag({content: 'window["__injected"] = 42;'}).catch(e => void e);
+    expect(await frame.evaluate('window["__injected"]')).toBe(undefined);
     await context.close();
   }
 
@@ -95,8 +95,8 @@ it('should bypass CSP in iframes as well', async({browser, server}) => {
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
     const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
-    await frame.addScriptTag({content: 'window.__injected = 42;'}).catch(e => void e);
-    expect(await frame.evaluate('window.__injected')).toBe(42);
+    await frame.addScriptTag({content: 'window["__injected"] = 42;'}).catch(e => void e);
+    expect(await frame.evaluate('window["__injected"]')).toBe(42);
     await context.close();
   }
 });

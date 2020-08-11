@@ -104,7 +104,7 @@ it.skip(!CHROMIUM)('should expose function', async ({ application }) => {
   const t = Date.now();
   await application.context().exposeFunction('add', (a, b) => a + b);
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
-  await page.goto('data:text/html,<script>window.result = add(20, 22);</script>');
+  await page.goto('data:text/html,<script>window["result"] = add(20, 22);</script>');
   expect(await page.evaluate(() => window['result'])).toBe(42);
 });
 
