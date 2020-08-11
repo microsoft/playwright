@@ -59,7 +59,7 @@ it('should send a character with ElementHandle.press', async ({page, server}) =>
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('should send a character with sendCharacter', async ({page, server}) => {
+it('should send a character with insertText', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   await page.keyboard.insertText('嗨');
