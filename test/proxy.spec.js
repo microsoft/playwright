@@ -86,8 +86,8 @@ it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, d
 
   if (CHROMIUM) {
     // Should successfully navigate to the error page.
-    await page.waitForEvent('framenavigated', frame => frame.url() === 'chrome-error://chromewebdata/');
-    expect(page.url()).toBe('chrome-error://chromewebdata/');
+    if (page.url() !== 'chrome-error://chromewebdata/')
+      await page.waitForEvent('framenavigated', () => page.url() === 'chrome-error://chromewebdata/');
   }
 
   await browser.close();
