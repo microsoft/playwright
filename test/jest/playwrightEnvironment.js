@@ -143,21 +143,21 @@ class PlaywrightEnvironment {
             throw new Error('fail');
           return;
         }
-        debug('pw:test')(`start "${testOrSuiteName(event.test)}"`);
+        debug('pwtest')(`start "${testOrSuiteName(event.test)}"`);
         try {
           await this.fixturePool.resolveParametersAndRun(fn);
         } catch(e) {
-          debug('pw:test')(`error "${testOrSuiteName(event.test)}"`, util.inspect(e));
+          debug('pwtest')(`error "${testOrSuiteName(event.test)}"`, util.inspect(e));
           throw e;
         } finally {
           await this.fixturePool.teardownScope('test');
-          debug('pw:test')(`finish "${testOrSuiteName(event.test)}"`);
+          debug('pwtest')(`finish "${testOrSuiteName(event.test)}"`);
         }
       };
     }
 
     if (event.name === 'error')
-      debug('pw:test')(`error "${testOrSuiteName(this._lastTest)}"`, util.inspect(event.error));
+      debug('pwtest')(`error "${testOrSuiteName(this._lastTest)}"`, util.inspect(event.error));
 
     if (event.name === 'test_fn_failure') {
       await this.fixturePool.teardownScope('worker');
