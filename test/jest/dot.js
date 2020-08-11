@@ -15,7 +15,6 @@
  */
 
 const colors = require('colors/safe');
-const { runTestsByPath } = require('../../jest.config');
 const failures = [];
 
 module.exports = function Reporter() {

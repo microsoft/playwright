@@ -100,7 +100,12 @@ class Matchers {
           outputPath: config.outputPath,
           goldenName
         });
-      }    
+      },
+
+      toMatch: function(received, other, message) {
+        message = message || `${received}`;
+        return { pass: received.match(other), message };
+      }
     }
   }
 

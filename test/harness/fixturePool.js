@@ -117,6 +117,8 @@ class FixturePool {
   }
 
   wrapTestCallback(callback) {
+    if (!callback)
+      return callback;
     return async() => {
       try {
         return await this.resolveParametersAndRun(callback);
