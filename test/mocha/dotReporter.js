@@ -18,7 +18,7 @@ const Base = require('mocha/lib/reporters/base');
 const constants = require('mocha/lib/runner').constants;
 const colors = require('colors/safe');
 
-class Dot extends Base {
+class DotReporter extends Base {
   constructor(runner, options) {
     super(runner, options);
 
@@ -48,4 +48,4 @@ class Dot extends Base {
   }
 }
 
-module.exports = Dot;
+module.exports = DotReporter;

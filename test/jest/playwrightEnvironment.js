@@ -15,7 +15,6 @@
  */
 
 const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
-const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const debug = require('debug');
