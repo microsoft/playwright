@@ -77,10 +77,17 @@ it('getProperties should return empty map for non-objects', async({page, server}
 it('getProperties should return even non-own properties', async({page, server}) => {
   const aHandle = await page.evaluateHandle(() => {
     class A {
-      a = '1';
+      a: string;
+      constructor() {
+        this.a = '1';
+      }
     }
     class B extends A {
-      b = '2';
+      b: string;
+      constructor() {
+        super();
+        this.b = '2';
+      }
     }
     return new B();
   });
