@@ -14,6 +14,7 @@ lib/injected/
 #types
 !types/*
 !index.d.ts
+!electron-types.d.ts
 
 !index.js
 !index.mjs

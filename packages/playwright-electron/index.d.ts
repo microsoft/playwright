@@ -14,41 +14,7 @@
  * limitations under the License.
  */
 
-import { Logger, Page, JSHandle, ChromiumBrowserContext } from 'playwright-core/types/types';
-import { BrowserWindow, BrowserWindowConstructorOptions } from 'electron';
-
+import { ElectronLauncher } from 'playwright-core/electron-types';
 export * from 'playwright-core/types/types';
-export type ElectronLaunchOptions = {
-  args?: string[],
-  cwd?: string,
-  env?: {[key: string]: string|number|boolean},
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  logger?: Logger,
-};
-export interface ElectronLauncher {
-  launch(executablePath: string, options?: ElectronLaunchOptions): Promise<ElectronApplication>;
-}
-export interface ElectronApplication {
-  on(event: 'window', listener: (page : ElectronPage) => void): this;
-  addListener(event: 'window', listener: (page : ElectronPage) => void): this;
-  waitForEvent(event: 'window', optionsOrPredicate?: { predicate?: (page : ElectronPage) => boolean, timeout?: number }): Promise<ElectronPage>;
-
-  on(event: 'close', listener: (exitCode? : number) => void): this;
-  addListener(event: 'close', listener: (exitCode? : number) => void): this;
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (exitCode? : number) => boolean, timeout?: number }): Promise<number|undefined>;
-
-  context(): ChromiumBrowserContext;
-  windows(): ElectronPage[];
-  firstWindow(): Promise<ElectronPage>;
-  newBrowserWindow(options?: BrowserWindowConstructorOptions): Promise<ElectronPage>;
-  close(): Promise<void>;
-  evaluate: JSHandle<typeof import('electron')>['evaluate'];
-  evaluateHandle: JSHandle<typeof import('electron')>['evaluateHandle'];
-}
-export interface ElectronPage extends Page {
-  browserWindow: JSHandle<BrowserWindow>;
-}
+export * from 'playwright-core/electron-types';
 export const electron: ElectronLauncher;

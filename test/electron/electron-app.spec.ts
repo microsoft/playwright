@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require('../base.fixture');
+import './electron.fixture';
 
-const path = require('path');
+import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
 const { CHROMIUM } = testOptions;
 
-registerFixture('application', async ({playwright}, test) => {
-  const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-  const application = await playwright.electron.launch(electronPath, {
-    args: [path.join(__dirname, 'testApp.js')],
-  });
-  try {
-    await test(application);
-  } finally {
-    await application.close();
-  }
-});
 
 it.skip(!CHROMIUM)('should fire close event', async ({ playwright }) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
@@ -108,16 +97,15 @@ it.skip(!CHROMIUM)('should support init script', async ({ application }) => {
   await application.context().addInitScript('window.magic = 42;')
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('data:text/html,<script>window.copy = magic</script>');
-  expect(await page.evaluate(() => copy)).toBe(42);
+  expect(await page.evaluate(() => window['copy'])).toBe(42);
 });
 
 it.skip(!CHROMIUM)('should expose function', async ({ application }) => {
-  const result = new Promise(f => callback = f);
   const t = Date.now();
   await application.context().exposeFunction('add', (a, b) => a + b);
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('data:text/html,<script>window.result = add(20, 22);</script>');
-  expect(await page.evaluate(() => result)).toBe(42);
+  expect(await page.evaluate(() => window['result'])).toBe(42);
 });
 
 it.skip(!CHROMIUM)('should wait for first window', async ({ application }) => {

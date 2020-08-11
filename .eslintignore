@@ -11,6 +11,7 @@ src/firefox/protocol.ts
 src/webkit/protocol.ts
 /types/*
 /index.d.ts
+/electron-types.d.ts
 utils/generate_types/overrides.d.ts
 utils/generate_types/test/test.ts
 test/
