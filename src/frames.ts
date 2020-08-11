@@ -20,7 +20,7 @@ import * as util from 'util';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { Events } from './events';
-import { assert, helper, RegisteredListener, assertMaxArguments, debugAssert } from './helper';
+import { assert, helper, RegisteredListener, assertMaxArguments } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -172,14 +172,31 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._url = url;
     frame._name = name;
-    if (frame._pendingDocument && frame._pendingDocument.documentId === undefined)
-      frame._pendingDocument.documentId = documentId;
-    debugAssert(!frame._pendingDocument || frame._pendingDocument.documentId === documentId);
-    if (frame._pendingDocument && frame._pendingDocument.documentId === documentId)
-      frame._currentDocument = frame._pendingDocument;
-    else
+
+    let keepPending: DocumentInfo | undefined;
+    if (frame._pendingDocument) {
+      if (frame._pendingDocument.documentId === undefined) {
+        // Pending with unknown documentId - assume it is the one being committed.
+        frame._pendingDocument.documentId = documentId;
+      }
+      if (frame._pendingDocument.documentId === documentId) {
+        // Committing a pending document.
+        frame._currentDocument = frame._pendingDocument;
+      } else {
+        // Sometimes, we already have a new pending when the old one commits.
+        // An example would be Chromium error page followed by a new navigation request,
+        // where the error page commit arrives after Network.requestWillBeSent for the
+        // new navigation.
+        // We commit, but keep the pending request since it's not done yet.
+        keepPending = frame._pendingDocument;
+        frame._currentDocument = { documentId, request: undefined };
+      }
+      frame._pendingDocument = undefined;
+    } else {
+      // No pending - just commit a new document.
       frame._currentDocument = { documentId, request: undefined };
-    frame._pendingDocument = undefined;
+    }
+
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
     frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
@@ -187,6 +204,8 @@ export class FrameManager {
       this._page._logger.info(`  navigated to "${url}"`);
       this._page.emit(Events.Page.FrameNavigated, frame);
     }
+    // Restore pending if any - see comments above about keepPending.
+    frame._pendingDocument = keepPending;
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {

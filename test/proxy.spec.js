@@ -17,7 +17,7 @@ require('./base.fixture');
 
 const socks = require('socksv5');
 const utils = require('./utils');
-const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
 
 it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
@@ -40,7 +40,7 @@ it('should authenticate', async ({browserType, defaultBrowserOptions, server}) =
       res.writeHead(407, 'Proxy Authentication Required', {
         'Proxy-Authenticate': 'Basic realm="Access to internal site"'
       });
-      res.end();  
+      res.end();
     } else {
       res.end(`<html><title>${auth}</title></html>`);
     }
@@ -55,7 +55,8 @@ it('should authenticate', async ({browserType, defaultBrowserOptions, server}) =
   await browser.close();
 });
 
-it('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
+it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
+  // Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });
@@ -81,6 +82,12 @@ it('should exclude patterns', async ({browserType, defaultBrowserOptions, server
   {
     const error = await page.goto('http://foo.zone/target.html').catch(e => e);
     expect(error.message).toBeTruthy();
+  }
+
+  if (CHROMIUM) {
+    // Should successfully navigate to the error page.
+    await page.waitForEvent('framenavigated', frame => frame.url() === 'chrome-error://chromewebdata/');
+    expect(page.url()).toBe('chrome-error://chromewebdata/');
   }
 
   await browser.close();
