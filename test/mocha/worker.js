@@ -16,7 +16,7 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { fixturesUI } = require('./fixturesUI');
+const { fixturesUI, fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 
@@ -32,11 +32,11 @@ let closed = false;
 
 process.on('message', async message => {
   if (message.method === 'init')
-    process.env.JEST_WORKER_ID = message.params;
+    process.env.JEST_WORKER_ID = message.params.workerId;
   if (message.method === 'stop')
-    gracefullyCloseAndExit();
+    await gracefullyCloseAndExit();
   if (message.method === 'run')
-    await runSingleTest(message.params);
+    await runSingleTest(message.params.file, message.params.options);
 });
 
 process.on('disconnect', gracefullyCloseAndExit);
@@ -55,10 +55,12 @@ async function gracefullyCloseAndExit() {
 
 class NullReporter {}
 
-async function runSingleTest(file) {
+async function runSingleTest(file, options) {
+  let nextOrdinal = 0;
   const mocha = new Mocha({
-    ui: fixturesUI,
-    timeout: 10000,
+    ui: fixturesUI.bind(null, false),
+    retries: options.retries === 1 ? undefined : options.retries,
+    timeout: options.timeout,
     reporter: NullReporter
   });
   mocha.addFile(file);
@@ -71,22 +73,27 @@ async function runSingleTest(file) {
   });
 
   runner.on(constants.EVENT_TEST_BEGIN, test => {
-    sendMessageToParent('test', { test: sanitizeTest(test) });
+    // Retries will produce new test instances, store ordinal on the original function.
+    let ordinal = nextOrdinal++;
+    if (typeof test.fn.__original.__ordinal !== 'number')
+      test.fn.__original.__ordinal = ordinal;
+    sendMessageToParent('test', { test: serializeTest(test, ordinal) });
   });
 
   runner.on(constants.EVENT_TEST_PENDING, test => {
-    sendMessageToParent('pending', { test: sanitizeTest(test) });
+    // Pending does not get test begin signal, so increment ordinal.
+    sendMessageToParent('pending', { test: serializeTest(test, nextOrdinal++) });
   });
 
   runner.on(constants.EVENT_TEST_PASS, test => {
-    sendMessageToParent('pass', { test: sanitizeTest(test) });
+    sendMessageToParent('pass', { test: serializeTest(test, test.fn.__original.__ordinal) });
   });
 
   runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
     sendMessageToParent('fail', {
-      test: sanitizeTest(test),
+      test: serializeTest(test, test.fn.__original.__ordinal),
       error: serializeError(error),
-     });
+    });
   });
 
   runner.once(constants.EVENT_RUN_END, async () => {
@@ -105,17 +112,12 @@ function sendMessageToParent(method, params = {}) {
   }
 }
 
-function sanitizeTest(test) {
+function serializeTest(test, origin) {
   return {
+    id: `${test.file}::${origin}`,
     currentRetry: test.currentRetry(),
     duration: test.duration,
-    file: test.file,
-    fullTitle: test.fullTitle(),
-    isPending: test.isPending(),
-    slow: test.slow(),
-    timeout: test.timeout(),
     title: test.title,
-    titlePath: test.titlePath(),
   };
 }
 
