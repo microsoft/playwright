@@ -65,7 +65,7 @@ export class Firefox extends BrowserTypeBase {
   }
 
   _defaultArgs(options: LaunchNonPersistentOptions, isPersistent: boolean, userDataDir: string): string[] {
-    const { args = [], proxy, devtools, headless } = options;
+    const { args = [], devtools, headless } = options;
     if (devtools)
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
     const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
@@ -73,25 +73,7 @@ export class Firefox extends BrowserTypeBase {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-    let firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
-    if (proxy) {
-      // TODO: we should support proxy in persistent context without overriding user prefs.
-      firefoxUserPrefs = firefoxUserPrefs || {};
-      firefoxUserPrefs['network.proxy.type'] = 1;
-      const proxyServer = new URL(proxy.server);
-      const isSocks = proxyServer.protocol === 'socks5:';
-      if (isSocks) {
-        firefoxUserPrefs['network.proxy.socks'] = proxyServer.hostname;
-        firefoxUserPrefs['network.proxy.socks_port'] = parseInt(proxyServer.port, 10);
-      } else {
-        firefoxUserPrefs['network.proxy.http'] = proxyServer.hostname;
-        firefoxUserPrefs['network.proxy.http_port'] = parseInt(proxyServer.port, 10);
-        firefoxUserPrefs['network.proxy.ssl'] = proxyServer.hostname;
-        firefoxUserPrefs['network.proxy.ssl_port'] = parseInt(proxyServer.port, 10);
-      }
-      if (proxy.bypass)
-        firefoxUserPrefs['network.proxy.no_proxies_on'] = proxy.bypass;
-    }
+    const firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
     if (firefoxUserPrefs) {
       const lines: string[] = [];
       for (const [name, value] of Object.entries(firefoxUserPrefs))
