@@ -45,7 +45,7 @@ it('Page.Events.Response', async({page, server}) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-fit('Page.Events.RequestFailed', async({page, server}) => {
+it('Page.Events.RequestFailed', async({page, server}) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
