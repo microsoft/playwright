@@ -198,7 +198,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        transport: [wire, object]
+        transport: [wire, none]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2

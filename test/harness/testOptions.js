@@ -29,7 +29,7 @@ testOptions.CHROMIUM = browserName === 'chromium';
 testOptions.FFOX = browserName === 'firefox';
 testOptions.WEBKIT = browserName === 'webkit';
 testOptions.USES_HOOKS = process.env.PWCHANNEL === 'wire';
-testOptions.CHANNEL = true;
+testOptions.CHANNEL = process.env.PWCHANNEL !== 'none';
 testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
 testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
 testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);

@@ -21,4 +21,9 @@ const path = require('path');
 
 const playwright = new Playwright(__dirname, require(path.join(__dirname, 'browsers.json'))['browsers']);
 playwright.electron = new Electron();
-module.exports = setupInProcess(playwright);
+if (process.env.PWCHANNEL === 'none') {
+  playwright._toImpl = x => x;
+  module.exports = playwright;
+} else {
+  module.exports = setupInProcess(playwright);
+}
