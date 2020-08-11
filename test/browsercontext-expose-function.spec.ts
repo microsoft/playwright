@@ -72,9 +72,9 @@ it('should be callable from-inside addInitScript', async({browser, server}) => {
   await context.exposeFunction('woof', function(arg) {
     args.push(arg);
   });
-  await context.addInitScript('woof("context")');
+  await context.addInitScript('window["woof"]("context")');
   const page = await context.newPage();
-  await page.addInitScript('woof("page")');
+  await page.addInitScript('window["woof"]("page")');
   args = [];
   await page.reload();
   expect(args).toEqual(['context', 'page']);

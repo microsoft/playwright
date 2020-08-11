@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-import { ChromiumBrowser } from '../types/types';
+import { ChromiumBrowser } from '..';
 const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = testOptions;
 
 it.skip(!CHANNEL)('should work', async({browser}) => {
