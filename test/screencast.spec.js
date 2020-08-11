@@ -20,7 +20,7 @@ const path = require('path');
 const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, USES_HOOKS} = testOptions;
 
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
@@ -44,16 +44,16 @@ registerFixture('firefox', async ({playwright}, test) => {
   }
 });
 
-it.fail(CHROMIUM || (WEBKIT && WIN && HEADLESS))('should capture static page', async({page, persistentDirectory, firefox}) => {
+it.fail(CHROMIUM || USES_HOOKS)('should capture static page', async({page, persistentDirectory, firefox, toImpl}) => {
   const videoFile = path.join(persistentDirectory, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await page._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
   if (HEADLESS && WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
-  await page._delegate.stopVideoRecording();
+  await toImpl(page)._delegate.stopVideoRecording();
   expect(fs.existsSync(videoFile)).toBe(true);
 
   if (WEBKIT && !LINUX) {
@@ -85,16 +85,15 @@ it.fail(CHROMIUM || (WEBKIT && WIN && HEADLESS))('should capture static page', a
   const videoHeight = await page.$eval('video', v => v.videoHeight);
   expect(videoHeight).toBe(480);
 
-  const pixels = await page.$eval('video', (video, x) => {
+  const pixels = await page.$eval('video', video => {
     let canvas = document.createElement("canvas");
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const context = canvas.getContext('2d');
     context.drawImage(video, 0, 0);
-    const imgd = context.getImageData(x, 0, 10, 10);
+    const imgd = context.getImageData(0, 0, 10, 10);
     return Array.from(imgd.data);
-    // TODO: we capture window frame in FF headful on Windows.
-  }, FFOX && WIN && !HEADLESS ? 10 : 0);
+  });
   const expectAlmostRed = (i) => {
     const r = pixels[i];
     const g = pixels[i + 1];
