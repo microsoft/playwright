@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-require('./base.fixture');
+import './base.fixture';
+import { FirefoxBrowser } from '..';
 
 const fs = require('fs');
 const os = require('os');
@@ -22,6 +23,12 @@ const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
 const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, USES_HOOKS} = testOptions;
+declare global {
+  interface FixtureState {
+    persistentDirectory: string;
+    firefox: FirefoxBrowser;
+  }  
+}
 
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
