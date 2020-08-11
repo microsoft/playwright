@@ -61,6 +61,13 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
+export type VideoRecordingOptions = {
+  outputFile: string,
+  width: number,
+  height: number,
+  scale?: number,
+};
+
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
 export type Credentials = {

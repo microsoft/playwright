@@ -347,6 +347,19 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
+  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
+    this._session.send('Page.startVideoRecording', {
+      file: options.outputFile,
+      width: options.width,
+      height: options.height,
+      scale: options.scale,
+    });
+  }
+
+  async stopVideoRecording(): Promise<void> {
+    await this._session.send('Page.stopVideoRecording');
+  }
+
   async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     if (!documentRect) {
       const context = await this._page.mainFrame()._utilityContext();

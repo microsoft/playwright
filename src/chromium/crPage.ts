@@ -208,6 +208,14 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
+  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
+  async stopVideoRecording(): Promise<void> {
+    throw new Error('Not implemented');
+  }
+
   async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     const { visualViewport } = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
     if (!documentRect) {
