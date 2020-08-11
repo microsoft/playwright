@@ -56,16 +56,12 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
   }
 
   async launchServer(params: BrowserTypeLaunchServerParams): Promise<{ server: BrowserServerChannel }> {
-    const options = {
+    const options: types.LaunchServerOptions = {
       ...params,
       ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
       env: params.env ? envArrayToObject(params.env) : undefined,
     };
-    return { server: new BrowserServerDispatcher(this._scope, await this._object.launchServer(options)) };
-  }
-
-  async connect(params: types.ConnectOptions): Promise<{ browser: BrowserChannel }> {
-    const browser = await this._object.connect(params);
-    return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
+    const browser = await this._object.launch(options);
+    return { server: new BrowserServerDispatcher(this._scope, this._object as BrowserTypeBase, browser as BrowserBase, options.port) };
   }
 }

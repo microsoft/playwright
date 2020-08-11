@@ -176,14 +176,6 @@ BrowserType:
 
   commands:
 
-    connect:
-      parameters:
-        wsEndpoint: string
-        slowMo: number?
-        timeout: number?
-      returns:
-        browser: Browser
-
     launch:
       parameters:
         executablePath: string?

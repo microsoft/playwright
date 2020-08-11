@@ -20,10 +20,16 @@ import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { BrowserServer } from './browserServer';
 import { headersObjectToArray, envObjectToArray } from '../../converters';
-import { assert } from '../../helper';
+import { assert, helper } from '../../helper';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
+import * as WebSocket from 'ws';
+import { Connection } from './connection';
+import { serializeError } from '../serializers';
+import { Events } from './events';
+import { TimeoutSettings } from '../../timeoutSettings';
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
+  private _timeoutSettings = new TimeoutSettings();
 
   static from(browserType: BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -96,11 +102,61 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
 
   async connect(options: ConnectOptions): Promise<Browser> {
     const logger = options.logger;
-    options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.connect', async () => {
-      const browser = Browser.from((await this._channel.connect(options)).browser);
-      browser._logger = logger;
-      return browser;
+      const connection = new Connection();
+
+      const ws = new WebSocket(options.wsEndpoint, [], {
+        perMessageDeflate: false,
+        maxPayload: 256 * 1024 * 1024, // 256Mb,
+        handshakeTimeout: this._timeoutSettings.timeout(options),
+      });
+
+      // The 'ws' module in node sometimes sends us multiple messages in a single task.
+      const waitForNextTask = options.slowMo
+        ? (cb: () => any) => setTimeout(cb, options.slowMo)
+        : helper.makeWaitForNextTask();
+      connection.onmessage = message => {
+        if (ws.readyState !== WebSocket.OPEN) {
+          setTimeout(() => {
+            connection.dispatch({ id: (message as any).id, error: serializeError(new Error('Browser has been closed')) });
+          }, 0);
+          return;
+        }
+        ws.send(JSON.stringify(message));
+      };
+      ws.addEventListener('message', event => {
+        waitForNextTask(() => connection.dispatch(JSON.parse(event.data)));
+      });
+
+      return await new Promise<Browser>(async (fulfill, reject) => {
+        if ((options as any).__testHookBeforeCreateBrowser) {
+          try {
+            await (options as any).__testHookBeforeCreateBrowser();
+          } catch (e) {
+            reject(e);
+          }
+        }
+        ws.addEventListener('open', async () => {
+          const browser = (await connection.waitForObjectWithKnownName('connectedBrowser')) as Browser;
+          browser._logger = logger;
+          const closeListener = () => {
+            // Emulate all pages, contexts and the browser closing upon disconnect.
+            for (const context of browser.contexts()) {
+              for (const page of context.pages())
+                page._onClose();
+              context._onClose();
+            }
+            browser._didClose();
+          };
+          ws.addEventListener('close', closeListener);
+          browser.on(Events.Browser.Disconnected, () => ws.removeEventListener('close', closeListener));
+          fulfill(browser);
+        });
+        ws.addEventListener('error', event => {
+          ws.close();
+          reject(new Error('WebSocket error: ' + event.message));
+        });
+      });
     }, logger);
   }
 }

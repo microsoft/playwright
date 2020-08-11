@@ -26,12 +26,14 @@ import { PageDispatcher } from './pageDispatcher';
 import { headersArrayToObject } from '../../converters';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
-  constructor(scope: DispatcherScope, browser: BrowserBase) {
-    super(scope, browser, 'Browser', { version: browser.version() }, true);
-    browser.on(Events.Browser.Disconnected, () => {
-      this._dispatchEvent('close');
-      this._dispose();
-    });
+  constructor(scope: DispatcherScope, browser: BrowserBase, guid?: string) {
+    super(scope, browser, 'Browser', { version: browser.version() }, true, guid);
+    browser.on(Events.Browser.Disconnected, () => this._didClose());
+  }
+
+  _didClose() {
+    this._dispatchEvent('close');
+    this._dispose();
   }
 
   async newContext(params: BrowserNewContextParams): Promise<{ context: BrowserContextChannel }> {

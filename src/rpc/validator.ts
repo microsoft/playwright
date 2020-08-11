@@ -100,11 +100,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     name: tString,
     handle: tChannel('ElementHandle'),
   });
-  scheme.BrowserTypeConnectParams = tObject({
-    wsEndpoint: tString,
-    slowMo: tOptional(tNumber),
-    timeout: tOptional(tNumber),
-  });
   scheme.BrowserTypeLaunchParams = tObject({
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),

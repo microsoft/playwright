@@ -141,23 +141,10 @@ export type BrowserTypeInitializer = {
   name: string,
 };
 export interface BrowserTypeChannel extends Channel {
-  connect(params: BrowserTypeConnectParams): Promise<BrowserTypeConnectResult>;
   launch(params: BrowserTypeLaunchParams): Promise<BrowserTypeLaunchResult>;
   launchServer(params: BrowserTypeLaunchServerParams): Promise<BrowserTypeLaunchServerResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<BrowserTypeLaunchPersistentContextResult>;
 }
-export type BrowserTypeConnectParams = {
-  wsEndpoint: string,
-  slowMo?: number,
-  timeout?: number,
-};
-export type BrowserTypeConnectOptions = {
-  slowMo?: number,
-  timeout?: number,
-};
-export type BrowserTypeConnectResult = {
-  browser: BrowserChannel,
-};
 export type BrowserTypeLaunchParams = {
   executablePath?: string,
   args?: string[],

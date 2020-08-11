@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserNewContextOptions, BrowserTypeLaunchOptions, BrowserTypeLaunchServerOptions, BrowserTypeConnectParams } from '../channels';
+import { BrowserNewContextOptions, BrowserTypeLaunchOptions, BrowserTypeLaunchServerOptions } from '../channels';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface LoggerSink {
@@ -58,4 +58,4 @@ type LaunchOptionsBase = Omit<BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' |
 export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
 export type LaunchServerOptions = Omit<BrowserTypeLaunchServerOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides & FirefoxUserPrefs;
 export type LaunchPersistentContextOptions = LaunchOptionsBase & BrowserContextOptions;
-export type ConnectOptions = BrowserTypeConnectParams & { logger?: LoggerSink };
+export type ConnectOptions = { wsEndpoint: string, slowMo?: number, timeout?: number, logger?: LoggerSink };
