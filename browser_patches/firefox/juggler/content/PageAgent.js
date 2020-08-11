@@ -58,6 +58,7 @@ class FrameData {
     this._runtime = runtime;
     this._frame = frame;
     this._isolatedWorlds = new Map();
+    this._initialNavigationDone = false;
     this.reset();
   }
 
@@ -277,17 +278,20 @@ class PageAgent {
       // Sometimes we initialize later than the first about:blank page is opened.
       // In this case, the page might've been loaded already, and we need to issue
       // the `DOMContentLoaded` and `load` events.
-      if (mainFrame.url() === 'about:blank' && readyState === 'complete') {
-        this._browserPage.emit('pageEventFired', {
-          frameId: this._frameTree.mainFrame().id(),
-          name: 'DOMContentLoaded',
-        });
-        this._browserPage.emit('pageEventFired', {
-          frameId: this._frameTree.mainFrame().id(),
-          name: 'load',
-        });
-      }
+      if (mainFrame.url() === 'about:blank' && readyState === 'complete')
+        this._emitAllEvents(this._frameTree.mainFrame());
     }
+  }
+
+  _emitAllEvents(frame) {
+    this._browserPage.emit('pageEventFired', {
+      frameId: frame.id(),
+      name: 'DOMContentLoaded',
+    });
+    this._browserPage.emit('pageEventFired', {
+      frameId: frame.id(),
+      name: 'load',
+    });
   }
 
   _onExecutionContextCreated(executionContext) {
@@ -330,16 +334,8 @@ class PageAgent {
     const props = subject.QueryInterface(Ci.nsIPropertyBag2);
     const hasUrl = props.hasKey('url');
     const createdDocShell = props.getPropertyAsInterface('createdTabDocShell', Ci.nsIDocShell);
-    if (!hasUrl && createdDocShell === this._docShell && this._frameTree.forcePageReady()) {
-      this._browserPage.emit('pageEventFired', {
-        frameId: this._frameTree.mainFrame().id(),
-        name: 'DOMContentLoaded',
-      });
-      this._browserPage.emit('pageEventFired', {
-        frameId: this._frameTree.mainFrame().id(),
-        name: 'load',
-      });
-    }
+    if (!hasUrl && createdDocShell === this._docShell && this._frameTree.forcePageReady())
+      this._emitAllEvents(this._frameTree.mainFrame());
   }
 
   _setInterceptFileChooserDialog({enabled}) {
@@ -438,6 +434,10 @@ class PageAgent {
       navigationId,
       errorText,
     });
+    const frameData = this._frameData.get(frame);
+    if (!frameData._initialNavigationDone && frame !== this._frameTree.mainFrame())
+      this._emitAllEvents(frame);
+    frameData._initialNavigationDone = true;
   }
 
   _onSameDocumentNavigation(frame) {
@@ -454,6 +454,7 @@ class PageAgent {
       url: frame.url(),
       name: frame.name(),
     });
+    this._frameData.get(frame)._initialNavigationDone = true;
   }
 
   _onGlobalObjectCreated({ frame }) {
