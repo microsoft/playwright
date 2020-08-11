@@ -21,6 +21,7 @@ PLAYWRIGHT_TGZ="$(node ${PACKAGE_BUILDER} playwright ./playwright.tgz)"
 PLAYWRIGHT_CHROMIUM_TGZ="$(node ${PACKAGE_BUILDER} playwright-chromium ./playwright-chromium.tgz)"
 PLAYWRIGHT_WEBKIT_TGZ="$(node ${PACKAGE_BUILDER} playwright-webkit ./playwright-webkit.tgz)"
 PLAYWRIGHT_FIREFOX_TGZ="$(node ${PACKAGE_BUILDER} playwright-firefox ./playwright-firefox.tgz)"
+PLAYWRIGHT_ELECTRON_TGZ="$(node ${PACKAGE_BUILDER} playwright-electron ./playwright-electron.tgz)"
 
 SCRIPTS_PATH="$(pwd -P)/.."
 TEST_ROOT="$(pwd -P)"
@@ -33,6 +34,8 @@ function copy_test_scripts {
   cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-firefox.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-webkit.mjs" .
+  cp "${SCRIPTS_PATH}/sanity-electron.js" .
+  cp "${SCRIPTS_PATH}/electron-app.js" .
 }
 
 function run_tests {
@@ -45,6 +48,7 @@ function run_tests {
   test_playwright_firefox_should_work
   test_playwright_global_installation
   test_playwright_global_installation_cross_package
+  test_playwright_electron_should_work
 }
 
 function test_typescript_types {
@@ -226,6 +230,15 @@ function test_playwright_firefox_should_work {
   if [[ "${NODE_VERSION}" == *"v14."* ]]; then
     node esm-playwright-firefox.mjs
   fi
+}
+
+function test_playwright_electron_should_work {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_ELECTRON_TGZ}
+  npm install electron@9.0
+  copy_test_scripts
+  xvfb-run --auto-servernum -- bash -c "node sanity-electron.js"
 }
 
 function initialize_test {
