@@ -44,7 +44,9 @@ registerFixture('firefox', async ({playwright}, test) => {
   }
 });
 
-it.fail(CHROMIUM).skip(USES_HOOKS)('should capture static page', async({page, persistentDirectory, firefox, toImpl}) => {
+it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, firefox, toImpl}) => {
+  if (!toImpl)
+    return;
   const videoFile = path.join(persistentDirectory, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
