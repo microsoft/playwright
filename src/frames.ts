@@ -374,6 +374,10 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
+  page(): Page {
+    return this._page;
+  }
+
   private _apiName(method: string) {
     const subject = this._page._callingPageAPI  ? 'page' : 'frame';
     return `${subject}.${method}`;
