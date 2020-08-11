@@ -399,6 +399,10 @@ playwright.chromium.launch().then(async browser => {
     });
     const assertion: AssertType<playwright.Page, typeof newPage> = true;
   }
+  {
+    const response = await page.waitForEvent('response', response => response.url() === 'asdf');
+    const assertion: AssertType<playwright.Response, typeof response> = true;
+  }
 })();
 
 // typed handles
