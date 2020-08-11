@@ -7892,6 +7892,40 @@ index 0000000000000000000000000000000000000000..9f1a0173a5641d6f158d815b8f7b9ea6
 +G_END_DECLS
 +
 +#endif
+diff --git a/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBase.cpp b/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBase.cpp
+index 5d01dab5c149cd173e8ef75558f92d98304e960e..80d778b9830e9d91000ce84546fc13d4e0dcee0d 100644
+--- a/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBase.cpp
++++ b/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBase.cpp
+@@ -2265,6 +2265,11 @@ void webkitWebViewBaseResetClickCounter(WebKitWebViewBase* webkitWebViewBase)
+ #endif
+ }
+ 
++WebKit::AcceleratedBackingStore* webkitWebViewBaseGetAcceleratedBackingStore(WebKitWebViewBase* webkitWebViewBase)
++{
++    return webkitWebViewBase->priv->acceleratedBackingStore.get();
++}
++
+ void webkitWebViewBaseEnterAcceleratedCompositingMode(WebKitWebViewBase* webkitWebViewBase, const LayerTreeContext& layerTreeContext)
+ {
+     ASSERT(webkitWebViewBase->priv->acceleratedBackingStore);
+diff --git a/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBasePrivate.h b/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBasePrivate.h
+index d09aea45d94fb7367ba88fdf8326dea1209d02ce..dac8f3ec62ace87fc82c997feb950733aa59a996 100644
+--- a/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBasePrivate.h
++++ b/Source/WebKit/UIProcess/API/gtk/WebKitWebViewBasePrivate.h
+@@ -27,6 +27,7 @@
+ 
+ #pragma once
+ 
++#include "AcceleratedBackingStore.h"
+ #include "APIPageConfiguration.h"
+ #include "GestureController.h"
+ #include "InputMethodState.h"
+@@ -120,3 +121,5 @@ void webkitWebViewBaseDidLosePointerLock(WebKitWebViewBase*);
+ void webkitWebViewBaseSetInputMethodContext(WebKitWebViewBase*, WebKitInputMethodContext*);
+ WebKitInputMethodContext* webkitWebViewBaseGetInputMethodContext(WebKitWebViewBase*);
+ void webkitWebViewBaseSynthesizeCompositionKeyPress(WebKitWebViewBase*, const String& text, Optional<Vector<WebCore::CompositionUnderline>>&&, Optional<WebKit::EditingRange>&&);
++
++WebKit::AcceleratedBackingStore* webkitWebViewBaseGetAcceleratedBackingStore(WebKitWebViewBase*);
 diff --git a/Source/WebKit/UIProcess/API/gtk/webkit2.h b/Source/WebKit/UIProcess/API/gtk/webkit2.h
 index c358118360a38c7b462227aa4ab8388bd7942c3e..70bdfbda231b481e8c5ac34fe6d8825f2350d71e 100644
 --- a/Source/WebKit/UIProcess/API/gtk/webkit2.h
@@ -8393,23 +8427,31 @@ index 0f9e8fcde5e5137b687468621ed6f5c54d720a5d..a821adf0c49730c8de93e7adb04be8d1
  {
      NSWindow *window = [m_view window];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 61e3f6050d7f819a479cf511625320e3f6204ee9..7d3f72ca4e4455209ea2407ad738194985a83bfe 100644
+index 61e3f6050d7f819a479cf511625320e3f6204ee9..aa81411bd998ecddb2742f899c177e40352a518c 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-@@ -37,6 +37,7 @@
+@@ -32,13 +32,16 @@
+ #include "DrawingAreaProxyMessages.h"
+ #include "LayerTreeContext.h"
+ #include "UpdateInfo.h"
++#include "WebPageInspectorController.h"
+ #include "WebPageProxy.h"
+ #include "WebPreferences.h"
  #include "WebProcessProxy.h"
  #include <WebCore/PlatformDisplay.h>
  #include <WebCore/Region.h>
 +#include <wtf/Vector.h>
  
  #if PLATFORM(GTK)
++#include "WebKitWebViewBasePrivate.h"
  #include <gtk/gtk.h>
-@@ -51,6 +52,14 @@
+ #endif
+ 
+@@ -51,6 +54,13 @@
  #include <d3d11_1.h>
  #endif
  
 +#if PLATFORM(WIN)
-+#include "WebPageInspectorController.h"
 +#include <cairo-win32.h>
 +#include <windows.h>
 +#include <WebCore/HWndDC.h>
@@ -8419,7 +8461,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..7d3f72ca4e4455209ea2407ad7381949
  namespace WebKit {
  using namespace WebCore;
  
-@@ -119,6 +128,10 @@ void DrawingAreaProxyCoordinatedGraphics::paint(BackingStore::PlatformGraphicsCo
+@@ -119,6 +129,10 @@ void DrawingAreaProxyCoordinatedGraphics::paint(BackingStore::PlatformGraphicsCo
  
  void DrawingAreaProxyCoordinatedGraphics::sizeDidChange()
  {
@@ -8430,7 +8472,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..7d3f72ca4e4455209ea2407ad7381949
  #if USE(DIRECT2D)
      m_backingStore = nullptr;
  #endif
-@@ -133,6 +146,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
+@@ -133,6 +147,11 @@ void DrawingAreaProxyCoordinatedGraphics::deviceScaleFactorDidChange()
      backingStoreStateDidChange(RespondImmediately);
  }
  
@@ -8442,17 +8484,28 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..7d3f72ca4e4455209ea2407ad7381949
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
  {
      m_hasReceivedFirstUpdate = true;
-@@ -238,6 +256,20 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
+@@ -238,6 +257,31 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
      updateAcceleratedCompositingMode(layerTreeContext);
  }
  
-+#if PLATFORM(WIN)
++#if !PLATFORM(WPE)
 +void DrawingAreaProxyCoordinatedGraphics::captureFrame()
 +{
-+    if (!m_backingStore)
-+        return;
++    cairo_surface_t* surface = nullptr;
++    if (isInAcceleratedCompositingMode()) {
++#if PLATFORM(GTK)
++        AcceleratedBackingStore* backingStore = webkitWebViewBaseGetAcceleratedBackingStore(WEBKIT_WEB_VIEW_BASE(m_webPageProxy.viewWidget()));
++        if (!backingStore)
++            return;
 +
-+    cairo_surface_t* surface = m_backingStore->surface();
++        surface = backingStore->surface();
++#else
++        fprintf(stderr, "captureFrame() is not supported in accelerated compositing mode on this platform.\n");
++#endif
++    } else if (m_backingStore) {
++        surface = m_backingStore->surface();
++    }
++
 +    if (!surface)
 +        return;
 +
@@ -8464,7 +8517,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..7d3f72ca4e4455209ea2407ad7381949
  void DrawingAreaProxyCoordinatedGraphics::incorporateUpdate(const UpdateInfo& updateInfo)
  {
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..a5de33bc78961ef820602a70ec8d9c00725db4fd 100644
+index d7695088e7cfc4f638f157338754f9f157489749..a79bbb9bdc779e7ea2f6f859329dd6df6908e194 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,7 @@
@@ -8480,7 +8533,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..a5de33bc78961ef820602a70ec8d9c00
      bool isInAcceleratedCompositingMode() const { return !m_layerTreeContext.isEmpty(); }
      const LayerTreeContext& layerTreeContext() const { return m_layerTreeContext; }
 +    void waitForSizeUpdate(Function<void ()>&&);
-+#if PLATFORM(WIN)
++#if !PLATFORM(WPE)
 +    void captureFrame();
 +#endif
  
@@ -8603,10 +8656,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad072308c77861
+index 0000000000000000000000000000000000000000..5a2d1075e5db34a8e86d882f07ff642e2eb82cce
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,154 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8644,11 +8697,8 @@ index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad0723
 +#include <wtf/RunLoop.h>
 +
 +#if USE(CAIRO)
-+#include "DrawingAreaProxy.h"
-+#endif
-+
-+#if PLATFORM(WIN)
 +#include "DrawingAreaProxyCoordinatedGraphics.h"
++#include "DrawingAreaProxy.h"
 +#endif
 +
 +namespace WebKit {
@@ -8711,7 +8761,7 @@ index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad0723
 +    if (!m_encoder)
 +        return;
 +
-+#if PLATFORM(MAC) || PLATFORM(WIN)
++#if !PLATFORM(WPE)
 +    scheduleFrameEncoding();
 +#endif
 +}
@@ -8728,7 +8778,7 @@ index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad0723
 +    m_encoder = nullptr;
 +}
 +
-+#if PLATFORM(MAC) || PLATFORM(WIN)
++#if !PLATFORM(WPE)
 +void InspectorScreencastAgent::scheduleFrameEncoding()
 +{
 +    if (!m_encoder)
@@ -8752,7 +8802,7 @@ index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad0723
 +}
 +#endif
 +
-+#if PLATFORM(WIN)
++#if USE(CAIRO) && !PLATFORM(WPE)
 +void InspectorScreencastAgent::encodeFrame()
 +{
 +    if (!m_encoder)
@@ -8766,7 +8816,7 @@ index 0000000000000000000000000000000000000000..0519b7e885163b52a93230d586ad0723
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..85ceb59f9901e956faba5dad5fa08ca11732a27d
+index 0000000000000000000000000000000000000000..1ff1e813de838a60f4ab030e31b248913260d3b4
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 @@ -0,0 +1,76 @@
@@ -8835,7 +8885,7 @@ index 0000000000000000000000000000000000000000..85ceb59f9901e956faba5dad5fa08ca1
 +
 +
 +private:
-+#if PLATFORM(MAC) || PLATFORM(WIN)
++#if !PLATFORM(WPE)
 +    void scheduleFrameEncoding();
 +    void encodeFrame();
 +#endif
@@ -12803,7 +12853,7 @@ index 0a7f83d2b7dc63538c8578800e617affc5d3f19d..b31ac558c47b6430b563076741e9d992
      UniqueRef<SOAuthorizationCoordinator> m_soAuthorizationCoordinator;
  #endif
 diff --git a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
-index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..a7ff849219a504725284022c5fcfddff64a5e27e 100644
+index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..a4e90dc22fb278864c49c0636964e82f3d0d7193 100644
 --- a/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 +++ b/Source/WebKit/UIProcess/cairo/BackingStoreCairo.cpp
 @@ -27,9 +27,11 @@
@@ -12832,16 +12882,6 @@ index dc0a70b8824afdc7ec3dd1f69f4d9b51942924f6..a7ff849219a504725284022c5fcfddff
  void BackingStore::paint(cairo_t* context, const IntRect& rect)
  {
      ASSERT(m_backend);
-@@ -72,6 +81,9 @@ void BackingStore::paint(cairo_t* context, const IntRect& rect)
-     cairo_rectangle(context, rect.x(), rect.y(), rect.width(), rect.height());
-     cairo_fill(context);
-     cairo_restore(context);
-+#if !PLATFORM(WIN)
-+    m_webPageProxy.inspectorController().didPaint(m_backend->surface());
-+#endif
- }
- 
- void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& updateInfo)
 diff --git a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp b/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
 index 411056d43ea764c42bce0403e6c69ddb8b24b04e..86d4e842699a230ce595088b62a29eabea5b6b90 100644
 --- a/Source/WebKit/UIProcess/geoclue/GeoclueGeolocationProvider.cpp
@@ -13109,27 +13149,39 @@ index 0000000000000000000000000000000000000000..63ff73901ceb50771820709e91796fb4
 +} // namespace API
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
-diff --git a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
-index be19b6007c9c0fbfffb859e40fd34751493fe7d1..ce214fb7e22f8623aff6e2487cecd0272b21c478 100644
---- a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
-+++ b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.cpp
-@@ -31,6 +31,7 @@
- #include "DrawingAreaProxyCoordinatedGraphics.h"
- #include "LayerTreeContext.h"
- #include "WebPageProxy.h"
-+#include "WebPageInspectorController.h"
- #include <WebCore/CairoUtilities.h>
- #include <WebCore/PlatformDisplayX11.h>
- #include <WebCore/XErrorTrapper.h>
-@@ -256,6 +257,8 @@ bool AcceleratedBackingStoreX11::paint(cairo_t* cr, const IntRect& clipRect)
+diff --git a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStore.h b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStore.h
+index 39aeff71fe05354cf63d3b3701d363642d63aca4..32e96cdd0bdbd8c5dcde43fdf60052ac13a226f7 100644
+--- a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStore.h
++++ b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStore.h
+@@ -28,6 +28,7 @@
+ #include <wtf/Noncopyable.h>
  
-     cairo_restore(cr);
+ typedef struct _cairo cairo_t;
++typedef struct _cairo_surface cairo_surface_t;
  
-+    m_webPage.inspectorController().didPaint(m_surface.get());
+ #if USE(GTK4)
+ typedef struct _GdkSnapshot GdkSnapshot;
+@@ -56,6 +57,8 @@ public:
+ #else
+     virtual bool paint(cairo_t*, const WebCore::IntRect&) = 0;
+ #endif
++    virtual cairo_surface_t* surface() { return nullptr; }
 +
-     cairo_surface_flush(m_surface.get());
+     virtual void realize() { };
+     virtual void unrealize() { };
+     virtual bool makeContextCurrent() { return false; }
+diff --git a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.h b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.h
+index 054e80bd900cf16d69801e8102ca989ff0563e1d..8245d7ed58008dbb6152e55e619e4331d30ae674 100644
+--- a/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.h
++++ b/Source/WebKit/UIProcess/gtk/AcceleratedBackingStoreX11.h
+@@ -52,6 +52,7 @@ private:
+ #else
+     bool paint(cairo_t*, const WebCore::IntRect&) override;
+ #endif
++    cairo_surface_t* surface() override { return m_surface.get(); }
  
-     return true;
+     RefPtr<cairo_surface_t> m_surface;
+     WebCore::XUniqueDamage m_damage;
 diff --git a/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp b/Source/WebKit/UIProcess/gtk/InspectorTargetProxyGtk.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..8a86cc348bc210b71bb463dcb3057f575ad7c1d3
