@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('playwright-core/lib/server/playwright');
-const { Electron } = require('playwright-core/lib/server/electron');
+const { Playwright } = require('./lib/server/playwright');
+const { Electron } = require('./lib/server/electron');
 const { setupInProcess } = require('./lib/rpc/inprocess');
 
 const playwright = new Playwright(__dirname, require('./browsers.json')['browsers']);
