@@ -192,6 +192,49 @@ class TimeoutError extends Error {}
 
 }
 
+export interface Accessibility {
+  snapshot(options?: {
+    /**
+     * Prune uninteresting nodes from the tree. Defaults to `true`.
+     */
+    interestingOnly?: boolean;
+
+    /**
+     * The root DOM element for the snapshot. Defaults to the whole page.
+     */
+    root?: ElementHandle;
+  }): Promise<null|AccessibilityNode>;
+}
+
+type AccessibilityNode = {
+  role: string;
+  name: string;
+  value?: string|number;
+  description?: string;
+  keyshortcuts?: string;
+  roledescription?: string;
+  valuetext?: string;
+  disabled?: boolean;
+  expanded?: boolean;
+  focused?: boolean;
+  modal?: boolean;
+  multiline?: boolean;
+  multiselectable?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+  selected?: boolean;
+  checked?: boolean|"mixed";
+  pressed?: boolean|"mixed";
+  level?: number;
+  valuemin?: number;
+  valuemax?: number;
+  autocomplete?: string;
+  haspopup?: string;
+  invalid?: string;
+  orientation?: string;
+  children?: AccessibilityNode[];
+}
+
 export const selectors: Selectors;
 export const devices: Devices & DeviceDescriptor[];
 

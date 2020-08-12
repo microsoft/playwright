@@ -238,9 +238,6 @@ function writeComment(comment, indent = '') {
 function stringifyComplexType(type, indent, ...namespace) {
   if (!type)
     return 'void';
-  // Accessibility.snapshot has a recursive data structure, so special case it here.
-  if (namespace[0] === 'AccessibilitySnapshot' && namespace[1] === 'children')
-    return 'Array<AccessibilitySnapshot>';
   let typeString = stringifySimpleType(parseType(type.name));
   if (type.properties.length && typeString.indexOf('Object') !== -1) {
     const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
