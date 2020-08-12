@@ -90,7 +90,7 @@ registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
   });
 });
 
-registerWorkerFixture('playwright', async({}, test) => {
+registerWorkerFixture('playwright', async({parallelIndex}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (process.env.PWCHANNEL === 'wire') {
     const connection = new Connection();
@@ -126,8 +126,7 @@ registerWorkerFixture('playwright', async({}, test) => {
 
   async function teardownCoverage() {
     uninstall();
-    const relativeTestPath = path.relative(__dirname, testPath);
-    const coveragePath = path.join(path.join(__dirname, 'output-' + browserName), 'coverage', relativeTestPath + '.json');
+    const coveragePath = path.join(path.join(__dirname, 'output-' + browserName), 'coverage', parallelIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');

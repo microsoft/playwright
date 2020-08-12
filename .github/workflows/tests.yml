@@ -38,16 +38,11 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000 && npm run coverage"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/mocha/index.js --max-workers=1 --timeout=30000 && npm run coverage"
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-jest-report
-        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -74,16 +69,11 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run jest -- --testTimeout=30000
+    - run: node test/mocha/index.js --max-workers=1 --timeout=30000
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-mac-jest-report
-        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -113,17 +103,12 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npm run jest -- --testTimeout=30000
+    - run: node test/mocha/index.js --max-workers=1 --timeout=30000
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-win-jest-report
-        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -175,17 +160,12 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/mocha/index.js --max-workers=1 --timeout=30000"
       if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
         DEBUG_FILE: "testrun.log"
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: headful-${{ matrix.browser }}-linux-jest-report
-        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -214,17 +194,12 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && npm run jest -- --testTimeout=30000"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/mocha/index.js --max-workers=1 --timeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*"
+        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
         PWCHANNEL: ${{ matrix.transport }}
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-jest-report
-        path: jest-report.json
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
