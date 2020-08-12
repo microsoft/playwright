@@ -43,6 +43,7 @@
 * [playwright-cljs](https://github.com/apeckham/playwright-cljs): Playwright examples in ClojureScript
 * [playwright-azure-functions](https://github.com/arjun27/playwright-azure-functions): Playwright setup on Azure Functions
 * [playwright-aws-lambda](https://github.com/austinkelleher/playwright-aws-lambda): Playwright setup on AWS Lambda
+* [Heroku Playwright Example](https://github.com/mxschmitt/heroku-playwright-example): Example using Playwright on Heroku
 
 ## Contributing
 
