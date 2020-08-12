@@ -119,6 +119,7 @@ function fixturesUI(trialRun, suite) {
       return condition ? context.xit : context.it;
     };
     context.it.slow = () => itBuilder(['slow']);
+    context.xit.slow = () => context.xit;
     context.it.retries = function(n) {
       context.retries(n);
     };
