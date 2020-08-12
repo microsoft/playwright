@@ -18,7 +18,6 @@ const child_process = require('child_process');
 const path = require('path');
 const { EventEmitter } = require('events');
 const Mocha = require('mocha');
-const { Serializer } = require('v8');
 
 const constants = Mocha.Runner.constants;
 
@@ -26,6 +25,7 @@ class Runner extends EventEmitter {
   constructor(options) {
     super();
     this._maxWorkers = options.maxWorkers;
+    this._noMocha = options.noMocha;
     this._workers = new Set();
     this._freeWorkers = [];
     this._callbacks = [];
@@ -61,7 +61,7 @@ class Runner extends EventEmitter {
       });
       let readyCallback;
       const result = new Promise(f => readyCallback = f);
-      worker.send({ method: 'init', params: ++this._workerId });
+      worker.send({ method: 'init', params: { workerId: ++this._workerId, noMocha: this._noMocha } });
       worker.on('message', message => {
         if (message.method === 'ready')
             readyCallback();

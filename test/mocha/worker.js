@@ -17,6 +17,8 @@
 const path = require('path');
 const Mocha = require('mocha');
 const { fixturesUI } = require('./fixturesUI');
+const NoMochaUI = require('./noMochaUI');
+const { TestRunner: NoMochaTestRunner } = require('../../utils/testrunner/TestRunner');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
 
@@ -29,14 +31,21 @@ global.testOptions = require('../harness/testOptions');
 extendExpects();
 
 let closed = false;
+let noMocha = false;
 
 process.on('message', async message => {
-  if (message.method === 'init')
-    process.env.JEST_WORKER_ID = message.params;
+  if (message.method === 'init') {
+    process.env.JEST_WORKER_ID = message.params.workerId;
+    noMocha = message.params.noMocha;
+  }
   if (message.method === 'stop')
     gracefullyCloseAndExit();
-  if (message.method === 'run')
-    await runSingleTest(message.params);
+  if (message.method === 'run') {
+    if (noMocha)
+      await runSingleTestNoMocha(message.params);
+    else
+      await runSingleTest(message.params);
+  }
 });
 
 process.on('disconnect', gracefullyCloseAndExit);
@@ -92,6 +101,66 @@ async function runSingleTest(file) {
   runner.once(constants.EVENT_RUN_END, async () => {
     sendMessageToParent('end', { stats: serializeStats(runner.stats) });
     sendMessageToParent('done');
+  });
+}
+
+async function runSingleTestNoMocha(file) {
+  const noMocha = new NoMochaUI({ timeout: 10000 });
+  noMocha.addFile(file);
+  const testRuns = noMocha.createTestRuns();
+
+  function serializeTest(test, duration) {
+    let isPending = test.skipped();
+    for (let suite = test.suite(); suite; suite = suite.parentSuite())
+      isPending = isPending || suite.skipped();
+    return {
+      currentRetry: 0,
+      duration,
+      file: file,
+      fullTitle: test.fullName(),
+      isPending,
+      slow: false,
+      timeout: test.timeout(),
+      title: test.name(),
+      titlePath: test.fullName(), // What is this?
+    };
+  }
+
+  const testRunner = new NoMochaTestRunner();
+  await testRunner.run(testRuns, {
+    hookTimeout: 10000,
+    totalTimeout: process.env.CI ? 30 * 60 * 1000 : 0, // 30 minutes on CI
+    parallel: 1,
+    breakOnFailure: false,
+    onStarted: async (testRuns) => {
+      sendMessageToParent('start');
+    },
+    onFinished: async (result) => {
+      sendMessageToParent('end', { stats: {
+        tests: result.runs.length,
+        passes: result.runs.filter(run => run.result() === 'ok').length,
+        duration: result.runs.map(run => run.duration()).reduce((a, b) => a + b, 0),
+        failures: result.runs.filter(run => run.result() !== 'ok' && run.result() !== 'skipped').length,
+        pending: result.runs.filter(run => run.result() === 'skipped').length,
+      } });
+      sendMessageToParent('done');
+    },
+    onTestRunStarted: async (testRun) => {
+      sendMessageToParent('test', { test: serializeTest(testRun.test(), 0) });
+    },
+    onTestRunFinished: async (testRun) => {
+      const serialized = serializeTest(testRun.test(), testRun.duration());
+      if (testRun.result() === 'skipped') {
+        sendMessageToParent('pending', { test: serialized });
+      } else if (testRun.result() === 'ok') {
+        sendMessageToParent('pass', { test: serialized });
+      } else {
+        sendMessageToParent('fail', {
+          test: serialized,
+          error: serializeError(testRun.error()),
+        });
+      }
+    },
   });
 }
 

@@ -26,6 +26,7 @@ program
   .version('Version ' + require('../../package.json').version)
   .option('--reporter <reporter>', 'reporter to use', '')
   .option('--max-workers <maxWorkers>', 'reporter to use', '')
+  .option('--no-mocha', 'no mocha')
   .action(async (command, args) => {
     const testDir = path.join(process.cwd(), 'test');
     const files = [];
@@ -46,7 +47,8 @@ program
 
     const runner = new Runner({
       reporter: command.reporter ? builtinReporters[command.reporter] : DotRunner,
-      maxWorkers: command.maxWorkers || Math.ceil(require('os').cpus().length / 2)
+      maxWorkers: command.maxWorkers || Math.ceil(require('os').cpus().length / 2),
+      noMocha: !command.mocha,
     });
     await runner.run(files);
     await runner.stop();
