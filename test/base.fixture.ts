@@ -22,8 +22,8 @@ import { TestServer } from '../utils/testserver/';
 import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
-import { installCoverageHooks } from './harness/coverage';
-import { valueFromEnv } from './harness/utils';
+import { installCoverageHooks } from './runner/coverage';
+import { valueFromEnv } from './runner/utils';
 
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 

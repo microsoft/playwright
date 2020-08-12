@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-const { FixturePool, registerFixture, registerWorkerFixture } = require('../harness/fixturePool');
+const { FixturePool, registerFixture, registerWorkerFixture } = require('./fixturePool');
 const { Test, Suite } = require('mocha');
 const pirates = require('pirates');
 const babel = require('@babel/core');
 const commonSuite = require('mocha/lib/interfaces/common');
 
 Error.stackTraceLimit = 15;
-global.testOptions = require('../harness/testOptions');
+global.testOptions = require('./testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
 process.env.JEST_WORKER_ID = 1;

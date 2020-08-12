@@ -51,7 +51,7 @@ class Runner extends EventEmitter {
 
     if (suite.hasOnly())
       suite.filterOnly();
-    console.log(`Running ${suite.total()} tests`);
+    console.log(`Running ${suite.total()} tests using ${this._maxWorkers} workers`);
     this._traverse(suite);
   }
 
@@ -128,6 +128,7 @@ class Runner extends EventEmitter {
     const worker = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
       env: process.env,
+      stdio: 'ignore'
     });
     worker.on('exit', () => {
       this._workers.delete(worker);

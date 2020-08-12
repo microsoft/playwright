@@ -38,7 +38,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/mocha/index.js --max-workers=1 --timeout=30000 && npm run coverage"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/runner --max-workers=1 --timeout=30000 && npm run coverage"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
@@ -69,7 +69,7 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: node test/mocha/index.js --max-workers=1 --timeout=30000
+    - run: node test/runner --max-workers=1 --timeout=30000
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
@@ -103,7 +103,7 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: node test/mocha/index.js --max-workers=1 --timeout=30000
+    - run: node test/runner --max-workers=1 --timeout=30000
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
@@ -160,7 +160,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/mocha/index.js --max-workers=1 --timeout=30000"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/runner --max-workers=1 --timeout=30000"
       if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
@@ -194,7 +194,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/mocha/index.js --max-workers=1 --timeout=30000"
+    - run: xvfb-run --auto-servernum -- bash -c "ulimit -c unlimited && node test/runner --max-workers=1 --timeout=30000"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
