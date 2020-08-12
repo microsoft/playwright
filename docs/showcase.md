@@ -43,6 +43,7 @@
 * [playwright-cljs](https://github.com/apeckham/playwright-cljs): Playwright examples in ClojureScript
 * [playwright-azure-functions](https://github.com/arjun27/playwright-azure-functions): Playwright setup on Azure Functions
 * [playwright-aws-lambda](https://github.com/austinkelleher/playwright-aws-lambda): Playwright setup on AWS Lambda
+* [playwright-jest-circus-allure](https://github.com/d-shch/playwright-jest-circus-allure): Example how to use allure-report and jest-circus with playwright
 
 ## Contributing
 
