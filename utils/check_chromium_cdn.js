@@ -16,17 +16,10 @@
  */
 
 const assert = require('assert');
-const browserFetcher = require('../lib/install/browserFetcher.js');
 const https = require('https');
+const util = require('util');
+const URL = require('url');
 const SUPPORTER_PLATFORMS = ['linux', 'mac', 'win32', 'win64'];
-
-const fetcherOptions = SUPPORTER_PLATFORMS.map(platform => {
-  if (platform === 'mac')
-    return 'mac10.15';
-  if (platform === 'linux')
-    return 'ubuntu18.04';
-  return platform;
-});
 
 const colors = {
   reset: '\x1b[0m',
@@ -99,6 +92,19 @@ async function checkRangeAvailability(fromRevision, toRevision, stopWhenAllAvail
   }
 }
 
+async function canDownload(revision, platform) {
+  const serverHost = 'https://storage.googleapis.com';
+  const urlTemplate = new Map([
+    ['linux', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+    ['mac', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
+    ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
+    ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
+  ]).get(platform);
+  assert(urlTemplate, `ERROR: Playwright does not support ${platform}`);
+  const url = util.format(urlTemplate, serverHost, revision);
+  return await headRequest(url);
+}
+
 /**
  * @param {!Table} table
  * @param {string} name
@@ -106,7 +112,7 @@ async function checkRangeAvailability(fromRevision, toRevision, stopWhenAllAvail
  * @return {boolean}
  */
 async function checkAndDrawRevisionAvailability(table, name, revision) {
-  const promises = fetcherOptions.map(platform => browserFetcher.canDownload({ name, revision, download: true }, platform));
+  const promises = SUPPORTER_PLATFORMS.map(platform => canDownload(revision, platform));
   const availability = await Promise.all(promises);
   const allAvailable = availability.every(e => !!e);
   const values = [name + ' ' + (allAvailable ? colors.green + revision + colors.reset : revision)];
@@ -178,3 +184,14 @@ function padCenter(text, length) {
   const right = Math.ceil((length - printableCharacters.length) / 2);
   return spaceString(left) + text + spaceString(right);
 }
+
+async function headRequest(url) {
+  return new Promise(resolve => {
+    let options = URL.parse(url);
+    options.method = 'HEAD';
+    const request = https.request(options, res => resolve(res.statusCode === 200));
+    request.on('error', error => resolve(false));
+    request.end();
+  });
+}
+
