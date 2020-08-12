@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 const {XPCOMUtils} = ChromeUtils.import("resource://gre/modules/XPCOMUtils.jsm");
+const {ComponentUtils} = ChromeUtils.import("resource://gre/modules/ComponentUtils.jsm");
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {Dispatcher} = ChromeUtils.import("chrome://juggler/content/protocol/Dispatcher.js");
 const {BrowserHandler} = ChromeUtils.import("chrome://juggler/content/protocol/BrowserHandler.js");
@@ -117,4 +118,4 @@ CommandLineHandler.prototype = {
   helpInfo : "  --juggler            Enable Juggler automation\n"
 };
 
-var NSGetFactory = XPCOMUtils.generateNSGetFactory([CommandLineHandler]);
+var NSGetFactory = ComponentUtils.generateNSGetFactory([CommandLineHandler]);
