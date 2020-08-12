@@ -209,7 +209,6 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({pag
     return;
   const videoFile = path.join(persistentDirectory, 'v.webm');
   await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-  await page.evaluate(async () => new Promise(f => requestAnimationFrame(f)));
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
@@ -217,7 +216,6 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({pag
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
-  await page.evaluate(async () => new Promise(f => requestAnimationFrame(f)));
   await new Promise(r => setTimeout(r, 300));
   await toImpl(page)._delegate.stopVideoRecording();
   expect(fs.existsSync(videoFile)).toBe(true);
