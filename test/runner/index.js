@@ -89,7 +89,7 @@ function collectFiles(dir, filters) {
   const files = [];
   for (const name of fs.readdirSync(dir)) {
     if (fs.lstatSync(path.join(dir, name)).isDirectory()) {
-      collectFiles(path.join(dir, name), filters, files);
+      files.push(...collectFiles(path.join(dir, name), filters));
       continue;
     }
     if (!name.includes('spec'))
