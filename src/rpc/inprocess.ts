@@ -21,6 +21,7 @@ import { PlaywrightDispatcher } from './server/playwrightDispatcher';
 import { setUseApiName } from '../progress';
 import { Connection } from './client/connection';
 import { isUnderTest } from '../helper';
+import { BrowserServerLauncherImpl } from './browserServerImpl';
 
 export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
   setUseApiName(false);
@@ -34,13 +35,16 @@ export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
 
   // Initialize Playwright channel.
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
-  const playwrightAPI = clientConnection.getObjectWithKnownName('Playwright');
+  const playwrightAPI = clientConnection.getObjectWithKnownName('Playwright') as PlaywrightAPI;
+  playwrightAPI.chromium._serverLauncher = new BrowserServerLauncherImpl(playwright.chromium);
+  playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl(playwright.firefox);
+  playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl(playwright.webkit);
 
   // Switch to async dispatch after we got Playwright object.
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
   clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
 
   if (isUnderTest())
-    playwrightAPI._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
+    (playwrightAPI as any)._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
   return playwrightAPI;
 }

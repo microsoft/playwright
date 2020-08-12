@@ -15,13 +15,15 @@
  * limitations under the License.
  */
 
-import { BrowserNewContextOptions, BrowserTypeLaunchOptions, BrowserTypeLaunchServerOptions } from '../channels';
+import { BrowserNewContextOptions, BrowserTypeLaunchOptions } from '../channels';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface LoggerSink {
   isEnabled(name: string, severity: LoggerSeverity): boolean;
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
+// This is a workaround for the documentation generation.
+export interface Logger extends LoggerSink {}
 
 export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };
@@ -56,6 +58,33 @@ type FirefoxUserPrefs = {
 };
 type LaunchOptionsBase = Omit<BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
 export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
-export type LaunchServerOptions = Omit<BrowserTypeLaunchServerOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides & FirefoxUserPrefs;
 export type LaunchPersistentContextOptions = LaunchOptionsBase & BrowserContextOptions;
-export type ConnectOptions = { wsEndpoint: string, slowMo?: number, timeout?: number, logger?: LoggerSink };
+
+export type ConnectOptions = {
+  wsEndpoint: string,
+  slowMo?: number,
+  timeout?: number,
+  logger?: LoggerSink,
+};
+export type LaunchServerOptions = {
+  executablePath?: string,
+  args?: string[],
+  ignoreDefaultArgs?: boolean | string[],
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
+  timeout?: number,
+  env?: Env,
+  headless?: boolean,
+  devtools?: boolean,
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string
+  },
+  downloadsPath?: string,
+  chromiumSandbox?: boolean,
+  port?: number,
+  logger?: LoggerSink,
+} & FirefoxUserPrefs;

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchServerParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { BrowserServer } from './browserServer';
 import { headersObjectToArray, envObjectToArray } from '../../converters';
 import { assert, helper } from '../../helper';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
@@ -27,9 +26,22 @@ import { Connection } from './connection';
 import { serializeError } from '../serializers';
 import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
+import { ChildProcess } from 'child_process';
+
+export interface BrowserServerLauncher {
+  launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
+}
+
+export interface BrowserServer {
+  process(): ChildProcess;
+  wsEndpoint(): string;
+  close(): Promise<void>;
+  kill(): Promise<void>;
+}
 
 export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
   private _timeoutSettings = new TimeoutSettings();
+  _serverLauncher?: BrowserServerLauncher;
 
   static from(browserType: BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
@@ -66,17 +78,9 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
-    const logger = options.logger;
-    options = { ...options, logger: undefined };
-    return this._wrapApiCall('browserType.launchServer', async () => {
-      const launchServerOptions: BrowserTypeLaunchServerParams = {
-        ...options,
-        ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
-        ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
-        env: options.env ? envObjectToArray(options.env) : undefined,
-      };
-      return BrowserServer.from((await this._channel.launchServer(launchServerOptions)).server);
-    }, logger);
+    if (!this._serverLauncher)
+      throw new Error('Launching server is not supported');
+    return this._serverLauncher.launchServer(options);
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
@@ -149,7 +153,10 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
             browser._didClose();
           };
           ws.addEventListener('close', closeListener);
-          browser.on(Events.Browser.Disconnected, () => ws.removeEventListener('close', closeListener));
+          browser.on(Events.Browser.Disconnected, () => {
+            ws.removeEventListener('close', closeListener);
+            ws.close();
+          });
           fulfill(browser);
         });
         ws.addEventListener('error', event => {

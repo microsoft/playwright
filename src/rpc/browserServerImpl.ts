@@ -14,37 +14,55 @@
  * limitations under the License.
  */
 
-import { BrowserBase } from '../../browser';
-import { BrowserServerChannel, BrowserServerInitializer, BrowserNewContextParams, BrowserContextChannel } from '../channels';
-import { Dispatcher, DispatcherScope, DispatcherConnection } from './dispatcher';
-import { Events } from '../../events';
-import { BrowserDispatcher } from './browserDispatcher';
-import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { LaunchServerOptions } from './client/types';
+import { BrowserTypeBase } from '../server/browserType';
 import * as ws from 'ws';
-import { helper } from '../../helper';
-import { BrowserTypeBase } from '../../server/browserType';
-import { BrowserTypeDispatcher } from './browserTypeDispatcher';
+import { helper } from '../helper';
+import { BrowserBase } from '../browser';
+import { ChildProcess } from 'child_process';
+import { Events } from '../events';
+import { EventEmitter } from 'ws';
+import { DispatcherScope, DispatcherConnection } from './server/dispatcher';
+import { BrowserTypeDispatcher } from './server/browserTypeDispatcher';
+import { BrowserDispatcher } from './server/browserDispatcher';
+import { BrowserContextDispatcher } from './server/browserContextDispatcher';
+import { BrowserNewContextParams, BrowserContextChannel } from './channels';
+import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 
-export class BrowserServerDispatcher extends Dispatcher<BrowserBase, BrowserServerInitializer> implements BrowserServerChannel {
-  private _server: ws.Server;
+export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserTypeBase;
 
-  constructor(scope: DispatcherScope, browserType: BrowserTypeBase, browser: BrowserBase, port: number = 0) {
-    const token = helper.guid();
-    const server = new ws.Server({ port });
-    const address = server.address();
-    const wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
-
-    const browserServer = browser._options.ownedServer!;
-    super(scope, browser, 'BrowserServer', {
-      wsEndpoint,
-      pid: browserServer.process().pid
-    }, true);
-
-    this._server = server;
+  constructor(browserType: BrowserTypeBase) {
     this._browserType = browserType;
+  }
 
-    server.on('connection', (socket: ws, req) => {
+  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServerImpl> {
+    const browser = await this._browserType.launch(options);
+    return new BrowserServerImpl(this._browserType, browser as BrowserBase, options.port);
+  }
+}
+
+export class BrowserServerImpl extends EventEmitter implements BrowserServer {
+  private _server: ws.Server;
+  private _browserType: BrowserTypeBase;
+  private _browser: BrowserBase;
+  private _wsEndpoint: string;
+  private _process: ChildProcess;
+
+  constructor(browserType: BrowserTypeBase, browser: BrowserBase, port: number = 0) {
+    super();
+
+    this._browserType = browserType;
+    this._browser = browser;
+
+    const token = helper.guid();
+    this._server = new ws.Server({ port });
+    const address = this._server.address();
+    this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
+    const browserServer = browser._options.ownedServer!;
+    this._process = browserServer.process();
+
+    this._server.on('connection', (socket: ws, req) => {
       if (req.url !== '/' + token) {
         socket.close();
         return;
@@ -54,23 +72,25 @@ export class BrowserServerDispatcher extends Dispatcher<BrowserBase, BrowserServ
 
     browserServer.on(Events.BrowserServer.Close, (exitCode, signal) => {
       this._server.close();
-      this._dispatchEvent('close', {
-        exitCode: exitCode === null ? undefined : exitCode,
-        signal: signal === null ? undefined : signal,
-      });
-      this._dispose();
+      this.emit('close', exitCode, signal);
     });
+  }
 
-    (browser as any)._checkLeaks = () => {};
+  process(): ChildProcess {
+    return this._process;
+  }
+
+  wsEndpoint(): string {
+    return this._wsEndpoint;
   }
 
   async close(): Promise<void> {
-    const browserServer = this._object._options.ownedServer!;
+    const browserServer = this._browser._options.ownedServer!;
     await browserServer.close();
   }
 
   async kill(): Promise<void> {
-    const browserServer = this._object._options.ownedServer!;
+    const browserServer = this._browser._options.ownedServer!;
     await browserServer.kill();
   }
 
@@ -85,7 +105,7 @@ export class BrowserServerDispatcher extends Dispatcher<BrowserBase, BrowserServ
     });
     socket.on('error', () => {});
     const browserType = new BrowserTypeDispatcher(connection.rootDispatcher(), this._browserType);
-    const browser = new ConnectedBrowser(browserType._scope, this._object);
+    const browser = new ConnectedBrowser(browserType._scope, this._browser);
     socket.on('close', () => {
       // Avoid sending any more messages over closed socket.
       connection.onmessage = () => {};

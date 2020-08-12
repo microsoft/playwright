@@ -126,32 +126,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     chromiumSandbox: tOptional(tBoolean),
     slowMo: tOptional(tNumber),
   });
-  scheme.BrowserTypeLaunchServerParams = tObject({
-    executablePath: tOptional(tString),
-    args: tOptional(tArray(tString)),
-    ignoreAllDefaultArgs: tOptional(tBoolean),
-    ignoreDefaultArgs: tOptional(tArray(tString)),
-    handleSIGINT: tOptional(tBoolean),
-    handleSIGTERM: tOptional(tBoolean),
-    handleSIGHUP: tOptional(tBoolean),
-    timeout: tOptional(tNumber),
-    env: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
-    headless: tOptional(tBoolean),
-    devtools: tOptional(tBoolean),
-    proxy: tOptional(tObject({
-      server: tString,
-      bypass: tOptional(tString),
-      username: tOptional(tString),
-      password: tOptional(tString),
-    })),
-    downloadsPath: tOptional(tString),
-    firefoxUserPrefs: tOptional(tAny),
-    chromiumSandbox: tOptional(tBoolean),
-    port: tOptional(tNumber),
-  });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     userDataDir: tString,
     executablePath: tOptional(tString),
@@ -209,8 +183,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
   });
-  scheme.BrowserServerCloseParams = tOptional(tObject({}));
-  scheme.BrowserServerKillParams = tOptional(tObject({}));
   scheme.BrowserCloseParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
     noDefaultViewport: tOptional(tBoolean),

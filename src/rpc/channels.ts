@@ -142,7 +142,6 @@ export type BrowserTypeInitializer = {
 };
 export interface BrowserTypeChannel extends Channel {
   launch(params: BrowserTypeLaunchParams): Promise<BrowserTypeLaunchResult>;
-  launchServer(params: BrowserTypeLaunchServerParams): Promise<BrowserTypeLaunchServerResult>;
   launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<BrowserTypeLaunchPersistentContextResult>;
 }
 export type BrowserTypeLaunchParams = {
@@ -199,61 +198,6 @@ export type BrowserTypeLaunchOptions = {
 };
 export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
-};
-export type BrowserTypeLaunchServerParams = {
-  executablePath?: string,
-  args?: string[],
-  ignoreAllDefaultArgs?: boolean,
-  ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  env?: {
-    name: string,
-    value: string,
-  }[],
-  headless?: boolean,
-  devtools?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  downloadsPath?: string,
-  firefoxUserPrefs?: any,
-  chromiumSandbox?: boolean,
-  port?: number,
-};
-export type BrowserTypeLaunchServerOptions = {
-  executablePath?: string,
-  args?: string[],
-  ignoreAllDefaultArgs?: boolean,
-  ignoreDefaultArgs?: string[],
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
-  timeout?: number,
-  env?: {
-    name: string,
-    value: string,
-  }[],
-  headless?: boolean,
-  devtools?: boolean,
-  proxy?: {
-    server: string,
-    bypass?: string,
-    username?: string,
-    password?: string,
-  },
-  downloadsPath?: string,
-  firefoxUserPrefs?: any,
-  chromiumSandbox?: boolean,
-  port?: number,
-};
-export type BrowserTypeLaunchServerResult = {
-  server: BrowserServerChannel,
 };
 export type BrowserTypeLaunchPersistentContextParams = {
   userDataDir: string,
@@ -371,27 +315,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
 export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
 };
-
-// ----------- BrowserServer -----------
-export type BrowserServerInitializer = {
-  wsEndpoint: string,
-  pid: number,
-};
-export interface BrowserServerChannel extends Channel {
-  on(event: 'close', callback: (params: BrowserServerCloseEvent) => void): this;
-  close(params?: BrowserServerCloseParams): Promise<BrowserServerCloseResult>;
-  kill(params?: BrowserServerKillParams): Promise<BrowserServerKillResult>;
-}
-export type BrowserServerCloseEvent = {
-  exitCode?: number,
-  signal?: string,
-};
-export type BrowserServerCloseParams = {};
-export type BrowserServerCloseOptions = {};
-export type BrowserServerCloseResult = void;
-export type BrowserServerKillParams = {};
-export type BrowserServerKillOptions = {};
-export type BrowserServerKillResult = void;
 
 // ----------- Browser -----------
 export type BrowserInitializer = {

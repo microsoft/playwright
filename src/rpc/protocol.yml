@@ -213,43 +213,6 @@ BrowserType:
       returns:
         browser: Browser
 
-    launchServer:
-      parameters:
-        executablePath: string?
-        args:
-          type: array?
-          items: string
-        ignoreAllDefaultArgs: boolean?
-        ignoreDefaultArgs:
-          type: array?
-          items: string
-        handleSIGINT: boolean?
-        handleSIGTERM: boolean?
-        handleSIGHUP: boolean?
-        timeout: number?
-        env:
-          type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
-        headless: boolean?
-        devtools: boolean?
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
-        downloadsPath: string?
-        firefoxUserPrefs: json?
-        chromiumSandbox: boolean?
-        port: number?
-      returns:
-        server: BrowserServer
-
     launchPersistentContext:
       parameters:
         userDataDir: string
@@ -330,28 +293,6 @@ BrowserType:
         acceptDownloads: boolean?
       returns:
         context: BrowserContext
-
-
-
-BrowserServer:
-  type: interface
-
-  initializer:
-    wsEndpoint: string
-    pid: number
-
-  commands:
-
-    close:
-
-    kill:
-
-  events:
-
-    close:
-      parameters:
-        exitCode: number?
-        signal: string?
 
 
 Browser:
