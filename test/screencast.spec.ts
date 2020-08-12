@@ -33,11 +33,8 @@ declare global {
 
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  try {
-    await test(persistentDirectory);
-  } finally {
-    await removeFolderAsync(persistentDirectory);
-  }
+  await test(persistentDirectory);
+  await removeFolderAsync(persistentDirectory);
 });
 
 registerFixture('videoPlayer', async ({playwright, context}, test) => {
@@ -48,17 +45,13 @@ registerFixture('videoPlayer', async ({playwright, context}, test) => {
     context = await firefox.newContext();
   }
 
-  let page;
-  try {
-    page = await context.newPage();
-    const player = new VideoPlayer(page);
-    await test(player);
-  } finally {
-    if (firefox)
-      await firefox.close();
-    else
-      await page.close();
-  }
+  const page = await context.newPage();
+  const player = new VideoPlayer(page);
+  await test(player);
+  if (firefox)
+    await firefox.close();
+  else
+    await page.close();
 });
 
 function almostRed(r, g, b, alpha) {

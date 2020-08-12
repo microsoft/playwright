@@ -30,11 +30,8 @@ declare global {
 }
 registerFixture('downloadsPath', async ({}, test) => {
   const downloadsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  try {
-    await test(downloadsPath);
-  } finally {
-    await removeFolderAsync(downloadsPath);
-  }
+  await test(downloadsPath);
+  await removeFolderAsync(downloadsPath);
 });
 
 registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, downloadsPath}, test) => {
@@ -47,11 +44,8 @@ registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserO
     ...defaultBrowserOptions,
     downloadsPath: downloadsPath,
   });
-  try {
-    await test(browser);
-  } finally {
-    await browser.close();
-  }
+  await test(browser);
+  await browser.close();
 });
 
 registerFixture('persistentDownloadsContext', async ({server, browserType, defaultBrowserOptions, downloadsPath}, test) => {
@@ -71,12 +65,9 @@ registerFixture('persistentDownloadsContext', async ({server, browserType, defau
   );
   const page = context.pages()[0];
   page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-  try {
-    await test(context);
-  } finally {
-    await context.close();
-    await removeFolderAsync(userDataDir);
-  }
+  await test(context);
+  await context.close();
+  await removeFolderAsync(userDataDir);
 });
 
 it('should keep downloadsPath folder', async({downloadsBrowser, downloadsPath, server})  => {

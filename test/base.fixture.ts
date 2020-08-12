@@ -107,21 +107,15 @@ registerWorkerFixture('playwright', async({parallelIndex}, test) => {
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));
     const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
-    try {
-      await test(playwrightObject);
-    } finally {
-      spawnedProcess.removeListener('exit', onExit);
-      spawnedProcess.stdin.destroy();
-      spawnedProcess.stdout.destroy();
-      spawnedProcess.stderr.destroy();
-      await teardownCoverage();
-    }
+    await test(playwrightObject);
+    spawnedProcess.removeListener('exit', onExit);
+    spawnedProcess.stdin.destroy();
+    spawnedProcess.stdout.destroy();
+    spawnedProcess.stderr.destroy();
+    await teardownCoverage();
   } else {
-    try {
-      await test(require('../index'))
-    } finally {
-      await teardownCoverage();
-    }
+    await test(require('../index'))
+    await teardownCoverage();
   }
 
   async function teardownCoverage() {
@@ -144,24 +138,18 @@ registerWorkerFixture('browserType', async ({playwright}, test) => {
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch(defaultBrowserOptions);
-  try {
-    await test(browser);
-    if (browser.contexts().length !== 0) {
-      console.warn(`\nWARNING: test did not close all created contexts! ${new Error().stack}\n`);
-      await Promise.all(browser.contexts().map(context => context.close()));
-    }
-  } finally {
-    await browser.close();
+  await test(browser);
+  if (browser.contexts().length !== 0) {
+    console.warn(`\nWARNING: test did not close all created contexts! ${new Error().stack}\n`);
+    await Promise.all(browser.contexts().map(context => context.close())).catch(e => void 0);
   }
+  await browser.close();
 });
 
 registerFixture('context', async ({browser}, test) => {
   const context = await browser.newContext();
-  try {
-    await test(context);
-  } finally {
-    await context.close();
-  }
+  await test(context);
+  await context.close();
 });
 
 registerFixture('page', async ({context}, test) => {

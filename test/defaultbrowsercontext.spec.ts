@@ -32,11 +32,8 @@ declare global {
 }
 registerFixture('userDataDir', async ({}, test) => {
   const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
-  try {
-    await test(userDataDir);
-  } finally {
-    removeFolderAsync(userDataDir).catch(e => {});
-  }
+  await test(userDataDir);
+  removeFolderAsync(userDataDir).catch(e => {});
 });
 
 registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, browserType}, test) => {
@@ -48,12 +45,9 @@ registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, 
     const page = context.pages()[0];
     return {context, page};
   }
-  try {
-    await test(launchPersistent);
-  } finally {
-    if (context)
-      await context.close();
-  }
+  await test(launchPersistent);
+  if (context)
+    await context.close();
 });
 
 it('context.cookies() should work', async ({server, launchPersistent}) => {

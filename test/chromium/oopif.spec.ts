@@ -30,20 +30,14 @@ registerFixture('sppBrowser', async ({browserType, defaultBrowserOptions}, test)
     ...defaultBrowserOptions,
     args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
   });
-  try {
-    await test(browser);
-  } finally {
-    await browser.close();
-  }
+  await test(browser);
+  await browser.close();
 });
 
 registerFixture('sppContext', async ({sppBrowser}, test) => {
   const context = await sppBrowser.newContext();
-  try {
-    await test(context);
-  } finally {
-    await context.close();
-  }
+  await test(context);
+  await context.close();
 });
 
 registerFixture('sppPage', async ({sppContext}, test) => {
