@@ -118,12 +118,20 @@ it('should return response when page changes its URL after load', async({page, s
   expect(response.status()).toBe(200);
 });
 
-it.fail(FFOX)('should work with subframes return 204', async({page, server}) => {
+it('should work with subframes return 204', async({page, server}) => {
   server.setRoute('/frames/frame.html', (req, res) => {
     res.statusCode = 204;
     res.end();
   });
   await page.goto(server.PREFIX + '/frames/one-frame.html');
+});
+
+it('should work with subframes return 204 with domcontentloaded', async({page, server}) => {
+  server.setRoute('/frames/frame.html', (req, res) => {
+    res.statusCode = 204;
+    res.end();
+  });
+  await page.goto(server.PREFIX + '/frames/one-frame.html', { waitUntil: 'domcontentloaded' });
 });
 
 it('should fail when server returns 204', async({page, server}) => {
