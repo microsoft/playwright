@@ -98,7 +98,7 @@ function expectAll(pixels, rgbaPredicate) {
       checkPixel(i);
   } catch(e) {
     // Log pixel values on failure.
-    console.log(pixels.join(','));
+    console.log(pixels);
     throw e;
   }
 }
