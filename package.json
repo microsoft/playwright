@@ -9,9 +9,9 @@
     "node": ">=10.15.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium node test/mocha/index.js",
-    "ftest": "cross-env BROWSER=firefox node test/mocha/index.js",
-    "wtest": "cross-env BROWSER=webkit node test/mocha/index.js",
+    "ctest": "cross-env BROWSER=chromium node test/runner",
+    "ftest": "cross-env BROWSER=firefox node test/runner",
+    "wtest": "cross-env BROWSER=webkit node test/runner",
     "test": "npm run ctest && npm run ftest && npm run wtest",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src",
     "tsc": "tsc -p .",
@@ -30,7 +30,7 @@
     "generate-channels": "node utils/generate_channels.js",
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
-    "coverage": "node test/jest/checkCoverage.js",
+    "coverage": "node test/runner/checkCoverage.js",
     "check-deps": "node utils/check_deps.js"
   },
   "author": {

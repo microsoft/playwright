@@ -24,7 +24,7 @@ const browserName = process.env.BROWSER || 'chromium';
 const goldenPath = path.join(__dirname, '..', 'golden-' + browserName);
 const outputPath = path.join(__dirname, '..', 'output-' + browserName);
 global.expect = require('expect');
-global.testOptions = require('../harness/testOptions');
+global.testOptions = require('./testOptions');
 
 const constants = Mocha.Runner.constants;
 

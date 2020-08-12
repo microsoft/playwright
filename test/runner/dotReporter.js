@@ -22,8 +22,9 @@ class DotReporter extends Base {
   constructor(runner, options) {
     super(runner, options);
 
-    runner.on(constants.EVENT_RUN_BEGIN, () => {
-      process.stdout.write('\n');
+    process.on('SIGINT', async () => {
+      Base.list(this.failures);
+      process.exit(130);
     });
 
     runner.on(constants.EVENT_TEST_PENDING, test => {

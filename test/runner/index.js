@@ -19,7 +19,9 @@ const path = require('path');
 const program = require('commander');
 const { Runner } = require('./runner');
 const Mocha = require('mocha');
+const constants = require('mocha/lib/runner').constants;
 const { fixturesUI } = require('./fixturesUI');
+const colors = require('colors/safe');
 
 class NullReporter {}
 
@@ -35,6 +37,7 @@ program
     collectFiles(path.join(process.cwd(), 'test'), command.args, files);
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
+    console.log(`Transpiling ${files.length} test files`);
     // Build the test model, suite per file.
     for (const file of files) {
       const mocha = new Mocha({
@@ -47,8 +50,14 @@ program
       mocha.suite.title = path.basename(file);
       mocha.suite.root = false;
       rootSuite.suites.push(mocha.suite);
-      await new Promise(f => mocha.run(f));
+      await new Promise(f => {
+        const runner = mocha.run(f);
+        runner.on(constants.EVENT_RUN_BEGIN, () => {
+          process.stdout.write(colors.yellow('\u00B7'));
+        });
+      });
     }
+    console.log();
 
     const runner = new Runner(rootSuite, {
       maxWorkers: command.maxWorkers,
