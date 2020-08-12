@@ -35,6 +35,34 @@ function fixturesUI(trialRun, suite) {
   suite.on(Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
     const common = commonSuite(suites, context, mocha);
 
+    const itBuilder = (markers) => {
+      return function(title, fn) {
+        const suite = suites[0];
+        if (suite.isPending())
+          fn = null;
+        let wrapper;
+        if (trialRun) {
+          if (fn)
+            wrapper = () => {};
+        } else {
+          const wrapped = fixturePool.wrapTestCallback(fn);
+          wrapper = wrapped ? (done, ...args) => {
+            wrapped(...args).then(done).catch(done);
+          } : undefined;
+        }
+        if (wrapper) {
+          wrapper.toString = () => fn.toString();
+          wrapper.__original = fn;
+        }
+        const test = new Test(title, wrapper);
+        if (markers && markers.includes('slow'))
+          test.timeout(90000);
+        test.file = file;
+        suite.addTest(test);
+        return test;
+      };
+    };
+
     context.beforeEach = common.beforeEach;
     context.afterEach = common.afterEach;
     if (trialRun) {
@@ -56,7 +84,6 @@ function fixturesUI(trialRun, suite) {
         fn: fn
       });
     };
-
     context.xdescribe = (title, fn) => {
       return common.suite.skip({
         title: title,
@@ -64,11 +91,9 @@ function fixturesUI(trialRun, suite) {
         fn: fn
       });
     };
-
     context.describe.skip = function(condition) {
       return condition ? context.xdescribe : context.describe;
     };
-
     context.describe.only = (title, fn) => {
       return common.suite.only({
         title: title,
@@ -79,52 +104,21 @@ function fixturesUI(trialRun, suite) {
 
     context.fdescribe = context.describe.only;
 
-    context.it = context.specify = function(title, fn) {
-      const suite = suites[0];
-      if (suite.isPending())
-        fn = null;
-      let wrapper = fn;
-      if (trialRun) {
-        if (wrapper)
-          wrapper = () => {};
-      } else {
-        const wrapped = fixturePool.wrapTestCallback(wrapper);
-        wrapper = wrapped ? (done, ...args) => {
-          wrapped(...args).then(done).catch(done);
-        } : undefined;
-      }
-      if (wrapper) {
-        wrapper.toString = () => fn.toString();
-        wrapper.__original = fn;
-      }
-      const test = new Test(title, wrapper);
-      test.file = file;
-      suite.addTest(test);
-      return test;
-    };
-
+    context.it = itBuilder();
     context.it.only = function(title, fn) {
       return common.test.only(mocha, context.it(title, fn));
     };
-
     context.fit = context.it.only;
-
     context.xit = function(title) {
       return context.it(title);
     };
-
     context.it.skip = function(condition) {
       return condition ? context.xit : context.it;
     };
-
     context.it.fail = function(condition) {
       return condition ? context.xit : context.it;
     };
-
-    context.it.slow = function(condition) {
-      return context.it;
-    };
-
+    context.it.slow = () => itBuilder(['slow']);
     context.it.retries = function(n) {
       context.retries(n);
     };

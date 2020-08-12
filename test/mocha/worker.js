@@ -26,6 +26,8 @@ const outputPath = path.join(__dirname, '..', 'output-' + browserName);
 global.expect = require('expect');
 global.testOptions = require('../harness/testOptions');
 
+const constants = Mocha.Runner.constants;
+
 extendExpects();
 
 let closed = false;
@@ -33,9 +35,10 @@ let closed = false;
 process.on('message', async message => {
   if (message.method === 'init')
     process.env.JEST_WORKER_ID = message.params.workerId;
-  if (message.method === 'stop')
+  if (message.method === 'stop') {
+    await fixturePool.teardownScope('worker');
     await gracefullyCloseAndExit();
-  if (message.method === 'run')
+  } if (message.method === 'run')
     await runSingleTest(message.params.file, message.params.options);
 });
 
@@ -55,50 +58,45 @@ async function gracefullyCloseAndExit() {
 
 class NullReporter {}
 
+let failedWithError = false;
+
 async function runSingleTest(file, options) {
-  let nextOrdinal = 0;
+  let lastOrdinal = -1;
   const mocha = new Mocha({
     ui: fixturesUI.bind(null, false),
-    retries: options.retries === 1 ? undefined : options.retries,
     timeout: options.timeout,
     reporter: NullReporter
   });
   mocha.addFile(file);
+  mocha.suite.filterOnly();
 
-  const runner = mocha.run();
-
-  const constants = Mocha.Runner.constants;
-  runner.on(constants.EVENT_RUN_BEGIN, () => {
-    sendMessageToParent('start');
+  const runner = mocha.run(() => {
+    // Runner adds these; if we don't remove them, we'll get a leak.
+    process.removeAllListeners('uncaughtException');
   });
 
   runner.on(constants.EVENT_TEST_BEGIN, test => {
-    // Retries will produce new test instances, store ordinal on the original function.
-    let ordinal = nextOrdinal++;
-    if (typeof test.fn.__original.__ordinal !== 'number')
-      test.fn.__original.__ordinal = ordinal;
-    sendMessageToParent('test', { test: serializeTest(test, ordinal) });
+    sendMessageToParent('test', { test: serializeTest(test, ++lastOrdinal) });
   });
 
   runner.on(constants.EVENT_TEST_PENDING, test => {
-    // Pending does not get test begin signal, so increment ordinal.
-    sendMessageToParent('pending', { test: serializeTest(test, nextOrdinal++) });
+    sendMessageToParent('pending', { test: serializeTest(test, ++lastOrdinal) });
   });
 
   runner.on(constants.EVENT_TEST_PASS, test => {
-    sendMessageToParent('pass', { test: serializeTest(test, test.fn.__original.__ordinal) });
+    sendMessageToParent('pass', { test: serializeTest(test, lastOrdinal) });
   });
 
   runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
+    failedWithError = error;
     sendMessageToParent('fail', {
-      test: serializeTest(test, test.fn.__original.__ordinal),
+      test: serializeTest(test, lastOrdinal),
       error: serializeError(error),
     });
   });
 
   runner.once(constants.EVENT_RUN_END, async () => {
-    sendMessageToParent('end', { stats: serializeStats(runner.stats) });
-    sendMessageToParent('done');
+    sendMessageToParent('done', { stats: serializeStats(runner.stats), error: failedWithError });
   });
 }
 
@@ -115,9 +113,7 @@ function sendMessageToParent(method, params = {}) {
 function serializeTest(test, origin) {
   return {
     id: `${test.file}::${origin}`,
-    currentRetry: test.currentRetry(),
     duration: test.duration,
-    title: test.title,
   };
 }
 

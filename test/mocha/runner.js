@@ -22,6 +22,8 @@ const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
 
 const constants = Mocha.Runner.constants;
+// Mocha runner does not remove uncaughtException listeners.
+process.setMaxListeners(0);
 
 class Runner extends EventEmitter {
   constructor(suite, options) {
@@ -31,8 +33,9 @@ class Runner extends EventEmitter {
     this._maxWorkers = options.maxWorkers;
     this._workers = new Set();
     this._freeWorkers = [];
-    this._callbacks = [];
+    this._workerClaimers = [];
     this._workerId = 0;
+    this._pendingJobs = 0;
     this.stats = {
       duration: 0,
       failures: 0,
@@ -45,6 +48,10 @@ class Runner extends EventEmitter {
 
     this._tests = new Map();
     this._files = new Map();
+
+    if (suite.hasOnly())
+      suite.filterOnly();
+    console.log(`Running ${suite.total()} tests`);
     this._traverse(suite);
   }
 
@@ -62,60 +69,90 @@ class Runner extends EventEmitter {
 
   async run() {
     this.emit(constants.EVENT_RUN_BEGIN, {});
-    const result = new Promise(f => this._runCallback = f);
     for (const file of this._files.keys()) {
       const worker = await this._obtainWorker();
-      worker.send({ method: 'run', params: { file, options: this._options } });
+      this._runJob(worker, file);
     }
-    await result;
+    await new Promise(f => this._runCompleteCallback = f);
     this.emit(constants.EVENT_RUN_END, {});
   }
 
-  async _obtainWorker() {
-    if (this._freeWorkers.length)
-      return this._freeWorkers.pop();
+  _runJob(worker, file) {
+    ++this._pendingJobs;
+    worker.send({ method: 'run', params: { file, options: this._options } });
+    const messageListener = (message) => {
+      const { method, params } = message;
+      if (method !== 'done') {
+        this._messageFromWorker(method, params);
+        return;
+      }
+      worker.off('message', messageListener);
 
-    if (this._workers.size < this._maxWorkers) {
-      const worker = child_process.fork(path.join(__dirname, 'worker.js'), {
-        detached: false
-      });
-      let readyCallback;
-      const result = new Promise(f => readyCallback = f);
-      worker.send({ method: 'init', params: { workerId: ++this._workerId } });
-      worker.on('message', message => {
-        if (message.method === 'ready')
-          readyCallback();
-        this._messageFromWorker(worker, message);
-      });
-      worker.on('exit', () => {
-        this._workers.delete(worker);
-        if (!this._workers.size)
-          this._stopCallback();
-      });
-      this._workers.add(worker);
-      await result;
-      return worker;
-    }
-
-    return new Promise(f => this._callbacks.push(f));
+      --this._pendingJobs;
+      this.stats.duration += params.stats.duration;
+      this.stats.failures += params.stats.failures;
+      this.stats.passes += params.stats.passes;
+      this.stats.pending += params.stats.pending;
+      this.stats.tests += params.stats.tests;
+      if (params.error)
+        this._restartWorker(worker);
+      else
+        this._workerAvailable(worker);
+      if (this._runCompleteCallback && !this._pendingJobs)
+        this._runCompleteCallback();
+    };
+    worker.on('message', messageListener)
   }
 
-  _messageFromWorker(worker, message) {
-    const { method, params } = message;
+  async _obtainWorker() {
+    // If there is worker, use it.
+    if (this._freeWorkers.length)
+      return this._freeWorkers.pop();
+    // If we can create worker, create it.
+    if (this._workers.size < this._maxWorkers)
+      this._createWorker();
+    // Wait for the next available worker.
+    await new Promise(f => this._workerClaimers.push(f));
+    return this._freeWorkers.pop();
+  }
+
+  async _workerAvailable(worker) {
+    this._freeWorkers.push(worker);
+    if (this._workerClaimers.length) {
+      const callback = this._workerClaimers.shift();
+      callback();
+    }
+  }
+
+  _createWorker() {
+    const worker = child_process.fork(path.join(__dirname, 'worker.js'), {
+      detached: false,
+      env: process.env,
+    });
+    worker.on('exit', () => {
+      this._workers.delete(worker);
+      if (this._stopCallback && !this._workers.size)
+        this._stopCallback();
+    });
+    this._workers.add(worker);
+    worker.send({ method: 'init', params: { workerId: ++this._workerId } });
+    worker.once('message', () => {
+      // Ready ack.
+      this._workerAvailable(worker);
+    });
+  }
+
+  _stopWorker(worker) {
+    worker.send({ method: 'stop' });
+  }
+
+  async _restartWorker(worker) {
+    this._stopWorker(worker);
+    this._createWorker();
+  }
+
+  _messageFromWorker(method, params) {
     switch (method) {
-      case 'done': {
-        if (this._callbacks.length) {
-          const callback = this._callbacks.shift();
-          callback(worker);
-        } else {
-          this._freeWorkers.push(worker);
-          if (this._freeWorkers.length === this._workers.size)
-            this._runCallback();
-        }
-        break;
-      }
-      case 'start':
-        break;
       case 'test':
         this.emit(constants.EVENT_TEST_BEGIN, this._updateTest(params.test));
         break;
@@ -126,30 +163,21 @@ class Runner extends EventEmitter {
         this.emit(constants.EVENT_TEST_PASS, this._updateTest(params.test));
         break;
       case 'fail':
-        const test = this._updateTest(params.test);
-        this.emit(constants.EVENT_TEST_FAIL, test, params.error);
-        break;
-      case 'end':
-        this.stats.duration += params.stats.duration;
-        this.stats.failures += params.stats.failures;
-        this.stats.passes += params.stats.passes;
-        this.stats.pending += params.stats.pending;
-        this.stats.tests += params.stats.tests;
+        this.emit(constants.EVENT_TEST_FAIL, this._updateTest(params.test), params.error);
         break;
     }
   }
 
   _updateTest(serialized) {
     const test = this._tests.get(serialized.id);
-    test._currentRetry = serialized.currentRetry;
-    this.duration = serialized.duration;
+    test.duration = serialized.duration;
     return test;
   }
 
   async stop() {
     const result = new Promise(f => this._stopCallback = f);
     for (const worker of this._workers)
-      worker.send({ method: 'stop' });
+      this._stopWorker(worker);
     await result;
   }
 }

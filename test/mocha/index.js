@@ -31,7 +31,8 @@ program
   .option('--retries <retries>', 'number of times to retry a failing test', 1)
   .action(async (command) => {
     // Collect files
-    const files = collectFiles(command.args);
+    const files = [];
+    collectFiles(path.join(process.cwd(), 'test'), command.args, files);
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
     // Build the test model, suite per file.
@@ -49,10 +50,6 @@ program
       await new Promise(f => mocha.run(f));
     }
 
-    if (rootSuite.hasOnly())
-      rootSuite.filterOnly();
-
-    console.log(`Running ${rootSuite.total()} tests`);
     const runner = new Runner(rootSuite, {
       maxWorkers: command.maxWorkers,
       reporter: command.reporter,
@@ -65,22 +62,23 @@ program
 
 program.parse(process.argv);
 
-function collectFiles(args) {
-  const testDir = path.join(process.cwd(), 'test');
-  const files = [];
-  for (const name of fs.readdirSync(testDir)) {
-    if (!name.includes('.spec.'))
-      continue;
-    if (!args.length) {
-      files.push(path.join(testDir, name));
+function collectFiles(dir, filters, files) {
+  for (const name of fs.readdirSync(dir)) {
+    if (fs.lstatSync(path.join(dir, name)).isDirectory()) {
+      collectFiles(path.join(dir, name), filters, files);
       continue;
     }
-    for (const filter of args) {
+    if (!name.includes('spec'))
+      continue;
+    if (!filters.length) {
+      files.push(path.join(dir, name));
+      continue;
+    }
+    for (const filter of filters) {
       if (name.includes(filter)) {
-        files.push(path.join(testDir, name));
+        files.push(path.join(dir, name));
         break;
       }
     }
   }
-  return files;
 }
