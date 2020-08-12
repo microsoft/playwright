@@ -148,6 +148,17 @@ class VideoPlayer {
     }, timestamp);
   }
 
+  async seekFirstNonEmptyFrame() {
+    let time = 0;
+    for (let i = 0; i < 10; i++) {
+      await this.seek(time);
+      const pixels = await this.pixels();
+      if (!pixels.every(p => p === 255))
+        return;
+      time += 0.1;
+    }
+  }
+
   async seekLastNonEmptyFrame() {
     const duration = await this.duration();
     let time = duration - 0.01;
@@ -176,8 +187,7 @@ class VideoPlayer {
   }
 }
 
-// TODO: the test fails in headful Firefox when running under xvfb.
-it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture static page', async({page, persistentDirectory, videoPlayer, toImpl}) => {
+it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(persistentDirectory, 'v.webm');
@@ -204,7 +214,7 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture static page', async({pa
 });
 
 // TODO: the test fails in headful Firefox when running under xvfb.
-it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+it.fail(CHROMIUM)('should capture navigation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(persistentDirectory, 'v.webm');
@@ -225,7 +235,7 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({pag
   expect(duration).toBeGreaterThan(0);
 
   {
-    await videoPlayer.seek(0);
+    await videoPlayer.seekFirstNonEmptyFrame();
     const pixels = await videoPlayer.pixels();
     expectAll(pixels, almostBlack);
   }
