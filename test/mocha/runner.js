@@ -18,13 +18,16 @@ const child_process = require('child_process');
 const path = require('path');
 const { EventEmitter } = require('events');
 const Mocha = require('mocha');
-const { Serializer } = require('v8');
+const builtinReporters = require('mocha/lib/reporters');
+const DotRunner = require('./dotReporter');
 
 const constants = Mocha.Runner.constants;
 
 class Runner extends EventEmitter {
-  constructor(options) {
+  constructor(suite, options) {
     super();
+    this._suite = suite;
+    this._options = options;
     this._maxWorkers = options.maxWorkers;
     this._workers = new Set();
     this._freeWorkers = [];
@@ -37,15 +40,32 @@ class Runner extends EventEmitter {
       pending: 0,
       tests: 0,
     };
-    this._reporter = new options.reporter(this, {});
+    const reporterFactory = builtinReporters[options.reporter] || DotRunner;
+    this._reporter = new reporterFactory(this, {});
+
+    this._tests = new Map();
+    this._files = new Map();
+    this._traverse(suite);
   }
 
-  async run(files) {
+  _traverse(suite) {
+    for (const child of suite.suites)
+      this._traverse(child);
+    for (const test of suite.tests) {
+      if (!this._files.has(test.file))
+        this._files.set(test.file, 0);
+      const counter = this._files.get(test.file);
+      this._files.set(test.file, counter + 1);
+      this._tests.set(`${test.file}::${counter}`, test);
+    }
+  }
+
+  async run() {
     this.emit(constants.EVENT_RUN_BEGIN, {});
     const result = new Promise(f => this._runCallback = f);
-    for (const file of files) {
+    for (const file of this._files.keys()) {
       const worker = await this._obtainWorker();
-      worker.send({ method: 'run', params: file });
+      worker.send({ method: 'run', params: { file, options: this._options } });
     }
     await result;
     this.emit(constants.EVENT_RUN_END, {});
@@ -61,16 +81,16 @@ class Runner extends EventEmitter {
       });
       let readyCallback;
       const result = new Promise(f => readyCallback = f);
-      worker.send({ method: 'init', params: ++this._workerId });
+      worker.send({ method: 'init', params: { workerId: ++this._workerId } });
       worker.on('message', message => {
         if (message.method === 'ready')
-            readyCallback();
+          readyCallback();
         this._messageFromWorker(worker, message);
       });
       worker.on('exit', () => {
         this._workers.delete(worker);
         if (!this._workers.size)
-          this._runCallback();
+          this._stopCallback();
       });
       this._workers.add(worker);
       await result;
@@ -89,25 +109,24 @@ class Runner extends EventEmitter {
           callback(worker);
         } else {
           this._freeWorkers.push(worker);
-          if (this._freeWorkers.length === this._workers.size) {
+          if (this._freeWorkers.length === this._workers.size)
             this._runCallback();
-          }
         }
         break;
       }
       case 'start':
         break;
       case 'test':
-        this.emit(constants.EVENT_TEST_BEGIN, this._parse(params.test));
+        this.emit(constants.EVENT_TEST_BEGIN, this._updateTest(params.test));
         break;
       case 'pending':
-        this.emit(constants.EVENT_TEST_PENDING, this._parse(params.test));
+        this.emit(constants.EVENT_TEST_PENDING, this._updateTest(params.test));
         break;
       case 'pass':
-        this.emit(constants.EVENT_TEST_PASS, this._parse(params.test));
+        this.emit(constants.EVENT_TEST_PASS, this._updateTest(params.test));
         break;
       case 'fail':
-        const test = this._parse(params.test);
+        const test = this._updateTest(params.test);
         this.emit(constants.EVENT_TEST_FAIL, test, params.error);
         break;
       case 'end':
@@ -120,19 +139,11 @@ class Runner extends EventEmitter {
     }
   }
 
-  _parse(serialized) {
-    return {
-      ...serialized,
-      currentRetry: () => serialized.currentRetry,
-      fullTitle: () => serialized.fullTitle,
-      slow: () => serialized.slow,
-      timeout: () => serialized.timeout,
-      titlePath: () => serialized.titlePath,
-      isPending: () => serialized.isPending,
-      parent: {
-        fullTitle: () => ''
-      }
-    };
+  _updateTest(serialized) {
+    const test = this._tests.get(serialized.id);
+    test._currentRetry = serialized.currentRetry;
+    this.duration = serialized.duration;
+    return test;
   }
 
   async stop() {

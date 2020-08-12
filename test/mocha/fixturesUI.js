@@ -29,7 +29,7 @@ process.env.JEST_WORKER_ID = 1;
 const fixturePool = new FixturePool();
 let revertBabelRequire;
 
-function fixturesUI(suite) {
+function fixturesUI(trialRun, suite) {
   const suites = [suite];
 
   suite.on(Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
@@ -37,8 +37,15 @@ function fixturesUI(suite) {
 
     context.beforeEach = common.beforeEach;
     context.afterEach = common.afterEach;
-    fixturePool.patchToEnableFixtures(context, 'beforeEach');
-    fixturePool.patchToEnableFixtures(context, 'afterEach');
+    if (trialRun) {
+      context.beforeEach = () => {};
+      context.afterEach = () => {};
+    } else {
+      context.beforeEach = common.beforeEach;
+      context.afterEach = common.afterEach;
+      fixturePool.patchToEnableFixtures(context, 'beforeEach');
+      fixturePool.patchToEnableFixtures(context, 'afterEach');
+    }
 
     context.run = mocha.options.delay && common.runWithSuite(suite);
 
@@ -74,14 +81,22 @@ function fixturesUI(suite) {
 
     context.it = context.specify = function(title, fn) {
       const suite = suites[0];
-      if (suite.isPending()) {
+      if (suite.isPending())
         fn = null;
+      let wrapper = fn;
+      if (trialRun) {
+        if (wrapper)
+          wrapper = () => {};
+      } else {
+        const wrapped = fixturePool.wrapTestCallback(wrapper);
+        wrapper = wrapped ? (done, ...args) => {
+          wrapped(...args).then(done).catch(done);
+        } : undefined;
       }
-      const wrapped = fixturePool.wrapTestCallback(fn);
-      const wrapper = wrapped ? (done, ...args) => {
-        wrapped(...args).then(done).catch(done);
-      } : undefined;
-
+      if (wrapper) {
+        wrapper.toString = () => fn.toString();
+        wrapper.__original = fn;
+      }
       const test = new Test(title, wrapper);
       test.file = file;
       suite.addTest(test);
