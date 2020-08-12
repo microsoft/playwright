@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-import { Page } from '../lib/page';
+import { Page } from '..';
 
 const fs = require('fs');
 const os = require('os');
