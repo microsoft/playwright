@@ -11,6 +11,7 @@ configurations for common CI providers.
   * [Azure Pipelines](#azure-pipelines)
   * [Travis CI](#travis-ci)
   * [CircleCI](#circleci)
+  * [Jenkins](#jenkins)
   * [Bitbucket Pipelines](#bitbucket-pipelines)
   * [GitLab CI](#gitlab-ci)
 - [Caching browsers](#caching-browsers)
@@ -169,6 +170,25 @@ We run our tests on CircleCI, with our [pre-built Docker image](docker/README.md
    ```
 
    This is likely caused by Jest autodetecting the number of processes on the entire machine (`36`) rather than the number allowed to your container (`2`). To fix this, set `jest --maxWorkers=2` in your test command.
+
+### Jenkins
+
+Jenkins supports Docker agents for pipelines. Use the [Playwright Docker image](docker/README.md)
+to run tests on Jenkins.
+
+```groovy
+pipeline {
+   agent { docker { image 'mcr.microsoft.com/playwright:bionic' } }
+   stages {
+      stage('e2e-tests') {
+         steps {
+            sh 'npm install'
+            sh 'npm run test'
+         }
+      }
+   }
+}
+```
 
 ### Bitbucket Pipelines
 
