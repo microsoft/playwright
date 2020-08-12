@@ -67,6 +67,8 @@ async function runSingleTest(file, options) {
     timeout: options.timeout,
     reporter: NullReporter
   });
+  if (options.grep)
+    mocha.grep(options.grep);
   mocha.addFile(file);
   mocha.suite.filterOnly();
 

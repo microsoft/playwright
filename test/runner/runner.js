@@ -30,7 +30,7 @@ class Runner extends EventEmitter {
     super();
     this._suite = suite;
     this._options = options;
-    this._maxWorkers = options.maxWorkers;
+    this._jobs = options.jobs;
     this._workers = new Set();
     this._freeWorkers = [];
     this._workerClaimers = [];
@@ -49,9 +49,6 @@ class Runner extends EventEmitter {
     this._tests = new Map();
     this._files = new Map();
 
-    if (suite.hasOnly())
-      suite.filterOnly();
-    console.log(`Running ${suite.total()} tests using ${this._maxWorkers} workers`);
     this._traverse(suite);
   }
 
@@ -109,7 +106,7 @@ class Runner extends EventEmitter {
     if (this._freeWorkers.length)
       return this._freeWorkers.pop();
     // If we can create worker, create it.
-    if (this._workers.size < this._maxWorkers)
+    if (this._workers.size < this._jobs)
       this._createWorker();
     // Wait for the next available worker.
     await new Promise(f => this._workerClaimers.push(f));
