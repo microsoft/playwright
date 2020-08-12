@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-import { FirefoxBrowser } from '..';
+import { Page } from '../lib/page';
 
 const fs = require('fs');
 const os = require('os');
@@ -23,10 +23,11 @@ const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
 const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, USES_HOOKS} = testOptions;
+
 declare global {
   interface FixtureState {
     persistentDirectory: string;
-    firefox: FirefoxBrowser;
+    videoPlayer: VideoPlayer;
   }  
 }
 
@@ -103,13 +104,14 @@ function expectAll(pixels, rgbaPredicate) {
 }
 
 class VideoPlayer {
-  constructor(page) {
+  private readonly _page: Page;
+  constructor(page: Page) {
     this._page = page;
   }
 
   async load(videoFile) {
     await this._page.goto(url.pathToFileURL(videoFile).href);
-    await this._page.$eval('video', v => {
+    await this._page.$eval('video', (v:HTMLVideoElement) => {
       return new Promise(fulfil => {
         // In case video playback autostarts.
         v.pause();
@@ -117,7 +119,7 @@ class VideoPlayer {
         v.play();
       });
     });
-    await this._page.$eval('video', v => {
+    await this._page.$eval('video', (v:HTMLVideoElement) => {
       v.pause();
       const result = new Promise(f => v.onseeked = f);
       v.currentTime = v.duration;
@@ -126,19 +128,19 @@ class VideoPlayer {
   }
 
   async duration() {
-    return await this._page.$eval('video', v => v.duration);
+    return await this._page.$eval('video', (v:HTMLVideoElement) => v.duration);
   }
 
   async videoWidth() {
-    return await this._page.$eval('video', v => v.videoWidth);
+    return await this._page.$eval('video', (v:HTMLVideoElement) => v.videoWidth);
   }
 
   async videoHeight() {
-    return await this._page.$eval('video', v => v.videoHeight);
+    return await this._page.$eval('video', (v:HTMLVideoElement) => v.videoHeight);
   }
 
   async seek(timestamp) {
-    await this._page.$eval('video', (v, timestamp) => {
+    await this._page.$eval('video', (v:HTMLVideoElement, timestamp) => {
       v.pause();
       const result = new Promise(f => v.onseeked = f);
       v.currentTime = timestamp;
@@ -159,7 +161,7 @@ class VideoPlayer {
   }
 
   async pixels() {
-    const pixels = await this._page.$eval('video', video => {
+    const pixels = await this._page.$eval('video', (video:HTMLVideoElement) => {
       let canvas = document.createElement("canvas");
       if (!video.videoWidth || !video.videoHeight)
         throw new Error("Video element is empty");
