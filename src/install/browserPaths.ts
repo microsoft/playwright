@@ -36,11 +36,9 @@ export const hostPlatform = ((): BrowserPlatform => {
   }
   if (platform === 'linux') {
     const ubuntuVersion = getUbuntuVersionSync();
-    if (ubuntuVersion === '20.04')
-      return 'ubuntu20.04';
-    // For the sake of downloading logic, consider any other Linux distribution
-    // to be "ubuntu18.04".
-    return 'ubuntu18.04';
+    if (parseInt(ubuntuVersion, 10) <= 19)
+      return 'ubuntu18.04';
+    return 'ubuntu20.04';
   }
   if (platform === 'win32')
     return os.arch() === 'x64' ? 'win64' : 'win32';
