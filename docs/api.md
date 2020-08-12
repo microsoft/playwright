@@ -2092,6 +2092,7 @@ console.log(text);
 - [frame.innerText(selector[, options])](#frameinnertextselector-options)
 - [frame.isDetached()](#frameisdetached)
 - [frame.name()](#framename)
+- [frame.page()](#framepage)
 - [frame.parentFrame()](#frameparentframe)
 - [frame.press(selector, key[, options])](#framepressselector-key-options)
 - [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
@@ -2457,6 +2458,11 @@ Returns frame's name attribute as specified in the tag.
 If the name is empty, returns the id attribute instead.
 
 > **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed later.
+
+#### frame.page()
+- returns: <[Page]>
+
+Returns the page containing this frame.
 
 #### frame.parentFrame()
 - returns: <[null]|[Frame]> Parent frame, if any. Detached frames and main frames return `null`.

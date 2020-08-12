@@ -88,6 +88,10 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return this._page!._isPageCall ? 'page.' + method : 'frame.' + method;
   }
 
+  page(): Page {
+    return this._page!;
+  }
+
   async goto(url: string, options: FrameGotoOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('goto'), async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);

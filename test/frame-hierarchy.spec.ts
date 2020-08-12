@@ -189,3 +189,9 @@ it.fail(FFOX)('should refuse to display x-frame-options:deny iframe', async({pag
   await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX}/x-frame-options-deny.html"></iframe>`);
   expect(await refusalText).toMatch(/Refused to display 'http.*\/x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'deny'./i)
 });
+
+it('should return frame.page()', async({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  expect(page.mainFrame().page()).toBe(page);
+  expect(page.mainFrame().childFrames()[0].page()).toBe(page);
+});
