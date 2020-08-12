@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-import { FirefoxBrowser } from '..';
+import { Page } from '..';
 
 const fs = require('fs');
 const os = require('os');
@@ -23,10 +23,11 @@ const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
 const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, USES_HOOKS} = testOptions;
+
 declare global {
   interface FixtureState {
     persistentDirectory: string;
-    firefox: FirefoxBrowser;
+    videoPlayer: VideoPlayer;
   }  
 }
 
@@ -39,20 +40,144 @@ registerFixture('persistentDirectory', async ({}, test) => {
   }
 });
 
-registerFixture('firefox', async ({playwright}, test) => {
+registerFixture('videoPlayer', async ({playwright, context}, test) => {
+  let firefox;
   if (WEBKIT && !LINUX) {
-    const firefox = await playwright.firefox.launch();
-    try {
-      await test(firefox);
-    } finally {
+    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
+    firefox = await playwright.firefox.launch();
+    context = await firefox.newContext();
+  }
+
+  let page;
+  try {
+    page = await context.newPage();
+    const player = new VideoPlayer(page);
+    await test(player);
+  } finally {
+    if (firefox)
       await firefox.close();
-    }
-  } else {
-    await test(null);
+    else
+      await page.close();
   }
 });
 
-it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, firefox, toImpl}) => {
+function almostRed(r, g, b, alpha) {
+  expect(r).toBeGreaterThan(240);
+  expect(g).toBeLessThan(50);
+  expect(b).toBeLessThan(50);
+  expect(alpha).toBe(255);
+}
+
+function almostBlack(r, g, b, alpha) {
+  expect(r).toBeLessThan(10);
+  expect(g).toBeLessThan(10);
+  expect(b).toBeLessThan(10);
+  expect(alpha).toBe(255);
+}
+
+function almostGrey(r, g, b, alpha) {
+  expect(r).toBeGreaterThanOrEqual(90);
+  expect(g).toBeGreaterThanOrEqual(90);
+  expect(b).toBeGreaterThanOrEqual(90);
+  expect(r).toBeLessThan(110);
+  expect(g).toBeLessThan(110);
+  expect(b).toBeLessThan(110);
+  expect(alpha).toBe(255);
+}
+
+function expectAll(pixels, rgbaPredicate) {
+  const checkPixel = (i) => {
+    const r = pixels[i];
+    const g = pixels[i + 1];
+    const b = pixels[i + 2];
+    const alpha = pixels[i + 3];
+    rgbaPredicate(r, g, b, alpha);
+  }
+  try {
+    for (var i = 0, n = pixels.length; i < n; i += 4)
+      checkPixel(i);
+  } catch(e) {
+    // Log pixel values on failure.
+    console.log(pixels);
+    throw e;
+  }
+}
+
+class VideoPlayer {
+  private readonly _page: Page;
+  constructor(page: Page) {
+    this._page = page;
+  }
+
+  async load(videoFile) {
+    await this._page.goto(url.pathToFileURL(videoFile).href);
+    await this._page.$eval('video', (v:HTMLVideoElement) => {
+      return new Promise(fulfil => {
+        // In case video playback autostarts.
+        v.pause();
+        v.onplaying = fulfil;
+        v.play();
+      });
+    });
+    await this._page.$eval('video', (v:HTMLVideoElement) => {
+      v.pause();
+      const result = new Promise(f => v.onseeked = f);
+      v.currentTime = v.duration;
+      return result;
+    });
+  }
+
+  async duration() {
+    return await this._page.$eval('video', (v:HTMLVideoElement) => v.duration);
+  }
+
+  async videoWidth() {
+    return await this._page.$eval('video', (v:HTMLVideoElement) => v.videoWidth);
+  }
+
+  async videoHeight() {
+    return await this._page.$eval('video', (v:HTMLVideoElement) => v.videoHeight);
+  }
+
+  async seek(timestamp) {
+    await this._page.$eval('video', (v:HTMLVideoElement, timestamp) => {
+      v.pause();
+      const result = new Promise(f => v.onseeked = f);
+      v.currentTime = timestamp;
+      return result;
+    }, timestamp);
+  }
+
+  async seekLastNonEmptyFrame() {
+    const duration = await this.duration();
+    let time = duration - 0.01;
+    for (let i = 0; i < 10; i++) {
+      await this.seek(time);
+      const pixels = await this.pixels();
+      if (!pixels.every(p => p === 0))
+        return;
+      time -= 0.1;
+    }
+  }
+
+  async pixels() {
+    const pixels = await this._page.$eval('video', (video:HTMLVideoElement) => {
+      let canvas = document.createElement("canvas");
+      if (!video.videoWidth || !video.videoHeight)
+        throw new Error("Video element is empty");
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0);
+      const imgd = context.getImageData(0, 0, 10, 10);
+      return Array.from(imgd.data);
+    });
+    return pixels;
+  }
+}
+
+// TODO: the test fails in headful Firefox when running under xvfb.
+it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture static page', async({page, persistentDirectory, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(persistentDirectory, 'v.webm');
@@ -66,60 +191,48 @@ it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory
   await toImpl(page)._delegate.stopVideoRecording();
   expect(fs.existsSync(videoFile)).toBe(true);
 
-  if (WEBKIT && !LINUX) {
-    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
-    const context = await firefox.newContext();
-    page = await context.newPage();
-  }
-
-  await page.goto(url.pathToFileURL(videoFile).href);
-  await page.$eval('video', v => {
-    return new Promise(fulfil => {
-      // In case video playback autostarts.
-      v.pause();
-      v.onplaying = fulfil;
-      v.play();
-    });
-  });
-  await page.$eval('video', v => {
-    v.pause();
-    const result = new Promise(f => v.onseeked = f);
-    v.currentTime = v.duration - 0.01;
-    return result;
-  });
-
-  const duration = await page.$eval('video', v => v.duration);
+  await videoPlayer.load(videoFile);
+  const duration = await videoPlayer.duration();
   expect(duration).toBeGreaterThan(0);
-  const videoWidth = await page.$eval('video', v => v.videoWidth);
-  expect(videoWidth).toBe(640);
-  const videoHeight = await page.$eval('video', v => v.videoHeight);
-  expect(videoHeight).toBe(480);
 
-  const pixels = await page.$eval('video', video => {
-    let canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const context = canvas.getContext('2d');
-    context.drawImage(video, 0, 0);
-    const imgd = context.getImageData(0, 0, 10, 10);
-    return Array.from(imgd.data);
-  });
-  const expectAlmostRed = (i) => {
-    const r = pixels[i];
-    const g = pixels[i + 1];
-    const b = pixels[i + 2];
-    const alpha = pixels[i + 3];
-    expect(r).toBeGreaterThan(240);
-    expect(g).toBeLessThan(50);
-    expect(b).toBeLessThan(50);
-    expect(alpha).toBe(255);
+  expect(await videoPlayer.videoWidth()).toBe(640);
+  expect(await videoPlayer.videoHeight()).toBe(480);
+
+  await videoPlayer.seekLastNonEmptyFrame();
+  const pixels = await videoPlayer.pixels();
+  expectAll(pixels, almostRed);
+});
+
+// TODO: the test fails in headful Firefox when running under xvfb.
+it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+  if (!toImpl)
+    return;
+  const videoFile = path.join(persistentDirectory, 'v.webm');
+  await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
+  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  // TODO: in WebKit figure out why video size is not reported correctly for
+  // static pictures.
+  if (HEADLESS && WEBKIT)
+    await page.setViewportSize({width: 1270, height: 950});
+  await new Promise(r => setTimeout(r, 300));
+  await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
+  await new Promise(r => setTimeout(r, 300));
+  await toImpl(page)._delegate.stopVideoRecording();
+  expect(fs.existsSync(videoFile)).toBe(true);
+
+  await videoPlayer.load(videoFile);
+  const duration = await videoPlayer.duration();
+  expect(duration).toBeGreaterThan(0);
+
+  {
+    await videoPlayer.seek(0);
+    const pixels = await videoPlayer.pixels();
+    expectAll(pixels, almostBlack);
   }
-  try {
-    for (var i = 0, n = pixels.length; i < n; i += 4)
-      expectAlmostRed(i);
-  } catch(e) {
-    // Log pixel values on failure.
-    console.log(pixels);
-    throw e;
+
+  {
+    await videoPlayer.seekLastNonEmptyFrame();
+    const pixels = await videoPlayer.pixels();
+    expectAll(pixels, almostGrey);
   }
 });
