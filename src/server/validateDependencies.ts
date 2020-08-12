@@ -138,7 +138,7 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
   if (missingPackages.size) {
     missingPackagesMessage = [
       `  Install missing packages with:`,
-      `      apt-get install ${[...missingPackages].join('\\\n          ')}`,
+      `      sudo apt-get install ${[...missingPackages].join('\\\n          ')}`,
       ``,
       ``,
     ].join('\n');
