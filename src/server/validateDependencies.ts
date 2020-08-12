@@ -220,14 +220,14 @@ async function missingDLOPENLibraries(browser: BrowserDescriptor): Promise<strin
   const libraries = DL_OPEN_LIBRARIES[browser.name];
   if (!libraries.length)
     return [];
-  const {stdout, code} = await spawnAsync('ldconfig', ['-p'], {});
-  if (code !== 0)
+  const {stdout, code, error} = await spawnAsync('/sbin/ldconfig', ['-p'], {});
+  if (code !== 0 || error)
     return [];
   const isLibraryAvailable = (library: string) => stdout.toLowerCase().includes(library.toLowerCase());
   return libraries.filter(library => !isLibraryAvailable(library));
 }
 
-function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number}> {
+function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
   const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {
@@ -236,6 +236,7 @@ function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout:
     process.stdout.on('data', data => stdout += data);
     process.stderr.on('data', data => stderr += data);
     process.on('close', code => resolve({stdout, stderr, code}));
+    process.on('error', error => resolve({stdout, stderr, code: 0, error}));
   });
 }
 
