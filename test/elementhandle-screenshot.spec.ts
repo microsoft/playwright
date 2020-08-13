@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIRE, HEADLESS} = testOptions;
 import {PNG} from 'pngjs';
 
 // Firefox headful produces a different image.
@@ -283,7 +283,7 @@ it.skip(ffheadful)('should restore default viewport after fullPage screenshot', 
   await context.close();
 });
 
-it.skip(ffheadful || USES_HOOKS)('should restore viewport after page screenshot and exception', async({ browser, server }) => {
+it.skip(ffheadful || WIRE)('should restore viewport after page screenshot and exception', async({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -294,7 +294,7 @@ it.skip(ffheadful || USES_HOOKS)('should restore viewport after page screenshot 
   await context.close();
 });
 
-it.skip(ffheadful || USES_HOOKS)('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
+it.skip(ffheadful || WIRE)('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -338,7 +338,7 @@ it.skip(ffheadful)('should take element screenshot when default viewport is null
   await context.close();
 });
 
-it.skip(ffheadful || USES_HOOKS)('should restore viewport after element screenshot and exception', async({server, browser}) => {
+it.skip(ffheadful || WIRE)('should restore viewport after element screenshot and exception', async({server, browser}) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.setContent(`<div style="width:600px;height:600px;"></div>`);

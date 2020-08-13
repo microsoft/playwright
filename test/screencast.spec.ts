@@ -22,13 +22,13 @@ const path = require('path');
 const url = require('url');
 const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, WIRE} = testOptions;
 
 declare global {
   interface FixtureState {
     persistentDirectory: string;
     videoPlayer: VideoPlayer;
-  }  
+  }
 }
 
 registerFixture('persistentDirectory', async ({}, test) => {

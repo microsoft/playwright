@@ -18,7 +18,7 @@ import './base.fixture';
 
 import utils from './utils';
 import path from 'path';
-const { FFOX, CHROMIUM, WEBKIT, USES_HOOKS } = testOptions;
+const { FFOX, CHROMIUM, WEBKIT, WIRE } = testOptions;
 
 it('should have different execution contexts', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -44,7 +44,7 @@ function expectContexts(pageImpl, count) {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it.skip(USES_HOOKS)('should dispose context on navigation', async ({ page, server, toImpl }) => {
+it.skip(WIRE)('should dispose context on navigation', async ({ page, server, toImpl }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
   expectContexts(toImpl(page), 4);
@@ -52,7 +52,7 @@ it.skip(USES_HOOKS)('should dispose context on navigation', async ({ page, serve
   expectContexts(toImpl(page), 2);
 });
 
-it.skip(USES_HOOKS)('should dispose context on cross-origin navigation', async ({ page, server, toImpl }) => {
+it.skip(WIRE)('should dispose context on cross-origin navigation', async ({ page, server, toImpl }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
   expectContexts(toImpl(page), 4);

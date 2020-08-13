@@ -19,7 +19,7 @@ const ts = require('typescript');
 const path = require('path');
 const Documentation = require('./Documentation');
 const EventEmitter = require('events');
-module.exports = { checkSources, expandPrefix };
+module.exports = { checkSources };
 
 /**
  * @param {!Array<!import('../Source')>} sources
@@ -101,13 +101,12 @@ function checkSources(sources) {
       }
       if (className && !excludeClasses.has(className) && !fileName.endsWith('/protocol.ts')) {
         excludeClasses.add(className);
-        const renamed = expandPrefix(className);
-        classes.push(serializeClass(renamed, symbol, node));
-        inheritance.set(renamed, parentClasses(node).map(expandPrefix));
+        classes.push(serializeClass(className, symbol, node));
+        inheritance.set(className, parentClasses(node));
       }
     }
     if (fileName.endsWith('/api.ts') && ts.isExportSpecifier(node))
-      apiClassNames.add(expandPrefix((node.propertyName || node.name).text));
+      apiClassNames.add((node.propertyName || node.name).text);
     ts.forEachChild(node, visit);
   }
 
@@ -215,10 +214,10 @@ function checkSources(sources) {
         innerTypeNames.push(innerType.name);
       }
       if (innerTypeNames.length === 0 || (innerTypeNames.length === 1 && innerTypeNames[0] === 'void'))
-        return new Documentation.Type(expandPrefix(type.symbol.name));
-      return new Documentation.Type(`${expandPrefix(type.symbol.name)}<${innerTypeNames.join(', ')}>`, properties);
+        return new Documentation.Type(type.symbol.name);
+      return new Documentation.Type(`${type.symbol.name}<${innerTypeNames.join(', ')}>`, properties);
     }
-    return new Documentation.Type(expandPrefix(typeName), []);
+    return new Documentation.Type(typeName, []);
   }
 
   /**
@@ -304,16 +303,4 @@ function checkSources(sources) {
     }
     return props;
   }
-}
-
-function expandPrefix(name) {
-  if (name === 'CRSession')
-    return 'CDPSession';
-  if (name.startsWith('CR'))
-    return 'Chromium' + name.substring(2);
-  if (name.startsWith('FF'))
-    return 'Firefox' + name.substring(2);
-  if (name.startsWith('WK'))
-    return 'WebKit' + name.substring(2);
-  return name;
 }

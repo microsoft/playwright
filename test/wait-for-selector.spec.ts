@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 async function giveItTimeToLog(frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));

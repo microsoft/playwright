@@ -18,7 +18,7 @@ import '../base.fixture';
 import fs from 'fs';
 import path from 'path';
 import { ChromiumBrowser } from '../..';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 declare global {
   interface FixtureState {
     outputFile: string;

@@ -16,7 +16,7 @@
  */
 import './base.fixture';
 
-const {WEBKIT, USES_HOOKS, FFOX} = testOptions;
+const {WEBKIT, WIRE, FFOX} = testOptions;
 
 it('should work', async ({ page, server }) => {
   const result = await page.evaluate(() => 7 * 3);
@@ -434,8 +434,8 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it.fail(USES_HOOKS)('should transfer 100Mb of data from page to node.js', async ({ page }) => {
-  // This does not use hooks, but is slow in wire channel.
+it.fail(WIRE)('should transfer 100Mb of data from page to node.js', async ({ page }) => {
+  // This is too slow with wire.
   const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
   expect(a.length).toBe(100 * 1024 * 1024);
 });

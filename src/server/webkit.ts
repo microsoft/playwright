@@ -20,13 +20,9 @@ import { Env } from './processLauncher';
 import * as path from 'path';
 import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { BrowserTypeBase } from './browserType';
-import { ConnectionTransport, ProtocolResponse, ProtocolRequest } from '../transport';
-import * as ws from 'ws';
-import { Logger } from '../logger';
+import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
-import { WebSocketServer } from './webSocketServer';
-import { assert } from '../helper';
 import { LaunchOptionsBase } from '../types';
 
 export class WebKit extends BrowserTypeBase {
@@ -52,10 +48,6 @@ export class WebKit extends BrowserTypeBase {
 
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
-  }
-
-  _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
-    return startWebSocketServer(transport, logger, port);
   }
 
   _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
@@ -94,71 +86,4 @@ export class WebKit extends BrowserTypeBase {
       webkitArguments.push('about:blank');
     return webkitArguments;
   }
-}
-
-function startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
-  const pendingBrowserContextCreations = new Set<number>();
-  const pendingBrowserContextDeletions = new Map<number, string>();
-  const browserContextIds = new Map<string, ws>();
-
-  const server = new WebSocketServer(transport, logger, port, {
-    onBrowserResponse(seqNum: number, source: ws, message: ProtocolResponse) {
-      if (source.readyState === ws.CLOSED || source.readyState === ws.CLOSING) {
-        if (pendingBrowserContextCreations.has(seqNum))
-          server.sendMessageToBrowserOneWay('Playwright.deleteContext', { browserContextId: message.result.browserContextId });
-        return;
-      }
-
-      if (pendingBrowserContextCreations.has(seqNum)) {
-        // Browser.createContext response -> establish context attribution.
-        browserContextIds.set(message.result.browserContextId, source);
-        pendingBrowserContextCreations.delete(seqNum);
-      }
-
-      const deletedContextId = pendingBrowserContextDeletions.get(seqNum);
-      if (deletedContextId) {
-        // Browser.deleteContext response -> remove context attribution.
-        browserContextIds.delete(deletedContextId);
-        pendingBrowserContextDeletions.delete(seqNum);
-      }
-
-      source.send(JSON.stringify(message));
-      return;
-    },
-
-    onBrowserNotification(message: ProtocolResponse) {
-      // Process notification response.
-      const { params, browserContextId } = message;
-      const contextId = browserContextId || params.browserContextId;
-      assert(contextId);
-      const socket = browserContextIds.get(contextId);
-      if (!socket || socket.readyState === ws.CLOSING) {
-        // Drop unattributed messages on the floor.
-        return;
-      }
-      socket.send(JSON.stringify(message));
-    },
-
-    onClientAttached(socket: ws) {
-    },
-
-    onClientRequest(socket: ws, message: ProtocolRequest) {
-      const { method, params } = message;
-      const seqNum = server.sendMessageToBrowser(message, socket);
-      if (method === 'Playwright.createContext')
-        pendingBrowserContextCreations.add(seqNum);
-      if (method === 'Playwright.deleteContext')
-        pendingBrowserContextDeletions.set(seqNum, params.browserContextId);
-    },
-
-    onClientDetached(socket: ws) {
-      for (const [browserContextId, s] of browserContextIds) {
-        if (s === socket) {
-          server.sendMessageToBrowserOneWay('Playwright.deleteContext', { browserContextId });
-          browserContextIds.delete(browserContextId);
-        }
-      }
-    }
-  });
-  return server;
 }

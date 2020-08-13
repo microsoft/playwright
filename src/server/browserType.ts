@@ -21,7 +21,7 @@ import * as util from 'util';
 import { BrowserContext, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
 import { BrowserServer } from './browserServer';
 import * as browserPaths from '../install/browserPaths';
-import { Loggers, Logger } from '../logger';
+import { Loggers } from '../logger';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserBase, BrowserOptions, Browser } from '../browser';
 import { assert, helper } from '../helper';
@@ -31,13 +31,11 @@ import { PipeTransport } from './pipeTransport';
 import { Progress, runAbortableTask } from '../progress';
 import * as types from '../types';
 import { TimeoutSettings } from '../timeoutSettings';
-import { WebSocketServer } from './webSocketServer';
 import { LoggerSink } from '../loggerSink';
 import { validateHostRequirements } from './validateDependencies';
 
 type FirefoxPrefsOptions = { firefoxUserPrefs?: { [key: string]: string | number | boolean } };
 type LaunchOptions = types.LaunchOptions & { logger?: LoggerSink };
-type ConnectOptions = types.ConnectOptions & { logger?: LoggerSink };
 
 
 export type LaunchNonPersistentOptions = LaunchOptions & FirefoxPrefsOptions;
@@ -50,7 +48,6 @@ export interface BrowserType {
   launch(options?: LaunchNonPersistentOptions): Promise<Browser>;
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
   launchPersistentContext(userDataDir: string, options?: LaunchPersistentOptions): Promise<BrowserContext>;
-  connect(options: ConnectOptions): Promise<Browser>;
 }
 
 const mkdirAsync = util.promisify(fs.mkdir);
@@ -134,24 +131,10 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launchServer`. Use `browserType.launchPersistentContext` instead');
     options = validateLaunchOptions(options);
     const loggers = new Loggers(options.logger);
-    const { port = 0 } = options;
     return runAbortableTask(async progress => {
-      const { browserServer, transport } = await this._launchServer(progress, options, false, loggers);
-      browserServer._webSocketServer = this._startWebSocketServer(transport, loggers.browser, port);
+      const { browserServer } = await this._launchServer(progress, options, false, loggers);
       return browserServer;
     }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.launchServer');
-  }
-
-  async connect(options: ConnectOptions): Promise<Browser> {
-    const loggers = new Loggers(options.logger);
-    return runAbortableTask(async progress => {
-      const transport = await WebSocketTransport.connect(progress, options.wsEndpoint);
-      progress.cleanupWhenAborted(() => transport.closeAndWait());
-      if ((options as any).__testHookBeforeCreateBrowser)
-        await (options as any).__testHookBeforeCreateBrowser();
-      const browser = await this._connectToTransport(transport, { name: this._name, slowMo: options.slowMo, loggers });
-      return browser;
-    }, loggers.browser, TimeoutSettings.timeout(options), 'browserType.connect');
   }
 
   private async _launchServer(progress: Progress, options: LaunchServerOptions, isPersistent: boolean, loggers: Loggers, userDataDir?: string): Promise<{ browserServer: BrowserServer, downloadsPath: string, transport: ConnectionTransport }> {
@@ -247,7 +230,6 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   abstract _defaultArgs(options: types.LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
-  abstract _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
   abstract _amendArguments(browserArguments: string[]): string[];
   abstract _rewriteStartupError(error: Error, prefix: string): Error;

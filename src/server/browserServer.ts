@@ -16,13 +16,11 @@
 
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
-import { WebSocketServer } from './webSocketServer';
 
 export class BrowserServer extends EventEmitter {
   private _process: ChildProcess;
   private _gracefullyClose: () => Promise<void>;
   private _kill: () => Promise<void>;
-  _webSocketServer: WebSocketServer | null = null;
 
   constructor(process: ChildProcess, gracefullyClose: () => Promise<void>, kill: () => Promise<void>) {
     super();
@@ -35,21 +33,12 @@ export class BrowserServer extends EventEmitter {
     return this._process;
   }
 
-  wsEndpoint(): string {
-    return this._webSocketServer ? this._webSocketServer.wsEndpoint : '';
-  }
-
   async kill(): Promise<void> {
     await this._kill();
   }
 
   async close(): Promise<void> {
     await this._gracefullyClose();
-  }
-
-  async _checkLeaks(): Promise<void> {
-    if (this._webSocketServer)
-      await this._webSocketServer.checkLeaks();
   }
 
   async _closeOrKill(timeout: number): Promise<void> {
