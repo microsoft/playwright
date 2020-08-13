@@ -167,6 +167,11 @@ jobs:
         HEADLESS: "false"
         DEBUG_FILE: "testrun.log"
     - uses: actions/upload-artifact@v1
+      if: failure()
+      with:
+        name: headful-${{ matrix.browser }}-linux-output
+        path: test/output-${{ matrix.browser }}
+    - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
         name: headful-${{ matrix.browser }}-linux-testrun.log
