@@ -239,7 +239,8 @@ it.fail(CHROMIUM)('should capture navigation', async({page, persistentDirectory,
   }
 });
 
-it.fail(CHROMIUM)('should capture css transformation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+// Accelerated compositing is disabled in WebKit on Windows.
+it.fail(CHROMIUM || (WEBKIT && WIN))('should capture css transformation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(persistentDirectory, 'v.webm');
