@@ -34,10 +34,14 @@ program
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
     // Collect files
-    const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
+    const root = path.join(process.cwd(), command.args[0]);
+    const files = collectFiles(root, command.args.slice(1));
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
-    console.log(`Parsing ${files.length} test files`);
+    if (files.length === 1)
+      console.log(`Parsing ${path.relative(root, files[0])}`);
+    else
+      console.log(`Parsing ${files.length} test files`);
     let total = 0;
     // Build the test model, suite per file.
     for (const file of files) {
@@ -93,7 +97,8 @@ function collectFiles(dir, filters) {
       files.push(...collectFiles(path.join(dir, name), filters));
       continue;
     }
-    if (!name.includes('spec'))
+    // There could be other files in our repo, e.g. foo.spec.js.json.
+    if (!name.endsWith('spec.js') && !name.endsWith('spec.ts'))
       continue;
     if (!filters.length) {
       files.push(path.join(dir, name));
