@@ -139,7 +139,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index ff630c49f8529baac227dfca33b7fc84b1a14d0a..fea8bf34ffbf1555a63a81f7f4d2a566778d6295 100644
+index ff630c49f8529baac227dfca33b7fc84b1a14d0a..45afdc9025ee2e5a75d54fca0633b5651a142458 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -207,7 +207,7 @@ index ff630c49f8529baac227dfca33b7fc84b1a14d0a..fea8bf34ffbf1555a63a81f7f4d2a566
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3021,6 +3037,184 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3021,6 +3037,189 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -384,6 +384,11 @@ index ff630c49f8529baac227dfca33b7fc84b1a14d0a..fea8bf34ffbf1555a63a81f7f4d2a566
 +NS_IMETHODIMP
 +nsDocShell::SetColorSchemeOverride(ColorSchemeOverride aColorSchemeOverride) {
 +  mColorSchemeOverride = aColorSchemeOverride;
++  RefPtr<nsPresContext> presContext = GetPresContext();
++  if (presContext) {
++    presContext->MediaFeatureValuesChanged(
++        {MediaFeatureChangeReason::SystemMetricsChange});
++  }
 +  return NS_OK;
 +}
 +
@@ -392,7 +397,7 @@ index ff630c49f8529baac227dfca33b7fc84b1a14d0a..fea8bf34ffbf1555a63a81f7f4d2a566
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -8291,6 +8485,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8291,6 +8490,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -405,7 +410,7 @@ index ff630c49f8529baac227dfca33b7fc84b1a14d0a..fea8bf34ffbf1555a63a81f7f4d2a566
        return rv;
      }
  
-@@ -11908,6 +12108,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -11908,6 +12113,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -415,7 +420,7 @@ index ff630c49f8529baac227dfca33b7fc84b1a14d0a..fea8bf34ffbf1555a63a81f7f4d2a566
      return NS_OK;
    }
  
-@@ -11993,6 +12196,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -11993,6 +12201,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
