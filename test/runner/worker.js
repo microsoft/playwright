@@ -16,7 +16,6 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { registerWorkerFixture } = require('./fixturePool');
 const { fixturesUI, fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const GoldenUtils = require('../../utils/testrunner/GoldenUtils');

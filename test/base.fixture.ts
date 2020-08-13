@@ -24,6 +24,7 @@ import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
+import { registerFixture, registerWorkerFixture} from './runner/fixtures';
 
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 

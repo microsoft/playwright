@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import './base.fixture';
+import { registerFixture } from './runner/fixtures';
 
 import path from 'path';
 import fs from 'fs';

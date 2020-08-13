@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import '../base.fixture';
+import { registerFixture } from '../runner/fixtures';
 import { Page, Browser, BrowserContext } from '../..';
 
 const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
