@@ -9,9 +9,9 @@
     "node": ">=10.15.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium node test/runner",
-    "ftest": "cross-env BROWSER=firefox node test/runner",
-    "wtest": "cross-env BROWSER=webkit node test/runner",
+    "ctest": "cross-env BROWSER=chromium node test/runner test/",
+    "ftest": "cross-env BROWSER=firefox node test/runner test/",
+    "wtest": "cross-env BROWSER=webkit node test/runner test/",
     "test": "npm run ctest && npm run ftest && npm run wtest",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src",
     "tsc": "tsc -p .",

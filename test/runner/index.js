@@ -34,8 +34,7 @@ program
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
     // Collect files
-    const files = [];
-    collectFiles(path.join(process.cwd(), 'test'), command.args, files);
+    const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
     console.log(`Parsing ${files.length} test files`);
@@ -84,10 +83,13 @@ program
 
 program.parse(process.argv);
 
-function collectFiles(dir, filters, files) {
+function collectFiles(dir, filters) {
+  if (fs.statSync(dir).isFile())
+    return [dir];
+  const files = [];
   for (const name of fs.readdirSync(dir)) {
     if (fs.lstatSync(path.join(dir, name)).isDirectory()) {
-      collectFiles(path.join(dir, name), filters, files);
+      files.push(...collectFiles(path.join(dir, name), filters));
       continue;
     }
     if (!name.includes('spec'))
@@ -103,4 +105,5 @@ function collectFiles(dir, filters, files) {
       }
     }
   }
+  return files;
 }
