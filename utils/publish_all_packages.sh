@@ -66,8 +66,8 @@ elif [[ $1 == "--tip-of-tree" ]]; then
   UPSTREAM_SHA=$(git ls-remote https://github.com/microsoft/playwright --tags $(git rev-parse --abbrev-ref HEAD) | cut -f1)
   CURRENT_SHA=$(git rev-parse HEAD)
   if [[ "${UPSTREAM_SHA}" != "${CURRENT_SHA}" ]]; then
-    echo "REFUSING TO PUBLISH: this is not tip-of-tree"
-    exit 1
+    echo "FYI: REFUSING TO PUBLISH since this is not tip-of-tree"
+    exit 0
   fi
   NPM_PUBLISH_TAG="next"
 else
