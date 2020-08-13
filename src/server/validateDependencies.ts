@@ -220,6 +220,9 @@ async function missingDLOPENLibraries(browser: BrowserDescriptor): Promise<strin
   const libraries = DL_OPEN_LIBRARIES[browser.name];
   if (!libraries.length)
     return [];
+  // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
+  // default PATH in CRON.
+  // @see https://github.com/microsoft/playwright/issues/3397
   const {stdout, code, error} = await spawnAsync('/sbin/ldconfig', ['-p'], {});
   if (code !== 0 || error)
     return [];
