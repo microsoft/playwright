@@ -171,8 +171,8 @@ class VideoPlayer {
     }
   }
 
-  async pixels() {
-    const pixels = await this._page.$eval('video', (video:HTMLVideoElement) => {
+  async pixels(point = {x: 0, y: 0}) {
+    const pixels = await this._page.$eval('video', (video:HTMLVideoElement, point) => {
       let canvas = document.createElement("canvas");
       if (!video.videoWidth || !video.videoHeight)
         throw new Error("Video element is empty");
@@ -180,9 +180,9 @@ class VideoPlayer {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       context.drawImage(video, 0, 0);
-      const imgd = context.getImageData(0, 0, 10, 10);
+      const imgd = context.getImageData(point.x, point.y, 10, 10);
       return Array.from(imgd.data);
-    });
+    }, point);
     return pixels;
   }
 }
@@ -213,7 +213,6 @@ it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory
   expectAll(pixels, almostRed);
 });
 
-// TODO: the test fails in headful Firefox when running under xvfb.
 it.fail(CHROMIUM)('should capture navigation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
@@ -244,5 +243,30 @@ it.fail(CHROMIUM)('should capture navigation', async({page, persistentDirectory,
     await videoPlayer.seekLastNonEmptyFrame();
     const pixels = await videoPlayer.pixels();
     expectAll(pixels, almostGrey);
+  }
+});
+
+it.fail(CHROMIUM)('should capture css transformation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+  if (!toImpl)
+    return;
+  const videoFile = path.join(persistentDirectory, 'v.webm');
+  await page.goto(server.PREFIX + '/rotate-z.html');
+  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  // TODO: in WebKit figure out why video size is not reported correctly for
+  // static pictures.
+  if (HEADLESS && WEBKIT)
+    await page.setViewportSize({width: 1270, height: 950});
+  await new Promise(r => setTimeout(r, 300));
+  await toImpl(page)._delegate.stopVideoRecording();
+  expect(fs.existsSync(videoFile)).toBe(true);
+
+  await videoPlayer.load(videoFile);
+  const duration = await videoPlayer.duration();
+  expect(duration).toBeGreaterThan(0);
+
+  {
+    await videoPlayer.seekLastNonEmptyFrame();
+    const pixels = await videoPlayer.pixels({x: 95, y: 45});
+    expectAll(pixels, almostRed);
   }
 });
