@@ -21,7 +21,7 @@ import path from 'path';
 import url from 'url';
 import { Frame } from '..';
 
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should work', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);

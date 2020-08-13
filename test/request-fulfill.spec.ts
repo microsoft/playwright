@@ -52,7 +52,7 @@ it('should work with status code 422', async({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it.skip(FFOX && !HEADLESS)('should allow mocking binary responses', async({page, server}) => {
+it.skip(FFOX && !HEADLESS)('should allow mocking binary responses', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
@@ -68,10 +68,10 @@ it.skip(FFOX && !HEADLESS)('should allow mocking binary responses', async({page,
     return new Promise(fulfill => img.onload = fulfill);
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
+  expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
 });
 
-it.skip(FFOX && !HEADLESS)('should allow mocking svg with charset', async({page, server}) => {
+it.skip(FFOX && !HEADLESS)('should allow mocking svg with charset', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     route.fulfill({
@@ -86,10 +86,10 @@ it.skip(FFOX && !HEADLESS)('should allow mocking svg with charset', async({page,
     return new Promise((f, r) => { img.onload = f; img.onerror = r; });
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toBeGolden('mock-svg.png');
+  expect(await img.screenshot()).toMatchImage(golden('mock-svg.png'));
 });
 
-it('should work with file path', async({page, server}) => {
+it('should work with file path', async({page, server, golden}) => {
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
   await page.evaluate(PREFIX => {
     const img = document.createElement('img');
@@ -98,7 +98,7 @@ it('should work with file path', async({page, server}) => {
     return new Promise(fulfill => img.onload = fulfill);
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toBeGolden('mock-binary-response.png');
+  expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
 });
 
 it('should stringify intercepted request response headers', async({page, server}) => {

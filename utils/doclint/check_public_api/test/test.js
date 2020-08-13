@@ -52,7 +52,7 @@ async function testLint(name) {
     const jsSources = await Source.readdir(dirPath, '.js');
     const messages = await checkPublicAPI(page, mdSources, jsSources.concat(tsSources));
     const errors = messages.map(message => message.text);
-    expect(errors.join('\n')).toBeGolden(path.join(dirPath, 'result.txt'));
+    expect(errors.join('\n')).toMatchImage(path.join(dirPath, 'result.txt'));
   });
 }
 
@@ -61,7 +61,7 @@ async function testMDBuilder(name) {
     const dirPath = path.join(__dirname, name);
     const sources = await Source.readdir(dirPath, '.md');
     const {documentation} = await mdBuilder(page, sources);
-    expect(serialize(documentation)).toBeGolden(path.join(dirPath, 'result.txt'));
+    expect(serialize(documentation)).toMatchImage(path.join(dirPath, 'result.txt'));
   });
 }
 
@@ -71,7 +71,7 @@ async function testJSBuilder(name) {
     const jsSources = await Source.readdir(dirPath, '.js');
     const tsSources = await Source.readdir(dirPath, '.ts');
     const {documentation} = await jsBuilder.checkSources(jsSources.concat(tsSources));
-    expect(serialize(documentation)).toBeGolden(path.join(dirPath, 'result.txt'));
+    expect(serialize(documentation)).toMatchImage(path.join(dirPath, 'result.txt'));
   });
 }
 

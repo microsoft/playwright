@@ -30,7 +30,5 @@ testOptions.FFOX = browserName === 'firefox';
 testOptions.WEBKIT = browserName === 'webkit';
 testOptions.WIRE = process.env.PWWIRE;
 testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
-testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
-testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
 
 module.exports = testOptions;

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import '../base.fixture';
+import { registerFixture } from '../runner/fixtures';
 
 import fs from 'fs';
 import path from 'path';
@@ -24,8 +25,8 @@ declare global {
     outputFile: string;
   }
 }
-registerFixture('outputFile', async ({outputDir, parallelIndex}, test) => {
-  const outputFile = path.join(outputDir, `trace-${parallelIndex}.json`);
+registerFixture('outputFile', async ({tmpDir}, test) => {
+  const outputFile = path.join(tmpDir, `trace.json`);
   await test(outputFile);
   if (fs.existsSync(outputFile))
     fs.unlinkSync(outputFile);

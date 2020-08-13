@@ -14,28 +14,20 @@
  * limitations under the License.
  */
 import './base.fixture';
+import { registerFixture } from './runner/fixtures';
 import { Page } from '..';
 
 const fs = require('fs');
-const os = require('os');
 const path = require('path');
 const url = require('url');
-const {mkdtempAsync, removeFolderAsync} = require('./utils');
 
 const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, WIRE} = testOptions;
 
 declare global {
   interface FixtureState {
-    persistentDirectory: string;
     videoPlayer: VideoPlayer;
   }
 }
-
-registerFixture('persistentDirectory', async ({}, test) => {
-  const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  await test(persistentDirectory);
-  await removeFolderAsync(persistentDirectory);
-});
 
 registerFixture('videoPlayer', async ({playwright, context}, test) => {
   let firefox;
@@ -180,10 +172,10 @@ class VideoPlayer {
   }
 }
 
-it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory, videoPlayer, toImpl}) => {
+it.fail(CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
-  const videoFile = path.join(persistentDirectory, 'v.webm');
+  const videoFile = path.join(tmpDir, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
@@ -206,10 +198,10 @@ it.fail(CHROMIUM)('should capture static page', async({page, persistentDirectory
   expectAll(pixels, almostRed);
 });
 
-it.fail(CHROMIUM)('should capture navigation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+it.fail(CHROMIUM)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
-  const videoFile = path.join(persistentDirectory, 'v.webm');
+  const videoFile = path.join(tmpDir, 'v.webm');
   await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
@@ -239,10 +231,10 @@ it.fail(CHROMIUM)('should capture navigation', async({page, persistentDirectory,
   }
 });
 
-it.fail(CHROMIUM)('should capture css transformation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+it.fail(CHROMIUM)('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
-  const videoFile = path.join(persistentDirectory, 'v.webm');
+  const videoFile = path.join(tmpDir, 'v.webm');
   await page.goto(server.PREFIX + '/rotate-z.html');
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for

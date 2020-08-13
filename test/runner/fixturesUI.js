@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { FixturePool, registerFixture, registerWorkerFixture } = require('./fixturePool');
+const { FixturePool, registerFixture, registerWorkerFixture } = require('./fixtures');
 const { Test, Suite } = require('mocha');
 const {installTransform} = require('./transform');
 const commonSuite = require('mocha/lib/interfaces/common');
