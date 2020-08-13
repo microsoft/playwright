@@ -306,10 +306,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         progress.logger.info('  element is outside of the viewport');
         continue;
       }
-      if (result === 'error:nothittarget') {
+      if (typeof result === 'object' && 'hitTargetDescription' in result) {
         if (options.force)
-          throw new Error('Element does not receive pointer events');
-        progress.logger.info('  element does not receive pointer events');
+          throw new Error(`Element does not receive pointer events, ${result.hitTargetDescription} intercepts them`);
+        progress.logger.info(`  ${result.hitTargetDescription} intercepts pointer events`);
         continue;
       }
       return result;
@@ -317,7 +317,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:nothittarget' | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
@@ -655,7 +655,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | 'error:nothittarget' | 'done'> {
+  async _checkHitTargetAt(point: types.Point): Promise<'error:notconnected' | { hitTargetDescription: string } | 'done'> {
     const frame = await this.ownerFrame();
     if (frame && frame.parentFrame()) {
       const element = await frame.frameElement();
