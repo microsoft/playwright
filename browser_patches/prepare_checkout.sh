@@ -114,7 +114,7 @@ if git show-ref --verify --quiet refs/heads/playwright-build; then
 fi
 git checkout -b playwright-build
 echo "-- applying patches"
-git apply --index $PATCHES_PATH/*
+git apply --index --whitespace=nowarn $PATCHES_PATH/*
 
 if [[ ! -z "${WEBKIT_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding WebKit embedders"
