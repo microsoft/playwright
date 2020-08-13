@@ -16,8 +16,7 @@
 
 const { FixturePool, registerFixture, registerWorkerFixture } = require('./fixturePool');
 const { Test, Suite } = require('mocha');
-const pirates = require('pirates');
-const babel = require('@babel/core');
+const {installTransform} = require('./transform');
 const commonSuite = require('mocha/lib/interfaces/common');
 
 Error.stackTraceLimit = 15;
@@ -135,16 +134,7 @@ function fixturesUI(trialRun, suite) {
     context.fit = it.only(true);
     context.xit = it.skip(true);
 
-    revertBabelRequire = pirates.addHook((code, filename) => {
-      const result = babel.transformFileSync(filename, {
-        presets: [
-          ['@babel/preset-env', {targets: {node: 'current'}}],
-          '@babel/preset-typescript']
-      });
-      return result.code;
-    }, {
-      exts: ['.ts']
-    });
+    revertBabelRequire = installTransform();
   });
 
   suite.on(Suite.constants.EVENT_FILE_POST_REQUIRE, function(context, file, mocha) {

@@ -39,10 +39,6 @@ program
     const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
-    if (!command.reporter) {
-      // TODO: extend reporter interface.
-      console.log(`Parsing ${files.length} test files`);
-    }
     let total = 0;
     // Build the test model, suite per file.
     for (const file of files) {
@@ -59,11 +55,6 @@ program
       let runner;
       await new Promise(f => {
         runner = mocha.run(f);
-        if (!command.reporter) {
-          runner.on(constants.EVENT_RUN_BEGIN, () => {
-            process.stdout.write(colors.yellow('\u00B7'));
-          });
-        }
       });
       total += runner.grepTotal(mocha.suite);
 
