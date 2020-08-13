@@ -64,7 +64,7 @@ let failedWithError = false;
 async function runSingleTest(file, options) {
   let lastOrdinal = -1;
   const mocha = new Mocha({
-    ui: fixturesUI.bind(null, false),
+    ui: fixturesUI.bind(null, options.trialRun),
     timeout: options.timeout,
     reporter: NullReporter
   });

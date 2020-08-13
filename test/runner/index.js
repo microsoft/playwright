@@ -31,13 +31,17 @@ program
   .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
   .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2))
   .option('--reporter <reporter>', 'Specify reporter to use', '')
+  .option('--trial-run', 'Only collect the matching tests and report them as passing')
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
     // Collect files
     const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
-    console.log(`Parsing ${files.length} test files`);
+    if (!command.reporter) {
+      // TODO: extend reporter interface.
+      console.log(`Parsing ${files.length} test files`);
+    }
     let total = 0;
     // Build the test model, suite per file.
     for (const file of files) {
@@ -54,9 +58,11 @@ program
       let runner;
       await new Promise(f => {
         runner = mocha.run(f);
-        runner.on(constants.EVENT_RUN_BEGIN, () => {
-          process.stdout.write(colors.yellow('\u00B7'));
-        });
+        if (!command.reporter) {
+          runner.on(constants.EVENT_RUN_BEGIN, () => {
+            process.stdout.write(colors.yellow('\u00B7'));
+          });
+        }
       });
       total += runner.grepTotal(mocha.suite);
 
@@ -64,18 +70,23 @@ program
       mocha.suite.title = path.basename(file);
     }
 
+    // Now run the tests.
     if (rootSuite.hasOnly())
       rootSuite.filterOnly();
-    console.log();
-    total = Math.min(total, rootSuite.total()); // First accounts for grep, second for only.
-    console.log(`Running ${total} tests using ${Math.min(command.jobs, total)} workers`);
+    if (!command.reporter) {
+      console.log();
+      total = Math.min(total, rootSuite.total()); // First accounts for grep, second for only.
+      console.log(`Running ${total} tests using ${Math.min(command.jobs, total)} workers`);
+    }
 
-    const runner = new Runner(rootSuite, {
+    // Trial run does not need many workers, use one.
+    const jobs = command.trialRun ? 1 : command.jobs;
+    const runner = new Runner(rootSuite, jobs, {
       grep: command.grep,
-      jobs: command.jobs,
       reporter: command.reporter,
       retries: command.retries,
       timeout: command.timeout,
+      trialRun: command.trialRun,
     });
     await runner.run(files);
     await runner.stop();
