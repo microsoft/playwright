@@ -13,7 +13,13 @@ python -m playwright install
 
 ## Usage
 
-For most use cases its more convenient to use the sync variant of Playwright because then inline REPLs like pdb/ipython or the Visual Studio Code debugger automatically returns the correct value. A basic example to make a screenshot with all the browser engines would look like as follows:
+### Pytest
+
+Playwright can be used as a library in your application or as a part of the testing solution. We recommend using our [Pytest](https://github.com/microsoft/playwright-pytest#readme) plugin for testing.
+
+As a library, Playwright offers both blocking (synchronous) API and asyncio API (async/await). For most use cases its more convenient to use the sync variant of Playwright because then inline REPLs like pdb/ipython or the Visual Studio Code debugger automatically returns the value. You can pick the one that works best for you. They are identical in terms of capabilities and only differ in a way one consumes the API. A basic example to make a screenshot with all the browser engines would look like as follows:
+
+### Sync variant
 
 ```py
 from playwright import sync_playwright
@@ -27,7 +33,7 @@ with sync_playwright() as p:
         browser.close()
 ```
 
-The async alternative would look like that:
+### Async variant
 
 ```py
 import asyncio
@@ -44,6 +50,8 @@ async def main():
 
 asyncio.get_event_loop().run_until_complete(main())
 ```
+
+#
 
 ## Further reference
 
