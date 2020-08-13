@@ -28,7 +28,7 @@ class DotReporter extends Base {
     });
 
     runner.on(constants.EVENT_TEST_PENDING, test => {
-      process.stdout.write(colors.yellow('\u00B7'))
+      process.stdout.write(colors.yellow('∘'))
     });
 
     runner.on(constants.EVENT_TEST_PASS, () => {
