@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <style type="text/css">
+      .square {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 200px;
+        height: 100px;
+        background-color: red;
+        animation-name: z-spin;
+        animation-duration: 5s;
+        animation-iteration-count: infinite;
+        animation-timing-function: linear;
+      }
+      
+      @keyframes z-spin {
+        0%    { transform: rotateZ(0deg); }
+        100%  { transform: rotateZ(360deg); }
+      }
+    </style>
+  </head>
+  <body >
+      <div class="square"></div>
+  </body>
+</html>
