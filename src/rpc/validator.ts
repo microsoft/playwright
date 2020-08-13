@@ -759,6 +759,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
+  scheme.ElementHandleWaitForSelectorParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+    state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
+  });
   scheme.RequestResponseParams = tOptional(tObject({}));
   scheme.RouteAbortParams = tObject({
     errorCode: tOptional(tString),

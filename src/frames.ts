@@ -577,13 +577,7 @@ export class Frame {
         return null;
       }
       const handle = result.asElement() as dom.ElementHandle<Element>;
-      const mainContext = await this._mainContext();
-      if (handle && handle._context !== mainContext) {
-        const adopted = await this._page._delegate.adoptElementHandle(handle, mainContext);
-        handle.dispose();
-        return adopted;
-      }
-      return handle;
+      return handle._adoptTo(await this._mainContext());
     }, this._page._timeoutSettings.timeout(options), this._apiName('waitForSelector'));
   }
 

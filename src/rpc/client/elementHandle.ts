@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions } from '../channels';
+import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions, ElementHandleWaitForSelectorOptions } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
@@ -206,6 +206,13 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     return this._wrapApiCall('elementHandle.$$eval', async () => {
       const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
       return parseResult(result.value);
+    });
+  }
+
+  async waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
+    return this._wrapApiCall('elementHandle.waitForSelector', async () => {
+      const result = await this._elementChannel.waitForSelector({ selector, ...options });
+      return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
     });
   }
 }

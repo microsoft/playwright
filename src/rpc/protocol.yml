@@ -1577,6 +1577,19 @@ ElementHandle:
         noWaitAfter: boolean?
         timeout: number?
 
+    waitForSelector:
+      parameters:
+        selector: string
+        timeout: number?
+        state:
+          type: enum?
+          literals:
+          - attached
+          - detached
+          - visible
+          - hidden
+      returns:
+        element: ElementHandle?
 
 
 Request:

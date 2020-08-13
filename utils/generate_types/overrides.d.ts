@@ -46,9 +46,12 @@ type ElementHandleForTag<K extends keyof HTMLElementTagNameMap> = ElementHandle<
 type HTMLOrSVGElement = SVGElement | HTMLElement;
 type HTMLOrSVGElementHandle = ElementHandle<HTMLOrSVGElement>;
 
-type WaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
+type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state: 'visible'|'attached';
-}
+};
+type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelectorOptions & {
+  state: 'visible'|'attached';
+};
 
 export interface Page {
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
@@ -76,8 +79,8 @@ export interface Page {
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
-  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: WaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
-  waitForSelector(selector: string, options?: WaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
+  waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
@@ -108,8 +111,8 @@ export interface Frame {
   waitForFunction<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
   waitForFunction<R>(pageFunction: PageFunction<void, R>, arg?: any, options?: PageWaitForFunctionOptions): Promise<SmartHandle<R>>;
 
-  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: WaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
-  waitForSelector(selector: string, options?: WaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
+  waitForSelector(selector: string, options?: PageWaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: PageWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
   waitForSelector(selector: string, options: PageWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
@@ -149,6 +152,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   $$eval<R, Arg, E extends HTMLOrSVGElement = HTMLOrSVGElement>(selector: string, pageFunction: PageFunctionOn<E[], Arg, R>, arg: Arg): Promise<R>;
   $$eval<K extends keyof HTMLElementTagNameMap, R>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], void, R>, arg?: any): Promise<R>;
   $$eval<R, E extends HTMLOrSVGElement = HTMLOrSVGElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any): Promise<R>;
+
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
+  waitForSelector(selector: string, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<HTMLOrSVGElementHandle>;
+  waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options: ElementHandleWaitForSelectorOptions): Promise<ElementHandleForTag<K> | null>;
+  waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions): Promise<null|HTMLOrSVGElementHandle>;
 }
 
 export interface BrowserType<Browser> {
