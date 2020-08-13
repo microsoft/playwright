@@ -18,11 +18,11 @@ import './base.fixture';
 import fs from 'fs'
 import path from 'path'
 
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 
 // Printing to pdf is currently only supported in headless chromium.
-it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page}) => {
-  const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
+it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page, outputDir}) => {
+  const outputFile = path.join(outputDir, 'output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
   fs.unlinkSync(outputFile);

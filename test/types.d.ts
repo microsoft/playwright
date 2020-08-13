@@ -55,7 +55,6 @@ declare const testOptions: {
     LINUX: boolean;
     WIN: boolean;
     HEADLESS: boolean;
-    OUTPUT_DIR: string;
     USES_HOOKS: boolean;
     CHANNEL: boolean;
     ASSETS_DIR: string;

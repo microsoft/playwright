@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
 import childProcess from 'child_process';
 import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver/';
@@ -37,6 +37,7 @@ declare global {
     playwright: typeof import('../index');
     browserType: BrowserType<Browser>;
     browser: Browser;
+    outputDir: string;
   }
   interface FixtureState {
     toImpl: (rpcObject: any) => any;
@@ -165,4 +166,13 @@ registerFixture('server', async ({http_server}, test) => {
 registerFixture('httpsServer', async ({http_server}, test) => {
   http_server.httpsServer.reset();
   await test(http_server.httpsServer);
+});
+
+registerWorkerFixture('outputDir', async ({}, test) => {
+  const outputDir = path.join(__dirname, 'output-' + browserName);
+  try {
+    await fs.promises.mkdir(outputDir, { recursive: true });
+  } catch (e) {
+  }
+  await test(outputDir);
 });

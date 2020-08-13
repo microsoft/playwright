@@ -93,12 +93,6 @@ it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, d
     expect(await page.title()).toBe('Served by the proxy');
   }
 
-  if (CHROMIUM) {
-    // Should successfully navigate to the error page.
-    await page.waitForEvent('framenavigated', frame => frame.url() === 'chrome-error://chromewebdata/');
-    expect(page.url()).toBe('chrome-error://chromewebdata/');
-  }
-
   await browser.close();
 });
 

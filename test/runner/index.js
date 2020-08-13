@@ -79,6 +79,7 @@ program
     });
     await runner.run(files);
     await runner.stop();
+    process.exit(runner.stats.failures ? 1 : 0);
   });
 
 program.parse(process.argv);
