@@ -30,11 +30,8 @@ declare global {
 }
 registerFixture('persistentDirectory', async ({}, test) => {
   const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  try {
-    await test(persistentDirectory);
-  } finally {
-    await removeFolderAsync(persistentDirectory);
-  }
+  await test(persistentDirectory);
+  await removeFolderAsync(persistentDirectory);
 });
 
 beforeEach(async ({server}) => {

@@ -20,18 +20,12 @@ registerFixture('application', async ({playwright}, test) => {
   const application = await playwright.electron.launch(electronPath, {
     args: [path.join(__dirname, 'testApp.js')],
   });
-  try {
-    await test(application);
-  } finally {
-    await application.close();
-  }
+  await test(application);
+  await application.close();
 });
 
 registerFixture('window', async ({application}, test) => {
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
-  try {
-    await test(page);
-  } finally {
-    await page.close();
-  }
+  await test(page);
+  await page.close();
 });
