@@ -33,6 +33,5 @@ testOptions.CHANNEL = process.env.PWCHANNEL !== 'none';
 testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
 testOptions.ASSETS_DIR = path.join(__dirname, '..', 'assets');
 testOptions.GOLDEN_DIR = path.join(__dirname, '..', 'golden-' + browserName);
-testOptions.OUTPUT_DIR = path.join(__dirname, '..', 'output-' + browserName);
 
 module.exports = testOptions;

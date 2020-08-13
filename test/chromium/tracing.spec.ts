@@ -18,14 +18,14 @@ import '../base.fixture';
 import fs from 'fs';
 import path from 'path';
 import { ChromiumBrowser } from '../..';
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
 declare global {
   interface FixtureState {
     outputFile: string;
   }
 }
-registerFixture('outputFile', async ({parallelIndex}, test) => {
-  const outputFile = path.join(OUTPUT_DIR, `trace-${parallelIndex}.json`);
+registerFixture('outputFile', async ({outputDir, parallelIndex}, test) => {
+  const outputFile = path.join(outputDir, `trace-${parallelIndex}.json`);
   await test(outputFile);
   if (fs.existsSync(outputFile))
     fs.unlinkSync(outputFile);
