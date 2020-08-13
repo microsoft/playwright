@@ -26,15 +26,14 @@ const constants = Mocha.Runner.constants;
 process.setMaxListeners(0);
 
 class Runner extends EventEmitter {
-  constructor(suite, jobs, options) {
+  constructor(suite, options) {
     super();
     this._suite = suite;
-    this._jobs = jobs;
     this._options = options;
     this._workers = new Set();
     this._freeWorkers = [];
     this._workerClaimers = [];
-    this._workerId = 0;
+    this._lastWorkerId = 0;
     this._pendingJobs = 0;
     this.stats = {
       duration: 0,
@@ -76,15 +75,8 @@ class Runner extends EventEmitter {
 
   _runJob(worker, file) {
     ++this._pendingJobs;
-    worker.send({ method: 'run', params: { file, options: this._options } });
-    const messageListener = (message) => {
-      const { method, params } = message;
-      if (method !== 'done') {
-        this._messageFromWorker(method, params);
-        return;
-      }
-      worker.off('message', messageListener);
-
+    worker.run(file);
+    worker.once('done', params => {
       --this._pendingJobs;
       this.stats.duration += params.stats.duration;
       this.stats.failures += params.stats.failures;
@@ -97,8 +89,7 @@ class Runner extends EventEmitter {
         this._workerAvailable(worker);
       if (this._runCompleteCallback && !this._pendingJobs)
         this._runCompleteCallback();
-    };
-    worker.on('message', messageListener)
+    });
   }
 
   async _obtainWorker() {
@@ -106,7 +97,7 @@ class Runner extends EventEmitter {
     if (this._freeWorkers.length)
       return this._freeWorkers.pop();
     // If we can create worker, create it.
-    if (this._workers.size < this._jobs)
+    if (this._workers.size < this._options.jobs)
       this._createWorker();
     // Wait for the next available worker.
     await new Promise(f => this._workerClaimers.push(f));
@@ -122,10 +113,18 @@ class Runner extends EventEmitter {
   }
 
   _createWorker() {
-    const worker = child_process.fork(path.join(__dirname, 'worker.js'), {
-      detached: false,
-      env: process.env,
-      stdio: 'ignore'
+    const worker = new Worker(this);
+    worker.on('test', params => this.emit(constants.EVENT_TEST_BEGIN, this._updateTest(params.test)));
+    worker.on('pending', params => this.emit(constants.EVENT_TEST_PENDING, this._updateTest(params.test)));
+    worker.on('pass', params => this.emit(constants.EVENT_TEST_PASS, this._updateTest(params.test)));
+    worker.on('fail', params => {
+      const out = worker.takeOut();
+      if (out.length)
+        params.error.stack += '\n\x1b[33mstdout: ' + out.join('\n') + '\x1b[0m';
+      const err = worker.takeErr();
+      if (err.length)
+        params.error.stack += '\n\x1b[33mstderr: ' + err.join('\n') + '\x1b[0m';
+      this.emit(constants.EVENT_TEST_FAIL, this._updateTest(params.test), params.error);
     });
     worker.on('exit', () => {
       this._workers.delete(worker);
@@ -133,37 +132,12 @@ class Runner extends EventEmitter {
         this._stopCallback();
     });
     this._workers.add(worker);
-    worker.send({ method: 'init', params: { workerId: ++this._workerId } });
-    worker.once('message', () => {
-      // Ready ack.
-      this._workerAvailable(worker);
-    });
-  }
-
-  _stopWorker(worker) {
-    worker.send({ method: 'stop' });
+    worker.init().then(() => this._workerAvailable(worker));
   }
 
   async _restartWorker(worker) {
-    this._stopWorker(worker);
+    worker.stop();
     this._createWorker();
-  }
-
-  _messageFromWorker(method, params) {
-    switch (method) {
-      case 'test':
-        this.emit(constants.EVENT_TEST_BEGIN, this._updateTest(params.test));
-        break;
-      case 'pending':
-        this.emit(constants.EVENT_TEST_PENDING, this._updateTest(params.test));
-        break;
-      case 'pass':
-        this.emit(constants.EVENT_TEST_PASS, this._updateTest(params.test));
-        break;
-      case 'fail':
-        this.emit(constants.EVENT_TEST_FAIL, this._updateTest(params.test), params.error);
-        break;
-    }
   }
 
   _updateTest(serialized) {
@@ -175,8 +149,68 @@ class Runner extends EventEmitter {
   async stop() {
     const result = new Promise(f => this._stopCallback = f);
     for (const worker of this._workers)
-      this._stopWorker(worker);
+      worker.stop();
     await result;
+  }
+}
+
+let lastWorkerId = 0;
+
+class Worker extends EventEmitter {
+  constructor(runner) {
+    super();
+    this.runner = runner;
+
+    this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
+      detached: false,
+      env: process.env,
+      stdio: ['ignore', 'pipe', 'pipe', 'ipc']
+    });
+    this.process.on('exit', () => this.emit('exit'));
+    this.process.on('message', message => {
+      const { method, params } = message;
+      this.emit(method, params);
+    });
+    this.stdout = [];
+    this.stderr = [];
+    this.process.stdout.on('data', data => {
+      if (runner._options.dumpio)
+        process.stdout.write(data);
+      else
+        this.stdout.push(data.toString());
+    });
+  
+    this.process.stderr.on('data', data => {
+      if (runner._options.dumpio)
+        process.stderr.write(data);
+      else
+        this.stderr.push(data.toString());
+    });
+  }
+
+  async init() {
+    this.process.send({ method: 'init', params: { workerId: lastWorkerId++ } });
+    await new Promise(f => this.process.once('message', f));  // Ready ack
+  }
+
+  run(file) {
+    this.process.send({ method: 'run', params: { file, options: this.runner._options } });
+  }
+
+  stop() {
+    this.process.send({ method: 'stop' });
+  }
+
+  takeOut() {
+    const result = this.stdout;
+    this.stdout = [];
+    return result;
+  }
+
+  takeErr() {
+    const result = this.stderr;
+    this.stderr = [];
+    return result;
   }
 }
 

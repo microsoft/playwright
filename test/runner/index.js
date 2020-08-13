@@ -32,6 +32,7 @@ program
   .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2))
   .option('--reporter <reporter>', 'Specify reporter to use', '')
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
+  .option('--dumpio', 'Dump stdout and stderr from workers', false)
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
     // Collect files
@@ -81,8 +82,10 @@ program
 
     // Trial run does not need many workers, use one.
     const jobs = command.trialRun ? 1 : command.jobs;
-    const runner = new Runner(rootSuite, jobs, {
+    const runner = new Runner(rootSuite, {
+      dumpio: command.dumpio,
       grep: command.grep,
+      jobs,
       reporter: command.reporter,
       retries: command.retries,
       timeout: command.timeout,
