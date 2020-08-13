@@ -31,7 +31,10 @@ export async function validateHostRequirements(browserPath: string, browser: Bro
   const ubuntuVersion = await getUbuntuVersion();
   if (browser.name === 'firefox' && ubuntuVersion === '16.04')
     throw new Error(`Cannot launch firefox on Ubuntu 16.04! Minimum required Ubuntu version for Firefox browser is 18.04`);
-  await validateDependencies(browserPath, browser);
+  if (os.platform() === 'linux')
+    return await validateDependenciesLinux(browserPath, browser);
+  if (os.platform() === 'win32' && os.arch() === 'x64')
+    return await validateDependenciesWindows(browserPath, browser);
 }
 
 const DL_OPEN_LIBRARIES = {
@@ -41,12 +44,14 @@ const DL_OPEN_LIBRARIES = {
   clank: [],
 };
 
-async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {
-  // We currently only support Linux.
-  if (os.platform() === 'linux')
-    return await validateDependenciesLinux(browserPath, browser);
-  if (os.platform() === 'win32' && os.arch() === 'x64')
-    return await validateDependenciesWindows(browserPath, browser);
+function isSupportedWindowsVersion(): boolean {
+  if (os.platform() !== 'win32' || os.arch() !== 'x64')
+    return false;
+  const [major, minor] = os.release().split('.').map(token => parseInt(token, 10));
+  // This is based on: https://stackoverflow.com/questions/42524606/how-to-get-windows-version-using-node-js/44916050#44916050
+  // The table with versions is taken from: https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw#remarks
+  // We support launch doctor on windows 7 and above, which is encoded as `6.1`.
+  return major > 6 || (major === 6 && minor > 1);
 }
 
 async function validateDependenciesWindows(browserPath: string, browser: BrowserDescriptor) {
@@ -101,7 +106,13 @@ async function validateDependenciesWindows(browserPath: string, browser: Browser
       `    ${[...missingDeps].join('\n    ')}`,
       ``);
 
-  throw new Error(`Host system is missing dependencies!\n\n${details.join('\n')}`);
+  const message = `Host system is missing dependencies!\n\n${details.join('\n')}`;
+  if (isSupportedWindowsVersion()) {
+    throw new Error(message);
+  } else {
+    console.warn(`WARNING: running on unsupported windows version!`);
+    console.warn(message);
+  }
 }
 
 async function validateDependenciesLinux(browserPath: string, browser: BrowserDescriptor) {
