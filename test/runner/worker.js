@@ -19,7 +19,7 @@ const Mocha = require('mocha');
 const { registerWorkerFixture } = require('./fixturePool');
 const { fixturesUI, fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
-const GoldenUtils = require('../../utils/testrunner/GoldenUtils');
+const GoldenUtils = require('./GoldenUtils');
 
 const browserName = process.env.BROWSER || 'chromium';
 const goldenPath = path.join(__dirname, '..', 'golden-' + browserName);

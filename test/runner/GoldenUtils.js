@@ -92,8 +92,8 @@ function compare(actual, golden) {
   const goldenPath = path.normalize(golden.goldenPath);
   const outputPath = path.normalize(golden.outputPath);
   const goldenName = golden.goldenName;
-  const expectedPath = path.join(goldenPath, goldenName);
-  const actualPath = path.join(outputPath, goldenName);
+  const expectedPath = path.resolve(goldenPath, goldenName);
+  const actualPath = path.resolve(outputPath, goldenName);
 
   const messageSuffix = 'Output is saved in "' + path.basename(outputPath + '" directory');
 
