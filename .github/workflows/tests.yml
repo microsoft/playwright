@@ -177,13 +177,12 @@ jobs:
         name: headful-${{ matrix.browser }}-linux-testrun.log
         path: testrun.log
 
-  rpc_linux:
-    name: "RPC Linux"
+  wire_linux:
+    name: "Wire Linux"
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        transport: [wire, none]
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
@@ -204,14 +203,14 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
-        PWCHANNEL: ${{ matrix.transport }}
+        PWWIRE: true
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-output
+        name: wire-${{ matrix.browser }}-linux-output
         path: test/output-${{ matrix.browser }}
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: rpc-${{ matrix.transport }}-${{ matrix.browser }}-linux-testrun.log
+        name: wire-${{ matrix.browser }}-linux-testrun.log
         path: testrun.log

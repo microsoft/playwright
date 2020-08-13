@@ -19,9 +19,9 @@ import './base.fixture';
 import path from 'path';
 import util from 'util';
 import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
-const CRASH_FAIL = (FFOX && WIN) || USES_HOOKS;
+const CRASH_FAIL = (FFOX && WIN) || WIRE;
 // Firefox Win: it just doesn't crash sometimes.
 function crash(pageImpl) {
   if (CHROMIUM)

@@ -16,7 +16,7 @@
 import '../base.fixture';
 import { ChromiumBrowserContext } from '../..';
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 it.skip(!CHROMIUM)('should create a worker from a service worker', async({page, server, context}) => {
   const [worker] = await Promise.all([

@@ -18,7 +18,7 @@ import './base.fixture';
 
 import path from 'path';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
 
 it('query', async ({page}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);

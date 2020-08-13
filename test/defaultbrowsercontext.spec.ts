@@ -22,7 +22,7 @@ import utils from './utils';
 import os from 'os';
 import { BrowserType, Browser, BrowserContext, Page } from '..';
 const {removeFolderAsync, mkdtempAsync, removeUserDataDir, makeUserDataDir} = utils;
-const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
+const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
 declare global {
   interface FixtureState {
@@ -352,7 +352,7 @@ it.skip(FFOX)('should throw if page argument is passed', async ({browserType, de
   expect(error.message).toContain('can not specify page');
 });
 
-it.skip(USES_HOOKS)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, userDataDir, toImpl}) => {
+it.skip(WIRE)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, userDataDir, toImpl}) => {
   const args = toImpl(browserType)._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
   const options = {
     ...defaultBrowserOptions,
@@ -368,13 +368,13 @@ it.skip(USES_HOOKS)('should have passed URL when launching with ignoreDefaultArg
   await browserContext.close();
 });
 
-it.skip(USES_HOOKS)('should handle timeout', async({browserType, defaultBrowserOptions, userDataDir}) => {
+it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions, userDataDir}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
   expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
 });
 
-it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions, userDataDir}) => {
+it.skip(WIRE)('should handle exception', async({browserType, defaultBrowserOptions, userDataDir}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
   const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);

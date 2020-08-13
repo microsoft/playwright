@@ -17,7 +17,7 @@ import './base.fixture';
 
 import fs from 'fs';
 import path from 'path';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 it('should log', async({browserType, defaultBrowserOptions}) => {
   const log = [];

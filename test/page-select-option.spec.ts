@@ -19,7 +19,7 @@ import './base.fixture';
 import path from 'path';
 import util from 'util';
 import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
 it('should select single option', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/select.html');

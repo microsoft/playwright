@@ -16,7 +16,7 @@
 import '../base.fixture';
 import { Page, Browser, BrowserContext } from '../..';
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 declare global {
   interface FixtureState {

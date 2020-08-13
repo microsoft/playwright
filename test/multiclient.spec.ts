@@ -16,9 +16,9 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
 
-it.skip(USES_HOOKS)('should work across sessions', async ({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE)('should work across sessions', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   expect(browser1.contexts().length).toBe(0);
@@ -38,7 +38,7 @@ it.skip(USES_HOOKS)('should work across sessions', async ({browserType, defaultB
   await browserServer.close();
 });
 
-it.skip(USES_HOOKS).slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async ({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE).slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const originalBrowser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const wsEndpoint = browserServer.wsEndpoint();
@@ -72,7 +72,7 @@ it.skip(USES_HOOKS).slow()('should be emitted when: browser gets closed, disconn
   expect(disconnectedRemote2).toBe(1);
 });
 
-it.skip(USES_HOOKS)('should be able to connect multiple times to the same browser', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE)('should be able to connect multiple times to the same browser', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const browser2 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -86,7 +86,7 @@ it.skip(USES_HOOKS)('should be able to connect multiple times to the same browse
   await browserServer.close();
 });
 
-it.skip(USES_HOOKS)('should not be able to close remote browser', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE)('should not be able to close remote browser', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   {
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });

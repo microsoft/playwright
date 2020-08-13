@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, HEADLESS, WIRE} = testOptions;
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)

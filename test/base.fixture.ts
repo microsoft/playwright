@@ -46,7 +46,7 @@ declare global {
     page: Page;
     httpsServer: TestServer;
     browserServer: BrowserServer;
-  }  
+  }
 }
 
 registerWorkerFixture('parallelIndex', async ({}, test) => {
@@ -93,7 +93,7 @@ registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
 
 registerWorkerFixture('playwright', async({parallelIndex}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
-  if (process.env.PWCHANNEL === 'wire') {
+  if (process.env.PWWIRE) {
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
       stdio: 'pipe',

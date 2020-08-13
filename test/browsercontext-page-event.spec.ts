@@ -16,7 +16,7 @@
  */
 import './base.fixture';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
 const {devices} = require('..');
 
 it('should have url', async({browser, server}) => {

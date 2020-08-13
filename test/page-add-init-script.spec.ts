@@ -18,7 +18,7 @@ import './base.fixture';
 
 import utils from './utils';
 import path from 'path';
-const { FFOX, CHROMIUM, WEBKIT, USES_HOOKS } = testOptions;
+const { FFOX, CHROMIUM, WEBKIT, WIRE } = testOptions;
 
 it('should evaluate before anything else on the page', async ({ page, server }) => {
   await page.addInitScript(function () {

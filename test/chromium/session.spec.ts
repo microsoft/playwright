@@ -16,7 +16,7 @@
 import '../base.fixture';
 import { ChromiumBrowserContext, ChromiumBrowser } from "../../types/types";
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
 
 it.skip(!CHROMIUM)('should work', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
@@ -73,7 +73,7 @@ it.skip(!CHROMIUM)('should be able to detach session', async function({page}) {
   } catch (e) {
     error = e;
   }
-  expect(error.message).toContain(CHANNEL ? 'Target browser or context has been closed' : 'Session closed.');
+  expect(error.message).toContain('Target browser or context has been closed');
 });
 
 it.skip(!CHROMIUM)('should throw nice errors', async function({page}) {

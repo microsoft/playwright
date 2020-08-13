@@ -16,7 +16,7 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
 it('should dispatch click event', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
