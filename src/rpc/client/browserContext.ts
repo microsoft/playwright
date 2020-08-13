@@ -214,7 +214,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
     return result;
   }
 
-  private async _onClose() {
+  async _onClose() {
     this._isClosedOrClosing = true;
     if (this._browser)
       this._browser._contexts.delete(this);

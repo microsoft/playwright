@@ -17,7 +17,7 @@
 export { Accessibility } from './accessibility';
 export { Browser } from './browser';
 export { BrowserContext } from './browserContext';
-export { BrowserServer } from './browserServer';
+export { BrowserServer } from './browserType';
 export { BrowserType } from './browserType';
 export { ConsoleMessage } from './consoleMessage';
 export { Dialog } from './dialog';

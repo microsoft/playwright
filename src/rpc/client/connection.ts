@@ -29,7 +29,6 @@ import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
 import { parseError } from '../serializers';
-import { BrowserServer } from './browserServer';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
@@ -159,9 +158,6 @@ export class Connection {
           result = new ChromiumBrowserContext(parent, type, guid, initializer);
         else
           result = new BrowserContext(parent, type, guid, initializer, browserName);
-        break;
-      case 'BrowserServer':
-        result = new BrowserServer(parent, type, guid, initializer);
         break;
       case 'BrowserType':
         result = new BrowserType(parent, type, guid, initializer);

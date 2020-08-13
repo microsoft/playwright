@@ -21,14 +21,14 @@ import { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 const {makeUserDataDir, removeUserDataDir} = utils;
 const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
 
-it.skip(!CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(USES_HOOKS || !CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
   const error = await browserType.launchServer(options).catch(e => e);
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it.skip(!CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(USES_HOOKS || !CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
   const browser = await browserType.launchServer(options);

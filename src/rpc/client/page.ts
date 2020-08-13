@@ -173,7 +173,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     this.emit(Events.Page.Worker, worker);
   }
 
-  private _onClose() {
+  _onClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
     this.emit(Events.Page.Close);
