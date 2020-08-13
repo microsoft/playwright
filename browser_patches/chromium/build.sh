@@ -41,4 +41,4 @@ for file in ${FILES_TO_REMOVE[@]}; do
   rm -f "${file}"
 done
 
-zip -r build.zip ${ZIP_NAME%.zip}
+zip --symlinks -r build.zip ${ZIP_NAME%.zip}
