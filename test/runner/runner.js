@@ -26,11 +26,11 @@ const constants = Mocha.Runner.constants;
 process.setMaxListeners(0);
 
 class Runner extends EventEmitter {
-  constructor(suite, options) {
+  constructor(suite, jobs, options) {
     super();
     this._suite = suite;
+    this._jobs = jobs;
     this._options = options;
-    this._jobs = options.jobs;
     this._workers = new Set();
     this._freeWorkers = [];
     this._workerClaimers = [];
