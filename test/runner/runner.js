@@ -210,10 +210,7 @@ class Worker extends EventEmitter {
         this.stderr.push(data);
     });
     this.on('debug', data => {
-      if (runner._options.dumpio)
-        process.stderr.write(data + '\n');
-      else
-        this.stderr.push(data + '\n');
+      process.stderr.write(data + '\n');
     });
   }
 
