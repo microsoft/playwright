@@ -35,7 +35,8 @@ program
   .action(async (command) => {
     // Collect files
     const files = [];
-    collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1), files);
+    const root = path.join(process.cwd(), command.args[0]);
+    collectFiles(root, command.args.slice(1), files);
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
     let total = 0;
@@ -73,6 +74,8 @@ program
     // Trial run does not need many workers, use one.
     const jobs = command.trialRun ? 1 : command.jobs;
     const runner = new Runner(rootSuite, {
+      root,
+      omitFileName: files.length === 1,
       dumpio: command.dumpio,
       grep: command.grep,
       jobs,

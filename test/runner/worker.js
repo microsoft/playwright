@@ -14,6 +14,20 @@
  * limitations under the License.
  */
 
+let closed = false;
+let lastFile = '';
+
+const { Writable } = require('stream');
+const consoleStream = new Writable({
+  write(chunk, encoding, callback) {
+    sendMessageToParent('console', { file: lastFile, data: Buffer.from(chunk, encoding).toString() });
+    callback();
+  }
+});
+
+const { Console } = require('console');
+global.console = new Console({ stdout: consoleStream, colorMode: true });
+
 const debug = require('debug');
 const Mocha = require('mocha');
 const { fixturesUI, fixturePool } = require('./fixturesUI');
@@ -27,18 +41,16 @@ const constants = Mocha.Runner.constants;
 
 extendExpects();
 
-let closed = false;
-
 process.stdout.write = chunk => {
-  sendMessageToParent('stdout', chunk);
+  sendMessageToParent('stdout', { file: lastFile, data: Buffer.from(chunk).toString() });
 };
 
 process.stderr.write = chunk => {
-  sendMessageToParent('stderr', chunk);
+  sendMessageToParent('stderr', { file: lastFile, data: Buffer.from(chunk).toString() });
 };
 
 debug.log = data => {
-  sendMessageToParent('debug', data);
+  sendMessageToParent('debug', { file: lastFile, data });
 };
 
 process.on('message', async message => {
@@ -70,6 +82,7 @@ class NullReporter {}
 let failedWithError = false;
 
 async function runSingleTest(file, options) {
+  lastFile = file;
   let lastOrdinal = -1;
   const mocha = new Mocha({
     ui: fixturesUI.bind(null, options.trialRun),

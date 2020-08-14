@@ -197,21 +197,30 @@ class Worker extends EventEmitter {
     });
     this.stdout = [];
     this.stderr = [];
-    this.on('stdout', data => {
+    this.on('stdout', ({ data, file }) => {
       if (runner._options.dumpio)
-        process.stdout.write(data);
+        process.stdout.write(this._formatOutput(file, data));
       else
         this.stdout.push(data);
     });
-    this.on('stderr', data => {
+    this.on('stderr', ({ data, file }) => {
       if (runner._options.dumpio)
-        process.stderr.write(data);
+        process.stderr.write(this._formatOutput(file, data));
       else
         this.stderr.push(data);
     });
-    this.on('debug', data => {
-      process.stderr.write(data + '\n');
+    this.on('debug', ({ data, file }) => {
+      process.stderr.write(this._formatOutput(file, data) + '\n');
     });
+    this.on('console', ({ data, file }) => {
+      process.stdout.write(this._formatOutput(file, data));
+    });
+  }
+
+  _formatOutput(file, data) {
+    if (this.runner._options.omitFileName)
+      return data;
+    return `[${path.relative(this.runner._options.root, file)}] ${data}`;
   }
 
   async init() {
