@@ -20,7 +20,6 @@ import * as ws from 'ws';
 import { helper } from '../helper';
 import { BrowserBase } from '../browser';
 import { ChildProcess } from 'child_process';
-import { Events } from '../events';
 import { EventEmitter } from 'ws';
 import { DispatcherScope, DispatcherConnection } from './server/dispatcher';
 import { BrowserTypeDispatcher } from './server/browserTypeDispatcher';
@@ -59,8 +58,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._server = new ws.Server({ port });
     const address = this._server.address();
     this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
-    const browserServer = browser._options.ownedServer!;
-    this._process = browserServer.process();
+    this._process = browser._options.browserProcess.process;
 
     this._server.on('connection', (socket: ws, req) => {
       if (req.url !== '/' + token) {
@@ -70,10 +68,10 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       this._clientAttached(socket);
     });
 
-    browserServer.on(Events.BrowserServer.Close, (exitCode, signal) => {
+    browser._options.browserProcess.onclose = (exitCode, signal) => {
       this._server.close();
       this.emit('close', exitCode, signal);
-    });
+    };
   }
 
   process(): ChildProcess {
@@ -85,13 +83,11 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 
   async close(): Promise<void> {
-    const browserServer = this._browser._options.ownedServer!;
-    await browserServer.close();
+    await this._browser._options.browserProcess.close();
   }
 
   async kill(): Promise<void> {
-    const browserServer = this._browser._options.ownedServer!;
-    await browserServer.kill();
+    await this._browser._options.browserProcess.kill();
   }
 
   private _clientAttached(socket: ws) {

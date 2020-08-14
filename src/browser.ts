@@ -19,11 +19,18 @@ import { BrowserContext, BrowserContextBase } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
-import type { BrowserServer } from './server/browserServer';
 import { Events } from './events';
 import { Loggers } from './logger';
 import { ProxySettings } from './types';
 import { LoggerSink } from './loggerSink';
+import { ChildProcess } from 'child_process';
+
+export interface BrowserProcess {
+  onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
+  process: ChildProcess;
+  kill(): Promise<void>;
+  close(): Promise<void>;
+}
 
 export type BrowserOptions = {
   name: string,
@@ -32,7 +39,7 @@ export type BrowserOptions = {
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   slowMo?: number,
-  ownedServer?: BrowserServer,
+  browserProcess: BrowserProcess,
   proxy?: ProxySettings,
 };
 
@@ -102,12 +109,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   async close() {
     if (!this._startedClosing) {
       this._startedClosing = true;
-      if (this._options.ownedServer) {
-        await this._options.ownedServer.close();
-      } else {
-        await Promise.all(this.contexts().map(context => context.close()));
-        this._disconnect();
-      }
+      await this._options.browserProcess.close();
     }
     if (this.isConnected())
       await new Promise(x => this.once(Events.Browser.Disconnected, x));
