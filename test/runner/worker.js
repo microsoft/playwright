@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const path = require('path');
+const debug = require('debug');
 const Mocha = require('mocha');
 const { fixturesUI, fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
@@ -28,6 +28,18 @@ const constants = Mocha.Runner.constants;
 extendExpects();
 
 let closed = false;
+
+process.stdout.write = chunk => {
+  sendMessageToParent('stdout', chunk);
+};
+
+process.stderr.write = chunk => {
+  sendMessageToParent('stderr', chunk);
+};
+
+debug.log = data => {
+  sendMessageToParent('debug', data);
+};
 
 process.on('message', async message => {
   if (message.method === 'init')
