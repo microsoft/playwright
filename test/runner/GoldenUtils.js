@@ -85,76 +85,53 @@ function compareText(actual, expectedBuffer) {
 
 /**
  * @param {?Object} actual
- * @param {!{goldenPath: string, outputPath: string, goldenName: string}} golden
+ * @param {string} path
  * @return {!{pass: boolean, message: (undefined|string)}}
  */
-function compare(actual, golden) {
-  const goldenPath = path.normalize(golden.goldenPath);
-  const outputPath = path.normalize(golden.outputPath);
-  const goldenName = golden.goldenName;
-  const expectedPath = path.resolve(goldenPath, goldenName);
-  const actualPath = path.resolve(outputPath, goldenName);
-
-  const messageSuffix = 'Output is saved in "' + path.basename(outputPath + '" directory');
-
+function compare(actual, expectedPath) {
   if (!fs.existsSync(expectedPath)) {
-    ensureOutputDir();
-    fs.writeFileSync(actualPath, actual);
+    fs.writeFileSync(expectedPath, actual);
     return {
       pass: false,
-      message: goldenName + ' is missing in golden results. ' + messageSuffix
+      message: expectedPath + ' is missing in golden results, writing actual.'
     };
   }
   const expected = fs.readFileSync(expectedPath);
-  const extension = goldenName.substring(goldenName.lastIndexOf('.') + 1);
+  const extension = path.extname(expectedPath).substring(1);
   const mimeType = extensionToMimeType[extension];
   const comparator = GoldenComparators[mimeType];
   if (!comparator) {
     return {
       pass: false,
-      message: 'Failed to find comparator with type ' + mimeType + ': '  + goldenName,
+      message: 'Failed to find comparator with type ' + mimeType + ': '  + expectedPath,
     };
   }
+
   const result = comparator(actual, expected, mimeType);
   if (!result)
     return { pass: true };
-  ensureOutputDir();
+
+  const actualPath = addSuffix(expectedPath, '-actual');
+  const diffPath = addSuffix(expectedPath, '-diff', result.diffExtension);
+  fs.writeFileSync(actualPath, actual);
+  if (result.diff)
+    fs.writeFileSync(diffPath, result.diff);
+  
   const output = [
-    c.red(`GOLDEN FAILED: `) + c.yellow('"' + goldenName + '"'),
+    c.red(`Image comparison failed:`),
   ];
   if (result.errorMessage)
     output.push('    ' + result.errorMessage);
   output.push('');
   output.push(`Expected: ${c.yellow(expectedPath)}`);
-  if (goldenPath === outputPath) {
-    const filepath = addSuffix(actualPath, '-actual');
-    fs.writeFileSync(filepath, actual);
-    output.push(`Received: ${c.yellow(filepath)}`);
-  } else {
-    fs.writeFileSync(actualPath, actual);
-    // Copy expected to the output/ folder for convenience.
-    fs.writeFileSync(addSuffix(actualPath, '-expected'), expected);
-    output.push(`Received: ${c.yellow(actualPath)}`);
-  }
-  if (result.diff) {
-    const diffPath = addSuffix(actualPath, '-diff', result.diffExtension);
-    fs.writeFileSync(diffPath, result.diff);
+  output.push(`Received: ${c.yellow(actualPath)}`);
+  if (result.diff)
     output.push(`    Diff: ${c.yellow(diffPath)}`);
-  }
 
-  let message = goldenName + ' mismatch!';
-  if (result.errorMessage)
-    message += ' ' + result.errorMessage;
   return {
     pass: false,
-    message: message + ' ' + messageSuffix,
-    formatter: () => output.join('\n'),
+    message: output.join('n'),
   };
-
-  function ensureOutputDir() {
-    if (!fs.existsSync(outputPath))
-      fs.mkdirSync(outputPath);
-  }
 }
 
 /**

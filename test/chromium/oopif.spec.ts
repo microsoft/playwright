@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import '../base.fixture';
+import { registerFixture } from '../runner/fixtures';
 import { Page, Browser, BrowserContext } from '../..';
 
 const {FFOX, CHROMIUM, WEBKIT} = testOptions;
@@ -188,14 +189,14 @@ it.skip(!CHROMIUM)('should respect route', async({sppBrowser, sppPage, server}) 
   expect(intercepted).toBe(true);
 });
 
-it.skip(!CHROMIUM)('should take screenshot', async({sppBrowser, sppPage, server}) => {
+it.skip(!CHROMIUM)('should take screenshot', async({sppBrowser, sppPage, server, golden}) => {
   const browser = sppBrowser;
   const page = sppPage;
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
-  expect(await page.screenshot()).toBeGolden('screenshot-oopif.png');
+  expect(await page.screenshot()).toMatchImage(golden('screenshot-oopif.png'));
 });
 
 it.skip(!CHROMIUM)('should load oopif iframes with subresources and request interception', async function({sppBrowser, sppPage, server, context}) {

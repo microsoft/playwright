@@ -18,7 +18,7 @@ import './base.fixture';
 
 import path from 'path';
 import url from 'url';
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('page.goBack should work', async({page, server}) => {
   expect(await page.goBack()).toBe(null);
@@ -54,9 +54,9 @@ it('page.goBack should work with HistoryAPI', async({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it.fail(WEBKIT && MAC)('page.goBack should work for file urls', async ({page, server}) => {
+it.fail(WEBKIT && MAC)('page.goBack should work for file urls', async ({page, server, asset}) => {
   // WebKit embedder fails to go back/forward to the file url.
-  const url1 = url.pathToFileURL(path.join(ASSETS_DIR, 'empty.html')).href;
+  const url1 = url.pathToFileURL(asset('empty.html')).href;
   const url2 = server.EMPTY_PAGE;
   await page.goto(url1);
   await page.setContent(`<a href='${url2}'>url2</a>`);

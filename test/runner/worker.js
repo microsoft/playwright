@@ -16,14 +16,10 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { registerWorkerFixture } = require('./fixturePool');
 const { fixturesUI, fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const GoldenUtils = require('./GoldenUtils');
 
-const browserName = process.env.BROWSER || 'chromium';
-const goldenPath = path.join(__dirname, '..', 'golden-' + browserName);
-const outputPath = path.join(__dirname, '..', 'output-' + browserName);
 global.expect = require('expect');
 global.testOptions = require('./testOptions');
 
@@ -155,13 +151,9 @@ function serializeError(error) {
 }
 
 function extendExpects() {
-  function toBeGolden(received, goldenName) {
-    const {pass, message} =  GoldenUtils.compare(received, {
-      goldenPath,
-      outputPath,
-      goldenName
-    });
+  function toMatchImage(received, path) {
+    const {pass, message} =  GoldenUtils.compare(received, path);
     return {pass, message: () => message};
   };
-  global.expect.extend({ toBeGolden });
+  global.expect.extend({ toMatchImage });
 }

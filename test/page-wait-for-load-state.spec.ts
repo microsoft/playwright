@@ -20,7 +20,7 @@ import utils from './utils';
 import path from 'path';
 import url from 'url';
 import { Route } from '..';
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should pick up ongoing navigation', async({page, server}) => {
   let response = null;

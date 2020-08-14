@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import childProcess from 'child_process';
 import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver/';
@@ -24,6 +25,9 @@ import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
+import { registerFixture, registerWorkerFixture} from './runner/fixtures';
+
+import {mkdtempAsync, removeFolderAsync} from './utils';
 
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 
@@ -31,13 +35,14 @@ const browserName = process.env.BROWSER || 'chromium';
 
 declare global {
   interface WorkerState {
+    asset: (path: string) => string;
     parallelIndex: number;
-    http_server: {server: TestServer, httpsServer: TestServer};
     defaultBrowserOptions: LaunchOptions;
+    golden: (path: string) => string;
     playwright: typeof import('../index');
     browserType: BrowserType<Browser>;
     browser: Browser;
-    outputDir: string;
+    tmpDir: string;
   }
   interface FixtureState {
     toImpl: (rpcObject: any) => any;
@@ -53,7 +58,7 @@ registerWorkerFixture('parallelIndex', async ({}, test) => {
   await test(parseInt(process.env.JEST_WORKER_ID, 10) - 1);
 });
 
-registerWorkerFixture('http_server', async ({parallelIndex}, test) => {
+registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
@@ -158,21 +163,30 @@ registerFixture('page', async ({context}, test) => {
   await test(page);
 });
 
-registerFixture('server', async ({http_server}, test) => {
-  http_server.server.reset();
-  await test(http_server.server);
+registerFixture('server', async ({httpService}, test) => {
+  httpService.server.reset();
+  await test(httpService.server);
 });
 
-registerFixture('httpsServer', async ({http_server}, test) => {
-  http_server.httpsServer.reset();
-  await test(http_server.httpsServer);
+registerFixture('browserName', async ({}, test) => {
+  await test(browserName);
 });
 
-registerWorkerFixture('outputDir', async ({}, test) => {
-  const outputDir = path.join(__dirname, 'output-' + browserName);
-  try {
-    await fs.promises.mkdir(outputDir, { recursive: true });
-  } catch (e) {
-  }
-  await test(outputDir);
+registerFixture('httpsServer', async ({httpService}, test) => {
+  httpService.httpsServer.reset();
+  await test(httpService.httpsServer);
+});
+
+registerFixture('tmpDir', async ({}, test) => {
+  const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+  await test(tmpDir);
+  await removeFolderAsync(tmpDir);
+});
+
+registerWorkerFixture('asset', async ({}, test) => {
+  await test(p => path.join(__dirname, `assets`, p));
+});
+
+registerWorkerFixture('golden', async ({browserName}, test) => {
+  await test(p => path.join(__dirname, `golden-${browserName}`, p));
 });

@@ -19,7 +19,7 @@ import './base.fixture';
 import utils from './utils';
 import path from 'path';
 import url from 'url';
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should navigate subframes', async({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
