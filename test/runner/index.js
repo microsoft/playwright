@@ -19,9 +19,7 @@ const path = require('path');
 const program = require('commander');
 const { Runner } = require('./runner');
 const Mocha = require('mocha');
-const constants = require('mocha/lib/runner').constants;
 const { fixturesUI } = require('./fixturesUI');
-const colors = require('colors/safe');
 
 class NullReporter {}
 
@@ -36,7 +34,8 @@ program
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
     // Collect files
-    const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
+    const files = [];
+    collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1), files);
     const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
 
     let total = 0;
@@ -62,7 +61,7 @@ program
       mocha.suite.title = path.basename(file);
     }
 
-    // Now run the tests.
+    // Filter tests.
     if (rootSuite.hasOnly())
       rootSuite.filterOnly();
     if (!command.reporter) {
@@ -89,13 +88,12 @@ program
 
 program.parse(process.argv);
 
-function collectFiles(dir, filters) {
+function collectFiles(dir, filters, files) {
   if (fs.statSync(dir).isFile())
     return [dir];
-  const files = [];
   for (const name of fs.readdirSync(dir)) {
     if (fs.lstatSync(path.join(dir, name)).isDirectory()) {
-      files.push(...collectFiles(path.join(dir, name), filters));
+      collectFiles(path.join(dir, name), filters, files);
       continue;
     }
     if (!name.includes('spec'))
@@ -111,5 +109,4 @@ function collectFiles(dir, filters) {
       }
     }
   }
-  return files;
 }
