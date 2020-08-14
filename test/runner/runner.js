@@ -15,13 +15,12 @@
  */
 
 const child_process = require('child_process');
-const crypto = require('crypto');
 const path = require('path');
 const { EventEmitter } = require('events');
 const Mocha = require('mocha');
 const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
-const { filesWithRegistrations } = require('./fixtures');
+const { computeWorkerHash } = require('./fixtures');
 
 const constants = Mocha.Runner.constants;
 // Mocha runner does not remove uncaughtException listeners.
@@ -230,32 +229,6 @@ class Worker extends EventEmitter {
     this.stderr = [];
     return result;
   }
-}
-
-function collectRequires(file, allDeps) {
-  if (allDeps.has(file))
-    return;
-  allDeps.add(file);
-  const cache = require.cache[file];
-  const deps = cache.children.map(m => m.id);
-  for (const dep of deps)
-    collectRequires(dep, allDeps);
-}
-
-function computeWorkerHash(file) {
-  // At this point, filesWithRegistrations contains all the files with worker fixture registrations.
-  // For every test, build the require closure and map each file to fixtures declared in it.
-  // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
-  // Tests with the matching "worker hash" will reuse the same worker.
-  const deps = new Set();
-  const hash = crypto.createHash('sha1');
-  collectRequires(file, deps);
-  for (const dep of deps) {
-    if (!filesWithRegistrations.has(dep))
-      continue;
-    hash.update(dep);
-  }
-  return hash.digest('hex');
 }
 
 module.exports = { Runner };

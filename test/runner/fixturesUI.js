@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { FixturePool, registerFixture, registerWorkerFixture } = require('./fixtures');
+const { FixturePool, registerFixture, registerWorkerFixture, rerunRegistrations } = require('./fixtures');
 const { Test, Suite } = require('mocha');
 const { installTransform } = require('./transform');
 const commonSuite = require('mocha/lib/interfaces/common');
@@ -139,6 +139,7 @@ function fixturesUI(trialRun, suite) {
 
   suite.on(Suite.constants.EVENT_FILE_POST_REQUIRE, function(context, file, mocha) {
     revertBabelRequire();
+    rerunRegistrations(file, 'test');
   });
 };
 

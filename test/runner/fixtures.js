@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+const crypto = require('crypto');
 const debug = require('debug');
 
 const registrations = new Map();
-const filesWithRegistrations = new Set();
+const registrationsByFile = new Map();
 
 class Fixture {
   constructor(pool, name, scope, fn) {
@@ -143,10 +144,11 @@ function innerRegisterFixture(name, scope, fn) {
   const stackFrame = new Error().stack.split('\n').slice(1).filter(line => !line.includes(__filename))[0];
   const location = stackFrame.replace(/.*at Object.<anonymous> \((.*)\)/, '$1');
   const file = location.replace(/^(.+):\d+:\d+$/, '$1');
-  const registration = { scope, fn, file, location };
+  const registration = { name, scope, fn, file, location };
   registrations.set(name, registration);
-  if (scope === 'worker')
-    filesWithRegistrations.add(file);
+  if (!registrationsByFile.has(file))
+    registrationsByFile.set(file, []);
+  registrationsByFile.get(file).push(registration);
 };
 
 function registerFixture(name, fn) {
@@ -157,4 +159,46 @@ function registerWorkerFixture (name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, filesWithRegistrations };
+function collectRequires(file, result) {
+  if (result.has(file))
+    return;
+  result.add(file);
+  const cache = require.cache[file];
+  const deps = cache.children.map(m => m.id).slice().reverse();
+  for (const dep of deps)
+    collectRequires(dep, result);
+}
+
+function lookupRegistrations(file, scope) {
+  const deps = new Set();
+  collectRequires(file, deps);
+  const allDeps = [...deps].reverse();
+  let result = [];
+  for (const dep of allDeps) {
+    const registrationList = registrationsByFile.get(dep);
+    if (!registrationList)
+      continue;
+    result = result.concat(registrationList.filter(r => r.scope === scope));
+  }
+  return result;
+}
+
+function rerunRegistrations(file, scope) {
+  // When we are running several tests in the same worker, we should re-run registrations before
+  // each file. That way we erase potential fixture overrides from the previous test runs.
+  for (const registration of lookupRegistrations(file, scope))
+    registrations.set(registration.name, registration);
+}
+
+function computeWorkerHash(file) {
+  // At this point, registrationsByFile contains all the files with worker fixture registrations.
+  // For every test, build the require closure and map each file to fixtures declared in it.
+  // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
+  // Tests with the matching "worker hash" will reuse the same worker.
+  const hash = crypto.createHash('sha1');
+  for (const registration of lookupRegistrations(file, 'worker'))
+    hash.update(registration.location);
+  return hash.digest('hex');
+}
+
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations };
