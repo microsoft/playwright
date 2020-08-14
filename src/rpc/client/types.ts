@@ -52,6 +52,7 @@ type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[],
   env?: Env,
   logger?: LoggerSink,
+  slowMo?: number,
 };
 type FirefoxUserPrefs = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

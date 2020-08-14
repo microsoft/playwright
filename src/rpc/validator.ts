@@ -124,7 +124,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     downloadsPath: tOptional(tString),
     firefoxUserPrefs: tOptional(tAny),
     chromiumSandbox: tOptional(tBoolean),
-    slowMo: tOptional(tNumber),
   });
   scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     userDataDir: tString,
@@ -150,7 +149,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     downloadsPath: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
-    slowMo: tOptional(tNumber),
     noDefaultViewport: tOptional(tBoolean),
     viewport: tOptional(tObject({
       width: tNumber,

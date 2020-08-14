@@ -168,7 +168,6 @@ export type BrowserTypeLaunchParams = {
   downloadsPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
-  slowMo?: number,
 };
 export type BrowserTypeLaunchOptions = {
   executablePath?: string,
@@ -194,7 +193,6 @@ export type BrowserTypeLaunchOptions = {
   downloadsPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
-  slowMo?: number,
 };
 export type BrowserTypeLaunchResult = {
   browser: BrowserChannel,
@@ -223,7 +221,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   downloadsPath?: string,
   chromiumSandbox?: boolean,
-  slowMo?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,
@@ -279,7 +276,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   downloadsPath?: string,
   chromiumSandbox?: boolean,
-  slowMo?: number,
   noDefaultViewport?: boolean,
   viewport?: {
     width: number,

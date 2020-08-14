@@ -21,7 +21,7 @@ import { Events } from '../events';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
@@ -38,7 +38,7 @@ export class WKBrowser extends BrowserBase {
   private readonly _eventListeners: RegisteredListener[];
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
-    const browser = new WKBrowser(SlowMoTransport.wrap(transport, options.slowMo), options);
+    const browser = new WKBrowser(transport, options);
     const promises: Promise<any>[] = [
       browser._browserSession.send('Playwright.enable'),
     ];

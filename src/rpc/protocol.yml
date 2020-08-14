@@ -209,7 +209,6 @@ BrowserType:
         downloadsPath: string?
         firefoxUserPrefs: json?
         chromiumSandbox: boolean?
-        slowMo: number?
       returns:
         browser: Browser
 
@@ -246,7 +245,6 @@ BrowserType:
             password: string?
         downloadsPath: string?
         chromiumSandbox: boolean?
-        slowMo: number?
         noDefaultViewport: boolean?
         viewport:
           type: object?

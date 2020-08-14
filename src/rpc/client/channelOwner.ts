@@ -30,6 +30,7 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
   readonly _channel: T;
   readonly _initializer: Initializer;
   _logger: LoggerSink | undefined;
+  _slowMo: number | undefined;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer) {
     super();
@@ -87,6 +88,18 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
     };
   }
 
+  private _getSlowMo(): number | undefined {
+    // The slowMo property affects the whole subtree.
+    // For example, slowMo on a browser will slow down all contexts,
+    // pages, handles, etc. in this particular browser.
+    // We do this instead of a global per-connection slowMo to
+    // keep our api that takes slowMo per browser.
+    let object: ChannelOwner | undefined = this;
+    while (object && !object._slowMo)
+      object = object._parent;
+    return object ? object._slowMo : undefined;
+  }
+
   protected async _wrapApiCall<T>(apiName: string, func: () => Promise<T>, logger?: LoggerSink): Promise<T> {
     const stackObject: any = {};
     Error.captureStackTrace(stackObject);
@@ -94,7 +107,15 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
     logger = logger || this._logger;
     try {
       logApiCall(logger, `=> ${apiName} started`);
-      const result = await func();
+      const slowMo = this._getSlowMo();
+      let result: T;
+      if (slowMo) {
+        result = await new Promise<T>(f => setTimeout(async () => {
+          f(await func());
+        }, slowMo));
+      } else {
+        result = await func();
+      }
       logApiCall(logger, `<= ${apiName} succeeded`);
       return result;
     } catch (e) {

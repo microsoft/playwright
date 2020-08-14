@@ -61,7 +61,6 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
 
   async launch(options: LaunchOptions = {}): Promise<Browser> {
     const logger = options.logger;
-    options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launch', async () => {
       assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
@@ -73,6 +72,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
       };
       const browser = Browser.from((await this._channel.launch(launchOptions)).browser);
       browser._logger = logger;
+      browser._slowMo = options.slowMo;
       return browser;
     }, logger);
   }
@@ -100,6 +100,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
       const result = await this._channel.launchPersistentContext(persistentOptions);
       const context = BrowserContext.from(result.context);
       context._logger = logger;
+      context._slowMo = options.slowMo;
       return context;
     }, logger);
   }
@@ -115,10 +116,6 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         handshakeTimeout: this._timeoutSettings.timeout(options),
       });
 
-      // The 'ws' module in node sometimes sends us multiple messages in a single task.
-      const waitForNextTask = options.slowMo
-        ? (cb: () => any) => setTimeout(cb, options.slowMo)
-        : helper.makeWaitForNextTask();
       connection.onmessage = message => {
         if (ws.readyState !== WebSocket.OPEN) {
           setTimeout(() => {
@@ -128,18 +125,15 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         }
         ws.send(JSON.stringify(message));
       };
+      // The 'ws' module in node sometimes sends us multiple messages in a single task.
+      const waitForNextTask = helper.makeWaitForNextTask();
       ws.addEventListener('message', event => {
         waitForNextTask(() => connection.dispatch(JSON.parse(event.data)));
       });
 
-      return await new Promise<Browser>(async (fulfill, reject) => {
-        if ((options as any).__testHookBeforeCreateBrowser) {
-          try {
-            await (options as any).__testHookBeforeCreateBrowser();
-          } catch (e) {
-            reject(e);
-          }
-        }
+      if ((options as any).__testHookBeforeCreateBrowser)
+        await (options as any).__testHookBeforeCreateBrowser();
+      return await new Promise<Browser>((fulfill, reject) => {
         ws.addEventListener('open', async () => {
           const browser = (await connection.waitForObjectWithKnownName('connectedBrowser')) as Browser;
           browser._logger = logger;
@@ -157,6 +151,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
             ws.removeEventListener('close', closeListener);
             ws.close();
           });
+          browser._slowMo = options.slowMo;
           fulfill(browser);
         });
         ws.addEventListener('error', event => {

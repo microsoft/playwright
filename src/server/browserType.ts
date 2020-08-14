@@ -107,7 +107,6 @@ export abstract class BrowserTypeBase implements BrowserType {
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
       name: this._name,
-      slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
       loggers: logger,

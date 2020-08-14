@@ -38,7 +38,6 @@ export type BrowserOptions = {
   downloadsPath?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
-  slowMo?: number,
   browserProcess: BrowserProcess,
   proxy?: ProxySettings,
 };

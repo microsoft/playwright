@@ -305,7 +305,7 @@ export type LaunchOptionsBase = {
   chromiumSandbox?: boolean,
 };
 
-export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
+export type LaunchOptions = LaunchOptionsBase;
 export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
 
 export type SerializedAXNode = {
