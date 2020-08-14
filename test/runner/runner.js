@@ -184,9 +184,11 @@ class Worker extends EventEmitter {
       detached: false,
       env: {
         FORCE_COLOR: process.stdout.isTTY ? 1 : 0,
+        DEBUG_COLORS: process.stdout.isTTY ? 1 : 0,
         ...process.env
       },
-      stdio: ['ignore', 'pipe', 'pipe', 'ipc']
+      // Can't pipe since piping slows down termination for some reason.
+      stdio: ['ignore', 'ignore', 'ignore', 'ipc']
     });
     this.process.on('exit', () => this.emit('exit'));
     this.process.on('message', message => {
@@ -195,18 +197,23 @@ class Worker extends EventEmitter {
     });
     this.stdout = [];
     this.stderr = [];
-    this.process.stdout.on('data', data => {
+    this.on('stdout', data => {
       if (runner._options.dumpio)
         process.stdout.write(data);
       else
-        this.stdout.push(data.toString());
+        this.stdout.push(data);
     });
-  
-    this.process.stderr.on('data', data => {
+    this.on('stderr', data => {
       if (runner._options.dumpio)
         process.stderr.write(data);
       else
-        this.stderr.push(data.toString());
+        this.stderr.push(data);
+    });
+    this.on('debug', data => {
+      if (runner._options.dumpio)
+        process.stderr.write(data + '\n');
+      else
+        this.stderr.push(data + '\n');
     });
   }
 
