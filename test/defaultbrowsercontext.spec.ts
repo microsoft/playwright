@@ -67,7 +67,7 @@ it('context.cookies() should work', async ({server, launchPersistent}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: FFOX ? 'Lax' : 'None',
+    sameSite: 'None',
   }]);
 });
 
@@ -128,7 +128,7 @@ it('should(not) block third party cookies', async ({server, launchPersistent}) =
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = CHROMIUM;
+  const allowsThirdParty = CHROMIUM || FFOX;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {

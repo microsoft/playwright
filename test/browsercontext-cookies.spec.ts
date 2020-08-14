@@ -38,7 +38,7 @@ it('should get a cookie', async({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: FFOX ? 'Lax' : 'None',
+    sameSite: 'None',
   }]);
 });
 
@@ -60,7 +60,7 @@ it('should get a non-session cookie', async({context, page, server}) => {
     expires: date / 1000,
     httpOnly: false,
     secure: false,
-    sameSite: FFOX ? 'Lax' : 'None',
+    sameSite: 'None',
   }]);
 });
 
@@ -116,7 +116,7 @@ it('should get multiple cookies', async({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: FFOX ? 'Lax' : 'None',
+      sameSite: 'None',
     },
     {
       name: 'username',
@@ -126,7 +126,7 @@ it('should get multiple cookies', async({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: FFOX ? 'Lax' : 'None',
+      sameSite: 'None',
     },
   ]);
 });
