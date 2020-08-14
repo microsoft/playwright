@@ -19,8 +19,28 @@ const path = require('path');
 const fs = require('fs');
 const pirates = require('pirates');
 const babel = require('@babel/core');
-const version = 0;
+const sourceMapSupport = require('source-map-support');
+
+const version = 1;
 const cacheDir = path.join(os.tmpdir(), 'playwright-transform-cache');
+/** @type {Map<string, string>} */
+const sourceMaps = new Map();
+
+sourceMapSupport.install({
+  environment: 'node',
+  handleUncaughtExceptions: false,
+  retrieveSourceMap(source) {
+    if (!sourceMaps.has(source))
+      return null;
+    const sourceMapPath = sourceMaps.get(source);
+    if (!fs.existsSync(sourceMapPath))
+      return null;
+    return {
+      map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
+      url: source
+    };
+  }
+});
 
 /**
  * @param {string} content 
@@ -38,6 +58,8 @@ function installTransform() {
   return pirates.addHook((code, filename) => {
     const cachePath = calculateCachePath(code, filename);
     const codePath = cachePath + '.js';
+    const sourceMapPath = cachePath + '.map';
+    sourceMaps.set(filename, sourceMapPath);
     if (fs.existsSync(codePath))
       return fs.readFileSync(codePath, 'utf8');
     
@@ -45,12 +67,14 @@ function installTransform() {
       presets: [
         ['@babel/preset-env', {targets: {node: 'current'}}],
         '@babel/preset-typescript'],
+      sourceMaps: true,
     });
     if (result.code) {
       fs.mkdirSync(path.dirname(cachePath), {recursive: true});
+      if (result.map)
+        fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');  
       fs.writeFileSync(codePath, result.code, 'utf8');
     }
-    // TODO(einbinder) sourcemaps
     return result.code;
   }, {
     exts: ['.ts']

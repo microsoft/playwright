@@ -78,6 +78,7 @@
     "pirates": "^4.0.1",
     "pixelmatch": "^4.0.2",
     "socksv5": "0.0.6",
+    "source-map-support": "^0.5.19",
     "text-diff": "^1.0.1",
     "ts-loader": "^6.1.2",
     "typescript": "^3.8.3",
