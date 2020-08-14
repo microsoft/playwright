@@ -139,7 +139,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index ff630c49f8529baac227dfca33b7fc84b1a14d0a..45afdc9025ee2e5a75d54fca0633b5651a142458 100644
+index 32bf7e2049805e15dcf74e48e61af542db3d3feb..ab49d948d5d8c59cde623db964ce0d48af2dde16 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -536,7 +536,7 @@ index 22dae012b1a7532e320c4c35e948743927f5416d..54a8f19a4e8faa164d4ef0bf41445e1f
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index a0a53ddca585c3840b07a1548b1aaa8224900694..830685a8ef10b98a3daa6638ac855f718c0a85a4 100644
+index c25d36ee633f2d1be34cd8b5142c6767be316366..30cdbfb2fe10511df7ecd039b6078edc75f951f9 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3281,6 +3281,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -561,7 +561,7 @@ index a0a53ddca585c3840b07a1548b1aaa8224900694..830685a8ef10b98a3daa6638ac855f71
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
-@@ -4103,6 +4111,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+@@ -4110,6 +4118,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
      return false;
    }
  
@@ -572,7 +572,7 @@ index a0a53ddca585c3840b07a1548b1aaa8224900694..830685a8ef10b98a3daa6638ac855f71
    // Is there a focused DOMWindow?
    nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
    fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
-@@ -16501,6 +16513,19 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+@@ -16508,6 +16520,19 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
  
  StylePrefersColorScheme Document::PrefersColorScheme(
      IgnoreRFP aIgnoreRFP) const {
@@ -657,10 +657,10 @@ index 9e898052f8eebd8331b46b105bc8b6eeff3a2e84..994243e99814a3f8882c9fe425ecab52
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
-index 4a22e7c667d52eecc88129da48f5b0070cb4df2c..d47dbe7e11304a7576d0261e9c225c0718f123c4 100644
+index 7a76d50c0f66ff9e3c2afe97faa87f51c4104f7f..a626a5252895b1bf890aa5b3dd479d5d16260bf7 100644
 --- a/dom/base/nsFocusManager.cpp
 +++ b/dom/base/nsFocusManager.cpp
-@@ -2713,7 +2713,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+@@ -2744,7 +2744,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
      }
    }
  
@@ -672,7 +672,7 @@ index 4a22e7c667d52eecc88129da48f5b0070cb4df2c..d47dbe7e11304a7576d0261e9c225c07
      // care of lowering the present active window. This happens in
      // a separate runnable to avoid touching multiple windows in
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index 951d43fbae18abc592ee5d6f3d39e8a24ecb1c8d..594f910898068f03db5d36a58e996c60e20bf96c 100644
+index 2042de37abedede254455e6e26f6815ba6478697..4caba9fa1d6afa37f7834f2e11af9897a85d21b7 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
 @@ -2427,7 +2427,7 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
@@ -933,7 +933,7 @@ index d92bd1c738016f93c66dbdc449c70937c37b6f9a..a4c1f0ca974470342cb8136705d78cfc
    ~Geolocation();
  
 diff --git a/dom/html/HTMLInputElement.cpp b/dom/html/HTMLInputElement.cpp
-index 6d5a0e696890ea3b367b8e1021df17ea438fc9a2..6bc53af4bee4327c439fd08af0feffe91b5b9bf9 100644
+index a5330b6c0b73cd82a3e477b2999bafe1a9c423eb..79b0d9e245083b2dac511ecd431f3411b2b8c830 100644
 --- a/dom/html/HTMLInputElement.cpp
 +++ b/dom/html/HTMLInputElement.cpp
 @@ -45,6 +45,7 @@
@@ -1108,7 +1108,7 @@ index 90d49d8ddc21e3f60fedf9dbfe6ca1a5e2af89b8..88ff30500cb0be53b11cddc3e63c1e4b
  
    return aGlobalOrNull;
 diff --git a/dom/security/nsCSPUtils.cpp b/dom/security/nsCSPUtils.cpp
-index 7c6bd4a4fb996523c42885b158353c7b4ad9e8df..71bdf9108c9266f716dd5ed1af43d08a7fc7d7b7 100644
+index ad0944f09e633d363193cbb2e1f6a1e77ae050b1..60ea878d970479a779dd437893c994331e1fd4bd 100644
 --- a/dom/security/nsCSPUtils.cpp
 +++ b/dom/security/nsCSPUtils.cpp
 @@ -121,6 +121,11 @@ void CSP_ApplyMetaCSPToDoc(mozilla::dom::Document& aDoc,
