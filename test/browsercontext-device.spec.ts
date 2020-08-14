@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX} = testOptions;
-
 it.skip(FFOX)('should work', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });

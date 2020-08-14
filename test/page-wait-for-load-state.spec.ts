@@ -16,11 +16,7 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-import path from 'path';
-import url from 'url';
 import { Route } from '..';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should pick up ongoing navigation', async({page, server}) => {
   let response = null;

@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-
-const {WEBKIT, WIRE, FFOX} = testOptions;
+const { WIRE } = testOptions;
 
 it('should work', async ({ page, server }) => {
   const result = await page.evaluate(() => 7 * 3);

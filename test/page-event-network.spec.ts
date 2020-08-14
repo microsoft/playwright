@@ -16,11 +16,6 @@
  */
 import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
-
 it('Page.Events.Request', async({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));

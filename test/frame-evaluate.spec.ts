@@ -17,8 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-import path from 'path';
-const { FFOX, CHROMIUM, WEBKIT, WIRE } = testOptions;
+const { WIRE } = testOptions;
 
 it('should have different execution contexts', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);

@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
 it('should fire', async({page, server}) => {
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('alert');
@@ -28,7 +26,7 @@ it('should fire', async({page, server}) => {
   await page.evaluate(() => alert('yo'));
 });
 
-it('should allow accepting prompts', async({page, server}) => {
+it('should allow accepting prompts', async({page}) => {
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('prompt');
     expect(dialog.defaultValue()).toBe('yes.');
@@ -39,7 +37,7 @@ it('should allow accepting prompts', async({page, server}) => {
   expect(result).toBe('answer!');
 });
 
-it('should dismiss the prompt', async({page, server}) => {
+it('should dismiss the prompt', async({page}) => {
   page.on('dialog', dialog => {
     dialog.dismiss();
   });
@@ -47,7 +45,7 @@ it('should dismiss the prompt', async({page, server}) => {
   expect(result).toBe(null);
 });
 
-it('should accept the confirm prompt', async({page, server}) => {
+it('should accept the confirm prompt', async({page}) => {
   page.on('dialog', dialog => {
     dialog.accept();
   });
@@ -55,7 +53,7 @@ it('should accept the confirm prompt', async({page, server}) => {
   expect(result).toBe(true);
 });
 
-it('should dismiss the confirm prompt', async({page, server}) => {
+it('should dismiss the confirm prompt', async({page}) => {
   page.on('dialog', dialog => {
     dialog.dismiss();
   });

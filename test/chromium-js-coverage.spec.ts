@@ -15,9 +15,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
 it.skip(CHROMIUM)('should be missing', async function({page, server}) {
   expect(page.coverage).toBe(null);
 });

@@ -16,8 +16,7 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {WIRE} = testOptions;
+const { WIRE } = testOptions;
 
 it.skip(WIRE)('should fail when element jumps during hit testing', async({page, server}) => {
   await page.setContent('<button>Click me</button>');

@@ -16,23 +16,20 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
-it('should timeout', async({page, server}) => {
+it('should timeout', async({page}) => {
   const startTime = Date.now();
   const timeout = 42;
   await page.waitForTimeout(timeout);
   expect(Date.now() - startTime).not.toBeLessThan(timeout / 2);
 });
 
-it('should accept a string', async({page, server}) => {
+it('should accept a string', async({page}) => {
   const watchdog = page.waitForFunction('window.__FOO === 1');
   await page.evaluate(() => window['__FOO'] = 1);
   await watchdog;
 });
 
-it('should work when resolved right before execution context disposal', async({page, server}) => {
+it('should work when resolved right before execution context disposal', async({page}) => {
   await page.addInitScript(() => window['__RELOADED'] = true);
   await page.waitForFunction(() => {
     if (!window['__RELOADED'])
@@ -53,7 +50,7 @@ it('should poll on interval', async({page, server}) => {
   expect(await timeDelta.jsonValue()).not.toBeLessThan(polling);
 });
 
-it('should avoid side effects after timeout', async({page, server}) => {
+it('should avoid side effects after timeout', async({page}) => {
   let counter = 0;
   page.on('console', () => ++counter);
 
@@ -69,23 +66,23 @@ it('should avoid side effects after timeout', async({page, server}) => {
   expect(counter).toBe(savedCounter);
 });
 
-it('should throw on polling:mutation', async({page, server}) => {
+it('should throw on polling:mutation', async({page}) => {
   const error = await page.waitForFunction(() => true, {}, {polling: 'mutation' as any}).catch(e => e);
   expect(error.message).toContain('Unknown polling option: mutation');
 });
 
-it('should poll on raf', async({page, server}) => {
+it('should poll on raf', async({page}) => {
   const watchdog = page.waitForFunction(() => window['__FOO'] === 'hit', {}, {polling: 'raf'});
   await page.evaluate(() => window['__FOO'] = 'hit');
   await watchdog;
 });
 
-it('should fail with predicate throwing on first call', async({page, server}) => {
+it('should fail with predicate throwing on first call', async({page}) => {
   const error = await page.waitForFunction(() => { throw new Error('oh my'); }).catch(e => e);
   expect(error.message).toContain('oh my');
 });
 
-it('should fail with predicate throwing sometimes', async({page, server}) => {
+it('should fail with predicate throwing sometimes', async({page}) => {
   const error = await page.waitForFunction(() => {
     window['counter'] = (window['counter'] || 0) + 1;
     if (window['counter'] === 3)
@@ -95,7 +92,7 @@ it('should fail with predicate throwing sometimes', async({page, server}) => {
   expect(error.message).toContain('Bad counter!');
 });
 
-it('should fail with ReferenceError on wrong page', async({page, server}) => {
+it('should fail with ReferenceError on wrong page', async({page}) => {
   // @ts-ignore
   const error = await page.waitForFunction(() => globalVar === 123).catch(e => e);
   expect(error.message).toContain('globalVar');
@@ -112,7 +109,7 @@ it('should work with strict CSP policy', async({page, server}) => {
   expect(error).toBe(null);
 });
 
-it('should throw on bad polling value', async({page, server}) => {
+it('should throw on bad polling value', async({page}) => {
   let error = null;
   try {
     await page.waitForFunction(() => !!document.body, {}, {polling: 'unknown' as any});
@@ -123,7 +120,7 @@ it('should throw on bad polling value', async({page, server}) => {
   expect(error.message).toContain('polling');
 });
 
-it('should throw negative polling interval', async({page, server}) => {
+it('should throw negative polling interval', async({page}) => {
   let error = null;
   try {
     await page.waitForFunction(() => !!document.body, {}, {polling: -10});
@@ -200,13 +197,13 @@ it('should survive navigations', async({page, server}) => {
   await watchdog;
 });
 
-it('should work with multiline body', async({page, server}) => {
+it('should work with multiline body', async({page}) => {
   const result = await page.waitForFunction(`
     (() => true)()
   `);
   expect(await result.jsonValue()).toBe(true);
 });
 
-it('should wait for predicate with arguments', async({page, server}) => {
+it('should wait for predicate with arguments', async({page}) => {
   await page.waitForFunction(({arg1, arg2}) => arg1 + arg2 === 3, { arg1: 1, arg2: 2});
 });

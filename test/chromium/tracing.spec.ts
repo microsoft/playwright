@@ -19,12 +19,13 @@ import { registerFixture } from '../runner/fixtures';
 import fs from 'fs';
 import path from 'path';
 import { ChromiumBrowser } from '../..';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
+
 declare global {
   interface FixtureState {
     outputFile: string;
   }
 }
+
 registerFixture('outputFile', async ({tmpDir}, test) => {
   const outputFile = path.join(tmpDir, `trace.json`);
   await test(outputFile);

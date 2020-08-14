@@ -17,8 +17,6 @@
 import '../base.fixture';
 import { registerWorkerFixture } from '../runner/fixtures';
 
-const {CHROMIUM} = testOptions;
-
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,

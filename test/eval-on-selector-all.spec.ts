@@ -16,10 +16,6 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
-
 it('should work with css selector', async({page, server}) => {
   await page.setContent('<div>hello</div><div>beautiful</div><div>world!</div>');
   const divsCount = await page.$$eval('css=div', divs => divs.length);

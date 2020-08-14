@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
 import url from 'url';
-
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX} = testOptions;
+import './base.fixture';
 
 it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
   await page.goto(server.PREFIX + '/wasm/table2.html');

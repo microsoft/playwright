@@ -16,8 +16,7 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const { FFOX, HEADLESS } = testOptions;
+const { HEADLESS } = testOptions;
 
 it.fail(FFOX && !HEADLESS)('should work', async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });

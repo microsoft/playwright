@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, WEBKIT, WIN} = testOptions;
-
 it('should return no cookies in pristine browser context', async({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);
 });

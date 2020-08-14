@@ -17,7 +17,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const { FFOX, HEADLESS } = testOptions;
 
 it('should have a nice preview', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);

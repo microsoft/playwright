@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 import './base.fixture';
-import utils from './utils';
 
 declare const renderComponent;
 declare const e;

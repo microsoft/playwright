@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
-
 it('should work', async({browser, httpsServer}) => {
   let error = null;
   const context = await browser.newContext({ ignoreHTTPSErrors: true });

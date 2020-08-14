@@ -16,8 +16,7 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
+const { WIRE } = testOptions;
 
 it.skip(WIRE).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);

@@ -16,10 +16,7 @@
  */
 import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should fire for navigation requests', async({page, server}) => {
   const requests = [];

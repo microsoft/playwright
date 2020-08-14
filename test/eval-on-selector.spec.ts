@@ -16,10 +16,6 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
-
 it('should work with css selector', async({page, server}) => {
   await page.setContent('<section id="testAttribute">43543</section>');
   const idAttribute = await page.$eval('css=section', e => e.id);

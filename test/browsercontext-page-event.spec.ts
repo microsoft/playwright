@@ -15,9 +15,6 @@
  * limitations under the License.
  */
 import './base.fixture';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
-const {devices} = require('..');
 
 it('should have url', async({browser, server}) => {
   const context = await browser.newContext();

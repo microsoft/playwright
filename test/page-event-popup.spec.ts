@@ -15,8 +15,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
-
 it('should work', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();

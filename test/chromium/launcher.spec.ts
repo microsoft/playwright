@@ -18,8 +18,8 @@ import '../base.fixture';
 import path from 'path';
 import utils from '../utils';
 import { ChromiumBrowser, ChromiumBrowserContext } from '../..';
-const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
+const { makeUserDataDir, removeUserDataDir } = utils;
+const { WIRE } = testOptions;
 
 it.skip(WIRE || !CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);

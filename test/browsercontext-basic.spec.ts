@@ -18,8 +18,6 @@ import './base.fixture';
 
 import utils from './utils';
 
-const {WEBKIT} = testOptions;
-
 it('should create new context', async function({browser}) {
   expect(browser.contexts().length).toBe(0);
   const context = await browser.newContext();

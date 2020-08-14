@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-
 it('clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);

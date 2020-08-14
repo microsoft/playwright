@@ -15,19 +15,9 @@
  */
 
 const os = require('os');
-const path = require('path');
 const { valueFromEnv } = require('./utils');
 
-const platform = process.env.REPORT_ONLY_PLATFORM || os.platform();
-const browserName = process.env.BROWSER || 'chromium';
-
 const testOptions = {};
-testOptions.MAC = platform === 'darwin';
-testOptions.LINUX = platform === 'linux';
-testOptions.WIN = platform === 'win32';
-testOptions.CHROMIUM = browserName === 'chromium';
-testOptions.FFOX = browserName === 'firefox';
-testOptions.WEBKIT = browserName === 'webkit';
 testOptions.WIRE = process.env.PWWIRE;
 testOptions.HEADLESS = !!valueFromEnv('HEADLESS', true);
 

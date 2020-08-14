@@ -16,7 +16,7 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
+const { WIRE } = testOptions;
 
 it.skip(WIRE)('should work across sessions', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);

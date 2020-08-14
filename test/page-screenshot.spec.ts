@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 import './base.fixture';
-
 import utils from './utils';
-const {FFOX, WEBKIT, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 // Firefox headful produces a different image.
 const ffheadful = FFOX && !HEADLESS;

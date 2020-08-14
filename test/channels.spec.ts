@@ -15,10 +15,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-
-import utils from './utils';
 import { ChromiumBrowser } from '..';
-const { FFOX, CHROMIUM, WEBKIT, WIN } = testOptions;
 
 it('should work', async({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();

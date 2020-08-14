@@ -16,12 +16,6 @@
  */
 import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import { helper } from '../lib/helper';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
-
 it('should intercept', async({page, server}) => {
   let intercepted = false;
   await page.route('**/empty.html', (route, request) => {

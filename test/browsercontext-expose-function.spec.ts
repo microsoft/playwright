@@ -16,10 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
-const {devices} = require('..');
-
 it('expose binding should work', async({browser}) => {
   const context = await browser.newContext();
   let bindingSource;

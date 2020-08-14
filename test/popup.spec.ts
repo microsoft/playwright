@@ -15,9 +15,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
-
-
 it('should inherit user agent from browser context', async function({browser, server}) {
   const context = await browser.newContext({
     userAgent: 'hey'

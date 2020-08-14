@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-
-const {FFOX, CHROMIUM, WEBKIT, LINUX, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);

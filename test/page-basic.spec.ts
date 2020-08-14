@@ -16,11 +16,6 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
-
 it('should reject all promises when page is closed', async({context}) => {
   const newPage = await context.newPage();
   let error = null;

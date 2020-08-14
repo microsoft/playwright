@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 beforeEach(async ({server}) => {
   server.setRoute('/download', (req, res) => {

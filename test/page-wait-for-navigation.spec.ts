@@ -17,11 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-import path from 'path';
-import url from 'url';
 import { Frame } from '..';
-
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should work', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);

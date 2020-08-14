@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
-
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
   return {

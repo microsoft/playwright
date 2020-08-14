@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
-
 it.skip(FFOX)('should support mobile emulation', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });

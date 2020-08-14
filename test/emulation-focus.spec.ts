@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 it('should think that it is focused by default', async({page}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);

@@ -16,9 +16,7 @@
  */
 import './base.fixture';
 
-import path from 'path';
 import url from 'url';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('page.goBack should work', async({page, server}) => {
   expect(await page.goBack()).toBe(null);

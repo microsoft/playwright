@@ -16,7 +16,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const {CHROMIUM} = testOptions;
 
 it('should create new page', async function({browser}) {
   const page1 = await browser.newPage();

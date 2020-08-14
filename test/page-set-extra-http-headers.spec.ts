@@ -16,12 +16,6 @@
  */
 import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
-
-
 it('should work', async({page, server}) => {
   await page.setExtraHTTPHeaders({
     foo: 'bar'

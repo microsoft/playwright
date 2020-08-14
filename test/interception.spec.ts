@@ -16,11 +16,8 @@
  */
 import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
 import { helper } from '../lib/helper';
 import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 
 it('should work with navigation', async({page, server}) => {
   const requests = new Map();

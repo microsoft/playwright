@@ -17,11 +17,11 @@ import './base.fixture';
 import { registerFixture } from './runner/fixtures';
 import { Page } from '..';
 
-const fs = require('fs');
-const path = require('path');
-const url = require('url');
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, WIRE} = testOptions;
+const { HEADLESS } = testOptions;
 
 declare global {
   interface FixtureState {

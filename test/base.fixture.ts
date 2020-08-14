@@ -32,6 +32,7 @@ import {mkdtempAsync, removeFolderAsync} from './utils';
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 
 const browserName = process.env.BROWSER || 'chromium';
+const platform = os.platform();
 
 declare global {
   interface WorkerState {
@@ -53,6 +54,13 @@ declare global {
     browserServer: BrowserServer;
   }
 }
+
+(global as any).MAC = platform === 'darwin';
+(global as any).LINUX = platform === 'linux';
+(global as any).WIN = platform === 'win32';
+(global as any).CHROMIUM = browserName === 'chromium';
+(global as any).FFOX = browserName === 'firefox';
+(global as any).WEBKIT = browserName === 'webkit';
 
 registerWorkerFixture('parallelIndex', async ({}, test) => {
   await test(parseInt(process.env.JEST_WORKER_ID, 10) - 1);
@@ -180,7 +188,7 @@ registerFixture('httpsServer', async ({httpService}, test) => {
 registerFixture('tmpDir', async ({}, test) => {
   const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   await test(tmpDir);
-  await removeFolderAsync(tmpDir);
+  await removeFolderAsync(tmpDir).catch(e => {});
 });
 
 registerWorkerFixture('asset', async ({}, test) => {

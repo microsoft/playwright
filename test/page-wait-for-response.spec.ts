@@ -16,11 +16,6 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
-
 it('should work', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([

@@ -16,7 +16,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
 it('should dispatch click event', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
@@ -32,7 +31,7 @@ it('should dispatch click event properties', async({page, server}) => {
   expect(await page.evaluate('composed')).toBeTruthy();
 });
 
-it('should dispatch click svg', async({page, server}) => {
+it('should dispatch click svg', async({page}) => {
   await page.setContent(`
     <svg height="100" width="100">
       <circle onclick="javascript:window.__CLICKED=42" cx="50" cy="50" r="40" stroke="black" stroke-width="3" fill="red" />

@@ -16,8 +16,8 @@
 import './base.fixture';
 
 import socks from 'socksv5';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
+
+const { HEADLESS } = testOptions;
 
 it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {

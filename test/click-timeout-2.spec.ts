@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {WIRE} = testOptions;
-
 it('should timeout waiting for display:none to be gone', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', b => b.style.display = 'none');
