@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+import { Screencast } from '../browserContext';
 import * as frames from '../frames';
 import { helper, RegisteredListener, assert, debugAssert } from '../helper';
 import * as dom from '../dom';
@@ -68,6 +69,7 @@ export class WKPage implements PageDelegate {
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
+  private _recordingVideoFile: string | null = null;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -689,7 +691,9 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    this._pageProxySession.sendMayFail('Target.close', {
+    if (this._recordingVideoFile)
+      await this.stopScreencast();
+    await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
     });
@@ -703,17 +707,31 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
-    this._pageProxySession.send('Screencast.startVideoRecording', {
-      file: options.outputFile,
-      width: options.width,
-      height: options.height,
-      scale: options.scale,
-    });
+  async startScreencast(options: types.PageScreencastOptions): Promise<void> {
+    if (this._recordingVideoFile)
+      throw new Error('Already recording');
+    this._recordingVideoFile = options.outputFile;
+    try {
+      await this._pageProxySession.send('Screencast.startVideoRecording', {
+        file: options.outputFile,
+        width: options.width,
+        height: options.height,
+        scale: options.scale,
+      });
+      this._browserContext.emit(Events.BrowserContext.ScreencastStarted, new Screencast(options.outputFile, this._initializedPage!));
+    } catch (e) {
+      this._recordingVideoFile = null;
+      throw e;
+    }
   }
 
-  async stopVideoRecording(): Promise<void> {
+  async stopScreencast(): Promise<void> {
+    if (!this._recordingVideoFile)
+      throw new Error('No video recording in progress');
+    const fileName = this._recordingVideoFile;
+    this._recordingVideoFile = null;
     await this._pageProxySession.send('Screencast.stopVideoRecording');
+    this._browserContext.emit(Events.BrowserContext.ScreencastStopped, new Screencast(fileName, this._initializedPage!));
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {

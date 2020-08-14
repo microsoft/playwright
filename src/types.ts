@@ -60,11 +60,18 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
-export type VideoRecordingOptions = {
-  outputFile: string,
+export type ScreencastOptions = {
   width: number,
   height: number,
   scale?: number,
+};
+
+export type PageScreencastOptions = ScreencastOptions & {
+  outputFile: string,
+};
+
+export type ContextScreencastOptions = ScreencastOptions & {
+  dir: string,
 };
 
 export type URLMatch = string | RegExp | ((url: URL) => boolean);

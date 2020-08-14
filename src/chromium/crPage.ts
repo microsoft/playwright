@@ -209,11 +209,11 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
+  async startScreencast(options: types.PageScreencastOptions): Promise<void> {
     throw new Error('Not implemented');
   }
 
-  async stopVideoRecording(): Promise<void> {
+  async stopScreencast(): Promise<void> {
     throw new Error('Not implemented');
   }
 

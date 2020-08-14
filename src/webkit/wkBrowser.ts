@@ -21,6 +21,7 @@ import { Events } from '../events';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
+import * as path from 'path';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
@@ -247,12 +248,17 @@ export class WKBrowserContext extends BrowserContext {
     const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
     const wkPage = this._browser._wkPages.get(pageProxyId)!;
     const result = await wkPage.pageOrError();
-    if (result instanceof Page) {
-      if (result.isClosed())
-        throw new Error('Page has been closed.');
-      return result;
+    if (!(result instanceof Page))
+      throw result;
+    if (result.isClosed())
+      throw new Error('Page has been closed.');
+    if (result._browserContext._screencastOptions) {
+      const contextOptions = result._browserContext._screencastOptions;
+      const outputFile = path.join(contextOptions.dir, helper.guid() + '.webm');
+      const options = Object.assign({}, contextOptions, {outputFile});
+      await wkPage.startScreencast(options);
     }
-    throw result;
+    return result;
   }
 
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {

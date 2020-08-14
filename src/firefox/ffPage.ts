@@ -346,7 +346,7 @@ export class FFPage implements PageDelegate {
       throw new Error('Not implemented');
   }
 
-  async startVideoRecording(options: types.VideoRecordingOptions): Promise<void> {
+  async startScreencast(options: types.PageScreencastOptions): Promise<void> {
     this._session.send('Page.startVideoRecording', {
       file: options.outputFile,
       width: options.width,
@@ -355,7 +355,7 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async stopVideoRecording(): Promise<void> {
+  async stopScreencast(): Promise<void> {
     await this._session.send('Page.stopVideoRecording');
   }
 
