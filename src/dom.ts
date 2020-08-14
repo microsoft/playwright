@@ -287,11 +287,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryPointerAction(progress: Progress, actionName: string, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _retryPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
+    options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     let first = true;
     while (progress.isRunning()) {
       progress.logger.info(`${first ? 'attempting' : 'retrying'} ${actionName} action`);
-      const result = await this._performPointerAction(progress, actionName, action, options);
+      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, options);
       first = false;
       if (result === 'error:notvisible') {
         if (options.force)
@@ -316,12 +317,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: string, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:nothittarget' | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | 'error:nothittarget' | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
     if (!force) {
-      const result = await this._waitForDisplayedAtStablePosition(progress, true /* waitForEnabled */);
+      const result = await this._waitForDisplayedAtStablePosition(progress, waitForEnabled);
       if (result !== 'done')
         return result;
     }
@@ -379,7 +380,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'hover', point => this._page.mouse.move(point.x, point.y), options);
+    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(point.x, point.y), options);
   }
 
   click(options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -390,7 +391,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'click', point => this._page.mouse.click(point.x, point.y, options), options);
+    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
   dblclick(options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
@@ -401,7 +402,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'dblclick', point => this._page.mouse.dblclick(point.x, point.y, options), options);
+    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
   async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {

@@ -8,7 +8,8 @@ Some actions like `page.click()` support `{force: true}` option that disable non
 
 | Actions | Performed checks |
 | ------ | ------- |
-| `check()`<br>`click()`<br>`dblclick()`<br>`hover()`<br>`uncheck()` | [Visible]<br>[Stable]<br>[Enabled]<br>[Receiving Events]<br>[Attached] |
+| `check()`<br>`click()`<br>`dblclick()`<br>`uncheck()` | [Visible]<br>[Stable]<br>[Enabled]<br>[Receiving Events]<br>[Attached] |
+| `hover()` | [Visible]<br>[Stable]<br>[Receiving Events]<br>[Attached] |
 | `fill()` | [Visible]<br>[Enabled]<br>[Editable]<br>[Attached] |
 | `dispatchEvent()`<br>`focus()`<br>`press()`<br>`setInputFiles()`<br>`selectOption()`<br>`type()` | [Attached] |
 | `scrollIntoViewIfNeeded()`<br>`screenshot()` | [Visible]<br>[Stable]<br>[Attached] |
