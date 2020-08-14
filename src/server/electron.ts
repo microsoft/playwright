@@ -25,7 +25,6 @@ import { Page } from '../page';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketTransport } from '../transport';
 import * as types from '../types';
-import { BrowserServer } from './browserServer';
 import { launchProcess, waitForLine } from './processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
@@ -33,6 +32,7 @@ import { runAbortableTask, ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { LoggerSink } from '../loggerSink';
+import { BrowserProcess } from '../browser';
 
 export type ElectronLaunchOptionsBase = {
   args?: string[],
@@ -202,8 +202,13 @@ export class Electron  {
 
       const chromeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/);
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
-      const browserServer = new BrowserServer(launchedProcess, gracefullyClose, kill);
-      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, loggers, persistent: { viewport: null }, ownedServer: browserServer });
+      const browserProcess: BrowserProcess = {
+        onclose: undefined,
+        process: launchedProcess,
+        close: gracefullyClose,
+        kill
+      };
+      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, loggers, persistent: { viewport: null }, browserProcess });
       app = new ElectronApplication(loggers, browser, nodeConnection);
       await app._init();
       return app;

@@ -80,30 +80,6 @@ class Helper {
     return helper.evaluationString(fun, arg);
   }
 
-  static installApiHooks(className: string, classType: any) {
-    for (const methodName of Reflect.ownKeys(classType.prototype)) {
-      const method = Reflect.get(classType.prototype, methodName);
-      if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
-        continue;
-      const isAsync = method.constructor.name === 'AsyncFunction';
-      if (!isAsync)
-        continue;
-      const override = function(this: any, ...args: any[]) {
-        const syncStack: any = {};
-        Error.captureStackTrace(syncStack);
-        return method.call(this, ...args).catch((e: any) => {
-          const stack = syncStack.stack.substring(syncStack.stack.indexOf('\n') + 1);
-          const clientStack = stack.substring(stack.indexOf('\n'));
-          if (e instanceof Error && e.stack && !e.stack.includes(clientStack))
-            e.stack += '\n  -- ASYNC --\n' + stack;
-          throw e;
-        });
-      };
-      Object.defineProperty(override, 'name', { writable: false, value: methodName });
-      Reflect.set(classType.prototype, methodName, override);
-    }
-  }
-
   static addEventListener(
     emitter: EventEmitter,
     eventName: (string | symbol),

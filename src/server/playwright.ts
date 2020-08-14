@@ -15,8 +15,6 @@
  */
 
 import * as types from '../types';
-import * as api from '../api';
-import { helper } from '../helper';
 import { TimeoutError } from '../errors';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { Chromium } from './chromium';
@@ -24,11 +22,6 @@ import { WebKit } from './webkit';
 import { Firefox } from './firefox';
 import { selectors } from '../selectors';
 import * as browserPaths from '../install/browserPaths';
-
-for (const className in api) {
-  if (typeof (api as any)[className] === 'function')
-    helper.installApiHooks(className[0].toLowerCase() + className.substring(1), (api as any)[className]);
-}
 
 export class Playwright {
   readonly selectors = selectors;
