@@ -100,12 +100,14 @@ class Runner extends EventEmitter {
       this.stats.passes += params.stats.passes;
       this.stats.pending += params.stats.pending;
       this.stats.tests += params.stats.tests;
-      if (params.error)
-        this._restartWorker(worker);
-      else
-        this._workerAvailable(worker);
       if (this._runCompleteCallback && !this._pendingJobs)
         this._runCompleteCallback();
+      else {
+        if (params.error)
+          this._restartWorker(worker);
+        else
+          this._workerAvailable(worker);
+      }
     });
   }
 
@@ -180,7 +182,10 @@ class Worker extends EventEmitter {
 
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
-      env: process.env,
+      env: {
+        FORCE_COLOR: process.stdout.isTTY ? 1 : 0,
+        ...process.env
+      },
       stdio: ['ignore', 'pipe', 'pipe', 'ipc']
     });
     this.process.on('exit', () => this.emit('exit'));
