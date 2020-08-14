@@ -142,7 +142,7 @@ it('should fail with error upon disconnect', async({page, server}) => {
   expect(error.message).toContain('Page closed');
 });
 
-it('page.ur should work', async({page, server}) => {
+it('page.url should work', async({page, server}) => {
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
@@ -241,4 +241,14 @@ it('frame.press should work', async({page, server}) => {
   const frame = page.frame('inner');
   await frame.press('textarea', 'a');
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
+});
+
+it.fail(FFOX)('frame.focus should work multiple times', async ({ context, server }) => {
+  const page1 = await context.newPage()
+  const page2 = await context.newPage()
+  for (const page of [page1, page2]) {
+    await page.setContent(`<button id="foo" onfocus="window.gotFocus=true"></button>`)
+    await page.focus("#foo")
+    expect(await page.evaluate(() => !!window['gotFocus'])).toBe(true)
+  }
 });
