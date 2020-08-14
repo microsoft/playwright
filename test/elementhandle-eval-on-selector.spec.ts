@@ -16,10 +16,6 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
-
 it('should work', async({page, server}) => {
   await page.setContent('<html><body><div class="tweet"><div class="like">100</div><div class="retweets">10</div></div></body></html>');
   const tweet = await page.$('.tweet');

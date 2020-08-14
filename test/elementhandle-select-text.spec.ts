@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const { FFOX, HEADLESS } = testOptions;
-
 it('should select textarea', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');

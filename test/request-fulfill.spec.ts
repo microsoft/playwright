@@ -18,9 +18,8 @@ import './base.fixture';
 
 import fs from 'fs';
 import path from 'path';
-import { helper } from '../lib/helper';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
+
+const { HEADLESS } = testOptions;
 
 it('should work', async({page, server}) => {
   await page.route('**/*', route => {

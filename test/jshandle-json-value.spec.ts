@@ -16,21 +16,19 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
-it('should work', async({page, server}) => {
+it('should work', async({page}) => {
   const aHandle = await page.evaluateHandle(() => ({foo: 'bar'}));
   const json = await aHandle.jsonValue();
   expect(json).toEqual({foo: 'bar'});
 });
 
-it('should work with dates', async({page, server}) => {
+it('should work with dates', async({page}) => {
   const dateHandle = await page.evaluateHandle(() => new Date('2017-09-26T00:00:00.000Z'));
   const date = await dateHandle.jsonValue();
   expect(date.toJSON()).toBe('2017-09-26T00:00:00.000Z');
 });
 
-it('should throw for circular objects', async({page, server}) => {
+it('should throw for circular objects', async({page}) => {
   const windowHandle = await page.evaluateHandle('window');
   let error = null;
   await windowHandle.jsonValue().catch(e => error = e);

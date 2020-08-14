@@ -18,8 +18,6 @@ import './electron.fixture';
 import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
-const { CHROMIUM } = testOptions;
-
 
 it.skip(!CHROMIUM)('should fire close event', async ({ playwright }) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);

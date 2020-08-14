@@ -18,7 +18,7 @@ import './base.fixture';
 import fs from 'fs'
 import path from 'path'
 
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 // Printing to pdf is currently only supported in headless chromium.
 it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page, tmpDir}) => {

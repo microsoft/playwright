@@ -15,8 +15,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, LINUX, WEBKIT, MAC} = testOptions;
-
 it('should work', async function({page, server}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');

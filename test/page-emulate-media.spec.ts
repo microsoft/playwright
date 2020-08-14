@@ -17,7 +17,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it('should emulate type', async({page, server}) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);

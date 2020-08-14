@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 import './base.fixture';
-
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS, WIRE} = testOptions;
+
+const { HEADLESS } = testOptions;
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)

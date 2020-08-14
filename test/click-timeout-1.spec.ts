@@ -16,8 +16,7 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {WIRE} = testOptions;
+const { WIRE } = testOptions;
 
 it.skip(WIRE)('should avoid side effects after timeout', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

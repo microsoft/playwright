@@ -15,10 +15,7 @@
  * limitations under the License.
  */
 import './base.fixture';
-
-import utils from './utils';
-
-const {WIRE} = testOptions;
+const { WIRE } = testOptions;
 
 it('should await navigation when clicking anchor', async({page, server}) => {
   const messages = [];

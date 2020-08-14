@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIRE, HEADLESS} = testOptions;
+const {WIRE, HEADLESS} = testOptions;
 import {PNG} from 'pngjs';
 
 // Firefox headful produces a different image.

@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM} = testOptions;
-
 it('should work', async({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{

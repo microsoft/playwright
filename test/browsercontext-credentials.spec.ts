@@ -16,8 +16,7 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {CHROMIUM, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 it.fail(CHROMIUM && !HEADLESS)('should fail without credentials', async({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');

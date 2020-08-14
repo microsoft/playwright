@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
 it('should work', async function({page}) {
   await page.setContent(`
   <head>

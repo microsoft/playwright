@@ -16,12 +16,8 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
-
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
+
 it('should work', async({page, server}) => {
   await page.setContent('<div>hello</div>');
   const result = await page.content();

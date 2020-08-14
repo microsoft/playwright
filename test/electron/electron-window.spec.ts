@@ -15,8 +15,6 @@
  */
 import './electron.fixture';
 
-const { CHROMIUM } = testOptions;
-
 it.skip(!CHROMIUM)('should click the button', async({window, server}) => {
   await window.goto(server.PREFIX + '/input/button.html');
   await window.click('button');

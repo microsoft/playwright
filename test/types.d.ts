@@ -24,9 +24,7 @@ declare module '' {
     }
 }
 
-
 declare const expect: typeof import('expect');
-
 
 declare const describe: DescribeFunction;
 declare const fdescribe: DescribeFunction;
@@ -45,17 +43,16 @@ declare const browserType: import('../index').BrowserType<import('../index').Bro
 
 // global variables in assets
 declare const testOptions: {
-    FFOX: boolean;
-    WEBKIT: boolean;
-    CHROMIUM: boolean;
-    MAC: boolean;
-    LINUX: boolean;
-    WIN: boolean;
     HEADLESS: boolean;
     WIRE: boolean;
 };
 
-declare const testPath : string;
+declare var MAC: boolean;
+declare var LINUX: boolean;
+declare var WIN: boolean;
+declare var CHROMIUM: boolean;
+declare var FFOX: boolean;
+declare var WEBKIT: boolean;
 
 // keyboard.html
 declare function getResult(): string;

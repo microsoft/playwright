@@ -17,9 +17,6 @@
 import './base.fixture';
 
 import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
 it('should throw an error if no options are provided', async({page, server}) => {
   let error = null;

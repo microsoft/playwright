@@ -16,10 +16,7 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import fs from 'fs';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
+const { WIRE } = testOptions;
 
 it.skip(WIRE)('should work', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);

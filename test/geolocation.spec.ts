@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
 it('should work', async({page, server, context}) => {
   await context.grantPermissions(['geolocation']);
   await page.goto(server.EMPTY_PAGE);

@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const { FFOX, HEADLESS } = testOptions;
-
 it('should work', async ({ page }) => {
   await page.setContent(`<input type='text' />`);
   await page.press('input', 'h');

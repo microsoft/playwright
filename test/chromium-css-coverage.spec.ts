@@ -15,9 +15,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
 it.skip(!CHROMIUM)('should work', async function({browserType, page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/simple.html');

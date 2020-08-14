@@ -17,7 +17,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it('should get the proper default viewport size', async({page, server}) => {
   await utils.verifyViewport(page, 1280, 720);

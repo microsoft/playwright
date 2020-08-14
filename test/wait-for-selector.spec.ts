@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import './base.fixture';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 async function giveItTimeToLog(frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
@@ -25,6 +24,7 @@ async function giveItTimeToLog(frame) {
 }
 
 const addElement = tag => document.body.appendChild(document.createElement(tag));
+
 it('should throw on waitFor', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   let error;

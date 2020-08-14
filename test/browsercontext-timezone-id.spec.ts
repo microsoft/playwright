@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
-
 it('should work', async ({ browser }) => {
   const func = () => new Date(1479579154987).toString();
   {

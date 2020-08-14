@@ -17,7 +17,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 it('should handle nested frames', async({page, server}) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');

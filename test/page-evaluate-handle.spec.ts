@@ -16,8 +16,6 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
-
 it('should work', async({page, server}) => {
   const windowHandle = await page.evaluateHandle(() => window);
   expect(windowHandle).toBeTruthy();

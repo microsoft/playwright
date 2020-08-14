@@ -16,8 +16,6 @@
 import '../base.fixture';
 import { ChromiumBrowserContext, ChromiumBrowser } from "../../types/types";
 
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
-
 it.skip(!CHROMIUM)('should work', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
 

@@ -16,33 +16,24 @@
  */
 import './base.fixture';
 import { registerFixture } from './runner/fixtures';
-
 import fs from 'fs';
-import path from 'path';
 import utils from './utils';
-import os from 'os';
 import { BrowserType, Browser, BrowserContext, Page } from '..';
-const {removeFolderAsync, mkdtempAsync, removeUserDataDir, makeUserDataDir} = utils;
-const {FFOX, MAC, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
+const { removeUserDataDir, makeUserDataDir } = utils;
+const { WIRE } = testOptions;
 
 declare global {
   interface FixtureState {
-    userDataDir: string;
     launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
   }
 }
-registerFixture('userDataDir', async ({}, test) => {
-  const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_dev_profile-'));
-  await test(userDataDir);
-  removeFolderAsync(userDataDir).catch(e => {});
-});
 
-registerFixture('launchPersistent', async ({userDataDir, defaultBrowserOptions, browserType}, test) => {
+registerFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, browserType}, test) => {
   let context;
   async function launchPersistent(options) {
     if (context)
       throw new Error('can only launch one persitent context');
-    context = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, ...options});
+    context = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, ...options});
     const page = context.pages()[0];
     return {context, page};
   }
@@ -275,14 +266,14 @@ it('should support extraHTTPHeaders option', async ({server, launchPersistent}) 
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should accept userDataDir', async ({launchPersistent, userDataDir}) => {
+it('should accept userDataDir', async ({launchPersistent, tmpDir}) => {
   const {page, context} = await launchPersistent();
   // Note: we need an open page to make sure its functional.
-  expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+  expect(fs.readdirSync(tmpDir).length).toBeGreaterThan(0);
   await context.close();
-  expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
+  expect(fs.readdirSync(tmpDir).length).toBeGreaterThan(0);
   // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-  await removeUserDataDir(userDataDir);
+  await removeUserDataDir(tmpDir);
 });
 
 it.slow()('should restore state from userDataDir', async({browserType, defaultBrowserOptions, server, launchPersistent}) => {
@@ -347,20 +338,20 @@ it('should have default URL when launching browser', async ({launchPersistent}) 
   expect(urls).toEqual(['about:blank']);
 });
 
-it.skip(FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server, userDataDir}) => {
+it.skip(FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
   const options = {...defaultBrowserOptions, args: [server.EMPTY_PAGE] };
-  const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
+  const error = await browserType.launchPersistentContext(tmpDir, options).catch(e => e);
   expect(error.message).toContain('can not specify page');
 });
 
-it.skip(WIRE)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, userDataDir, toImpl}) => {
-  const args = toImpl(browserType)._defaultArgs(defaultBrowserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
+it.skip(WIRE)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, tmpDir, toImpl}) => {
+  const args = toImpl(browserType)._defaultArgs(defaultBrowserOptions, 'persistent', tmpDir, 0).filter(a => a !== 'about:blank');
   const options = {
     ...defaultBrowserOptions,
     args: [...args, server.EMPTY_PAGE],
     ignoreDefaultArgs: true,
   };
-  const browserContext = await browserType.launchPersistentContext(userDataDir, options);
+  const browserContext = await browserType.launchPersistentContext(tmpDir, options);
   if (!browserContext.pages().length)
     await browserContext.waitForEvent('page');
   await browserContext.pages()[0].waitForLoadState();
@@ -369,16 +360,16 @@ it.skip(WIRE)('should have passed URL when launching with ignoreDefaultArgs: tru
   await browserContext.close();
 });
 
-it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions, userDataDir}) => {
+it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions, tmpDir}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
-  const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
+  const error = await browserType.launchPersistentContext(tmpDir, options).catch(e => e);
   expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
 });
 
-it.skip(WIRE)('should handle exception', async({browserType, defaultBrowserOptions, userDataDir}) => {
+it.skip(WIRE)('should handle exception', async({browserType, defaultBrowserOptions, tmpDir}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
-  const error = await browserType.launchPersistentContext(userDataDir, options).catch(e => e);
+  const error = await browserType.launchPersistentContext(tmpDir, options).catch(e => e);
   expect(error.message).toContain('Dummy');
 });
 

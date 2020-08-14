@@ -16,10 +16,6 @@
  */
 import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
-
 it('should work for open shadow roots', async({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`css=span`, e => e.textContent)).toBe('Hello from root1');

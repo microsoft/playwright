@@ -20,7 +20,7 @@ import { registerFixture } from './runner/fixtures';
 import path from 'path';
 import {spawn, execSync} from 'child_process';
 import { BrowserType, Browser, LaunchOptions } from '..';
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, HEADLESS} = testOptions;
+const { HEADLESS } = testOptions;
 
 const playwrightPath = path.join(__dirname, '..');
 

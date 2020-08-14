@@ -16,9 +16,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
-
 it('should affect accept-language header', async({browser, server}) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();

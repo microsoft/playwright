@@ -17,11 +17,9 @@
 import './base.fixture';
 
 import path from 'path';
-import fs from 'fs';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
-it('should require top-level Errors', async({playwright}) => {
+it('should require top-level Errors', async({}) => {
   const Errors = require(path.join(utils.projectRoot(), '/lib/errors.js'));
   expect(String(Errors.TimeoutError)).toContain('TimeoutError');
 });

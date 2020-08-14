@@ -18,7 +18,6 @@ import './base.fixture';
 
 import path from 'path';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
 
 it('should work', async ({playwright, page}) => {
   const createTagSelector = () => ({

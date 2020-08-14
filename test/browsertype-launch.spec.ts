@@ -14,12 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
 import path from 'path';
-import fs from 'fs';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
+import './base.fixture';
+
+const { WIRE } = testOptions;
 
 it('should reject all promises when browser is closed', async({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);

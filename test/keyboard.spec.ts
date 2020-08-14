@@ -18,9 +18,7 @@ import './base.fixture';
 
 import utils from './utils';
 
-const {FFOX, WEBKIT, CHROMIUM, MAC} = testOptions;
-
-it('should type into a textarea', async ({page, server}) => {
+it('should type into a textarea', async ({page}) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
