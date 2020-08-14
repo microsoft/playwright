@@ -58,7 +58,8 @@ class DotReporter extends Base {
   epilogue() {
     console.log('');
 
-    console.log(colors.green(`  ${this.stats.passes || 0} passing`) + colors.dim(` (${milliseconds(this.stats.duration)})`));  
+    const durationMessage = isNaN(this.stats.duration) ? '' : colors.dim(` (${milliseconds(this.stats.duration)})`);
+    console.log(colors.green(`  ${this.stats.passes || 0} passing`) + durationMessage);  
 
     if (this.stats.pending)
       console.log(colors.yellow(`  ${this.stats.pending} skipped`));

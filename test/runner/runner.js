@@ -36,7 +36,7 @@ class Runner extends EventEmitter {
     this._workerClaimers = [];
     this._lastWorkerId = 0;
     this.stats = {
-      duration: 0,
+      duration: NaN,
       failures: 0,
       passes: 0,
       pending: 0,
@@ -74,11 +74,13 @@ class Runner extends EventEmitter {
   }
 
   async run() {
+    const start = Date.now();
     this.emit(constants.EVENT_RUN_BEGIN, {});
     this._queue = this._filesSortedByWorkerHash();
     // Loop in case job schedules more jobs
     while (this._queue.length)
       await this._dispatchQueue();
+    this.stats.duration = Date.now() - start;
     this.emit(constants.EVENT_RUN_END, {});
   }
 
@@ -102,7 +104,6 @@ class Runner extends EventEmitter {
     let doneCallback;
     const result = new Promise(f => doneCallback = f);
     worker.once('done', params => {
-      this.stats.duration += params.stats.duration;
       this.stats.failures += params.stats.failures;
       this.stats.passes += params.stats.passes;
       this.stats.pending += params.stats.pending;
