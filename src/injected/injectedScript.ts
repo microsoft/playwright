@@ -479,15 +479,36 @@ export default class InjectedScript {
     });
   }
 
-  checkHitTargetAt(node: Node, point: types.Point): 'error:notconnected' | 'error:nothittarget' | 'done' {
-    let element = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  checkHitTargetAt(node: Node, point: types.Point): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
+    let element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
       return 'error:notconnected';
     element = element.closest('button, [role=button]') || element;
     let hitElement = this.deepElementFromPoint(document, point.x, point.y);
-    while (hitElement && hitElement !== element)
+    const hitParents: Element[] = [];
+    while (hitElement && hitElement !== element) {
+      hitParents.push(hitElement);
       hitElement = this._parentElementOrShadowHost(hitElement);
-    return hitElement === element ? 'done' : 'error:nothittarget';
+    }
+    if (hitElement === element)
+      return 'done';
+    const hitTargetDescription = this.previewNode(hitParents[0]);
+    // Root is the topmost element in the hitTarget's chain that is not in the
+    // element's chain. For example, it might be a dialog element that overlays
+    // the target.
+    let rootHitTargetDescription: string | undefined;
+    while (element) {
+      const index = hitParents.indexOf(element);
+      if (index !== -1) {
+        if (index > 1)
+          rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
+        break;
+      }
+      element = this._parentElementOrShadowHost(element);
+    }
+    if (rootHitTargetDescription)
+      return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
+    return { hitTargetDescription };
   }
 
   dispatchEvent(node: Node, type: string, eventInit: Object) {

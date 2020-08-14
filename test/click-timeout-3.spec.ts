@@ -31,7 +31,7 @@ it.skip(WIRE)('should fail when element jumps during hit testing', async({page, 
   expect(clicked).toBe(false);
   expect(await page.evaluate('window.clicked')).toBe(undefined);
   expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
-  expect(error.message).toContain('element does not receive pointer events');
+  expect(error.message).toContain('<body>…</body> intercepts pointer events');
   expect(error.message).toContain('retrying click action');
 });
 
@@ -41,6 +41,7 @@ it('should timeout waiting for hit target', async({page, server}) => {
   await page.evaluate(() => {
     document.body.style.position = 'relative';
     const blocker = document.createElement('div');
+    blocker.id = 'blocker';
     blocker.style.position = 'absolute';
     blocker.style.width = '400px';
     blocker.style.height = '20px';
@@ -50,6 +51,36 @@ it('should timeout waiting for hit target', async({page, server}) => {
   });
   const error = await button.click({ timeout: 5000 }).catch(e => e);
   expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
-  expect(error.message).toContain('element does not receive pointer events');
+  expect(error.message).toContain('<div id="blocker"></div> intercepts pointer events');
+  expect(error.message).toContain('retrying click action');
+});
+
+it('should report wrong hit target subtree', async({page, server}) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  const button = await page.$('button');
+  await page.evaluate(() => {
+    document.body.style.position = 'relative';
+
+    const blocker = document.createElement('div');
+    blocker.id = 'blocker';
+    blocker.style.position = 'absolute';
+    blocker.style.width = '400px';
+    blocker.style.height = '20px';
+    blocker.style.left = '0';
+    blocker.style.top = '0';
+    document.body.appendChild(blocker);
+
+    const inner = document.createElement('div');
+    inner.id = 'inner';
+    inner.style.position = 'absolute';
+    inner.style.left = '0';
+    inner.style.top = '0';
+    inner.style.right = '0';
+    inner.style.bottom = '0';
+    blocker.appendChild(inner);
+  });
+  const error = await button.click({ timeout: 5000 }).catch(e => e);
+  expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
+  expect(error.message).toContain('<div id="inner"></div> from <div id="blocker">…</div> subtree intercepts pointer events');
   expect(error.message).toContain('retrying click action');
 });
