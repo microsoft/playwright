@@ -28,14 +28,9 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number, apiName: string): Promise<T> {
-  const controller = new ProgressController(logger, timeout, apiName);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number): Promise<T> {
+  const controller = new ProgressController(logger, timeout);
   return controller.run(task);
-}
-
-let useApiName = true;
-export function setUseApiName(value: boolean) {
-  useApiName = value;
 }
 
 export class ProgressController {
@@ -54,12 +49,10 @@ export class ProgressController {
 
   private _logger: Logger;
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
-  private _apiName: string;
   private _deadline: number;
   private _timeout: number;
 
-  constructor(logger: Logger, timeout: number, apiName: string) {
-    this._apiName = apiName;
+  constructor(logger: Logger, timeout: number) {
     this._logger = logger;
 
     this._timeout = timeout;
@@ -74,7 +67,7 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
 
-    const loggerScope = this._logger.createScope(useApiName ? this._apiName : undefined, true);
+    const loggerScope = this._logger.createScope(undefined, true);
 
     const progress: Progress = {
       aborted: this._abortedPromise,
@@ -105,7 +98,6 @@ export class ProgressController {
     } catch (e) {
       this._aborted();
       rewriteErrorMessage(e,
-          (useApiName ? `${this._apiName}: ` : '') +
           e.message +
           formatLogRecording(loggerScope.recording()) +
           kLoggingNote);

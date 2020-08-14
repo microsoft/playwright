@@ -143,10 +143,6 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   async setFileChooserInterceptedNoReply(params: { intercepted: boolean }) {
   }
 
-  async title() {
-    return await this._page.title();
-  }
-
   async keyboardDown(params: { key: string }): Promise<void> {
     await this._page.keyboard.down(params.key);
   }

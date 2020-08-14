@@ -22,7 +22,7 @@ const CRASH_FAIL = (FFOX && WIN) || WIRE;
 // Firefox Win: it just doesn't crash sometimes.
 function crash(pageImpl) {
   if (CHROMIUM)
-    pageImpl.goto('chrome://crash').catch(e => {});
+    pageImpl.mainFrame().goto('chrome://crash').catch(e => {});
   else if (WEBKIT)
     pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
   else if (FFOX)
