@@ -48,6 +48,7 @@
     "ws": "^6.1.0"
   },
   "devDependencies": {
+    "@babel/code-frame": "^7.10.4",
     "@babel/core": "^7.10.3",
     "@babel/preset-env": "^7.10.3",
     "@babel/preset-typescript": "^7.10.1",
@@ -59,6 +60,7 @@
     "@types/progress": "^2.0.3",
     "@types/proxy-from-env": "^1.0.0",
     "@types/rimraf": "^2.0.2",
+    "@types/stack-utils": "^1.0.1",
     "@types/ws": "^6.0.1",
     "@typescript-eslint/eslint-plugin": "^2.6.1",
     "@typescript-eslint/parser": "^2.6.1",
@@ -79,6 +81,8 @@
     "pixelmatch": "^4.0.2",
     "socksv5": "0.0.6",
     "source-map-support": "^0.5.19",
+    "stack-utils": "^2.0.2",
+    "terminal-link": "^2.1.1",
     "text-diff": "^1.0.1",
     "ts-loader": "^6.1.2",
     "typescript": "^3.8.3",
