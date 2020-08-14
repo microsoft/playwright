@@ -17,6 +17,7 @@
 const debug = require('debug');
 
 const registrations = new Map();
+const filesWithRegistrations = new Set();
 
 class Fixture {
   constructor(pool, name, scope, fn) {
@@ -139,7 +140,13 @@ function fixtureParameterNames(fn) {
 }
 
 function innerRegisterFixture(name, scope, fn) {
-  registrations.set(name, { scope, fn });
+  const stackFrame = new Error().stack.split('\n').slice(1).filter(line => !line.includes(__filename))[0];
+  const location = stackFrame.replace(/.*at Object.<anonymous> \((.*)\)/, '$1');
+  const file = location.replace(/^(.+):\d+:\d+$/, '$1');
+  const registration = { scope, fn, file, location };
+  registrations.set(name, registration);
+  if (scope === 'worker')
+    filesWithRegistrations.add(file);
 };
 
 function registerFixture(name, fn) {
@@ -150,4 +157,4 @@ function registerWorkerFixture (name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
-module.exports = { FixturePool, registerFixture, registerWorkerFixture };
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, filesWithRegistrations };

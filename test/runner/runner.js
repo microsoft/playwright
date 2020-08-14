@@ -15,11 +15,13 @@
  */
 
 const child_process = require('child_process');
+const crypto = require('crypto');
 const path = require('path');
 const { EventEmitter } = require('events');
 const Mocha = require('mocha');
 const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
+const { filesWithRegistrations } = require('./fixtures');
 
 const constants = Mocha.Runner.constants;
 // Mocha runner does not remove uncaughtException listeners.
@@ -63,11 +65,27 @@ class Runner extends EventEmitter {
     }
   }
 
+  _filesSortedByWorkerHash() {
+    const result = [];
+    for (const file of this._files.keys())
+      result.push({ file, hash: computeWorkerHash(file) });
+    result.sort((a, b) => a.hash < b.hash ? -1 : (a.hash === b.hash ? 0 : 1));
+    return result;
+  }
+
   async run() {
     this.emit(constants.EVENT_RUN_BEGIN, {});
-    for (const file of this._files.keys()) {
+    const files = this._filesSortedByWorkerHash();
+    while (files.length) {
       const worker = await this._obtainWorker();
-      this._runJob(worker, file);
+      const requiredHash = files[0].hash;
+      if (worker.hash && worker.hash !== requiredHash) {
+        this._restartWorker(worker);
+        continue;
+      }
+      const entry = files.shift();
+      worker.hash = requiredHash;
+      this._runJob(worker, entry.file);
     }
     await new Promise(f => this._runCompleteCallback = f);
     this.emit(constants.EVENT_RUN_END, {});
@@ -135,7 +153,7 @@ class Runner extends EventEmitter {
     worker.init().then(() => this._workerAvailable(worker));
   }
 
-  async _restartWorker(worker) {
+  _restartWorker(worker) {
     worker.stop();
     this._createWorker();
   }
@@ -212,6 +230,32 @@ class Worker extends EventEmitter {
     this.stderr = [];
     return result;
   }
+}
+
+function collectRequires(file, allDeps) {
+  if (allDeps.has(file))
+    return;
+  allDeps.add(file);
+  const cache = require.cache[file];
+  const deps = cache.children.map(m => m.id);
+  for (const dep of deps)
+    collectRequires(dep, allDeps);
+}
+
+function computeWorkerHash(file) {
+  // At this point, filesWithRegistrations contains all the files with worker fixture registrations.
+  // For every test, build the require closure and map each file to fixtures declared in it.
+  // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
+  // Tests with the matching "worker hash" will reuse the same worker.
+  const deps = new Set();
+  const hash = crypto.createHash('sha1');
+  collectRequires(file, deps);
+  for (const dep of deps) {
+    if (!filesWithRegistrations.has(dep))
+      continue;
+    hash.update(dep);
+  }
+  return hash.digest('hex');
 }
 
 module.exports = { Runner };
