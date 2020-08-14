@@ -130,7 +130,7 @@ function compare(actual, expectedPath) {
 
   return {
     pass: false,
-    message: output.join('n'),
+    message: output.join('\n'),
   };
 }
 
