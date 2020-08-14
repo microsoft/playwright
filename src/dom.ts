@@ -637,6 +637,36 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
+  async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
+    const { state = 'visible' } = options;
+    if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
+      throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
+    const info = selectors._parseSelector(selector);
+    const task = waitForSelectorTask(info, state, this);
+    return this._page._runAbortableTask(async progress => {
+      progress.logger.info(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
+      const context = await this._context.frame._context(info.world);
+      const injected = await context.injectedScript();
+      const pollHandler = new InjectedScriptPollHandler(progress, await task(injected));
+      const result = await pollHandler.finishHandle();
+      if (!result.asElement()) {
+        result.dispose();
+        return null;
+      }
+      const handle = result.asElement() as ElementHandle<Element>;
+      return handle._adoptTo(await this._context.frame._mainContext());
+    }, this._page._timeoutSettings.timeout(options), 'elementHandle.waitForSelector');
+  }
+
+  async _adoptTo(context: FrameExecutionContext): Promise<ElementHandle<T>> {
+    if (this._context !== context) {
+      const adopted = await this._page._delegate.adoptElementHandle(this, context);
+      this.dispose();
+      return adopted;
+    }
+    return this;
+  }
+
   async _waitForDisplayedAtStablePosition(progress: Progress, waitForEnabled: boolean): Promise<'error:notconnected' | 'done'> {
     if (waitForEnabled)
       progress.logger.info(`  waiting for element to be visible, enabled and not moving`);
@@ -782,12 +812,12 @@ function roundPoint(point: types.Point): types.Point {
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;
 
-export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden'): SchedulableTask<Element | undefined> {
-  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, state }) => {
+export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', root?: ElementHandle): SchedulableTask<Element | undefined> {
+  return injectedScript => injectedScript.evaluateHandle((injected, { parsed, state, root }) => {
     let lastElement: Element | undefined;
 
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document);
+      const element = injected.querySelector(parsed, root || document);
       const visible = element ? injected.isVisible(element) : false;
 
       if (lastElement !== element) {
@@ -809,7 +839,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
           return !visible ? undefined : continuePolling;
       }
     });
-  }, { parsed: selector.parsed, state });
+  }, { parsed: selector.parsed, state, root });
 }
 
 export function dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): SchedulableTask<undefined> {

@@ -148,6 +148,10 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
     return { value: serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
+
+  async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element?: ElementHandleChannel }> {
+    return { element: ElementHandleDispatcher.createNullable(this._scope, await this._elementHandle.waitForSelector(params.selector, params)) };
+  }
 }
 
 export function convertSelectOptionValues(elements?: ElementHandleChannel[], options?: types.SelectOption[]): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {

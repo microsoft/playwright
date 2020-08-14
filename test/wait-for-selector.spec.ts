@@ -47,6 +47,41 @@ it('should immediately resolve promise if node exists', async({page, server}) =>
   await frame.waitForSelector('div', { state: 'attached'});
 });
 
+it('elementHandle.waitForSelector should immediately resolve if node exists', async({page}) => {
+  await page.setContent(`<span>extra</span><div><span>target</span></div>`);
+  const div = await page.$('div');
+  const span = await div.waitForSelector('span', { state: 'attached' });
+  expect(await span.evaluate(e => e.textContent)).toBe('target');
+});
+
+it('elementHandle.waitForSelector should wait', async({page}) => {
+  await page.setContent(`<div></div>`);
+  const div = await page.$('div');
+  const promise = div.waitForSelector('span', { state: 'attached' });
+  await div.evaluate(div => div.innerHTML = '<span>target</span>');
+  const span = await promise;
+  expect(await span.evaluate(e => e.textContent)).toBe('target');
+});
+
+it('elementHandle.waitForSelector should timeout', async({page}) => {
+  await page.setContent(`<div></div>`);
+  const div = await page.$('div');
+  const error = await div.waitForSelector('span', { timeout: 100 }).catch(e => e);
+  expect(error.message).toContain('Timeout 100ms exceeded.');
+});
+
+it('elementHandle.waitForSelector should throw on navigation', async({page, server}) => {
+  await page.setContent(`<div></div>`);
+  const div = await page.$('div');
+  const promise = div.waitForSelector('span').catch(e => e);
+  // Give it some time before navigating.
+  for (let i = 0; i < 10; i++)
+    await page.evaluate(() => 1);
+  await page.goto(server.EMPTY_PAGE);
+  const error = await promise;
+  expect(error.message).toContain('Execution context was destroyed, most likely because of a navigation');
+});
+
 it('should work with removed MutationObserver', async({page, server}) => {
   await page.evaluate(() => delete window.MutationObserver);
   const [handle] = await Promise.all([
@@ -158,7 +193,7 @@ it('should work when node is added through innerHTML', async({page, server}) => 
   await watchdog;
 });
 
-it('Page.$ waitFor is shortcut for main frame', async({page, server}) => {
+it('page.waitForSelector is shortcut for main frame', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const otherFrame = page.frames()[1];
