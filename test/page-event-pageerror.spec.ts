@@ -17,7 +17,7 @@
 import './base.fixture';
 
 import path from 'path';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
 it('should fire', async({page, server}) => {
   const [error] = await Promise.all([

@@ -17,9 +17,9 @@
 import './base.fixture';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
-it.skip(USES_HOOKS).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
+it.skip(WIRE).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   {
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -38,7 +38,7 @@ it.skip(USES_HOOKS).slow()('should be able to reconnect to a browser', async({br
   await browserServer.close();
 });
 
-it.skip(USES_HOOKS).fail(CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE).fail(CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
   const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);
@@ -46,7 +46,7 @@ it.skip(USES_HOOKS).fail(CHROMIUM && WIN).slow()('should handle exceptions durin
   expect(error.message).toContain('Dummy');
 });
 
-it.skip(USES_HOOKS)('should set the browser connected state', async ({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE)('should set the browser connected state', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   expect(remote.isConnected()).toBe(true);
@@ -55,7 +55,7 @@ it.skip(USES_HOOKS)('should set the browser connected state', async ({browserTyp
   await browserServer.close();
 });
 
-it.skip(USES_HOOKS)('should throw when used after isConnected returns false', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE)('should throw when used after isConnected returns false', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const page = await remote.newPage();

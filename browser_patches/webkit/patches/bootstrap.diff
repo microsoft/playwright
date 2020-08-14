@@ -8656,10 +8656,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5a2d1075e5db34a8e86d882f07ff642e2eb82cce
+index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d1a9d5650
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,154 @@
+@@ -0,0 +1,157 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8761,6 +8761,9 @@ index 0000000000000000000000000000000000000000..5a2d1075e5db34a8e86d882f07ff642e
 +    if (!m_encoder)
 +        return;
 +
++#if PLATFORM(MAC)
++    m_encoder->setOffsetTop(m_page.pageClient().browserToolbarHeight());
++#endif
 +#if !PLATFORM(WPE)
 +    scheduleFrameEncoding();
 +#endif
@@ -8898,10 +8901,10 @@ index 0000000000000000000000000000000000000000..1ff1e813de838a60f4ab030e31b24891
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f540189dfbe
+index 0000000000000000000000000000000000000000..b33d5babec7709e003bc968434a8ba96486d5cea
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,378 @@
+@@ -0,0 +1,380 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9019,9 +9022,10 @@ index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f54
 +        : m_surface(WTFMove(surface))
 +    { }
 +#elif PLATFORM(MAC)
-+    VPXFrame(RetainPtr<CGImageRef> windowImage, Optional<double> scale)
++    VPXFrame(RetainPtr<CGImageRef> windowImage, Optional<double> scale, int offsetTop)
 +        : m_windowImage(WTFMove(windowImage))
 +        , m_scale(scale)
++        , m_offsetTop(offsetTop)
 +    { }
 +#endif
 +
@@ -9038,7 +9042,7 @@ index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f54
 +        int argb_stride = image->w * 4;
 +        UniqueArray<uint8_t> buffer = makeUniqueArray<uint8_t>(argb_stride * image->h);
 +        uint8_t* argb_data = buffer.get();
-+        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h, m_scale);
++        ScreencastEncoder::imageToARGB(m_windowImage.get(), argb_data, image->w, image->h, m_scale, m_offsetTop);
 +#endif
 +        const int y_stride = image->stride[0];
 +        ASSERT(image->stride[1] == image->stride[2]);
@@ -9061,6 +9065,7 @@ index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f54
 +#elif PLATFORM(MAC)
 +    RetainPtr<CGImageRef> m_windowImage;
 +    Optional<double> m_scale;
++    int m_offsetTop { 0 };
 +#endif
 +    int m_duration = 0;
 +};
@@ -9259,7 +9264,7 @@ index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f54
 +    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +
-+    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale);
++    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale, m_offsetTop);
 +}
 +#endif
 +
@@ -9282,10 +9287,10 @@ index 0000000000000000000000000000000000000000..9bef1bb85b02342ca8fd8129b80d7f54
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72aefca77bf6
+index 0000000000000000000000000000000000000000..0e2f2d42cf398bee37ab27bda765be978be81f0d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,79 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9342,6 +9347,7 @@ index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72ae
 +    void encodeFrame(cairo_surface_t*, WebCore::IntSize);
 +#elif PLATFORM(MAC)
 +    void encodeFrame(RetainPtr<CGImageRef>&&);
++    void setOffsetTop(int offset) { m_offsetTop = offset;}
 +#endif
 +
 +    void finish(Function<void()>&& callback);
@@ -9349,7 +9355,7 @@ index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72ae
 +private:
 +    void flushLastFrame();
 +#if PLATFORM(MAC)
-+    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height, Optional<double> scale);
++    static void imageToARGB(CGImageRef, uint8_t* rgba_data, int width, int height, Optional<double> scale, int offsetTop);
 +#endif
 +
 +    std::unique_ptr<VPXCodec> m_vpxCodec;
@@ -9358,6 +9364,9 @@ index 0000000000000000000000000000000000000000..df283ee565b1691c49e68b79f40a72ae
 +    MonotonicTime m_lastFrameTimestamp;
 +    class VPXFrame;
 +    std::unique_ptr<VPXFrame> m_lastFrame;
++#if PLATFORM(MAC)
++    int m_offsetTop { 0 };
++#endif
 +};
 +
 +} // namespace WebKit
@@ -10044,10 +10053,10 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..51b0d77bbb2addd48a0ffd1cfb65368d37caefd9
+index 0000000000000000000000000000000000000000..76df8f6952c586fe2e0e10d620e8770a03b08ab0
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,54 @@
+@@ -0,0 +1,53 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -10081,7 +10090,7 @@ index 0000000000000000000000000000000000000000..51b0d77bbb2addd48a0ffd1cfb65368d
 +
 +namespace WebKit {
 +
-+void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height, Optional<double> scale)
++void ScreencastEncoder::imageToARGB(CGImageRef image, uint8_t* argb_data, int width, int height, Optional<double> scale, int offsetTop)
 +{
 +    size_t bitsPerComponent = 8;
 +    size_t bytesPerPixel = 4;
@@ -10096,8 +10105,7 @@ index 0000000000000000000000000000000000000000..51b0d77bbb2addd48a0ffd1cfb65368d
 +    size_t imageWidth = CGImageGetWidth(image);
 +    size_t imageHeight = CGImageGetHeight(image);
 +    // TODO: exclude controls from original screenshot
-+    constexpr int browserControlsHeight = 55;
-+    CGFloat pageHeight = static_cast<CGFloat>(imageHeight) - browserControlsHeight;
++    CGFloat pageHeight = static_cast<CGFloat>(imageHeight) - offsetTop;
 +    CGContextDrawImage(context.get(), CGRectMake(0, height - pageHeight, imageWidth, imageHeight), image);
 +}
 +
@@ -11304,7 +11312,7 @@ index 7a14cfba15c103a2d4fe263fa49d25af3c396ec2..3ee0e154349661632799057c71f1d1f1
      BOOL result = ::CreateProcess(0, commandLine.data(), 0, 0, true, 0, 0, 0, &startupInfo, &processInformation);
  
 diff --git a/Source/WebKit/UIProcess/PageClient.h b/Source/WebKit/UIProcess/PageClient.h
-index 8c6c573cfd7349d0a11afb4b38f969173ad60bb4..e4d02afc038ea7efbae9e44701a2d962cd86847c 100644
+index 8c6c573cfd7349d0a11afb4b38f969173ad60bb4..f5c6646b261847bc6fa5e05defcef282cda5e19e 100644
 --- a/Source/WebKit/UIProcess/PageClient.h
 +++ b/Source/WebKit/UIProcess/PageClient.h
 @@ -248,7 +248,7 @@ public:
@@ -11328,7 +11336,15 @@ index 8c6c573cfd7349d0a11afb4b38f969173ad60bb4..e4d02afc038ea7efbae9e44701a2d962
  #if PLATFORM(COCOA) || PLATFORM(GTK)
      virtual RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) = 0;
  #endif
-@@ -347,7 +352,7 @@ public:
+@@ -303,6 +308,7 @@ public:
+     virtual WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&) = 0;
+ #if PLATFORM(MAC)
+     virtual WebCore::IntRect rootViewToWindow(const WebCore::IntRect&) = 0;
++    virtual int browserToolbarHeight() const { return 0; }
+ #endif
+ #if PLATFORM(IOS_FAMILY)
+     virtual void didNotHandleTapAsClick(const WebCore::IntPoint&) = 0;
+@@ -347,7 +353,7 @@ public:
      virtual void setTextIndicator(Ref<WebCore::TextIndicator>, WebCore::TextIndicatorWindowLifetime) = 0;
      virtual void clearTextIndicator(WebCore::TextIndicatorWindowDismissalAnimation) = 0;
      virtual void setTextIndicatorAnimationProgress(float) = 0;
@@ -11337,7 +11353,7 @@ index 8c6c573cfd7349d0a11afb4b38f969173ad60bb4..e4d02afc038ea7efbae9e44701a2d962
      virtual void didPerformDictionaryLookup(const WebCore::DictionaryPopupInfo&) = 0;
  #endif
  
-@@ -477,7 +482,7 @@ public:
+@@ -477,7 +483,7 @@ public:
      virtual bool hasSafeBrowsingWarning() const { return false; }
  
      virtual void setMouseEventPolicy(WebCore::MouseEventPolicy) { }
@@ -13620,7 +13636,7 @@ index 0000000000000000000000000000000000000000..721826c8c98fc85b68a4f45deaee69c1
 +
 +#endif
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.h b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
-index 5b0d31702036b6f2cda7726b69372d9aee82852c..9e3441a72f458f645be4350e783253ade8f1ce18 100644
+index 5b0d31702036b6f2cda7726b69372d9aee82852c..39fd6a2834b2e0030dd7fbef1cddfdea8b64d217 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.h
 @@ -53,6 +53,8 @@ class PageClientImpl final : public PageClientImplCocoa
@@ -13632,7 +13648,15 @@ index 5b0d31702036b6f2cda7726b69372d9aee82852c..9e3441a72f458f645be4350e783253ad
      PageClientImpl(NSView *, WKWebView *);
      virtual ~PageClientImpl();
  
-@@ -154,6 +156,9 @@ private:
+@@ -119,6 +121,7 @@ private:
+     WebCore::IntRect rootViewToScreen(const WebCore::IntRect&) override;
+ #if PLATFORM(MAC)
+     WebCore::IntRect rootViewToWindow(const WebCore::IntRect&) override;
++    int browserToolbarHeight() const override;
+ #endif
+     WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint&) override;
+     WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&) override;
+@@ -154,6 +157,9 @@ private:
      void updateAcceleratedCompositingMode(const LayerTreeContext&) override;
      void didFirstLayerFlush(const LayerTreeContext&) override;
  
@@ -13642,7 +13666,7 @@ index 5b0d31702036b6f2cda7726b69372d9aee82852c..9e3441a72f458f645be4350e783253ad
      RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&) override;
      void wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&) override;
  #if ENABLE(MAC_GESTURE_EVENTS)
-@@ -201,6 +206,10 @@ private:
+@@ -201,6 +207,10 @@ private:
      void beganExitFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame) override;
  #endif
  
@@ -13654,7 +13678,7 @@ index 5b0d31702036b6f2cda7726b69372d9aee82852c..9e3441a72f458f645be4350e783253ad
      void navigationGestureWillEnd(bool willNavigate, WebBackForwardListItem&) override;
      void navigationGestureDidEnd(bool willNavigate, WebBackForwardListItem&) override;
 diff --git a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
-index 4d3687710c9212b4764deea5ef5eaca0783d5da4..0134511277b9d3e302df63d28a8c887523204582 100644
+index 4d3687710c9212b4764deea5ef5eaca0783d5da4..24db60f00929cb4c8d37caf0ec37c12e370dcbef 100644
 --- a/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 +++ b/Source/WebKit/UIProcess/mac/PageClientImplMac.mm
 @@ -79,6 +79,7 @@
@@ -13673,7 +13697,7 @@ index 4d3687710c9212b4764deea5ef5eaca0783d5da4..0134511277b9d3e302df63d28a8c8875
 +
 +// static
 +void PageClientImpl::setHeadless(bool headless) {
-+    _headless = true;
++    _headless = headless;
 +}
 +
  PageClientImpl::PageClientImpl(NSView *view, WKWebView *webView)
@@ -13719,7 +13743,23 @@ index 4d3687710c9212b4764deea5ef5eaca0783d5da4..0134511277b9d3e302df63d28a8c8875
  }
  
  void PageClientImpl::toolTipChanged(const String& oldToolTip, const String& newToolTip)
-@@ -447,11 +465,15 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
+@@ -435,6 +453,15 @@ IntRect PageClientImpl::rootViewToWindow(const WebCore::IntRect& rect)
+     return enclosingIntRect(tempRect);
+ }
+ 
++int PageClientImpl::browserToolbarHeight() const
++{
++    // There are no controls in headless mode.
++    if (_headless)
++        return 0;
++
++    return 55;
++}
++
+ IntPoint PageClientImpl::accessibilityScreenToRootView(const IntPoint& point)
+ {
+     return screenToRootView(point);
+@@ -447,11 +474,15 @@ IntRect PageClientImpl::rootViewToAccessibilityScreen(const IntRect& rect)
  
  void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool eventWasHandled)
  {
@@ -13735,7 +13775,7 @@ index 4d3687710c9212b4764deea5ef5eaca0783d5da4..0134511277b9d3e302df63d28a8c8875
      return WebPopupMenuProxyMac::create(m_view, page);
  }
  
-@@ -564,6 +586,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
+@@ -564,6 +595,12 @@ CALayer *PageClientImpl::acceleratedCompositingRootLayer() const
      return m_impl->acceleratedCompositingRootLayer();
  }
  
@@ -13748,7 +13788,7 @@ index 4d3687710c9212b4764deea5ef5eaca0783d5da4..0134511277b9d3e302df63d28a8c8875
  RefPtr<ViewSnapshot> PageClientImpl::takeViewSnapshot(Optional<WebCore::IntRect>&&)
  {
      return m_impl->takeViewSnapshot();
-@@ -742,6 +770,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
+@@ -742,6 +779,13 @@ void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntR
  
  #endif // ENABLE(FULLSCREEN_API)
  
@@ -13762,7 +13802,7 @@ index 4d3687710c9212b4764deea5ef5eaca0783d5da4..0134511277b9d3e302df63d28a8c8875
  void PageClientImpl::navigationGestureDidBegin()
  {
      m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
-@@ -908,6 +943,9 @@ void PageClientImpl::didRestoreScrollPosition()
+@@ -908,6 +952,9 @@ void PageClientImpl::didRestoreScrollPosition()
  
  bool PageClientImpl::windowIsFrontWindowUnderMouse(const NativeWebMouseEvent& event)
  {

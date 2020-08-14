@@ -102,7 +102,7 @@ it('should change document.activeElement', async({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server}) => {
+it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();
   await Promise.all([
@@ -119,8 +119,8 @@ it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server}
     page.screenshot(),
     page2.screenshot(),
   ]);
-  expect(screenshots[0]).toBeGolden('screenshot-sanity.png');
-  expect(screenshots[1]).toBeGolden('grid-cell-0.png');
+  expect(screenshots[0]).toMatchImage(golden('screenshot-sanity.png'));
+  expect(screenshots[1]).toMatchImage(golden('grid-cell-0.png'));
 });
 
 it('should change focused iframe', async({page, server}) => {

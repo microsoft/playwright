@@ -16,7 +16,7 @@
  */
 import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 it('should fire', async({page, server}) => {
   page.on('dialog', dialog => {
@@ -61,24 +61,6 @@ it('should dismiss the confirm prompt', async({page, server}) => {
   });
   const result = await page.evaluate(() => confirm('boolean?'));
   expect(result).toBe(false);
-});
-
-it.fail(CHANNEL)('should log prompt actions', async({browser}) => {
-  const messages = [];
-  const context = await browser.newContext({
-    logger: {
-      isEnabled: () => true,
-      log: (name, severity, message) => messages.push(message),
-    }
-  });
-  const page = await context.newPage();
-  const promise = page.evaluate(() => confirm('01234567890123456789012345678901234567890123456789012345678901234567890123456789'));
-  const dialog = await page.waitForEvent('dialog');
-  expect(messages.join()).toContain('confirm "0123456789012345678901234567890123456789012345678…" was shown');
-  await dialog.accept('123');
-  await promise;
-  expect(messages.join()).toContain('confirm "0123456789012345678901234567890123456789012345678…" was accepted');
-  await context.close();
 });
 
 it.fail(WEBKIT)('should be able to close context with open alert', async({browser}) => {

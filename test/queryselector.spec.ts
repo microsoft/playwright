@@ -18,7 +18,7 @@ import './base.fixture';
 
 import path from 'path';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
 
 it('should query existing element with css selector', async({page, server}) => {
   await page.setContent('<section>test</section>');

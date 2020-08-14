@@ -21,7 +21,7 @@ import path from 'path';
 import url from 'url';
 import { Frame, Page } from '..';
 import { TestServer } from '../utils/testserver';
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should navigate to empty page with networkidle', async({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });

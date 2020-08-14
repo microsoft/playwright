@@ -19,17 +19,14 @@ import * as path from 'path';
 import * as os from 'os';
 import { getFromENV, logPolitely, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
-import * as ws from 'ws';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { BrowserTypeBase } from './browserType';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
-import { Logger } from '../logger';
+import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserOptions } from '../browser';
-import { WebSocketServer } from './webSocketServer';
 import { LaunchOptionsBase } from '../types';
 
 export class Chromium extends BrowserTypeBase {
@@ -105,10 +102,6 @@ export class Chromium extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
-    return startWebSocketServer(transport, logger, port);
-  }
-
   _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
@@ -157,136 +150,6 @@ export class Chromium extends BrowserTypeBase {
     return chromeArguments;
   }
 }
-
-type SessionData = {
-  socket: ws,
-  children: Set<string>,
-  isBrowserSession: boolean,
-  parent?: string,
-};
-
-function startWebSocketServer(transport: ConnectionTransport, logger: Logger, port: number): WebSocketServer {
-  const awaitingBrowserTarget = new Map<number, ws>();
-  const sessionToData = new Map<string, SessionData>();
-  const socketToBrowserSession = new Map<ws, { sessionId?: string, queue?: ProtocolRequest[] }>();
-
-  function addSession(sessionId: string, socket: ws, parentSessionId?: string) {
-    sessionToData.set(sessionId, {
-      socket,
-      children: new Set(),
-      isBrowserSession: !parentSessionId,
-      parent: parentSessionId,
-    });
-    if (parentSessionId)
-      sessionToData.get(parentSessionId)!.children.add(sessionId);
-  }
-
-  function removeSession(sessionId: string) {
-    const data = sessionToData.get(sessionId)!;
-    for (const child of data.children)
-      removeSession(child);
-    if (data.parent)
-      sessionToData.get(data.parent)!.children.delete(sessionId);
-    sessionToData.delete(sessionId);
-  }
-
-  const server = new WebSocketServer(transport, logger, port, {
-    onBrowserResponse(seqNum: number, source: ws, message: ProtocolResponse) {
-      if (awaitingBrowserTarget.has(seqNum)) {
-        const freshSocket = awaitingBrowserTarget.get(seqNum)!;
-        awaitingBrowserTarget.delete(seqNum);
-
-        const sessionId = message.result.sessionId;
-        if (freshSocket.readyState !== ws.CLOSED && freshSocket.readyState !== ws.CLOSING) {
-          const { queue } = socketToBrowserSession.get(freshSocket)!;
-          for (const item of queue!) {
-            item.sessionId = sessionId;
-            server.sendMessageToBrowser(item, source);
-          }
-          socketToBrowserSession.set(freshSocket, { sessionId });
-          addSession(sessionId, freshSocket);
-        } else {
-          server.sendMessageToBrowserOneWay('Target.detachFromTarget', { sessionId });
-          socketToBrowserSession.delete(freshSocket);
-        }
-        return;
-      }
-
-      if (message.id === -1)
-        return;
-
-      // At this point everything we care about has sessionId.
-      if (!message.sessionId)
-        return;
-
-      const data = sessionToData.get(message.sessionId);
-      if (data && data.socket.readyState !== ws.CLOSING) {
-        if (data.isBrowserSession)
-          delete message.sessionId;
-        data.socket.send(JSON.stringify(message));
-      }
-    },
-
-    onBrowserNotification(message: ProtocolResponse) {
-      // At this point everything we care about has sessionId.
-      if (!message.sessionId)
-        return;
-
-      const data = sessionToData.get(message.sessionId);
-      if (data && data.socket.readyState !== ws.CLOSING) {
-        if (message.method === 'Target.attachedToTarget')
-          addSession(message.params.sessionId, data.socket, message.sessionId);
-        if (message.method === 'Target.detachedFromTarget')
-          removeSession(message.params.sessionId);
-        // Strip session ids from the browser sessions.
-        if (data.isBrowserSession)
-          delete message.sessionId;
-        data.socket.send(JSON.stringify(message));
-      }
-    },
-
-    onClientAttached(socket: ws) {
-      socketToBrowserSession.set(socket, { queue: [] });
-
-      const seqNum = server.sendMessageToBrowser({
-        id: -1, // Proxy-initiated request.
-        method: 'Target.attachToBrowserTarget',
-        params: {}
-      }, socket);
-      awaitingBrowserTarget.set(seqNum, socket);
-    },
-
-    onClientRequest(socket: ws, message: ProtocolRequest) {
-      // If message has sessionId, pass through.
-      if (message.sessionId) {
-        server.sendMessageToBrowser(message, socket);
-        return;
-      }
-
-      // If message has no sessionId, look it up.
-      const session = socketToBrowserSession.get(socket)!;
-      if (session.sessionId) {
-        // We have it, use it.
-        message.sessionId = session.sessionId;
-        server.sendMessageToBrowser(message, socket);
-        return;
-      }
-      // Pending session id, queue the message.
-      session.queue!.push(message);
-    },
-
-    onClientDetached(socket: ws) {
-      const session = socketToBrowserSession.get(socket);
-      if (!session || !session.sessionId)
-        return;
-      removeSession(session.sessionId);
-      socketToBrowserSession.delete(socket);
-      server.sendMessageToBrowserOneWay('Target.detachFromTarget', { sessionId: session.sessionId });
-    }
-  });
-  return server;
-}
-
 
 const DEFAULT_ARGS = [
   '--disable-background-networking',

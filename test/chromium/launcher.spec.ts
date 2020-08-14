@@ -19,23 +19,23 @@ import path from 'path';
 import utils from '../utils';
 import { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 const {makeUserDataDir, removeUserDataDir} = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIN, WIRE} = testOptions;
 
-it.skip(USES_HOOKS || !CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE || !CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
   const error = await browserType.launchServer(options).catch(e => e);
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it.skip(USES_HOOKS || !CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE || !CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
   const browser = await browserType.launchServer(options);
   await browser.close();
 });
 
-it.skip(!CHROMIUM || USES_HOOKS || WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+it.skip(!CHROMIUM || WIRE || WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);
   const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {

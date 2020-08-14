@@ -308,12 +308,6 @@ export type LaunchOptionsBase = {
 export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
 export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
 
-export type ConnectOptions = {
-  wsEndpoint: string,
-  slowMo?: number,
-  timeout?: number,
-};
-
 export type SerializedAXNode = {
   role: string,
   name: string,

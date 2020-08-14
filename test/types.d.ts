@@ -19,7 +19,7 @@ interface FixtureState {
 declare module '' {
     module 'expect/build/types' {
         interface Matchers<R> {
-            toBeGolden(name: string): R;
+            toMatchImage(path: string): R;
         }
     }
 }
@@ -41,9 +41,6 @@ declare const afterEach: (inner: (state: FixtureState & WorkerState) => Promise<
 declare const beforeAll: (inner: (state: WorkerState) => Promise<void>) => void;
 declare const afterAll: (inner: (state: WorkerState) => Promise<void>) => void;
 
-declare const registerFixture: <T extends keyof FixtureState>(name: T, inner: (state: FixtureState & WorkerState, test: (arg: FixtureState[T]) => Promise<void>) => Promise<void>) => void;
-declare const registerWorkerFixture: <T extends keyof WorkerState>(name: T, inner: (state: WorkerState, test: (arg: WorkerState[T]) => Promise<void>) => Promise<void>) => void;
-
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
 
 // global variables in assets
@@ -55,9 +52,7 @@ declare const testOptions: {
     LINUX: boolean;
     WIN: boolean;
     HEADLESS: boolean;
-    USES_HOOKS: boolean;
-    CHANNEL: boolean;
-    ASSETS_DIR: string;
+    WIRE: boolean;
 };
 
 declare const testPath : string;

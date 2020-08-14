@@ -18,7 +18,7 @@ import './base.fixture';
 
 import path from 'path';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+const {FFOX, CHROMIUM, WEBKIT, WIRE} = testOptions;
 
 it('should query existing element', async({page, server}) => {
   await page.goto(server.PREFIX + '/playground.html');
