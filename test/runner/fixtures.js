@@ -109,15 +109,6 @@ class FixturePool {
     return fn(params);
   }
 
-  patchToEnableFixtures(object, name) {
-    const original = object[name];
-    object[name] = fn => {
-      return original(async () => {
-        return await this.resolveParametersAndRun(fn);
-      });
-    }
-  }
-
   wrapTestCallback(callback) {
     if (!callback)
       return callback;

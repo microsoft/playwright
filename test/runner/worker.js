@@ -18,17 +18,26 @@ const debug = require('debug');
 const { fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const { TestRunner } = require('./testRunner');
+const util = require('util');
 
 let closed = false;
 
 sendMessageToParent('ready');
 
+function chunkToParams(chunk) {
+  if (chunk instanceof Buffer)
+    return { buffer: chunk.toString('base64') };
+  if (typeof chunk !== 'string')
+    return util.inspect(chunk);
+  return chunk;
+}
+
 process.stdout.write = chunk => {
-  sendMessageToParent('stdout', chunk);
+  sendMessageToParent('stdout', chunkToParams(chunk));
 };
 
 process.stderr.write = chunk => {
-  sendMessageToParent('stderr', chunk);
+  sendMessageToParent('stderr', chunkToParams(chunk));
 };
 
 debug.log = data => {

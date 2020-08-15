@@ -197,17 +197,17 @@ class OopWorker extends EventEmitter {
     });
     this.stdout = [];
     this.stderr = [];
-    this.on('stdout', data => {
-      if (runner._options.dumpio)
-        process.stdout.write(data);
-      else
-        this.stdout.push(data);
+    this.on('stdout', params => {
+      const chunk = chunkFromParams(params);
+      if (!runner._options.quiet)
+        process.stdout.write(chunk);
+      this.stdout.push(chunk);
     });
-    this.on('stderr', data => {
-      if (runner._options.dumpio)
-        process.stderr.write(data);
-      else
-        this.stderr.push(data);
+    this.on('stderr', params => {
+      const chunk = chunkFromParams(params);
+      if (!runner._options.quiet)
+        process.stderr.write(chunk);
+      this.stderr.push(chunk);
     });
     this.on('debug', data => {
       process.stderr.write(data + '\n');
@@ -271,6 +271,12 @@ class InProcessWorker extends EventEmitter {
   takeErr() {
     return [];
   }
+}
+
+function chunkFromParams(params) {
+  if (typeof params === 'string')
+    return params;
+  return Buffer.from(params.buffer, 'base64');
 }
 
 module.exports = { Runner };

@@ -58,7 +58,7 @@ function specBuilder(modifiers, specCallback) {
   return builder({}, null);
 }
 
-function fixturesUI(trialRun, suite) {
+function fixturesUI(testRunner, suite) {
   const suites = [suite];
 
   suite.on(Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
@@ -69,7 +69,7 @@ function fixturesUI(trialRun, suite) {
       if (suite.isPending())
         fn = null;
       let wrapper;
-      if (trialRun) {
+      if (testRunner.trialRun) {
         if (fn)
           wrapper = () => {};
       } else {
@@ -113,17 +113,20 @@ function fixturesUI(trialRun, suite) {
       return suite;
     });
 
-    context.beforeEach = common.beforeEach;
-    context.afterEach = common.afterEach;
-    if (trialRun) {
-      context.beforeEach = () => {};
-      context.afterEach = () => {};
-    } else {
-      context.beforeEach = common.beforeEach;
-      context.afterEach = common.afterEach;
-      fixturePool.patchToEnableFixtures(context, 'beforeEach');
-      fixturePool.patchToEnableFixtures(context, 'afterEach');
-    }
+    context.beforeEach = (fn) => {
+      if (testRunner.trialRun)
+        return;
+      return common.beforeEach(async () => {
+        return await fixturePool.resolveParametersAndRun(fn);
+      });
+    };
+    context.afterEach = (fn) => {
+      if (testRunner.trialRun)
+        return;
+      return common.afterEach(async () => {
+        return await fixturePool.resolveParametersAndRun(fn);
+      });
+    };
 
     context.run = mocha.options.delay && common.runWithSuite(suite);
 
