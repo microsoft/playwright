@@ -234,6 +234,8 @@ function checkSources(sources) {
         continue;
       if (name.startsWith('_'))
         continue;
+      if (member.valueDeclaration && ts.getCombinedModifierFlags(member.valueDeclaration) & ts.ModifierFlags.Private)
+        continue;
       if (EventEmitter.prototype.hasOwnProperty(name))
         continue;
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);

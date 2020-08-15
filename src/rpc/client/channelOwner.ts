@@ -106,6 +106,17 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
       throw e;
     }
   }
+
+  private toJSON() {
+    // Jest's expect library tries to print objects sometimes.
+    // RPC objects can contain links to lots of other objects,
+    // which can cause jest to crash. Let's help it out
+    // by just returning the important values.
+    return {
+      _type: this._type,
+      _guid: this._guid,
+    };
+  }
 }
 
 const debugLogger = new DebugLoggerSink();
