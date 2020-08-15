@@ -29,7 +29,7 @@ program
   .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2))
   .option('--reporter <reporter>', 'Specify reporter to use', '')
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
-  .option('--dumpio', 'Dump stdout and stderr from workers', false)
+  .option('--quiet', 'Suppress stdio', false)
   .option('--debug', 'Run tests in-process for debugging', false)
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
@@ -70,7 +70,7 @@ program
     const jobs = (command.trialRun || command.debug) ? 1 : command.jobs;
     const runner = new Runner(rootSuite, {
       debug: command.debug,
-      dumpio: command.dumpio,
+      quiet: command.quiet,
       grep: command.grep,
       jobs,
       reporter: command.reporter,

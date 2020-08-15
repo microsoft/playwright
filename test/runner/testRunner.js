@@ -39,7 +39,7 @@ class TestRunner extends EventEmitter {
       forbidOnly: options.forbidOnly,
       reporter: NullReporter,
       timeout: options.timeout,
-      ui: fixturesUI.bind(null, options.trialRun),
+      ui: fixturesUI.bind(null, this),
     });
     if (options.grep)
       this.mocha.grep(options.grep);
@@ -49,6 +49,7 @@ class TestRunner extends EventEmitter {
     this.suite = this.mocha.suite;
     this._lastOrdinal = -1;
     this._failedWithError = false;
+    this.trialRun = options.trialRun;
   }
 
   async run() {
