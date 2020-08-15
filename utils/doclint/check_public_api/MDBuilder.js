@@ -53,7 +53,12 @@ class MDOutline {
         const ul = clone.querySelector(':scope > ul');
         const str = parseComment(extractSiblingsIntoFragment(clone.firstChild, ul));
         const name = str.substring(0, str.indexOf('<')).replace(/\`/g, '').trim();
-        const type = findType(str);
+        let type = findType(str);
+        const literals = type.match(/("[^"]+"(\|"[^"]+")*)/);
+        if (literals) {
+          const sorted = literals[1].split('|').sort((a, b) => a.localeCompare(b)).join('|');
+          type = type.substring(0, literals.index) + sorted + type.substring(literals.index + literals[0].length);
+        }
         const properties = [];
         let comment = str.substring(str.indexOf('<') + type.length + 2).trim();
         const hasNonEnumProperties = type.split('|').some(part => {
