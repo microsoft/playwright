@@ -536,6 +536,22 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this;
   }
 
+  addListener(event: string | symbol, listener: Listener): this {
+    if (event === Events.Page.FileChooser) {
+      if (!this.listenerCount(event))
+        this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
+    }
+    super.addListener(event, listener);
+    return this;
+  }
+
+  off(event: string | symbol, listener: Listener): this {
+    super.off(event, listener);
+    if (event === Events.Page.FileChooser && !this.listenerCount(event))
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
+    return this;
+  }
+
   removeListener(event: string | symbol, listener: Listener): this {
     super.removeListener(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))

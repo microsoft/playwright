@@ -54,10 +54,40 @@ it('should set from memory', async({page}) => {
   expect(await page.$eval('input', input => input.files[0].name)).toBe('test.txt');
 });
 
-it('should emit event', async({page, server}) => {
+it('should emit event once', async({page, server}) => {
   await page.setContent(`<input type=file>`);
   const [chooser] = await Promise.all([
     new Promise(f => page.once('filechooser', f)),
+    page.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+
+it('should emit event on/off', async({page, server}) => {
+  await page.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    new Promise(f => {
+      const listener = chooser => {
+        page.off('filechooser', listener);
+        f(chooser);
+      }
+      page.on('filechooser', listener);
+    }),
+    page.click('input'),
+  ]);
+  expect(chooser).toBeTruthy();
+});
+
+it('should emit event addListener/removeListener', async({page, server}) => {
+  await page.setContent(`<input type=file>`);
+  const [chooser] = await Promise.all([
+    new Promise(f => {
+      const listener = chooser => {
+        page.removeListener('filechooser', listener);
+        f(chooser);
+      }
+      page.addListener('filechooser', listener);
+    }),
     page.click('input'),
   ]);
   expect(chooser).toBeTruthy();
