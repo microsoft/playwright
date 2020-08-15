@@ -69,15 +69,14 @@ function fixturesUI(testRunner, suite) {
       if (suite.isPending())
         fn = null;
       let wrapper;
-      if (testRunner.trialRun) {
-        if (fn)
-          wrapper = () => {};
-      } else {
-        const wrapped = fixturePool.wrapTestCallback(fn);
-        wrapper = wrapped ? (done, ...args) => {
-          wrapped(...args).then(done).catch(done);
-        } : undefined;
-      }
+      const wrapped = fixturePool.wrapTestCallback(fn);
+      wrapper = wrapped ? (done, ...args) => {
+        if (!testRunner.shouldRunTest()) {
+          done();
+          return;
+        }
+        wrapped(...args).then(done).catch(done);
+      } : undefined;
       if (wrapper) {
         wrapper.toString = () => fn.toString();
         wrapper.__original = fn;
@@ -114,14 +113,14 @@ function fixturesUI(testRunner, suite) {
     });
 
     context.beforeEach = (fn) => {
-      if (testRunner.trialRun)
+      if (!testRunner.shouldRunTest(true))
         return;
       return common.beforeEach(async () => {
         return await fixturePool.resolveParametersAndRun(fn);
       });
     };
     context.afterEach = (fn) => {
-      if (testRunner.trialRun)
+      if (!testRunner.shouldRunTest(true))
         return;
       return common.afterEach(async () => {
         return await fixturePool.resolveParametersAndRun(fn);

@@ -33,7 +33,7 @@ const GoldenUtils = require('./GoldenUtils');
 class NullReporter {}
 
 class TestRunner extends EventEmitter {
-  constructor(file, options) {
+  constructor(file, startOrdinal, options) {
     super();
     this.mocha = new Mocha({
       forbidOnly: options.forbidOnly,
@@ -43,45 +43,92 @@ class TestRunner extends EventEmitter {
     });
     if (options.grep)
       this.mocha.grep(options.grep);
+    this._currentOrdinal = -1;
+    this._failedWithError = false;
+    this._startOrdinal = startOrdinal;
+    this._trialRun = options.trialRun;
+    this._passes = 0;
+    this._failures = 0;
+    this._pending = 0;
+
     this.mocha.addFile(file);
     this.mocha.suite.filterOnly();
     this.mocha.loadFiles();
     this.suite = this.mocha.suite;
-    this._lastOrdinal = -1;
-    this._failedWithError = false;
-    this.trialRun = options.trialRun;
   }
 
   async run() {
     let callback;
     const result = new Promise(f => callback = f);
     const runner = this.mocha.run(callback);
+    let remaining = 0;
 
     const constants = Mocha.Runner.constants;
     runner.on(constants.EVENT_TEST_BEGIN, test => {
-      this.emit('test', { test: serializeTest(test, ++this._lastOrdinal) });
+      if (this._failedWithError) {
+        ++remaining;
+        return;
+      }
+      if (++this._currentOrdinal < this._startOrdinal)
+        return;
+      this.emit('test', { test: serializeTest(test, this._currentOrdinal) });
     });
 
     runner.on(constants.EVENT_TEST_PENDING, test => {
-      this.emit('pending', { test: serializeTest(test, ++this._lastOrdinal) });
+      if (this._failedWithError) {
+        ++remaining;
+        return;
+      }
+      if (++this._currentOrdinal < this._startOrdinal)
+        return;
+      ++this._pending;
+      this.emit('pending', { test: serializeTest(test, this._currentOrdinal) });
     });
 
     runner.on(constants.EVENT_TEST_PASS, test => {
-      this.emit('pass', { test: serializeTest(test, this._lastOrdinal) });
+      if (this._failedWithError)
+        return;
+
+      if (this._currentOrdinal < this._startOrdinal)
+        return;
+      ++this._passes;
+      this.emit('pass', { test: serializeTest(test, this._currentOrdinal) });
     });
 
     runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
+      if (this._failedWithError)
+        return;
+      ++this._failures;
       this._failedWithError = error;
       this.emit('fail', {
-        test: serializeTest(test, this._lastOrdinal),
+        test: serializeTest(test, this._currentOrdinal),
         error: serializeError(error),
       });
     });
 
     runner.once(constants.EVENT_RUN_END, async () => {
-      this.emit('done', { stats: serializeStats(runner.stats), error: this._failedWithError });
+      this.emit('done', {
+        stats: this._serializeStats(runner.stats),
+        error: this._failedWithError,
+        remaining,
+        total: runner.stats.tests
+      });
     });
     await result;
+  }
+
+  shouldRunTest(hook) {
+    if (this._trialRun || this._failedWithError)
+      return false;
+    if (hook) {
+      // Hook starts before we bump the test ordinal.
+      if (this._currentOrdinal + 1 < this._startOrdinal)
+        return false;
+    } else {
+      if (this._currentOrdinal < this._startOrdinal)
+        return false;
+    }
+    return true;
   }
 
   grepTotal() {
@@ -92,6 +139,15 @@ class TestRunner extends EventEmitter {
     });
     return total;
   }
+
+  _serializeStats(stats) {
+    return {
+      passes: this._passes,
+      failures: this._failures,
+      pending: this._pending,
+      duration: stats.duration || 0,
+    }
+  }  
 }
 
 function createTestSuite() {
@@ -103,16 +159,6 @@ function serializeTest(test, origin) {
     id: `${test.file}::${origin}`,
     duration: test.duration,
   };
-}
-
-function serializeStats(stats) {
-  return {
-    tests: stats.tests,
-    passes: stats.passes,
-    duration: stats.duration,
-    failures: stats.failures,
-    pending: stats.pending,
-  }
 }
 
 function trimCycles(obj) {
