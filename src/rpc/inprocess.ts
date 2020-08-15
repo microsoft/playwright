@@ -18,14 +18,11 @@ import { DispatcherConnection } from './server/dispatcher';
 import type { Playwright as PlaywrightImpl } from '../server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './server/playwrightDispatcher';
-import { setUseApiName } from '../progress';
 import { Connection } from './client/connection';
 import { isUnderTest } from '../helper';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 
 export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
-  setUseApiName(false);
-
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();
 

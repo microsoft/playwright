@@ -42,7 +42,7 @@ export class WebKit extends BrowserTypeBase {
     return browserArguments;
   }
 
-  _rewriteStartupError(error: Error, prefix: string): Error {
+  _rewriteStartupError(error: Error): Error {
     return error;
   }
 

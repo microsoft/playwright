@@ -94,7 +94,7 @@ export class ElectronApplication extends EventEmitter {
       this._windows.delete(page);
     });
     this._windows.add(page);
-    await page.waitForLoadState('domcontentloaded').catch(e => {}); // can happen after detach
+    await page.mainFrame().waitForLoadState('domcontentloaded').catch(e => {}); // can happen after detach
     this.emit(ElectronEvents.ElectronApplication.Window, page);
   }
 
@@ -136,7 +136,7 @@ export class ElectronApplication extends EventEmitter {
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options), 'electron.waitForEvent');
+    const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options));
     if (event !== ElectronEvents.ElectronApplication.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
@@ -212,6 +212,6 @@ export class Electron  {
       app = new ElectronApplication(loggers, browser, nodeConnection);
       await app._init();
       return app;
-    }, loggers.browser, TimeoutSettings.timeout(options), 'electron.launch');
+    }, loggers.browser, TimeoutSettings.timeout(options));
   }
 }

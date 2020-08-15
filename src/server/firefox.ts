@@ -36,7 +36,7 @@ export class Firefox extends BrowserTypeBase {
     return FFBrowser.connect(transport, options);
   }
 
-  _rewriteStartupError(error: Error, prefix: string): Error {
+  _rewriteStartupError(error: Error): Error {
     return error;
   }
 

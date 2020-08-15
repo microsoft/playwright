@@ -19,10 +19,7 @@ import { DispatcherConnection } from './server/dispatcher';
 import { Playwright } from '../server/playwright';
 import { PlaywrightDispatcher } from './server/playwrightDispatcher';
 import { Electron } from '../server/electron';
-import { setUseApiName } from '../progress';
 import { gracefullyCloseAll } from '../server/processLauncher';
-
-setUseApiName(false);
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);

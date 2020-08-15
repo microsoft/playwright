@@ -149,10 +149,6 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
       this._page.removeListener(Events.Page.FileChooser, this._onFileChooser);
   }
 
-  async title() {
-    return await this._page.title();
-  }
-
   async keyboardDown(params: { key: string }): Promise<void> {
     await this._page.keyboard.down(params.key);
   }
