@@ -20,7 +20,7 @@ import * as util from 'util';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { Events } from './events';
-import { assert, helper, RegisteredListener, assertMaxArguments } from './helper';
+import { assert, helper, RegisteredListener, assertMaxArguments, debugLogger } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -201,7 +201,7 @@ export class FrameManager {
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
     frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
     if (!initial) {
-      this._page._logger.info(`  navigated to "${url}"`);
+      debugLogger.log('api', `  navigated to "${url}"`);
       this._page.emit(Events.Page.FrameNavigated, frame);
     }
     // Restore pending if any - see comments above about keepPending.
@@ -215,7 +215,7 @@ export class FrameManager {
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name };
     frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
-    this._page._logger.info(`  navigated to "${url}"`);
+    debugLogger.log('api', `  navigated to "${url}"`);
     this._page.emit(Events.Page.FrameNavigated, frame);
   }
 
@@ -414,7 +414,7 @@ export class Frame {
       if (!this._subtreeLifecycleEvents.has(event)) {
         this._eventEmitter.emit(kAddLifecycleEvent, event);
         if (this === mainFrame && this._url !== 'about:blank')
-          this._page._logger.info(`  "${event}" event fired`);
+          debugLogger.log('api', `  "${event}" event fired`);
         if (this === mainFrame && event === 'load')
           this._page.emit(Events.Page.Load);
         if (this === mainFrame && event === 'domcontentloaded')
@@ -431,7 +431,7 @@ export class Frame {
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, async progress => {
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      progress.logger.info(`navigating to "${url}", waiting until "${waitUntil}"`);
+      progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = (this._page._state.extraHTTPHeaders || {});
       let referer = headers['referer'] || headers['Referer'];
       if (options.referer !== undefined) {
@@ -476,13 +476,13 @@ export class Frame {
     return runNavigationTask(this, options, async progress => {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      progress.logger.info(`waiting for navigation${toUrl} until "${waitUntil}"`);
+      progress.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
 
       const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
         // Any failed navigation results in a rejection.
         if (event.error)
           return true;
-        progress.logger.info(`  navigated to "${this._url}"`);
+        progress.log(`  navigated to "${this._url}"`);
         return helper.urlMatches(this._url, options.url);
       }).promise;
       if (navigationEvent.error)
@@ -565,7 +565,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.waitForSelectorTask(info, state);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
+      progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
       if (!result.asElement()) {
         result.dispose();
@@ -580,7 +580,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.dispatchEventTask(info, type, eventInit || {});
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`Dispatching "${type}" event on selector "${selector}"...`);
+      progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
       // Note: we always dispatch events in the main world.
       await this._scheduleRerunnableTask(progress, 'main', task);
     }, this._page._timeoutSettings.timeout(options));
@@ -635,7 +635,7 @@ export class Frame {
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
     return runNavigationTask(this, options, async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
-      progress.logger.info(`setting frame content, waiting until "${waitUntil}"`);
+      progress.log(`setting frame content, waiting until "${waitUntil}"`);
       const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
       const context = await this._utilityContext();
       const lifecyclePromise = new Promise((resolve, reject) => {
@@ -822,7 +822,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     return this._page._runAbortableTask(async progress => {
       while (progress.isRunning()) {
-        progress.logger.info(`waiting for selector "${selector}"`);
+        progress.log(`waiting for selector "${selector}"`);
         const task = dom.waitForSelectorTask(info, 'attached');
         const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
         const element = handle.asElement() as dom.ElementHandle<Element>;
@@ -834,7 +834,7 @@ export class Frame {
         const result = await action(progress, element);
         element.dispose();
         if (result === 'error:notconnected') {
-          progress.logger.info('element was detached from the DOM, retrying');
+          progress.log('element was detached from the DOM, retrying');
           continue;
         }
         return result;
@@ -863,7 +863,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.textContentTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving textContent from "${selector}"`);
+      progress.log(`  retrieving textContent from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -872,7 +872,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.innerTextTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving innerText from "${selector}"`);
+      progress.log(`  retrieving innerText from "${selector}"`);
       const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
       return result.innerText;
     }, this._page._timeoutSettings.timeout(options));
@@ -882,7 +882,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.innerHTMLTask(info);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving innerHTML from "${selector}"`);
+      progress.log(`  retrieving innerHTML from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -891,7 +891,7 @@ export class Frame {
     const info = selectors._parseSelector(selector);
     const task = dom.getAttributeTask(info, name);
     return this._page._runAbortableTask(async progress => {
-      progress.logger.info(`  retrieving attribute "${name}" from "${selector}"`);
+      progress.log(`  retrieving attribute "${name}" from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -1104,7 +1104,7 @@ class SignalBarrier {
     this.retain();
     const waiter = helper.waitForEvent(null, frame._eventEmitter, kNavigationEvent, (e: NavigationEvent) => {
       if (!e.error && this._progress)
-        this._progress.logger.info(`  navigated to "${frame._url}"`);
+        this._progress.log(`  navigated to "${frame._url}"`);
       return true;
     });
     await Promise.race([
@@ -1130,7 +1130,7 @@ class SignalBarrier {
 
 async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions, task: (progress: Progress) => Promise<T>): Promise<T> {
   const page = frame._page;
-  const controller = new ProgressController(page._logger, page._timeoutSettings.navigationTimeout(options));
+  const controller = new ProgressController(page._timeoutSettings.navigationTimeout(options));
   page._disconnectedPromise.then(() => controller.abort(new Error('Navigation failed because page was closed!')));
   page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
   frame._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));

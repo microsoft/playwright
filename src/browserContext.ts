@@ -24,11 +24,9 @@ import * as types from './types';
 import { Events } from './events';
 import { Download } from './download';
 import { BrowserBase } from './browser';
-import { Loggers, Logger } from './logger';
 import { EventEmitter } from 'events';
 import { ProgressController } from './progress';
 import { DebugController } from './debug/debugController';
-import { LoggerSink } from './loggerSink';
 
 export interface BrowserContext extends EventEmitter {
   setDefaultNavigationTimeout(timeout: number): void;
@@ -53,12 +51,10 @@ export interface BrowserContext extends EventEmitter {
   close(): Promise<void>;
 }
 
-type BrowserContextOptions = types.BrowserContextOptions & { logger?: LoggerSink };
-
 export abstract class BrowserContextBase extends EventEmitter implements BrowserContext {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
-  readonly _options: BrowserContextOptions;
+  readonly _options: types.BrowserContextOptions;
   _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -67,14 +63,11 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
   readonly _browserBase: BrowserBase;
-  readonly _apiLogger: Logger;
 
-  constructor(browserBase: BrowserBase, options: BrowserContextOptions, isPersistentContext: boolean) {
+  constructor(browserBase: BrowserBase, options: types.BrowserContextOptions, isPersistentContext: boolean) {
     super();
     this._browserBase = browserBase;
     this._options = options;
-    const loggers = options.logger ? new Loggers(options.logger) : browserBase._options.loggers;
-    this._apiLogger = loggers.api;
     this._isPersistentContext = isPersistentContext;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
@@ -86,7 +79,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._apiLogger, this._timeoutSettings.timeout(options));
+    const progressController = new ProgressController(this._timeoutSettings.timeout(options));
     if (event !== Events.BrowserContext.Close)
       this._closePromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
@@ -248,10 +241,10 @@ export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
   }
 }
 
-export function validateBrowserContextOptions(options: BrowserContextOptions): BrowserContextOptions {
+export function validateBrowserContextOptions(options: types.BrowserContextOptions): types.BrowserContextOptions {
   // Copy all fields manually to strip any extra junk.
   // Especially useful when we share context and launch options for launchPersistent.
-  const result: BrowserContextOptions = {
+  const result: types.BrowserContextOptions = {
     ignoreHTTPSErrors: options.ignoreHTTPSErrors,
     bypassCSP: options.bypassCSP,
     locale: options.locale,
@@ -269,7 +262,6 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): B
     deviceScaleFactor: options.deviceScaleFactor,
     isMobile: options.isMobile,
     hasTouch: options.hasTouch,
-    logger: options.logger,
   };
   if (result.viewport === null && result.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);

@@ -23,6 +23,7 @@ import * as removeFolder from 'rimraf';
 import * as util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
+import * as debug from 'debug';
 
 const removeFolderAsync = util.promisify(removeFolder);
 const readFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -384,3 +385,48 @@ export function logPolitely(toBeLogged: string) {
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
 
 export const helper = Helper;
+
+const debugLoggerColorMap = {
+  'api': 45, // cyan
+  'protocol': 34, // green
+  'browser': 0, // reset
+  'error': 160, // red,
+  'channel:command': 33, // blue
+  'channel:response': 202, // orange
+  'channel:event': 207, // magenta
+};
+export type LogName = keyof typeof debugLoggerColorMap;
+
+export class DebugLogger {
+  private _debuggers = new Map<string, debug.IDebugger>();
+
+  constructor() {
+    if (process.env.DEBUG_FILE) {
+      const ansiRegex = new RegExp([
+        '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
+        '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
+      ].join('|'), 'g');
+      const stream = fs.createWriteStream(process.env.DEBUG_FILE);
+      (debug as any).log = (data: string) => {
+        stream.write(data.replace(ansiRegex, ''));
+        stream.write('\n');
+      };
+    }
+  }
+
+  log(name: LogName, message: string | Error | object) {
+    let cachedDebugger = this._debuggers.get(name);
+    if (!cachedDebugger) {
+      cachedDebugger = debug(`pw:${name}`);
+      this._debuggers.set(name, cachedDebugger);
+      (cachedDebugger as any).color = debugLoggerColorMap[name];
+    }
+    cachedDebugger(message);
+  }
+
+  isEnabled(name: LogName) {
+    return debug.enabled(`pw:${name}`);
+  }
+}
+
+export const debugLogger = new DebugLogger();

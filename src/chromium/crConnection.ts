@@ -15,11 +15,10 @@
  * limitations under the License.
  */
 
-import { assert } from '../helper';
+import { assert, debugLogger } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
-import { Loggers, Logger } from '../logger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const ConnectionEvents = {
@@ -36,18 +35,15 @@ export class CRConnection extends EventEmitter {
   private readonly _sessions = new Map<string, CRSession>();
   readonly rootSession: CRSession;
   _closed = false;
-  readonly _logger: Logger;
 
-  constructor(transport: ConnectionTransport, loggers: Loggers) {
+  constructor(transport: ConnectionTransport) {
     super();
     this._transport = transport;
-    this._logger = loggers.protocol;
     this._transport.onmessage = this._onMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this.rootSession = new CRSession(this, '', 'browser', '');
     this._sessions.set('', this.rootSession);
   }
-
 
   static fromSession(session: CRSession): CRConnection {
     return session._connection!;
@@ -62,15 +58,15 @@ export class CRConnection extends EventEmitter {
     const message: ProtocolRequest = { id, method, params };
     if (sessionId)
       message.sessionId = sessionId;
-    if (this._logger.isEnabled())
-      this._logger.info('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (debugLogger.isEnabled('protocol'))
+      debugLogger.log('protocol', 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
     return id;
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._logger.isEnabled())
-      this._logger.info('◀ RECV ' + JSON.stringify(message));
+    if (debugLogger.isEnabled('protocol'))
+      debugLogger.log('protocol', '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.method === 'Target.attachedToTarget') {
@@ -167,10 +163,7 @@ export class CRSession extends EventEmitter {
   }
 
   _sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch((error: Error) => {
-      if (this._connection)
-        this._connection._logger.error(error);
-    });
+    return this.send(method, params).catch((error: Error) => debugLogger.log('error', error));
   }
 
   _onMessage(object: ProtocolResponse) {

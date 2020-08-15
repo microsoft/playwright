@@ -14,22 +14,21 @@
  * limitations under the License.
  */
 
-import { Logger } from './logger';
 import { TimeoutError } from './errors';
-import { assert } from './helper';
+import { assert, debugLogger, LogName } from './helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
 
 export interface Progress {
   readonly aborted: Promise<void>;
-  readonly logger: Logger;
+  log(message: string): void;
   timeUntilDeadline(): number;
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, logger: Logger, timeout: number): Promise<T> {
-  const controller = new ProgressController(logger, timeout);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, logName: LogName = 'api'): Promise<T> {
+  const controller = new ProgressController(timeout, logName);
   return controller.run(task);
 }
 
@@ -47,14 +46,14 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _logger: Logger;
+  private _logName: LogName;
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number;
   private _timeout: number;
+  private _logRecordring: string[] = [];
 
-  constructor(logger: Logger, timeout: number) {
-    this._logger = logger;
-
+  constructor(timeout: number, logName: LogName = 'api') {
+    this._logName = logName;
     this._timeout = timeout;
     this._deadline = timeout ? monotonicTime() + timeout : 0;
 
@@ -67,11 +66,13 @@ export class ProgressController {
     assert(this._state === 'before');
     this._state = 'running';
 
-    const loggerScope = this._logger.createScope(undefined, true);
-
     const progress: Progress = {
       aborted: this._abortedPromise,
-      logger: loggerScope,
+      log: message => {
+        if (this._state === 'running')
+          this._logRecordring.push(message);
+        debugLogger.log(this._logName, message);
+      },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
@@ -93,17 +94,17 @@ export class ProgressController {
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
       this._state = 'finished';
-      loggerScope.endScope('succeeded');
+      this._logRecordring = [];
       return result;
     } catch (e) {
       this._aborted();
       rewriteErrorMessage(e,
           e.message +
-          formatLogRecording(loggerScope.recording()) +
+          formatLogRecording(this._logRecordring) +
           kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
-      loggerScope.endScope(`failed`);
+      this._logRecordring = [];
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       throw e;
     }

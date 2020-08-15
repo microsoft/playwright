@@ -16,10 +16,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { assert } from '../helper';
+import { assert, debugLogger } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
-import { Loggers, Logger } from '../logger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export const ConnectionEvents = {
@@ -34,7 +33,6 @@ export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
-  readonly _logger: Logger;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
@@ -44,10 +42,9 @@ export class FFConnection extends EventEmitter {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(transport: ConnectionTransport, loggers: Loggers) {
+  constructor(transport: ConnectionTransport) {
     super();
     this._transport = transport;
-    this._logger = loggers.protocol;
     this._lastId = 0;
     this._callbacks = new Map();
 
@@ -79,14 +76,14 @@ export class FFConnection extends EventEmitter {
   }
 
   _rawSend(message: ProtocolRequest) {
-    if (this._logger.isEnabled())
-      this._logger.info('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (debugLogger.isEnabled('protocol'))
+      debugLogger.log('protocol', 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._logger.isEnabled())
-      this._logger.info('◀ RECV ' + JSON.stringify(message));
+    if (debugLogger.isEnabled('protocol'))
+      debugLogger.log('protocol', '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {
@@ -186,9 +183,7 @@ export class FFSession extends EventEmitter {
   }
 
   sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch(error => {
-      this._connection._logger.error(error);
-    });
+    return this.send(method, params).catch(error => debugLogger.log('error', error));
   }
 
   dispatchMessage(object: ProtocolResponse) {
