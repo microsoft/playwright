@@ -55,7 +55,7 @@ process.on('message', async message => {
     await fixturePool.teardownScope('worker');
     await gracefullyCloseAndExit();
   } if (message.method === 'run') {
-    const testRunner = new TestRunner(message.params.file, message.params.options);
+    const testRunner = new TestRunner(message.params.file, message.params.startOrdinal, message.params.options);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();

@@ -35,7 +35,6 @@ class Runner extends EventEmitter {
     this._freeWorkers = [];
     this._workerClaimers = [];
     this._lastWorkerId = 0;
-    this._pendingJobs = 0;
     this.stats = {
       duration: 0,
       failures: 0,
@@ -49,66 +48,77 @@ class Runner extends EventEmitter {
     this._tests = new Map();
     this._files = new Map();
 
-    this._traverse(suite);
-  }
+    let grep;
+    if (options.grep) {
+      const match = options.grep.match(/^\/(.*)\/(g|i|)$|.*/);
+      grep = new RegExp(match[1] || match[0], match[2]);
+    }
 
-  _traverse(suite) {
-    for (const child of suite.suites)
-      this._traverse(child);
-    for (const test of suite.tests) {
+    suite.eachTest(test => {
+      if (grep && !grep.test(test.fullTitle()))
+        return;
       if (!this._files.has(test.file))
         this._files.set(test.file, 0);
       const counter = this._files.get(test.file);
       this._files.set(test.file, counter + 1);
       this._tests.set(`${test.file}::${counter}`, test);
-    }
+    });
   }
 
   _filesSortedByWorkerHash() {
     const result = [];
     for (const file of this._files.keys())
-      result.push({ file, hash: computeWorkerHash(file) });
+      result.push({ file, hash: computeWorkerHash(file), startOrdinal: 0 });
     result.sort((a, b) => a.hash < b.hash ? -1 : (a.hash === b.hash ? 0 : 1));
     return result;
   }
 
   async run() {
     this.emit(constants.EVENT_RUN_BEGIN, {});
-    const files = this._filesSortedByWorkerHash();
-    while (files.length) {
-      const worker = await this._obtainWorker();
-      const requiredHash = files[0].hash;
-      if (worker.hash && worker.hash !== requiredHash) {
-        this._restartWorker(worker);
-        continue;
-      }
-      const entry = files.shift();
-      worker.hash = requiredHash;
-      this._runJob(worker, entry.file);
-    }
-    await new Promise(f => this._runCompleteCallback = f);
+    this._queue = this._filesSortedByWorkerHash();
+    // Loop in case job schedules more jobs
+    while (this._queue.length)
+      await this._dispatchQueue();
     this.emit(constants.EVENT_RUN_END, {});
   }
 
-  _runJob(worker, file) {
-    ++this._pendingJobs;
-    worker.run(file);
+  async _dispatchQueue() {
+    const jobs = [];
+    while (this._queue.length) {
+      const entry = this._queue.shift();
+      const requiredHash = entry.hash;
+      let worker = await this._obtainWorker();
+      while (worker.hash && worker.hash !== requiredHash) {
+        this._restartWorker(worker);
+        worker = await this._obtainWorker();
+      }
+      jobs.push(this._runJob(worker, entry));
+    }
+    await Promise.all(jobs);
+  }
+
+  async _runJob(worker, entry) {
+    worker.run(entry);
+    let doneCallback;
+    const result = new Promise(f => doneCallback = f);
     worker.once('done', params => {
-      --this._pendingJobs;
       this.stats.duration += params.stats.duration;
       this.stats.failures += params.stats.failures;
       this.stats.passes += params.stats.passes;
       this.stats.pending += params.stats.pending;
-      this.stats.tests += params.stats.tests;
-      if (this._runCompleteCallback && !this._pendingJobs)
-        this._runCompleteCallback();
-      else {
-        if (params.error)
-          this._restartWorker(worker);
-        else
-          this._workerAvailable(worker);
+      this.stats.tests += params.stats.passes + params.stats.pending + params.stats.failures;
+      // When worker encounters error, we will restart it.
+      if (params.error) {
+        this._restartWorker(worker);
+        // If there are remaining tests, we will queue them.
+        if (params.remaining)
+          this._queue.unshift({ ...entry, startOrdinal: params.total - params.remaining });
+      } else {
+        this._workerAvailable(worker);
       }
+      doneCallback();
     });
+    return result;
   }
 
   async _obtainWorker() {
@@ -219,8 +229,9 @@ class OopWorker extends EventEmitter {
     await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
-  run(file) {
-    this.process.send({ method: 'run', params: { file, options: this.runner._options } });
+  run(entry) {
+    this.hash = entry.hash;
+    this.process.send({ method: 'run', params: { file: entry.file, startOrdinal: entry.startOrdinal, options: this.runner._options } });
   }
 
   stop() {
@@ -250,12 +261,12 @@ class InProcessWorker extends EventEmitter {
   async init() {
   }
 
-  async run(file) {
-    delete require.cache[file];
+  async run(entry) {
+    delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
-    const testRunner = new TestRunner(file, this.runner._options);
+    const testRunner = new TestRunner(entry.file, entry.startOrdinal, this.runner._options);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
-      testRunner.on(event, this.emit.bind(this, event)); 
+      testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();
   }
 

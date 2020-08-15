@@ -40,7 +40,7 @@ program
     let total = 0;
     // Build the test model, suite per file.
     for (const file of files) {
-      const testRunner = new TestRunner(file, {
+      const testRunner = new TestRunner(file, 0, {
         forbidOnly: command.forbidOnly || undefined,
         grep: command.grep,
         reporter: NullReporter,
@@ -63,7 +63,8 @@ program
     if (!command.reporter) {
       console.log();
       total = Math.min(total, rootSuite.total()); // First accounts for grep, second for only.
-      console.log(`Running ${total} tests using ${Math.min(command.jobs, total)} workers`);
+      const workers = Math.min(command.jobs, files.length);
+      console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${workers} worker${ workers > 1 ? 's' : ''}`);
     }
 
     // Trial run does not need many workers, use one.
@@ -100,9 +101,10 @@ function collectFiles(dir, filters) {
       files.push(path.join(dir, name));
       continue;
     }
+    const fullName = path.join(dir, name);
     for (const filter of filters) {
-      if (name.includes(filter)) {
-        files.push(path.join(dir, name));
+      if (fullName.includes(filter)) {
+        files.push(fullName);
         break;
       }
     }
