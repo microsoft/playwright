@@ -18,8 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const program = require('commander');
 const { Runner } = require('./runner');
-const Mocha = require('mocha');
-const { fixturesUI } = require('./fixturesUI');
+const { TestRunner, createTestSuite } = require('./testRunner');
 
 class NullReporter {}
 
@@ -36,26 +35,21 @@ program
   .action(async (command) => {
     // Collect files
     const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
-    const rootSuite = new Mocha.Suite('', new Mocha.Context(), true);
+    const rootSuite = new createTestSuite();
 
     let total = 0;
     // Build the test model, suite per file.
     for (const file of files) {
-      const mocha = new Mocha({
+      const testRunner = new TestRunner(file, {
         forbidOnly: command.forbidOnly || undefined,
+        grep: command.grep,
         reporter: NullReporter,
-        retries: command.retries,
         timeout: command.timeout,
-        ui: fixturesUI.bind(null, true),
+        trialRun: true,
       });
-      if (command.grep)
-        mocha.grep(command.grep);
-      mocha.addFile(file);
-      mocha.loadFiles();
-      total += grepTotal(mocha.suite, mocha.options.grep);
-
-      rootSuite.addSuite(mocha.suite);
-      mocha.suite.title = path.basename(file);
+      total += testRunner.grepTotal();
+      rootSuite.addSuite(testRunner.suite);
+      testRunner.suite.title = path.basename(file);
     }
 
     if (!total) {
@@ -114,13 +108,4 @@ function collectFiles(dir, filters) {
     }
   }
   return files;
-}
-
-function grepTotal(suite, grep) {
-  let total = 0;
-  suite.eachTest(test => {
-    if (grep.test(test.fullTitle()))
-      total++;
-  });
-  return total;
 }

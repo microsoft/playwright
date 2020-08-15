@@ -36,14 +36,17 @@ class TestRunner extends EventEmitter {
   constructor(file, options) {
     super();
     this.mocha = new Mocha({
-      ui: fixturesUI.bind(null, options.trialRun),
+      forbidOnly: options.forbidOnly,
+      reporter: NullReporter,
       timeout: options.timeout,
-      reporter: NullReporter
+      ui: fixturesUI.bind(null, options.trialRun),
     });
     if (options.grep)
       this.mocha.grep(options.grep);
     this.mocha.addFile(file);
     this.mocha.suite.filterOnly();
+    this.mocha.loadFiles();
+    this.suite = this.mocha.suite;
     this._lastOrdinal = -1;
     this._failedWithError = false;
   }
@@ -79,6 +82,19 @@ class TestRunner extends EventEmitter {
     });
     await result;
   }
+
+  grepTotal() {
+    let total = 0;
+    this.suite.eachTest(test => {
+      if (this.mocha.options.grep.test(test.fullTitle()))
+        total++;
+    });
+    return total;
+  }
+}
+
+function createTestSuite() {
+  return new Mocha.Suite('', new Mocha.Context(), true);
 }
 
 function serializeTest(test, origin) {
@@ -122,4 +138,4 @@ function serializeError(error) {
   return trimCycles(error);
 }
 
-module.exports = { TestRunner };
+module.exports = { TestRunner, createTestSuite };
