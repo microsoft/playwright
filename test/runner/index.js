@@ -31,6 +31,7 @@ program
   .option('--reporter <reporter>', 'Specify reporter to use', '')
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
   .option('--dumpio', 'Dump stdout and stderr from workers', false)
+  .option('--debug', 'Run tests in-process for debugging', false)
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
   .action(async (command) => {
     // Collect files
@@ -50,11 +51,8 @@ program
       if (command.grep)
         mocha.grep(command.grep);
       mocha.addFile(file);
-      let runner;
-      await new Promise(f => {
-        runner = mocha.run(f);
-      });
-      total += runner.grepTotal(mocha.suite);
+      mocha.loadFiles();
+      total += grepTotal(mocha.suite, mocha.options.grep);
 
       rootSuite.addSuite(mocha.suite);
       mocha.suite.title = path.basename(file);
@@ -75,8 +73,9 @@ program
     }
 
     // Trial run does not need many workers, use one.
-    const jobs = command.trialRun ? 1 : command.jobs;
+    const jobs = (command.trialRun || command.debug) ? 1 : command.jobs;
     const runner = new Runner(rootSuite, {
+      debug: command.debug,
       dumpio: command.dumpio,
       grep: command.grep,
       jobs,
@@ -101,7 +100,7 @@ function collectFiles(dir, filters) {
       files.push(...collectFiles(path.join(dir, name), filters));
       continue;
     }
-    if (!name.includes('spec'))
+    if (!name.endsWith('spec.ts'))
       continue;
     if (!filters.length) {
       files.push(path.join(dir, name));
@@ -115,4 +114,13 @@ function collectFiles(dir, filters) {
     }
   }
   return files;
+}
+
+function grepTotal(suite, grep) {
+  let total = 0;
+  suite.eachTest(test => {
+    if (grep.test(test.fullTitle()))
+      total++;
+  });
+  return total;
 }

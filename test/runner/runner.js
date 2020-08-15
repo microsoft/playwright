@@ -20,7 +20,7 @@ const { EventEmitter } = require('events');
 const Mocha = require('mocha');
 const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
-const { computeWorkerHash } = require('./fixtures');
+const { computeWorkerHash, FixturePool } = require('./fixtures');
 
 const constants = Mocha.Runner.constants;
 // Mocha runner does not remove uncaughtException listeners.
@@ -132,7 +132,7 @@ class Runner extends EventEmitter {
   }
 
   _createWorker() {
-    const worker = new Worker(this);
+    const worker = this._options.debug ? new InProcessWorker(this) : new OopWorker(this);
     worker.on('test', params => this.emit(constants.EVENT_TEST_BEGIN, this._updateTest(params.test)));
     worker.on('pending', params => this.emit(constants.EVENT_TEST_PENDING, this._updateTest(params.test)));
     worker.on('pass', params => this.emit(constants.EVENT_TEST_PASS, this._updateTest(params.test)));
@@ -154,8 +154,8 @@ class Runner extends EventEmitter {
     worker.init().then(() => this._workerAvailable(worker));
   }
 
-  _restartWorker(worker) {
-    worker.stop();
+  async _restartWorker(worker) {
+    await worker.stop();
     this._createWorker();
   }
 
@@ -175,7 +175,7 @@ class Runner extends EventEmitter {
 
 let lastWorkerId = 0;
 
-class Worker extends EventEmitter {
+class OopWorker extends EventEmitter {
   constructor(runner) {
     super();
     this.runner = runner;
@@ -237,6 +237,39 @@ class Worker extends EventEmitter {
     const result = this.stderr;
     this.stderr = [];
     return result;
+  }
+}
+
+class InProcessWorker extends EventEmitter {
+  constructor(runner) {
+    super();
+    this.runner = runner;
+    this.fixturePool = require('./fixturesUI').fixturePool;
+  }
+
+  async init() {
+  }
+
+  async run(file) {
+    delete require.cache[file];
+    const { TestRunner } = require('./testRunner');
+    const testRunner = new TestRunner(file, this.runner._options);
+    for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
+      testRunner.on(event, this.emit.bind(this, event)); 
+    testRunner.run();
+  }
+
+  async stop() {
+    await this.fixturePool.teardownScope('worker');
+    this.emit('exit');
+  }
+
+  takeOut() {
+    return [];
+  }
+
+  takeErr() {
+    return [];
   }
 }
 
