@@ -86,14 +86,19 @@ registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
   ]);
 });
 
-registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
-  let executablePath = undefined;
+const getExecutablePath = () => {
   if (browserName === 'chromium' && process.env.CRPATH)
-    executablePath = process.env.CRPATH;
+    return process.env.CRPATH;
   if (browserName === 'firefox' && process.env.FFPATH)
-    executablePath = process.env.FFPATH;
+    return process.env.FFPATH;
   if (browserName === 'webkit' && process.env.WKPATH)
-    executablePath = process.env.WKPATH;
+    return process.env.WKPATH;
+  return
+}
+
+registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
+  let executablePath = getExecutablePath();
+
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await test({
@@ -147,7 +152,11 @@ registerFixture('toImpl', async ({playwright}, test) => {
 });
 
 registerWorkerFixture('browserType', async ({playwright}, test) => {
-  await test(playwright[process.env.BROWSER || 'chromium']);
+  const browserType = playwright[process.env.BROWSER || 'chromium']
+  const executablePath = getExecutablePath()
+  if (executablePath)
+    browserType._executablePath = executablePath
+  await test(browserType);
 });
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
