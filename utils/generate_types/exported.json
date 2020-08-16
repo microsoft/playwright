@@ -1,5 +1,6 @@
 {
   "BrowserTypeLaunchOptions": "LaunchOptions",
+  "BrowserTypeConnectOptions": "ConnectOptions",
   "BrowserContextCookies": "Cookie",
   "BrowserNewContextOptions": "BrowserContextOptions",
   "BrowserNewContextOptionsViewport": "ViewportSize",
