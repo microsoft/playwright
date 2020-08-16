@@ -202,7 +202,7 @@ it.skip(ffheadful)('should work for canvas', async({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/screenshots/canvas.html');
   const screenshot = await page.screenshot();
-  expect(screenshot).toMatchImage(golden('screenshot-canvas.png'));
+  expect(screenshot).toMatchImage(golden('screenshot-canvas.png'), { threshold: 0.3 });
 });
 
 it.skip(ffheadful)('should work for translateZ', async({page, server, golden}) => {

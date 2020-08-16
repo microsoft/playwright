@@ -17,7 +17,9 @@
 const debug = require('debug');
 const { fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
-const { TestRunner } = require('./testRunner');
+const { TestRunner, initializeImageMatcher } = require('./testRunner');
+const { initializeWorker } = require('./builtin.fixtures');
+
 const util = require('util');
 
 let closed = false;
@@ -49,12 +51,17 @@ process.on('SIGINT',() => {});
 process.on('SIGTERM',() => {});
 
 process.on('message', async message => {
-  if (message.method === 'init')
-    process.env.JEST_WORKER_ID = message.params.workerId;
+  if (message.method === 'init') {
+    initializeWorker(message.params);
+    initializeImageMatcher(message.params);
+    return;
+  }
   if (message.method === 'stop') {
     await fixturePool.teardownScope('worker');
     await gracefullyCloseAndExit();
-  } if (message.method === 'run') {
+    return;
+  }
+  if (message.method === 'run') {
     const testRunner = new TestRunner(message.params.file, message.params.startOrdinal, message.params.options);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));

@@ -38,7 +38,7 @@ if (browserName !== 'chromium') {
 if (browserName === 'webkit')
   api.delete('browserContext.clearPermissions');
 
-const coverageDir = path.join(__dirname, '..', 'output-' + browserName, 'coverage');
+const coverageDir = path.join(__dirname, '..', 'coverage-report', 'coverage');
 
 const coveredMethods = new Set();
 for (const file of getCoverageFiles(coverageDir)) {
