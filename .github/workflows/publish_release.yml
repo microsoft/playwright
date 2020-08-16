@@ -4,9 +4,6 @@ on:
   release:
     types: [published]
 
-env:
-  CI: true
-
 jobs:
   publish-npm-release:
     name: "publish to NPM"

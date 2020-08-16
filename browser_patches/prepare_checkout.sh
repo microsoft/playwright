@@ -126,7 +126,7 @@ elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   git add juggler
 fi
 
-git commit -a --author="playwright-devops <devops@playwright.com>" -m "chore: bootstrap build #$BUILD_NUMBER"
+git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore: bootstrap build #$BUILD_NUMBER"
 
 echo
 echo
