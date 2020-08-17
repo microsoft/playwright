@@ -1620,6 +1620,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   textContent(params?: ElementHandleTextContentParams): Promise<ElementHandleTextContentResult>;
   type(params: ElementHandleTypeParams): Promise<ElementHandleTypeResult>;
   uncheck(params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
+  waitForElementState(params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
   waitForSelector(params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
@@ -1914,6 +1915,14 @@ export type ElementHandleUncheckOptions = {
   timeout?: number,
 };
 export type ElementHandleUncheckResult = void;
+export type ElementHandleWaitForElementStateParams = {
+  state: 'visible' | 'hidden' | 'stable' | 'enabled',
+  timeout?: number,
+};
+export type ElementHandleWaitForElementStateOptions = {
+  timeout?: number,
+};
+export type ElementHandleWaitForElementStateResult = void;
 export type ElementHandleWaitForSelectorParams = {
   selector: string,
   timeout?: number,
