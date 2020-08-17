@@ -149,6 +149,10 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return { value: serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
+  async waitForElementState(params: { state: 'visible' | 'hidden' | 'stable' | 'enabled' } & types.TimeoutOptions): Promise<void> {
+    await this._elementHandle.waitForElementState(params.state, params);
+  }
+
   async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element?: ElementHandleChannel }> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._elementHandle.waitForSelector(params.selector, params)) };
   }

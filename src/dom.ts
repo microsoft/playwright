@@ -226,14 +226,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         this._page._timeoutSettings.timeout(options));
   }
 
-  private async _waitForVisible(progress: Progress): Promise<'error:notconnected' | 'done'> {
-    const poll = await this._evaluateHandleInUtility(([injected, node]) => {
-      return injected.waitForNodeVisible(node);
-    }, {});
-    const pollHandler = new InjectedScriptPollHandler(progress, poll);
-    return throwFatalDOMError(await pollHandler.finish());
-  }
-
   private async _clickablePoint(): Promise<types.Point | 'error:notvisible' | 'error:notinviewport'> {
     const intersectQuadWithViewport = (quad: types.Quad): types.Quad => {
       return quad.map(point => ({
@@ -621,6 +613,45 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
+  }
+
+  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled', options: types.TimeoutOptions = {}): Promise<void> {
+    return this._page._runAbortableTask(async progress => {
+      if (state === 'visible') {
+        const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+          return injected.waitForNodeVisible(node);
+        }, {});
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+        return;
+      }
+      if (state === 'hidden') {
+        const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+          return injected.waitForNodeHidden(node);
+        }, {});
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(await pollHandler.finish());
+        return;
+      }
+      if (state === 'enabled') {
+        const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+          return injected.waitForNodeEnabled(node);
+        }, {});
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+        return;
+      }
+      if (state === 'stable') {
+        const rafCount =  this._page._delegate.rafCountForStablePosition();
+        const poll = await this._evaluateHandleInUtility(([injected, node, rafCount]) => {
+          return injected.waitForDisplayedAtStablePosition(node, rafCount, false /* waitForEnabled */);
+        }, rafCount);
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+        return;
+      }
+      throw new Error(`state: expected one of (visible|hidden|stable|enabled)`);
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {

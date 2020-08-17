@@ -357,6 +357,32 @@ export default class InjectedScript {
     });
   }
 
+  waitForNodeHidden(node: Node): types.InjectedScriptPoll<'done'> {
+    return this.pollRaf((progress, continuePolling) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+      if (!node.isConnected || !element)
+        return 'done';
+      if (this.isVisible(element)) {
+        progress.logRepeating('    element is visible - waiting...');
+        return continuePolling;
+      }
+      return 'done';
+    });
+  }
+
+  waitForNodeEnabled(node: Node): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+    return this.pollRaf((progress, continuePolling) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+      if (!node.isConnected || !element)
+        return 'error:notconnected';
+      if (this._isElementDisabled(element)) {
+        progress.logRepeating('    element is not enabled - waiting...');
+        return continuePolling;
+      }
+      return 'done';
+    });
+  }
+
   focusNode(node: Node, resetSelectionIfNotFocused?: boolean): FatalDOMError | 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';
@@ -463,8 +489,7 @@ export default class InjectedScript {
       const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
       const isVisible = !!style && style.visibility !== 'hidden';
 
-      const elementOrButton = element.closest('button, [role=button]') || element;
-      const isDisabled = waitForEnabled && ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+      const isDisabled = waitForEnabled && this._isElementDisabled(element);
 
       if (isDisplayed && isStable && isVisible && !isDisabled)
         return 'done';
@@ -524,6 +549,11 @@ export default class InjectedScript {
       default: event = new Event(type, eventInit); break;
     }
     node.dispatchEvent(event);
+  }
+
+  private _isElementDisabled(element: Element): boolean {
+    const elementOrButton = element.closest('button, [role=button]') || element;
+    return ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
   }
 
   private _parentElementOrShadowHost(element: Element): Element | undefined {

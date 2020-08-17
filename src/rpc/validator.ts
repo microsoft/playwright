@@ -759,6 +759,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
   });
+  scheme.ElementHandleWaitForElementStateParams = tObject({
+    state: tEnum(['visible', 'hidden', 'stable', 'enabled']),
+    timeout: tOptional(tNumber),
+  });
   scheme.ElementHandleWaitForSelectorParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
