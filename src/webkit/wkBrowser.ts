@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserBase, BrowserOptions, BrowserContextOptions } from '../browser';
+import { BrowserBase, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { helper, RegisteredListener, assert } from '../helper';
@@ -72,8 +72,8 @@ export class WKBrowser extends BrowserBase {
     this._didClose();
   }
 
-  async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    options = validateBrowserContextOptions(options);
+  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    validateBrowserContextOptions(options);
     const { browserContextId } = await this._browserSession.send('Playwright.createContext');
     options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
     const context = new WKBrowserContext(this, browserContextId, options);
@@ -287,8 +287,7 @@ export class WKBrowserContext extends BrowserContextBase {
   }
 
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
-    if (geolocation)
-      geolocation = verifyGeolocation(geolocation);
+    verifyGeolocation(geolocation);
     this._options.geolocation = geolocation;
     const payload: any = geolocation ? { ...geolocation, timestamp: Date.now() } : undefined;
     await this._browser._browserSession.send('Playwright.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });

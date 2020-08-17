@@ -27,7 +27,7 @@ import { ConnectionTransport, ProtocolRequest } from '../transport';
 import { BrowserDescriptor } from '../install/browserPaths';
 import { CRDevTools } from '../chromium/crDevTools';
 import { BrowserOptions } from '../browser';
-import { LaunchOptionsBase } from '../types';
+import * as types from '../types';
 
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
@@ -101,7 +101,7 @@ export class Chromium extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy } = options;
     const userDataDirArg = args.find(arg => arg.startsWith('--user-data-dir'));
     if (userDataDirArg)

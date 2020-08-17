@@ -127,7 +127,7 @@ export class Page extends EventEmitter {
     this._crashedPromise = new Promise(f => this._crashedCallback = f);
     this._browserContext = browserContext;
     this._state = {
-      viewportSize: browserContext._options.viewport ? { ...browserContext._options.viewport } : null,
+      viewportSize: browserContext._options.viewport || null,
       mediaType: null,
       colorScheme: null,
       extraHTTPHeaders: null,

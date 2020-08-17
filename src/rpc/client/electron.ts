@@ -22,8 +22,8 @@ import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from '.
 import { TimeoutSettings } from '../../timeoutSettings';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { envObjectToArray } from '../../converters';
 import { WaitForEventOptions, Env, LoggerSink } from './types';
+import { envObjectToArray } from './clientHelper';
 
 type ElectronOptions = Omit<ElectronLaunchOptions, 'env'> & {
   env?: Env,

@@ -39,7 +39,6 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
   async newContext(params: BrowserNewContextParams): Promise<{ context: BrowserContextChannel }> {
     const options = {
       ...params,
-      viewport: params.viewport || (params.noDefaultViewport ? null : undefined),
       extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
     };
     return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(options) as BrowserContextBase) };

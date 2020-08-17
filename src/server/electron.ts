@@ -24,7 +24,7 @@ import { Page } from '../page';
 import { TimeoutSettings } from '../timeoutSettings';
 import { WebSocketTransport } from '../transport';
 import * as types from '../types';
-import { launchProcess, waitForLine } from './processLauncher';
+import { launchProcess, waitForLine, envArrayToObject } from './processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
 import { runAbortableTask, ProgressController } from '../progress';
@@ -35,7 +35,7 @@ import { BrowserProcess } from '../browser';
 export type ElectronLaunchOptionsBase = {
   args?: string[],
   cwd?: string,
-  env?: types.Env,
+  env?: types.EnvArray,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -145,7 +145,6 @@ export class Electron  {
   async launch(executablePath: string, options: ElectronLaunchOptionsBase = {}): Promise<ElectronApplication> {
     const {
       args = [],
-      env = process.env,
       handleSIGINT = true,
       handleSIGTERM = true,
       handleSIGHUP = true,
@@ -156,7 +155,7 @@ export class Electron  {
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         executablePath,
         args: electronArguments,
-        env,
+        env: options.env ? envArrayToObject(options.env) : process.env,
         handleSIGINT,
         handleSIGTERM,
         handleSIGHUP,
@@ -180,7 +179,7 @@ export class Electron  {
         close: gracefullyClose,
         kill
       };
-      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, persistent: { viewport: null }, browserProcess });
+      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, persistent: { noDefaultViewport: true }, browserProcess });
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;

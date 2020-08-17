@@ -74,7 +74,7 @@ export class CRPage implements PageDelegate {
     this._mainFrameSession = new FrameSession(this, client, targetId, null);
     this._sessions.set(targetId, this._mainFrameSession);
     client.once(CRSessionEvents.Disconnected, () => this._page._didDisconnect());
-    if (opener && browserContext._options.viewport !== null) {
+    if (opener && !browserContext._options.noDefaultViewport) {
       const features = opener._nextWindowOpenPopupFeatures.shift() || [];
       const viewportSize = helper.getViewportSizeFromWindowFeatures(features);
       if (viewportSize)
@@ -371,7 +371,7 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    if (hasUIWindow && this._crPage._browserContext._options.viewport !== null) {
+    if (hasUIWindow && !this._crPage._browserContext._options.noDefaultViewport) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }

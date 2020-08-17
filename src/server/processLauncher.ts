@@ -21,6 +21,7 @@ import * as removeFolder from 'rimraf';
 import * as stream from 'stream';
 import { helper, isUnderTest } from '../helper';
 import { Progress } from '../progress';
+import * as types from '../types';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -203,4 +204,11 @@ export function waitForLine(progress: Progress, process: childProcess.ChildProce
       helper.removeEventListeners(listeners);
     }
   });
+}
+
+export function envArrayToObject(env: types.EnvArray): Env {
+  const result: Env = {};
+  for (const { name, value } of env)
+    result[name] = value;
+  return result;
 }

@@ -16,6 +16,7 @@
  */
 
 import { isUnderTest as commonIsUnderTest } from '../../helper';
+import * as types from './types';
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {
@@ -27,4 +28,13 @@ export function deprecate(methodName: string, message: string) {
 
 export function isUnderTest() {
   return commonIsUnderTest();
+}
+
+export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
+  const result: { name: string, value: string }[] = [];
+  for (const name in env) {
+    if (!Object.is(env[name], undefined))
+      result.push({ name, value: String(env[name]) });
+  }
+  return result;
 }

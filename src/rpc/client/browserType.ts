@@ -18,7 +18,7 @@ import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, Br
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { headersObjectToArray, envObjectToArray } from '../../converters';
+import { headersObjectToArray } from '../../converters';
 import { assert, helper } from '../../helper';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import * as WebSocket from 'ws';
@@ -27,6 +27,7 @@ import { serializeError } from '../serializers';
 import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { ChildProcess } from 'child_process';
+import { envObjectToArray } from './clientHelper';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;

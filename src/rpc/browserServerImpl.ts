@@ -27,6 +27,7 @@ import { BrowserDispatcher } from './server/browserDispatcher';
 import { BrowserContextDispatcher } from './server/browserContextDispatcher';
 import { BrowserNewContextParams, BrowserContextChannel } from './channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
+import { envObjectToArray } from './client/clientHelper';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserTypeBase;
@@ -36,7 +37,12 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   }
 
   async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServerImpl> {
-    const browser = await this._browserType.launch(options);
+    const browser = await this._browserType.launch({
+      ...options,
+      ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
+      ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
+      env: options.env ? envObjectToArray(options.env) : undefined,
+    });
     return new BrowserServerImpl(this._browserType, browser as BrowserBase, options.port);
   }
 }

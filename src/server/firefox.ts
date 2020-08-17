@@ -20,11 +20,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FFBrowser } from '../firefox/ffBrowser';
 import { kBrowserCloseMessageId } from '../firefox/ffConnection';
-import { BrowserTypeBase, LaunchNonPersistentOptions } from './browserType';
+import { BrowserTypeBase } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
+import * as types from '../types';
 
 export class Firefox extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -57,7 +58,7 @@ export class Firefox extends BrowserTypeBase {
     transport.send(message);
   }
 
-  _defaultArgs(options: LaunchNonPersistentOptions, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], devtools, headless } = options;
     if (devtools)
       console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
