@@ -20,7 +20,7 @@ import * as util from 'util';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { Events } from './events';
-import { assert, helper, RegisteredListener, assertMaxArguments, debugLogger } from './helper';
+import { assert, helper, RegisteredListener, debugLogger } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -374,10 +374,6 @@ export class Frame {
       this._parentFrame._childFrames.add(this);
   }
 
-  page(): Page {
-    return this._page;
-  }
-
   _onLifecycleEvent(event: types.LifecycleEvent) {
     if (this._firedLifecycleEvents.has(event))
       return;
@@ -524,25 +520,9 @@ export class Frame {
     return this._context('utility');
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<js.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
-    assertMaxArguments(arguments.length, 2);
-    const context = await this._mainContext();
-    return context.evaluateHandleInternal(pageFunction, arg);
-  }
-
   async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
     const context = await this._mainContext();
     return context.evaluateExpressionHandleInternal(expression, isFunction, arg);
-  }
-
-  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    const context = await this._mainContext();
-    return context.evaluateInternal(pageFunction, arg);
   }
 
   async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
@@ -586,13 +566,6 @@ export class Frame {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 3);
-    return this._$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
-  }
-
   async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const handle = await this.$(selector);
     if (!handle)
@@ -600,13 +573,6 @@ export class Frame {
     const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
-  }
-
-  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 3);
-    return this._$$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
   }
 
   async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
@@ -670,10 +636,6 @@ export class Frame {
 
   childFrames(): Frame[] {
     return Array.from(this._childFrames);
-  }
-
-  isDetached(): boolean {
-    return this._detached;
   }
 
   async addScriptTag(options: {
@@ -922,16 +884,6 @@ export class Frame {
 
   async uncheck(selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setChecked(progress, false, options));
-  }
-
-  async waitForTimeout(timeout: number) {
-    await new Promise(fulfill => setTimeout(fulfill, timeout));
-  }
-
-  async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
-  async waitForFunction<R>(pageFunction: js.Func1<void, R>, arg?: any, options?: types.WaitForFunctionOptions): Promise<js.SmartHandle<R>>;
-  async waitForFunction<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
-    return this._waitForFunctionExpression(String(pageFunction), typeof pageFunction === 'function', arg, options);
   }
 
   async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {

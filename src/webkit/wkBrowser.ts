@@ -193,11 +193,6 @@ export class WKBrowser extends BrowserBase {
   isConnected(): boolean {
     return !this._connection.isClosed();
   }
-
-  _disconnect() {
-    helper.removeEventListeners(this._eventListeners);
-    this._connection.close();
-  }
 }
 
 export class WKBrowserContext extends BrowserContextBase {

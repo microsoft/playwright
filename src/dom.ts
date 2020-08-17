@@ -15,7 +15,7 @@
  */
 
 import * as frames from './frames';
-import { assert, helper, assertMaxArguments } from './helper';
+import { assert, helper } from './helper';
 import InjectedScript from './injected/injectedScript';
 import * as injectedScriptSource from './generated/injectedScriptSource';
 import * as debugScriptSource from './generated/debugScriptSource';
@@ -607,13 +607,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return selectors._queryAll(this._context.frame, selector, this);
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: js.FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 3);
-    return this._$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
-  }
-
   async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
     const handle = await selectors._query(this._context.frame, selector, this);
     if (!handle)
@@ -621,13 +614,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
     return result;
-  }
-
-  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: js.FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: js.FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 3);
-    return this._$$evalExpression(selector, String(pageFunction), typeof pageFunction === 'function', arg);
   }
 
   async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {

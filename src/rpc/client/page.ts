@@ -16,7 +16,7 @@
  */
 
 import { Events } from './events';
-import { assert, assertMaxArguments, helper, Listener } from '../../helper';
+import { assert, helper, Listener } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PagePdfParams, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameGotoOptions, PageReloadOptions, PageGoBackOptions, PageGoForwardOptions, PageScreenshotOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../channels';
 import { parseError, serializeError } from '../serializers';
@@ -31,7 +31,7 @@ import { ElementHandle } from './elementHandle';
 import { Worker } from './worker';
 import { Frame, FunctionWithSource, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse } from './input';
-import { Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
+import { assertMaxArguments, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
 import { Request, Response, Route, RouteHandler } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';

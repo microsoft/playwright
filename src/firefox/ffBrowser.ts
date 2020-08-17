@@ -162,11 +162,6 @@ export class FFBrowser extends BrowserBase {
     const error = payload.canceled ? 'canceled' : payload.error;
     this._downloadFinished(payload.uuid, error);
   }
-
-  _disconnect() {
-    helper.removeEventListeners(this._eventListeners);
-    this._connection.close();
-  }
 }
 
 export class FFBrowserContext extends BrowserContextBase {

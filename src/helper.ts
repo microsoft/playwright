@@ -185,15 +185,6 @@ class Helper {
     return urlString;
   }
 
-  static trimMiddle(string: string, maxLength: number) {
-    if (string.length <= maxLength)
-      return string;
-
-    const leftHalf = maxLength >> 1;
-    const rightHalf = maxLength - leftHalf - 1;
-    return string.substr(0, leftHalf) + '\u2026' + string.substr(this.length - rightHalf, rightHalf);
-  }
-
   static enclosingIntRect(rect: types.Rect): types.Rect {
     const x = Math.floor(rect.x + 1e-3);
     const y = Math.floor(rect.y + 1e-3);
@@ -361,10 +352,6 @@ export function isUnderTest(): boolean {
 export function debugAssert(value: any, message?: string): asserts value {
   if (_isUnderTest && !value)
     throw new Error(message);
-}
-
-export function assertMaxArguments(count: number, max: number): asserts count {
-  assert(count <= max, 'Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
 }
 
 export function getFromENV(name: string) {

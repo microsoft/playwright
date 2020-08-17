@@ -15,7 +15,6 @@
  */
 
 import * as types from '../types';
-import { TimeoutError } from '../errors';
 import { DeviceDescriptors } from '../deviceDescriptors';
 import { Chromium } from './chromium';
 import { WebKit } from './webkit';
@@ -26,14 +25,12 @@ import * as browserPaths from '../install/browserPaths';
 export class Playwright {
   readonly selectors = selectors;
   readonly devices: types.Devices;
-  readonly errors: { TimeoutError: typeof TimeoutError };
   readonly chromium: Chromium;
   readonly firefox: Firefox;
   readonly webkit: WebKit;
 
   constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
     this.devices = DeviceDescriptors;
-    this.errors = { TimeoutError };
 
     const chromium = browsers.find(browser => browser.name === 'chromium');
     this.chromium = new Chromium(packagePath, chromium!);

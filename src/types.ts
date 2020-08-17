@@ -187,8 +187,6 @@ export type ProxySettings = {
   password?: string
 };
 
-export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
-
 export type KeyboardModifier = 'Alt' | 'Control' | 'Meta' | 'Shift';
 export type MouseButton = 'left' | 'right' | 'middle';
 

@@ -111,7 +111,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
     const hasCustomArguments = !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs);
     if (persistent && !hasCustomArguments)
-      await browser._defaultContext!._loadDefaultContext();
+      await browser._defaultContext!._loadDefaultContext(progress);
     return browser;
   }
 

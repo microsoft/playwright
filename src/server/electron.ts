@@ -94,18 +94,8 @@ export class ElectronApplication extends EventEmitter {
     this.emit(ElectronEvents.ElectronApplication.Window, page);
   }
 
-  windows(): Page[] {
-    return [...this._windows];
-  }
-
-  async firstWindow(): Promise<Page> {
-    if (this._windows.size)
-      return this._windows.values().next().value;
-    return this.waitForEvent('window');
-  }
-
   async newBrowserWindow(options: any): Promise<Page> {
-    const windowId = await this.evaluate(async ({ BrowserWindow }, options) => {
+    const windowId = await this._nodeElectronHandle!.evaluate(async ({ BrowserWindow }, options) => {
       const win = new BrowserWindow(options);
       win.loadURL('about:blank');
       return win.id;
@@ -125,17 +115,16 @@ export class ElectronApplication extends EventEmitter {
 
   async close() {
     const closed = this.waitForEvent(ElectronEvents.ElectronApplication.Close);
-    await this.evaluate(({ app }) => app.quit());
+    await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
   }
 
-  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._timeoutSettings.timeout(options));
+  async waitForEvent(event: string, predicate?: Function): Promise<any> {
+    const progressController = new ProgressController(this._timeoutSettings.timeout({}));
     if (event !== ElectronEvents.ElectronApplication.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, predicate).promise);
   }
 
   async _init()  {
@@ -149,18 +138,6 @@ export class ElectronApplication extends EventEmitter {
         return (global as any)._playwrightRun();
       return new Promise(f => (global as any)._playwrightRunCallback = f);
     });
-  }
-
-  async evaluate<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: js.FuncOn<any, void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<R> {
-    return this._nodeElectronHandle!.evaluate(pageFunction, arg);
-  }
-
-  async evaluateHandle<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: js.FuncOn<any, void, R>, arg?: any): Promise<js.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: js.FuncOn<any, Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
-    return this._nodeElectronHandle!.evaluateHandle(pageFunction, arg);
   }
 }
 

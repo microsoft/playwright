@@ -119,7 +119,7 @@ export class CRPage implements PageDelegate {
 
   async exposeBinding(binding: PageBinding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(binding.source).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(binding.source, false, {}).catch(e => {})));
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
@@ -394,7 +394,7 @@ class FrameSession {
             worldName: UTILITY_WORLD_NAME,
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame.evaluate(binding.source).catch(e => {});
+            frame._evaluateExpression(binding.source, false, {}).catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
