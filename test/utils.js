@@ -23,7 +23,6 @@ const removeFolder = require('rimraf');
 
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');
-const browserName = process.env.BROWSER || 'chromium';
 
 let platform = os.platform();
 
@@ -227,7 +226,7 @@ const utils = module.exports = {
     return logger;
   },
 
-  expectSSLError(errorMessage) {
+  expectSSLError(browserName, errorMessage) {
     if (browserName === 'chromium') {
       expect(errorMessage).toContain('net::ERR_CERT_AUTHORITY_INVALID');
     } else if (browserName === 'webkit') {

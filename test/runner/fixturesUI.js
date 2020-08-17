@@ -81,6 +81,7 @@ function fixturesUI(testRunner, suite) {
         wrapper.__original = fn;
       }
       const test = new Test(title, wrapper);
+      test.__fixtures = fixturePool.fixtures(fn);
       test.file = file;
       suite.addTest(test);
       const only = specs.only && specs.only[0];

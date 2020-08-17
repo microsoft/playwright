@@ -26,7 +26,7 @@ const GoldenUtils = require('./GoldenUtils');
 class NullReporter {}
 
 class TestRunner extends EventEmitter {
-  constructor(file, startOrdinal, options) {
+  constructor(file, ordinals, options) {
     super();
     this.mocha = new Mocha({
       forbidOnly: options.forbidOnly,
@@ -38,7 +38,8 @@ class TestRunner extends EventEmitter {
       this.mocha.grep(options.grep);
     this._currentOrdinal = -1;
     this._failedWithError = false;
-    this._startOrdinal = startOrdinal;
+    this._ordinals = new Set(ordinals);
+    this._remaining = new Set(ordinals);
     this._trialRun = options.trialRun;
     this._passes = 0;
     this._failures = 0;
@@ -54,39 +55,39 @@ class TestRunner extends EventEmitter {
     let callback;
     const result = new Promise(f => callback = f);
     const runner = this.mocha.run(callback);
-    let remaining = 0;
 
     const constants = Mocha.Runner.constants;
     runner.on(constants.EVENT_TEST_BEGIN, test => {
       relativeTestFile = this._relativeTestFile;
-      if (this._failedWithError) {
-        ++remaining;
+      if (this._failedWithError)
         return;
-      }
-      if (++this._currentOrdinal < this._startOrdinal)
+      const ordinal = ++this._currentOrdinal;
+      if (this._ordinals.size && !this._ordinals.has(ordinal))
         return;
-      this.emit('test', { test: serializeTest(test, this._currentOrdinal) });
+      this._remaining.delete(ordinal);
+      this.emit('test', { test: serializeTest(test, ordinal) });
     });
 
     runner.on(constants.EVENT_TEST_PENDING, test => {
-      if (this._failedWithError) {
-        ++remaining;
+      if (this._failedWithError)
         return;
-      }
-      if (++this._currentOrdinal < this._startOrdinal)
+      const ordinal = ++this._currentOrdinal;
+      if (this._ordinals.size && !this._ordinals.has(ordinal))
         return;
+      this._remaining.delete(ordinal);
       ++this._pending;
-      this.emit('pending', { test: serializeTest(test, this._currentOrdinal) });
+      this.emit('pending', { test: serializeTest(test, ordinal) });
     });
 
     runner.on(constants.EVENT_TEST_PASS, test => {
       if (this._failedWithError)
         return;
 
-      if (this._currentOrdinal < this._startOrdinal)
+      const ordinal = this._currentOrdinal;
+      if (this._ordinals.size && !this._ordinals.has(ordinal))
         return;
       ++this._passes;
-      this.emit('pass', { test: serializeTest(test, this._currentOrdinal) });
+      this.emit('pass', { test: serializeTest(test, ordinal) });
     });
 
     runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
@@ -104,7 +105,7 @@ class TestRunner extends EventEmitter {
       this.emit('done', {
         stats: this._serializeStats(runner.stats),
         error: this._failedWithError,
-        remaining,
+        remaining: [...this._remaining],
         total: runner.stats.tests
       });
     });
@@ -116,10 +117,10 @@ class TestRunner extends EventEmitter {
       return false;
     if (hook) {
       // Hook starts before we bump the test ordinal.
-      if (this._currentOrdinal + 1 < this._startOrdinal)
+      if (!this._ordinals.has(this._currentOrdinal + 1))
         return false;
     } else {
-      if (this._currentOrdinal < this._startOrdinal)
+      if (!this._ordinals.has(this._currentOrdinal))
         return false;
     }
     return true;

@@ -43,7 +43,7 @@ program
     let total = 0;
     // Build the test model, suite per file.
     for (const file of files) {
-      const testRunner = new TestRunner(file, 0, {
+      const testRunner = new TestRunner(file, [], {
         forbidOnly: command.forbidOnly || undefined,
         grep: command.grep,
         reporter: NullReporter,

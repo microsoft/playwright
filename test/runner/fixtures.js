@@ -120,6 +120,21 @@ class FixturePool {
       }
     };
   }
+
+  fixtures(callback) {
+    const result = new Set();
+    const visit  = (callback) => {
+      for (const name of fixtureParameterNames(callback)) {
+        if (name in result)
+          continue;
+        result.add(name);
+        const { fn } = registrations.get(name)
+        visit(fn);
+      }
+    };
+    visit(callback);
+    return result;
+  }
 }
 
 function fixtureParameterNames(fn) {
@@ -146,7 +161,7 @@ function registerFixture(name, fn) {
   innerRegisterFixture(name, 'test', fn);
 };
 
-function registerWorkerFixture (name, fn) {
+function registerWorkerFixture(name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
