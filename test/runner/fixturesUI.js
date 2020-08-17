@@ -23,7 +23,6 @@ Error.stackTraceLimit = 15;
 global.testOptions = require('./testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
-process.env.JEST_WORKER_ID = 1;
 
 const fixturePool = new FixturePool();
 let revertBabelRequire;

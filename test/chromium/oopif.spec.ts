@@ -155,7 +155,7 @@ it.skip(!CHROMIUM)('should take screenshot', async({browser, page, server, golde
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
-  expect(await page.screenshot()).toMatchImage(golden('screenshot-oopif.png'));
+  expect(await page.screenshot()).toMatchImage(golden('screenshot-oopif.png'), { threshold: 0.3 });
 });
 
 it.skip(!CHROMIUM)('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {

@@ -26,6 +26,7 @@ import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
 import { registerFixture, registerWorkerFixture} from './runner/fixtures';
+import './runner/builtin.fixtures';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
 
@@ -37,13 +38,11 @@ const platform = os.platform();
 declare global {
   interface WorkerState {
     asset: (path: string) => string;
-    parallelIndex: number;
     defaultBrowserOptions: LaunchOptions;
     golden: (path: string) => string;
     playwright: typeof import('../index');
     browserType: BrowserType<Browser>;
     browser: Browser;
-    tmpDir: string;
   }
   interface FixtureState {
     toImpl: (rpcObject: any) => any;
@@ -61,10 +60,6 @@ declare global {
 (global as any).CHROMIUM = browserName === 'chromium';
 (global as any).FFOX = browserName === 'firefox';
 (global as any).WEBKIT = browserName === 'webkit';
-
-registerWorkerFixture('parallelIndex', async ({}, test) => {
-  await test(parseInt(process.env.JEST_WORKER_ID, 10) - 1);
-});
 
 registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
@@ -139,7 +134,7 @@ registerWorkerFixture('playwright', async({parallelIndex}, test) => {
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(path.join(__dirname, 'output-' + browserName), 'coverage', parallelIndex + '.json');
+    const coveragePath = path.join(path.join(__dirname, 'coverage-report'), 'coverage', parallelIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
@@ -205,5 +200,5 @@ registerWorkerFixture('asset', async ({}, test) => {
 });
 
 registerWorkerFixture('golden', async ({browserName}, test) => {
-  await test(p => path.join(__dirname, `golden-${browserName}`, p));
+  await test(p => path.join(`${browserName}`, p));
 });

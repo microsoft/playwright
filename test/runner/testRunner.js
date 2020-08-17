@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+const path = require('path');
 const Mocha = require('mocha');
 const { fixturesUI } = require('./fixturesUI');
 const { EventEmitter } = require('events');
@@ -21,14 +22,6 @@ const { EventEmitter } = require('events');
 global.expect = require('expect');
 global.testOptions = require('./testOptions');
 const GoldenUtils = require('./GoldenUtils');
-
-(function extendExpects() {
-  function toMatchImage(received, path) {
-    const {pass, message} =  GoldenUtils.compare(received, path);
-    return {pass, message: () => message};
-  };
-  global.expect.extend({ toMatchImage });
-})();
 
 class NullReporter {}
 
@@ -50,7 +43,7 @@ class TestRunner extends EventEmitter {
     this._passes = 0;
     this._failures = 0;
     this._pending = 0;
-
+    this._relativeTestFile = path.relative(options.testDir, file);
     this.mocha.addFile(file);
     this.mocha.suite.filterOnly();
     this.mocha.loadFiles();
@@ -65,6 +58,7 @@ class TestRunner extends EventEmitter {
 
     const constants = Mocha.Runner.constants;
     runner.on(constants.EVENT_TEST_BEGIN, test => {
+      relativeTestFile = this._relativeTestFile;
       if (this._failedWithError) {
         ++remaining;
         return;
@@ -185,4 +179,14 @@ function serializeError(error) {
   return trimCycles(error);
 }
 
-module.exports = { TestRunner, createTestSuite };
+let relativeTestFile;
+
+function initializeImageMatcher(options) {
+  function toMatchImage(received, name, config) {
+    const { pass, message } = GoldenUtils.compare(received, name, { ...options, relativeTestFile, config });
+    return { pass, message: () => message };
+  };
+  global.expect.extend({ toMatchImage });
+}
+
+module.exports = { TestRunner, createTestSuite, initializeImageMatcher };

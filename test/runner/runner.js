@@ -20,7 +20,7 @@ const { EventEmitter } = require('events');
 const Mocha = require('mocha');
 const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
-const { computeWorkerHash, FixturePool } = require('./fixtures');
+const { computeWorkerHash } = require('./fixtures');
 
 const constants = Mocha.Runner.constants;
 // Mocha runner does not remove uncaughtException listeners.
@@ -225,7 +225,7 @@ class OopWorker extends EventEmitter {
   }
 
   async init() {
-    this.process.send({ method: 'init', params: { workerId: lastWorkerId++ } });
+    this.process.send({ method: 'init', params: { workerId: lastWorkerId++, ...this.runner._options } });
     await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
@@ -259,6 +259,10 @@ class InProcessWorker extends EventEmitter {
   }
 
   async init() {
+    const { initializeImageMatcher } = require('./testRunner');
+    const { initializeWorker } = require('./builtin.fixtures');
+    initializeImageMatcher(this.runner._options);
+    initializeWorker({ ...this.runner._options.outputDir, workerId: 0 });
   }
 
   async run(entry) {

@@ -31,10 +31,13 @@ program
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
   .option('--quiet', 'Suppress stdio', false)
   .option('--debug', 'Run tests in-process for debugging', false)
+  .option('--output <outputDir>', 'Folder for output artifacts, default: test-results', path.join(process.cwd(), 'test-results'))
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
+  .option('-u, --update-snapshots', 'Use this flag to re-record every snapshot that fails during this test run')
   .action(async (command) => {
-    // Collect files
-    const files = collectFiles(path.join(process.cwd(), command.args[0]), command.args.slice(1));
+    // Collect files]
+    const testDir = path.join(process.cwd(), command.args[0]);
+    const files = collectFiles(testDir, '', command.args.slice(1));
     const rootSuite = new createTestSuite();
 
     let total = 0;
@@ -44,6 +47,7 @@ program
         forbidOnly: command.forbidOnly || undefined,
         grep: command.grep,
         reporter: NullReporter,
+        testDir,
         timeout: command.timeout,
         trialRun: true,
       });
@@ -74,10 +78,14 @@ program
       quiet: command.quiet,
       grep: command.grep,
       jobs,
+      outputDir: command.output,
       reporter: command.reporter,
       retries: command.retries,
+      snapshotDir: path.join(testDir, '__snapshots__'),
+      testDir,
       timeout: command.timeout,
       trialRun: command.trialRun,
+      updateSnapshots: command.updateSnapshots
     });
     await runner.run(files);
     await runner.stop();
@@ -86,24 +94,26 @@ program
 
 program.parse(process.argv);
 
-function collectFiles(dir, filters) {
-  if (fs.statSync(dir).isFile())
-    return [dir];
+function collectFiles(testDir, dir, filters) {
+  const fullDir = path.join(testDir, dir);
+  if (fs.statSync(fullDir).isFile())
+    return [fullDir];
   const files = [];
-  for (const name of fs.readdirSync(dir)) {
-    if (fs.lstatSync(path.join(dir, name)).isDirectory()) {
-      files.push(...collectFiles(path.join(dir, name), filters));
+  for (const name of fs.readdirSync(fullDir)) {
+    if (fs.lstatSync(path.join(fullDir, name)).isDirectory()) {
+      files.push(...collectFiles(testDir, path.join(dir, name), filters));
       continue;
     }
     if (!name.endsWith('spec.ts'))
       continue;
+    const relativeName = path.join(dir, name);
+    const fullName = path.join(testDir, relativeName);
     if (!filters.length) {
-      files.push(path.join(dir, name));
+      files.push(fullName);
       continue;
     }
-    const fullName = path.join(dir, name);
     for (const filter of filters) {
-      if (fullName.includes(filter)) {
+      if (relativeName.includes(filter)) {
         files.push(fullName);
         break;
       }

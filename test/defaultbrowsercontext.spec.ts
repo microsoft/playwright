@@ -14,6 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import './runner/builtin.fixtures';
 import './base.fixture';
 import { registerFixture } from './runner/fixtures';
 import fs from 'fs';

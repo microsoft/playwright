@@ -44,7 +44,7 @@ const GoldenComparators = {
  * @param {!string} mimeType
  * @return {?{diff: (!Object:undefined), errorMessage: (string|undefined)}}
  */
-function compareImages(actualBuffer, expectedBuffer, mimeType) {
+function compareImages(actualBuffer, expectedBuffer, mimeType, config = {}) {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be Buffer.' };
 
@@ -56,7 +56,7 @@ function compareImages(actualBuffer, expectedBuffer, mimeType) {
     };
   }
   const diff = new PNG({width: expected.width, height: expected.height});
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {threshold: 0.2});
+  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {threshold: 0.2, ...config});
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
 
@@ -88,8 +88,16 @@ function compareText(actual, expectedBuffer) {
  * @param {string} path
  * @return {!{pass: boolean, message: (undefined|string)}}
  */
-function compare(actual, expectedPath) {
+function compare(actual, name, options) {
+  const { relativeTestFile, snapshotDir, outputDir, updateSnapshots } = options;
+  let expectedPath;
+  const testAssetsDir = relativeTestFile.replace(/\.spec\.[jt]s/, '');
+  if (path.isAbsolute(name))
+    expectedPath = name;
+  else
+    expectedPath = path.join(snapshotDir, testAssetsDir, name);
   if (!fs.existsSync(expectedPath)) {
+    fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
     fs.writeFileSync(expectedPath, actual);
     return {
       pass: false,
@@ -107,15 +115,35 @@ function compare(actual, expectedPath) {
     };
   }
 
-  const result = comparator(actual, expected, mimeType);
+  const result = comparator(actual, expected, mimeType, options.config);
   if (!result)
     return { pass: true };
 
-  const actualPath = addSuffix(expectedPath, '-actual');
-  const diffPath = addSuffix(expectedPath, '-diff', result.diffExtension);
+  if (updateSnapshots) {
+    fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
+    fs.writeFileSync(expectedPath, actual);
+    return {
+      pass: true,
+      message: expectedPath + ' running with --update-snapshots, writing actual.'
+    };
+  }
+
+  let actualPath;
+  let diffPath;
+  if (path.isAbsolute(name)) {
+    actualPath = addSuffix(expectedPath, '-actual');
+    diffPath = addSuffix(expectedPath, '-diff', result.diffExtension);
+  } else {
+    const outputPath = path.join(outputDir, testAssetsDir, name);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    const expectedPathOut = addSuffix(outputPath, '-expected');
+    actualPath = addSuffix(outputPath, '-actual');
+    diffPath = addSuffix(outputPath, '-diff', result.diffExtension);
+    fs.writeFileSync(expectedPathOut, expected);
+  }
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
-    fs.writeFileSync(diffPath, result.diff);
+    fs.writeFileSync(diffPath, result.diff);  
   
   const output = [
     c.red(`Image comparison failed:`),

@@ -46,8 +46,8 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-output
-        path: test/output-${{ matrix.browser }}
+        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
+        path: test-results
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -77,8 +77,8 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: ${{ matrix.browser }}-mac-output
-        path: test/output-${{ matrix.browser }}
+        name: ${{ matrix.browser }}-mac-test-results
+        path: test-results
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -112,8 +112,8 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: ${{ matrix.browser }}-win-output
-        path: test/output-${{ matrix.browser }}
+        name: ${{ matrix.browser }}-win-test-results
+        path: test-results
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -169,8 +169,8 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: headful-${{ matrix.browser }}-linux-output
-        path: test/output-${{ matrix.browser }}
+        name: headful-${{ matrix.browser }}-linux-test-results
+        path: test-results
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -207,8 +207,8 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
-        name: wire-${{ matrix.browser }}-linux-output
-        path: test/output-${{ matrix.browser }}
+        name: wire-${{ matrix.browser }}-linux-test-results
+        path: test-results
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
