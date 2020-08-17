@@ -92,7 +92,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   }
 
   async setGeolocation(params: BrowserContextSetGeolocationParams): Promise<void> {
-    await this._context.setGeolocation(params.geolocation || null);
+    await this._context.setGeolocation(params.geolocation);
   }
 
   async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
@@ -104,7 +104,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   }
 
   async setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<void> {
-    await this._context.setHTTPCredentials(params.httpCredentials || null);
+    await this._context.setHTTPCredentials(params.httpCredentials);
   }
 
   async addInitScript(params: { source: string }): Promise<void> {

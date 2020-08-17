@@ -23,7 +23,7 @@ import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
-import { assert, logPolitely, getFromENV } from '../helper';
+import { assert, getFromENV } from '../helper';
 import * as browserPaths from './browserPaths';
 import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths';
 
@@ -249,4 +249,12 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
     require('http').request(options, requestCallback);
   request.end();
   return request;
+}
+
+export function logPolitely(toBeLogged: string) {
+  const logLevel = process.env.npm_config_loglevel;
+  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
+
+  if (!logLevelDisplay)
+    console.log(toBeLogged);  // eslint-disable-line no-console
 }

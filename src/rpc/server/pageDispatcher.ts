@@ -36,7 +36,6 @@ import { CRCoverage } from '../../chromium/crCoverage';
 
 export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
   private _page: Page;
-  private _onFileChooser: (fileChooser: FileChooser) => void;
 
   constructor(scope: DispatcherScope, page: Page) {
     // TODO: theoretically, there could be more than one frame already.
@@ -53,11 +52,10 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     page.on(Events.Page.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
     page.on(Events.Page.Download, dialog => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, dialog) }));
-    // We add this listener lazily, to avoid intercepting file chooser when noone listens.
-    this._onFileChooser = fileChooser => this._dispatchEvent('fileChooser', {
+    this._page.on(Events.Page.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
-    });
+    }));
     page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
     page.on(Events.Page.FrameDetached, frame => this._onFrameDetached(frame));
     page.on(Events.Page.Load, () => this._dispatchEvent('load'));
@@ -143,10 +141,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
   }
 
   async setFileChooserInterceptedNoReply(params: { intercepted: boolean }) {
-    if (params.intercepted)
-      this._page.on(Events.Page.FileChooser, this._onFileChooser);
-    else
-      this._page.removeListener(Events.Page.FileChooser, this._onFileChooser);
+    await this._page._setFileChooserIntercepted(params.intercepted);
   }
 
   async keyboardDown(params: { key: string }): Promise<void> {

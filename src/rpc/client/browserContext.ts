@@ -21,6 +21,7 @@ import * as network from './network';
 import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { helper } from '../../helper';
+import { isUnderTest, deprecate } from './clientHelper';
 import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
@@ -157,6 +158,8 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
+    if (!isUnderTest())
+      deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
     return this._wrapApiCall('browserContext.setHTTPCredentials', async () => {
       await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
     });

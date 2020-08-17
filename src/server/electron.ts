@@ -106,7 +106,7 @@ export class ElectronApplication extends EventEmitter {
         return page;
     }
 
-    return await this.waitForEvent(ElectronEvents.ElectronApplication.Window, (page: ElectronPage) => page._browserWindowId === windowId);
+    return await this._waitForEvent(ElectronEvents.ElectronApplication.Window, (page: ElectronPage) => page._browserWindowId === windowId);
   }
 
   context(): BrowserContext {
@@ -114,13 +114,13 @@ export class ElectronApplication extends EventEmitter {
   }
 
   async close() {
-    const closed = this.waitForEvent(ElectronEvents.ElectronApplication.Close);
+    const closed = this._waitForEvent(ElectronEvents.ElectronApplication.Close);
     await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
   }
 
-  async waitForEvent(event: string, predicate?: Function): Promise<any> {
+  private async _waitForEvent(event: string, predicate?: Function): Promise<any> {
     const progressController = new ProgressController(this._timeoutSettings.timeout({}));
     if (event !== ElectronEvents.ElectronApplication.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));

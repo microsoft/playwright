@@ -17,7 +17,7 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, helper, Listener, debugLogger } from './helper';
+import { assert, helper, debugLogger } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
@@ -386,20 +386,8 @@ export class Page extends EventEmitter {
     }
   }
 
-  on(event: string | symbol, listener: Listener): this {
-    if (event === Events.Page.FileChooser) {
-      if (!this.listenerCount(event))
-        this._delegate.setFileChooserIntercepted(true);
-    }
-    super.on(event, listener);
-    return this;
-  }
-
-  removeListener(event: string | symbol, listener: Listener): this {
-    super.removeListener(event, listener);
-    if (event === Events.Page.FileChooser && !this.listenerCount(event))
-      this._delegate.setFileChooserIntercepted(false);
-    return this;
+  async _setFileChooserIntercepted(enabled: boolean): Promise<void> {
+    await this._delegate.setFileChooserIntercepted(enabled);
   }
 }
 

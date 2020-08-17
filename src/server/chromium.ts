@@ -17,7 +17,7 @@
 
 import * as path from 'path';
 import * as os from 'os';
-import { getFromENV, logPolitely, helper } from '../helper';
+import { getFromENV, helper } from '../helper';
 import { CRBrowser } from '../chromium/crBrowser';
 import { Env } from './processLauncher';
 import { kBrowserCloseMessageId } from '../chromium/crConnection';
@@ -39,7 +39,6 @@ export class Chromium extends BrowserTypeBase {
     if (debugPort !== undefined) {
       if (Number.isNaN(debugPort))
         throw new Error(`PLAYWRIGHT_CHROMIUM_DEBUG_PORT must be a number, but is set to "${debugPortStr}"`);
-      logPolitely(`NOTE: Chromium will be launched in debug mode on port ${debugPort}`);
     }
 
     super(packagePath, browser, debugPort ? { webSocketRegex: /^DevTools listening on (ws:\/\/.*)$/, stream: 'stderr' } : null);
