@@ -86,38 +86,6 @@ export class SlowMoTransport implements ConnectionTransport {
   }
 }
 
-export class DeferWriteTransport implements ConnectionTransport {
-  private _delegate: ConnectionTransport;
-  private _readPromise: Promise<void>;
-
-  onmessage?: (message: ProtocolResponse) => void;
-  onclose?: () => void;
-
-  constructor(transport: ConnectionTransport) {
-    this._delegate = transport;
-    let callback: () => void;
-    this._readPromise = new Promise(f => callback = f);
-    this._delegate.onmessage = (s: ProtocolResponse) => {
-      callback();
-      if (this.onmessage)
-        this.onmessage(s);
-    };
-    this._delegate.onclose = () => {
-      if (this.onclose)
-        this.onclose();
-    };
-  }
-
-  async send(s: ProtocolRequest) {
-    await this._readPromise;
-    this._delegate.send(s);
-  }
-
-  close() {
-    this._delegate.close();
-  }
-}
-
 export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;
   private _progress: Progress;
@@ -190,40 +158,5 @@ export class WebSocketTransport implements ConnectionTransport {
     const promise = new Promise(f => this.onclose = f);
     this.close();
     return promise; // Make sure to await the actual disconnect.
-  }
-}
-
-export class InterceptingTransport implements ConnectionTransport {
-  private readonly _delegate: ConnectionTransport;
-  private _interceptor: (message: ProtocolRequest) => ProtocolRequest;
-
-  onmessage?: (message: ProtocolResponse) => void;
-  onclose?: () => void;
-
-  constructor(transport: ConnectionTransport, interceptor: (message: ProtocolRequest) => ProtocolRequest) {
-    this._delegate = transport;
-    this._interceptor = interceptor;
-    this._delegate.onmessage = this._onmessage.bind(this);
-    this._delegate.onclose = this._onClose.bind(this);
-  }
-
-  private _onmessage(message: ProtocolResponse) {
-    if (this.onmessage)
-      this.onmessage(message);
-  }
-
-  private _onClose() {
-    if (this.onclose)
-      this.onclose();
-    this._delegate.onmessage = undefined;
-    this._delegate.onclose = undefined;
-  }
-
-  send(s: ProtocolRequest) {
-    this._delegate.send(this._interceptor(s));
-  }
-
-  close() {
-    this._delegate.close();
   }
 }

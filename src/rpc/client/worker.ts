@@ -15,10 +15,9 @@
  */
 
 import { Events } from './events';
-import { assertMaxArguments } from '../../helper';
 import { WorkerChannel, WorkerInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
-import { Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
+import { assertMaxArguments, Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';
 import { BrowserContext } from './browserContext';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';

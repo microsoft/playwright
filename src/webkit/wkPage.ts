@@ -662,7 +662,7 @@ export class WKPage implements PageDelegate {
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
     const script = this._bindingToScript(binding);
-    await Promise.all(this._page.frames().map(frame => frame.evaluate(script).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(script, false, {}).catch(e => {})));
   }
 
   async evaluateOnNewDocument(script: string): Promise<void> {

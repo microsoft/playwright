@@ -25,7 +25,7 @@ import { Events } from './events';
 import { Download } from './download';
 import { BrowserBase } from './browser';
 import { EventEmitter } from 'events';
-import { ProgressController } from './progress';
+import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
 
 export interface BrowserContext extends EventEmitter {
@@ -44,10 +44,8 @@ export interface BrowserContext extends EventEmitter {
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
   exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void>;
-  exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
   unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
-  waitForEvent(event: string, optionsOrPredicate?: Function | (types.TimeoutOptions & { predicate?: Function })): Promise<any>;
   close(): Promise<void>;
 }
 
@@ -75,14 +73,6 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   async _initialize() {
     if (helper.isDebugMode())
       new DebugController(this);
-  }
-
-  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._timeoutSettings.timeout(options));
-    if (event !== Events.BrowserContext.Close)
-      this._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
   }
 
   _browserClosed() {
@@ -125,10 +115,6 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     if (urls && !Array.isArray(urls))
       urls = [ urls ];
     return await this._doCookies(urls as string[]);
-  }
-
-  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
   }
 
   setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
@@ -180,9 +166,12 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async _loadDefaultContext() {
-    if (!this.pages().length)
-      await this.waitForEvent('page');
+  async _loadDefaultContext(progress: Progress) {
+    if (!this.pages().length) {
+      const waitForEvent = helper.waitForEvent(progress, this, Events.BrowserContext.Page);
+      progress.cleanupWhenAborted(() => waitForEvent.dispose);
+      await waitForEvent.promise;
+    }
     const pages = this.pages();
     await pages[0].mainFrame().waitForLoadState();
     if (pages.length !== 1 || pages[0].mainFrame().url() !== 'about:blank')

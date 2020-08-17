@@ -110,3 +110,8 @@ export function serializeArgument(arg: any): SerializedArgument {
 export function parseResult(value: SerializedValue): any {
   return parseSerializedValue(value, undefined);
 }
+
+export function assertMaxArguments(count: number, max: number): asserts count {
+  if (count > max)
+    throw new Error('Too many arguments. If you need to pass more than 1 argument to the function wrap them in an object.');
+}

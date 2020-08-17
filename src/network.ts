@@ -17,7 +17,6 @@
 import * as frames from './frames';
 import * as types from './types';
 import { assert, helper } from './helper';
-import { URLSearchParams } from 'url';
 import { normalizeFulfillParameters, normalizeContinueOverrides } from './converters';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
@@ -120,32 +119,8 @@ export class Request {
     return this._method;
   }
 
-  postData(): string | null {
-    return this._postData ? this._postData.toString('utf8') : null;
-  }
-
   postDataBuffer(): Buffer | null {
     return this._postData;
-  }
-
-  postDataJSON(): Object | null {
-    const postData = this.postData();
-    if (!postData)
-      return null;
-
-    const contentType = this.headers()['content-type'];
-    if (!contentType)
-      return null;
-
-    if (contentType === 'application/x-www-form-urlencoded') {
-      const entries: Record<string, string> = {};
-      const parsed = new URLSearchParams(postData);
-      for (const [k, v] of parsed.entries())
-        entries[k] = v;
-      return entries;
-    }
-
-    return JSON.parse(postData);
   }
 
   headers(): {[key: string]: string} {
@@ -179,10 +154,6 @@ export class Request {
 
   redirectedFrom(): Request | null {
     return this._redirectedFrom;
-  }
-
-  redirectedTo(): Request | null {
-    return this._redirectedTo;
   }
 
   failure(): { errorText: string } | null {
@@ -268,10 +239,6 @@ export class Response {
     return this._url;
   }
 
-  ok(): boolean {
-    return this._status === 0 || (this._status >= 200 && this._status <= 299);
-  }
-
   status(): number {
     return this._status;
   }
@@ -297,16 +264,6 @@ export class Response {
       });
     }
     return this._contentPromise;
-  }
-
-  async text(): Promise<string> {
-    const content = await this.body();
-    return content.toString('utf8');
-  }
-
-  async json(): Promise<object> {
-    const content = await this.text();
-    return JSON.parse(content);
   }
 
   request(): Request {

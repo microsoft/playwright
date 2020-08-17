@@ -211,10 +211,6 @@ export class CRBrowser extends BrowserBase {
     await this._session.send('Target.closeTarget', { targetId: crPage._targetId });
   }
 
-  _disconnect() {
-    this._connection.close();
-  }
-
   async newBrowserCDPSession(): Promise<CRSession> {
     return await this._connection.createBrowserSession();
   }

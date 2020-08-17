@@ -65,7 +65,6 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
   abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
-  abstract _disconnect(): void;
   abstract version(): string;
 
   async newPage(options?: BrowserContextOptions): Promise<Page> {

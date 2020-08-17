@@ -17,7 +17,7 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, helper, Listener, assertMaxArguments, debugLogger } from './helper';
+import { assert, helper, Listener, debugLogger } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
@@ -30,7 +30,7 @@ import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { ProgressController, Progress, runAbortableTask } from './progress';
+import { Progress, runAbortableTask } from './progress';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -192,17 +192,6 @@ export class Page extends EventEmitter {
     return this._frameManager.mainFrame();
   }
 
-  frame(options: string | { name?: string, url?: types.URLMatch }): frames.Frame | null {
-    const name = helper.isString(options) ? options : options.name;
-    const url = helper.isObject(options) ? options.url : undefined;
-    assert(name || url, 'Either name or url matcher should be specified');
-    return this.frames().find(f => {
-      if (name)
-        return f.name() === name;
-      return helper.urlMatches(f.url(), url);
-    }) || null;
-  }
-
   frames(): frames.Frame[] {
     return this._frameManager.frames();
   }
@@ -213,10 +202,6 @@ export class Page extends EventEmitter {
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
-  async exposeFunction(name: string, playwrightFunction: Function) {
-    await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
   }
 
   async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource) {
@@ -253,33 +238,6 @@ export class Page extends EventEmitter {
     const waitPromise = this.mainFrame().waitForNavigation(options);
     await this._delegate.reload();
     return waitPromise;
-  }
-
-  async waitForRequest(urlOrPredicate: string | RegExp | ((r: network.Request) => boolean), options: types.TimeoutOptions = {}): Promise<network.Request> {
-    const predicate = (request: network.Request) => {
-      if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
-        return helper.urlMatches(request.url(), urlOrPredicate);
-      return urlOrPredicate(request);
-    };
-    return this.waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout });
-  }
-
-  async waitForResponse(urlOrPredicate: string | RegExp | ((r: network.Response) => boolean), options: types.TimeoutOptions = {}): Promise<network.Response> {
-    const predicate = (response: network.Response) => {
-      if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
-        return helper.urlMatches(response.url(), urlOrPredicate);
-      return urlOrPredicate(response);
-    };
-    return this.waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout });
-  }
-
-  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
-    const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._timeoutSettings.timeout(options));
-    this._disconnectedPromise.then(error => progressController.abort(error));
-    if (event !== Events.Page.Crash)
-      this._crashedPromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, options.predicate).promise);
   }
 
   async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {
@@ -325,11 +283,6 @@ export class Page extends EventEmitter {
 
   async bringToFront(): Promise<void> {
     await this._delegate.bringToFront();
-  }
-
-  async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
-    const source = await helper.evaluationScript(script, arg);
-    await this._addInitScriptExpression(source);
   }
 
   async _addInitScriptExpression(source: string) {
@@ -413,14 +366,6 @@ export class Page extends EventEmitter {
     return this._closedState === 'closed';
   }
 
-  async waitForTimeout(timeout: number) {
-    await this.mainFrame().waitForTimeout(timeout);
-  }
-
-  workers(): Worker[] {
-    return [...this._workers.values()];
-  }
-
   _addWorker(workerId: string, worker: Worker) {
     this._workers.set(workerId, worker);
     this.emit(Events.Page.Worker, worker);
@@ -480,22 +425,8 @@ export class Worker extends EventEmitter {
     return this._url;
   }
 
-  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<R> {
-    assertMaxArguments(arguments.length, 2);
-    return js.evaluate(await this._executionContextPromise, true /* returnByValue */, pageFunction, arg);
-  }
-
   async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
     return js.evaluateExpression(await this._executionContextPromise, true /* returnByValue */, expression, isFunction, arg);
-  }
-
-  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: js.Func1<void, R>, arg?: any): Promise<js.SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: js.Func1<Arg, R>, arg: Arg): Promise<js.SmartHandle<R>> {
-    assertMaxArguments(arguments.length, 2);
-    return js.evaluate(await this._executionContextPromise, false /* returnByValue */, pageFunction, arg);
   }
 
   async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {

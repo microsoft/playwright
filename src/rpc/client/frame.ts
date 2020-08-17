@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { assertMaxArguments, helper, assert } from '../../helper';
+import { helper, assert } from '../../helper';
 import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
-import { JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
+import { assertMaxArguments, JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
 import * as fs from 'fs';
 import * as network from './network';
 import * as util from 'util';

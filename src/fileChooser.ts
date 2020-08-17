@@ -16,7 +16,6 @@
 
 import { ElementHandle } from './dom';
 import { Page } from './page';
-import * as types from './types';
 
 export class FileChooser {
   private _page: Page;
@@ -39,9 +38,5 @@ export class FileChooser {
 
   page(): Page {
     return this._page;
-  }
-
-  async setFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options?: types.NavigatingActionWaitOptions) {
-    return this._elementHandle.setInputFiles(files, options);
   }
 }
