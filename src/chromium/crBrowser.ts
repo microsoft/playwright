@@ -48,7 +48,7 @@ export class CRBrowser extends BrowserBase {
   private _tracingClient: CRSession | undefined;
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
-    const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo), options.loggers);
+    const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo));
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
     const session = connection.rootSession;

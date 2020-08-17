@@ -64,8 +64,8 @@ it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
-  expect(error.message).toContain(`[browser] <launching>`);
-  expect(error.message).toContain(`[browser] <launched> pid=`);
+  expect(error.message).toContain(`<launching>`);
+  expect(error.message).toContain(`<launched> pid=`);
 });
 
 it.skip(WIRE)('should handle exception', async({browserType, defaultBrowserOptions}) => {

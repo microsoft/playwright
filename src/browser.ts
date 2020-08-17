@@ -20,9 +20,7 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
 import { Events } from './events';
-import { Loggers } from './logger';
 import { ProxySettings } from './types';
-import { LoggerSink } from './loggerSink';
 import { ChildProcess } from 'child_process';
 
 export interface BrowserProcess {
@@ -34,7 +32,6 @@ export interface BrowserProcess {
 
 export type BrowserOptions = {
   name: string,
-  loggers: Loggers,
   downloadsPath?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
@@ -43,7 +40,7 @@ export type BrowserOptions = {
   proxy?: ProxySettings,
 };
 
-export type BrowserContextOptions = types.BrowserContextOptions & { logger?: LoggerSink };
+export type BrowserContextOptions = types.BrowserContextOptions;
 
 export interface Browser extends EventEmitter {
   newContext(options?: BrowserContextOptions): Promise<BrowserContext>;

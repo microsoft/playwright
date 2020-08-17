@@ -186,7 +186,6 @@ export class FFPage implements PageDelegate {
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
     this._page.emit(Events.Page.Dialog, new dialog.Dialog(
-        this._page._logger,
         params.type,
         params.message,
         async (accept: boolean, promptText?: string) => {

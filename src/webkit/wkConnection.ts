@@ -16,10 +16,9 @@
  */
 
 import { EventEmitter } from 'events';
-import { assert } from '../helper';
+import { assert, debugLogger } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
-import { Loggers, Logger } from '../logger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
@@ -37,11 +36,9 @@ export class WKConnection {
   private _lastId = 0;
   private _closed = false;
   readonly browserSession: WKSession;
-  readonly _logger: Logger;
 
-  constructor(transport: ConnectionTransport, loggers: Loggers, onDisconnect: () => void) {
+  constructor(transport: ConnectionTransport, onDisconnect: () => void) {
     this._transport = transport;
-    this._logger = loggers.protocol;
     this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this._onDisconnect = onDisconnect;
@@ -55,14 +52,14 @@ export class WKConnection {
   }
 
   rawSend(message: ProtocolRequest) {
-    if (this._logger.isEnabled())
-      this._logger.info('SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+    if (debugLogger.isEnabled('protocol'))
+      debugLogger.log('protocol', 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
     this._transport.send(message);
   }
 
   private _dispatchMessage(message: ProtocolResponse) {
-    if (this._logger.isEnabled())
-      this._logger.info('◀ RECV ' + JSON.stringify(message));
+    if (debugLogger.isEnabled('protocol'))
+      debugLogger.log('protocol', '◀ RECV ' + JSON.stringify(message));
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.pageProxyId) {
@@ -138,9 +135,7 @@ export class WKSession extends EventEmitter {
   }
 
   sendMayFail<T extends keyof Protocol.CommandParameters>(method: T, params?: Protocol.CommandParameters[T]): Promise<Protocol.CommandReturnValues[T] | void> {
-    return this.send(method, params).catch(error => {
-      this.connection._logger.error(error);
-    });
+    return this.send(method, params).catch(error => debugLogger.log('error', error));
   }
 
   markAsCrashed() {

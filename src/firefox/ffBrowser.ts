@@ -36,7 +36,7 @@ export class FFBrowser extends BrowserBase {
   private _version = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
-    const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo), options.loggers);
+    const connection = new FFConnection(SlowMoTransport.wrap(transport, options.slowMo));
     const browser = new FFBrowser(connection, options);
     const promises: Promise<any>[] = [
       connection.send('Browser.enable', { attachToDefaultContext: !!options.persistent }),

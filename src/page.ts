@@ -17,7 +17,7 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, helper, Listener, assertMaxArguments } from './helper';
+import { assert, helper, Listener, assertMaxArguments, debugLogger } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
@@ -30,7 +30,6 @@ import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { logError, Logger } from './logger';
 import { ProgressController, Progress, runAbortableTask } from './progress';
 
 export interface PageDelegate {
@@ -105,7 +104,6 @@ export class Page extends EventEmitter {
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
-  readonly _logger: Logger;
   readonly _state: PageState;
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _evaluateOnNewDocumentSources: string[] = [];
@@ -121,7 +119,6 @@ export class Page extends EventEmitter {
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
     super();
     this._delegate = delegate;
-    this._logger = browserContext._apiLogger;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
     this._disconnectedCallback = () => {};
@@ -170,7 +167,7 @@ export class Page extends EventEmitter {
   async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
     return runAbortableTask(async progress => {
       return task(progress);
-    }, this._logger, timeout);
+    }, timeout);
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
@@ -278,7 +275,7 @@ export class Page extends EventEmitter {
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const options = typeof optionsOrPredicate === 'function' ? { predicate: optionsOrPredicate } : optionsOrPredicate;
-    const progressController = new ProgressController(this._logger, this._timeoutSettings.timeout(options));
+    const progressController = new ProgressController(this._timeoutSettings.timeout(options));
     this._disconnectedPromise.then(error => progressController.abort(error));
     if (event !== Events.Page.Crash)
       this._crashedPromise.then(error => progressController.abort(error));
@@ -524,12 +521,12 @@ export class PageBinding {
       if (!binding)
         binding = page._browserContext._pageBindings.get(name);
       const result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
-      context.evaluateInternal(deliverResult, { name, seq, result }).catch(logError(page._logger));
+      context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
       if (helper.isError(error))
-        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(logError(page._logger));
+        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
       else
-        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(logError(page._logger));
+        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
 
     function deliverResult(arg: { name: string, seq: number, result: any }) {

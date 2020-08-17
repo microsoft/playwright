@@ -15,28 +15,25 @@
  * limitations under the License.
  */
 
-import { assert } from './helper';
-import { Logger } from './logger';
+import { assert, debugLogger } from './helper';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 
 export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
 export class Dialog {
-  private _logger: Logger;
   private _type: string;
   private _message: string;
   private _onHandle: OnHandle;
   private _handled = false;
   private _defaultValue: string;
 
-  constructor(logger: Logger, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
-    this._logger = logger;
+  constructor(type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
     this._type = type;
     this._message = message;
     this._onHandle = onHandle;
     this._defaultValue = defaultValue || '';
-    this._logger.info(`  ${this._preview()} was shown`);
+    debugLogger.log('api', `  ${this._preview()} was shown`);
   }
 
   type(): string {
@@ -54,14 +51,14 @@ export class Dialog {
   async accept(promptText: string | undefined) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
-    this._logger.info(`  ${this._preview()} was accepted`);
+    debugLogger.log('api', `  ${this._preview()} was accepted`);
     await this._onHandle(true, promptText);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
-    this._logger.info(`  ${this._preview()} was dismissed`);
+    debugLogger.log('api', `  ${this._preview()} was dismissed`);
     await this._onHandle(false);
   }
 
