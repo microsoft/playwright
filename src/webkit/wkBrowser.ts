@@ -286,10 +286,10 @@ export class WKBrowserContext extends BrowserContextBase {
     await Promise.all(this.pages().map(page => (page._delegate as WKPage)._clearPermissions()));
   }
 
-  async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
+  async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     if (geolocation)
       geolocation = verifyGeolocation(geolocation);
-    this._options.geolocation = geolocation || undefined;
+    this._options.geolocation = geolocation;
     const payload: any = geolocation ? { ...geolocation, timestamp: Date.now() } : undefined;
     await this._browser._browserSession.send('Playwright.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: payload });
   }
@@ -306,8 +306,8 @@ export class WKBrowserContext extends BrowserContextBase {
       await (page._delegate as WKPage).updateOffline();
   }
 
-  async _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
-    this._options.httpCredentials = httpCredentials || undefined;
+  async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+    this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page._delegate as WKPage).updateHttpCredentials();
   }

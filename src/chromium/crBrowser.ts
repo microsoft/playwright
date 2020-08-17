@@ -380,10 +380,10 @@ export class CRBrowserContext extends BrowserContextBase {
     await this._browser._session.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
   }
 
-  async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
+  async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     if (geolocation)
       geolocation = verifyGeolocation(geolocation);
-    this._options.geolocation = geolocation || undefined;
+    this._options.geolocation = geolocation;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateGeolocation();
   }
@@ -400,8 +400,8 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage).updateOffline();
   }
 
-  async _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
-    this._options.httpCredentials = httpCredentials || undefined;
+  async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+    this._options.httpCredentials = httpCredentials;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateHttpCredentials();
   }

@@ -288,11 +288,11 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
   }
 
-  async setGeolocation(geolocation: types.Geolocation | null): Promise<void> {
+  async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     if (geolocation)
       geolocation = verifyGeolocation(geolocation);
-    this._options.geolocation = geolocation || undefined;
-    await this._browser._connection.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId || undefined, geolocation });
+    this._options.geolocation = geolocation;
+    await this._browser._connection.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId || undefined, geolocation: geolocation || null });
   }
 
   async setExtraHTTPHeaders(headers: types.Headers): Promise<void> {
@@ -308,9 +308,9 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId || undefined, override: offline ? 'offline' : 'online' });
   }
 
-  async _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
-    this._options.httpCredentials = httpCredentials || undefined;
-    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId || undefined, credentials: httpCredentials });
+  async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
+    this._options.httpCredentials = httpCredentials;
+    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId || undefined, credentials: httpCredentials || null });
   }
 
   async _doAddInitScript(source: string) {

@@ -38,14 +38,6 @@ export type Listener = (...args: any[]) => void;
 
 const isInDebugMode = !!getFromENV('PWDEBUG');
 
-const deprecatedHits = new Set();
-export function deprecate(methodName: string, message: string) {
-  if (deprecatedHits.has(methodName))
-    return;
-  deprecatedHits.add(methodName);
-  console.warn(message);
-}
-
 class Helper {
 
   static evaluationString(fun: Function | string, ...args: any[]): string {
@@ -359,14 +351,6 @@ export function getFromENV(name: string) {
   value = value || process.env[`npm_config_${name.toLowerCase()}`];
   value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
   return value;
-}
-
-export function logPolitely(toBeLogged: string) {
-  const logLevel = process.env.npm_config_loglevel;
-  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
-
-  if (!logLevelDisplay)
-    console.log(toBeLogged);  // eslint-disable-line no-console
 }
 
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);

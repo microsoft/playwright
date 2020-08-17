@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { isUnderTest, helper, deprecate} from './helper';
+import { helper } from './helper';
 import * as network from './network';
 import { Page, PageBinding } from './page';
 import { TimeoutSettings } from './timeoutSettings';
@@ -38,10 +38,10 @@ export interface BrowserContext extends EventEmitter {
   clearCookies(): Promise<void>;
   grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void>;
   clearPermissions(): Promise<void>;
-  setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
+  setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
   setOffline(offline: boolean): Promise<void>;
-  setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
+  setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
   exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void>;
   route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
@@ -101,8 +101,8 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   abstract clearCookies(): Promise<void>;
   abstract _doGrantPermissions(origin: string, permissions: string[]): Promise<void>;
   abstract _doClearPermissions(): Promise<void>;
-  abstract setGeolocation(geolocation: types.Geolocation | null): Promise<void>;
-  abstract _doSetHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void>;
+  abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
+  abstract _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   abstract setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract _doAddInitScript(expression: string): Promise<void>;
@@ -117,9 +117,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     return await this._doCookies(urls as string[]);
   }
 
-  setHTTPCredentials(httpCredentials: types.Credentials | null): Promise<void> {
-    if (!isUnderTest())
-      deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
+  setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     return this._doSetHTTPCredentials(httpCredentials);
   }
 
