@@ -197,11 +197,16 @@ function checkSources(sources) {
       return new Documentation.Type('Object', properties);
     }
     if (type.isUnion() && (typeName.includes('|') || type.types.every(type => type.isStringLiteral() || type.intrinsicName === 'number'))) {
-      const types = type.types
-        .filter(isNotUndefined)
-        .map(type => serializeType(type, circular));
-      const name = types.map(type => type.name).join('|');
-      const properties = [].concat(...types.map(type => type.properties));
+      const types = type.types.filter(isNotUndefined).map((type, index) => {
+        return { isLiteral: type.isStringLiteral(), serialized: serializeType(type, circular), index };
+      });
+      types.sort((a, b) => {
+        if (!a.isLiteral || !b.isLiteral)
+          return a.index - b.index;
+        return a.serialized.name.localeCompare(b.serialized.name);
+      });
+      const name = types.map(type => type.serialized.name).join('|');
+      const properties = [].concat(...types.map(type => type.serialized.properties));
       return new Documentation.Type(name.replace(/false\|true/g, 'boolean'), properties);
     }
     if (type.typeArguments && type.symbol) {
