@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as mime from 'mime';
 import * as util from 'util';
 import * as dom from './dom';
-import { assert, helper } from './helper';
+import { assert, helper, mkdirIfNeeded } from './helper';
 import { Page } from './page';
 import * as types from './types';
 import { rewriteErrorMessage } from './utils/stackTrace';
@@ -153,8 +153,10 @@ export class Screenshotter {
     if (shouldSetDefaultBackground)
       await this._page._delegate.setBackgroundColor();
     progress.throwIfAborted(); // Avoid side effects.
-    if (options.path)
+    if (options.path) {
+      await mkdirIfNeeded(options.path);
       await util.promisify(fs.writeFile)(options.path, buffer);
+    }
     if ((options as any).__testHookAfterScreenshot)
       await (options as any).__testHookAfterScreenshot();
     return buffer;

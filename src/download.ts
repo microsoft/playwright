@@ -20,7 +20,7 @@ import * as util from 'util';
 import { Page } from './page';
 import { Events } from './events';
 import { Readable } from 'stream';
-import { assert } from './helper';
+import { assert, mkdirIfNeeded } from './helper';
 
 export class Download {
   private _downloadsPath: string;
@@ -92,8 +92,7 @@ export class Download {
 
   async _saveAs(downloadPath: string) {
     const fileName = path.join(this._downloadsPath, this._uuid);
-    // This will harmlessly throw on windows if the dirname is the root directory.
-    await util.promisify(fs.mkdir)(path.dirname(downloadPath), {recursive: true}).catch(() => {});
+    await mkdirIfNeeded(downloadPath);
     await util.promisify(fs.copyFile)(fileName, downloadPath);
   }
 

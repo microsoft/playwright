@@ -42,6 +42,14 @@ it.skip(!CHROMIUM)('should output a trace', async({browser, page, server, output
   expect(fs.existsSync(outputFile)).toBe(true);
 });
 
+it.skip(!CHROMIUM)('should create directories as needed', async({browser, page, server, tmpDir}) => {
+  const filePath = path.join(tmpDir, 'these', 'are', 'directories');
+  await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: filePath});
+  await page.goto(server.PREFIX + '/grid.html');
+  await (browser as ChromiumBrowser).stopTracing();
+  expect(fs.existsSync(filePath)).toBe(true);
+});
+
 it.skip(!CHROMIUM)('should run with custom categories if provided', async({browser, page, outputFile}) => {
   await (browser as ChromiumBrowser).startTracing(page, {path: outputFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
   await (browser as ChromiumBrowser).stopTracing();

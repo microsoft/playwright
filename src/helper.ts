@@ -21,12 +21,14 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as removeFolder from 'rimraf';
 import * as util from 'util';
+import * as path from 'path';
 import * as types from './types';
 import { Progress } from './progress';
 import * as debug from 'debug';
 
 const removeFolderAsync = util.promisify(removeFolder);
 const readFileAsync = util.promisify(fs.readFile.bind(fs));
+const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -351,6 +353,12 @@ export function getFromENV(name: string) {
   value = value || process.env[`npm_config_${name.toLowerCase()}`];
   value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
   return value;
+}
+
+
+export async function mkdirIfNeeded(filePath: string) {
+  // This will harmlessly throw on windows if the dirname is the root directory.
+  await mkdirAsync(path.dirname(filePath), {recursive: true}).catch(() => {});
 }
 
 const escapeGlobChars = new Set(['/', '$', '^', '+', '.', '(', ')', '=', '!', '|']);
