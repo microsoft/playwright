@@ -20,6 +20,7 @@ import { Protocol } from './protocol';
 import * as fs from 'fs';
 import * as util from 'util';
 import * as types from '../types';
+import { mkdirIfNeeded } from '../helper';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)
@@ -42,8 +43,10 @@ export async function releaseObject(client: CRSession, objectId: string) {
 export async function readProtocolStream(client: CRSession, handle: string, path: string | null): Promise<Buffer> {
   let eof = false;
   let fd: number | undefined;
-  if (path)
+  if (path) {
+    await mkdirIfNeeded(path);
     fd = await util.promisify(fs.open)(path, 'w');
+  }
   const bufs = [];
   while (!eof) {
     const response = await client.send('IO.read', {handle});

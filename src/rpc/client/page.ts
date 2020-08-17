@@ -16,7 +16,7 @@
  */
 
 import { Events } from './events';
-import { assert, helper, Listener } from '../../helper';
+import { assert, helper, Listener, mkdirIfNeeded } from '../../helper';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PagePdfParams, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameGotoOptions, PageReloadOptions, PageGoBackOptions, PageGoForwardOptions, PageScreenshotOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../channels';
 import { parseError, serializeError } from '../serializers';
@@ -425,8 +425,10 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   async screenshot(options: PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('page.screenshot', async () => {
       const buffer = Buffer.from((await this._channel.screenshot(options)).binary, 'base64');
-      if (options.path)
+      if (options.path) {
+        await mkdirIfNeeded(options.path);
         await fsWriteFileAsync(options.path, buffer);
+      }
       return buffer;
     });
   }
