@@ -29,7 +29,8 @@
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/runner/checkCoverage.js",
-    "check-deps": "node utils/check_deps.js"
+    "check-deps": "node utils/check_deps.js",
+    "build-driver": "pkg --public --targets node12-linux-x64,node12-macos-x64,node12-win-x64 --out-path=drivers packages/playwright-driver/main.js"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -79,6 +80,7 @@
     "node-stream-zip": "^1.8.2",
     "pirates": "^4.0.1",
     "pixelmatch": "^4.0.2",
+    "pkg": "^4.4.9",
     "socksv5": "0.0.6",
     "source-map-support": "^0.5.19",
     "stack-utils": "^2.0.2",
