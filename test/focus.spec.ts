@@ -74,6 +74,7 @@ it('should traverse focus in all directions', async function({page}) {
   await page.keyboard.press('Shift+Tab');
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
+
 // Chromium and WebKit both have settings for tab traversing all links, but 
 // it is only on by default in WebKit.
 it.skip(!MAC || !WEBKIT)('should traverse only form elements', async function({page}) {

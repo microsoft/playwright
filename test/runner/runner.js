@@ -67,8 +67,8 @@ class Runner extends EventEmitter {
 
   _filesSortedByWorkerHash() {
     const result = [];
-    for (const file of this._files.keys())
-      result.push({ file, hash: computeWorkerHash(file), startOrdinal: 0 });
+    for (const [file, count] of this._files.entries())
+      result.push({ file, hash: computeWorkerHash(file), ordinals: new Array(count).fill(0).map((_, i) => i) });
     result.sort((a, b) => a.hash < b.hash ? -1 : (a.hash === b.hash ? 0 : 1));
     return result;
   }
@@ -111,8 +111,8 @@ class Runner extends EventEmitter {
       if (params.error) {
         this._restartWorker(worker);
         // If there are remaining tests, we will queue them.
-        if (params.remaining)
-          this._queue.unshift({ ...entry, startOrdinal: params.total - params.remaining });
+        if (params.remaining.length)
+          this._queue.unshift({ ...entry, ordinals: params.remaining });
       } else {
         this._workerAvailable(worker);
       }
@@ -231,7 +231,7 @@ class OopWorker extends EventEmitter {
 
   run(entry) {
     this.hash = entry.hash;
-    this.process.send({ method: 'run', params: { file: entry.file, startOrdinal: entry.startOrdinal, options: this.runner._options } });
+    this.process.send({ method: 'run', params: { file: entry.file, ordinals: entry.ordinals, options: this.runner._options } });
   }
 
   stop() {
@@ -268,7 +268,7 @@ class InProcessWorker extends EventEmitter {
   async run(entry) {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
-    const testRunner = new TestRunner(entry.file, entry.startOrdinal, this.runner._options);
+    const testRunner = new TestRunner(entry.file, entry.ordinals, this.runner._options);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();

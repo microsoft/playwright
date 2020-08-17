@@ -25,7 +25,7 @@ import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
-import { registerFixture, registerWorkerFixture} from './runner/fixtures';
+import { registerFixture, registerWorkerFixture } from './runner/fixtures';
 import './runner/builtin.fixtures';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
@@ -42,6 +42,7 @@ declare global {
     golden: (path: string) => string;
     playwright: typeof import('../index');
     browserType: BrowserType<Browser>;
+    browserName: string;
     browser: Browser;
   }
   interface FixtureState {
@@ -81,7 +82,7 @@ registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
   ]);
 });
 
-const getExecutablePath = () => {
+const getExecutablePath = (browserName) => {
   if (browserName === 'chromium' && process.env.CRPATH)
     return process.env.CRPATH;
   if (browserName === 'firefox' && process.env.FFPATH)
@@ -91,8 +92,8 @@ const getExecutablePath = () => {
   return
 }
 
-registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
-  let executablePath = getExecutablePath();
+registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
+  let executablePath = getExecutablePath(browserName);
 
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -104,7 +105,7 @@ registerWorkerFixture('defaultBrowserOptions', async({}, test) => {
   });
 });
 
-registerWorkerFixture('playwright', async({parallelIndex}, test) => {
+registerWorkerFixture('playwright', async({parallelIndex, browserName}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (process.env.PWWIRE) {
     const connection = new Connection();
@@ -146,9 +147,9 @@ registerFixture('toImpl', async ({playwright}, test) => {
   await test((playwright as any)._toImpl);
 });
 
-registerWorkerFixture('browserType', async ({playwright}, test) => {
+registerWorkerFixture('browserType', async ({playwright, browserName}, test) => {
   const browserType = playwright[process.env.BROWSER || 'chromium']
-  const executablePath = getExecutablePath()
+  const executablePath = getExecutablePath(browserName)
   if (executablePath)
     browserType._executablePath = executablePath
   await test(browserType);
@@ -180,7 +181,7 @@ registerFixture('server', async ({httpService}, test) => {
   await test(httpService.server);
 });
 
-registerFixture('browserName', async ({}, test) => {
+registerWorkerFixture('browserName', async ({}, test) => {
   await test(browserName);
 });
 
