@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-const debug = require('debug');
 const { fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const { TestRunner, initializeImageMatcher } = require('./testRunner');
@@ -40,10 +39,6 @@ process.stdout.write = chunk => {
 
 process.stderr.write = chunk => {
   sendMessageToParent('stderr', chunkToParams(chunk));
-};
-
-debug.log = data => {
-  sendMessageToParent('debug', data);
 };
 
 process.on('disconnect', gracefullyCloseAndExit);
