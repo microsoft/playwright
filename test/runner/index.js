@@ -18,9 +18,7 @@ const fs = require('fs');
 const path = require('path');
 const program = require('commander');
 const { Runner } = require('./runner');
-const { TestRunner, createTestSuite } = require('./testRunner');
-
-class NullReporter {}
+const { TestCollector } = require('./testCollector');
 
 program
   .version('Version ' + require('../../package.json').version)
@@ -38,42 +36,31 @@ program
     // Collect files]
     const testDir = path.join(process.cwd(), command.args[0]);
     const files = collectFiles(testDir, '', command.args.slice(1));
-    const rootSuite = new createTestSuite();
 
-    let total = 0;
-    // Build the test model, suite per file.
-    for (const file of files) {
-      const testRunner = new TestRunner(file, [], {
-        forbidOnly: command.forbidOnly || undefined,
-        grep: command.grep,
-        reporter: NullReporter,
-        testDir,
-        timeout: command.timeout,
-        trialRun: true,
-      });
-      total += testRunner.grepTotal();
-      rootSuite.addSuite(testRunner.suite);
-      testRunner.suite.title = path.basename(file);
-    }
+    const testCollector = new TestCollector({
+      forbidOnly: command.forbidOnly || undefined,
+      grep: command.grep,
+      timeout: command.timeout,
+    });
+    for (const file of files)
+      testCollector.addFile(file);
 
+    const rootSuite = testCollector.suite;
+    const total = rootSuite.total();
     if (!total) {
-      console.error('No tests found.');
+      console.error('=================');
+      console.error(' No tests found.');
+      console.error('=================');
       process.exit(1);
     }
 
     // Filter tests.
     if (rootSuite.hasOnly())
       rootSuite.filterOnly();
-    if (!command.reporter) {
-      console.log();
-      total = Math.min(total, rootSuite.total()); // First accounts for grep, second for only.
-      const workers = Math.min(command.jobs, files.length);
-      console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${workers} worker${ workers > 1 ? 's' : ''}`);
-    }
 
     // Trial run does not need many workers, use one.
     const jobs = (command.trialRun || command.debug) ? 1 : command.jobs;
-    const runner = new Runner(rootSuite, {
+    const runner = new Runner(rootSuite, total, {
       debug: command.debug,
       quiet: command.quiet,
       grep: command.grep,

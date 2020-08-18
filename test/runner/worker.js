@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-const { fixturePool } = require('./fixturesUI');
 const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
-const { TestRunner, initializeImageMatcher } = require('./testRunner');
+const { TestRunner, initializeImageMatcher, fixturePool } = require('./testRunner');
 const { initializeWorker } = require('./builtin.fixtures');
 
 const util = require('util');
@@ -57,7 +56,7 @@ process.on('message', async message => {
     return;
   }
   if (message.method === 'run') {
-    const testRunner = new TestRunner(message.params.file, message.params.ordinals, message.params.options);
+    const testRunner = new TestRunner(message.params.entry, message.params.options);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();

@@ -19,6 +19,7 @@ const debug = require('debug');
 
 const registrations = new Map();
 const registrationsByFile = new Map();
+const generatorRegistrations = new Map();
 
 class Fixture {
   constructor(pool, name, scope, fn) {
@@ -28,10 +29,13 @@ class Fixture {
     this.fn = fn;
     this.deps = fixtureParameterNames(this.fn);
     this.usages = new Set();
-    this.value = null;
+    this.generatorValue = this.pool.generators.get(name);
+    this.value = this.generatorValue || null;
   }
 
   async setup() {
+    if (this.generatorValue)
+      return;
     for (const name of this.deps) {
       await this.pool.setupFixture(name);
       this.pool.instances.get(name).usages.add(this.name);
@@ -55,6 +59,8 @@ class Fixture {
   }
 
   async teardown() {
+    if (this.generatorValue)
+      return;
     if (this._teardown)
       return;
     this._teardown = true;
@@ -76,6 +82,7 @@ class Fixture {
 class FixturePool {
   constructor() {
     this.instances = new Map();
+    this.generators = new Map();
   }
 
   async setupFixture(name) {
@@ -120,21 +127,23 @@ class FixturePool {
       }
     };
   }
+}
 
-  fixtures(callback) {
-    const result = new Set();
-    const visit  = (callback) => {
-      for (const name of fixtureParameterNames(callback)) {
-        if (name in result)
-          continue;
-        result.add(name);
-        const { fn } = registrations.get(name)
-        visit(fn);
-      }
-    };
-    visit(callback);
-    return result;
-  }
+function fixturesForCallback(callback) {
+  const names = new Set();
+  const visit  = (callback) => {
+    for (const name of fixtureParameterNames(callback)) {
+      if (name in names)
+        continue;
+        names.add(name);
+      const { fn } = registrations.get(name)
+      visit(fn);
+    }
+  };
+  visit(callback);
+  const result = [...names];
+  result.sort();
+  return result;
 }
 
 function fixtureParameterNames(fn) {
@@ -165,6 +174,11 @@ function registerWorkerFixture(name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
+function registerWorkerGenerator(name, fn) {
+  innerRegisterFixture(name, 'worker', () => {});
+  generatorRegistrations.set(name, fn);
+}
+
 function collectRequires(file, result) {
   if (result.has(file))
     return;
@@ -179,12 +193,16 @@ function lookupRegistrations(file, scope) {
   const deps = new Set();
   collectRequires(file, deps);
   const allDeps = [...deps].reverse();
-  let result = [];
+  let result = new Map();
   for (const dep of allDeps) {
     const registrationList = registrationsByFile.get(dep);
     if (!registrationList)
       continue;
-    result = result.concat(registrationList.filter(r => r.scope === scope));
+    for (const r of registrationList) {
+      if (scope && r.scope !== scope)
+        continue;
+        result.set(r.name, r);
+    }
   }
   return result;
 }
@@ -192,7 +210,7 @@ function lookupRegistrations(file, scope) {
 function rerunRegistrations(file, scope) {
   // When we are running several tests in the same worker, we should re-run registrations before
   // each file. That way we erase potential fixture overrides from the previous test runs.
-  for (const registration of lookupRegistrations(file, scope))
+  for (const registration of lookupRegistrations(file, scope).values())
     registrations.set(registration.name, registration);
 }
 
@@ -202,9 +220,9 @@ function computeWorkerHash(file) {
   // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
   // Tests with the matching "worker hash" will reuse the same worker.
   const hash = crypto.createHash('sha1');
-  for (const registration of lookupRegistrations(file, 'worker'))
+  for (const registration of lookupRegistrations(file, 'worker').values())
     hash.update(registration.location);
   return hash.digest('hex');
 }
 
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations };
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerWorkerGenerator, generatorRegistrations };

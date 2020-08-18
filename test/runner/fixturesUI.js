@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const { FixturePool, registerFixture, registerWorkerFixture, rerunRegistrations } = require('./fixtures');
+const { registerFixture, registerWorkerFixture, registerWorkerGenerator } = require('./fixtures');
 const { Test, Suite } = require('mocha');
 const { installTransform } = require('./transform');
 const commonSuite = require('mocha/lib/interfaces/common');
@@ -23,8 +23,8 @@ Error.stackTraceLimit = 15;
 global.testOptions = require('./testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
+global.registerWorkerGenerator = registerWorkerGenerator;
 
-const fixturePool = new FixturePool();
 let revertBabelRequire;
 
 function specBuilder(modifiers, specCallback) {
@@ -57,7 +57,7 @@ function specBuilder(modifiers, specCallback) {
   return builder({}, null);
 }
 
-function fixturesUI(testRunner, suite) {
+function fixturesUI(wrappers, suite) {
   const suites = [suite];
 
   suite.on(Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
@@ -65,26 +65,18 @@ function fixturesUI(testRunner, suite) {
 
     const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
       const suite = suites[0];
+
       if (suite.isPending())
         fn = null;
-      let wrapper;
-      const wrapped = fixturePool.wrapTestCallback(fn);
-      wrapper = wrapped ? (done, ...args) => {
-        if (!testRunner.shouldRunTest()) {
-          done();
-          return;
-        }
-        wrapped(...args).then(done).catch(done);
-      } : undefined;
+      const wrapper = fn ? wrappers.testWrapper(fn) : undefined;
       if (wrapper) {
         wrapper.toString = () => fn.toString();
         wrapper.__original = fn;
       }
       const test = new Test(title, wrapper);
-      test.__fixtures = fixturePool.fixtures(fn);
       test.file = file;
       suite.addTest(test);
-      const only = specs.only && specs.only[0];
+      const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
       if (specs.slow && specs.slow[0])
         test.timeout(90000);
       if (only)
@@ -102,7 +94,7 @@ function fixturesUI(testRunner, suite) {
         file: file,
         fn: fn
       });
-      const only = specs.only && specs.only[0];
+      const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
       if (only)
         suite.markOnly();
       if (!only && specs.skip && specs.skip[0])
@@ -112,23 +104,9 @@ function fixturesUI(testRunner, suite) {
       return suite;
     });
 
-    context.beforeEach = (fn) => {
-      if (!testRunner.shouldRunTest(true))
-        return;
-      return common.beforeEach(async () => {
-        return await fixturePool.resolveParametersAndRun(fn);
-      });
-    };
-    context.afterEach = (fn) => {
-      if (!testRunner.shouldRunTest(true))
-        return;
-      return common.afterEach(async () => {
-        return await fixturePool.resolveParametersAndRun(fn);
-      });
-    };
-
+    context.beforeEach = fn => wrappers.hookWrapper(common.beforeEach.bind(common), fn);
+    context.afterEach = fn => wrappers.hookWrapper(common.afterEach.bind(common), fn);
     context.run = mocha.options.delay && common.runWithSuite(suite);
-
     context.describe = describe;
     context.fdescribe = describe.only(true);
     context.xdescribe = describe.skip(true);
@@ -141,8 +119,7 @@ function fixturesUI(testRunner, suite) {
 
   suite.on(Suite.constants.EVENT_FILE_POST_REQUIRE, function(context, file, mocha) {
     revertBabelRequire();
-    rerunRegistrations(file, 'test');
   });
 };
 
-module.exports = { fixturesUI, fixturePool, registerFixture, registerWorkerFixture };
+module.exports = { fixturesUI };

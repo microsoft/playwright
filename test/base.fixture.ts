@@ -25,14 +25,13 @@ import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
-import { registerFixture, registerWorkerFixture } from './runner/fixtures';
+import { registerFixture, registerWorkerFixture, registerWorkerGenerator } from './runner/fixtures';
 import './runner/builtin.fixtures';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
 
 setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 
-const browserName = process.env.BROWSER || 'chromium';
 const platform = os.platform();
 
 declare global {
@@ -57,6 +56,8 @@ declare global {
     browserServer: BrowserServer;
   }
 }
+
+const browserName = process.env.BROWSER;
 
 (global as any).MAC = platform === 'darwin';
 (global as any).LINUX = platform === 'linux';
@@ -92,7 +93,6 @@ const getExecutablePath = (browserName) => {
     return process.env.FFPATH;
   if (browserName === 'webkit' && process.env.WKPATH)
     return process.env.WKPATH;
-  return
 }
 
 registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
@@ -151,7 +151,7 @@ registerFixture('toImpl', async ({playwright}, test) => {
 });
 
 registerWorkerFixture('browserType', async ({playwright, browserName}, test) => {
-  const browserType = playwright[process.env.BROWSER || 'chromium']
+  const browserType = playwright[browserName];
   const executablePath = getExecutablePath(browserName)
   if (executablePath)
     browserType._executablePath = executablePath
@@ -184,8 +184,10 @@ registerFixture('server', async ({httpService}, test) => {
   await test(httpService.server);
 });
 
-registerWorkerFixture('browserName', async ({}, test) => {
-  await test(browserName);
+registerWorkerGenerator('browserName', () => {
+  if (process.env.BROWSER)
+    return [process.env.BROWSER];
+  return ['chromium', 'webkit', 'firefox'];
 });
 
 registerWorkerFixture('isChromium', async ({browserName}, test) => {
@@ -216,5 +218,5 @@ registerWorkerFixture('asset', async ({}, test) => {
 });
 
 registerWorkerFixture('golden', async ({browserName}, test) => {
-  await test(p => path.join(`${browserName}`, p));
+  await test(p => path.join(browserName, p));
 });

@@ -27,7 +27,7 @@ const constants = Mocha.Runner.constants;
 process.setMaxListeners(0);
 
 class Runner extends EventEmitter {
-  constructor(suite, options) {
+  constructor(suite, total, options) {
     super();
     this._suite = suite;
     this._options = options;
@@ -45,30 +45,36 @@ class Runner extends EventEmitter {
     const reporterFactory = builtinReporters[options.reporter] || DotRunner;
     this._reporter = new reporterFactory(this, {});
 
-    this._tests = new Map();
-    this._files = new Map();
-
-    let grep;
-    if (options.grep) {
-      const match = options.grep.match(/^\/(.*)\/(g|i|)$|.*/);
-      grep = new RegExp(match[1] || match[0], match[2]);
-    }
+    this._testById = new Map();
+    this._testsByConfiguredFile = new Map();
 
     suite.eachTest(test => {
-      if (grep && !grep.test(test.fullTitle()))
-        return;
-      if (!this._files.has(test.file))
-        this._files.set(test.file, 0);
-      const counter = this._files.get(test.file);
-      this._files.set(test.file, counter + 1);
-      this._tests.set(`${test.file}::${counter}`, test);
+      const configuredFile = `${test.file}::[${test.__configurationString}]`;
+      if (!this._testsByConfiguredFile.has(configuredFile)) {
+        this._testsByConfiguredFile.set(configuredFile, {
+          file: test.file,
+          configuredFile,
+          ordinals: [],
+          configurationObject: test.__configurationObject,
+          configurationString: test.__configurationString
+        });
+      }
+      const { ordinals } = this._testsByConfiguredFile.get(configuredFile);
+      ordinals.push(test.__ordinal);
+      this._testById.set(`${test.__ordinal}@${configuredFile}`, test);
     });
+
+    if (process.stdout.isTTY) {
+      console.log();
+      const jobs = Math.min(options.jobs, this._testsByConfiguredFile.size);
+      console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${jobs} worker${ jobs > 1 ? 's' : ''}`);
+    }
   }
 
   _filesSortedByWorkerHash() {
     const result = [];
-    for (const [file, count] of this._files.entries())
-      result.push({ file, hash: computeWorkerHash(file), ordinals: new Array(count).fill(0).map((_, i) => i) });
+    for (const entry of this._testsByConfiguredFile.values())
+      result.push({ ...entry, hash: entry.configurationString + '@' + computeWorkerHash(entry.file) });
     result.sort((a, b) => a.hash < b.hash ? -1 : (a.hash === b.hash ? 0 : 1));
     return result;
   }
@@ -170,7 +176,7 @@ class Runner extends EventEmitter {
   }
 
   _updateTest(serialized) {
-    const test = this._tests.get(serialized.id);
+    const test = this._testById.get(serialized.id);
     test.duration = serialized.duration;
     return test;
   }
@@ -228,7 +234,7 @@ class OopWorker extends EventEmitter {
 
   run(entry) {
     this.hash = entry.hash;
-    this.process.send({ method: 'run', params: { file: entry.file, ordinals: entry.ordinals, options: this.runner._options } });
+    this.process.send({ method: 'run', params: { entry, options: this.runner._options } });
   }
 
   stop() {
@@ -252,7 +258,7 @@ class InProcessWorker extends EventEmitter {
   constructor(runner) {
     super();
     this.runner = runner;
-    this.fixturePool = require('./fixturesUI').fixturePool;
+    this.fixturePool = require('./testRunner').fixturePool;
   }
 
   async init() {
@@ -265,7 +271,7 @@ class InProcessWorker extends EventEmitter {
   async run(entry) {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
-    const testRunner = new TestRunner(entry.file, entry.ordinals, this.runner._options);
+    const testRunner = new TestRunner(entry, this.runner._options);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();

@@ -16,9 +16,11 @@
 
 const path = require('path');
 const Mocha = require('mocha');
+const { FixturePool, rerunRegistrations, fixturesForCallback } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 const { EventEmitter } = require('events');
 
+const fixturePool = new FixturePool();
 global.expect = require('expect');
 global.testOptions = require('./testOptions');
 const GoldenUtils = require('./GoldenUtils');
@@ -26,27 +28,34 @@ const GoldenUtils = require('./GoldenUtils');
 class NullReporter {}
 
 class TestRunner extends EventEmitter {
-  constructor(file, ordinals, options) {
+  constructor(entry, options) {
     super();
     this.mocha = new Mocha({
-      forbidOnly: options.forbidOnly,
       reporter: NullReporter,
       timeout: options.timeout,
-      ui: fixturesUI.bind(null, this),
+      ui: fixturesUI.bind(null, {
+        testWrapper: fn => this._testWrapper(fn),
+        hookWrapper: (hook, fn) => this._hookWrapper(hook, fn),
+        ignoreOnly: true
+      }),
     });
-    if (options.grep)
-      this.mocha.grep(options.grep);
     this._currentOrdinal = -1;
     this._failedWithError = false;
-    this._ordinals = new Set(ordinals);
-    this._remaining = new Set(ordinals);
+    this._file = entry.file;
+    this._ordinals = new Set(entry.ordinals);
+    this._remaining = new Set(entry.ordinals);
     this._trialRun = options.trialRun;
     this._passes = 0;
     this._failures = 0;
     this._pending = 0;
-    this._relativeTestFile = path.relative(options.testDir, file);
-    this.mocha.addFile(file);
-    this.mocha.suite.filterOnly();
+    this._configuredFile = entry.configuredFile;
+    this._configurationObject = entry.configurationObject;
+    this._configurationString = entry.configurationString;
+    this._parsedGeneratorConfiguration = new Map();
+    for (const {name, value} of this._configurationObject)
+      this._parsedGeneratorConfiguration.set(name, value);
+    this._relativeTestFile = path.relative(options.testDir, this._file);
+    this.mocha.addFile(this._file);
     this.mocha.loadFiles();
     this.suite = this.mocha.suite;
   }
@@ -54,6 +63,9 @@ class TestRunner extends EventEmitter {
   async run() {
     let callback;
     const result = new Promise(f => callback = f);
+    rerunRegistrations(this._file, 'test');
+    for (const [name, value] of this._parsedGeneratorConfiguration)
+      fixturePool.generators.set(name, value);
     const runner = this.mocha.run(callback);
 
     const constants = Mocha.Runner.constants;
@@ -65,7 +77,7 @@ class TestRunner extends EventEmitter {
       if (this._ordinals.size && !this._ordinals.has(ordinal))
         return;
       this._remaining.delete(ordinal);
-      this.emit('test', { test: serializeTest(test, ordinal) });
+      this.emit('test', { test: this._serializeTest(test, ordinal) });
     });
 
     runner.on(constants.EVENT_TEST_PENDING, test => {
@@ -76,7 +88,7 @@ class TestRunner extends EventEmitter {
         return;
       this._remaining.delete(ordinal);
       ++this._pending;
-      this.emit('pending', { test: serializeTest(test, ordinal) });
+      this.emit('pending', { test: this._serializeTest(test, ordinal) });
     });
 
     runner.on(constants.EVENT_TEST_PASS, test => {
@@ -87,7 +99,7 @@ class TestRunner extends EventEmitter {
       if (this._ordinals.size && !this._ordinals.has(ordinal))
         return;
       ++this._passes;
-      this.emit('pass', { test: serializeTest(test, ordinal) });
+      this.emit('pass', { test: this._serializeTest(test, ordinal) });
     });
 
     runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
@@ -96,7 +108,7 @@ class TestRunner extends EventEmitter {
       ++this._failures;
       this._failedWithError = error;
       this.emit('fail', {
-        test: serializeTest(test, this._currentOrdinal),
+        test: this._serializeTest(test, this._currentOrdinal),
         error: serializeError(error),
       });
     });
@@ -112,7 +124,7 @@ class TestRunner extends EventEmitter {
     await result;
   }
 
-  shouldRunTest(hook) {
+  _shouldRunTest(hook) {
     if (this._trialRun || this._failedWithError)
       return false;
     if (hook) {
@@ -126,15 +138,32 @@ class TestRunner extends EventEmitter {
     return true;
   }
 
-  grepTotal() {
-    let total = 0;
-    this.suite.eachTest(test => {
-      if (this.mocha.options.grep.test(test.fullTitle()))
-        total++;
-    });
-    return total;
+  _testWrapper(fn) {
+    const wrapped = fixturePool.wrapTestCallback(fn);
+    return wrapped ? (done, ...args) => {
+      if (!this._shouldRunTest()) {
+        done();
+        return;
+      }
+      wrapped(...args).then(done).catch(done);
+    } : undefined;
   }
 
+  _hookWrapper(hook, fn) {
+    if (!this._shouldRunTest(true))
+      return;
+    return hook(async () => {
+      return await fixturePool.resolveParametersAndRun(fn);
+    });
+  }
+
+  _serializeTest(test, ordinal) {
+    return {
+      id: `${ordinal}@${this._configuredFile}`,
+      duration: test.duration,
+    };
+  }
+  
   _serializeStats(stats) {
     return {
       passes: this._passes,
@@ -143,17 +172,6 @@ class TestRunner extends EventEmitter {
       duration: stats.duration || 0,
     }
   }  
-}
-
-function createTestSuite() {
-  return new Mocha.Suite('', new Mocha.Context(), true);
-}
-
-function serializeTest(test, origin) {
-  return {
-    id: `${test.file}::${origin}`,
-    duration: test.duration,
-  };
 }
 
 function trimCycles(obj) {
@@ -190,4 +208,4 @@ function initializeImageMatcher(options) {
   global.expect.extend({ toMatchImage });
 }
 
-module.exports = { TestRunner, createTestSuite, initializeImageMatcher };
+module.exports = { TestRunner, initializeImageMatcher, fixturePool };
