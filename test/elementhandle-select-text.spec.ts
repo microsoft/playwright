@@ -16,12 +16,12 @@
  */
 import './base.fixture';
 
-it('should select textarea', async ({ page, server }) => {
+it('should select textarea', async ({ page, server, isFirefox }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.evaluate(textarea => textarea.value = 'some value');
   await textarea.selectText();
-  if (FFOX) {
+  if (isFirefox) {
     expect(await textarea.evaluate(el => el.selectionStart)).toBe(0);
     expect(await textarea.evaluate(el => el.selectionEnd)).toBe(10);
   } else {
@@ -29,12 +29,12 @@ it('should select textarea', async ({ page, server }) => {
   }
 });
 
-it('should select input', async ({ page, server }) => {
+it('should select input', async ({ page, server, isFirefox }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const input = await page.$('input');
   await input.evaluate(input => input.value = 'some value');
   await input.selectText();
-  if (FFOX) {
+  if (isFirefox) {
     expect(await input.evaluate(el => el.selectionStart)).toBe(0);
     expect(await input.evaluate(el => el.selectionEnd)).toBe(10);
   } else {
