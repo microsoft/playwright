@@ -219,9 +219,6 @@ class OopWorker extends EventEmitter {
         process.stderr.write(chunk);
       this.stderr.push(chunk);
     });
-    this.on('debug', data => {
-      process.stderr.write(data + '\n');
-    });
   }
 
   async init() {
