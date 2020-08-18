@@ -425,7 +425,7 @@ export default class InjectedScript {
     throw new Error('Not a checkbox');
   }
 
-  async setInputFiles(node: Node, payloads: types.FileTransferPayload[]) {
+  async setInputFiles(node: Node, payloads: types.FilePayload[]) {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'Node is not of type HTMLElement';
     const element: Element | undefined = node as Element;
@@ -437,8 +437,8 @@ export default class InjectedScript {
       return 'Not an input[type=file] element';
 
     const files = await Promise.all(payloads.map(async file => {
-      const result = await fetch(`data:${file.type};base64,${file.data}`);
-      return new File([await result.blob()], file.name, {type: file.type});
+      const result = await fetch(`data:${file.mimeType};base64,${file.buffer}`);
+      return new File([await result.blob()], file.name, {type: file.mimeType});
     }));
     const dt = new DataTransfer();
     for (const file of files)

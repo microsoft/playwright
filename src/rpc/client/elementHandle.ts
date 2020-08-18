@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions, ElementHandleWaitForSelectorOptions, ElementHandleWaitForElementStateOptions } from '../channels';
+import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions, ElementHandleWaitForSelectorOptions, ElementHandleWaitForElementStateOptions, ElementHandleSetInputFilesParams } from '../channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
 import { helper, assert } from '../../helper';
-import { normalizeFilePayloads } from '../../converters';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
+import * as fs from 'fs';
+import * as mime from 'mime';
+import * as path from 'path';
+import * as util from 'util';
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;
@@ -239,7 +242,23 @@ export function convertSelectOptionValues(values: string | ElementHandle | Selec
   return { options: values as SelectOption[] };
 }
 
-export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[]): Promise<{ name: string, mimeType: string, buffer: string }[]> {
-  const filePayloads = await normalizeFilePayloads(files);
-  return filePayloads.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: f.buffer.toString('base64') }));
+type SetInputFilesFiles = ElementHandleSetInputFilesParams['files'];
+export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[]): Promise<SetInputFilesFiles> {
+  const items: (string | FilePayload)[] = Array.isArray(files) ? files : [ files ];
+  const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {
+    if (typeof item === 'string') {
+      return {
+        name: path.basename(item),
+        mimeType: mime.getType(item) || 'application/octet-stream',
+        buffer: (await util.promisify(fs.readFile)(item)).toString('base64')
+      };
+    } else {
+      return {
+        name: item.name,
+        mimeType: item.mimeType,
+        buffer: item.buffer.toString('base64'),
+      };
+    }
+  }));
+  return filePayloads;
 }

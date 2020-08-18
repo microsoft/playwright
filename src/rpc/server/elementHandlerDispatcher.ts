@@ -100,7 +100,7 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async setInputFiles(params: { files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions) {
-    await this._elementHandle.setInputFiles(convertInputFiles(params.files), params);
+    await this._elementHandle.setInputFiles(params.files, params);
   }
 
   async focus() {
@@ -157,8 +157,4 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element?: ElementHandleChannel }> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._elementHandle.waitForSelector(params.selector, params)) };
   }
-}
-
-export function convertInputFiles(files: { name: string, mimeType: string, buffer: string }[]): types.FilePayload[] {
-  return files.map(f => ({ name: f.name, mimeType: f.mimeType, buffer: Buffer.from(f.buffer, 'base64') }));
 }

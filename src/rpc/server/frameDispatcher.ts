@@ -18,7 +18,7 @@ import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent, kNavigationEvent, Nav
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, SerializedArgument, FrameWaitForFunctionParams, SerializedValue } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
-import { ElementHandleDispatcher, createHandle, convertInputFiles } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 
@@ -157,7 +157,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   }
 
   async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions): Promise<void> {
-    await this._frame.setInputFiles(params.selector, convertInputFiles(params.files), params);
+    await this._frame.setInputFiles(params.selector, params.files, params);
   }
 
   async type(params: { selector: string, text: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void> {
