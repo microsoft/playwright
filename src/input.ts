@@ -42,11 +42,13 @@ export interface RawKeyboard {
 export class Keyboard {
   private _pressedModifiers = new Set<types.KeyboardModifier>();
   private _pressedKeys = new Set<string>();
+  private _raw: RawKeyboard;
+  private _page: Page;
 
-  constructor(
-    private _raw: RawKeyboard,
-    private _page: Page,
-  ) {}
+  constructor(raw: RawKeyboard, page: Page) {
+    this._raw = raw;
+    this._page = page;
+  }
 
   async down(key: string) {
     const description = this._keyDescriptionForString(key);
@@ -166,11 +168,12 @@ export class Mouse {
   private _y = 0;
   private _lastButton: 'none' | types.MouseButton = 'none';
   private _buttons = new Set<types.MouseButton>();
+  private _raw: RawMouse;
+  private _page: Page;
 
-  constructor(
-    private _raw: RawMouse,
-    private _page: Page,
-  ) {
+  constructor(raw: RawMouse, page: Page) {
+    this._raw = raw;
+    this._page = page;
     this._keyboard = this._page.keyboard;
   }
 
