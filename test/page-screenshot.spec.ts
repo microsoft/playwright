@@ -265,3 +265,17 @@ it.skip(ffheadful)('path option should create subdirectories', async({page, serv
   await page.screenshot({path: outputPath});
   expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('screenshot-sanity.png'));
 });
+
+it.skip(ffheadful)('path option should detect jpeg', async({page, server, golden, tmpDir}) => {
+  await page.setViewportSize({ width: 100, height: 100 });
+  await page.goto(server.EMPTY_PAGE);
+  const outputPath = path.join(tmpDir, 'screenshot.jpg');
+  const screenshot = await page.screenshot({omitBackground: true, path: outputPath});
+  expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('white.jpg'));
+  expect(screenshot).toMatchImage(golden('white.jpg'));
+});
+
+it.skip(ffheadful)('path option should throw for unsupported mime type', async({page, server, golden, tmpDir}) => {
+  const error = await page.screenshot({ path: 'file.txt' }).catch(e => e);
+  expect(error.message).toContain('path: unsupported mime type "text/plain"');
+});

@@ -19,6 +19,8 @@ import './base.fixture';
 import utils from './utils';
 const {WIRE, HEADLESS} = testOptions;
 import {PNG} from 'pngjs';
+import path from 'path';
+import fs from 'fs';
 
 // Firefox headful produces a different image.
 const ffheadful = FFOX && !HEADLESS;
@@ -368,4 +370,14 @@ it.skip(ffheadful)('should take screenshot of disabled button', async({page}) =>
   const button = await page.$('button');
   const screenshot = await button.screenshot();
   expect(screenshot).toBeInstanceOf(Buffer);
+});
+
+it.skip(ffheadful)('path option should create subdirectories', async({page, server, golden, tmpDir}) => {
+  await page.setViewportSize({width: 500, height: 500});
+  await page.goto(server.PREFIX + '/grid.html');
+  await page.evaluate(() => window.scrollBy(50, 100));
+  const elementHandle = await page.$('.box:nth-of-type(3)');
+  const outputPath = path.join(tmpDir, 'these', 'are', 'directories', 'screenshot.png');
+  await elementHandle.screenshot({path: outputPath});
+  expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('screenshot-element-bounding-box.png'));
 });

@@ -51,7 +51,6 @@ export type WaitForNavigationOptions = TimeoutOptions & {
 
 export type ElementScreenshotOptions = TimeoutOptions & {
   type?: 'png' | 'jpeg',
-  path?: string,
   quality?: number,
   omitBackground?: boolean,
 };

@@ -1822,14 +1822,12 @@ export type ElementHandleQuerySelectorAllResult = {
 export type ElementHandleScreenshotParams = {
   timeout?: number,
   type?: 'png' | 'jpeg',
-  path?: string,
   quality?: number,
   omitBackground?: boolean,
 };
 export type ElementHandleScreenshotOptions = {
   timeout?: number,
   type?: 'png' | 'jpeg',
-  path?: string,
   quality?: number,
   omitBackground?: boolean,
 };

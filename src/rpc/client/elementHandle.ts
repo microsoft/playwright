@@ -18,12 +18,14 @@ import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewI
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
-import { helper, assert } from '../../helper';
+import { helper, assert, mkdirIfNeeded } from '../../helper';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
+
+const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   readonly _elementChannel: ElementHandleChannel;
@@ -175,9 +177,16 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async screenshot(options: ElementHandleScreenshotOptions = {}): Promise<Buffer> {
+  async screenshot(options: ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('elementHandle.screenshot', async () => {
-      return Buffer.from((await this._elementChannel.screenshot(options)).binary, 'base64');
+      const type = determineScreenshotType(options);
+      const result = await this._elementChannel.screenshot({ ...options, type });
+      const buffer = Buffer.from(result.binary, 'base64');
+      if (options.path) {
+        await mkdirIfNeeded(options.path);
+        await fsWriteFileAsync(options.path, buffer);
+      }
+      return buffer;
     });
   }
 
@@ -261,4 +270,16 @@ export async function convertInputFiles(files: string | FilePayload | string[] |
     }
   }));
   return filePayloads;
+}
+
+export function determineScreenshotType(options: { path?: string, type?: 'png' | 'jpeg' }): 'png' | 'jpeg' | undefined {
+  if (options.path) {
+    const mimeType = mime.getType(options.path);
+    if (mimeType === 'image/png')
+      return 'png';
+    else if (mimeType === 'image/jpeg')
+      return 'jpeg';
+    throw new Error(`path: unsupported mime type "${mimeType}"`);
+  }
+  return options.type;
 }
