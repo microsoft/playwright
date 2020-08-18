@@ -40,12 +40,10 @@ export type BrowserOptions = {
   proxy?: ProxySettings,
 };
 
-export type BrowserContextOptions = types.BrowserContextOptions;
-
 export interface Browser extends EventEmitter {
-  newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
+  newContext(options?: types.BrowserContextOptions): Promise<BrowserContext>;
   contexts(): BrowserContext[];
-  newPage(options?: BrowserContextOptions): Promise<Page>;
+  newPage(options?: types.BrowserContextOptions): Promise<Page>;
   isConnected(): boolean;
   close(): Promise<void>;
   version(): string;
@@ -62,12 +60,12 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
     this._options = options;
   }
 
-  abstract newContext(options?: BrowserContextOptions): Promise<BrowserContext>;
+  abstract newContext(options?: types.BrowserContextOptions): Promise<BrowserContext>;
   abstract contexts(): BrowserContext[];
   abstract isConnected(): boolean;
   abstract version(): string;
 
-  async newPage(options?: BrowserContextOptions): Promise<Page> {
+  async newPage(options?: types.BrowserContextOptions): Promise<Page> {
     const context = await this.newContext(options);
     const page = await context.newPage();
     page._ownedContext = context;

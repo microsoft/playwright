@@ -22,7 +22,6 @@ import { BrowserContextBase } from '../../browserContext';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { createHandle } from './elementHandlerDispatcher';
-import { envArrayToObject } from '../../converters';
 
 export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer> implements ElectronChannel {
   constructor(scope: DispatcherScope, electron: Electron) {
@@ -30,11 +29,7 @@ export class ElectronDispatcher extends Dispatcher<Electron, ElectronInitializer
   }
 
   async launch(params: ElectronLaunchParams): Promise<{ electronApplication: ElectronApplicationChannel }> {
-    const options = {
-      ...params,
-      env: params.env ? envArrayToObject(params.env) : undefined,
-    };
-    const electronApplication = await this._object.launch(params.executablePath, options);
+    const electronApplication = await this._object.launch(params.executablePath, params);
     return { electronApplication: new ElectronApplicationDispatcher(this._scope, electronApplication) };
   }
 }

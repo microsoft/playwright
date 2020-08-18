@@ -265,7 +265,8 @@ export type SetNetworkCookieParam = {
 };
 
 export type BrowserContextOptions = {
-  viewport?: Size | null,
+  viewport?: Size,
+  noDefaultViewport?: boolean,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -284,27 +285,29 @@ export type BrowserContextOptions = {
   acceptDownloads?: boolean,
 };
 
-export type Env = {[key: string]: string | number | boolean | undefined};
 export type EnvArray = { name: string, value: string }[];
 
-export type LaunchOptionsBase = {
+type LaunchOptionsBase = {
   executablePath?: string,
   args?: string[],
-  ignoreDefaultArgs?: boolean | string[],
+  ignoreDefaultArgs?: string[],
+  ignoreAllDefaultArgs?: boolean,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  env?: Env,
+  env?: EnvArray,
   headless?: boolean,
   devtools?: boolean,
   proxy?: ProxySettings,
   downloadsPath?: string,
   chromiumSandbox?: boolean,
+  slowMo?: number,
 };
-
-export type LaunchOptions = LaunchOptionsBase & { slowMo?: number };
-export type LaunchServerOptions = LaunchOptionsBase & { port?: number };
+export type LaunchOptions = LaunchOptionsBase & {
+  firefoxUserPrefs?: { [key: string]: string | number | boolean },
+};
+export type LaunchPersistentOptions = LaunchOptionsBase & BrowserContextOptions;
 
 export type SerializedAXNode = {
   role: string,

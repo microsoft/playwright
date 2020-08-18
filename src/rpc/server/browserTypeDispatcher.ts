@@ -21,7 +21,7 @@ import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeI
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { headersArrayToObject, envArrayToObject } from '../../converters';
+import { headersArrayToObject } from '../../converters';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
@@ -32,21 +32,13 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
   }
 
   async launch(params: BrowserTypeLaunchParams): Promise<{ browser: BrowserChannel }> {
-    const options = {
-      ...params,
-      ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
-      env: params.env ? envArrayToObject(params.env) : undefined,
-    };
-    const browser = await this._object.launch(options);
+    const browser = await this._object.launch(params);
     return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
   }
 
   async launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<{ context: BrowserContextChannel }> {
     const options = {
       ...params,
-      viewport: params.viewport || (params.noDefaultViewport ? null : undefined),
-      ignoreDefaultArgs: params.ignoreAllDefaultArgs ? true : params.ignoreDefaultArgs,
-      env: params.env ? envArrayToObject(params.env) : undefined,
       extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
     };
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, options);

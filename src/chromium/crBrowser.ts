@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserBase, BrowserOptions, BrowserContextOptions } from '../browser';
+import { BrowserBase, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events as CommonEvents } from '../events';
 import { assert } from '../helper';
@@ -99,8 +99,8 @@ export class CRBrowser extends BrowserBase {
     this._session.on('Target.detachedFromTarget', this._onDetachedFromTarget.bind(this));
   }
 
-  async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
-    options = validateBrowserContextOptions(options);
+  async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    validateBrowserContextOptions(options);
     const { browserContextId } = await this._session.send('Target.createBrowserContext', { disposeOnDetach: true });
     const context = new CRBrowserContext(this, browserContextId, options);
     await context._initialize();
@@ -381,8 +381,7 @@ export class CRBrowserContext extends BrowserContextBase {
   }
 
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
-    if (geolocation)
-      geolocation = verifyGeolocation(geolocation);
+    verifyGeolocation(geolocation);
     this._options.geolocation = geolocation;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateGeolocation();

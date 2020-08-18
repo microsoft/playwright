@@ -23,7 +23,7 @@ import { BrowserTypeBase } from './browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../install/browserPaths';
-import { LaunchOptionsBase } from '../types';
+import * as types from '../types';
 
 export class WebKit extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
@@ -50,7 +50,7 @@ export class WebKit extends BrowserTypeBase {
     transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
   }
 
-  _defaultArgs(options: LaunchOptionsBase, isPersistent: boolean, userDataDir: string): string[] {
+  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
     const { args = [], proxy, devtools, headless } = options;
     if (devtools)
       console.warn('devtools parameter as a launch argument in WebKit is not supported. Also starting Web Inspector manually will terminate the execution in WebKit.');

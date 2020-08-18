@@ -228,47 +228,23 @@ export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
   }
 }
 
-export function validateBrowserContextOptions(options: types.BrowserContextOptions): types.BrowserContextOptions {
-  // Copy all fields manually to strip any extra junk.
-  // Especially useful when we share context and launch options for launchPersistent.
-  const result: types.BrowserContextOptions = {
-    ignoreHTTPSErrors: options.ignoreHTTPSErrors,
-    bypassCSP: options.bypassCSP,
-    locale: options.locale,
-    timezoneId: options.timezoneId,
-    offline: options.offline,
-    colorScheme: options.colorScheme,
-    acceptDownloads: options.acceptDownloads,
-    viewport: options.viewport,
-    javaScriptEnabled: options.javaScriptEnabled,
-    userAgent: options.userAgent,
-    geolocation: options.geolocation,
-    permissions: options.permissions,
-    extraHTTPHeaders: options.extraHTTPHeaders,
-    httpCredentials: options.httpCredentials,
-    deviceScaleFactor: options.deviceScaleFactor,
-    isMobile: options.isMobile,
-    hasTouch: options.hasTouch,
-  };
-  if (result.viewport === null && result.deviceScaleFactor !== undefined)
+export function validateBrowserContextOptions(options: types.BrowserContextOptions) {
+  if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
-  if (result.viewport === null && result.isMobile !== undefined)
+  if (options.noDefaultViewport && options.isMobile !== undefined)
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
-  if (!result.viewport && result.viewport !== null)
-    result.viewport = { width: 1280, height: 720 };
-  if (result.viewport)
-    result.viewport = { ...result.viewport };
-  if (result.geolocation)
-    result.geolocation = verifyGeolocation(result.geolocation);
-  if (result.extraHTTPHeaders)
-    result.extraHTTPHeaders = network.verifyHeaders(result.extraHTTPHeaders);
-  return result;
+  if (!options.viewport && !options.noDefaultViewport)
+    options.viewport = { width: 1280, height: 720 };
+  verifyGeolocation(options.geolocation);
+  if (options.extraHTTPHeaders)
+    options.extraHTTPHeaders = network.verifyHeaders(options.extraHTTPHeaders);
 }
 
-export function verifyGeolocation(geolocation: types.Geolocation): types.Geolocation {
-  const result = { ...geolocation };
-  result.accuracy = result.accuracy || 0;
-  const { longitude, latitude, accuracy } = result;
+export function verifyGeolocation(geolocation?: types.Geolocation) {
+  if (!geolocation)
+    return;
+  geolocation.accuracy = geolocation.accuracy || 0;
+  const { longitude, latitude, accuracy } = geolocation;
   if (!helper.isNumber(longitude))
     throw new Error(`geolocation.longitude: expected number, got ${typeof longitude}`);
   if (longitude < -180 || longitude > 180)
@@ -281,7 +257,6 @@ export function verifyGeolocation(geolocation: types.Geolocation): types.Geoloca
     throw new Error(`geolocation.accuracy: expected number, got ${typeof accuracy}`);
   if (accuracy < 0)
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
-  return result;
 }
 
 export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySettings {
