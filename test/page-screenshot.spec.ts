@@ -250,7 +250,7 @@ it.skip(ffheadful)('should work with iframe in shadow', async({page, server, gol
   expect(await page.screenshot()).toMatchImage(golden('screenshot-iframe.png'));
 });
 
-it('path option should work', async({page, server, golden, tmpDir}) => {
+it.skip(ffheadful)('path option should work', async({page, server, golden, tmpDir}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/grid.html');
   const outputPath = path.join(tmpDir, 'screenshot.png');
@@ -258,7 +258,7 @@ it('path option should work', async({page, server, golden, tmpDir}) => {
   expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('screenshot-sanity.png'));
 });
 
-it('path option should create subdirectories', async({page, server, golden, tmpDir}) => {
+it.skip(ffheadful)('path option should create subdirectories', async({page, server, golden, tmpDir}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/grid.html');
   const outputPath = path.join(tmpDir, 'these', 'are', 'directories', 'screenshot.png');
