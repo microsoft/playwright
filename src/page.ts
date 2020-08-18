@@ -133,14 +133,21 @@ export class Page extends EventEmitter {
       extraHTTPHeaders: null,
     };
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
-    this.keyboard = new input.Keyboard(delegate.rawKeyboard);
-    this.mouse = new input.Mouse(delegate.rawMouse, this.keyboard);
+    this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
+    this.mouse = new input.Mouse(delegate.rawMouse, this);
     this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
+  }
+
+  async _doSlowMo() {
+    const slowMo = this._browserContext._browserBase._options.slowMo;
+    if (!slowMo)
+      return;
+    await new Promise(x => setTimeout(x, slowMo));
   }
 
   _didClose() {
@@ -237,7 +244,9 @@ export class Page extends EventEmitter {
   async reload(options?: types.NavigateOptions): Promise<network.Response | null> {
     const waitPromise = this.mainFrame().waitForNavigation(options);
     await this._delegate.reload();
-    return waitPromise;
+    const response =  waitPromise;
+    await this._doSlowMo();
+    return response;
   }
 
   async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {
@@ -247,7 +256,9 @@ export class Page extends EventEmitter {
       waitPromise.catch(() => {});
       return null;
     }
-    return waitPromise;
+    const response = await waitPromise;
+    await this._doSlowMo();
+    return response;
   }
 
   async goForward(options?: types.NavigateOptions): Promise<network.Response | null> {
@@ -257,7 +268,9 @@ export class Page extends EventEmitter {
       waitPromise.catch(() => {});
       return null;
     }
-    return waitPromise;
+    const response = await waitPromise;
+    await this._doSlowMo();
+    return response;
   }
 
   async emulateMedia(options: { media?: types.MediaType | null, colorScheme?: types.ColorScheme | null }) {
@@ -270,11 +283,13 @@ export class Page extends EventEmitter {
     if (options.colorScheme !== undefined)
       this._state.colorScheme = options.colorScheme;
     await this._delegate.updateEmulateMedia();
+    await this._doSlowMo();
   }
 
   async setViewportSize(viewportSize: types.Size) {
     this._state.viewportSize = { ...viewportSize };
     await this._delegate.setViewportSize(this._state.viewportSize);
+    await this._doSlowMo();
   }
 
   viewportSize(): types.Size | null {

@@ -355,6 +355,11 @@ export function getFromENV(name: string) {
   return value;
 }
 
+export async function doSlowMo(amount?: number) {
+  if (!amount)
+    return;
+  await new Promise(x => setTimeout(x, amount));
+}
 
 export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.

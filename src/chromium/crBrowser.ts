@@ -21,7 +21,7 @@ import { Events as CommonEvents } from '../events';
 import { assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
-import { ConnectionTransport, SlowMoTransport } from '../transport';
+import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
 import { CRPage } from './crPage';
@@ -48,7 +48,7 @@ export class CRBrowser extends BrowserBase {
   private _tracingClient: CRSession | undefined;
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
-    const connection = new CRConnection(SlowMoTransport.wrap(transport, options.slowMo));
+    const connection = new CRConnection(transport);
     const browser = new CRBrowser(connection, options);
     browser._devtools = devtools;
     const session = connection.rootSession;
