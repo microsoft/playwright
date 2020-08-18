@@ -32,7 +32,7 @@ import { Worker } from './worker';
 import { Frame, FunctionWithSource, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse } from './input';
 import { assertMaxArguments, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
-import { Request, Response, Route, RouteHandler } from './network';
+import { Request, Response, Route, RouteHandler, validateHeaders } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
 import { ChromiumCoverage } from './chromiumCoverage';
@@ -291,6 +291,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async setExtraHTTPHeaders(headers: Headers) {
     return this._wrapApiCall('page.setExtraHTTPHeaders', async () => {
+      validateHeaders(headers);
       await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
     });
   }

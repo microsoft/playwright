@@ -428,8 +428,9 @@ export class Frame {
     return runNavigationTask(this, options, async progress => {
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
-      const headers = (this._page._state.extraHTTPHeaders || {});
-      let referer = headers['referer'] || headers['Referer'];
+      const headers = this._page._state.extraHTTPHeaders || [];
+      const refererHeader = headers.find(h => h.name === 'referer' || h.name === 'Referer');
+      let referer = refererHeader ? refererHeader.value : undefined;
       if (options.referer !== undefined) {
         if (referer !== undefined && referer !== options.referer)
           throw new Error('"referer" is already specified as extra HTTP header');

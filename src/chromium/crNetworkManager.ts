@@ -23,6 +23,7 @@ import * as network from '../network';
 import * as frames from '../frames';
 import * as types from '../types';
 import { CRPage } from './crPage';
+import { headersObjectToArray } from '../converters';
 
 export class CRNetworkManager {
   private _client: CRSession;
@@ -239,7 +240,7 @@ export class CRNetworkManager {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
-    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), getResponseBody);
+    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), getResponseBody);
   }
 
   _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
@@ -350,7 +351,7 @@ class InterceptableRequest implements network.RouteDelegate {
     if (postDataEntries && postDataEntries.length && postDataEntries[0].bytes)
       postDataBuffer = Buffer.from(postDataEntries[0].bytes, 'base64');
 
-    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postDataBuffer, headersObject(headers));
+    this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, url, type, method, postDataBuffer, headersObjectToArray(headers));
   }
 
   async continue(overrides: types.NormalizedContinueOverrides) {
@@ -406,11 +407,3 @@ const errorReasons: { [reason: string]: Protocol.Network.ErrorReason } = {
   'timedout': 'TimedOut',
   'failed': 'Failed',
 };
-
-function headersObject(headers: Protocol.Network.Headers): types.Headers {
-  const result: types.Headers = {};
-  for (const key of Object.keys(headers))
-    result[key.toLowerCase()] = headers[key];
-  return result;
-}
-

@@ -387,8 +387,8 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage).updateGeolocation();
   }
 
-  async setExtraHTTPHeaders(headers: types.Headers): Promise<void> {
-    this._options.extraHTTPHeaders = network.verifyHeaders(headers);
+  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
+    this._options.extraHTTPHeaders = headers;
     for (const page of this.pages())
       await (page._delegate as CRPage).updateExtraHTTPHeaders();
   }

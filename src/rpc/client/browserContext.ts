@@ -147,6 +147,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   async setExtraHTTPHeaders(headers: Headers): Promise<void> {
     return this._wrapApiCall('browserContext.setExtraHTTPHeaders', async () => {
+      network.validateHeaders(headers);
       await this._channel.setExtraHTTPHeaders({ headers: headersObjectToArray(headers) });
     });
   }

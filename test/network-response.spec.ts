@@ -22,10 +22,13 @@ import path from 'path';
 it('should work', async({page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
+    res.setHeader('BaZ', 'bAz');
     res.end();
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.headers()['foo']).toBe('bar');
+  expect(response.headers()['baz']).toBe('bAz');
+  expect(response.headers()['BaZ']).toBe(undefined);
 });
 
 

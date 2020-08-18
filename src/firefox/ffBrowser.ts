@@ -24,7 +24,6 @@ import { Page, PageBinding } from '../page';
 import { ConnectionTransport, SlowMoTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
-import { headersArray } from './ffNetworkManager';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
 
@@ -211,7 +210,7 @@ export class FFBrowserContext extends BrowserContextBase {
     if (this._options.permissions)
       promises.push(this.grantPermissions(this._options.permissions));
     if (this._options.extraHTTPHeaders || this._options.locale)
-      promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || {}));
+      promises.push(this.setExtraHTTPHeaders(this._options.extraHTTPHeaders || []));
     if (this._options.httpCredentials)
       promises.push(this.setHTTPCredentials(this._options.httpCredentials));
     if (this._options.geolocation)
@@ -294,12 +293,12 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId || undefined, geolocation: geolocation || null });
   }
 
-  async setExtraHTTPHeaders(headers: types.Headers): Promise<void> {
-    this._options.extraHTTPHeaders = network.verifyHeaders(headers);
-    const allHeaders = { ...this._options.extraHTTPHeaders };
+  async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
+    this._options.extraHTTPHeaders = headers;
+    let allHeaders = this._options.extraHTTPHeaders;
     if (this._options.locale)
-      allHeaders['Accept-Language'] = this._options.locale;
-    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: headersArray(allHeaders) });
+      allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
+    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: allHeaders });
   }
 
   async setOffline(offline: boolean): Promise<void> {

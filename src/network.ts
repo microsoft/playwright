@@ -16,8 +16,7 @@
 
 import * as frames from './frames';
 import * as types from './types';
-import { assert, helper } from './helper';
-import { normalizeFulfillParameters, normalizeContinueOverrides } from './converters';
+import { assert } from './helper';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -78,13 +77,13 @@ export class Request {
   private _resourceType: string;
   private _method: string;
   private _postData: Buffer | null;
-  private _headers: types.Headers;
+  private _headers: types.HeadersArray;
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
 
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.Headers) {
+    url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     assert(!(routeDelegate && redirectedFrom), 'Should not be able to intercept redirects');
     this._routeDelegate = routeDelegate;
@@ -123,8 +122,8 @@ export class Request {
     return this._postData;
   }
 
-  headers(): {[key: string]: string} {
-    return { ...this._headers };
+  headers(): types.HeadersArray {
+    return this._headers;
   }
 
   response(): Promise<Response | null> {
@@ -191,15 +190,15 @@ export class Route {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(response: types.FulfillResponse & { path?: string }) {
+  async fulfill(response: types.NormalizedFulfillResponse) {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
-    await this._delegate.fulfill(await normalizeFulfillParameters(response));
+    await this._delegate.fulfill(response);
   }
 
-  async continue(overrides: types.ContinueOverrides = {}) {
+  async continue(overrides: types.NormalizedContinueOverrides = {}) {
     assert(!this._handled, 'Route is already handled!');
-    await this._delegate.continue(normalizeContinueOverrides(overrides));
+    await this._delegate.continue(overrides);
   }
 }
 
@@ -215,10 +214,10 @@ export class Response {
   private _status: number;
   private _statusText: string;
   private _url: string;
-  private _headers: types.Headers;
+  private _headers: types.HeadersArray;
   private _getResponseBodyCallback: GetResponseBodyCallback;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.Headers, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, getResponseBodyCallback: GetResponseBodyCallback) {
     this._request = request;
     this._status = status;
     this._statusText = statusText;
@@ -247,8 +246,8 @@ export class Response {
     return this._statusText;
   }
 
-  headers(): types.Headers {
-    return { ...this._headers };
+  headers(): types.HeadersArray {
+    return this._headers;
   }
 
   finished(): Promise<Error | null> {
@@ -348,30 +347,24 @@ export const STATUS_TEXTS: { [status: string]: string } = {
   '511': 'Network Authentication Required',
 };
 
-export function verifyHeaders(headers: types.Headers): types.Headers {
-  const result: types.Headers = {};
-  for (const key of Object.keys(headers)) {
-    const value = headers[key];
-    assert(helper.isString(value), `Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
-    result[key] = value;
-  }
-  return result;
+export function singleHeader(name: string, value: string): types.HeadersArray {
+  return [{ name, value }];
 }
 
-export function mergeHeaders(headers: (types.Headers | undefined | null)[]): types.Headers {
+export function mergeHeaders(headers: (types.HeadersArray | undefined | null)[]): types.HeadersArray {
   const lowerCaseToValue = new Map<string, string>();
   const lowerCaseToOriginalCase = new Map<string, string>();
   for (const h of headers) {
     if (!h)
       continue;
-    for (const key of Object.keys(h)) {
-      const lower = key.toLowerCase();
-      lowerCaseToOriginalCase.set(lower, key);
-      lowerCaseToValue.set(lower, h[key]);
+    for (const { name, value } of h) {
+      const lower = name.toLowerCase();
+      lowerCaseToOriginalCase.set(lower, name);
+      lowerCaseToValue.set(lower, value);
     }
   }
-  const result: types.Headers = {};
+  const result: types.HeadersArray = [];
   for (const [lower, value] of lowerCaseToValue)
-    result[lowerCaseToOriginalCase.get(lower)!] = value;
+    result.push({ name: lowerCaseToOriginalCase.get(lower)!, value });
   return result;
 }

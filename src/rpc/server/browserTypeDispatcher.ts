@@ -21,7 +21,6 @@ import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeI
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { headersArrayToObject } from '../../converters';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
@@ -37,11 +36,7 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
   }
 
   async launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<{ context: BrowserContextChannel }> {
-    const options = {
-      ...params,
-      extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
-    };
-    const browserContext = await this._object.launchPersistentContext(params.userDataDir, options);
+    const browserContext = await this._object.launchPersistentContext(params.userDataDir, params);
     return { context: new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase) };
   }
 }

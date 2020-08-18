@@ -37,6 +37,7 @@ import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { JSHandle } from '../javascript';
+import { headersArrayToObject } from '../converters';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -175,7 +176,7 @@ export class WKPage implements PageDelegate {
       }));
     }
     promises.push(this.updateEmulateMedia());
-    promises.push(session.send('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() }));
+    promises.push(session.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) }));
     if (contextOptions.offline)
       promises.push(session.send('Network.setEmulateOfflineState', { offline: true }));
     promises.push(session.send('Page.setTouchEmulationEnabled', { enabled: !!contextOptions.hasTouch }));
@@ -551,17 +552,16 @@ export class WKPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._updateState('Network.setExtraHTTPHeaders', { headers: this._calculateExtraHTTPHeaders() });
+    await this._updateState('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(this._calculateExtraHTTPHeaders(), false /* lowerCase */) });
   }
 
-  _calculateExtraHTTPHeaders(): types.Headers {
+  _calculateExtraHTTPHeaders(): types.HeadersArray {
+    const locale = this._browserContext._options.locale;
     const headers = network.mergeHeaders([
       this._browserContext._options.extraHTTPHeaders,
-      this._page._state.extraHTTPHeaders
+      this._page._state.extraHTTPHeaders,
+      locale ? network.singleHeader('Accept-Language', locale) : undefined,
     ]);
-    const locale = this._browserContext._options.locale;
-    if (locale)
-      headers['Accept-Language'] = locale;
     return headers;
   }
 

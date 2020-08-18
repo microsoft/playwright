@@ -208,18 +208,10 @@ export type MouseMultiClickOptions = PointerActionOptions & {
 
 export type World = 'main' | 'utility';
 
-export type Headers = { [key: string]: string };
 export type HeadersArray = { name: string, value: string }[];
 
 export type GotoOptions = NavigateOptions & {
   referer?: string,
-};
-
-export type FulfillResponse = {
-  status?: number,
-  headers?: Headers,
-  contentType?: string,
-  body?: string | Buffer,
 };
 
 export type NormalizedFulfillResponse = {
@@ -227,12 +219,6 @@ export type NormalizedFulfillResponse = {
   headers: HeadersArray,
   body: string,
   isBase64: boolean,
-};
-
-export type ContinueOverrides = {
-  method?: string,
-  headers?: Headers,
-  postData?: string | Buffer,
 };
 
 export type NormalizedContinueOverrides = {
@@ -275,7 +261,7 @@ export type BrowserContextOptions = {
   timezoneId?: string,
   geolocation?: Geolocation,
   permissions?: string[],
-  extraHTTPHeaders?: Headers,
+  extraHTTPHeaders?: HeadersArray,
   offline?: boolean,
   httpCredentials?: Credentials,
   deviceScaleFactor?: number,
