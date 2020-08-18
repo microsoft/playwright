@@ -18,7 +18,6 @@ import { Request, Response, Route } from '../../network';
 import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { headersObjectToArray, headersArrayToObject } from '../../converters';
 import * as types from '../../types';
 
 export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
@@ -40,7 +39,7 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
       resourceType: request.resourceType(),
       method: request.method(),
       postData: postData === null ? undefined : postData.toString('base64'),
-      headers: headersObjectToArray(request.headers()),
+      headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
     });
@@ -60,7 +59,7 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
-      headers: headersObjectToArray(response.headers()),
+      headers: response.headers(),
     });
   }
 
@@ -85,17 +84,13 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
   async continue(params: { method?: string, headers?: types.HeadersArray, postData?: string }): Promise<void> {
     await this._object.continue({
       method: params.method,
-      headers: params.headers ? headersArrayToObject(params.headers) : undefined,
+      headers: params.headers,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
     });
   }
 
   async fulfill(params: types.NormalizedFulfillResponse): Promise<void> {
-    await this._object.fulfill({
-      status: params.status,
-      headers: params.headers ? headersArrayToObject(params.headers) : undefined,
-      body: params.isBase64 ? Buffer.from(params.body, 'base64') : params.body,
-    });
+    await this._object.fulfill(params);
   }
 
   async abort(params: { errorCode?: string }): Promise<void> {

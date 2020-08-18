@@ -19,7 +19,6 @@ import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
 import * as types from './types';
-import { helper, assert } from './helper';
 
 export async function normalizeFilePayloads(files: string | types.FilePayload | string[] | types.FilePayload[]): Promise<types.FilePayload[]> {
   let ff: string[] | types.FilePayload[];
@@ -43,65 +42,18 @@ export async function normalizeFilePayloads(files: string | types.FilePayload | 
   return filePayloads;
 }
 
-export async function normalizeFulfillParameters(params: types.FulfillResponse & { path?: string }): Promise<types.NormalizedFulfillResponse> {
-  let body = '';
-  let isBase64 = false;
-  let length = 0;
-  if (params.path) {
-    const buffer = await util.promisify(fs.readFile)(params.path);
-    body = buffer.toString('base64');
-    isBase64 = true;
-    length = buffer.length;
-  } else if (helper.isString(params.body)) {
-    body = params.body;
-    isBase64 = false;
-    length = Buffer.byteLength(body);
-  } else if (params.body) {
-    body = params.body.toString('base64');
-    isBase64 = true;
-    length = params.body.length;
-  }
-  const headers: types.Headers = {};
-  for (const header of Object.keys(params.headers || {}))
-    headers[header.toLowerCase()] = String(params.headers![header]);
-  if (params.contentType)
-    headers['content-type'] = String(params.contentType);
-  else if (params.path)
-    headers['content-type'] = mime.getType(params.path) || 'application/octet-stream';
-  if (length && !('content-length' in headers))
-    headers['content-length'] = String(length);
-
-  return {
-    status: params.status || 200,
-    headers: headersObjectToArray(headers),
-    body,
-    isBase64
-  };
-}
-
-export function normalizeContinueOverrides(overrides: types.ContinueOverrides): types.NormalizedContinueOverrides {
-  return {
-    method: overrides.method,
-    headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
-    postData: helper.isString(overrides.postData) ? Buffer.from(overrides.postData, 'utf8') : overrides.postData,
-  };
-}
-
-export function headersObjectToArray(headers: types.Headers): types.HeadersArray {
+export function headersObjectToArray(headers: { [key: string]: string }): types.HeadersArray {
   const result: types.HeadersArray = [];
   for (const name in headers) {
-    if (!Object.is(headers[name], undefined)) {
-      const value = headers[name];
-      assert(helper.isString(value), `Expected value of header "${name}" to be String, but "${typeof value}" is found.`);
-      result.push({ name, value });
-    }
+    if (!Object.is(headers[name], undefined))
+      result.push({ name, value: headers[name] });
   }
   return result;
 }
 
-export function headersArrayToObject(headers: types.HeadersArray): types.Headers {
-  const result: types.Headers = {};
+export function headersArrayToObject(headers: types.HeadersArray, lowerCase: boolean): { [key: string]: string } {
+  const result: { [key: string]: string } = {};
   for (const { name, value } of headers)
-    result[name] = value;
+    result[lowerCase ? name.toLowerCase() : name] = value;
   return result;
 }

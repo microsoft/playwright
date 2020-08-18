@@ -18,8 +18,12 @@ import { URLSearchParams } from 'url';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { normalizeFulfillParameters, headersArrayToObject, normalizeContinueOverrides } from '../../converters';
+import { headersArrayToObject, headersObjectToArray } from '../../converters';
 import { Headers } from './types';
+import * as fs from 'fs';
+import * as mime from 'mime';
+import * as util from 'util';
+import { helper } from '../../helper';
 
 export type NetworkCookie = {
   name: string,
@@ -44,19 +48,6 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-type FulfillResponse = {
-  status?: number,
-  headers?: Headers,
-  contentType?: string,
-  body?: string | Buffer,
-};
-
-type ContinueOverrides = {
-  method?: string,
-  headers?: Headers,
-  postData?: string | Buffer,
-};
-
 export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
@@ -77,7 +68,7 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
       this._redirectedFrom._redirectedTo = this;
-    this._headers = headersArrayToObject(initializer.headers);
+    this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
   }
 
@@ -175,17 +166,49 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
     await this._channel.abort({ errorCode });
   }
 
-  async fulfill(response: FulfillResponse & { path?: string }) {
-    const normalized = await normalizeFulfillParameters(response);
-    await this._channel.fulfill(normalized);
+  async fulfill(response: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string }) {
+    let body = '';
+    let isBase64 = false;
+    let length = 0;
+    if (response.path) {
+      const buffer = await util.promisify(fs.readFile)(response.path);
+      body = buffer.toString('base64');
+      isBase64 = true;
+      length = buffer.length;
+    } else if (helper.isString(response.body)) {
+      body = response.body;
+      isBase64 = false;
+      length = Buffer.byteLength(body);
+    } else if (response.body) {
+      body = response.body.toString('base64');
+      isBase64 = true;
+      length = response.body.length;
+    }
+
+    const headers: Headers = {};
+    for (const header of Object.keys(response.headers || {}))
+      headers[header.toLowerCase()] = String(response.headers![header]);
+    if (response.contentType)
+      headers['content-type'] = String(response.contentType);
+    else if (response.path)
+      headers['content-type'] = mime.getType(response.path) || 'application/octet-stream';
+    if (length && !('content-length' in headers))
+      headers['content-length'] = String(length);
+
+    await this._channel.fulfill({
+      status: response.status || 200,
+      headers: headersObjectToArray(headers),
+      body,
+      isBase64
+    });
   }
 
-  async continue(overrides: ContinueOverrides = {}) {
-    const normalized = normalizeContinueOverrides(overrides);
+  async continue(overrides: { method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
+    const postDataBuffer = helper.isString(overrides.postData) ? Buffer.from(overrides.postData, 'utf8') : overrides.postData;
     await this._channel.continue({
-      method: normalized.method,
-      headers: normalized.headers,
-      postData: normalized.postData ? normalized.postData.toString('base64') : undefined
+      method: overrides.method,
+      headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
+      postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
     });
   }
 }
@@ -205,7 +228,7 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: ResponseInitializer) {
     super(parent, type, guid, initializer);
-    this._headers = headersArrayToObject(initializer.headers);
+    this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
   }
 
   url(): string {
@@ -255,5 +278,13 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
 
   frame(): Frame {
     return Request.from(this._initializer.request).frame();
+  }
+}
+
+export function validateHeaders(headers: Headers) {
+  for (const key of Object.keys(headers)) {
+    const value = headers[key];
+    if (!Object.is(value, undefined) && !helper.isString(value))
+      throw new Error(`Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
   }
 }

@@ -75,10 +75,7 @@ export class FFNetworkManager {
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
       return Buffer.from(response.base64body, 'base64');
     };
-    const headers: types.Headers = {};
-    for (const {name, value} of event.headers)
-      headers[name.toLowerCase()] = value;
-    const response = new network.Response(request.request, event.status, event.statusText, headers, getResponseBody);
+    const response = new network.Response(request.request, event.status, event.statusText, event.headers, getResponseBody);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
@@ -150,14 +147,11 @@ class InterceptableRequest implements network.RouteDelegate {
     this._id = payload.requestId;
     this._session = session;
 
-    const headers: types.Headers = {};
-    for (const {name, value} of payload.headers)
-      headers[name.toLowerCase()] = value;
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');
     this.request = new network.Request(payload.isIntercepted ? this : null, frame, redirectedFrom ? redirectedFrom.request : null, payload.navigationId,
-        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, headers);
+        payload.url, internalCauseToResourceType[payload.internalCause] || causeToResourceType[payload.cause] || 'other', payload.method, postDataBuffer, payload.headers);
   }
 
   async continue(overrides: types.NormalizedContinueOverrides) {
@@ -187,13 +181,4 @@ class InterceptableRequest implements network.RouteDelegate {
       errorCode,
     });
   }
-}
-
-export function headersArray(headers: types.Headers): Protocol.Network.HTTPHeader[] {
-  const result: Protocol.Network.HTTPHeader[] = [];
-  for (const name in headers) {
-    if (!Object.is(headers[name], undefined))
-      result.push({name, value: headers[name] + ''});
-  }
-  return result;
 }

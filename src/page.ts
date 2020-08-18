@@ -87,7 +87,7 @@ type PageState = {
   viewportSize: types.Size | null;
   mediaType: types.MediaType | null;
   colorScheme: types.ColorScheme | null;
-  extraHTTPHeaders: types.Headers | null;
+  extraHTTPHeaders: types.HeadersArray | null;
 };
 
 export class Page extends EventEmitter {
@@ -214,8 +214,8 @@ export class Page extends EventEmitter {
     await this._delegate.exposeBinding(binding);
   }
 
-  setExtraHTTPHeaders(headers: types.Headers) {
-    this._state.extraHTTPHeaders = network.verifyHeaders(headers);
+  setExtraHTTPHeaders(headers: types.HeadersArray) {
+    this._state.extraHTTPHeaders = headers;
     return this._delegate.updateExtraHTTPHeaders();
   }
 

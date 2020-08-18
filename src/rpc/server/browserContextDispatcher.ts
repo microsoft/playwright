@@ -24,7 +24,6 @@ import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Events as ChromiumEvents } from '../../chromium/events';
-import { headersArrayToObject } from '../../converters';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
   private _context: BrowserContextBase;
@@ -96,7 +95,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
   }
 
   async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
-    await this._context.setExtraHTTPHeaders(headersArrayToObject(params.headers));
+    await this._context.setExtraHTTPHeaders(params.headers);
   }
 
   async setOffline(params: { offline: boolean }): Promise<void> {

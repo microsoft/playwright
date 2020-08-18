@@ -28,7 +28,7 @@ import { FFBrowserContext } from './ffBrowser';
 import { FFSession, FFSessionEvents } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
-import { FFNetworkManager, headersArray } from './ffNetworkManager';
+import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { rewriteErrorMessage } from '../utils/stackTrace';
@@ -272,7 +272,7 @@ export class FFPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._session.send('Network.setExtraHTTPHeaders', { headers: headersArray(this._page._state.extraHTTPHeaders || {}) });
+    await this._session.send('Network.setExtraHTTPHeaders', { headers: this._page._state.extraHTTPHeaders || [] });
   }
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {

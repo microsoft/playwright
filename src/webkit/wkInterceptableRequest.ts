@@ -21,7 +21,7 @@ import * as network from '../network';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
-import { headersArrayToObject } from '../converters';
+import { headersArrayToObject, headersObjectToArray } from '../converters';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',
@@ -57,7 +57,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'binary');
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
-        resourceType, event.request.method, postDataBuffer, headersObject(event.request.headers));
+        resourceType, event.request.method, postDataBuffer, headersObjectToArray(event.request.headers));
     this._interceptedPromise = new Promise(f => this._interceptedCallback = f);
   }
 
@@ -76,7 +76,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     // In certain cases, protocol will return error if the request was already canceled
     // or the page was closed. We should tolerate these errors.
     let mimeType = response.isBase64 ? 'application/octet-stream' : 'text/plain';
-    const headers = headersArrayToObject(response.headers);
+    const headers = headersArrayToObject(response.headers, false /* lowerCase */);
     const contentType = headers['content-type'];
     if (contentType)
       mimeType = contentType.split(';')[0].trim();
@@ -98,7 +98,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     await this._session.sendMayFail('Network.interceptWithRequest', {
       requestId: this._requestId,
       method: overrides.method,
-      headers: overrides.headers ? headersArrayToObject(overrides.headers) : undefined,
+      headers: overrides.headers ? headersArrayToObject(overrides.headers, false /* lowerCase */) : undefined,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined
     });
   }
@@ -108,13 +108,6 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObject(responsePayload.headers), getResponseBody);
+    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), getResponseBody);
   }
-}
-
-function headersObject(headers: Protocol.Network.Headers): types.Headers {
-  const result: types.Headers = {};
-  for (const key of Object.keys(headers))
-    result[key.toLowerCase()] = headers[key];
-  return result;
 }

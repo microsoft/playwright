@@ -39,7 +39,7 @@ export interface BrowserContext extends EventEmitter {
   grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void>;
   clearPermissions(): Promise<void>;
   setGeolocation(geolocation?: types.Geolocation): Promise<void>;
-  setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
+  setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
   setOffline(offline: boolean): Promise<void>;
   setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
@@ -103,7 +103,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   abstract _doClearPermissions(): Promise<void>;
   abstract setGeolocation(geolocation?: types.Geolocation): Promise<void>;
   abstract _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
-  abstract setExtraHTTPHeaders(headers: types.Headers): Promise<void>;
+  abstract setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
   abstract setOffline(offline: boolean): Promise<void>;
   abstract _doAddInitScript(expression: string): Promise<void>;
   abstract _doExposeBinding(binding: PageBinding): Promise<void>;
@@ -189,9 +189,11 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     const { username, password } = proxy;
     if (username) {
       this._options.httpCredentials = { username, password: password! };
-      this._options.extraHTTPHeaders = this._options.extraHTTPHeaders || {};
       const token = Buffer.from(`${username}:${password}`).toString('base64');
-      this._options.extraHTTPHeaders['Proxy-Authorization'] = `Basic ${token}`;
+      this._options.extraHTTPHeaders = network.mergeHeaders([
+        this._options.extraHTTPHeaders,
+        network.singleHeader('Proxy-Authorization', `Basic ${token}`),
+      ]);
     }
   }
 
@@ -236,8 +238,6 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   verifyGeolocation(options.geolocation);
-  if (options.extraHTTPHeaders)
-    options.extraHTTPHeaders = network.verifyHeaders(options.extraHTTPHeaders);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

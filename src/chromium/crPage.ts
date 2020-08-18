@@ -37,6 +37,7 @@ import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import * as sourceMap from '../utils/sourceMap';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { headersArrayToObject } from '../converters';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -729,7 +730,7 @@ class FrameSession {
       this._crPage._browserContext._options.extraHTTPHeaders,
       this._page._state.extraHTTPHeaders
     ]);
-    await this._client.send('Network.setExtraHTTPHeaders', { headers });
+    await this._client.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(headers, false /* lowerCase */) });
   }
 
   async _updateGeolocation(): Promise<void> {

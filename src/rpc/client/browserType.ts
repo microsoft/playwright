@@ -28,6 +28,7 @@ import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
+import { validateHeaders } from './network';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
@@ -88,6 +89,8 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
+      if (options.extraHTTPHeaders)
+        validateHeaders(options.extraHTTPHeaders);
       const persistentOptions: BrowserTypeLaunchPersistentContextParams = {
         ...options,
         viewport: options.viewport === null ? undefined : options.viewport,

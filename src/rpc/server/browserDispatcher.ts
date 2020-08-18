@@ -23,7 +23,6 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { CRBrowser } from '../../chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
-import { headersArrayToObject } from '../../converters';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
   constructor(scope: DispatcherScope, browser: BrowserBase, guid?: string) {
@@ -37,11 +36,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
   }
 
   async newContext(params: BrowserNewContextParams): Promise<{ context: BrowserContextChannel }> {
-    const options = {
-      ...params,
-      extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders) : undefined,
-    };
-    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(options) as BrowserContextBase) };
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(params) as BrowserContextBase) };
   }
 
   async close(): Promise<void> {
