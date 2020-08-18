@@ -58,7 +58,7 @@ it('should return headers', async({page, server}) => {
 it.fail(CHROMIUM||WEBKIT)('should get the same headers as the server', async({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;
-  await server.setRoute('/something', (request, response) => {
+  server.setRoute('/something', (request, response) => {
     serverRequest = request;
     response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
     response.end('done');
