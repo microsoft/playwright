@@ -44,8 +44,7 @@ export interface BrowserContext extends EventEmitter {
   setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
   addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
   exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void>;
-  route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
-  unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
+  _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -53,7 +52,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
-  _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
+  _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
   readonly _closePromise: Promise<Error>;
@@ -107,8 +106,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   abstract setOffline(offline: boolean): Promise<void>;
   abstract _doAddInitScript(expression: string): Promise<void>;
   abstract _doExposeBinding(binding: PageBinding): Promise<void>;
-  abstract route(url: types.URLMatch, handler: network.RouteHandler): Promise<void>;
-  abstract unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void>;
+  abstract _doUpdateRequestInterception(): Promise<void>;
   abstract _doClose(): Promise<void>;
 
   async cookies(urls: string | string[] | undefined = []): Promise<types.NetworkCookie[]> {
@@ -204,6 +202,11 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     const { username, password } = proxy;
     if (username && password)
       this._options.httpCredentials = { username, password };
+  }
+
+  async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+    this._requestInterceptor = handler;
+    await this._doUpdateRequestInterception();
   }
 
   async close() {

@@ -113,7 +113,7 @@ export class Page extends EventEmitter {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
   readonly coverage: any;
-  _routes: { url: types.URLMatch, handler: network.RouteHandler }[] = [];
+  private _requestInterceptor?: network.RouteHandler;
   _ownedContext: BrowserContext | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
@@ -291,16 +291,11 @@ export class Page extends EventEmitter {
   }
 
   _needsRequestInterception(): boolean {
-    return this._routes.length > 0 || this._browserContext._routes.length > 0;
+    return !!this._requestInterceptor || !!this._browserContext._requestInterceptor;
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
-    await this._delegate.updateRequestInterception();
-  }
-
-  async unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+  async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+    this._requestInterceptor = handler;
     await this._delegate.updateRequestInterception();
   }
 
@@ -309,31 +304,15 @@ export class Page extends EventEmitter {
     const route = request._route();
     if (!route)
       return;
-    for (const { url, handler } of this._routes) {
-      if (helper.urlMatches(request.url(), url)) {
-        handler(route, request);
-        return;
-      }
+    if (this._requestInterceptor) {
+      this._requestInterceptor(route, request);
+      return;
     }
-    for (const { url, handler } of this._browserContext._routes) {
-      if (helper.urlMatches(request.url(), url)) {
-        handler(route, request);
-        return;
-      }
+    if (this._browserContext._requestInterceptor) {
+      this._browserContext._requestInterceptor(route, request);
+      return;
     }
     route.continue();
-  }
-
-  _isRouted(requestURL: string): boolean {
-    for (const { url } of this._routes) {
-      if (helper.urlMatches(requestURL, url))
-        return true;
-    }
-    for (const { url } of this._browserContext._routes) {
-      if (helper.urlMatches(requestURL, url))
-        return true;
-    }
-    return false;
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {

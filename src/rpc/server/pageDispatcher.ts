@@ -123,10 +123,10 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
 
   async setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void> {
     if (!params.enabled) {
-      await this._page.unroute('**/*');
+      await this._page._setRequestInterceptor(undefined);
       return;
     }
-    this._page.route('**/*', (route, request) => {
+    this._page._setRequestInterceptor((route, request) => {
       this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }
