@@ -171,12 +171,12 @@ it('should support bypassCSP option', async ({server, launchPersistent}) => {
   expect(await page.evaluate('__injected')).toBe(42);
 });
 
-it('should support javascriptEnabled option', async ({server, launchPersistent}) => {
+it('should support javascriptEnabled option', async ({launchPersistent, isWebKit}) => {
   const {page, context} = await launchPersistent({javaScriptEnabled: false});
   await page.goto('data:text/html, <script>var something = "forbidden"</script>');
   let error = null;
   await page.evaluate('something').catch(e => error = e);
-  if (WEBKIT)
+  if (isWebKit)
     expect(error.message).toContain('Can\'t find variable: something');
   else
     expect(error.message).toContain('something is not defined');

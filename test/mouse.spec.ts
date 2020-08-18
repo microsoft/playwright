@@ -121,12 +121,12 @@ it('should trigger hover state with removed window.Node', async({page, server}) 
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should set modifier keys on click', async({page, server}) => {
+it('should set modifier keys on click', async({page, server, isFirefox}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window["lastEvent"] = e, true));
   const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};
   // In Firefox, the Meta modifier only exists on Mac
-  if (FFOX && !MAC)
+  if (isFirefox && !MAC)
     delete modifiers['Meta'];
   for (const modifier in modifiers) {
     await page.keyboard.down(modifier);
@@ -142,9 +142,9 @@ it('should set modifier keys on click', async({page, server}) => {
   }
 });
 
-it('should tween mouse movement', async({page, server}) => {
+it('should tween mouse movement', async({page, isWebKit}) => {
   // The test becomes flaky on WebKit without next line.
-  if (WEBKIT)
+  if (isWebKit)
     await page.evaluate(() => new Promise(requestAnimationFrame));
   await page.mouse.move(100, 100);
   await page.evaluate(() => {

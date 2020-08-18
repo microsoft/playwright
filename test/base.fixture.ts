@@ -44,6 +44,9 @@ declare global {
     browserType: BrowserType<Browser>;
     browserName: string;
     browser: Browser;
+    isChromium: boolean;
+    isFirefox: boolean;
+    isWebKit: boolean;
   }
   interface FixtureState {
     toImpl: (rpcObject: any) => any;
@@ -183,6 +186,18 @@ registerFixture('server', async ({httpService}, test) => {
 
 registerWorkerFixture('browserName', async ({}, test) => {
   await test(browserName);
+});
+
+registerWorkerFixture('isChromium', async ({browserName}, test) => {
+  await test(browserName === 'chromium');
+});
+
+registerWorkerFixture('isFirefox', async ({browserName}, test) => {
+  await test(browserName === 'firefox');
+});
+
+registerWorkerFixture('isWebKit', async ({browserName}, test) => {
+  await test(browserName === 'webkit');
 });
 
 registerFixture('httpsServer', async ({httpService}, test) => {

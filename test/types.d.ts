@@ -17,7 +17,12 @@
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 
-type DescribeFunction = ((name: string, inner: () => void) => void) & {fail(condition: boolean): DescribeFunction};
+type DescribeFunction = ((name: string, inner: () => void) => void) & {
+    fail(condition: boolean): DescribeFunction;
+    skip(condition: boolean): DescribeFunction;
+    slow(): DescribeFunction;
+    repeat(n: number): DescribeFunction;
+};
 
 type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
     fail(condition: boolean): ItFunction<STATE>;
