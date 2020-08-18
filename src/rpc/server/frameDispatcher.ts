@@ -18,7 +18,7 @@ import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent, kNavigationEvent, Nav
 import * as types from '../../types';
 import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, SerializedArgument, FrameWaitForFunctionParams, SerializedValue } from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
-import { convertSelectOptionValues, ElementHandleDispatcher, createHandle, convertInputFiles } from './elementHandlerDispatcher';
+import { ElementHandleDispatcher, createHandle, convertInputFiles } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 
@@ -152,7 +152,8 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
   }
 
   async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
-    return { values: await this._frame.selectOption(params.selector, convertSelectOptionValues(params.elements, params.options), params) };
+    const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
+    return { values: await this._frame.selectOption(params.selector, elements, params.options || [], params) };
   }
 
   async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions): Promise<void> {

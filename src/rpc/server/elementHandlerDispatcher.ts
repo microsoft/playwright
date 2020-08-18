@@ -87,7 +87,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   }
 
   async selectOption(params: { elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
-    return { values: await this._elementHandle.selectOption(convertSelectOptionValues(params.elements, params.options), params) };
+    const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
+    return { values: await this._elementHandle.selectOption(elements, params.options || [], params) };
   }
 
   async fill(params: { value: string } & types.NavigatingActionWaitOptions) {
@@ -156,14 +157,6 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
   async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element?: ElementHandleChannel }> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._elementHandle.waitForSelector(params.selector, params)) };
   }
-}
-
-export function convertSelectOptionValues(elements?: ElementHandleChannel[], options?: types.SelectOption[]): string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null {
-  if (elements)
-    return elements.map(v => (v as ElementHandleDispatcher)._elementHandle);
-  if (options)
-    return options;
-  return null;
 }
 
 export function convertInputFiles(files: { name: string, mimeType: string, buffer: string }[]): types.FilePayload[] {
