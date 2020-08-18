@@ -224,7 +224,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
 }
 
 export function convertSelectOptionValues(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null): { elements?: ElementHandleChannel[], options?: SelectOption[] } {
-  if (!values)
+  if (values === null)
     return {};
   if (!Array.isArray(values))
     values = [ values as any ];
@@ -232,7 +232,6 @@ export function convertSelectOptionValues(values: string | ElementHandle | Selec
     return {};
   for (let i = 0; i < values.length; i++)
     assert(values[i] !== null, `options[${i}]: expected object, got null`);
-
   if (values[0] instanceof ElementHandle)
     return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };
   if (helper.isString(values[0]))

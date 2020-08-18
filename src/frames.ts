@@ -863,8 +863,8 @@ export class Frame {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._hover(progress, options));
   }
 
-  async selectOption(selector: string, values: string | dom.ElementHandle | types.SelectOption | string[] | dom.ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._selectOption(progress, values, options));
+  async selectOption(selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+    return this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._selectOption(progress, elements, values, options));
   }
 
   async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {

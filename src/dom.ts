@@ -397,35 +397,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  async selectOption(values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+  async selectOption(elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
     return this._page._runAbortableTask(async progress => {
-      const result = await this._selectOption(progress, values, options);
+      const result = await this._selectOption(progress, elements, values, options);
       return throwRetargetableDOMError(result);
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _selectOption(progress: Progress, values: string | ElementHandle | types.SelectOption | string[] | ElementHandle[] | types.SelectOption[] | null, options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
-    let vals: string[] | ElementHandle[] | types.SelectOption[];
-    if (values === null)
-      vals = [];
-    else if (!Array.isArray(values))
-      vals = [ values ] as (string[] | ElementHandle[] | types.SelectOption[]);
-    else
-      vals = values;
-    const selectOptions = (vals as any).map((value: any) => helper.isString(value) ? { value } : value);
-    for (let i = 0; i < selectOptions.length; i++) {
-      const option = selectOptions[i];
-      assert(option !== null, `options[${i}]: expected object, got null`);
-      assert(typeof option === 'object', `options[${i}]: expected object, got ${typeof option}`);
-      if (option instanceof ElementHandle)
-        continue;
-      if (option.value !== undefined)
-        assert(helper.isString(option.value), `options[${i}].value: expected string, got ${typeof option.value}`);
-      if (option.label !== undefined)
-        assert(helper.isString(option.label), `options[${i}].label: expected string, got ${typeof option.label}`);
-      if (option.index !== undefined)
-        assert(helper.isNumber(option.index), `options[${i}].index: expected number, got ${typeof option.index}`);
-    }
+  async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
+    const selectOptions = [...elements, ...values];
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       return throwFatalDOMError(await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions));
