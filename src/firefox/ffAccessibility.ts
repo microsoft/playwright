@@ -202,11 +202,10 @@ class FFAXNode implements accessibility.AXNode {
   serialize(): types.SerializedAXNode {
     const node: {[x in keyof types.SerializedAXNode]: any} = {
       role: FFRoleToARIARole.get(this._role) || this._role,
-      name: this._name || ''
+      name: this._name || '',
     };
     const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'name',
-      'value',
       'description',
       'roledescription',
       'valuetext',
@@ -236,16 +235,6 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[booleanProperty] = value;
     }
-    const tristateProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
-      'checked',
-      'pressed',
-    ];
-    for (const tristateProperty of tristateProperties) {
-      if (!(tristateProperty in this._payload))
-        continue;
-      const value = this._payload[tristateProperty];
-      node[tristateProperty] = value;
-    }
     const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Accessibility.AXTree> = [
       'level'
     ];
@@ -266,6 +255,13 @@ class FFAXNode implements accessibility.AXNode {
         continue;
       node[tokenProperty] = value;
     }
-    return node;
+
+    const axNode = node as types.SerializedAXNode;
+    axNode.valueString = this._payload.value;
+    if ('checked' in this._payload)
+      axNode.checked = this._payload.checked === true ? 'checked' : this._payload.checked === 'mixed' ? 'mixed' : 'unchecked';
+    if ('pressed' in this._payload)
+      axNode.pressed = this._payload.pressed === true ? 'pressed' : 'released';
+    return axNode;
   }
 }
