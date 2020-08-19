@@ -182,8 +182,18 @@ class WKAXNode implements accessibility.AXNode {
           node.roledescription = roledescription;
       }
 
-      if ('value' in this._payload && this._payload.role !== 'text')
-        node.value = this._payload.value;
+      if ('value' in this._payload && this._payload.role !== 'text') {
+        if (typeof this._payload.value === 'string')
+          node.valueString = this._payload.value;
+        else if (typeof this._payload.value === 'number')
+          node.valueNumber = this._payload.value;
+      }
+
+      if ('checked' in this._payload)
+        node.checked = this._payload.checked === 'true' ? 'checked' : this._payload.checked === 'false' ? 'unchecked' : 'mixed';
+
+      if ('pressed' in this._payload)
+        node.pressed = this._payload.pressed === 'true' ? 'pressed' : this._payload.pressed === 'false' ? 'released' : 'mixed';
 
       const userStringProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'keyshortcuts',
@@ -217,16 +227,6 @@ class WKAXNode implements accessibility.AXNode {
         (node as any)[booleanProperty] = value;
       }
 
-      const tristateProperties: ('checked'|'pressed')[] = [
-        'checked',
-        'pressed',
-      ];
-      for (const tristateProperty of tristateProperties) {
-        if (!(tristateProperty in this._payload))
-          continue;
-        const value = this._payload[tristateProperty];
-        node[tristateProperty] = value === 'mixed' ? 'mixed' : value === 'true' ? true : false;
-      }
       const numericalProperties: Array<keyof types.SerializedAXNode & keyof Protocol.Page.AXNode> = [
         'level',
         'valuemax',

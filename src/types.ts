@@ -292,7 +292,8 @@ export type LaunchPersistentOptions = LaunchOptionsBase & BrowserContextOptions;
 export type SerializedAXNode = {
   role: string,
   name: string,
-  value?: string|number,
+  valueString?: string,
+  valueNumber?: number,
   description?: string,
 
   keyshortcuts?: string,
@@ -309,8 +310,8 @@ export type SerializedAXNode = {
   required?: boolean,
   selected?: boolean,
 
-  checked?: boolean | 'mixed',
-  pressed?: boolean | 'mixed',
+  checked?: 'checked' | 'unchecked' | 'mixed',
+  pressed?: 'pressed' | 'released' | 'mixed',
 
   level?: number,
   valuemin?: number,

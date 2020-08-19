@@ -203,20 +203,15 @@ class CRAXNode implements accessibility.AXNode {
     const properties: Map<string, number | string | boolean> = new Map();
     for (const property of this._payload.properties || [])
       properties.set(property.name.toLowerCase(), property.value.value);
-    if (this._payload.name)
-      properties.set('name', this._payload.name.value);
-    if (this._payload.value)
-      properties.set('value', this._payload.value.value);
     if (this._payload.description)
       properties.set('description', this._payload.description.value);
 
     const node: {[x in keyof types.SerializedAXNode]: any} = {
       role: this._role,
-      name: this._payload.name ? (this._payload.name.value || '') : ''
+      name: this._payload.name ? (this._payload.name.value || '') : '',
     };
 
     const userStringProperties: Array<keyof types.SerializedAXNode> = [
-      'value',
       'description',
       'keyshortcuts',
       'roledescription',
@@ -227,7 +222,6 @@ class CRAXNode implements accessibility.AXNode {
         continue;
       node[userStringProperty] = properties.get(userStringProperty);
     }
-
     const booleanProperties: Array<keyof types.SerializedAXNode> = [
       'disabled',
       'expanded',
@@ -248,17 +242,6 @@ class CRAXNode implements accessibility.AXNode {
       if (!value)
         continue;
       node[booleanProperty] = value;
-    }
-
-    const tristateProperties: Array<keyof types.SerializedAXNode> = [
-      'checked',
-      'pressed',
-    ];
-    for (const tristateProperty of tristateProperties) {
-      if (!properties.has(tristateProperty))
-        continue;
-      const value = properties.get(tristateProperty);
-      node[tristateProperty] = value === 'mixed' ? 'mixed' : value === 'true' ? true : false;
     }
     const numericalProperties: Array<keyof types.SerializedAXNode> = [
       'level',
@@ -282,7 +265,19 @@ class CRAXNode implements accessibility.AXNode {
         continue;
       node[tokenProperty] = value;
     }
-    return node as types.SerializedAXNode;
+
+    const axNode = node as types.SerializedAXNode;
+    if (this._payload.value) {
+      if (typeof this._payload.value.value === 'string')
+        axNode.valueString = this._payload.value.value;
+      if (typeof this._payload.value.value === 'number')
+        axNode.valueNumber = this._payload.value.value;
+    }
+    if (properties.has('checked'))
+      axNode.checked = properties.get('checked') === 'true' ? 'checked' : properties.get('checked') === 'false' ? 'unchecked' : 'mixed';
+    if (properties.has('pressed'))
+      axNode.pressed = properties.get('pressed') === 'true' ? 'pressed' : properties.get('pressed') === 'false' ? 'released' : 'mixed';
+    return axNode;
   }
 
   static createTree(client: CRSession, payloads: Protocol.Accessibility.AXNode[]): CRAXNode {
