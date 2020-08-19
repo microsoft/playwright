@@ -64,11 +64,11 @@ class BrowserHandler {
     this._createdBrowserContextIds.delete(browserContextId);
   }
 
-  dispose() {
+  async dispose() {
     helper.removeListeners(this._eventListeners);
     for (const [target, session] of this._attachedSessions) {
       target.disconnectSession(session);
-      this._dispatcher.destroySession(session);
+      await this._dispatcher.destroySession(session);
     }
     this._attachedSessions.clear();
     for (const browserContextId of this._createdBrowserContextIds) {
@@ -99,12 +99,12 @@ class BrowserHandler {
     sessions.push(session);
   }
 
-  _onTargetDestroyed(target) {
+  async _onTargetDestroyed(target) {
     const session = this._attachedSessions.get(target);
     if (!session)
       return;
     this._attachedSessions.delete(target);
-    this._dispatcher.destroySession(session);
+    await this._dispatcher.destroySession(session);
     this._session.emitEvent('Browser.detachedFromTarget', {
       sessionId: session.sessionId(),
       targetId: target.id(),
@@ -182,6 +182,10 @@ class BrowserHandler {
 
   async setColorScheme({browserContextId, colorScheme}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('colorScheme', nullToUndefined(colorScheme));
+  }
+
+  async setScreencastOptions({browserContextId, dir, width, height, scale}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setScreencastOptions({dir, width, height, scale});
   }
 
   async setUserAgentOverride({browserContextId, userAgent}) {

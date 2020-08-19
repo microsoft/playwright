@@ -407,6 +407,15 @@ const Browser = {
         colorScheme: t.Nullable(t.Enum(['dark', 'light', 'no-preference'])),
       },
     },
+    'setScreencastOptions': {
+      params: {
+        browserContextId: t.Optional(t.String),
+        dir: t.String,
+        width: t.Number,
+        height: t.Number,
+        scale: t.Optional(t.Number),
+      },
+    },
   },
 };
 
@@ -639,6 +648,13 @@ const Page = {
     'dispatchMessageFromWorker': {
       workerId: t.String,
       message: t.String,
+    },
+    'screencastStarted': {
+      uid: t.String,
+      file: t.String,
+    },
+    'screencastStopped': {
+      uid: t.String,
     },
   },
 
