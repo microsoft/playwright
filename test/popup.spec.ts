@@ -209,7 +209,7 @@ it('should expose function from browser context', async function({browser, serve
   expect(messages.join('|')).toBe('page|binding');
 });
 
-it('should not dispatch binding on a closed page', async function({browser, server, isFirefox}) {
+it('should not dispatch binding on a closed page', async function({browser, server}) {
   const context = await browser.newContext();
   const messages = [];
   await context.exposeFunction('add', (a, b) => {
@@ -232,7 +232,7 @@ it('should not dispatch binding on a closed page', async function({browser, serv
     }),
   ]);
   await context.close();
-  if (isFirefox)
+  if (options.FFOX)
     expect(messages.join('|')).toBe('alreadyclosed');
   else
     expect(messages.join('|')).toBe('binding|close');

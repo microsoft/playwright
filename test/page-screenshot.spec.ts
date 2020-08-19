@@ -19,10 +19,9 @@ import utils from './utils';
 import path from 'path';
 import fs from 'fs';
 
-const { HEADLESS } = testOptions;
 
 // Firefox headful produces a different image.
-const ffheadful = options.FFOX && !HEADLESS;
+const ffheadful = options.FFOX && !options.HEADLESS;
 
 it.skip(ffheadful)('should work', async({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});

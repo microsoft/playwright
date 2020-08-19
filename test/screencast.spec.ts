@@ -23,7 +23,6 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 
-const { HEADLESS } = testOptions;
 
 declare global {
   interface FixtureState {
@@ -182,7 +181,7 @@ it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, vid
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && options.WEBKIT)
+  if (options.HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await toImpl(page)._delegate.stopVideoRecording();
@@ -208,7 +207,7 @@ it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, serv
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && options.WEBKIT)
+  if (options.HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
@@ -242,7 +241,7 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && options.WEBKIT)
+  if (options.HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await toImpl(page)._delegate.stopVideoRecording();

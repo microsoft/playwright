@@ -18,7 +18,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const { HEADLESS } = testOptions;
 
 it('should think that it is focused by default', async({page}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
@@ -103,7 +102,7 @@ it('should change document.activeElement', async({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it.skip(options.FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
+it.skip(options.FFOX && !options.HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();
   await Promise.all([

@@ -17,13 +17,12 @@
 import './base.fixture';
 
 import utils from './utils';
-const {WIRE, HEADLESS} = testOptions;
 import {PNG} from 'pngjs';
 import path from 'path';
 import fs from 'fs';
 
 // Firefox headful produces a different image.
-const ffheadful = options.FFOX && !HEADLESS;
+const ffheadful = options.FFOX && !options.HEADLESS;
 
 it.skip(ffheadful)('should work', async({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
@@ -285,7 +284,7 @@ it.skip(ffheadful)('should restore default viewport after fullPage screenshot', 
   await context.close();
 });
 
-it.skip(ffheadful || WIRE)('should restore viewport after page screenshot and exception', async({ browser, server }) => {
+it.skip(ffheadful || options.WIRE)('should restore viewport after page screenshot and exception', async({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -296,7 +295,7 @@ it.skip(ffheadful || WIRE)('should restore viewport after page screenshot and ex
   await context.close();
 });
 
-it.skip(ffheadful || WIRE)('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
+it.skip(ffheadful || options.WIRE)('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -340,7 +339,7 @@ it.skip(ffheadful)('should take element screenshot when default viewport is null
   await context.close();
 });
 
-it.skip(ffheadful || WIRE)('should restore viewport after element screenshot and exception', async({server, browser}) => {
+it.skip(ffheadful || options.WIRE)('should restore viewport after element screenshot and exception', async({server, browser}) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.setContent(`<div style="width:600px;height:600px;"></div>`);

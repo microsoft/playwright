@@ -20,7 +20,6 @@ import { registerFixture } from './runner/fixtures';
 import path from 'path';
 import {spawn, execSync} from 'child_process';
 import { BrowserType, Browser, LaunchOptions } from '..';
-const { HEADLESS } = testOptions;
 
 const playwrightPath = path.join(__dirname, '..');
 
@@ -129,7 +128,7 @@ it.slow()('should close the browser when the node process closes', async ({wrapp
 });
 
 // Cannot reliably send signals on Windows.
-it.skip(WIN || !HEADLESS).slow()('should report browser close signal', async ({wrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should report browser close signal', async ({wrapper}) => {
   const pid = await wrapper.out('pid');
   process.kill(-pid, 'SIGTERM');
   expect(await wrapper.out('exitCode')).toBe('null');
@@ -138,7 +137,7 @@ it.skip(WIN || !HEADLESS).slow()('should report browser close signal', async ({w
   await wrapper.childExitCode();
 });
 
-it.skip(WIN || !HEADLESS).slow()('should report browser close signal 2', async ({wrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should report browser close signal 2', async ({wrapper}) => {
   const pid = await wrapper.out('pid');
   process.kill(-pid, 'SIGKILL');
   expect(await wrapper.out('exitCode')).toBe('null');
@@ -147,28 +146,28 @@ it.skip(WIN || !HEADLESS).slow()('should report browser close signal 2', async (
   await wrapper.childExitCode();
 });
 
-it.skip(WIN || !HEADLESS).slow()('should close the browser on SIGINT', async ({wrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should close the browser on SIGINT', async ({wrapper}) => {
   process.kill(wrapper.child().pid, 'SIGINT');
   expect(await wrapper.out('exitCode')).toBe('0');
   expect(await wrapper.out('signal')).toBe('null');
   expect(await wrapper.childExitCode()).toBe(130);
 });
 
-it.skip(WIN || !HEADLESS).slow()('should close the browser on SIGTERM', async ({wrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should close the browser on SIGTERM', async ({wrapper}) => {
   process.kill(wrapper.child().pid, 'SIGTERM');
   expect(await wrapper.out('exitCode')).toBe('0');
   expect(await wrapper.out('signal')).toBe('null');
   expect(await wrapper.childExitCode()).toBe(0);
 });
 
-it.skip(WIN || !HEADLESS).slow()('should close the browser on SIGHUP', async ({wrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should close the browser on SIGHUP', async ({wrapper}) => {
   process.kill(wrapper.child().pid, 'SIGHUP');
   expect(await wrapper.out('exitCode')).toBe('0');
   expect(await wrapper.out('signal')).toBe('null');
   expect(await wrapper.childExitCode()).toBe(0);
 });
 
-it.skip(WIN || !HEADLESS).slow()('should kill the browser on double SIGINT', async ({stallingWrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should kill the browser on double SIGINT', async ({stallingWrapper}) => {
   const wrapper = stallingWrapper;
   process.kill(wrapper.child().pid, 'SIGINT');
   await wrapper.out('stalled');
@@ -178,7 +177,7 @@ it.skip(WIN || !HEADLESS).slow()('should kill the browser on double SIGINT', asy
   expect(await wrapper.childExitCode()).toBe(130);
 });
 
-it.skip(WIN || !HEADLESS).slow()('should kill the browser on SIGINT + SIGTERM', async ({stallingWrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should kill the browser on SIGINT + SIGTERM', async ({stallingWrapper}) => {
   const wrapper = stallingWrapper;
   process.kill(wrapper.child().pid, 'SIGINT');
   await wrapper.out('stalled');
@@ -188,7 +187,7 @@ it.skip(WIN || !HEADLESS).slow()('should kill the browser on SIGINT + SIGTERM', 
   expect(await wrapper.childExitCode()).toBe(0);
 });
 
-it.skip(WIN || !HEADLESS).slow()('should kill the browser on SIGTERM + SIGINT', async ({stallingWrapper}) => {
+it.skip(WIN || !options.HEADLESS).slow()('should kill the browser on SIGTERM + SIGINT', async ({stallingWrapper}) => {
   const wrapper = stallingWrapper;
   process.kill(wrapper.child().pid, 'SIGTERM');
   await wrapper.out('stalled');

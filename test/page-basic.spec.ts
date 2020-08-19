@@ -33,7 +33,7 @@ it('should not be visible in context.pages', async({context}) => {
   expect(context.pages()).not.toContain(newPage);
 });
 
-it('should run beforeunload if asked for', async({context, server, isChromium, isWebKit}) => {
+it('should run beforeunload if asked for', async({context, server}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -43,9 +43,9 @@ it('should run beforeunload if asked for', async({context, server, isChromium, i
   const dialog = await newPage.waitForEvent('dialog');
   expect(dialog.type()).toBe('beforeunload');
   expect(dialog.defaultValue()).toBe('');
-  if (isChromium)
+  if (options.CHROMIUM)
     expect(dialog.message()).toBe('');
-  else if (isWebKit)
+  else if (options.WEBKIT)
     expect(dialog.message()).toBe('Leave?');
   else
     expect(dialog.message()).toBe('This page is asking you to confirm that you want to leave - data you have entered may not be saved.');
@@ -196,7 +196,7 @@ it('page.frame should respect url', async function({page, server}) {
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
+it('should have sane user agent', async ({page}) => {
   const userAgent = await page.evaluate(() => navigator.userAgent);
   const [
     part1,
@@ -210,7 +210,7 @@ it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
   // Second part in parenthesis is platform - ignore it.
 
   // Third part for Firefox is the last one and encodes engine and browser versions.
-  if (isFirefox) {
+  if (options.FFOX) {
     const [engine, browser] = part3.split(' ');
     expect(engine.startsWith('Gecko')).toBe(true);
     expect(browser.startsWith('Firefox')).toBe(true);
@@ -224,7 +224,7 @@ it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
   // 5th part encodes real browser name and engine version.
   const [engine, browser] = part5.split(' ');
   expect(browser.startsWith('Safari/')).toBe(true);
-  if (isChromium)
+  if (options.CHROMIUM)
     expect(engine.includes('Chrome/')).toBe(true);
   else
     expect(engine.startsWith('Version/')).toBe(true);

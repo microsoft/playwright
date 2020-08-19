@@ -22,7 +22,6 @@ import fs from 'fs';
 import utils from './utils';
 import { BrowserType, Browser, BrowserContext, Page } from '..';
 const { removeUserDataDir, makeUserDataDir } = utils;
-const { WIRE } = testOptions;
 
 declare global {
   interface FixtureState {
@@ -171,12 +170,12 @@ it('should support bypassCSP option', async ({server, launchPersistent}) => {
   expect(await page.evaluate('__injected')).toBe(42);
 });
 
-it('should support javascriptEnabled option', async ({launchPersistent, isWebKit}) => {
+it('should support javascriptEnabled option', async ({launchPersistent}) => {
   const {page, context} = await launchPersistent({javaScriptEnabled: false});
   await page.goto('data:text/html, <script>var something = "forbidden"</script>');
   let error = null;
   await page.evaluate('something').catch(e => error = e);
-  if (isWebKit)
+  if (options.WEBKIT)
     expect(error.message).toContain('Can\'t find variable: something');
   else
     expect(error.message).toContain('something is not defined');
@@ -346,7 +345,7 @@ it.skip(options.FFOX)('should throw if page argument is passed', async ({browser
   expect(error.message).toContain('can not specify page');
 });
 
-it.skip(WIRE)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, tmpDir, toImpl}) => {
+it.skip(options.WIRE)('should have passed URL when launching with ignoreDefaultArgs: true', async ({browserType, defaultBrowserOptions, server, tmpDir, toImpl}) => {
   const args = toImpl(browserType)._defaultArgs(defaultBrowserOptions, 'persistent', tmpDir, 0).filter(a => a !== 'about:blank');
   const options = {
     ...defaultBrowserOptions,
@@ -362,13 +361,13 @@ it.skip(WIRE)('should have passed URL when launching with ignoreDefaultArgs: tru
   await browserContext.close();
 });
 
-it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions, tmpDir}) => {
+it.skip(options.WIRE)('should handle timeout', async({browserType, defaultBrowserOptions, tmpDir}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launchPersistentContext(tmpDir, options).catch(e => e);
   expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
 });
 
-it.skip(WIRE)('should handle exception', async({browserType, defaultBrowserOptions, tmpDir}) => {
+it.skip(options.WIRE)('should handle exception', async({browserType, defaultBrowserOptions, tmpDir}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
   const error = await browserType.launchPersistentContext(tmpDir, options).catch(e => e);

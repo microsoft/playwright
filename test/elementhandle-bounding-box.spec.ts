@@ -16,9 +16,8 @@
  */
 import './base.fixture';
 
-const { HEADLESS } = testOptions;
 
-it.fail(options.FFOX && !HEADLESS)('should work', async ({ page, server }) => {
+it.fail(options.FFOX && !options.HEADLESS)('should work', async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
   const elementHandle = await page.$('.box:nth-of-type(13)');

@@ -204,6 +204,11 @@ function registerWorkerFixture(name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
+function registerOptionGenerator(name, fn) {
+  registerWorkerFixture(name, async ({}, test) => await test(options.browserName));
+  optionRegistrations.set(name, fn);
+}
+
 function registerOption(name, fn) {
   optionRegistrations.set(name, fn);
 }
@@ -256,4 +261,4 @@ function computeWorkerHash(file) {
   return hash.digest('hex');
 }
 
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerOption, setOptions, optionRegistrations, options };
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerOption, registerOptionGenerator, setOptions, optionRegistrations, options };
