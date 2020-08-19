@@ -198,7 +198,7 @@ class TargetRegistry {
         setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
     };
 
-    const onTabCloseListener = async event => {
+    const onTabCloseListener = event => {
       const tab = event.target;
       const linkedBrowser = tab.linkedBrowser;
       const target = this._browserToTarget.get(linkedBrowser);
