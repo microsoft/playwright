@@ -15,7 +15,7 @@
  */
 
 import '../base.fixture';
-import { registerWorkerFixture } from '../runner/fixtures';
+import { registerWorkerFixture } from '../runner';
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch({

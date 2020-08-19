@@ -32,8 +32,6 @@ type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>)
 };
 
 interface WorkerState {
-    parallelIndex: number;
-    tmpDir: string;
 }
 
 interface FixtureState {

@@ -23,9 +23,8 @@ import { TestServer } from '../utils/testserver/';
 import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
-import { installCoverageHooks } from './runner/coverage';
-import { valueFromEnv } from './runner/utils';
-import { registerFixture, registerWorkerFixture, registerOption, registerOptionGenerator } from './runner/fixtures';
+import { installCoverageHooks } from './coverage';
+import { registerFixture, registerWorkerFixture, registerOption, registerOptionGenerator } from './runner';
 import './runner/builtin.fixtures';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
@@ -66,11 +65,11 @@ declare global {
 (global as any).LINUX = platform === 'linux';
 (global as any).WIN = platform === 'win32';
 
-registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
+registerWorkerFixture('httpService', async ({}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + parallelIndex * 2;
+  const port = 8907 + options.parallelIndex * 2;
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
@@ -108,7 +107,7 @@ registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
   });
 });
 
-registerWorkerFixture('playwright', async({parallelIndex, browserName}, test) => {
+registerWorkerFixture('playwright', async({browserName}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     const connection = new Connection();
@@ -138,7 +137,7 @@ registerWorkerFixture('playwright', async({parallelIndex, browserName}, test) =>
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(path.join(__dirname, 'coverage-report'), 'coverage', parallelIndex + '.json');
+    const coveragePath = path.join(__dirname, 'coverage-report', options.parallelIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
@@ -211,3 +210,9 @@ registerOption('FFOX', ({browserName}) => browserName === 'firefox');
 registerOption('WEBKIT', ({browserName}) => browserName === 'webkit');
 registerOption('HEADLESS', ({}) => !!valueFromEnv('HEADLESS', true));
 registerOption('WIRE', ({}) => process.env.PWWIRE);
+
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
+}

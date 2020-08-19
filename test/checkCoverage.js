@@ -42,7 +42,7 @@ if (browserName === 'webkit')
 api.delete('browserContext.emit("screencaststarted")');
 api.delete('browserContext.emit("screencaststopped")');
 
-const coverageDir = path.join(__dirname, '..', 'coverage-report', 'coverage');
+const coverageDir = path.join(__dirname, 'coverage-report');
 
 const coveredMethods = new Set();
 for (const file of getCoverageFiles(coverageDir)) {

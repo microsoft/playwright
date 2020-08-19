@@ -18,7 +18,7 @@
 import './runner/builtin.fixtures';
 import './base.fixture';
 
-import { registerFixture } from './runner/fixtures';
+import { registerFixture } from './runner';
 
 import path from 'path';
 import fs from 'fs';

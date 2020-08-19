@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { registerFixture } from './runner/fixtures';
+import { registerFixture } from './runner';
 
 declare global {
   interface FixtureState {

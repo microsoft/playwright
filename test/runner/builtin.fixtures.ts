@@ -14,35 +14,23 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const util = require('util');
-const { mkdtempAsync, removeFolderAsync } = require('../utils');
-const { registerFixture, registerWorkerFixture } = require('./fixtures');
-const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
+import os from 'os';
+import path from 'path';
+import { mkdtempAsync, removeFolderAsync } from '../utils';
+import { registerFixture } from '.';
 
-let workerId;
-let outputDir;
+declare global {
+  interface Options {
+    parallelIndex: number;
+  }
 
-registerWorkerFixture('parallelIndex', async ({}, test) => {
-  await test(workerId);
-});
+  interface WorkerState {
+    tmpDir: string;
+  }
+}
 
 registerFixture('tmpDir', async ({}, test) => {
   const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   await test(tmpDir);
   await removeFolderAsync(tmpDir).catch(e => {});
 });
-
-registerWorkerFixture('outputDir', async ({}, test) => {
-  await mkdirAsync(outputDir, { recursive: true });
-  await test(outputDir);
-});
-
-function initializeWorker(options) {
-  workerId = options.workerId;
-  outputDir = options.outputDir;
-} 
-
-module.exports = { initializeWorker };

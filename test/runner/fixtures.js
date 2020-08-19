@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-const crypto = require('crypto');
 const debug = require('debug');
 
 const registrations = new Map();
@@ -250,15 +249,4 @@ function rerunRegistrations(file, scope) {
     registrations.set(registration.name, registration);
 }
 
-function computeWorkerHash(file) {
-  // At this point, registrationsByFile contains all the files with worker fixture registrations.
-  // For every test, build the require closure and map each file to fixtures declared in it.
-  // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
-  // Tests with the matching "worker hash" will reuse the same worker.
-  const hash = crypto.createHash('sha1');
-  for (const registration of lookupRegistrations(file, 'worker').values())
-    hash.update(registration.location);
-  return hash.digest('hex');
-}
-
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerOption, registerOptionGenerator, setOptions, optionRegistrations, options };
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerOption, registerOptionGenerator, setOptions, optionRegistrations, options };
