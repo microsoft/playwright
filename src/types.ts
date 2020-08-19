@@ -116,11 +116,10 @@ export type PDFOptions = {
   landscape?: boolean,
   pageRanges?: string,
   format?: string,
-  width?: string|number,
-  height?: string|number,
+  width?: string,
+  height?: string,
   preferCSSPageSize?: boolean,
-  margin?: {top?: string|number, bottom?: string|number, left?: string|number, right?: string|number},
-  path?: string,
+  margin?: {top?: string, bottom?: string, left?: string, right?: string},
 }
 
 export type CSSCoverageOptions = {

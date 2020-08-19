@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { assert, helper } from '../helper';
+import { assert } from '../helper';
 import * as types from '../types';
 import { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
@@ -41,31 +41,22 @@ const unitToPixels: { [key: string]: number } = {
   'mm': 3.78
 };
 
-function convertPrintParameterToInches(parameter: (string | number | undefined)): (number | undefined) {
-  if (typeof parameter === 'undefined')
+function convertPrintParameterToInches(text: string | undefined): number | undefined {
+  if (text === undefined)
     return undefined;
-  let pixels: number;
-  if (helper.isNumber(parameter)) {
-    // Treat numbers as pixel values to be aligned with phantom's paperSize.
-    pixels = parameter;
-  } else if (helper.isString(parameter)) {
-    const text: string = parameter;
-    let unit = text.substring(text.length - 2).toLowerCase();
-    let valueText = '';
-    if (unitToPixels.hasOwnProperty(unit)) {
-      valueText = text.substring(0, text.length - 2);
-    } else {
-      // In case of unknown unit try to parse the whole parameter as number of pixels.
-      // This is consistent with phantom's paperSize behavior.
-      unit = 'px';
-      valueText = text;
-    }
-    const value = Number(valueText);
-    assert(!isNaN(value), 'Failed to parse parameter value: ' + text);
-    pixels = value * unitToPixels[unit];
+  let unit = text.substring(text.length - 2).toLowerCase();
+  let valueText = '';
+  if (unitToPixels.hasOwnProperty(unit)) {
+    valueText = text.substring(0, text.length - 2);
   } else {
-    throw new Error('page.pdf() Cannot handle parameter type: ' + (typeof parameter));
+    // In case of unknown unit try to parse the whole parameter as number of pixels.
+    // This is consistent with phantom's paperSize behavior.
+    unit = 'px';
+    valueText = text;
   }
+  const value = Number(valueText);
+  assert(!isNaN(value), 'Failed to parse parameter value: ' + text);
+  const pixels = value * unitToPixels[unit];
   return pixels / 96;
 }
 
@@ -87,7 +78,6 @@ export class CRPDF {
       pageRanges = '',
       preferCSSPageSize = false,
       margin = {},
-      path = null
     } = options;
 
     let paperWidth = 8.5;
@@ -124,6 +114,6 @@ export class CRPDF {
       pageRanges,
       preferCSSPageSize
     });
-    return await readProtocolStream(this._client, result.stream!, path);
+    return await readProtocolStream(this._client, result.stream!, null);
   }
 }
