@@ -20,8 +20,7 @@ import { Page, BindingCall } from './page';
 import * as network from './network';
 import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
-import { helper } from '../../helper';
-import { isUnderTest, deprecate } from './clientHelper';
+import { isUnderTest, deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
@@ -68,7 +67,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   _onRoute(route: network.Route, request: network.Request) {
     for (const {url, handler} of this._routes) {
-      if (helper.urlMatches(request.url(), url)) {
+      if (urlMatches(request.url(), url)) {
         handler(route, request);
         return;
       }
@@ -168,7 +167,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void> {
     return this._wrapApiCall('browserContext.addInitScript', async () => {
-      const source = await helper.evaluationScript(script, arg);
+      const source = await evaluationScript(script, arg);
       await this._channel.addInitScript({ source });
     });
   }
