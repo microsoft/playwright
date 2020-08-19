@@ -902,12 +902,12 @@ Emitted when a request fails, for example by timing out.
 #### event: 'requestfinished'
 - <[Request]>
 
-Emitted when a request finishes successfully after downloading the response body. For a succesful response, the sequence of events is `request`, `response` and `requestfinished`.
+Emitted when a request finishes successfully after downloading the response body. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### event: 'response'
 - <[Response]>
 
-Emitted when [response] status and headers are received for a request. For a succesful response, the sequence of events is `request`, `response` and `requestfinished`.
+Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### event: 'worker'
 - <[Worker]>
