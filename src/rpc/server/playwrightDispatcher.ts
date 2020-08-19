@@ -21,11 +21,12 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import { Electron } from '../../server/electron';
 import { ElectronDispatcher } from './electronDispatcher';
+import { DeviceDescriptors } from '../../deviceDescriptors';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightInitializer> implements PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
     const electron = (playwright as any).electron as (Electron | undefined);
-    const deviceDescriptors = Object.entries(playwright.devices)
+    const deviceDescriptors = Object.entries(DeviceDescriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
