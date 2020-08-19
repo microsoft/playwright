@@ -193,10 +193,10 @@ async function checkElementSlowMo(toImpl, page, selector, task) {
   const element = await page.$(selector);
   await checkSlowMo(toImpl, page, task.bind(null, element));
 }
-it('ElementHandle SlowMo $$', async ({page, toImpl}) => {
+it('ElementHandle SlowMo $$eval', async ({page, toImpl}) => {
   await checkElementSlowMo(toImpl, page, 'body', element => element.$$eval('button', () => void 0));
 });
-it('ElementHandle SlowMo $', async ({page, toImpl}) => {
+it('ElementHandle SlowMo $eval', async ({page, toImpl}) => {
   await checkElementSlowMo(toImpl, page, 'body', element => element.$eval('button', () => void 0));
 });
 it('ElementHandle SlowMo check', async ({page, toImpl}) => {
@@ -210,6 +210,12 @@ it('ElementHandle SlowMo dblclick', async ({page, toImpl}) => {
 });
 it('ElementHandle SlowMo dispatchEvent', async ({page, toImpl}) => {
   await checkElementSlowMo(toImpl, page, 'button', element => element.dispatchEvent('click'));
+});
+it('ElementHandle SlowMo evaluate', async ({page, toImpl}) => {
+  await checkElementSlowMo(toImpl, page, 'button', element => element.evaluate(() => void 0));
+});
+it('ElementHandle SlowMo evaluateHandle', async ({page, toImpl}) => {
+  await checkElementSlowMo(toImpl, page, 'button', element => element.evaluateHandle(() => void 0));
 });
 it('ElementHandle SlowMo fill', async ({page, toImpl}) => {
   await checkElementSlowMo(toImpl, page, '.fill', element => element.fill('foo'));

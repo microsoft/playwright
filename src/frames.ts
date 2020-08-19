@@ -580,7 +580,6 @@ export class Frame {
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
-    await this._page._doSlowMo();
     return result;
   }
 
@@ -588,7 +587,6 @@ export class Frame {
     const arrayHandle = await selectors._queryArray(this, selector);
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
-    await this._page._doSlowMo();
     return result;
   }
 

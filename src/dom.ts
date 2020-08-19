@@ -103,6 +103,10 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }
     return this._debugScriptPromise;
   }
+
+  async doSlowMo() {
+    return this.frame._page._doSlowMo();
+  }
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
@@ -490,9 +494,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async focus(): Promise<void> {
     await this._page._runAbortableTask(async progress => {
       const result = await this._focus(progress);
+      await this._page._doSlowMo();
       return assertDone(throwRetargetableDOMError(result));
     }, 0);
-    await this._page._doSlowMo();
   }
 
   async _focus(progress: Progress, resetSelectionIfNotFocused?: boolean): Promise<'error:notconnected' | 'done'> {
@@ -588,7 +592,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle._evaluateExpression(expression, isFunction, true, arg);
     handle.dispose();
-    await this._page._doSlowMo();
     return result;
   }
 
@@ -596,7 +599,6 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const arrayHandle = await selectors._queryArray(this._context.frame, selector, this);
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
-    await this._page._doSlowMo();
     return result;
   }
 
