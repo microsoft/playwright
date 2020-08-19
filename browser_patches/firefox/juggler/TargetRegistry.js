@@ -198,7 +198,7 @@ class TargetRegistry {
         setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
     };
 
-    const onTabCloseListener = event => {
+    const onTabCloseListener = async event => {
       const tab = event.target;
       const linkedBrowser = tab.linkedBrowser;
       const target = this._browserToTarget.get(linkedBrowser);
@@ -497,6 +497,7 @@ class BrowserContext {
     this.ignoreHTTPSErrors = undefined;
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
+    this.screencastOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
     this.settings = {};
@@ -683,6 +684,10 @@ class BrowserContext {
       });
     }
     return result;
+  }
+
+  setScreencastOptions(options) {
+    this.screencastOptions = options;
   }
 }
 

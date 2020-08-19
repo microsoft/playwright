@@ -6,6 +6,7 @@
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -132,13 +133,19 @@ class PageHandler {
         this._session.emitEvent('Page.crashed', {});
       }),
     ]);
+
+    const options = this._pageTarget.browserContext().screencastOptions;
+    if (options) {
+      const file = OS.Path.join(options.dir, helper.generateId() + '.webm');
+      await this.startVideoRecording(Object.assign({file}, options));
+    }
   }
 
-  dispose() {
+  async dispose() {
     this._contentPage.dispose();
     helper.removeListeners(this._eventListeners);
     if (this._videoSessionId !== -1)
-      this.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
+      await this.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
   }
 
   async setViewportSize({viewportSize}) {
@@ -304,6 +311,7 @@ class PageHandler {
     const rect = this._pageTarget.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._pageTarget._window.devicePixelRatio;
     this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
+    this._session.emitEvent('Page.screencastStarted', {uid: '' + this._videoSessionId, file});
   }
 
   async stopVideoRecording() {
@@ -312,6 +320,7 @@ class PageHandler {
     const videoSessionId = this._videoSessionId;
     this._videoSessionId = -1;
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    const session = this._session;
     const result = new Promise(resolve =>
       Services.obs.addObserver(function onStopped(subject, topic, data) {
         if (videoSessionId != data)
@@ -319,6 +328,8 @@ class PageHandler {
 
         Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
         resolve();
+
+        session.emitEvent('Page.screencastStopped', {uid: '' + videoSessionId});
       }, 'juggler-screencast-stopped')
     );
     screencast.stopVideoRecording(videoSessionId);
