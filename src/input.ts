@@ -17,6 +17,7 @@
 import { assert } from './helper';
 import * as keyboardLayout from './usKeyboardLayout';
 import * as types from './types';
+import type { Page } from './page';
 
 export const keypadLocation = keyboardLayout.keypadLocation;
 
@@ -39,12 +40,14 @@ export interface RawKeyboard {
 }
 
 export class Keyboard {
-  private _raw: RawKeyboard;
   private _pressedModifiers = new Set<types.KeyboardModifier>();
   private _pressedKeys = new Set<string>();
+  private _raw: RawKeyboard;
+  private _page: Page;
 
-  constructor(raw: RawKeyboard) {
+  constructor(raw: RawKeyboard, page: Page) {
     this._raw = raw;
+    this._page = page;
   }
 
   async down(key: string) {
@@ -55,6 +58,7 @@ export class Keyboard {
       this._pressedModifiers.add(description.key as types.KeyboardModifier);
     const text = description.text;
     await this._raw.keydown(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location, autoRepeat, text);
+    await this._page._doSlowMo();
   }
 
   private _keyDescriptionForString(keyString: string): KeyDescription {
@@ -75,10 +79,12 @@ export class Keyboard {
       this._pressedModifiers.delete(description.key as types.KeyboardModifier);
     this._pressedKeys.delete(description.code);
     await this._raw.keyup(this._pressedModifiers, description.code, description.keyCode, description.keyCodeWithoutLocation, description.key, description.location);
+    await this._page._doSlowMo();
   }
 
   async insertText(text: string) {
     await this._raw.sendText(text);
+    await this._page._doSlowMo();
   }
 
   async type(text: string, options?: { delay?: number }) {
@@ -111,15 +117,19 @@ export class Keyboard {
     }
 
     const tokens = split(key);
+    const promises = [];
     key = tokens[tokens.length - 1];
     for (let i = 0; i < tokens.length - 1; ++i)
-      await this.down(tokens[i]);
-    await this.down(key);
-    if (options.delay)
+      promises.push(this.down(tokens[i]));
+    promises.push(this.down(key));
+    if (options.delay) {
+      await Promise.all(promises);
       await new Promise(f => setTimeout(f, options.delay));
-    await this.up(key);
+    }
+    promises.push(this.up(key));
     for (let i = tokens.length - 2; i >= 0; --i)
-      await this.up(tokens[i]);
+      promises.push(this.up(tokens[i]));
+    await Promise.all(promises);
   }
 
   async _ensureModifiers(modifiers: types.KeyboardModifier[]): Promise<types.KeyboardModifier[]> {
@@ -153,16 +163,18 @@ export interface RawMouse {
 }
 
 export class Mouse {
-  private _raw: RawMouse;
   private _keyboard: Keyboard;
   private _x = 0;
   private _y = 0;
   private _lastButton: 'none' | types.MouseButton = 'none';
   private _buttons = new Set<types.MouseButton>();
+  private _raw: RawMouse;
+  private _page: Page;
 
-  constructor(raw: RawMouse, keyboard: Keyboard) {
+  constructor(raw: RawMouse, page: Page) {
     this._raw = raw;
-    this._keyboard = keyboard;
+    this._page = page;
+    this._keyboard = this._page.keyboard;
   }
 
   async move(x: number, y: number, options: { steps?: number } = {}) {
@@ -175,6 +187,7 @@ export class Mouse {
       const middleX = fromX + (x - fromX) * (i / steps);
       const middleY = fromY + (y - fromY) * (i / steps);
       await this._raw.move(middleX, middleY, this._lastButton, this._buttons, this._keyboard._modifiers());
+      await this._page._doSlowMo();
     }
   }
 
@@ -183,6 +196,7 @@ export class Mouse {
     this._lastButton = button;
     this._buttons.add(button);
     await this._raw.down(this._x, this._y, this._lastButton, this._buttons, this._keyboard._modifiers(), clickCount);
+    await this._page._doSlowMo();
   }
 
   async up(options: { button?: types.MouseButton, clickCount?: number } = {}) {
@@ -190,6 +204,7 @@ export class Mouse {
     this._lastButton = 'none';
     this._buttons.delete(button);
     await this._raw.up(this._x, this._y, button, this._buttons, this._keyboard._modifiers(), clickCount);
+    await this._page._doSlowMo();
   }
 
   async click(x: number, y: number, options: { delay?: number, button?: types.MouseButton, clickCount?: number } = {}) {

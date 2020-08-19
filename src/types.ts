@@ -282,7 +282,7 @@ type LaunchOptionsBase = {
   chromiumSandbox?: boolean,
   slowMo?: number,
 };
-export type LaunchOptions = LaunchOptionsBase & {
+export type LaunchOptions = LaunchOptionsBase & UIOptions & {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
 };
 export type LaunchPersistentOptions = LaunchOptionsBase & BrowserContextOptions;
@@ -332,4 +332,8 @@ export type Error = {
   message: string,
   name: string,
   stack?: string,
+};
+
+export type UIOptions = {
+  slowMo?: number;
 };

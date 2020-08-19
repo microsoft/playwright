@@ -103,6 +103,10 @@ export class FrameExecutionContext extends js.ExecutionContext {
     }
     return this._debugScriptPromise;
   }
+
+  async doSlowMo() {
+    return this.frame._page._doSlowMo();
+  }
 }
 
 export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
@@ -200,6 +204,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async dispatchEvent(type: string, eventInit: Object = {}) {
     await this._evaluateInMain(([injected, node, { type, eventInit }]) =>
       injected.dispatchEvent(node, type, eventInit), { type, eventInit });
+    await this._page._doSlowMo();
   }
 
   async _scrollRectIntoViewIfNeeded(rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'> {
@@ -407,7 +412,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const selectOptions = [...elements, ...values];
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      return throwFatalDOMError(await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions));
+      const value = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions);
+      await this._page._doSlowMo();
+      return throwFatalDOMError(value);
     });
   }
 
@@ -480,12 +487,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files);
     });
+    await this._page._doSlowMo();
     return 'done';
   }
 
   async focus(): Promise<void> {
-    return this._page._runAbortableTask(async progress => {
+    await this._page._runAbortableTask(async progress => {
       const result = await this._focus(progress);
+      await this._page._doSlowMo();
       return assertDone(throwRetargetableDOMError(result));
     }, 0);
   }

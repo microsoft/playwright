@@ -44,48 +44,6 @@ export interface ConnectionTransport {
   onclose?: () => void,
 }
 
-export class SlowMoTransport implements ConnectionTransport {
-  private readonly _delay: number;
-  private readonly _delegate: ConnectionTransport;
-
-  onmessage?: (message: ProtocolResponse) => void;
-  onclose?: () => void;
-
-  static wrap(transport: ConnectionTransport, delay?: number): ConnectionTransport {
-    return delay ? new SlowMoTransport(transport, delay) : transport;
-  }
-
-  constructor(transport: ConnectionTransport, delay: number) {
-    this._delay = delay;
-    this._delegate = transport;
-    this._delegate.onmessage = this._onmessage.bind(this);
-    this._delegate.onclose = this._onClose.bind(this);
-  }
-
-  private _onmessage(message: ProtocolResponse) {
-    if (this.onmessage)
-      this.onmessage(message);
-  }
-
-  private _onClose() {
-    if (this.onclose)
-      this.onclose();
-    this._delegate.onmessage = undefined;
-    this._delegate.onclose = undefined;
-  }
-
-  send(s: ProtocolRequest) {
-    setTimeout(() => {
-      if (this._delegate.onmessage)
-        this._delegate.send(s);
-    }, this._delay);
-  }
-
-  close() {
-    this._delegate.close();
-  }
-}
-
 export class WebSocketTransport implements ConnectionTransport {
   private _ws: WebSocket;
   private _progress: Progress;

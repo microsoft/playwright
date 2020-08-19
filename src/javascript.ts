@@ -73,6 +73,10 @@ export class ExecutionContext {
   createHandle(remoteObject: RemoteObject): JSHandle {
     return this._delegate.createHandle(this, remoteObject);
   }
+
+  async doSlowMo() {
+    // overrided in FrameExecutionContext
+  }
 }
 
 export class JSHandle<T = any> {
@@ -106,8 +110,10 @@ export class JSHandle<T = any> {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
-  _evaluateExpression(expression: string, isFunction: boolean, returnByValue: boolean, arg: any) {
-    return evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
+  async _evaluateExpression(expression: string, isFunction: boolean, returnByValue: boolean, arg: any) {
+    const value = await evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);1;
+    await this._context.doSlowMo();
+    return value;
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {

@@ -463,7 +463,9 @@ export class Frame {
         await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = event.newDocument ? event.newDocument.request : undefined;
-      return request ? request._finalRequest().response() : null;
+      const response = request ? request._finalRequest().response() : null;
+      await this._page._doSlowMo();
+      return response;
     });
   }
 
@@ -521,12 +523,16 @@ export class Frame {
 
   async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
     const context = await this._mainContext();
-    return context.evaluateExpressionHandleInternal(expression, isFunction, arg);
+    const handle = await context.evaluateExpressionHandleInternal(expression, isFunction, arg);
+    await this._page._doSlowMo();
+    return handle;
   }
 
   async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
     const context = await this._mainContext();
-    return context.evaluateExpressionInternal(expression, isFunction, arg);
+    const value = await context.evaluateExpressionInternal(expression, isFunction, arg);
+    await this._page._doSlowMo();
+    return value;
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
@@ -558,11 +564,12 @@ export class Frame {
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
     const info = selectors._parseSelector(selector);
     const task = dom.dispatchEventTask(info, type, eventInit || {});
-    return this._page._runAbortableTask(async progress => {
+    await this._page._runAbortableTask(async progress => {
       progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
       // Note: we always dispatch events in the main world.
       await this._scheduleRerunnableTask(progress, 'main', task);
     }, this._page._timeoutSettings.timeout(options));
+    await this._page._doSlowMo();
   }
 
   async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
@@ -618,6 +625,7 @@ export class Frame {
         document.close();
       }, { html, tag });
       await Promise.all([contentPromise, lifecyclePromise]);
+      await this._page._doSlowMo();
     });
   }
 
@@ -802,6 +810,7 @@ export class Frame {
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._focus(progress));
+    await this._page._doSlowMo();
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
