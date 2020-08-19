@@ -18,7 +18,7 @@ import './base.fixture';
 
 const { WIRE } = testOptions;
 
-const CRASH_FAIL = (FFOX && WIN) || WIRE;
+const CRASH_FAIL = (options.FFOX && WIN) || WIRE;
 // Firefox Win: it just doesn't crash sometimes.
 function crash(pageImpl, browserName) {
   if (browserName === 'chromium')

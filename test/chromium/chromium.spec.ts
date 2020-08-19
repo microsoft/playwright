@@ -16,7 +16,7 @@
 import '../base.fixture';
 import { ChromiumBrowserContext } from '../..';
 
-it.skip(!CHROMIUM)('should create a worker from a service worker', async({page, server, context}) => {
+it.skip(!options.CHROMIUM)('should create a worker from a service worker', async({page, server, context}) => {
   const [worker] = await Promise.all([
     (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -24,7 +24,7 @@ it.skip(!CHROMIUM)('should create a worker from a service worker', async({page, 
   expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
 });
 
-it.skip(!CHROMIUM)('serviceWorkers() should return current workers', async({page, server, context}) => {
+it.skip(!options.CHROMIUM)('serviceWorkers() should return current workers', async({page, server, context}) => {
   const [worker1] = await Promise.all([
     (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
     page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
@@ -42,7 +42,7 @@ it.skip(!CHROMIUM)('serviceWorkers() should return current workers', async({page
   expect(workers).toContain(worker2);
 });
 
-it.skip(!CHROMIUM)('should not create a worker from a shared worker', async({page, server, context}) => {
+it.skip(!options.CHROMIUM)('should not create a worker from a shared worker', async({page, server, context}) => {
   await page.goto(server.EMPTY_PAGE);
   let serviceWorkerCreated;
   (context as ChromiumBrowserContext).once('serviceworker', () => serviceWorkerCreated = true);
@@ -52,7 +52,7 @@ it.skip(!CHROMIUM)('should not create a worker from a shared worker', async({pag
   expect(serviceWorkerCreated).not.toBeTruthy();
 });
 
-it.skip(!CHROMIUM)('should close service worker together with the context', async({browser, server}) => {
+it.skip(!options.CHROMIUM)('should close service worker together with the context', async({browser, server}) => {
   const context = await browser.newContext() as ChromiumBrowserContext;
   const page = await context.newPage();
   const [worker] = await Promise.all([
@@ -66,7 +66,7 @@ it.skip(!CHROMIUM)('should close service worker together with the context', asyn
   expect(messages.join('|')).toBe('worker|context');
 });
 
-it.skip(!CHROMIUM)('Page.route should work with intervention headers', async({server, page}) => {
+it.skip(!options.CHROMIUM)('Page.route should work with intervention headers', async({server, page}) => {
   server.setRoute('/intervention', (req, res) => res.end(`
     <script>
       document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');

@@ -16,7 +16,7 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { FixturePool, rerunRegistrations, fixturesForCallback } = require('./fixtures');
+const { FixturePool, rerunRegistrations, setOptions } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 const { EventEmitter } = require('events');
 
@@ -56,16 +56,14 @@ class TestRunner extends EventEmitter {
       this._parsedGeneratorConfiguration.set(name, value);
     this._relativeTestFile = path.relative(options.testDir, this._file);
     this.mocha.addFile(this._file);
-    this.mocha.loadFiles();
-    this.suite = this.mocha.suite;
   }
 
   async run() {
     let callback;
     const result = new Promise(f => callback = f);
+    setOptions(this._parsedGeneratorConfiguration);
+    this.mocha.loadFiles();
     rerunRegistrations(this._file, 'test');
-    for (const [name, value] of this._parsedGeneratorConfiguration)
-      fixturePool.generators.set(name, value);
     const runner = this.mocha.run(callback);
 
     const constants = Mocha.Runner.constants;

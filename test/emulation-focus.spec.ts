@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import './base.fixture';
 
 import utils from './utils';
@@ -102,7 +103,7 @@ it('should change document.activeElement', async({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it.skip(FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
+it.skip(options.FFOX && !HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();
   await Promise.all([

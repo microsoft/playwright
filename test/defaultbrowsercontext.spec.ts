@@ -121,7 +121,7 @@ it('should(not) block third party cookies', async ({server, launchPersistent}) =
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = CHROMIUM || FFOX;
+  const allowsThirdParty = options.CHROMIUM || options.FFOX;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -219,7 +219,7 @@ it('should support hasTouch option', async ({server, launchPersistent}) => {
   expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
 });
 
-it.skip(FFOX)('should work in persistent context', async ({server, launchPersistent}) => {
+it.skip(options.FFOX)('should work in persistent context', async ({server, launchPersistent}) => {
   // Firefox does not support mobile.
   const {page, context} = await launchPersistent({viewport: {width: 320, height: 480}, isMobile: true});
   await page.goto(server.PREFIX + '/empty.html');
@@ -304,7 +304,7 @@ it.slow()('should restore state from userDataDir', async({browserType, defaultBr
   await removeUserDataDir(userDataDir2);
 });
 
-it.fail(CHROMIUM && (WIN || MAC)).slow()('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
+it.fail(options.CHROMIUM && (WIN || MAC)).slow()('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
   const userDataDir = await makeUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
   const page = await browserContext.newPage();
@@ -340,7 +340,7 @@ it('should have default URL when launching browser', async ({launchPersistent}) 
   expect(urls).toEqual(['about:blank']);
 });
 
-it.skip(FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
+it.skip(options.FFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
   const options = {...defaultBrowserOptions, args: [server.EMPTY_PAGE] };
   const error = await browserType.launchPersistentContext(tmpDir, options).catch(e => e);
   expect(error.message).toContain('can not specify page');
@@ -383,7 +383,7 @@ it('should fire close event for a persistent context', async({launchPersistent})
   expect(closed).toBe(true);
 });
 
-it.skip(!CHROMIUM)('coverage should work', async ({server, launchPersistent}) => {
+it.skip(!options.CHROMIUM)('coverage should work', async ({server, launchPersistent}) => {
   const {page, context} = await launchPersistent();
   await page.coverage.startJSCoverage();
   await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });
@@ -393,7 +393,7 @@ it.skip(!CHROMIUM)('coverage should work', async ({server, launchPersistent}) =>
   expect(coverage[0].functions.find(f => f.functionName === 'foo').ranges[0].count).toEqual(1);
 });
 
-it.skip(CHROMIUM)('coverage should be missing', async ({launchPersistent}) => {
+it.skip(options.CHROMIUM)('coverage should be missing', async ({launchPersistent}) => {
   const {page, context} = await launchPersistent();
   expect(page.coverage).toBe(null);
 });

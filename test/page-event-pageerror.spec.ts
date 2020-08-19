@@ -30,7 +30,7 @@ it('should fire', async({page, server, isWebKit}) => {
   expect(error.stack).toBe(stack);
 });
 
-it.fail(WEBKIT)('should contain sourceURL', async({page, server}) => {
+it.fail(options.WEBKIT)('should contain sourceURL', async({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -50,24 +50,24 @@ it('should handle odd values', async ({page}) => {
       page.waitForEvent('pageerror'),
       page.evaluate(value => setTimeout(() => { throw value; }, 0), value),
     ]);
-    expect(error.message).toBe(FFOX ? 'uncaught exception: ' + message : message);
+    expect(error.message).toBe(options.FFOX ? 'uncaught exception: ' + message : message);
   }
 });
 
-it.fail(FFOX)('should handle object', async ({page}) => {
+it.fail(options.FFOX)('should handle object', async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw {}; }, 0)),
   ]);
-  expect(error.message).toBe(CHROMIUM ? 'Object' : '[object Object]');
+  expect(error.message).toBe(options.CHROMIUM ? 'Object' : '[object Object]');
 });
 
-it.fail(FFOX)('should handle window', async ({page}) => {
+it.fail(options.FFOX)('should handle window', async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw window; }, 0)),
   ]);
-  expect(error.message).toBe(CHROMIUM ? 'Window' : '[object Window]');
+  expect(error.message).toBe(options.CHROMIUM ? 'Window' : '[object Window]');
 });

@@ -33,7 +33,7 @@ declare global {
 
 registerFixture('videoPlayer', async ({playwright, context}, test) => {
   let firefox;
-  if (WEBKIT && !LINUX) {
+  if (options.WEBKIT && !LINUX) {
     // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
     firefox = await playwright.firefox.launch();
     context = await firefox.newContext();
@@ -174,7 +174,7 @@ class VideoPlayer {
   }
 }
 
-it.fail(CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
+it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -182,7 +182,7 @@ it.fail(CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && WEBKIT)
+  if (HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await toImpl(page)._delegate.stopVideoRecording();
@@ -200,7 +200,7 @@ it.fail(CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer
   expectAll(pixels, almostRed);
 });
 
-it.fail(CHROMIUM)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -208,7 +208,7 @@ it.fail(CHROMIUM)('should capture navigation', async({page, tmpDir, server, vide
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && WEBKIT)
+  if (HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
@@ -234,7 +234,7 @@ it.fail(CHROMIUM)('should capture navigation', async({page, tmpDir, server, vide
 });
 
 // Accelerated compositing is disabled in WebKit on Windows.
-it.fail(CHROMIUM || (WEBKIT && WIN))('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -242,7 +242,7 @@ it.fail(CHROMIUM || (WEBKIT && WIN))('should capture css transformation', async(
   await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && WEBKIT)
+  if (HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await toImpl(page)._delegate.stopVideoRecording();

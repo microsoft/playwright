@@ -16,7 +16,7 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { fixturesForCallback, generatorRegistrations } = require('./fixtures');
+const { fixturesForCallback, optionRegistrations } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 
 global.testOptions = require('./testOptions');
@@ -71,9 +71,9 @@ class TestCollector {
       // to build different workers for them.
       const generatorConfigurations = [];
       for (const name of fixtures) {
-        if (!generatorRegistrations.has(name))
+        if (!optionRegistrations.has(name))
           continue;
-        const values = generatorRegistrations.get(name)();
+        const values = optionRegistrations.get(name)();
         let state = generatorConfigurations.length ? generatorConfigurations.slice() : [[]];
         generatorConfigurations.length = 0;
         for (const gen of state) {

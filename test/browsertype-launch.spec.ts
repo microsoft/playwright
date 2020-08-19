@@ -38,7 +38,7 @@ it('should throw if userDataDir option is passed', async({browserType, defaultBr
   expect(waitError.message).toContain('launchPersistentContext');
 });
 
-it.skip(FFOX)('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.FFOX)('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
   await browserType.launch(options).catch(e => waitError = e);

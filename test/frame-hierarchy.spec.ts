@@ -172,7 +172,7 @@ it('should report different frame instance when frame re-attaches', async({page,
   expect(frame1).not.toBe(frame2);
 });
 
-it.fail(FFOX)('should refuse to display x-frame-options:deny iframe', async({page, server}) => {
+it.fail(options.FFOX)('should refuse to display x-frame-options:deny iframe', async({page, server}) => {
   server.setRoute('/x-frame-options-deny.html', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('X-Frame-Options', 'DENY');

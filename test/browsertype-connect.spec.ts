@@ -37,7 +37,7 @@ it.skip(WIRE).slow()('should be able to reconnect to a browser', async({browserT
   await browserServer.close();
 });
 
-it.skip(WIRE).fail(CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE).fail(options.CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
   const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);

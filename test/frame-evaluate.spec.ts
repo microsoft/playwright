@@ -127,7 +127,7 @@ it('should be isolated between frames', async({page, server}) => {
   expect(a2).toBe(2);
 });
 
-it.fail(CHROMIUM || FFOX)('should work in iframes that failed initial navigation', async({page, server}) => {
+it.fail(options.CHROMIUM || options.FFOX)('should work in iframes that failed initial navigation', async({page, server}) => {
   // - Firefox does not report domcontentloaded for the iframe.
   // - Chromium and Firefox report empty url.
   // - Chromium does not report main/utility worlds for the iframe.
@@ -148,7 +148,7 @@ it.fail(CHROMIUM || FFOX)('should work in iframes that failed initial navigation
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it.fail(CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
+it.fail(options.CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {

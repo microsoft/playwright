@@ -25,7 +25,7 @@ import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
-import { registerFixture, registerWorkerFixture, registerWorkerGenerator } from './runner/fixtures';
+import { registerFixture, registerWorkerFixture, registerOption } from './runner/fixtures';
 import './runner/builtin.fixtures';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
@@ -55,16 +55,17 @@ declare global {
     httpsServer: TestServer;
     browserServer: BrowserServer;
   }
+  interface Options {
+    browserName: string;
+    CHROMIUM: boolean;
+    FFOX: boolean;
+    WEBKIT: boolean;
+  }
 }
-
-const browserName = process.env.BROWSER;
 
 (global as any).MAC = platform === 'darwin';
 (global as any).LINUX = platform === 'linux';
 (global as any).WIN = platform === 'win32';
-(global as any).CHROMIUM = browserName === 'chromium';
-(global as any).FFOX = browserName === 'firefox';
-(global as any).WEBKIT = browserName === 'webkit';
 
 registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
@@ -184,22 +185,20 @@ registerFixture('server', async ({httpService}, test) => {
   await test(httpService.server);
 });
 
-registerWorkerGenerator('browserName', () => {
-  if (process.env.BROWSER)
-    return [process.env.BROWSER];
-  return ['chromium', 'webkit', 'firefox'];
+registerWorkerFixture('browserName', async ({}, test) => {
+  await test(options.browserName);
 });
 
-registerWorkerFixture('isChromium', async ({browserName}, test) => {
-  await test(browserName === 'chromium');
+registerWorkerFixture('isChromium', async ({}, test) => {
+  await test(options.browserName === 'chromium');
 });
 
-registerWorkerFixture('isFirefox', async ({browserName}, test) => {
-  await test(browserName === 'firefox');
+registerWorkerFixture('isFirefox', async ({}, test) => {
+  await test(options.browserName === 'firefox');
 });
 
-registerWorkerFixture('isWebKit', async ({browserName}, test) => {
-  await test(browserName === 'webkit');
+registerWorkerFixture('isWebKit', async ({}, test) => {
+  await test(options.browserName === 'webkit');
 });
 
 registerFixture('httpsServer', async ({httpService}, test) => {
@@ -220,3 +219,12 @@ registerWorkerFixture('asset', async ({}, test) => {
 registerWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
+
+registerOption('browserName', () => {
+  if (process.env.BROWSER)
+    return [process.env.BROWSER];
+  return ['chromium', 'webkit', 'firefox'];
+});
+registerOption('CHROMIUM', ({browserName}) => browserName === 'chromium');
+registerOption('FFOX', ({browserName}) => browserName === 'firefox');
+registerOption('WEBKIT', ({browserName}) => browserName === 'webkit');

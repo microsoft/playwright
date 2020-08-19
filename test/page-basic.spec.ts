@@ -218,7 +218,7 @@ it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
     expect(part5).toBe(undefined);
     return;
   }
-  // For both CHROMIUM and WEBKIT, third part is the AppleWebKit version.
+  // For both options.CHROMIUM and options.WEBKIT, third part is the AppleWebKit version.
   expect(part3.startsWith('AppleWebKit/')).toBe(true);
   expect(part4).toBe('KHTML, like Gecko');
   // 5th part encodes real browser name and engine version.
@@ -243,7 +243,7 @@ it('frame.press should work', async({page, server}) => {
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it.fail(FFOX)('frame.focus should work multiple times', async ({ context, server }) => {
+it.fail(options.FFOX)('frame.focus should work multiple times', async ({ context, server }) => {
   const page1 = await context.newPage()
   const page2 = await context.newPage()
   for (const page of [page1, page2]) {

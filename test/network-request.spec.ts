@@ -55,7 +55,7 @@ it('should return headers', async({page, server, isChromium, isFirefox, isWebKit
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 
-it.fail(CHROMIUM||WEBKIT)('should get the same headers as the server', async({page, server}) => {
+it.fail(options.CHROMIUM||options.WEBKIT)('should get the same headers as the server', async({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;
   server.setRoute('/something', (request, response) => {

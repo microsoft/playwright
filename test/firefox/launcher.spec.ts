@@ -15,7 +15,7 @@
  */
 import '../base.fixture';
 
-it.skip(!FFOX)('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
+it.skip(!options.FFOX)('should pass firefox user preferences', async({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
     firefoxUserPrefs: {
