@@ -21,7 +21,6 @@ import fs from 'fs';
 import path from 'path';
 import util from 'util';
 
-const { HEADLESS } = testOptions;
 
 beforeEach(async ({server}) => {
   server.setRoute('/download', (req, res) => {
@@ -240,7 +239,7 @@ it.fail(options.FFOX || options.WEBKIT)('should report alt-click downloads', asy
   await page.close();
 });
 
-it.fail(options.CHROMIUM && !HEADLESS)('should report new window downloads', async({browser, server}) => {
+it.fail(options.CHROMIUM && !options.HEADLESS)('should report new window downloads', async({browser, server}) => {
   // TODO: - the test fails in headful Chromium as the popup page gets closed along
   // with the session before download completed event arrives.
   // - WebKit doesn't close the popup page

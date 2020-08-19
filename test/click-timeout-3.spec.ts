@@ -16,9 +16,8 @@
  */
 import './base.fixture';
 
-const { WIRE } = testOptions;
 
-it.skip(WIRE)('should fail when element jumps during hit testing', async({page, server}) => {
+it.skip(options.WIRE)('should fail when element jumps during hit testing', async({page, server}) => {
   await page.setContent('<button>Click me</button>');
   let clicked = false;
   const handle = await page.$('button');

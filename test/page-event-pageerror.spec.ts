@@ -16,7 +16,7 @@
  */
 import './base.fixture';
 
-it('should fire', async({page, server, isWebKit}) => {
+it('should fire', async({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -25,7 +25,7 @@ it('should fire', async({page, server, isWebKit}) => {
   expect(error.message).toBe('Fancy error!');
   let stack = await page.evaluate(() => window['e'].stack);
   // Note that WebKit reports the stack of the 'throw' statement instead of the Error constructor call.
-  if (isWebKit)
+  if (options.WEBKIT)
     stack = stack.replace('14:25', '15:19');
   expect(error.stack).toBe(stack);
 });

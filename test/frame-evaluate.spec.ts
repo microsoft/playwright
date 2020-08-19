@@ -17,7 +17,6 @@
 import './base.fixture';
 
 import utils from './utils';
-const { WIRE } = testOptions;
 
 it('should have different execution contexts', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -36,27 +35,27 @@ it('should have correct execution contexts', async ({ page, server }) => {
   expect(await page.frames()[1].evaluate(() => document.body.textContent.trim())).toBe(`Hi, I'm frame`);
 });
 
-function expectContexts(pageImpl, count, isChromium) {
-  if (isChromium)
+function expectContexts(pageImpl, count) {
+  if (options.CHROMIUM)
     expect(pageImpl._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
   else
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it.skip(WIRE)('should dispose context on navigation', async ({ page, server, toImpl, isChromium }) => {
+it.skip(options.WIRE)('should dispose context on navigation', async ({ page, server, toImpl }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
-  expectContexts(toImpl(page), 4, isChromium);
+  expectContexts(toImpl(page), 4);
   await page.goto(server.EMPTY_PAGE);
-  expectContexts(toImpl(page), 2, isChromium);
+  expectContexts(toImpl(page), 2);
 });
 
-it.skip(WIRE)('should dispose context on cross-origin navigation', async ({ page, server, toImpl, isChromium }) => {
+it.skip(options.WIRE)('should dispose context on cross-origin navigation', async ({ page, server, toImpl }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
-  expectContexts(toImpl(page), 4, isChromium);
+  expectContexts(toImpl(page), 4);
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-  expectContexts(toImpl(page), 2, isChromium);
+  expectContexts(toImpl(page), 2);
 });
 
 it('should execute after cross-site navigation', async ({ page, server }) => {

@@ -21,7 +21,6 @@ const commonSuite = require('mocha/lib/interfaces/common');
 
 Error.stackTraceLimit = 15;
 global.options = options;
-global.testOptions = require('./testOptions');
 global.registerFixture = registerFixture;
 global.registerWorkerFixture = registerWorkerFixture;
 global.registerOption = registerOption;

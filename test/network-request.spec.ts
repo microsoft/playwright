@@ -45,13 +45,13 @@ it('should work for fetch requests', async({page, server}) => {
   expect(requests[0].frame()).toBe(page.mainFrame());
 });
 
-it('should return headers', async({page, server, isChromium, isFirefox, isWebKit}) => {
+it('should return headers', async({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  if (isChromium)
+  if (options.CHROMIUM)
     expect(response.request().headers()['user-agent']).toContain('Chrome');
-  else if (isFirefox)
+  else if (options.FFOX)
     expect(response.request().headers()['user-agent']).toContain('Firefox');
-  else if (isWebKit)
+  else if (options.WEBKIT)
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 

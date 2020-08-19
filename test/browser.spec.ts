@@ -15,8 +15,6 @@
  */
 import './base.fixture';
 
-import utils from './utils';
-
 it('should create new page', async function({browser}) {
   const page1 = await browser.newPage();
   expect(browser.contexts().length).toBe(1);
@@ -39,9 +37,9 @@ it('should throw upon second create new page', async function({browser}) {
   expect(error.message).toContain('Please use browser.newContext()');
 });
 
-it('version should work', async function({browser, isChromium}) {
+it('version should work', async function({browser}) {
   const version = browser.version();
-  if (isChromium)
+  if (options.CHROMIUM)
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
   else
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();

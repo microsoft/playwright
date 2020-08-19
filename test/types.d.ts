@@ -68,12 +68,6 @@ declare const afterAll: (inner: (state: WorkerState) => Promise<void>) => void;
 
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
 
-// global variables in assets
-declare const testOptions: {
-    HEADLESS: boolean;
-    WIRE: boolean;
-};
-
 declare var MAC: boolean;
 declare var LINUX: boolean;
 declare var WIN: boolean;

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 import './base.fixture';
-const { HEADLESS } = testOptions;
 
 function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
@@ -92,7 +91,7 @@ describe.skip(options.WEBKIT)('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it.fail(options.WEBKIT || options.FFOX || (options.CHROMIUM && !HEADLESS))('should trigger permission onchange', async({page, server, context}) => {
+  it.fail(options.WEBKIT || options.FFOX || (options.CHROMIUM && !options.HEADLESS))('should trigger permission onchange', async({page, server, context}) => {
     //TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
     // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536
@@ -134,7 +133,7 @@ describe.skip(options.WEBKIT)('permissions', () => {
     await otherContext.close();
   });
 
-  it.fail(options.WEBKIT || options.FFOX || (options.CHROMIUM && !HEADLESS))('should support clipboard read', async({page, server, context, browser}) => {
+  it.fail(options.WEBKIT || options.FFOX || (options.CHROMIUM && !options.HEADLESS))('should support clipboard read', async({page, server, context, browser}) => {
     // No such permissions (requires flag) in Firefox
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

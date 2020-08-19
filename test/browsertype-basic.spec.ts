@@ -24,12 +24,12 @@ it('browserType.executablePath should work', async({browserType}) => {
   expect(fs.realpathSync(executablePath)).toBe(executablePath);
 });
 
-it('browserType.name should work', async({browserType, isWebKit, isFirefox, isChromium}) => {
-  if (isWebKit)
+it('browserType.name should work', async({browserType}) => {
+  if (options.WEBKIT)
     expect(browserType.name()).toBe('webkit');
-  else if (isFirefox)
+  else if (options.FFOX)
     expect(browserType.name()).toBe('firefox');
-  else if (isChromium)
+  else if (options.CHROMIUM)
     expect(browserType.name()).toBe('chromium');
   else
     throw new Error('Unknown browser');

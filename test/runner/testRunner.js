@@ -22,7 +22,6 @@ const { EventEmitter } = require('events');
 
 const fixturePool = new FixturePool();
 global.expect = require('expect');
-global.testOptions = require('./testOptions');
 const GoldenUtils = require('./GoldenUtils');
 
 class NullReporter {}

@@ -19,8 +19,6 @@ const Mocha = require('mocha');
 const { fixturesForCallback, optionRegistrations } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 
-global.testOptions = require('./testOptions');
-
 class NullReporter {}
 
 class TestCollector {

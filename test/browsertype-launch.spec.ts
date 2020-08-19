@@ -18,7 +18,6 @@
 import path from 'path';
 import './base.fixture';
 
-const { WIRE } = testOptions;
 
 it('should reject all promises when browser is closed', async({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);
@@ -60,7 +59,7 @@ it('should reject if executable path is invalid', async({browserType, defaultBro
   expect(waitError.message).toContain('Failed to launch');
 });
 
-it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
@@ -68,14 +67,14 @@ it.skip(WIRE)('should handle timeout', async({browserType, defaultBrowserOptions
   expect(error.message).toContain(`<launched> pid=`);
 });
 
-it.skip(WIRE)('should handle exception', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should handle exception', async({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain('Dummy');
 });
 
-it.skip(WIRE)('should report launch log', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should report launch log', async({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);

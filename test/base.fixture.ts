@@ -25,7 +25,7 @@ import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './runner/coverage';
 import { valueFromEnv } from './runner/utils';
-import { registerFixture, registerWorkerFixture, registerOption } from './runner/fixtures';
+import { registerFixture, registerWorkerFixture, registerOption, registerOptionGenerator } from './runner/fixtures';
 import './runner/builtin.fixtures';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
@@ -43,9 +43,6 @@ declare global {
     browserType: BrowserType<Browser>;
     browserName: string;
     browser: Browser;
-    isChromium: boolean;
-    isFirefox: boolean;
-    isWebKit: boolean;
   }
   interface FixtureState {
     toImpl: (rpcObject: any) => any;
@@ -60,6 +57,8 @@ declare global {
     CHROMIUM: boolean;
     FFOX: boolean;
     WEBKIT: boolean;
+    HEADLESS: boolean;
+    WIRE: boolean;
   }
 }
 
@@ -104,14 +103,14 @@ registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
   await test({
     handleSIGINT: false,
     slowMo: valueFromEnv('SLOW_MO', 0),
-    headless: !!valueFromEnv('HEADLESS', true),
+    headless: options.HEADLESS,
     executablePath
   });
 });
 
 registerWorkerFixture('playwright', async({parallelIndex, browserName}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
-  if (process.env.PWWIRE) {
+  if (options.WIRE) {
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
       stdio: 'pipe',
@@ -185,22 +184,6 @@ registerFixture('server', async ({httpService}, test) => {
   await test(httpService.server);
 });
 
-registerWorkerFixture('browserName', async ({}, test) => {
-  await test(options.browserName);
-});
-
-registerWorkerFixture('isChromium', async ({}, test) => {
-  await test(options.browserName === 'chromium');
-});
-
-registerWorkerFixture('isFirefox', async ({}, test) => {
-  await test(options.browserName === 'firefox');
-});
-
-registerWorkerFixture('isWebKit', async ({}, test) => {
-  await test(options.browserName === 'webkit');
-});
-
 registerFixture('httpsServer', async ({httpService}, test) => {
   httpService.httpsServer.reset();
   await test(httpService.httpsServer);
@@ -220,11 +203,14 @@ registerWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-registerOption('browserName', () => {
+registerOptionGenerator('browserName', () => {
   if (process.env.BROWSER)
     return [process.env.BROWSER];
   return ['chromium', 'webkit', 'firefox'];
 });
+
 registerOption('CHROMIUM', ({browserName}) => browserName === 'chromium');
 registerOption('FFOX', ({browserName}) => browserName === 'firefox');
 registerOption('WEBKIT', ({browserName}) => browserName === 'webkit');
+registerOption('HEADLESS', ({}) => !!valueFromEnv('HEADLESS', true));
+registerOption('WIRE', ({}) => process.env.PWWIRE);
