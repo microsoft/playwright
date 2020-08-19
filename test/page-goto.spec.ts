@@ -491,3 +491,8 @@ it.skip(true)('extraHttpHeaders should be pushed to provisional page', async({pa
   expect(htmlReq.headers['foo']).toBe(undefined);
   expect(cssReq.headers['foo']).toBe('bar');
 });
+
+it('should work with lazy loading iframes', async({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/lazy-frame.html');
+  expect(page.frames().length).toBe(2);
+});
