@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { BrowserBase, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { Browser, BrowserOptions } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
@@ -30,7 +30,7 @@ import { WKPage } from './wkPage';
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Safari/605.1.15';
 const BROWSER_VERSION = '14.0';
 
-export class WKBrowser extends BrowserBase {
+export class WKBrowser extends Browser {
   private readonly _connection: WKConnection;
   readonly _browserSession: WKSession;
   readonly _contexts = new Map<string, WKBrowserContext>();
@@ -195,7 +195,7 @@ export class WKBrowser extends BrowserBase {
   }
 }
 
-export class WKBrowserContext extends BrowserContextBase {
+export class WKBrowserContext extends BrowserContext {
   readonly _browser: WKBrowser;
   readonly _browserContextId: string | undefined;
   readonly _evaluateOnNewDocumentSources: string[];

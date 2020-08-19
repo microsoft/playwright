@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { BrowserBase, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { Browser, BrowserOptions } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events as CommonEvents } from '../events';
 import { assert } from '../helper';
 import * as network from '../network';
@@ -31,7 +31,7 @@ import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
 
-export class CRBrowser extends BrowserBase {
+export class CRBrowser extends Browser {
   readonly _connection: CRConnection;
   _session: CRSession;
   private _clientRootSessionPromise: Promise<CRSession> | null = null;
@@ -279,7 +279,7 @@ class CRServiceWorker extends Worker {
   }
 }
 
-export class CRBrowserContext extends BrowserContextBase {
+export class CRBrowserContext extends BrowserContext {
   readonly _browser: CRBrowser;
   readonly _browserContextId: string | null;
   readonly _evaluateOnNewDocumentSources: string[];

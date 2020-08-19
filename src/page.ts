@@ -25,7 +25,7 @@ import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
 import { Events } from './events';
-import { BrowserContext, BrowserContextBase } from './browserContext';
+import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
@@ -99,7 +99,7 @@ export class Page extends EventEmitter {
   readonly _disconnectedPromise: Promise<Error>;
   private _crashedCallback: (e: Error) => void;
   readonly _crashedPromise: Promise<Error>;
-  readonly _browserContext: BrowserContextBase;
+  readonly _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
   readonly _timeoutSettings: TimeoutSettings;
@@ -116,7 +116,7 @@ export class Page extends EventEmitter {
   private _requestInterceptor?: network.RouteHandler;
   _ownedContext: BrowserContext | undefined;
 
-  constructor(delegate: PageDelegate, browserContext: BrowserContextBase) {
+  constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
     this._delegate = delegate;
     this._closedCallback = () => {};
@@ -144,7 +144,7 @@ export class Page extends EventEmitter {
   }
 
   async _doSlowMo() {
-    const slowMo = this._browserContext._browserBase._options.slowMo;
+    const slowMo = this._browserContext._browser._options.slowMo;
     if (!slowMo)
       return;
     await new Promise(x => setTimeout(x, slowMo));

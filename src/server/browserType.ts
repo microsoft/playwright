@@ -21,7 +21,7 @@ import * as util from 'util';
 import { BrowserContext, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
 import * as browserPaths from '../install/browserPaths';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
-import { BrowserBase, BrowserOptions, Browser, BrowserProcess } from '../browser';
+import { BrowserOptions, Browser, BrowserProcess } from '../browser';
 import { assert, helper } from '../helper';
 import { launchProcess, Env, waitForLine, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
@@ -87,7 +87,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return browser._defaultContext!;
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<BrowserBase> {
+  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? verifyProxySettings(options.proxy) : undefined;
     const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
@@ -208,7 +208,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   }
 
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
-  abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<BrowserBase>;
+  abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
   abstract _amendArguments(browserArguments: string[]): string[];
   abstract _rewriteStartupError(error: Error): Error;

@@ -23,32 +23,12 @@ import * as frames from './frames';
 import * as types from './types';
 import { Events } from './events';
 import { Download } from './download';
-import { BrowserBase } from './browser';
+import { Browser } from './browser';
 import { EventEmitter } from 'events';
 import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
 
-export interface BrowserContext extends EventEmitter {
-  setDefaultNavigationTimeout(timeout: number): void;
-  setDefaultTimeout(timeout: number): void;
-  pages(): Page[];
-  newPage(): Promise<Page>;
-  cookies(urls?: string | string[]): Promise<types.NetworkCookie[]>;
-  addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
-  clearCookies(): Promise<void>;
-  grantPermissions(permissions: string[], options?: { origin?: string }): Promise<void>;
-  clearPermissions(): Promise<void>;
-  setGeolocation(geolocation?: types.Geolocation): Promise<void>;
-  setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void>;
-  setOffline(offline: boolean): Promise<void>;
-  setHTTPCredentials(httpCredentials?: types.Credentials): Promise<void>;
-  addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any): Promise<void>;
-  exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void>;
-  _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void>;
-  close(): Promise<void>;
-}
-
-export abstract class BrowserContextBase extends EventEmitter implements BrowserContext {
+export abstract class BrowserContext extends EventEmitter {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
@@ -59,11 +39,11 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
-  readonly _browserBase: BrowserBase;
+  readonly _browser: Browser;
 
-  constructor(browserBase: BrowserBase, options: types.BrowserContextOptions, isPersistentContext: boolean) {
+  constructor(browser: Browser, options: types.BrowserContextOptions, isPersistentContext: boolean) {
     super();
-    this._browserBase = browserBase;
+    this._browser = browser;
     this._options = options;
     this._isPersistentContext = isPersistentContext;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
@@ -183,7 +163,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   protected _authenticateProxyViaHeader() {
-    const proxy = this._browserBase._options.proxy || { username: undefined, password: undefined };
+    const proxy = this._browser._options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
       this._options.httpCredentials = { username, password: password! };
@@ -196,7 +176,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 
   protected _authenticateProxyViaCredentials() {
-    const proxy = this._browserBase._options.proxy;
+    const proxy = this._browser._options.proxy;
     if (!proxy)
       return;
     const { username, password } = proxy;
@@ -213,7 +193,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
     if (this._isPersistentContext) {
       // Default context is only created in 'persistent' mode and closing it should close
       // the browser.
-      await this._browserBase.close();
+      await this._browser.close();
       return;
     }
     if (this._closedStatus === 'open') {
@@ -226,7 +206,7 @@ export abstract class BrowserContextBase extends EventEmitter implements Browser
   }
 }
 
-export function assertBrowserContextIsNotOwned(context: BrowserContextBase) {
+export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   for (const page of context.pages()) {
     if (page._ownedContext)
       throw new Error('Please use browser.newContext() for multi-page scripts that share the context.');
