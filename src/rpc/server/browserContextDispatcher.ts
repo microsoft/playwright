@@ -112,10 +112,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
 
   async setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void> {
     if (!params.enabled) {
-      await this._context.unroute('**/*');
+      await this._context._setRequestInterceptor(undefined);
       return;
     }
-    this._context.route('**/*', (route, request) => {
+    this._context._setRequestInterceptor((route, request) => {
       this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }

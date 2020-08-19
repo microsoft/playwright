@@ -416,14 +416,7 @@ export class CRBrowserContext extends BrowserContextBase {
       await (page._delegate as CRPage).exposeBinding(binding);
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
-    for (const page of this.pages())
-      await (page._delegate as CRPage).updateRequestInterception();
-  }
-
-  async unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
+  async _doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as CRPage).updateRequestInterception();
   }

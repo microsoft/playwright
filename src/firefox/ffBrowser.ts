@@ -319,16 +319,8 @@ export class FFBrowserContext extends BrowserContextBase {
     await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId || undefined, name: binding.name, script: binding.source });
   }
 
-  async route(url: types.URLMatch, handler: network.RouteHandler): Promise<void> {
-    this._routes.push({ url, handler });
-    if (this._routes.length === 1)
-      await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: true });
-  }
-
-  async unroute(url: types.URLMatch, handler?: network.RouteHandler): Promise<void> {
-    this._routes = this._routes.filter(route => route.url !== url || (handler && route.handler !== handler));
-    if (this._routes.length === 0)
-      await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: false });
+  async _doUpdateRequestInterception(): Promise<void> {
+    await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: !!this._requestInterceptor });
   }
 
   async _doClose() {
