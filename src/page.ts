@@ -244,7 +244,7 @@ export class Page extends EventEmitter {
   async reload(options?: types.NavigateOptions): Promise<network.Response | null> {
     const waitPromise = this.mainFrame().waitForNavigation(options);
     await this._delegate.reload();
-    const response =  waitPromise;
+    const response = await waitPromise;
     await this._doSlowMo();
     return response;
   }
@@ -424,7 +424,7 @@ export class PageBinding {
   constructor(name: string, playwrightFunction: frames.FunctionWithSource) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.source = helper.evaluationString(addPageBinding, name);
+    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)})`;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {

@@ -469,18 +469,17 @@ export class Frame {
     });
   }
 
-  async waitForNavigation(options: types.WaitForNavigationOptions = {}): Promise<network.Response | null> {
+  async waitForNavigation(options: types.NavigateOptions = {}): Promise<network.Response | null> {
     return runNavigationTask(this, options, async progress => {
-      const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      progress.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
+      progress.log(`waiting for navigation until "${waitUntil}"`);
 
       const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
         // Any failed navigation results in a rejection.
         if (event.error)
           return true;
         progress.log(`  navigated to "${this._url}"`);
-        return helper.urlMatches(this._url, options.url);
+        return true;
       }).promise;
       if (navigationEvent.error)
         throw navigationEvent.error;

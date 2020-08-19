@@ -56,10 +56,6 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(params.url, params)) };
   }
 
-  async waitForNavigation(params: types.WaitForNavigationOptions): Promise<{ response?: ResponseChannel }> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.waitForNavigation(params)) };
-  }
-
   async frameElement(): Promise<{ element: ElementHandleChannel }> {
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.frameElement()) };
   }

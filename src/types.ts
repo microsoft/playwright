@@ -44,11 +44,6 @@ export type PointerActionWaitOptions = TimeoutOptions & {
   force?: boolean,
 };
 
-export type WaitForNavigationOptions = TimeoutOptions & {
-  waitUntil?: LifecycleEvent,
-  url?: URLMatch
-};
-
 export type ElementScreenshotOptions = TimeoutOptions & {
   type?: 'png' | 'jpeg',
   quality?: number,

@@ -41,6 +41,7 @@ import { Waiter } from './waiter';
 import * as fs from 'fs';
 import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
+import { evaluationScript, urlMatches } from './clientHelper';
 
 type PDFOptions = Omit<PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -150,7 +151,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   private _onRoute(route: Route, request: Request) {
     for (const {url, handler} of this._routes) {
-      if (helper.urlMatches(request.url(), url)) {
+      if (urlMatches(request.url(), url)) {
         handler(route, request);
         return;
       }
@@ -202,7 +203,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
     return this.frames().find(f => {
       if (name)
         return f.name() === name;
-      return helper.urlMatches(f.url(), url);
+      return urlMatches(f.url(), url);
     }) || null;
   }
 
@@ -330,7 +331,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
     const predicate = (request: Request) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
-        return helper.urlMatches(request.url(), urlOrPredicate);
+        return urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
     };
     return this.waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout });
@@ -339,7 +340,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
     const predicate = (response: Response) => {
       if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
-        return helper.urlMatches(response.url(), urlOrPredicate);
+        return urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
     };
     return this.waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout });
@@ -402,7 +403,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     return this._wrapApiCall('page.addInitScript', async () => {
-      const source = await helper.evaluationScript(script, arg);
+      const source = await evaluationScript(script, arg);
       await this._channel.addInitScript({ source });
     });
   }

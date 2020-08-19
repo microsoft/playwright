@@ -16,8 +16,8 @@
 
 import { SelectorsChannel, SelectorsInitializer } from '../channels';
 import { ChannelOwner } from './channelOwner';
-import { helper } from '../../helper';
 import { ElementHandle } from './elementHandle';
+import { evaluationScript } from './clientHelper';
 
 export class Selectors extends ChannelOwner<SelectorsChannel, SelectorsInitializer> {
   static from(selectors: SelectorsChannel): Selectors {
@@ -29,7 +29,7 @@ export class Selectors extends ChannelOwner<SelectorsChannel, SelectorsInitializ
   }
 
   async register(name: string, script: string | Function | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
-    const source = await helper.evaluationScript(script, undefined, false);
+    const source = await evaluationScript(script, undefined, false);
     await this._channel.register({ ...options, name, source });
   }
 

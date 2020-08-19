@@ -111,11 +111,6 @@ export abstract class BrowserContext extends EventEmitter {
     this._doExposeBinding(binding);
   }
 
-  async addInitScript(script: string | Function | { path?: string | undefined; content?: string | undefined; }, arg?: any): Promise<void> {
-    const source = await helper.evaluationScript(script, arg);
-    await this._doAddInitScript(source);
-  }
-
   async grantPermissions(permissions: string[], options?: { origin?: string }) {
     let origin = '*';
     if (options && options.origin) {
