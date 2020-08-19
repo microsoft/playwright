@@ -221,7 +221,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled', options: ElementHandleWaitForElementStateOptions = {}): Promise<void> {
+  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: ElementHandleWaitForElementStateOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.waitForElementState', async () => {
       return await this._elementChannel.waitForElementState({ state, ...options });
     });
