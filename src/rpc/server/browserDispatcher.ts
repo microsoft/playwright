@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserBase } from '../../browser';
-import { BrowserContextBase } from '../../browserContext';
+import { Browser } from '../../browser';
 import { Events } from '../../events';
 import { BrowserChannel, BrowserContextChannel, BrowserInitializer, CDPSessionChannel, Binary, BrowserNewContextParams } from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
@@ -25,7 +24,7 @@ import { CRBrowser } from '../../chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
 
 export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> implements BrowserChannel {
-  constructor(scope: DispatcherScope, browser: BrowserBase, guid?: string) {
+  constructor(scope: DispatcherScope, browser: Browser, guid?: string) {
     super(scope, browser, 'Browser', { version: browser.version() }, true, guid);
     browser.on(Events.Browser.Disconnected, () => this._didClose());
   }
@@ -36,7 +35,7 @@ export class BrowserDispatcher extends Dispatcher<Browser, BrowserInitializer> i
   }
 
   async newContext(params: BrowserNewContextParams): Promise<{ context: BrowserContextChannel }> {
-    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(params) as BrowserContextBase) };
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.newContext(params)) };
   }
 
   async close(): Promise<void> {

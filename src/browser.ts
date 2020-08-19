@@ -15,7 +15,7 @@
  */
 
 import * as types from './types';
-import { BrowserContext, BrowserContextBase } from './browserContext';
+import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
@@ -39,19 +39,10 @@ export type BrowserOptions = types.UIOptions & {
   proxy?: ProxySettings,
 };
 
-export interface Browser extends EventEmitter {
-  newContext(options?: types.BrowserContextOptions): Promise<BrowserContext>;
-  contexts(): BrowserContext[];
-  newPage(options?: types.BrowserContextOptions): Promise<Page>;
-  isConnected(): boolean;
-  close(): Promise<void>;
-  version(): string;
-}
-
-export abstract class BrowserBase extends EventEmitter implements Browser {
+export abstract class Browser extends EventEmitter {
   readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
-  _defaultContext: BrowserContextBase | null = null;
+  _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
 
   constructor(options: BrowserOptions) {
@@ -93,7 +84,7 @@ export abstract class BrowserBase extends EventEmitter implements Browser {
 
   _didClose() {
     for (const context of this.contexts())
-      (context as BrowserContextBase)._browserClosed();
+      context._browserClosed();
     if (this._defaultContext)
       this._defaultContext._browserClosed();
     this.emit(Events.Browser.Disconnected);

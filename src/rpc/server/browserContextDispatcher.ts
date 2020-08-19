@@ -15,7 +15,7 @@
  */
 
 import * as types from '../../types';
-import { BrowserContextBase, BrowserContext } from '../../browserContext';
+import { BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
@@ -26,9 +26,9 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Events as ChromiumEvents } from '../../chromium/events';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
-  private _context: BrowserContextBase;
+  private _context: BrowserContext;
 
-  constructor(scope: DispatcherScope, context: BrowserContextBase) {
+  constructor(scope: DispatcherScope, context: BrowserContext) {
     super(scope, context, 'BrowserContext', {}, true);
     this._context = context;
 
@@ -40,7 +40,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
       this._dispose();
     });
 
-    if (context._browserBase._options.name === 'chromium') {
+    if (context._browser._options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
         this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
       context.on(ChromiumEvents.ChromiumBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));

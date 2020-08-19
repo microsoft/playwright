@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { BrowserBase, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, BrowserContextBase, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
+import { Browser, BrowserOptions } from '../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
@@ -27,7 +27,7 @@ import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
 
-export class FFBrowser extends BrowserBase {
+export class FFBrowser extends Browser {
   _connection: FFConnection;
   readonly _ffPages: Map<string, FFPage>;
   readonly _contexts: Map<string, FFBrowserContext>;
@@ -163,7 +163,7 @@ export class FFBrowser extends BrowserBase {
   }
 }
 
-export class FFBrowserContext extends BrowserContextBase {
+export class FFBrowserContext extends BrowserContext {
   readonly _browser: FFBrowser;
   readonly _browserContextId: string | null;
 

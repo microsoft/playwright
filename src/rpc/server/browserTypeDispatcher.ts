@@ -14,12 +14,10 @@
  * limitations under the License.
  */
 
-import { BrowserBase } from '../../browser';
 import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import { BrowserDispatcher } from './browserDispatcher';
 import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { BrowserContextBase } from '../../browserContext';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
@@ -32,11 +30,11 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
 
   async launch(params: BrowserTypeLaunchParams): Promise<{ browser: BrowserChannel }> {
     const browser = await this._object.launch(params);
-    return { browser: new BrowserDispatcher(this._scope, browser as BrowserBase) };
+    return { browser: new BrowserDispatcher(this._scope, browser) };
   }
 
   async launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<{ context: BrowserContextChannel }> {
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, params);
-    return { context: new BrowserContextDispatcher(this._scope, browserContext as BrowserContextBase) };
+    return { context: new BrowserContextDispatcher(this._scope, browserContext) };
   }
 }
