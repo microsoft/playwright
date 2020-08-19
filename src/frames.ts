@@ -429,7 +429,7 @@ export class Frame {
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = this._page._state.extraHTTPHeaders || [];
-      const refererHeader = headers.find(h => h.name === 'referer' || h.name === 'Referer');
+      const refererHeader = headers.find(h => h.name.toLowerCase() === 'referer');
       let referer = refererHeader ? refererHeader.value : undefined;
       if (options.referer !== undefined) {
         if (referer !== undefined && referer !== options.referer)
@@ -867,7 +867,7 @@ export class Frame {
     return this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._selectOption(progress, elements, values, options));
   }
 
-  async setInputFiles(selector: string, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+  async setInputFiles(selector: string, files: types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._setInputFiles(progress, files, options));
   }
 

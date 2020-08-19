@@ -90,13 +90,7 @@ export type SelectOption = {
 export type FilePayload = {
   name: string,
   mimeType: string,
-  buffer: Buffer,
-};
-
-export type FileTransferPayload = {
-  name: string,
-  type: string,
-  data: string,
+  buffer: string,
 };
 
 export type MediaType = 'screen' | 'print';

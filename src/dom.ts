@@ -26,7 +26,6 @@ import * as types from './types';
 import { Progress } from './progress';
 import DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
-import { normalizeFilePayloads } from './converters';
 
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
@@ -458,14 +457,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
+  async setInputFiles(files: types.FilePayload[], options: types.NavigatingActionWaitOptions = {}) {
     return this._page._runAbortableTask(async progress => {
       const result = await this._setInputFiles(progress, files, options);
       return assertDone(throwRetargetableDOMError(result));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async _setInputFiles(progress: Progress, files: string | types.FilePayload | string[] | types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+  async _setInputFiles(progress: Progress, files: types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     const multiple = throwFatalDOMError(await this._evaluateInUtility(([injected, node]): 'error:notinput' | 'error:notconnected' | boolean => {
       if (node.nodeType !== Node.ELEMENT_NODE || (node as Node as Element).tagName !== 'INPUT')
         return 'error:notinput';
@@ -476,11 +475,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, {}));
     if (typeof multiple === 'string')
       return multiple;
-    const filePayloads = await normalizeFilePayloads(files);
-    assert(multiple || filePayloads.length <= 1, 'Non-multiple file input can only accept single file!');
+    assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, filePayloads);
+      await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files);
     });
     return 'done';
   }
@@ -760,14 +758,6 @@ export class InjectedScriptPollHandler<T> {
     await copy.evaluate(p => p.cancel()).catch(e => {});
     copy.dispose();
   }
-}
-
-export function toFileTransferPayload(files: types.FilePayload[]): types.FileTransferPayload[] {
-  return files.map(file => ({
-    name: file.name,
-    type: file.mimeType,
-    data: file.buffer.toString('base64')
-  }));
 }
 
 export function throwFatalDOMError<T>(result: T | FatalDOMError): T {

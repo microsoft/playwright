@@ -14,33 +14,7 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as mime from 'mime';
-import * as path from 'path';
-import * as util from 'util';
 import * as types from './types';
-
-export async function normalizeFilePayloads(files: string | types.FilePayload | string[] | types.FilePayload[]): Promise<types.FilePayload[]> {
-  let ff: string[] | types.FilePayload[];
-  if (!Array.isArray(files))
-    ff = [ files ] as string[] | types.FilePayload[];
-  else
-    ff = files;
-  const filePayloads: types.FilePayload[] = [];
-  for (const item of ff) {
-    if (typeof item === 'string') {
-      const file: types.FilePayload = {
-        name: path.basename(item),
-        mimeType: mime.getType(item) || 'application/octet-stream',
-        buffer: await util.promisify(fs.readFile)(item)
-      };
-      filePayloads.push(file);
-    } else {
-      filePayloads.push(item);
-    }
-  }
-  return filePayloads;
-}
 
 export function headersObjectToArray(headers: { [key: string]: string }): types.HeadersArray {
   const result: types.HeadersArray = [];
