@@ -48,6 +48,7 @@ else
   if command -v rustup >/dev/null; then
     # We manage Rust version ourselves.
     echo "-- Using rust v${RUST_VERSION}"
+    rustup install "${RUST_VERSION}"
     rustup default "${RUST_VERSION}"
   fi
 
