@@ -175,6 +175,8 @@ class TargetRegistry {
           openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
         }
         const browserContext = this._userContextIdToBrowserContext.get(userContextId);
+        if (!browserContext)
+          throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
         const target = new PageTarget(this, window, gBrowser, tab, linkedBrowser, browserContext, openerTarget);
 
         const sessions = [];
@@ -374,10 +376,8 @@ class PageTarget {
     ];
 
     this._disposed = false;
-    if (browserContext) {
-      browserContext.pages.add(this);
-      browserContext._firstPageCallback();
-    }
+    browserContext.pages.add(this);
+    browserContext._firstPageCallback();
     this._registry._browserToTarget.set(this._linkedBrowser, this);
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
   }
@@ -434,7 +434,7 @@ class PageTarget {
     return {
       targetId: this.id(),
       type: 'page',
-      browserContextId: this._browserContext ? this._browserContext.browserContextId : undefined,
+      browserContextId: this._browserContext.browserContextId,
       openerId: this._openerId,
     };
   }
@@ -466,8 +466,7 @@ class PageTarget {
 
   dispose() {
     this._disposed = true;
-    if (this._browserContext)
-      this._browserContext.pages.delete(this);
+    this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
     helper.removeListeners(this._eventListeners);
