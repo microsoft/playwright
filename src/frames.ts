@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as util from 'util';
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
 import { Events } from './events';
@@ -640,31 +638,23 @@ export class Frame {
   }
 
   async addScriptTag(options: {
-      url?: string; path?: string;
-      content?: string;
-      type?: string;
+      url?: string,
+      content?: string,
+      type?: string,
     }): Promise<dom.ElementHandle> {
     const {
       url = null,
-      path = null,
       content = null,
       type = ''
     } = options;
-    if (!url && !path && !content)
+    if (!url && !content)
       throw new Error('Provide an object with a `url`, `path` or `content` property');
 
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandleInternal(addScriptUrl, { url, type })).asElement()!;
-      let result;
-      if (path !== null) {
-        let contents = await util.promisify(fs.readFile)(path, 'utf8');
-        contents += '\n//# sourceURL=' + path.replace(/\n/g, '');
-        result = (await context.evaluateHandleInternal(addScriptContent, { content: contents, type })).asElement()!;
-      } else {
-        result = (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
-      }
+      const result = (await context.evaluateHandleInternal(addScriptContent, { content: content!, type })).asElement()!;
       // Another round trip to the browser to ensure that we receive CSP error messages
       // (if any) logged asynchronously in a separate task on the content main thread.
       if (this._page._delegate.cspErrorsAsynchronousForInlineScipts)
@@ -699,26 +689,18 @@ export class Frame {
     }
   }
 
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<dom.ElementHandle> {
+  async addStyleTag(options: { url?: string, content?: string }): Promise<dom.ElementHandle> {
     const {
       url = null,
-      path = null,
       content = null
     } = options;
-    if (!url && !path && !content)
+    if (!url && !content)
       throw new Error('Provide an object with a `url`, `path` or `content` property');
 
     const context = await this._mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandleInternal(addStyleUrl, url)).asElement()!;
-
-      if (path !== null) {
-        let contents = await util.promisify(fs.readFile)(path, 'utf8');
-        contents += '\n/*# sourceURL=' + path.replace(/\n/g, '') + '*/';
-        return (await context.evaluateHandleInternal(addStyleContent, contents)).asElement()!;
-      }
-
       return (await context.evaluateHandleInternal(addStyleContent, content!)).asElement()!;
     });
 

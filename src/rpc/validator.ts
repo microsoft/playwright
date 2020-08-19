@@ -718,7 +718,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleScreenshotParams = tObject({
     timeout: tOptional(tNumber),
     type: tOptional(tEnum(['png', 'jpeg'])),
-    path: tOptional(tString),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
   });

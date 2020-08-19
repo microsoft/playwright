@@ -27,7 +27,7 @@ import { ChannelOwner } from './channelOwner';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
-import { ElementHandle } from './elementHandle';
+import { ElementHandle, determineScreenshotType } from './elementHandle';
 import { Worker } from './worker';
 import { Frame, FunctionWithSource, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse } from './input';
@@ -425,7 +425,9 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async screenshot(options: PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('page.screenshot', async () => {
-      const buffer = Buffer.from((await this._channel.screenshot(options)).binary, 'base64');
+      const type = determineScreenshotType(options);
+      const result = await this._channel.screenshot({ ...options, type });
+      const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);
         await fsWriteFileAsync(options.path, buffer);
