@@ -149,7 +149,7 @@ export abstract class BrowserContext extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  _enableScreencast(options: types.ContextScreencastOptions) {
+  async _enableScreencast(options: types.ContextScreencastOptions) {
     this._screencastOptions = options;
     fs.mkdirSync(path.dirname(options.dir), {recursive: true});
   }

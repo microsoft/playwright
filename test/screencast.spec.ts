@@ -257,12 +257,12 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
   }
 });
 
-it.fail(options.CHROMIUM || options.FIREFOX)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+it.fail(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.
   const context = toImpl(await browser.newContext());
-  context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
   expect(context._screencastOptions).toBeTruthy();
 
   const [startEvent, newPage] = await Promise.all([
