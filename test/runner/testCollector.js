@@ -24,7 +24,7 @@ global.testOptions = require('./testOptions');
 class NullReporter {}
 
 class TestCollector {
-  constructor(options) {
+  constructor(files, options) {
     this._options = options;
     this.suite = new Mocha.Suite('', new Mocha.Context(), true);
     this._total = 0;
@@ -32,9 +32,18 @@ class TestCollector {
       const match = options.grep.match(/^\/(.*)\/(g|i|)$|.*/);
       this._grep = new RegExp(match[1] || match[0], match[2]);
     }
+
+    for (const file of files)
+      this._addFile(file);
+
+    this._hasOnly = this._filterOnly(this.suite);
   }
 
-  addFile(file) {
+  hasOnly() {
+    return this._hasOnly;
+  }
+
+  _addFile(file) {
     const mocha = new Mocha({
       forbidOnly: this._options.forbidOnly,
       reporter: NullReporter,
@@ -90,9 +99,6 @@ class TestCollector {
       }
     });
 
-    if (mocha.suite.hasOnly())
-      mocha.suite.filterOnly();
-
     // Clone the suite as many times as there are worker hashes.
     // Only include the tests that requested these generations.
     for (const [hash, {configurationObject, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
@@ -104,7 +110,7 @@ class TestCollector {
 
   _cloneSuite(suite, configurationObject, configurationString, tests) {
     const copy = suite.clone();
-    copy.__configurationObject = configurationObject;
+    copy.__only = suite.__only;
     for (const child of suite.suites)
       copy.addSuite(this._cloneSuite(child, configurationObject, configurationString, tests));
     for (const test of suite.tests) {
@@ -113,23 +119,25 @@ class TestCollector {
       if (this._grep && !this._grep.test(test.fullTitle()))
         continue;
       const testCopy = test.clone();
+      testCopy.__only = test.__only;
       testCopy.__ordinal = test.__ordinal;
       testCopy.__configurationObject = configurationObject;
       testCopy.__configurationString = configurationString;
       copy.addTest(testCopy);
     }
     return copy;
-  } 
-}
+  }
 
-
-function grepTotal(mocha, suite) {
-  let total = 0;
-  suite.eachTest(test => {
-    if (mocha.options.grep.test(test.fullTitle()))
-      total++;
-  });
-  return total;
+  _filterOnly(suite) {
+    const onlySuites = suite.suites.filter(child => this._filterOnly(child) || child.__only);
+    const onlyTests = suite.tests.filter(test => test.__only);
+    if (onlySuites.length || onlyTests.length) {
+      suite.suites = onlySuites;
+      suite.tests = onlyTests;
+      return true;
+    }
+    return false;
+  }
 }
 
 module.exports = { TestCollector };

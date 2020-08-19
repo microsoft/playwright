@@ -37,26 +37,26 @@ program
     const testDir = path.join(process.cwd(), command.args[0]);
     const files = collectFiles(testDir, '', command.args.slice(1));
 
-    const testCollector = new TestCollector({
+    const testCollector = new TestCollector(files, {
       forbidOnly: command.forbidOnly || undefined,
       grep: command.grep,
       timeout: command.timeout,
     });
-    for (const file of files)
-      testCollector.addFile(file);
-
     const rootSuite = testCollector.suite;
-    const total = rootSuite.total();
-    if (!total) {
-      console.error('=================');
-      console.error(' No tests found.');
-      console.error('=================');
+    if (command.forbidOnly && testCollector.hasOnly()) {
+      console.error('=====================================');
+      console.error(' --forbid-only found a focused test.');
+      console.error('=====================================');
       process.exit(1);
     }
 
-    // Filter tests.
-    if (rootSuite.hasOnly())
-      rootSuite.filterOnly();
+    const total = rootSuite.total();
+    if (!total) {
+      console.error('=================');
+      console.error(' no tests found.');
+      console.error('=================');
+      process.exit(1);
+    }
 
     // Trial run does not need many workers, use one.
     const jobs = (command.trialRun || command.debug) ? 1 : command.jobs;
