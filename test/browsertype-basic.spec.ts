@@ -18,7 +18,7 @@
 import fs from 'fs';
 import './base.fixture';
 
-it('browserType.executablePath should work', async({browserType}) => {
+it.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH))('browserType.executablePath should work', async({browserType}) => {
   const executablePath = browserType.executablePath();
   expect(fs.existsSync(executablePath)).toBe(true);
   expect(fs.realpathSync(executablePath)).toBe(executablePath);
