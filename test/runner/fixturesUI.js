@@ -80,7 +80,7 @@ function fixturesUI(wrappers, suite) {
       if (specs.slow && specs.slow[0])
         test.timeout(90000);
       if (only)
-        test.markOnly();
+        test.__only = true;
       if (!only && specs.skip && specs.skip[0])
         test.pending = true;
       if (!only && specs.fail && specs.fail[0])
@@ -96,7 +96,7 @@ function fixturesUI(wrappers, suite) {
       });
       const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
       if (only)
-        suite.markOnly();
+        suite.__only = true;
       if (!only && specs.skip && specs.skip[0])
         suite.pending = true;
       if (!only && specs.fail && specs.fail[0])
