@@ -22,7 +22,7 @@ import fs from 'fs';
 const { HEADLESS } = testOptions;
 
 // Firefox headful produces a different image.
-const ffheadful = FFOX && !HEADLESS;
+const ffheadful = options.FFOX && !HEADLESS;
 
 it.skip(ffheadful)('should work', async({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
@@ -140,7 +140,7 @@ it.skip(ffheadful)('should run in parallel in multiple pages', async({server, co
   await Promise.all(pages.map(page => page.close()));
 });
 
-it.fail(FFOX)('should allow transparency', async({page, golden}) => {
+it.fail(options.FFOX)('should allow transparency', async({page, golden}) => {
   await page.setViewportSize({ width: 50, height: 150 });
   await page.setContent(`
     <style>
@@ -174,7 +174,7 @@ it.skip(ffheadful)('should work with odd clip size on Retina displays', async({p
   expect(screenshot).toMatchImage(golden('screenshot-clip-odd-size.png'));
 });
 
-it.skip(FFOX)('should work with a mobile viewport', async({browser, server, golden}) => {
+it.skip(options.FFOX)('should work with a mobile viewport', async({browser, server, golden}) => {
   const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/overflow.html');
@@ -183,7 +183,7 @@ it.skip(FFOX)('should work with a mobile viewport', async({browser, server, gold
   await context.close();
 });
 
-it.skip(FFOX)('should work with a mobile viewport and clip', async({browser, server, golden}) => {
+it.skip(options.FFOX)('should work with a mobile viewport and clip', async({browser, server, golden}) => {
   const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/overflow.html');
@@ -192,7 +192,7 @@ it.skip(FFOX)('should work with a mobile viewport and clip', async({browser, ser
   await context.close();
 });
 
-it.skip(FFOX)('should work with a mobile viewport and fullPage', async({browser, server, golden}) => {
+it.skip(options.FFOX)('should work with a mobile viewport and fullPage', async({browser, server, golden}) => {
   const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/overflow-large.html');
@@ -215,7 +215,7 @@ it.skip(ffheadful)('should work for translateZ', async({page, server, golden}) =
   expect(screenshot).toMatchImage(golden('screenshot-translateZ.png'));
 });
 
-it.fail(FFOX || WEBKIT)('should work for webgl', async({page, server, golden}) => {
+it.fail(options.FFOX || options.WEBKIT)('should work for webgl', async({page, server, golden}) => {
   await page.setViewportSize({width: 640, height: 480});
   await page.goto(server.PREFIX + '/screenshots/webgl.html');
   const screenshot = await page.screenshot();

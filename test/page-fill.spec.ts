@@ -59,7 +59,7 @@ it('should fill date input after clicking', async({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
 });
 
-it.skip(WEBKIT)('should throw on incorrect date', async({page, server}) => {
+it.skip(options.WEBKIT)('should throw on incorrect date', async({page, server}) => {
   await page.setContent('<input type=date>');
   const error = await page.fill('input', '2020-13-05').catch(e => e);
   expect(error.message).toContain('Malformed value');
@@ -71,7 +71,7 @@ it('should fill time input', async({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('13:15');
 });
 
-it.skip(WEBKIT)('should throw on incorrect time', async({page, server}) => {
+it.skip(options.WEBKIT)('should throw on incorrect time', async({page, server}) => {
   await page.setContent('<input type=time>');
   const error = await page.fill('input', '25:05').catch(e => e);
   expect(error.message).toContain('Malformed value');
@@ -83,7 +83,7 @@ it('should fill datetime-local input', async({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
 });
 
-it.skip(WEBKIT || FFOX)('should throw on incorrect datetime-local', async({page, server}) => {
+it.skip(options.WEBKIT || options.FFOX)('should throw on incorrect datetime-local', async({page, server}) => {
   await page.setContent('<input type=datetime-local>');
   const error = await page.fill('input', 'abc').catch(e => e);
   expect(error.message).toContain('Malformed value');

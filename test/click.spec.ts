@@ -317,7 +317,7 @@ it('should click the button inside an iframe', async({page, server}) => {
   expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it.fail(CHROMIUM || WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
+it.fail(options.CHROMIUM || options.WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
   // @see https://chromium-review.googlesource.com/c/chromium/src/+/1742784
@@ -396,7 +396,7 @@ it('should click a button in scrolling container with offset', async({page, serv
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
 });
 
-it.skip(FFOX)('should click the button with offset with page scale', async({browser, server, isChromium, isWebKit}) => {
+it.skip(options.FFOX)('should click the button with offset with page scale', async({browser, server, isChromium, isWebKit}) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');

@@ -19,7 +19,29 @@ const debug = require('debug');
 
 const registrations = new Map();
 const registrationsByFile = new Map();
-const generatorRegistrations = new Map();
+const optionRegistrations = new Map();
+const optionsImpl = new Map();
+const options = new Proxy({}, {
+  get: (obj, prop) => {
+    if (optionsImpl.has(prop))
+      return optionsImpl.get(prop);
+    const fn = optionRegistrations.get(prop);
+    if (!fn)
+      return obj[prop];
+    const names = optionParameterNames(fn);
+    const param = {};
+    names.forEach(name => param[name] = options[name]);
+    const result = fn.call(null, param);
+    optionsImpl.set(prop, result);
+    return result;
+  }
+});
+
+function setOptions(map) {
+  optionsImpl.clear();
+  for (const [name, value] of map)
+    optionsImpl.set(name, value);
+}
 
 class Fixture {
   constructor(pool, name, scope, fn) {
@@ -29,7 +51,7 @@ class Fixture {
     this.fn = fn;
     this.deps = fixtureParameterNames(this.fn);
     this.usages = new Set();
-    this.generatorValue = this.pool.generators.get(name);
+    this.generatorValue = optionsImpl.get(name);
     this.value = this.generatorValue || null;
   }
 
@@ -82,7 +104,6 @@ class Fixture {
 class FixturePool {
   constructor() {
     this.instances = new Map();
-    this.generators = new Map();
   }
 
   async setupFixture(name) {
@@ -155,6 +176,15 @@ function fixtureParameterNames(fn) {
   return signature.split(',').map(t => t.trim());
 }
 
+function optionParameterNames(fn) {
+  const text = fn.toString();
+  const match = text.match(/(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
+  if (!match || !match[1].trim())
+    return [];
+  let signature = match[1];
+  return signature.split(',').map(t => t.trim());
+}
+
 function innerRegisterFixture(name, scope, fn) {
   const stackFrame = new Error().stack.split('\n').slice(1).filter(line => !line.includes(__filename))[0];
   const location = stackFrame.replace(/.*at Object.<anonymous> \((.*)\)/, '$1');
@@ -174,9 +204,8 @@ function registerWorkerFixture(name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
-function registerWorkerGenerator(name, fn) {
-  innerRegisterFixture(name, 'worker', () => {});
-  generatorRegistrations.set(name, fn);
+function registerOption(name, fn) {
+  optionRegistrations.set(name, fn);
 }
 
 function collectRequires(file, result) {
@@ -184,6 +213,8 @@ function collectRequires(file, result) {
     return;
   result.add(file);
   const cache = require.cache[file];
+  if (!cache)
+    return;
   const deps = cache.children.map(m => m.id).slice().reverse();
   for (const dep of deps)
     collectRequires(dep, result);
@@ -225,4 +256,4 @@ function computeWorkerHash(file) {
   return hash.digest('hex');
 }
 
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerWorkerGenerator, generatorRegistrations };
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, computeWorkerHash, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerOption, setOptions, optionRegistrations, options };

@@ -18,7 +18,7 @@ import './base.fixture';
 
 const { HEADLESS } = testOptions;
 
-it.fail(CHROMIUM && !HEADLESS)('should fail without credentials', async({browser, server}) => {
+it.fail(options.CHROMIUM && !HEADLESS)('should fail without credentials', async({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -27,7 +27,7 @@ it.fail(CHROMIUM && !HEADLESS)('should fail without credentials', async({browser
   await context.close();
 });
 
-it.fail(CHROMIUM && !HEADLESS)('should work with setHTTPCredentials', async({browser, server}) => {
+it.fail(options.CHROMIUM && !HEADLESS)('should work with setHTTPCredentials', async({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -50,7 +50,7 @@ it('should work with correct credentials', async({browser, server}) => {
   await context.close();
 });
 
-it.fail(CHROMIUM && !HEADLESS)('should fail with wrong credentials', async({browser, server}) => {
+it.fail(options.CHROMIUM && !HEADLESS)('should fail with wrong credentials', async({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'foo', password: 'bar' }

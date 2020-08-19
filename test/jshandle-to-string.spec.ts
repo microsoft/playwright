@@ -53,6 +53,6 @@ it('should work with different subtypes', async({page}) => {
   expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('JSHandle@weakset');
   expect((await page.evaluateHandle('new Error()')).toString()).toBe('JSHandle@error');
   // TODO(yurys): change subtype from array to typedarray in WebKit.
-  expect((await page.evaluateHandle('new Int32Array()')).toString()).toBe(WEBKIT ? 'JSHandle@array' : 'JSHandle@typedarray');
+  expect((await page.evaluateHandle('new Int32Array()')).toString()).toBe(options.WEBKIT ? 'JSHandle@array' : 'JSHandle@typedarray');
   expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe('JSHandle@proxy');
 });

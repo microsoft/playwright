@@ -72,7 +72,7 @@ it('should properly report httpOnly cookie', async({context, page, server}) => {
   expect(cookies[0].httpOnly).toBe(true);
 });
 
-it.fail(WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
+it.fail(options.WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
     res.end();
@@ -83,7 +83,7 @@ it.fail(WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async(
   expect(cookies[0].sameSite).toBe('Strict');
 });
 
-it.fail(WEBKIT && WIN)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
+it.fail(options.WEBKIT && WIN)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
     res.end();

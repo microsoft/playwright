@@ -16,7 +16,7 @@
  */
 import './base.fixture';
 
-it.skip(FFOX)('should work', async({playwright, browser, server}) => {
+it.skip(options.FFOX)('should work', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -26,7 +26,7 @@ it.skip(FFOX)('should work', async({playwright, browser, server}) => {
   await context.close();
 });
 
-it.skip(FFOX)('should support clicking', async({playwright, browser, server}) => {
+it.skip(options.FFOX)('should support clicking', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -38,7 +38,7 @@ it.skip(FFOX)('should support clicking', async({playwright, browser, server}) =>
   await context.close();
 });
 
-it.skip(FFOX)('should scroll to click', async({browser, server}) => {
+it.skip(options.FFOX)('should scroll to click', async({browser, server}) => {
   const context = await browser.newContext({
     viewport: {
       width: 400,

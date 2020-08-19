@@ -26,8 +26,8 @@ function dimensions() {
   };
 }
 
-it.fail(FFOX && WIN)('should click the document', async({page, server}) => {
-  // Occasionally times out on FFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
+it.fail(options.FFOX && WIN)('should click the document', async({page, server}) => {
+  // Occasionally times out on options.FFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
   await page.evaluate(() => {
     window["clickPromise"] = new Promise(resolve => {
       document.addEventListener('click', event => {
@@ -163,7 +163,7 @@ it('should tween mouse movement', async({page, isWebKit}) => {
   ]);
 });
 
-it.skip(FFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+it.skip(options.FFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
   // @see https://crbug.com/929806
   const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });
   const page = await context.newPage();

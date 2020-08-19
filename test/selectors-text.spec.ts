@@ -58,9 +58,9 @@ it('query', async ({page}) => {
   expect(await page.$eval(`"x"`, e => e.outerHTML)).toBe('<div>x</div>');
   expect(await page.$eval(`'x'`, e => e.outerHTML)).toBe('<div>x</div>');
   let error = await page.$(`"`).catch(e => e);
-  expect(error.message).toContain(WEBKIT ? 'SyntaxError' : 'querySelector');
+  expect(error.message).toContain(options.WEBKIT ? 'SyntaxError' : 'querySelector');
   error = await page.$(`'`).catch(e => e);
-  expect(error.message).toContain(WEBKIT ? 'SyntaxError' : 'querySelector');
+  expect(error.message).toContain(options.WEBKIT ? 'SyntaxError' : 'querySelector');
 
   await page.setContent(`<div> ' </div><div> " </div>`);
   expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');

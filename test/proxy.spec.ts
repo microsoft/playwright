@@ -57,7 +57,7 @@ it('should authenticate', async ({browserType, defaultBrowserOptions, server}) =
   await browser.close();
 });
 
-it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
+it.fail(options.CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
   // Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');

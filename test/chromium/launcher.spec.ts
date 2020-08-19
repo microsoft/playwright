@@ -21,21 +21,21 @@ import { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 const { makeUserDataDir, removeUserDataDir } = utils;
 const { WIRE } = testOptions;
 
-it.skip(WIRE || !CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE || !options.CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
   const error = await browserType.launchServer(options).catch(e => e);
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it.skip(WIRE || !CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(WIRE || !options.CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
   const browser = await browserType.launchServer(options);
   await browser.close();
 });
 
-it.skip(!CHROMIUM || WIRE || WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+it.skip(!options.CHROMIUM || WIRE || WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);
   const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
@@ -51,7 +51,7 @@ it.skip(!CHROMIUM || WIRE || WIN)('should open devtools when "devtools: true" op
   await browser.close();
 });
 
-it.skip(!CHROMIUM)('should return background pages', async({browserType, defaultBrowserOptions}) => {
+it.skip(!options.CHROMIUM)('should return background pages', async({browserType, defaultBrowserOptions}) => {
   const userDataDir = await makeUserDataDir();
   const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
   const extensionOptions = {...defaultBrowserOptions,
@@ -73,7 +73,7 @@ it.skip(!CHROMIUM)('should return background pages', async({browserType, default
   await removeUserDataDir(userDataDir);
 });
 
-it.skip(!CHROMIUM)('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
+it.skip(!options.CHROMIUM)('should not create pages automatically', async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);
   const browserSession = await (browser as ChromiumBrowser).newBrowserCDPSession();
   const targets = [];

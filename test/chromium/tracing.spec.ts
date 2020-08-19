@@ -35,14 +35,14 @@ registerFixture('outputFile', async ({tmpDir}, test) => {
     fs.unlinkSync(outputFile);
 });
 
-it.skip(!CHROMIUM)('should output a trace', async({browser, page, server, outputFile}) => {
+it.skip(!options.CHROMIUM)('should output a trace', async({browser, page, server, outputFile}) => {
   await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputFile});
   await page.goto(server.PREFIX + '/grid.html');
   await (browser as ChromiumBrowser).stopTracing();
   expect(fs.existsSync(outputFile)).toBe(true);
 });
 
-it.skip(!CHROMIUM)('should create directories as needed', async({browser, page, server, tmpDir}) => {
+it.skip(!options.CHROMIUM)('should create directories as needed', async({browser, page, server, tmpDir}) => {
   const filePath = path.join(tmpDir, 'these', 'are', 'directories');
   await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: filePath});
   await page.goto(server.PREFIX + '/grid.html');
@@ -50,7 +50,7 @@ it.skip(!CHROMIUM)('should create directories as needed', async({browser, page, 
   expect(fs.existsSync(filePath)).toBe(true);
 });
 
-it.skip(!CHROMIUM)('should run with custom categories if provided', async({browser, page, outputFile}) => {
+it.skip(!options.CHROMIUM)('should run with custom categories if provided', async({browser, page, outputFile}) => {
   await (browser as ChromiumBrowser).startTracing(page, {path: outputFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
   await (browser as ChromiumBrowser).stopTracing();
 
@@ -58,7 +58,7 @@ it.skip(!CHROMIUM)('should run with custom categories if provided', async({brows
   expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires');
 });
 
-it.skip(!CHROMIUM)('should throw if tracing on two pages', async({browser, page, outputFile}) => {
+it.skip(!options.CHROMIUM)('should throw if tracing on two pages', async({browser, page, outputFile}) => {
   await (browser as ChromiumBrowser).startTracing(page, {path: outputFile});
   const newPage = await browser.newPage();
   let error = null;
@@ -68,7 +68,7 @@ it.skip(!CHROMIUM)('should throw if tracing on two pages', async({browser, page,
   await (browser as ChromiumBrowser).stopTracing();
 });
 
-it.skip(!CHROMIUM)('should return a buffer', async({browser, page, server, outputFile}) => {
+it.skip(!options.CHROMIUM)('should return a buffer', async({browser, page, server, outputFile}) => {
   await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputFile});
   await page.goto(server.PREFIX + '/grid.html');
   const trace = await (browser as ChromiumBrowser).stopTracing();
@@ -76,14 +76,14 @@ it.skip(!CHROMIUM)('should return a buffer', async({browser, page, server, outpu
   expect(trace.toString()).toEqual(buf.toString());
 });
 
-it.skip(!CHROMIUM)('should work without options', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should work without options', async({browser, page, server}) => {
   await (browser as ChromiumBrowser).startTracing(page);
   await page.goto(server.PREFIX + '/grid.html');
   const trace = await (browser as ChromiumBrowser).stopTracing();
   expect(trace).toBeTruthy();
 });
 
-it.skip(!CHROMIUM)('should support a buffer without a path', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should support a buffer without a path', async({browser, page, server}) => {
   await (browser as ChromiumBrowser).startTracing(page, {screenshots: true});
   await page.goto(server.PREFIX + '/grid.html');
   const trace = await (browser as ChromiumBrowser).stopTracing();
