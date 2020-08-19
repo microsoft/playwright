@@ -38,6 +38,10 @@ if (browserName !== 'chromium') {
 if (browserName === 'webkit')
   api.delete('browserContext.clearPermissions');
 
+// Screencast APIs that are not publicly available.
+api.delete('browserContext.emit("screencaststarted")');
+api.delete('browserContext.emit("screencaststopped")');
+
 const coverageDir = path.join(__dirname, '..', 'coverage-report', 'coverage');
 
 const coveredMethods = new Set();

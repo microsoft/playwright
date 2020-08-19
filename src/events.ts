@@ -23,6 +23,8 @@ export const Events = {
   BrowserContext: {
     Close: 'close',
     Page: 'page',
+    ScreencastStarted: 'screencaststarted',
+    ScreencastStopped: 'screencaststopped',
   },
 
   BrowserServer: {

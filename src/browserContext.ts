@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
 import { helper } from './helper';
 import * as network from './network';
+import * as path from 'path';
 import { Page, PageBinding } from './page';
 import { TimeoutSettings } from './timeoutSettings';
 import * as frames from './frames';
@@ -28,10 +30,20 @@ import { EventEmitter } from 'events';
 import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
 
+export class Screencast {
+  readonly path: string;
+  readonly page: Page;
+  constructor(path: string, page: Page) {
+    this.path = path;
+    this.page = page;
+  }
+}
+
 export abstract class BrowserContext extends EventEmitter {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
+  _screencastOptions: types.ContextScreencastOptions | null = null;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -140,6 +152,15 @@ export abstract class BrowserContext extends EventEmitter {
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
+  }
+
+  _enableScreencast(options: types.ContextScreencastOptions) {
+    this._screencastOptions = options;
+    fs.mkdirSync(path.dirname(options.dir), {recursive: true});
+  }
+
+  _disableScreencast() {
+    this._screencastOptions = null;
   }
 
   async _loadDefaultContext(progress: Progress) {

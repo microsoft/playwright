@@ -179,13 +179,13 @@ it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, vid
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
   if (HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopVideoRecording();
+  await toImpl(page)._delegate.stopScreencast();
   expect(fs.existsSync(videoFile)).toBe(true);
 
   await videoPlayer.load(videoFile);
@@ -205,7 +205,7 @@ it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, serv
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
   await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
   if (HEADLESS && options.WEBKIT)
@@ -213,7 +213,7 @@ it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, serv
   await new Promise(r => setTimeout(r, 300));
   await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
   await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopVideoRecording();
+  await toImpl(page)._delegate.stopScreencast();
   expect(fs.existsSync(videoFile)).toBe(true);
 
   await videoPlayer.load(videoFile);
@@ -239,13 +239,13 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
   await page.goto(server.PREFIX + '/rotate-z.html');
-  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
   if (HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopVideoRecording();
+  await toImpl(page)._delegate.stopScreencast();
   expect(fs.existsSync(videoFile)).toBe(true);
 
   await videoPlayer.load(videoFile);
@@ -257,4 +257,27 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
     const pixels = await videoPlayer.pixels({x: 95, y: 45});
     expectAll(pixels, almostRed);
   }
+});
+
+it.fail(options.CHROMIUM || options.FFOX)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+  if (!toImpl)
+   return;
+  // Use server side of the context. All the code below also uses server side APIs.
+  const context = toImpl(await browser.newContext());
+  context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+  expect(context._screencastOptions).toBeTruthy();
+
+  const [startEvent, newPage] = await Promise.all([
+    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    context.newPage(),
+  ]);
+  expect(startEvent.page === newPage).toBe(true);
+  expect(startEvent.path).toBeTruthy();
+
+  const [stopEvent] = await Promise.all([
+    new Promise(resolve => context.on('screencaststopped', resolve)) as Promise<any>,
+    newPage.close(),
+  ]);
+  expect(stopEvent.page === newPage).toBe(true);
+  await context.close();
 });
