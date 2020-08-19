@@ -152,9 +152,6 @@ registerFixture('toImpl', async ({playwright}, test) => {
 
 registerWorkerFixture('browserType', async ({playwright, browserName}, test) => {
   const browserType = playwright[browserName];
-  const executablePath = getExecutablePath(browserName)
-  if (executablePath)
-    browserType._executablePath = executablePath
   await test(browserType);
 });
 
