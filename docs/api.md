@@ -902,12 +902,12 @@ Emitted when a request fails, for example by timing out.
 #### event: 'requestfinished'
 - <[Request]>
 
-Emitted when a request finishes successfully.
+Emitted when a request finishes successfully after downloading the response body. For a succesful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### event: 'response'
 - <[Response]>
 
-Emitted when a [response] is received.
+Emitted when [response] status and headers are received for a request. For a succesful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### event: 'worker'
 - <[Worker]>
@@ -3613,9 +3613,9 @@ Dispatches a `mouseup` event.
 
 ### class: Request
 
-Whenever the page sends a request, such as for a network resource, the following events are emitted by playwright's page:
+Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
 - [`'request'`](#event-request) emitted when the request is issued by the page.
-- [`'response'`](#event-response) emitted when/if the response is received for the request.
+- [`'response'`](#event-response) emitted when/if the response status and headers are received for the request.
 - [`'requestfinished'`](#event-requestfinished) emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  [`'requestfailed'`](#event-requestfailed) event is emitted.
