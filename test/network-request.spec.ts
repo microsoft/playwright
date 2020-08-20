@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import utils from './utils';
 
 it('should work for main frame navigation request', async({page, server}) => {
@@ -47,15 +47,15 @@ it('should work for fetch requests', async({page, server}) => {
 
 it('should return headers', async({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  if (options.CHROMIUM)
+  if (options.CHROMIUM())
     expect(response.request().headers()['user-agent']).toContain('Chrome');
-  else if (options.FFOX)
+  else if (options.FIREFOX())
     expect(response.request().headers()['user-agent']).toContain('Firefox');
-  else if (options.WEBKIT)
+  else if (options.WEBKIT())
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 
-it.fail(options.CHROMIUM||options.WEBKIT)('should get the same headers as the server', async({page, server}) => {
+it.fail(options.CHROMIUM()||options.WEBKIT())('should get the same headers as the server', async({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;
   server.setRoute('/something', (request, response) => {

@@ -16,7 +16,7 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { FixturePool, rerunRegistrations, setOptions } = require('./fixtures');
+const { FixturePool, rerunRegistrations, setParameters } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 const { EventEmitter } = require('events');
 
@@ -50,10 +50,10 @@ class TestRunner extends EventEmitter {
     this._configuredFile = entry.configuredFile;
     this._configurationObject = entry.configurationObject;
     this._configurationString = entry.configurationString;
-    this._parsedGeneratorConfiguration = new Map();
+    this._parsedGeneratorConfiguration = {};
     for (const {name, value} of this._configurationObject)
-      this._parsedGeneratorConfiguration.set(name, value);
-    this._parsedGeneratorConfiguration.set('parallelIndex', workerId);
+      this._parsedGeneratorConfiguration[name] = value;
+    this._parsedGeneratorConfiguration['parallelIndex'] = workerId;
     this._relativeTestFile = path.relative(options.testDir, this._file);
     this.mocha.addFile(this._file);
   }
@@ -67,7 +67,7 @@ class TestRunner extends EventEmitter {
   async run() {
     let callback;
     const result = new Promise(f => callback = f);
-    setOptions(this._parsedGeneratorConfiguration);
+    setParameters(this._parsedGeneratorConfiguration);
     this.mocha.loadFiles();
     rerunRegistrations(this._file, 'test');
     this._runner = this.mocha.run(callback);

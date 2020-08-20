@@ -14,10 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 
-const CRASH_FAIL = (options.FFOX && WIN) || options.WIRE;
+const CRASH_FAIL = (options.FIREFOX() && WIN) || options.WIRE;
 // Firefox Win: it just doesn't crash sometimes.
 function crash(pageImpl, browserName) {
   if (browserName === 'chromium')

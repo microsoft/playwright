@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 
 it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
@@ -36,7 +36,7 @@ it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({
   await browserServer.close();
 });
 
-it.skip(options.WIRE).fail(options.CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE).fail(options.CHROMIUM() && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
   const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);

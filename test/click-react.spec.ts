@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import './playwright.fixtures';
 
 declare const renderComponent;
 declare const e;

@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import './playwright.fixtures';
 
 it('should query existing element with css selector', async({page, server}) => {
   await page.setContent('<section>test</section>');

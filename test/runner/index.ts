@@ -14,20 +14,30 @@
  * limitations under the License.
  */
 
-import os from 'os';
-import path from 'path';
-import { mkdtempAsync, removeFolderAsync } from '../utils';
-import { registerFixture } from '.';
+const os = require('os');
+const path = require('path');
+const { mkdtempAsync, removeFolderAsync } = require('../utils');
+
+const {
+  parameters: jsParameters,
+  registerFixture: jsRegisterFixture,
+  registerWorkerFixture: jsRegisterWorkerFixture,
+  registerParameter: jsRegisterParameter
+} = require('./fixtures');
 
 declare global {
-  interface Options {
+  interface FixtureParameters {
     parallelIndex: number;
   }
-
   interface WorkerState {
     tmpDir: string;
   }
 }
+
+export const parameters: FixtureParameters = jsParameters;
+export const registerFixture = jsRegisterFixture;
+export const registerWorkerFixture = jsRegisterWorkerFixture
+export const registerParameter = jsRegisterParameter;
 
 registerFixture('tmpDir', async ({}, test) => {
   const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));

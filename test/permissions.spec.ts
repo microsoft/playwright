@@ -14,13 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
 }
 
-describe.skip(options.WEBKIT)('permissions', () => {
+describe.skip(options.WEBKIT())('permissions', () => {
   it('should be prompt by default', async({page, server, context}) => {
     // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
     await page.goto(server.EMPTY_PAGE);
@@ -91,7 +91,7 @@ describe.skip(options.WEBKIT)('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it.fail(options.WEBKIT || options.FFOX || (options.CHROMIUM && !options.HEADLESS))('should trigger permission onchange', async({page, server, context}) => {
+  it.fail(options.WEBKIT() || options.FIREFOX() || (options.CHROMIUM() && !options.HEADLESS))('should trigger permission onchange', async({page, server, context}) => {
     //TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
     // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536
@@ -133,7 +133,7 @@ describe.skip(options.WEBKIT)('permissions', () => {
     await otherContext.close();
   });
 
-  it.fail(options.WEBKIT || options.FFOX || (options.CHROMIUM && !options.HEADLESS))('should support clipboard read', async({page, server, context, browser}) => {
+  it.fail(options.WEBKIT() || options.FIREFOX() || (options.CHROMIUM() && !options.HEADLESS))('should support clipboard read', async({page, server, context, browser}) => {
     // No such permissions (requires flag) in Firefox
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

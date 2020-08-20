@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
-it.skip(!options.CHROMIUM)('should work', async function({browserType, page, server}) {
+it.skip(!options.CHROMIUM())('should work', async function({browserType, page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/simple.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -28,7 +28,7 @@ it.skip(!options.CHROMIUM)('should work', async function({browserType, page, ser
   expect(coverage[0].text.substring(range.start, range.end)).toBe('div { color: green; }');
 });
 
-it.skip(!options.CHROMIUM)('should report sourceURLs', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should report sourceURLs', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/sourceurl.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -36,7 +36,7 @@ it.skip(!options.CHROMIUM)('should report sourceURLs', async function({page, ser
   expect(coverage[0].url).toBe('nicename.css');
 });
 
-it.skip(!options.CHROMIUM)('should report multiple stylesheets', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should report multiple stylesheets', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -46,7 +46,7 @@ it.skip(!options.CHROMIUM)('should report multiple stylesheets', async function(
   expect(coverage[1].url).toContain('/csscoverage/stylesheet2.css');
 });
 
-it.skip(!options.CHROMIUM)('should report stylesheets that have no coverage', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should report stylesheets that have no coverage', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/unused.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -55,7 +55,7 @@ it.skip(!options.CHROMIUM)('should report stylesheets that have no coverage', as
   expect(coverage[0].ranges.length).toBe(0);
 });
 
-it.skip(!options.CHROMIUM)('should work with media queries', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should work with media queries', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/media.html');
   const coverage = await page.coverage.stopCSSCoverage();
@@ -66,7 +66,7 @@ it.skip(!options.CHROMIUM)('should work with media queries', async function({pag
   ]);
 });
 
-it.skip(!options.CHROMIUM)('should work with complicated usecases', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should work with complicated usecases', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.goto(server.PREFIX + '/csscoverage/involved.html');
   const coverage: any = await page.coverage.stopCSSCoverage();
@@ -90,7 +90,7 @@ it.skip(!options.CHROMIUM)('should work with complicated usecases', async functi
   );
 });
 
-it.skip(!options.CHROMIUM)('should ignore injected stylesheets', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should ignore injected stylesheets', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.addStyleTag({content: 'body { margin: 10px;}'});
   // trigger style recalc
@@ -100,7 +100,7 @@ it.skip(!options.CHROMIUM)('should ignore injected stylesheets', async function(
   expect(coverage.length).toBe(0);
 });
 
-it.skip(!options.CHROMIUM)('should report stylesheets across navigations', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should report stylesheets across navigations', async function({page, server}) {
   await page.coverage.startCSSCoverage({resetOnNavigation: false});
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
@@ -108,7 +108,7 @@ it.skip(!options.CHROMIUM)('should report stylesheets across navigations', async
   expect(coverage.length).toBe(2);
 });
 
-it.skip(!options.CHROMIUM)('should NOT report scripts across navigations', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should NOT report scripts across navigations', async function({page, server}) {
   await page.coverage.startCSSCoverage(); // Enabled by default.
   await page.goto(server.PREFIX + '/csscoverage/multiple.html');
   await page.goto(server.EMPTY_PAGE);
@@ -116,7 +116,7 @@ it.skip(!options.CHROMIUM)('should NOT report scripts across navigations', async
   expect(coverage.length).toBe(0);
 });
 
-it.skip(!options.CHROMIUM)('should work with a recently loaded stylesheet', async function({page, server}) {
+it.skip(!options.CHROMIUM())('should work with a recently loaded stylesheet', async function({page, server}) {
   await page.coverage.startCSSCoverage();
   await page.evaluate(async url => {
     document.body.textContent = 'hello, world';

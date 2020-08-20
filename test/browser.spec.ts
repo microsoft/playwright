@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 it('should create new page', async function({browser}) {
   const page1 = await browser.newPage();
@@ -39,7 +39,7 @@ it('should throw upon second create new page', async function({browser}) {
 
 it('version should work', async function({browser}) {
   const version = browser.version();
-  if (options.CHROMIUM)
+  if (options.CHROMIUM())
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
   else
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();

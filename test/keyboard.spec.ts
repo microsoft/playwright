@@ -14,8 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-
+import { options } from './playwright.fixtures';
 import utils from './utils';
 
 it('should type into a textarea', async ({page}) => {
@@ -83,7 +82,7 @@ it('insertText should only emit input event', async ({page, server}) => {
   expect(await events.jsonValue()).toEqual(['input']);
 });
 
-it.fail(options.FFOX && MAC)('should report shiftKey', async ({page, server}) => {
+it.fail(options.FIREFOX() && MAC)('should report shiftKey', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
   const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
@@ -354,17 +353,17 @@ it('should press the meta key', async ({page}) => {
   const lastEvent = await captureLastKeydown(page);
   await page.keyboard.press('Meta');
   const {key, code, metaKey} = await lastEvent.jsonValue();
-  if (options.FFOX && !MAC)
+  if (options.FIREFOX() && !MAC)
     expect(key).toBe('OS');
   else
     expect(key).toBe('Meta');
 
-  if (options.FFOX)
+  if (options.FIREFOX())
     expect(code).toBe('OSLeft');
   else
     expect(code).toBe('MetaLeft');
 
-  if (options.FFOX && !MAC)
+  if (options.FIREFOX() && !MAC)
     expect(metaKey).toBe(false);
   else
     expect(metaKey).toBe(true);
@@ -380,7 +379,7 @@ it('should work after a cross origin navigation', async ({page, server}) => {
 });
 
 // event.keyIdentifier has been removed from all browsers except WebKit
-it.skip(!options.WEBKIT)('should expose keyIdentifier in webkit', async ({page, server}) => {
+it.skip(!options.WEBKIT())('should expose keyIdentifier in webkit', async ({page, server}) => {
   const lastEvent = await captureLastKeydown(page);
   const keyMap = {
     'ArrowUp': 'Up',

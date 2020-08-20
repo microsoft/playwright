@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-const { registerFixture, registerWorkerFixture, registerOption, options } = require('./fixtures');
 const { Test, Suite } = require('mocha');
 const { installTransform } = require('./transform');
 const commonSuite = require('mocha/lib/interfaces/common');
 
 Error.stackTraceLimit = 15;
-global.options = options;
-global.registerFixture = registerFixture;
-global.registerWorkerFixture = registerWorkerFixture;
-global.registerOption = registerOption;
 
 let revertBabelRequire;
 

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 it('should await navigation when clicking anchor', async({page, server}) => {
   const messages = [];

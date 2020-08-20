@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
 
@@ -126,7 +126,7 @@ it('should be atomic', async({playwright, page}) => {
   expect(await page.evaluate(() => window['_clicked'])).toBe(true);
 });
 
-it.fail(options.WEBKIT)('should dispatch drag drop events', async({page, server}) => {
+it.fail(options.WEBKIT())('should dispatch drag drop events', async({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
@@ -138,7 +138,7 @@ it.fail(options.WEBKIT)('should dispatch drag drop events', async({page, server}
   }, {source, target})).toBeTruthy();
 });
 
-it.fail(options.WEBKIT)('should dispatch drag drop events', async({page, server}) => {
+it.fail(options.WEBKIT())('should dispatch drag drop events', async({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   const source = await page.$('#source');

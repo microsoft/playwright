@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
 import { Frame } from '..';
@@ -140,7 +141,7 @@ it('should work with DOM history.back()/history.forward()', async({page, server}
   expect(page.url()).toBe(server.PREFIX + '/second.html');
 });
 
-it.fail(options.FFOX)('should work when subframe issues window.stop()', async({page, server}) => {
+it.fail(options.FIREFOX())('should work when subframe issues window.stop()', async({page, server}) => {
   server.setRoute('/frames/style.css', (req, res) => {});
   const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = await new Promise<Frame>(f => page.once('frameattached', f));

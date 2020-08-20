@@ -18,28 +18,11 @@ const debug = require('debug');
 
 const registrations = new Map();
 const registrationsByFile = new Map();
-const optionRegistrations = new Map();
-const optionsImpl = new Map();
-const options = new Proxy({}, {
-  get: (obj, prop) => {
-    if (optionsImpl.has(prop))
-      return optionsImpl.get(prop);
-    const fn = optionRegistrations.get(prop);
-    if (!fn)
-      return obj[prop];
-    const names = optionParameterNames(fn);
-    const param = {};
-    names.forEach(name => param[name] = options[name]);
-    const result = fn.call(null, param);
-    optionsImpl.set(prop, result);
-    return result;
-  }
-});
+let parameters = {};
+const parameterRegistrations = new Map();
 
-function setOptions(map) {
-  optionsImpl.clear();
-  for (const [name, value] of map)
-    optionsImpl.set(name, value);
+function setParameters(params) {
+  parameters = Object.assign(parameters, params)
 }
 
 class Fixture {
@@ -50,12 +33,12 @@ class Fixture {
     this.fn = fn;
     this.deps = fixtureParameterNames(this.fn);
     this.usages = new Set();
-    this.generatorValue = optionsImpl.get(name);
-    this.value = this.generatorValue || null;
+    this.hasGeneratorValue = name in parameters;
+    this.value = this.hasGeneratorValue ? parameters[name] : null;
   }
 
   async setup() {
-    if (this.generatorValue)
+    if (this.hasGeneratorValue)
       return;
     for (const name of this.deps) {
       await this.pool.setupFixture(name);
@@ -80,7 +63,7 @@ class Fixture {
   }
 
   async teardown() {
-    if (this.generatorValue)
+    if (this.hasGeneratorValue)
       return;
     if (this._teardown)
       return;
@@ -203,13 +186,9 @@ function registerWorkerFixture(name, fn) {
   innerRegisterFixture(name, 'worker', fn);
 };
 
-function registerOptionGenerator(name, fn) {
-  registerWorkerFixture(name, async ({}, test) => await test(options.browserName));
-  optionRegistrations.set(name, fn);
-}
-
-function registerOption(name, fn) {
-  optionRegistrations.set(name, fn);
+function registerParameter(name, fn) {
+  registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
+  parameterRegistrations.set(name, fn);
 }
 
 function collectRequires(file, result) {
@@ -249,4 +228,4 @@ function rerunRegistrations(file, scope) {
     registrations.set(registration.name, registration);
 }
 
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerOption, registerOptionGenerator, setOptions, optionRegistrations, options };
+module.exports = { FixturePool, registerFixture, registerWorkerFixture, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerParameter, setParameters, parameterRegistrations, parameters };

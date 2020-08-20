@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 
 it.skip(options.WIRE)('should avoid side effects after timeout', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

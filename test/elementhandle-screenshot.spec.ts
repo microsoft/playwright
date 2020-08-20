@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
 import {PNG} from 'pngjs';
@@ -22,7 +22,7 @@ import path from 'path';
 import fs from 'fs';
 
 // Firefox headful produces a different image.
-const ffheadful = options.FFOX && !options.HEADLESS;
+const ffheadful = options.FIREFOX() && !options.HEADLESS;
 
 it.skip(ffheadful)('should work', async({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
@@ -210,7 +210,7 @@ it.skip(ffheadful)('should work for an element with fractional dimensions', asyn
   expect(screenshot).toMatchImage(golden('screenshot-element-fractional.png'));
 });
 
-it.skip(options.FFOX)('should work with a mobile viewport', async({browser, server, golden}) => {
+it.skip(options.FIREFOX())('should work with a mobile viewport', async({browser, server, golden}) => {
   const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -221,7 +221,7 @@ it.skip(options.FFOX)('should work with a mobile viewport', async({browser, serv
   await context.close();
 });
 
-it.skip(options.FFOX)('should work with device scale factor', async({browser, server, golden}) => {
+it.skip(options.FIREFOX())('should work with device scale factor', async({browser, server, golden}) => {
   const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');

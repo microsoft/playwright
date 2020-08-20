@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 import { ChromiumBrowser } from '..';
 
 it('should work', async({browser}) => {
@@ -65,7 +65,7 @@ it('should scope context handles', async({browserType, browser, server}) => {
   await expectScopeState(browser, GOLDEN_PRECONDITION);
 });
 
-it.skip(!options.CHROMIUM)('should scope CDPSession handles', async({browserType, browser, server}) => {
+it.skip(!options.CHROMIUM())('should scope CDPSession handles', async({browserType, browser, server}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [

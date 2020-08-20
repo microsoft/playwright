@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 it('should work', async ({ browser }) => {
   const func = () => new Date(1479579154987).toString();
@@ -69,7 +69,7 @@ it('should work for multiple pages sharing same process', async({browser, server
   await context.close();
 });
 
-it.fail(options.FFOX)('should not change default timezone in another context', async({browser, server}) => {
+it.fail(options.FIREFOX())('should not change default timezone in another context', async({browser, server}) => {
   async function getContextTimezone(context) {
     const page = await context.newPage();
     return await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);

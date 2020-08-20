@@ -16,8 +16,7 @@
  */
 
 import path from 'path';
-import './base.fixture';
-
+import { options } from './playwright.fixtures';
 
 it('should reject all promises when browser is closed', async({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);
@@ -37,7 +36,7 @@ it('should throw if userDataDir option is passed', async({browserType, defaultBr
   expect(waitError.message).toContain('launchPersistentContext');
 });
 
-it.skip(options.FFOX)('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.FIREFOX())('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
   await browserType.launch(options).catch(e => waitError = e);
