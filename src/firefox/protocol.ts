@@ -262,6 +262,14 @@ export module Protocol {
       colorScheme: ("dark"|"light"|"no-preference")|null;
     };
     export type setColorSchemeReturnValue = void;
+    export type setScreencastOptionsParameters = {
+      browserContextId?: string;
+      dir: string;
+      width: number;
+      height: number;
+      scale?: number;
+    };
+    export type setScreencastOptionsReturnValue = void;
   }
   export module Page {
     export type DOMPoint = {
@@ -397,6 +405,13 @@ export module Protocol {
     export type dispatchMessageFromWorkerPayload = {
       workerId: string;
       message: string;
+    }
+    export type screencastStartedPayload = {
+      uid: string;
+      file: string;
+    }
+    export type screencastStoppedPayload = {
+      uid: string;
     }
     export type closeParameters = {
       runBeforeUnload?: boolean;
@@ -935,6 +950,8 @@ export module Protocol {
     "Page.workerCreated": Page.workerCreatedPayload;
     "Page.workerDestroyed": Page.workerDestroyedPayload;
     "Page.dispatchMessageFromWorker": Page.dispatchMessageFromWorkerPayload;
+    "Page.screencastStarted": Page.screencastStartedPayload;
+    "Page.screencastStopped": Page.screencastStoppedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
     "Runtime.executionContextDestroyed": Runtime.executionContextDestroyedPayload;
     "Runtime.console": Runtime.consolePayload;
@@ -974,6 +991,7 @@ export module Protocol {
     "Browser.getCookies": Browser.getCookiesParameters;
     "Browser.setOnlineOverride": Browser.setOnlineOverrideParameters;
     "Browser.setColorScheme": Browser.setColorSchemeParameters;
+    "Browser.setScreencastOptions": Browser.setScreencastOptionsParameters;
     "Page.close": Page.closeParameters;
     "Page.setFileInputFiles": Page.setFileInputFilesParameters;
     "Page.addBinding": Page.addBindingParameters;
@@ -1046,6 +1064,7 @@ export module Protocol {
     "Browser.getCookies": Browser.getCookiesReturnValue;
     "Browser.setOnlineOverride": Browser.setOnlineOverrideReturnValue;
     "Browser.setColorScheme": Browser.setColorSchemeReturnValue;
+    "Browser.setScreencastOptions": Browser.setScreencastOptionsReturnValue;
     "Page.close": Page.closeReturnValue;
     "Page.setFileInputFiles": Page.setFileInputFilesReturnValue;
     "Page.addBinding": Page.addBindingReturnValue;
