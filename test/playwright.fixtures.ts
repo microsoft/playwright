@@ -54,7 +54,7 @@ declare global {
     browserName: string;
     headless: boolean;
     wire: boolean;
-    slowMo: boolean;
+    slowMo: number;
   }
 }
 

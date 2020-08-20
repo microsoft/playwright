@@ -12,6 +12,7 @@
     "declaration": true,
     "allowJs": true,
     "checkJs": true,
+    "declarationMap": true
   },
   "compileOnSave": true,
   "include": ["src"],

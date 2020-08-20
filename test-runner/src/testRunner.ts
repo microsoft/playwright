@@ -76,6 +76,7 @@ export class TestRunner extends EventEmitter {
     this._parsedGeneratorConfiguration = {};
     for (const {name, value} of this._configurationObject) {
       this._parsedGeneratorConfiguration[name] = value;
+      // @ts-ignore
       registerWorkerFixture(name, async ({}, test) => await test(value));
     }
     this._parsedGeneratorConfiguration['parallelIndex'] = workerId;

@@ -20,7 +20,7 @@ declare global {
   interface WorkerState {
   }
 
-  interface FixtureState {
+  interface TestState {
   }
 
   interface FixtureParameters {
@@ -32,10 +32,10 @@ const registrationsByFile = new Map();
 export let parameters: FixtureParameters = {} as FixtureParameters;
 export const parameterRegistrations = new Map();
 
-export function setParameters(params) {
+export function setParameters(params: any) {
   parameters = Object.assign(parameters, params);
   for (const name of Object.keys(params))
-    registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
+    registerWorkerFixture(name as keyof WorkerState, async ({}, test) => await test(parameters[name] as never));
 }
 
 
@@ -159,8 +159,8 @@ export class FixturePool {
   }
 }
 
-export function fixturesForCallback(callback: any) {
-  const names = new Set();
+export function fixturesForCallback(callback: any): string[] {
+  const names = new Set<string>();
   const visit  = (callback: any) => {
     for (const name of fixtureParameterNames(callback)) {
       if (name in names)
@@ -210,11 +210,11 @@ function innerRegisterFixture(name: any, scope: string, fn: any, caller: Functio
   registrationsByFile.get(file).push(registration);
 };
 
-export function registerFixture<T extends keyof FixtureState>(name: T, fn: (params: WorkerState & FixtureState, test: (arg: FixtureState[T]) => Promise<void>) => Promise<void>) {
+export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, test: (arg: TestState[T]) => Promise<void>) => Promise<void>) {
   innerRegisterFixture(name, 'test', fn, registerFixture);
 };
 
-export function registerWorkerFixture<T extends keyof WorkerState>(name: T, fn: (params: WorkerState, test: (arg: WorkerState[T]) => Promise<void>) => Promise<void>) {
+export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, test: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>) => Promise<void>) {
   innerRegisterFixture(name, 'worker', fn, registerWorkerFixture);
 };
 

@@ -40,15 +40,15 @@ declare global {
   const describe: DescribeFunction;
   const fdescribe: DescribeFunction;
   const xdescribe: DescribeFunction;
-  const it: ItFunction<FixtureState & WorkerState>;
-  const fit: ItFunction<FixtureState & WorkerState>;
-  const dit: ItFunction<FixtureState & WorkerState>;
-  const xit: ItFunction<FixtureState & WorkerState>;
+  const it: ItFunction<TestState & WorkerState & FixtureParameters>;
+  const fit: ItFunction<TestState & WorkerState & FixtureParameters>;
+  const dit: ItFunction<TestState & WorkerState & FixtureParameters>;
+  const xit: ItFunction<TestState & WorkerState & FixtureParameters>;
 
-  const beforeEach: (inner: (state: FixtureState & WorkerState) => Promise<void>) => void;
-  const afterEach: (inner: (state: FixtureState & WorkerState) => Promise<void>) => void;
-  const beforeAll: (inner: (state: WorkerState) => Promise<void>) => void;
-  const afterAll: (inner: (state: WorkerState) => Promise<void>) => void;
+  const beforeEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
+  const afterEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
+  const beforeAll: (inner: (state: WorkerState & FixtureParameters) => Promise<void>) => void;
+  const afterAll: (inner: (state: WorkerState & FixtureParameters) => Promise<void>) => void;
 }
 
 const mkdtempAsync = promisify(fs.mkdtemp);
@@ -58,7 +58,7 @@ declare global {
   interface FixtureParameters {
     parallelIndex: number;
   }
-  interface FixtureState {
+  interface TestState {
     tmpDir: string;
   }
 }

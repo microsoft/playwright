@@ -25,9 +25,9 @@ let beforeFunction;
 let afterFunction;
 let matrix = {};
 
-global.before = (fn => beforeFunction = fn);
-global.after = (fn => afterFunction = fn);
-global.matrix = (m => matrix = m);
+global['before'] = (fn => beforeFunction = fn);
+global['after'] = (fn => afterFunction = fn);
+global['matrix'] = (m => matrix = m);
 
 program
   .version('Version ' + /** @type {any} */ (require)('../package.json').version)
