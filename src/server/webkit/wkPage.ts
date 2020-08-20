@@ -25,6 +25,7 @@ import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
 import { Page, PageDelegate, PageBinding } from '../page';
+import * as path from 'path';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
@@ -113,6 +114,12 @@ export class WKPage implements PageDelegate {
     if (this._browserContext._permissions.size) {
       for (const [key, value] of this._browserContext._permissions)
         this._grantPermissions(key, value);
+    }
+    if (this._browserContext._screencastOptions) {
+      const contextOptions = this._browserContext._screencastOptions;
+      const outputFile = path.join(contextOptions.dir, helper.guid() + '.webm');
+      const options = Object.assign({}, contextOptions, {outputFile});
+      promises.push(this.startScreencast(options));
     }
     await Promise.all(promises);
   }
@@ -717,7 +724,7 @@ export class WKPage implements PageDelegate {
         height: options.height,
         scale: options.scale,
       });
-      this._browserContext.emit(BrowserContext.Events.ScreencastStarted, new Screencast(options.outputFile, this._initializedPage!));
+      this._browserContext.emit(BrowserContext.Events.ScreencastStarted, new Screencast(options.outputFile, this._page));
     } catch (e) {
       this._recordingVideoFile = null;
       throw e;
