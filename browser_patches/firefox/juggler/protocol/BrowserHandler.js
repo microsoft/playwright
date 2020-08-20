@@ -33,13 +33,13 @@ class BrowserHandler {
       if (!this._shouldAttachToTarget(target))
         continue;
       const session = this._dispatcher.createSession();
-      target.initSession(session);
-      target.connectSession(session);
       this._attachedSessions.set(target, session);
       this._session.emitEvent('Browser.attachedToTarget', {
         sessionId: session.sessionId(),
         targetInfo: target.info()
       });
+      target.initSession(session);
+      target.connectSession(session);
     }
 
     this._eventListeners = [
@@ -92,12 +92,12 @@ class BrowserHandler {
     if (!this._shouldAttachToTarget(target))
       return;
     const session = this._dispatcher.createSession();
-    target.initSession(session);
     this._attachedSessions.set(target, session);
     this._session.emitEvent('Browser.attachedToTarget', {
       sessionId: session.sessionId(),
       targetInfo: target.info()
     });
+    target.initSession(session);
     sessions.push(session);
   }
 
