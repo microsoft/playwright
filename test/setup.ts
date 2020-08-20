@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+declare const before: (f: () => Promise<any>) => void;
+declare const after: (f: () => Promise<any>) => void;
+declare const matrix: (m: any) => void;
+
 matrix({
   'browserName': process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit', 'firefox'],
   'headless': [!!valueFromEnv('HEADLESS', true)],

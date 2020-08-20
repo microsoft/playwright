@@ -13,6 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+type ServerResponse = import('http').ServerResponse;
+type IncomingMessage = import('http').IncomingMessage;
+
 export class TestServer {
   static create(dirPath: string, port: number): Promise<TestServer>;
   static createHTTPS(dirPath: string, port: number): Promise<TestServer>;
