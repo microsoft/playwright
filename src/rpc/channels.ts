@@ -1914,7 +1914,7 @@ export type ElementHandleUncheckOptions = {
 };
 export type ElementHandleUncheckResult = void;
 export type ElementHandleWaitForElementStateParams = {
-  state: 'visible' | 'hidden' | 'stable' | 'enabled',
+  state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled',
   timeout?: number,
 };
 export type ElementHandleWaitForElementStateOptions = {

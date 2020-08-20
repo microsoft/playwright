@@ -602,8 +602,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled', options: types.TimeoutOptions = {}): Promise<void> {
+  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: types.TimeoutOptions = {}): Promise<void> {
     return this._page._runAbortableTask(async progress => {
+      progress.log(`  waiting for element to be ${state}`);
       if (state === 'visible') {
         const poll = await this._evaluateHandleInUtility(([injected, node]) => {
           return injected.waitForNodeVisible(node);
@@ -623,6 +624,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (state === 'enabled') {
         const poll = await this._evaluateHandleInUtility(([injected, node]) => {
           return injected.waitForNodeEnabled(node);
+        }, {});
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+        return;
+      }
+      if (state === 'disabled') {
+        const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+          return injected.waitForNodeDisabled(node);
         }, {});
         const pollHandler = new InjectedScriptPollHandler(progress, poll);
         assertDone(throwRetargetableDOMError(await pollHandler.finish()));

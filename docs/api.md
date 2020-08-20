@@ -3113,7 +3113,7 @@ If the element is detached from the DOM at any moment during the action, this me
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
 
 #### elementHandle.waitForElementState(state[, options])
-- `state` <"visible"|"hidden"|"stable"|"enabled"> A state to wait for, see below for more details.
+- `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled"> A state to wait for, see below for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]> Promise that resolves when the element satisfies the `state`.
@@ -3123,6 +3123,7 @@ Depending on the `state` parameter, this method waits for one of the [actionabil
 - `"hidden"` Wait until the element is [not visible](./actionability.md#visible) or [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
 - `"stable"` Wait until the element is both [visible](./actionability.md#visible) and [stable](./actionability.md#stable).
 - `"enabled"` Wait until the element is [enabled](./actionability.md#enabled).
+- `"disabled"` Wait until the element is [not enabled](./actionability.md#enabled).
 
 If the element does not satisfy the condition for the `timeout` milliseconds, this method will throw.
 

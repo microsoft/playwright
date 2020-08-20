@@ -1585,6 +1585,7 @@ ElementHandle:
           - hidden
           - stable
           - enabled
+          - disabled
         timeout: number?
 
     waitForSelector:

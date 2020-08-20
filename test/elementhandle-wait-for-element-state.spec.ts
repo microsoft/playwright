@@ -102,6 +102,17 @@ it('should throw waiting for enabled when detached', async ({ page }) => {
   expect(error.message).toContain('Element is not attached to the DOM');
 });
 
+it('should wait for disabled button', async({page}) => {
+  await page.setContent('<button><span>Target</span></button>');
+  const span = await page.$('text=Target');
+  let done = false;
+  const promise = span.waitForElementState('disabled').then(() => done = true);
+  await giveItAChanceToResolve(page);
+  expect(done).toBe(false);
+  await span.evaluate(span => (span.parentElement as HTMLButtonElement).disabled = true);
+  await promise;
+});
+
 it('should wait for stable position', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');

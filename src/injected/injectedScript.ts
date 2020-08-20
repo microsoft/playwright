@@ -383,6 +383,19 @@ export default class InjectedScript {
     });
   }
 
+  waitForNodeDisabled(node: Node): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+    return this.pollRaf((progress, continuePolling) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
+      if (!node.isConnected || !element)
+        return 'error:notconnected';
+      if (!this._isElementDisabled(element)) {
+        progress.logRepeating('    element is enabled - waiting...');
+        return continuePolling;
+      }
+      return 'done';
+    });
+  }
+
   focusNode(node: Node, resetSelectionIfNotFocused?: boolean): FatalDOMError | 'error:notconnected' | 'done' {
     if (!node.isConnected)
       return 'error:notconnected';

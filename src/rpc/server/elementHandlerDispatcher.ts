@@ -150,7 +150,7 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements Eleme
     return { value: serializeResult(await this._elementHandle._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async waitForElementState(params: { state: 'visible' | 'hidden' | 'stable' | 'enabled' } & types.TimeoutOptions): Promise<void> {
+  async waitForElementState(params: { state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' } & types.TimeoutOptions): Promise<void> {
     await this._elementHandle.waitForElementState(params.state, params);
   }
 
