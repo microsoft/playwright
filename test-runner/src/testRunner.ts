@@ -31,49 +31,55 @@ declare global {
 global.expect = require('expect');
 const GoldenUtils = require('./GoldenUtils');
 
+export type TestRunnerEntry = {
+  file: string;
+  ordinals: number[];
+  configuredFile: string;
+  configurationObject: any;
+};
+
 class NullReporter {}
 
 export class TestRunner extends EventEmitter {
   mocha: any;
-  _currentOrdinal: number;
-  _failedWithError: boolean;
-  _file: any;
-  _ordinals: Set<unknown>;
-  _remaining: Set<unknown>;
-  _trialRun: any;
-  _passes: number;
-  _failures: number;
-  _pending: number;
-  _configuredFile: any;
-  _configurationObject: any;
-  _configurationString: any;
-  _parsedGeneratorConfiguration: {};
-  _relativeTestFile: string;
-  _runner: any;
-  constructor(entry, options, workerId) {
+  private _currentOrdinal = -1;
+  private _failedWithError = false;
+  private _file: any;
+  private _ordinals: Set<number>;
+  private _remaining: Set<number>;
+  private _trialRun: any;
+  private _passes = 0;
+  private _failures = 0;
+  private _pending = 0;
+  private _configuredFile: any;
+  private _configurationObject: any;
+  private _parsedGeneratorConfiguration: any = {};
+  private _relativeTestFile: string;
+  private _runner: Mocha.Runner;
+  private _outDir: string;
+  private _timeout: number;
+  private _testDir: string;
+
+  constructor(entry: TestRunnerEntry, options, workerId) {
     super();
     this.mocha = new Mocha({
       reporter: NullReporter,
-      timeout: options.timeout,
+      timeout: 0,
       ui: fixturesUI.bind(null, {
-        testWrapper: fn => this._testWrapper(fn),
+        testWrapper: (fn, title, file, isSlow) => this._testWrapper(fn, title, file, isSlow),
         hookWrapper: (hook, fn) => this._hookWrapper(hook, fn),
         ignoreOnly: true
       }),
     });
-    this._currentOrdinal = -1;
-    this._failedWithError = false;
     this._file = entry.file;
     this._ordinals = new Set(entry.ordinals);
     this._remaining = new Set(entry.ordinals);
     this._trialRun = options.trialRun;
-    this._passes = 0;
-    this._failures = 0;
-    this._pending = 0;
+    this._timeout = options.timeout;
+    this._testDir = options.testDir;
+    this._outDir = options.outputDir;
     this._configuredFile = entry.configuredFile;
     this._configurationObject = entry.configurationObject;
-    this._configurationString = entry.configurationString;
-    this._parsedGeneratorConfiguration = {};
     for (const {name, value} of this._configurationObject) {
       this._parsedGeneratorConfiguration[name] = value;
       // @ts-ignore
@@ -168,8 +174,15 @@ export class TestRunner extends EventEmitter {
     return true;
   }
 
-  _testWrapper(fn) {
-    const wrapped = fixturePool.wrapTestCallback(fn);
+  _testWrapper(fn, title, file, isSlow) {
+    const timeout = isSlow ? this._timeout * 3 : this._timeout;
+    const wrapped = fixturePool.wrapTestCallback(fn, timeout, {
+      outputDir: this._outDir,
+      testDir: this._testDir,
+      title,
+      file,
+      timeout
+    });
     return wrapped ? (done, ...args) => {
       if (!this._shouldRunTest()) {
         done();
@@ -183,7 +196,7 @@ export class TestRunner extends EventEmitter {
     if (!this._shouldRunTest(true))
       return;
     return hook(async () => {
-      return await fixturePool.resolveParametersAndRun(fn);
+      return await fixturePool.resolveParametersAndRun(fn, 0);
     });
   }
 
