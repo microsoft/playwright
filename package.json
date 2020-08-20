@@ -22,7 +22,7 @@
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
     "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run generate-types",
-    "watch": "node utils/runWebpack.js --mode='development' --watch --silent | tsc -w -p .",
+    "watch": "node utils/watch.js",
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && npm run typecheck-tests",
     "generate-types": "node utils/generate_types/",
     "generate-channels": "node utils/generate_channels.js",
