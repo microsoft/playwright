@@ -123,17 +123,17 @@ export abstract class BrowserContext extends EventEmitter {
     this._doExposeBinding(binding);
   }
 
-  async grantPermissions(permissions: string[], options?: { origin?: string }) {
-    let origin = '*';
-    if (options && options.origin) {
-      const url = new URL(options.origin);
-      origin = url.origin;
+  async grantPermissions(permissions: string[], origin?: string) {
+    let resolvedOrigin = '*';
+    if (origin) {
+      const url = new URL(origin);
+      resolvedOrigin = url.origin;
     }
-    const existing = new Set(this._permissions.get(origin) || []);
+    const existing = new Set(this._permissions.get(resolvedOrigin) || []);
     permissions.forEach(p => existing.add(p));
     const list = [...existing.values()];
-    this._permissions.set(origin, list);
-    await this._doGrantPermissions(origin, list);
+    this._permissions.set(resolvedOrigin, list);
+    await this._doGrantPermissions(resolvedOrigin, list);
   }
 
   async clearPermissions() {
