@@ -134,7 +134,8 @@ class TargetRegistry {
         if (!target)
           return;
         target.emit('crashed');
-        this._destroyTarget(target).catch(e => dump(`Failed to destroy target: ${e}`));
+        if (target)
+          target.dispose().catch(e => dump(`Failed to destroy target: ${e}`));
       }
     }, 'oop-frameloader-crashed');
 
@@ -202,7 +203,8 @@ class TargetRegistry {
       const tab = event.target;
       const linkedBrowser = tab.linkedBrowser;
       const target = this._browserToTarget.get(linkedBrowser);
-      this._destroyTarget(target).catch(e => dump(`Failed to destroy target: ${e}`));
+      if (target)
+          target.dispose().catch(e => dump(`Failed to destroy target: ${e}`));
     };
 
     Services.wm.addListener({
@@ -238,16 +240,6 @@ class TargetRegistry {
 
     const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
     extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
-  }
-
-  async _destroyTarget(target) {
-    if (!target)
-      return;
-    const event = { pendingActivity: [], target };
-    this.emit(TargetRegistry.Events.TargetWillBeDestroyed, event);
-    await Promise.all(event.pendingActivity);
-    target.dispose();
-    this.emit(TargetRegistry.Events.TargetDestroyed, target);
   }
 
   setBrowserProxy(proxy) {
@@ -468,12 +460,18 @@ class PageTarget {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
 
-  dispose() {
+  async dispose() {
     this._disposed = true;
-    this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
     helper.removeListeners(this._eventListeners);
+
+    const event = { pendingActivity: [], target: this };
+    this._registry.emit(TargetRegistry.Events.TargetWillBeDestroyed, event);
+    await Promise.all(event.pendingActivity);
+
+    this._browserContext.pages.delete(this);
+    this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
 
