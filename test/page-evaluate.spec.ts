@@ -415,7 +415,7 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it.fail(options.WEBKIT())('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
+it.fail(options.WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -453,7 +453,7 @@ it('should work even when JSON is set to null', async ({ page }) => {
   expect(result).toEqual({ abc: 123 });
 });
 
-it.fail(options.FIREFOX())('should await promise from popup', async ({ page, server }) => {
+it.fail(options.FIREFOX)('should await promise from popup', async ({ page, server }) => {
   // Something is wrong about the way Firefox waits for the chained promise
   await page.goto(server.EMPTY_PAGE);
   const result = await page.evaluate(() => {

@@ -114,7 +114,7 @@ it('should work in cross-process iframe', async({browser, server}) => {
   await page.close();
 });
 
-it.fail(options.FIREFOX())('should change the actual colors in css', async({page}) => {
+it.fail(options.FIREFOX)('should change the actual colors in css', async({page}) => {
   await page.setContent(`
     <style>
       @media (prefers-color-scheme: dark) {

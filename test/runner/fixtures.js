@@ -22,7 +22,9 @@ let parameters = {};
 const parameterRegistrations = new Map();
 
 function setParameters(params) {
-  parameters = Object.assign(parameters, params)
+  parameters = Object.assign(parameters, params);
+  for (const name of Object.keys(params))
+    registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
 }
 
 class Fixture {
@@ -139,7 +141,10 @@ function fixturesForCallback(callback) {
       if (name in names)
         continue;
         names.add(name);
-      const { fn } = registrations.get(name)
+      if (!registrations.has(name)) {
+        throw new Error('Using undefined fixture ' + name);
+      }
+      const { fn } = registrations.get(name);
       visit(fn);
     }
   };

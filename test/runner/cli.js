@@ -17,8 +17,17 @@
 const fs = require('fs');
 const path = require('path');
 const program = require('commander');
+const { installTransform } = require('./transform');
 const { Runner } = require('./runner');
 const { TestCollector } = require('./testCollector');
+
+let beforeFunction;
+let afterFunction;
+let matrix = {};
+
+global.before = (fn => beforeFunction = fn);
+global.after = (fn => afterFunction = fn);
+global.matrix = (m => matrix = m);
 
 program
   .version('Version ' + require('../../package.json').version)
@@ -37,7 +46,22 @@ program
     const testDir = path.join(process.cwd(), command.args[0]);
     const files = collectFiles(testDir, '', command.args.slice(1));
 
-    const testCollector = new TestCollector(files, {
+    const revertBabelRequire = installTransform();
+    let hasSetup = false;
+    try {
+      hasSetup = fs.statSync(path.join(testDir, 'setup.js')).isFile();
+    } catch (e) {
+    }
+    try {
+      hasSetup = hasSetup || fs.statSync(path.join(testDir, 'setup.ts')).isFile();
+    } catch (e) {
+    }
+
+    if (hasSetup)
+      require(path.join(testDir, 'setup'));
+    revertBabelRequire();
+
+    const testCollector = new TestCollector(files, matrix, {
       forbidOnly: command.forbidOnly || undefined,
       grep: command.grep,
       timeout: command.timeout,
@@ -74,8 +98,15 @@ program
       trialRun: command.trialRun,
       updateSnapshots: command.updateSnapshots
     });
-    await runner.run(files);
-    await runner.stop();
+    try {
+      if (beforeFunction)
+        await beforeFunction();
+      await runner.run(files);
+      await runner.stop();
+    } finally {
+      if (afterFunction)
+        await afterFunction();
+    }
     process.exit(runner.stats.failures ? 1 : 0);
   });
 

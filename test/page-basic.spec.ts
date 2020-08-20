@@ -44,9 +44,9 @@ it('should run beforeunload if asked for', async({context, server}) => {
   const dialog = await newPage.waitForEvent('dialog');
   expect(dialog.type()).toBe('beforeunload');
   expect(dialog.defaultValue()).toBe('');
-  if (options.CHROMIUM())
+  if (options.CHROMIUM)
     expect(dialog.message()).toBe('');
-  else if (options.WEBKIT())
+  else if (options.WEBKIT)
     expect(dialog.message()).toBe('Leave?');
   else
     expect(dialog.message()).toBe('This page is asking you to confirm that you want to leave - data you have entered may not be saved.');
@@ -211,7 +211,7 @@ it('should have sane user agent', async ({page}) => {
   // Second part in parenthesis is platform - ignore it.
 
   // Third part for Firefox is the last one and encodes engine and browser versions.
-  if (options.FIREFOX()) {
+  if (options.FIREFOX) {
     const [engine, browser] = part3.split(' ');
     expect(engine.startsWith('Gecko')).toBe(true);
     expect(browser.startsWith('Firefox')).toBe(true);
@@ -219,13 +219,13 @@ it('should have sane user agent', async ({page}) => {
     expect(part5).toBe(undefined);
     return;
   }
-  // For both options.CHROMIUM() and options.WEBKIT(), third part is the AppleWebKit version.
+  // For both options.CHROMIUM and options.WEBKIT, third part is the AppleWebKit version.
   expect(part3.startsWith('AppleWebKit/')).toBe(true);
   expect(part4).toBe('KHTML, like Gecko');
   // 5th part encodes real browser name and engine version.
   const [engine, browser] = part5.split(' ');
   expect(browser.startsWith('Safari/')).toBe(true);
-  if (options.CHROMIUM())
+  if (options.CHROMIUM)
     expect(engine.includes('Chrome/')).toBe(true);
   else
     expect(engine.startsWith('Version/')).toBe(true);
@@ -244,7 +244,7 @@ it('frame.press should work', async({page, server}) => {
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it.fail(options.FIREFOX())('frame.focus should work multiple times', async ({ context, server }) => {
+it.fail(options.FIREFOX)('frame.focus should work multiple times', async ({ context, server }) => {
   const page1 = await context.newPage()
   const page2 = await context.newPage()
   for (const page of [page1, page2]) {

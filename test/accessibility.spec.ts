@@ -35,7 +35,7 @@ it('should work', async function({page}) {
   // autofocus happens after a delay in chrome these days
   await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));
 
-  const golden = options.FIREFOX() ? {
+  const golden = options.FIREFOX ? {
     role: 'document',
     name: 'Accessibility Test',
     children: [
@@ -48,7 +48,7 @@ it('should work', async function({page}) {
       {role: 'textbox', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
       {role: 'textbox', name: '', value: 'and a value', description: 'This is a description!'}, // and here
     ]
-  } : options.CHROMIUM() ? {
+  } : options.CHROMIUM ? {
     role: 'WebArea',
     name: 'Accessibility Test',
     children: [
@@ -82,7 +82,7 @@ it('should work with regular text', async({page}) => {
   await page.setContent(`<div>Hello World</div>`);
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0]).toEqual({
-    role: options.FIREFOX() ? 'text leaf' : 'text',
+    role: options.FIREFOX ? 'text leaf' : 'text',
     name: 'Hello World',
   });
 });
@@ -124,7 +124,7 @@ it('should not report text nodes inside controls', async function({page}) {
     <div role="tab">Tab2</div>
   </div>`);
   const golden = {
-    role: options.FIREFOX() ? 'document' : 'WebArea',
+    role: options.FIREFOX ? 'document' : 'WebArea',
     name: '',
     children: [{
       role: 'tab',
@@ -139,12 +139,12 @@ it('should not report text nodes inside controls', async function({page}) {
 });
 
 // WebKit rich text accessibility is iffy
-it.skip(options.WEBKIT())('rich text editable fields should have children', async function({page}) {
+it.skip(options.WEBKIT)('rich text editable fields should have children', async function({page}) {
   await page.setContent(`
   <div contenteditable="true">
     Edit this image: <img src="fakeimage.png" alt="my fake image">
   </div>`);
-  const golden = options.FIREFOX() ? {
+  const golden = options.FIREFOX ? {
     role: 'section',
     name: '',
     children: [{
@@ -170,12 +170,12 @@ it.skip(options.WEBKIT())('rich text editable fields should have children', asyn
   expect(snapshot.children[0]).toEqual(golden);
 });
 // WebKit rich text accessibility is iffy
-it.skip(options.WEBKIT())('rich text editable fields with role should have children', async function({page}) {
+it.skip(options.WEBKIT)('rich text editable fields with role should have children', async function({page}) {
   await page.setContent(`
   <div contenteditable="true" role='textbox'>
     Edit this image: <img src="fakeimage.png" alt="my fake image">
   </div>`);
-  const golden = options.FIREFOX() ? {
+  const golden = options.FIREFOX ? {
     role: 'textbox',
     name: '',
     value: 'Edit this image: my fake image',
@@ -199,7 +199,7 @@ it.skip(options.WEBKIT())('rich text editable fields with role should have child
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it.skip(options.FIREFOX() || options.WEBKIT())('plain text field with role should not have children', async function({page}) {
+it.skip(options.FIREFOX || options.WEBKIT)('plain text field with role should not have children', async function({page}) {
   // Firefox does not support contenteditable="plaintext-only".
   // WebKit rich text accessibility is iffy
   await page.setContent(`
@@ -212,7 +212,7 @@ it.skip(options.FIREFOX() || options.WEBKIT())('plain text field with role shoul
     });
 });
 
-it.skip(options.FIREFOX() || options.WEBKIT())('plain text field without role should not have content', async function({page}) {
+it.skip(options.FIREFOX || options.WEBKIT)('plain text field without role should not have content', async function({page}) {
   await page.setContent(`
   <div contenteditable="plaintext-only">Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
   const snapshot = await page.accessibility.snapshot();
@@ -222,7 +222,7 @@ it.skip(options.FIREFOX() || options.WEBKIT())('plain text field without role sh
   });
 });
 
-it.skip(options.FIREFOX() || options.WEBKIT())('plain text field with tabindex and without role should not have content', async function({page}) {
+it.skip(options.FIREFOX || options.WEBKIT)('plain text field with tabindex and without role should not have content', async function({page}) {
   await page.setContent(`
   <div contenteditable="plaintext-only" tabIndex=0>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
   const snapshot = await page.accessibility.snapshot();
@@ -238,11 +238,11 @@ it('non editable textbox with role and tabIndex and label should not have childr
     this is the inner content
     <img alt="yo" src="fakeimg.png">
   </div>`);
-  const golden = options.FIREFOX() ? {
+  const golden = options.FIREFOX ? {
     role: 'textbox',
     name: 'my favorite textbox',
     value: 'this is the inner content yo'
-  } : options.CHROMIUM() ? {
+  } : options.CHROMIUM ? {
     role: 'textbox',
     name: 'my favorite textbox',
     value: 'this is the inner content '
@@ -276,7 +276,7 @@ it('checkbox without label should not have children', async function({page}) {
     this is the inner content
     <img alt="yo" src="fakeimg.png">
   </div>`);
-  const golden = options.FIREFOX() ? {
+  const golden = options.FIREFOX ? {
     role: 'checkbox',
     name: 'this is the inner content yo',
     checked: true
@@ -327,7 +327,7 @@ it('should work on a menu', async({page}) => {
     [ { role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
       { role: 'menuitem', name: 'Third Item' } ],
-    orientation: options.WEBKIT() ? 'vertical' : undefined
+    orientation: options.WEBKIT ? 'vertical' : undefined
   });
 });
 

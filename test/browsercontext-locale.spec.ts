@@ -137,7 +137,7 @@ it('should be isolated between contexts', async({browser, server}) => {
   ]);
 });
 
-it.fail(options.FIREFOX())('should not change default locale in another context', async({browser, server}) => {
+it.fail(options.FIREFOX)('should not change default locale in another context', async({browser, server}) => {
   async function getContextLocale(context) {
     const page = await context.newPage();
     return await page.evaluate(() => (new Intl.NumberFormat()).resolvedOptions().locale);

@@ -26,12 +26,12 @@ it('should fire', async({page, server}) => {
   expect(error.message).toBe('Fancy error!');
   let stack = await page.evaluate(() => window['e'].stack);
   // Note that WebKit reports the stack of the 'throw' statement instead of the Error constructor call.
-  if (options.WEBKIT())
+  if (options.WEBKIT)
     stack = stack.replace('14:25', '15:19');
   expect(error.stack).toBe(stack);
 });
 
-it.fail(options.WEBKIT())('should contain sourceURL', async({page, server}) => {
+it.fail(options.WEBKIT)('should contain sourceURL', async({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -51,24 +51,24 @@ it('should handle odd values', async ({page}) => {
       page.waitForEvent('pageerror'),
       page.evaluate(value => setTimeout(() => { throw value; }, 0), value),
     ]);
-    expect(error.message).toBe(options.FIREFOX() ? 'uncaught exception: ' + message : message);
+    expect(error.message).toBe(options.FIREFOX ? 'uncaught exception: ' + message : message);
   }
 });
 
-it.fail(options.FIREFOX())('should handle object', async ({page}) => {
+it.fail(options.FIREFOX)('should handle object', async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw {}; }, 0)),
   ]);
-  expect(error.message).toBe(options.CHROMIUM() ? 'Object' : '[object Object]');
+  expect(error.message).toBe(options.CHROMIUM ? 'Object' : '[object Object]');
 });
 
-it.fail(options.FIREFOX())('should handle window', async ({page}) => {
+it.fail(options.FIREFOX)('should handle window', async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw window; }, 0)),
   ]);
-  expect(error.message).toBe(options.CHROMIUM() ? 'Window' : '[object Window]');
+  expect(error.message).toBe(options.CHROMIUM ? 'Window' : '[object Window]');
 });

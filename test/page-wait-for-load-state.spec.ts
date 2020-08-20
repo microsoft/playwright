@@ -77,8 +77,8 @@ it('should wait for load state of empty url popup', async({browser, page}) => {
     }),
   ]);
   await popup.waitForLoadState();
-  expect(readyState).toBe(options.FIREFOX() ? 'uninitialized' : 'complete');
-  expect(await popup.evaluate(() => document.readyState)).toBe(options.FIREFOX() ? 'uninitialized' : 'complete');
+  expect(readyState).toBe(options.FIREFOX ? 'uninitialized' : 'complete');
+  expect(await popup.evaluate(() => document.readyState)).toBe(options.FIREFOX ? 'uninitialized' : 'complete');
 });
 
 it('should wait for load state of about:blank popup ', async({browser, page}) => {

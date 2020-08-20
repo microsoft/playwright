@@ -325,7 +325,7 @@ it('should(not) block third party cookies', async({context, page, server}) => {
   }, server.CROSS_PROCESS_PREFIX + '/grid.html');
   await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
   await page.waitForTimeout(2000);
-  const allowsThirdParty = options.CHROMIUM() || options.FIREFOX();
+  const allowsThirdParty = options.CHROMIUM || options.FIREFOX;
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
     expect(cookies).toEqual([

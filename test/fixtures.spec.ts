@@ -100,7 +100,7 @@ class Wrapper {
 }
 
 declare global {
-  interface FixtureState {
+  interface TestState {
     wrapper: Wrapper;
     stallingWrapper: Wrapper;
   }
