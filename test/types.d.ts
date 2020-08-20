@@ -17,29 +17,6 @@
 type ServerResponse = import('http').ServerResponse;
 type IncomingMessage = import('http').IncomingMessage;
 
-type DescribeFunction = ((name: string, inner: () => void) => void) & {
-    fail(condition: boolean): DescribeFunction;
-    skip(condition: boolean): DescribeFunction;
-    slow(): DescribeFunction;
-    repeat(n: number): DescribeFunction;
-};
-
-type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
-    fail(condition: boolean): ItFunction<STATE>;
-    skip(condition: boolean): ItFunction<STATE>;
-    slow(): ItFunction<STATE>;
-    repeat(n: number): ItFunction<STATE>;
-};
-
-interface FixtureParameters {
-}
-
-interface WorkerState {
-}
-
-interface TestState {
-}
-
 declare module '' {
     module 'expect/build/types' {
         interface Matchers<R> {
@@ -49,20 +26,6 @@ declare module '' {
 }
 
 declare const expect: typeof import('expect');
-
-declare const describe: DescribeFunction;
-declare const fdescribe: DescribeFunction;
-declare const xdescribe: DescribeFunction;
-declare const it: ItFunction<TestState & WorkerState & FixtureParameters>;
-declare const fit: ItFunction<TestState & WorkerState & FixtureParameters>;
-declare const dit: ItFunction<TestState & WorkerState & FixtureParameters>;
-declare const xit: ItFunction<TestState & WorkerState & FixtureParameters>;
-
-declare const beforeEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
-declare const afterEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
-declare const beforeAll: (inner: (state: WorkerState) => Promise<void>) => void;
-declare const afterAll: (inner: (state: WorkerState) => Promise<void>) => void;
-
 declare const browserType: import('../index').BrowserType<import('../index').Browser>;
 
 declare var MAC: boolean;

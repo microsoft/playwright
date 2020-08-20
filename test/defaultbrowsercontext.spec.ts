@@ -16,7 +16,7 @@
  */
 
 import { options } from './playwright.fixtures';
-import { registerFixture } from './runner';
+import { registerFixture } from '../test-runner';
 import fs from 'fs';
 import utils from './utils';
 import { BrowserType, Browser, BrowserContext, Page } from '..';

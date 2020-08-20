@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { registerFixture } from './runner';
+import { registerFixture } from '../test-runner';
 
 declare global {
   interface TestState {

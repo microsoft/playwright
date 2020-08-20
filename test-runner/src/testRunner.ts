@@ -14,19 +14,42 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const Mocha = require('mocha');
-const { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } = require('./fixtures');
-const { fixturesUI } = require('./fixturesUI');
-const { EventEmitter } = require('events');
+import path from 'path';
+import Mocha from 'mocha';
+import { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } from './fixtures';
+import { fixturesUI } from './fixturesUI';
+import { EventEmitter } from 'events';
 
-const fixturePool = new FixturePool();
+export const fixturePool = new FixturePool();
+declare global {
+  namespace NodeJS {
+    interface Global { 
+      expect: typeof import('expect')
+    }
+  }
+}
 global.expect = require('expect');
 const GoldenUtils = require('./GoldenUtils');
 
 class NullReporter {}
 
-class TestRunner extends EventEmitter {
+export class TestRunner extends EventEmitter {
+  mocha: any;
+  _currentOrdinal: number;
+  _failedWithError: boolean;
+  _file: any;
+  _ordinals: Set<unknown>;
+  _remaining: Set<unknown>;
+  _trialRun: any;
+  _passes: number;
+  _failures: number;
+  _pending: number;
+  _configuredFile: any;
+  _configurationObject: any;
+  _configurationString: any;
+  _parsedGeneratorConfiguration: {};
+  _relativeTestFile: string;
+  _runner: any;
   constructor(entry, options, workerId) {
     super();
     this.mocha = new Mocha({
@@ -130,7 +153,7 @@ class TestRunner extends EventEmitter {
     await result;
   }
 
-  _shouldRunTest(hook) {
+  _shouldRunTest(hook = false) {
     if (this._trialRun || this._failedWithError)
       return false;
     if (hook) {
@@ -206,12 +229,10 @@ function serializeError(error) {
 
 let relativeTestFile;
 
-function initializeImageMatcher(options) {
+export function initializeImageMatcher(options) {
   function toMatchImage(received, name, config) {
     const { pass, message } = GoldenUtils.compare(received, name, { ...options, relativeTestFile, config });
     return { pass, message: () => message };
   };
   global.expect.extend({ toMatchImage });
 }
-
-module.exports = { TestRunner, initializeImageMatcher, fixturePool };

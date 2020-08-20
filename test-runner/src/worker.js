@@ -32,10 +32,12 @@ function chunkToParams(chunk) {
 
 process.stdout.write = chunk => {
   sendMessageToParent('stdout', chunkToParams(chunk));
+  return true;
 };
 
 process.stderr.write = chunk => {
   sendMessageToParent('stderr', chunkToParams(chunk));
+  return true;
 };
 
 process.on('disconnect', gracefullyCloseAndExit);

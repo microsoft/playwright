@@ -24,7 +24,7 @@ import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './coverage';
-import { parameters, registerFixture, registerWorkerFixture } from './runner';
+import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
 
@@ -40,6 +40,7 @@ declare global {
     playwright: typeof import('../index');
     browserType: BrowserType<Browser>;
     browser: Browser;
+    httpService: {server: TestServer, httpsServer: TestServer}
   }
   interface TestState {
     toImpl: (rpcObject: any) => any;

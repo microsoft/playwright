@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { options } from './playwright.fixtures';
-import { registerFixture } from './runner';
+import { registerFixture } from '../test-runner';
 
 import path from 'path';
 import {spawn, execSync} from 'child_process';
