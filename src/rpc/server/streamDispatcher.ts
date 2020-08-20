@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import { StreamChannel, StreamInitializer, Binary } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as stream from 'stream';
 
-export class StreamDispatcher extends Dispatcher<stream.Readable, StreamInitializer> implements StreamChannel {
+export class StreamDispatcher extends Dispatcher<stream.Readable, channels.StreamInitializer> implements channels.StreamChannel {
   constructor(scope: DispatcherScope, stream: stream.Readable) {
     super(scope, stream, 'Stream', {});
   }
 
-  async read(params: { size?: number }): Promise<{ binary: Binary }> {
+  async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
     const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }

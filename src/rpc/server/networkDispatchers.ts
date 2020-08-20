@@ -15,12 +15,11 @@
  */
 
 import { Request, Response, Route } from '../../network';
-import { RequestChannel, ResponseChannel, RouteChannel, ResponseInitializer, RequestInitializer, RouteInitializer, Binary } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import * as types from '../../types';
 
-export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> implements RequestChannel {
+export class RequestDispatcher extends Dispatcher<Request, channels.RequestInitializer> implements channels.RequestChannel {
 
   static from(scope: DispatcherScope, request: Request): RequestDispatcher {
     const result = existingDispatcher<RequestDispatcher>(request);
@@ -45,12 +44,12 @@ export class RequestDispatcher extends Dispatcher<Request, RequestInitializer> i
     });
   }
 
-  async response(): Promise<{ response?: ResponseChannel }> {
+  async response(): Promise<channels.RequestResponseResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._object.response()) };
   }
 }
 
-export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer> implements ResponseChannel {
+export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseInitializer> implements channels.ResponseChannel {
 
   constructor(scope: DispatcherScope, response: Response) {
     super(scope, response, 'Response', {
@@ -63,16 +62,16 @@ export class ResponseDispatcher extends Dispatcher<Response, ResponseInitializer
     });
   }
 
-  async finished(): Promise<{ error?: string }> {
+  async finished(): Promise<channels.ResponseFinishedResult> {
     return await this._object._finishedPromise;
   }
 
-  async body(): Promise<{ binary: Binary }> {
+  async body(): Promise<channels.ResponseBodyResult> {
     return { binary: (await this._object.body()).toString('base64') };
   }
 }
 
-export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> implements RouteChannel {
+export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer> implements channels.RouteChannel {
 
   constructor(scope: DispatcherScope, route: Route) {
     super(scope, route, 'Route', {
@@ -81,7 +80,7 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     });
   }
 
-  async continue(params: { method?: string, headers?: types.HeadersArray, postData?: string }): Promise<void> {
+  async continue(params: channels.RouteContinueParams): Promise<void> {
     await this._object.continue({
       method: params.method,
       headers: params.headers,
@@ -89,11 +88,11 @@ export class RouteDispatcher extends Dispatcher<Route, RouteInitializer> impleme
     });
   }
 
-  async fulfill(params: types.NormalizedFulfillResponse): Promise<void> {
+  async fulfill(params: channels.RouteFulfillParams): Promise<void> {
     await this._object.fulfill(params);
   }
 
-  async abort(params: { errorCode?: string }): Promise<void> {
+  async abort(params: channels.RouteAbortParams): Promise<void> {
     await this._object.abort(params.errorCode || 'failed');
   }
 }

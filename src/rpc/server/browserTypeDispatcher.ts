@@ -16,11 +16,11 @@
 
 import { BrowserTypeBase, BrowserType } from '../../server/browserType';
 import { BrowserDispatcher } from './browserDispatcher';
-import { BrowserChannel, BrowserTypeChannel, BrowserContextChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
-export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeInitializer> implements BrowserTypeChannel {
+export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer> implements channels.BrowserTypeChannel {
   constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
     super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),
@@ -28,12 +28,12 @@ export class BrowserTypeDispatcher extends Dispatcher<BrowserType, BrowserTypeIn
     }, true);
   }
 
-  async launch(params: BrowserTypeLaunchParams): Promise<{ browser: BrowserChannel }> {
+  async launch(params: channels.BrowserTypeLaunchParams): Promise<channels.BrowserTypeLaunchResult> {
     const browser = await this._object.launch(params);
     return { browser: new BrowserDispatcher(this._scope, browser) };
   }
 
-  async launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<{ context: BrowserContextChannel }> {
+  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
     const browserContext = await this._object.launchPersistentContext(params.userDataDir, params);
     return { context: new BrowserContextDispatcher(this._scope, browserContext) };
   }

@@ -15,10 +15,10 @@
  */
 
 import { Dialog } from '../../dialog';
-import { DialogChannel, DialogInitializer } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class DialogDispatcher extends Dispatcher<Dialog, DialogInitializer> implements DialogChannel {
+export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogInitializer> implements channels.DialogChannel {
   constructor(scope: DispatcherScope, dialog: Dialog) {
     super(scope, dialog, 'Dialog', {
       type: dialog.type(),

@@ -15,10 +15,10 @@
  */
 
 import { CRSession, CRSessionEvents } from '../../chromium/crConnection';
-import { CDPSessionChannel, CDPSessionInitializer } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitializer> implements CDPSessionChannel {
+export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionInitializer> implements channels.CDPSessionChannel {
   constructor(scope: DispatcherScope, crSession: CRSession) {
     super(scope, crSession, 'CDPSession', {}, true);
     crSession._eventListener = (method, params) => {
@@ -27,7 +27,7 @@ export class CDPSessionDispatcher extends Dispatcher<CRSession, CDPSessionInitia
     crSession.on(CRSessionEvents.Disconnected, () => this._dispose());
   }
 
-  async send(params: { method: string, params?: any }): Promise<{ result: any }> {
+  async send(params: channels.CDPSessionSendParams): Promise<channels.CDPSessionSendResult> {
     return { result: await this._object.send(params.method as any, params.params) };
   }
 

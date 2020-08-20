@@ -19,8 +19,7 @@ import { Events } from '../../events';
 import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
-import * as types from '../../types';
-import { BindingCallChannel, BindingCallInitializer, ElementHandleChannel, PageChannel, PageInitializer, ResponseChannel, WorkerInitializer, WorkerChannel, JSHandleChannel, Binary, SerializedArgument, PagePdfParams, SerializedError, PageAccessibilitySnapshotResult, SerializedValue, PageEmulateMediaParams } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../serializers';
 import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
@@ -33,7 +32,7 @@ import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatche
 import { FileChooser } from '../../fileChooser';
 import { CRCoverage } from '../../chromium/crCoverage';
 
-export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements PageChannel {
+export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
 
   constructor(scope: DispatcherScope, page: Page) {
@@ -70,19 +69,19 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
+  async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams): Promise<void> {
     this._page.setDefaultNavigationTimeout(params.timeout);
   }
 
-  async setDefaultTimeoutNoReply(params: { timeout: number }) {
+  async setDefaultTimeoutNoReply(params: channels.PageSetDefaultTimeoutNoReplyParams): Promise<void> {
     this._page.setDefaultTimeout(params.timeout);
   }
 
-  async opener(): Promise<{ page?: PageChannel }> {
+  async opener(): Promise<channels.PageOpenerResult> {
     return { page: lookupNullableDispatcher<PageDispatcher>(await this._page.opener()) };
   }
 
-  async exposeBinding(params: { name: string }): Promise<void> {
+  async exposeBinding(params: channels.PageExposeBindingParams): Promise<void> {
     await this._page.exposeBinding(params.name, (source, ...args) => {
       const binding = new BindingCallDispatcher(this._scope, params.name, source, args);
       this._dispatchEvent('bindingCall', { binding });
@@ -90,38 +89,38 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
+  async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams): Promise<void> {
     await this._page.setExtraHTTPHeaders(params.headers);
   }
 
-  async reload(params: types.NavigateOptions): Promise<{ response?: ResponseChannel }> {
+  async reload(params: channels.PageReloadParams): Promise<channels.PageReloadResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params)) };
   }
 
-  async goBack(params: types.NavigateOptions): Promise<{ response?: ResponseChannel }> {
+  async goBack(params: channels.PageGoBackParams): Promise<channels.PageGoBackResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params)) };
   }
 
-  async goForward(params: types.NavigateOptions): Promise<{ response?: ResponseChannel }> {
+  async goForward(params: channels.PageGoForwardParams): Promise<channels.PageGoForwardResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params)) };
   }
 
-  async emulateMedia(params: PageEmulateMediaParams): Promise<void> {
+  async emulateMedia(params: channels.PageEmulateMediaParams): Promise<void> {
     await this._page.emulateMedia({
       media: params.media === 'null' ? null : params.media,
       colorScheme: params.colorScheme === 'null' ? null : params.colorScheme,
     });
   }
 
-  async setViewportSize(params: { viewportSize: types.Size }): Promise<void> {
+  async setViewportSize(params: channels.PageSetViewportSizeParams): Promise<void> {
     await this._page.setViewportSize(params.viewportSize);
   }
 
-  async addInitScript(params: { source: string }): Promise<void> {
+  async addInitScript(params: channels.PageAddInitScriptParams): Promise<void> {
     await this._page._addInitScriptExpression(params.source);
   }
 
-  async setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void> {
+  async setNetworkInterceptionEnabled(params: channels.PageSetNetworkInterceptionEnabledParams): Promise<void> {
     if (!params.enabled) {
       await this._page._setRequestInterceptor(undefined);
       return;
@@ -131,55 +130,55 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     });
   }
 
-  async screenshot(params: types.ScreenshotOptions): Promise<{ binary: Binary }> {
+  async screenshot(params: channels.PageScreenshotParams): Promise<channels.PageScreenshotResult> {
     return { binary: (await this._page.screenshot(params)).toString('base64') };
   }
 
-  async close(params: { runBeforeUnload?: boolean }): Promise<void> {
+  async close(params: channels.PageCloseParams): Promise<void> {
     await this._page.close(params);
   }
 
-  async setFileChooserInterceptedNoReply(params: { intercepted: boolean }) {
+  async setFileChooserInterceptedNoReply(params: channels.PageSetFileChooserInterceptedNoReplyParams): Promise<void> {
     await this._page._setFileChooserIntercepted(params.intercepted);
   }
 
-  async keyboardDown(params: { key: string }): Promise<void> {
+  async keyboardDown(params: channels.PageKeyboardDownParams): Promise<void> {
     await this._page.keyboard.down(params.key);
   }
 
-  async keyboardUp(params: { key: string }): Promise<void> {
+  async keyboardUp(params: channels.PageKeyboardUpParams): Promise<void> {
     await this._page.keyboard.up(params.key);
   }
 
-  async keyboardInsertText(params: { text: string }): Promise<void> {
+  async keyboardInsertText(params: channels.PageKeyboardInsertTextParams): Promise<void> {
     await this._page.keyboard.insertText(params.text);
   }
 
-  async keyboardType(params: { text: string, delay?: number }): Promise<void> {
+  async keyboardType(params: channels.PageKeyboardTypeParams): Promise<void> {
     await this._page.keyboard.type(params.text, params);
   }
 
-  async keyboardPress(params: { key: string, delay?: number }): Promise<void> {
+  async keyboardPress(params: channels.PageKeyboardPressParams): Promise<void> {
     await this._page.keyboard.press(params.key, params);
   }
 
-  async mouseMove(params: { x: number, y: number, steps?: number }): Promise<void> {
+  async mouseMove(params: channels.PageMouseMoveParams): Promise<void> {
     await this._page.mouse.move(params.x, params.y, params);
   }
 
-  async mouseDown(params: { button?: types.MouseButton, clickCount?: number }): Promise<void> {
+  async mouseDown(params: channels.PageMouseDownParams): Promise<void> {
     await this._page.mouse.down(params);
   }
 
-  async mouseUp(params: { button?: types.MouseButton, clickCount?: number }): Promise<void> {
+  async mouseUp(params: channels.PageMouseUpParams): Promise<void> {
     await this._page.mouse.up(params);
   }
 
-  async mouseClick(params: { x: number, y: number, delay?: number, button?: types.MouseButton, clickCount?: number }): Promise<void> {
+  async mouseClick(params: channels.PageMouseClickParams): Promise<void> {
     await this._page.mouse.click(params.x, params.y, params);
   }
 
-  async accessibilitySnapshot(params: { interestingOnly?: boolean, root?: ElementHandleChannel }): Promise<PageAccessibilitySnapshotResult> {
+  async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams): Promise<channels.PageAccessibilitySnapshotResult> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,
       root: params.root ? (params.root as ElementHandleDispatcher)._elementHandle : undefined
@@ -187,7 +186,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     return { rootAXNode: rootAXNode || undefined };
   }
 
-  async pdf(params: PagePdfParams): Promise<{ pdf: Binary }> {
+  async pdf(params: channels.PagePdfParams): Promise<channels.PagePdfResult> {
     if (!this._page.pdf)
       throw new Error('PDF generation is only supported for Headless Chromium');
     const buffer = await this._page.pdf(params);
@@ -198,22 +197,22 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
     await this._page.bringToFront();
   }
 
-  async crStartJSCoverage(params: types.JSCoverageOptions): Promise<void> {
+  async crStartJSCoverage(params: channels.PageCrStartJSCoverageParams): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startJSCoverage(params);
   }
 
-  async crStopJSCoverage(): Promise<{ entries: types.JSCoverageEntry[] }> {
+  async crStopJSCoverage(): Promise<channels.PageCrStopJSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
     return { entries: await coverage.stopJSCoverage() };
   }
 
-  async crStartCSSCoverage(params: types.CSSCoverageOptions): Promise<void> {
+  async crStartCSSCoverage(params: channels.PageCrStartCSSCoverageParams): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startCSSCoverage(params);
   }
 
-  async crStopCSSCoverage(): Promise<{ entries: types.CSSCoverageEntry[] }> {
+  async crStopCSSCoverage(): Promise<channels.PageCrStopCSSCoverageResult> {
     const coverage = this._page.coverage as CRCoverage;
     return { entries: await coverage.stopCSSCoverage() };
   }
@@ -228,7 +227,7 @@ export class PageDispatcher extends Dispatcher<Page, PageInitializer> implements
 }
 
 
-export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> implements WorkerChannel {
+export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerInitializer> implements channels.WorkerChannel {
   constructor(scope: DispatcherScope, worker: Worker) {
     super(scope, worker, 'Worker', {
       url: worker.url()
@@ -236,16 +235,16 @@ export class WorkerDispatcher extends Dispatcher<Worker, WorkerInitializer> impl
     worker.on(Events.Worker.Close, () => this._dispatchEvent('close'));
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+  async evaluateExpression(params: channels.WorkerEvaluateExpressionParams): Promise<channels.WorkerEvaluateExpressionResult> {
     return { value: serializeResult(await this._object._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }> {
+  async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams): Promise<channels.WorkerEvaluateExpressionHandleResult> {
     return { handle: createHandle(this._scope, await this._object._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 }
 
-export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer> implements BindingCallChannel {
+export class BindingCallDispatcher extends Dispatcher<{}, channels.BindingCallInitializer> implements channels.BindingCallChannel {
   private _resolve: ((arg: any) => void) | undefined;
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
@@ -266,11 +265,11 @@ export class BindingCallDispatcher extends Dispatcher<{}, BindingCallInitializer
     return this._promise;
   }
 
-  async resolve(params: { result: SerializedArgument }) {
+  async resolve(params: channels.BindingCallResolveParams): Promise<void> {
     this._resolve!(parseArgument(params.result));
   }
 
-  async reject(params: { error: SerializedError }) {
+  async reject(params: channels.BindingCallRejectParams): Promise<void> {
     this._reject!(parseError(params.error));
   }
 }

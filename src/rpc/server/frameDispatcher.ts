@@ -16,13 +16,13 @@
 
 import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent, kNavigationEvent, NavigationEvent } from '../../frames';
 import * as types from '../../types';
-import { ElementHandleChannel, FrameChannel, FrameInitializer, JSHandleChannel, ResponseChannel, SerializedArgument, FrameWaitForFunctionParams, SerializedValue } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 
-export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> implements FrameChannel {
+export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer> implements channels.FrameChannel {
   private _frame: Frame;
 
   static from(scope: DispatcherScope, frame: Frame): FrameDispatcher {
@@ -52,127 +52,127 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     });
   }
 
-  async goto(params: { url: string } & types.GotoOptions): Promise<{ response?: ResponseChannel }> {
+  async goto(params: channels.FrameGotoParams): Promise<channels.FrameGotoResult> {
     return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(params.url, params)) };
   }
 
-  async frameElement(): Promise<{ element: ElementHandleChannel }> {
+  async frameElement(): Promise<channels.FrameFrameElementResult> {
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.frameElement()) };
   }
 
-  async evaluateExpression(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+  async evaluateExpression(params: channels.FrameEvaluateExpressionParams): Promise<channels.FrameEvaluateExpressionResult> {
     return { value: serializeResult(await this._frame._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evaluateExpressionHandle(params: { expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ handle: JSHandleChannel }> {
+  async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams): Promise<channels.FrameEvaluateExpressionHandleResult> {
     return { handle: createHandle(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async waitForSelector(params: { selector: string } & types.WaitForElementOptions): Promise<{ element?: ElementHandleChannel }> {
+  async waitForSelector(params: channels.FrameWaitForSelectorParams): Promise<channels.FrameWaitForSelectorResult> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.waitForSelector(params.selector, params)) };
   }
 
-  async dispatchEvent(params: { selector: string, type: string, eventInit: SerializedArgument } & types.TimeoutOptions): Promise<void> {
+  async dispatchEvent(params: channels.FrameDispatchEventParams): Promise<void> {
     return this._frame.dispatchEvent(params.selector, params.type, parseArgument(params.eventInit), params);
   }
 
-  async evalOnSelector(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+  async evalOnSelector(params: channels.FrameEvalOnSelectorParams): Promise<channels.FrameEvalOnSelectorResult> {
     return { value: serializeResult(await this._frame._$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async evalOnSelectorAll(params: { selector: string, expression: string, isFunction: boolean, arg: SerializedArgument }): Promise<{ value: SerializedValue }> {
+  async evalOnSelectorAll(params: channels.FrameEvalOnSelectorAllParams): Promise<channels.FrameEvalOnSelectorAllResult> {
     return { value: serializeResult(await this._frame._$$evalExpression(params.selector, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
-  async querySelector(params: { selector: string }): Promise<{ element?: ElementHandleChannel }> {
+  async querySelector(params: channels.FrameQuerySelectorParams): Promise<channels.FrameQuerySelectorResult> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._frame.$(params.selector)) };
   }
 
-  async querySelectorAll(params: { selector: string }): Promise<{ elements: ElementHandleChannel[] }> {
+  async querySelectorAll(params: channels.FrameQuerySelectorAllParams): Promise<channels.FrameQuerySelectorAllResult> {
     const elements = await this._frame.$$(params.selector);
     return { elements: elements.map(e => new ElementHandleDispatcher(this._scope, e)) };
   }
 
-  async content(): Promise<{ value: string }> {
+  async content(): Promise<channels.FrameContentResult> {
     return { value: await this._frame.content() };
   }
 
-  async setContent(params: { html: string } & types.NavigateOptions): Promise<void> {
+  async setContent(params: channels.FrameSetContentParams): Promise<void> {
     await this._frame.setContent(params.html, params);
   }
 
-  async addScriptTag(params: { url?: string, content?: string, type?: string }): Promise<{ element: ElementHandleChannel }> {
+  async addScriptTag(params: channels.FrameAddScriptTagParams): Promise<channels.FrameAddScriptTagResult> {
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.addScriptTag(params)) };
   }
 
-  async addStyleTag(params: { url?: string, content?: string }): Promise<{ element: ElementHandleChannel }> {
+  async addStyleTag(params: channels.FrameAddStyleTagParams): Promise<channels.FrameAddStyleTagResult> {
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.addStyleTag(params)) };
   }
 
-  async click(params: { selector: string } & types.PointerActionOptions & types.MouseClickOptions & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }): Promise<void> {
+  async click(params: channels.FrameClickParams): Promise<void> {
     await this._frame.click(params.selector, params);
   }
 
-  async dblclick(params: { selector: string } & types.PointerActionOptions & types.MouseMultiClickOptions & types.TimeoutOptions & { force?: boolean }): Promise<void> {
+  async dblclick(params: channels.FrameDblclickParams): Promise<void> {
     await this._frame.dblclick(params.selector, params);
   }
 
-  async fill(params: { selector: string, value: string } & types.NavigatingActionWaitOptions): Promise<void> {
+  async fill(params: channels.FrameFillParams): Promise<void> {
     await this._frame.fill(params.selector, params.value, params);
   }
 
-  async focus(params: { selector: string } & types.TimeoutOptions): Promise<void> {
+  async focus(params: channels.FrameFocusParams): Promise<void> {
     await this._frame.focus(params.selector, params);
   }
 
-  async textContent(params: { selector: string } & types.TimeoutOptions): Promise<{ value?: string }> {
+  async textContent(params: channels.FrameTextContentParams): Promise<channels.FrameTextContentResult> {
     const value = await this._frame.textContent(params.selector, params);
     return { value: value === null ? undefined : value };
   }
 
-  async innerText(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string }> {
+  async innerText(params: channels.FrameInnerTextParams): Promise<channels.FrameInnerTextResult> {
     return { value: await this._frame.innerText(params.selector, params) };
   }
 
-  async innerHTML(params: { selector: string } & types.TimeoutOptions): Promise<{ value: string }> {
+  async innerHTML(params: channels.FrameInnerHTMLParams): Promise<channels.FrameInnerHTMLResult> {
     return { value: await this._frame.innerHTML(params.selector, params) };
   }
 
-  async getAttribute(params: { selector: string, name: string } & types.TimeoutOptions): Promise<{ value?: string }> {
+  async getAttribute(params: channels.FrameGetAttributeParams): Promise<channels.FrameGetAttributeResult> {
     const value = await this._frame.getAttribute(params.selector, params.name, params);
     return { value: value === null ? undefined : value };
   }
 
-  async hover(params: { selector: string } & types.PointerActionOptions & types.TimeoutOptions & { force?: boolean }): Promise<void> {
+  async hover(params: channels.FrameHoverParams): Promise<void> {
     await this._frame.hover(params.selector, params);
   }
 
-  async selectOption(params: { selector: string, elements?: ElementHandleChannel[], options?: types.SelectOption[] } & types.NavigatingActionWaitOptions): Promise<{ values: string[] }> {
+  async selectOption(params: channels.FrameSelectOptionParams): Promise<channels.FrameSelectOptionResult> {
     const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
     return { values: await this._frame.selectOption(params.selector, elements, params.options || [], params) };
   }
 
-  async setInputFiles(params: { selector: string, files: { name: string, mimeType: string, buffer: string }[] } & types.NavigatingActionWaitOptions): Promise<void> {
+  async setInputFiles(params: channels.FrameSetInputFilesParams): Promise<void> {
     await this._frame.setInputFiles(params.selector, params.files, params);
   }
 
-  async type(params: { selector: string, text: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void> {
+  async type(params: channels.FrameTypeParams): Promise<void> {
     await this._frame.type(params.selector, params.text, params);
   }
 
-  async press(params: { selector: string, key: string } & { delay?: number | undefined } & types.TimeoutOptions & { noWaitAfter?: boolean }): Promise<void> {
+  async press(params: channels.FramePressParams): Promise<void> {
     await this._frame.press(params.selector, params.key, params);
   }
 
-  async check(params: { selector: string } & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }): Promise<void> {
+  async check(params: channels.FrameCheckParams): Promise<void> {
     await this._frame.check(params.selector, params);
   }
 
-  async uncheck(params: { selector: string } & types.TimeoutOptions & { force?: boolean } & { noWaitAfter?: boolean }): Promise<void> {
+  async uncheck(params: channels.FrameUncheckParams): Promise<void> {
     await this._frame.uncheck(params.selector, params);
   }
 
-  async waitForFunction(params: FrameWaitForFunctionParams): Promise<{ handle: JSHandleChannel }> {
+  async waitForFunction(params: channels.FrameWaitForFunctionParams): Promise<channels.FrameWaitForFunctionResult> {
     const options = {
       ...params,
       polling: params.pollingInterval === undefined ? 'raf' as const : params.pollingInterval
@@ -180,7 +180,7 @@ export class FrameDispatcher extends Dispatcher<Frame, FrameInitializer> impleme
     return { handle: createHandle(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), options)) };
   }
 
-  async title(): Promise<{ value: string }> {
+  async title(): Promise<channels.FrameTitleResult> {
     return { value: await this._frame.title() };
   }
 }

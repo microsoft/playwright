@@ -15,21 +15,21 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { SelectorsInitializer, SelectorsChannel } from '../channels';
+import * as channels from '../channels';
 import { Selectors } from '../../selectors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import * as dom from '../../dom';
 
-export class SelectorsDispatcher extends Dispatcher<Selectors, SelectorsInitializer> implements SelectorsChannel {
+export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsInitializer> implements channels.SelectorsChannel {
   constructor(scope: DispatcherScope, selectors: Selectors) {
     super(scope, selectors, 'Selectors', {});
   }
 
-  async register(params: { name: string, source: string, contentScript?: boolean }): Promise<void> {
+  async register(params: channels.SelectorsRegisterParams): Promise<void> {
     await this._object.register(params.name, params.source, params.contentScript);
   }
 
-  async createSelector(params: { name: string, handle: ElementHandleDispatcher }): Promise<{ value?: string }> {
-    return { value: await this._object._createSelector(params.name, params.handle._object as dom.ElementHandle<Element>) };
+  async createSelector(params: channels.SelectorsCreateSelectorParams): Promise<channels.SelectorsCreateSelectorResult> {
+    return { value: await this._object._createSelector(params.name, (params.handle as ElementHandleDispatcher)._object as dom.ElementHandle<Element>) };
   }
 }

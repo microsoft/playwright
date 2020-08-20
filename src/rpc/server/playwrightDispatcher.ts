@@ -15,7 +15,7 @@
  */
 
 import { Playwright } from '../../server/playwright';
-import { PlaywrightChannel, PlaywrightInitializer } from '../channels';
+import * as channels from '../channels';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
@@ -23,7 +23,7 @@ import { Electron } from '../../server/electron';
 import { ElectronDispatcher } from './electronDispatcher';
 import { DeviceDescriptors } from '../../deviceDescriptors';
 
-export class PlaywrightDispatcher extends Dispatcher<Playwright, PlaywrightInitializer> implements PlaywrightChannel {
+export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
     const electron = (playwright as any).electron as (Electron | undefined);
     const deviceDescriptors = Object.entries(DeviceDescriptors)
