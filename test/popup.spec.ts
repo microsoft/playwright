@@ -233,7 +233,7 @@ it('should not dispatch binding on a closed page', async function({browser, serv
   ]);
   await context.close();
   if (options.FIREFOX)
-    expect(messages.join('|')).toBe('alreadyclosed');
+    expect(messages.join('|')).toBe('close');
   else
     expect(messages.join('|')).toBe('binding|close');
 });
