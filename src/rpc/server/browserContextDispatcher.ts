@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import * as types from '../../types';
 import { BrowserContext } from '../../browserContext';
 import { Events } from '../../events';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import { PageChannel, BrowserContextChannel, BrowserContextInitializer, CDPSessionChannel, BrowserContextSetGeolocationParams, BrowserContextSetHTTPCredentialsParams } from '../channels';
+import * as channels from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Events as ChromiumEvents } from '../../chromium/events';
 
-export class BrowserContextDispatcher extends Dispatcher<BrowserContext, BrowserContextInitializer> implements BrowserContextChannel {
+export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
@@ -50,15 +49,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     }
   }
 
-  async setDefaultNavigationTimeoutNoReply(params: { timeout: number }) {
+  async setDefaultNavigationTimeoutNoReply(params: channels.BrowserContextSetDefaultNavigationTimeoutNoReplyParams) {
     this._context.setDefaultNavigationTimeout(params.timeout);
   }
 
-  async setDefaultTimeoutNoReply(params: { timeout: number }) {
+  async setDefaultTimeoutNoReply(params: channels.BrowserContextSetDefaultTimeoutNoReplyParams) {
     this._context.setDefaultTimeout(params.timeout);
   }
 
-  async exposeBinding(params: { name: string }): Promise<void> {
+  async exposeBinding(params: channels.BrowserContextExposeBindingParams): Promise<void> {
     await this._context.exposeBinding(params.name, (source, ...args) => {
       const binding = new BindingCallDispatcher(this._scope, params.name, source, args);
       this._dispatchEvent('bindingCall', { binding });
@@ -66,15 +65,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     });
   }
 
-  async newPage(): Promise<{ page: PageChannel }> {
+  async newPage(): Promise<channels.BrowserContextNewPageResult> {
     return { page: lookupDispatcher<PageDispatcher>(await this._context.newPage()) };
   }
 
-  async cookies(params: { urls: string[] }): Promise<{ cookies: types.NetworkCookie[] }> {
+  async cookies(params: channels.BrowserContextCookiesParams): Promise<channels.BrowserContextCookiesResult> {
     return { cookies: await this._context.cookies(params.urls) };
   }
 
-  async addCookies(params: { cookies: types.SetNetworkCookieParam[] }): Promise<void> {
+  async addCookies(params: channels.BrowserContextAddCookiesParams): Promise<void> {
     await this._context.addCookies(params.cookies);
   }
 
@@ -82,35 +81,35 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     await this._context.clearCookies();
   }
 
-  async grantPermissions(params: { permissions: string[], options: { origin?: string } }): Promise<void> {
-    await this._context.grantPermissions(params.permissions, params.options);
+  async grantPermissions(params: channels.BrowserContextGrantPermissionsParams): Promise<void> {
+    await this._context.grantPermissions(params.permissions, params.origin);
   }
 
   async clearPermissions(): Promise<void> {
     await this._context.clearPermissions();
   }
 
-  async setGeolocation(params: BrowserContextSetGeolocationParams): Promise<void> {
+  async setGeolocation(params: channels.BrowserContextSetGeolocationParams): Promise<void> {
     await this._context.setGeolocation(params.geolocation);
   }
 
-  async setExtraHTTPHeaders(params: { headers: types.HeadersArray }): Promise<void> {
+  async setExtraHTTPHeaders(params: channels.BrowserContextSetExtraHTTPHeadersParams): Promise<void> {
     await this._context.setExtraHTTPHeaders(params.headers);
   }
 
-  async setOffline(params: { offline: boolean }): Promise<void> {
+  async setOffline(params: channels.BrowserContextSetOfflineParams): Promise<void> {
     await this._context.setOffline(params.offline);
   }
 
-  async setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<void> {
+  async setHTTPCredentials(params: channels.BrowserContextSetHTTPCredentialsParams): Promise<void> {
     await this._context.setHTTPCredentials(params.httpCredentials);
   }
 
-  async addInitScript(params: { source: string }): Promise<void> {
+  async addInitScript(params: channels.BrowserContextAddInitScriptParams): Promise<void> {
     await this._context._doAddInitScript(params.source);
   }
 
-  async setNetworkInterceptionEnabled(params: { enabled: boolean }): Promise<void> {
+  async setNetworkInterceptionEnabled(params: channels.BrowserContextSetNetworkInterceptionEnabledParams): Promise<void> {
     if (!params.enabled) {
       await this._context._setRequestInterceptor(undefined);
       return;
@@ -124,8 +123,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, Browser
     await this._context.close();
   }
 
-  async crNewCDPSession(params: { page: PageDispatcher }): Promise<{ session: CDPSessionChannel }> {
+  async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
     const crBrowserContext = this._object as CRBrowserContext;
-    return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession(params.page._object)) };
+    return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
   }
 }

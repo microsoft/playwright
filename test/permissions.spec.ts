@@ -40,10 +40,17 @@ describe.skip(options.WEBKIT())('permissions', () => {
     expect(error.message).toContain('Unknown permission: foo');
   });
 
-  it('should grant geolocation permission when listed', async({page, server, context}) => {
+  it('should grant geolocation permission when origin is listed', async({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
     expect(await getPermission(page, 'geolocation')).toBe('granted');
+  });
+
+  it('should prompt for geolocation permission when origin is not listed', async({page, server, context}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
+    await page.goto(server.EMPTY_PAGE.replace('localhost', '127.0.0.1'));
+    expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
   it('should grant notifications permission when listed', async({page, server, context}) => {
