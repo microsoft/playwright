@@ -19,7 +19,7 @@ const path = require('path');
 const fs = require('fs');
 
 const spawns = [
-  child_process.spawn('node', [path.join(__dirname, 'runWebpack.js'), '--watch', '--silent'], { stdio: 'inherit', shell: true }),
+  child_process.spawn('node', [path.join(__dirname, 'runWebpack.js'), '--mode="development"', '--watch', '--silent'], { stdio: 'inherit', shell: true }),
   child_process.spawn('npx', ['tsc', '-w', '--preserveWatchOutput', '-p', path.join(__dirname, '..')], { stdio: 'inherit', shell: true }),
 ];
 process.on('exit', () => spawns.forEach(s => s.kill()));
