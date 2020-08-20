@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import utils from './utils';
+import './playwright.fixtures';
 
 it('should clear cookies', async({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);

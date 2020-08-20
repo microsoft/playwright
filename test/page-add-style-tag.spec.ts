@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import './playwright.fixtures';
 import path from 'path';
 
 it('should throw an error if no options are provided', async({page, server}) => {

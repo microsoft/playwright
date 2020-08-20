@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import './playwright.fixtures';
 import utils from './utils';
 
 it('should have a nice preview', async ({ page, server }) => {

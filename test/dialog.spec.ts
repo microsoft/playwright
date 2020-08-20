@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 it('should fire', async({page, server}) => {
   page.on('dialog', dialog => {
@@ -61,7 +62,7 @@ it('should dismiss the confirm prompt', async({page}) => {
   expect(result).toBe(false);
 });
 
-it.fail(options.WEBKIT)('should be able to close context with open alert', async({browser}) => {
+it.fail(options.WEBKIT())('should be able to close context with open alert', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const alertPromise = page.waitForEvent('dialog');

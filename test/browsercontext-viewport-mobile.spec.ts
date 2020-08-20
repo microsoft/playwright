@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
-it.skip(options.FFOX)('should support mobile emulation', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX())('should support mobile emulation', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -28,7 +28,7 @@ it.skip(options.FFOX)('should support mobile emulation', async({playwright, brow
   await context.close();
 });
 
-it.skip(options.FFOX)('should support touch emulation', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX())('should support touch emulation', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -51,7 +51,7 @@ it.skip(options.FFOX)('should support touch emulation', async({playwright, brows
   }
 });
 
-it.skip(options.FFOX)('should be detectable by Modernizr', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX())('should be detectable by Modernizr', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -60,7 +60,7 @@ it.skip(options.FFOX)('should be detectable by Modernizr', async({playwright, br
   await context.close();
 });
 
-it.skip(options.FFOX)('should detect touch when applying viewport with touches', async({browser, server}) => {
+it.skip(options.FIREFOX())('should detect touch when applying viewport with touches', async({browser, server}) => {
   const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -69,7 +69,7 @@ it.skip(options.FFOX)('should detect touch when applying viewport with touches',
   await context.close();
 });
 
-it.skip(options.FFOX)('should support landscape emulation', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX())('should support landscape emulation', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
   const context1 = await browser.newContext({ ...iPhone });
@@ -83,7 +83,7 @@ it.skip(options.FFOX)('should support landscape emulation', async({playwright, b
   await context2.close();
 });
 
-it.skip(options.FFOX)('should support window.orientation emulation', async({browser, server}) => {
+it.skip(options.FIREFOX())('should support window.orientation emulation', async({browser, server}) => {
   const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/mobile.html');
@@ -93,7 +93,7 @@ it.skip(options.FFOX)('should support window.orientation emulation', async({brow
   await context.close();
 });
 
-it.skip(options.FFOX)('should fire orientationchange event', async({browser, server}) => {
+it.skip(options.FIREFOX())('should fire orientationchange event', async({browser, server}) => {
   const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/mobile.html');
@@ -112,7 +112,7 @@ it.skip(options.FFOX)('should fire orientationchange event', async({browser, ser
   await context.close();
 });
 
-it.skip(options.FFOX)('default mobile viewports to 980 width', async({browser, server}) => {
+it.skip(options.FIREFOX())('default mobile viewports to 980 width', async({browser, server}) => {
   const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/empty.html');
@@ -120,7 +120,7 @@ it.skip(options.FFOX)('default mobile viewports to 980 width', async({browser, s
   await context.close();
 });
 
-it.skip(options.FFOX)('respect meta viewport tag', async({browser, server}) => {
+it.skip(options.FIREFOX())('respect meta viewport tag', async({browser, server}) => {
   const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/mobile.html');

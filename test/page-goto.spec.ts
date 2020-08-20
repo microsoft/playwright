@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
 import path from 'path';
@@ -142,9 +143,9 @@ it('should fail when server returns 204', async({page, server}) => {
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).not.toBe(null);
-  if (options.CHROMIUM)
+  if (options.CHROMIUM())
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (options.WEBKIT)
+  else if (options.WEBKIT())
     expect(error.message).toContain('Aborted: 204 No Content');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -167,7 +168,7 @@ it('should work when page calls history API in beforeunload', async({page, serve
 it('should fail when navigating to bad url', async({page}) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
-  if (options.CHROMIUM || options.WEBKIT)
+  if (options.CHROMIUM() || options.WEBKIT())
     expect(error.message).toContain('Cannot navigate to invalid URL');
   else
     expect(error.message).toContain('Invalid url');
@@ -211,11 +212,11 @@ it('should throw if networkidle2 is passed as an option', async({page, server}) 
 it('should fail when main resources failed to load', async({page}) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-  if (options.CHROMIUM)
+  if (options.CHROMIUM())
     expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-  else if (options.WEBKIT && WIN)
+  else if (options.WEBKIT() && WIN)
     expect(error.message).toContain(`Couldn\'t connect to server`);
-  else if (options.WEBKIT)
+  else if (options.WEBKIT())
     expect(error.message).toContain('Could not connect');
   else
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
@@ -306,9 +307,9 @@ it('should fail when replaced by another navigation', async({page, server}) => {
   });
   const error = await page.goto(server.PREFIX + '/empty.html').catch(e => e);
   await anotherPromise;
-  if (options.CHROMIUM)
+  if (options.CHROMIUM())
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (options.WEBKIT)
+  else if (options.WEBKIT())
     expect(error.message).toContain('cancelled');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');

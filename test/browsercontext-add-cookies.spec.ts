@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 it('should work', async({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -325,7 +325,7 @@ it('should(not) block third party cookies', async({context, page, server}) => {
   }, server.CROSS_PROCESS_PREFIX + '/grid.html');
   await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
   await page.waitForTimeout(2000);
-  const allowsThirdParty = options.CHROMIUM || options.FFOX;
+  const allowsThirdParty = options.CHROMIUM() || options.FIREFOX();
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
     expect(cookies).toEqual([

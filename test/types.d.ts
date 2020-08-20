@@ -37,9 +37,6 @@ interface WorkerState {
 interface FixtureState {
 }
 
-interface Options {
-}
-
 declare module '' {
     module 'expect/build/types' {
         interface Matchers<R> {
@@ -50,7 +47,6 @@ declare module '' {
 
 declare const expect: typeof import('expect');
 
-declare const options: Options;
 declare const describe: DescribeFunction;
 declare const fdescribe: DescribeFunction;
 declare const xdescribe: DescribeFunction;

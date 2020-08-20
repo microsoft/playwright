@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import utils from './utils';
 
 it('should emulate type', async({page, server}) => {
@@ -114,7 +114,7 @@ it('should work in cross-process iframe', async({browser, server}) => {
   await page.close();
 });
 
-it.fail(options.FFOX)('should change the actual colors in css', async({page}) => {
+it.fail(options.FIREFOX())('should change the actual colors in css', async({page}) => {
   await page.setContent(`
     <style>
       @media (prefers-color-scheme: dark) {

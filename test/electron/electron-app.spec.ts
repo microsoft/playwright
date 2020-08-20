@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import { options } from '../playwright.fixtures';
 import './electron.fixture';
 
 import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
 
-it.skip(!options.CHROMIUM)('should fire close event', async ({ playwright }) => {
+it.skip(!options.CHROMIUM())('should fire close event', async ({ playwright }) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
   const application = await playwright.electron.launch(electronPath, {
     args: [path.join(__dirname, 'testApp.js')],
@@ -34,12 +36,12 @@ it.skip(!options.CHROMIUM)('should fire close event', async ({ playwright }) => 
   expect(events.join('|')).toBe('context|application');
 });
 
-it.skip(!options.CHROMIUM)('should script application', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should script application', async ({ application }) => {
   const appPath = await application.evaluate(async ({ app }) => app.getAppPath());
   expect(appPath).toContain('electron');
 });
 
-it.skip(!options.CHROMIUM)('should create window', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should create window', async ({ application }) => {
   const [ page ] = await Promise.all([
     application.waitForEvent('window'),
     application.evaluate(({ BrowserWindow }) => {
@@ -51,13 +53,13 @@ it.skip(!options.CHROMIUM)('should create window', async ({ application }) => {
   expect(await page.title()).toBe('Hello World 1');
 });
 
-it.skip(!options.CHROMIUM)('should create window 2', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should create window 2', async ({ application }) => {
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('data:text/html,<title>Hello World 2</title>');
   expect(await page.title()).toBe('Hello World 2');
 });
 
-it.skip(!options.CHROMIUM)('should create multiple windows', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should create multiple windows', async ({ application }) => {
   const createPage = async ordinal => {
     const page = await application.newBrowserWindow({ width: 800, height: 600 });
     await Promise.all([
@@ -78,7 +80,7 @@ it.skip(!options.CHROMIUM)('should create multiple windows', async ({ applicatio
   expect(titles).toEqual(['Hello World 2', 'Hello World 3', 'Hello World 4']);
 });
 
-it.skip(!options.CHROMIUM)('should route network', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should route network', async ({ application }) => {
   await application.context().route('**/empty.html', (route, request) => {
     route.fulfill({
       status: 200,
@@ -91,14 +93,14 @@ it.skip(!options.CHROMIUM)('should route network', async ({ application }) => {
   expect(await page.title()).toBe('Hello World');
 });
 
-it.skip(!options.CHROMIUM)('should support init script', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should support init script', async ({ application }) => {
   await application.context().addInitScript('window.magic = 42;')
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('data:text/html,<script>window.copy = magic</script>');
   expect(await page.evaluate(() => window['copy'])).toBe(42);
 });
 
-it.skip(!options.CHROMIUM)('should expose function', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should expose function', async ({ application }) => {
   const t = Date.now();
   await application.context().exposeFunction('add', (a, b) => a + b);
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
@@ -106,7 +108,7 @@ it.skip(!options.CHROMIUM)('should expose function', async ({ application }) => 
   expect(await page.evaluate(() => window['result'])).toBe(42);
 });
 
-it.skip(!options.CHROMIUM)('should wait for first window', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should wait for first window', async ({ application }) => {
   application.evaluate(({ BrowserWindow }) => {
     const window = new BrowserWindow({ width: 800, height: 600 });
     window.loadURL('data:text/html,<title>Hello World!</title>');
@@ -115,7 +117,7 @@ it.skip(!options.CHROMIUM)('should wait for first window', async ({ application 
   expect(await window.title()).toBe('Hello World!');
 });
 
-it.skip(!options.CHROMIUM)('should have a clipboard instance', async ({ application }) => {
+it.skip(!options.CHROMIUM())('should have a clipboard instance', async ({ application }) => {
   const clipboardContentToWrite = 'Hello from Playwright';
   await application.evaluate(async ({clipboard}, text) => clipboard.writeText(text), clipboardContentToWrite);
   const clipboardContentRead = await application.evaluate(async ({clipboard}) => clipboard.readText());

@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import './playwright.fixtures';
 
 async function giveItAChanceToResolve(page) {
   for (let i = 0; i < 5; i++)

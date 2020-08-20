@@ -15,8 +15,7 @@
  */
 
 
-import './runner/builtin.fixtures';
-import './base.fixture';
+import './playwright.fixtures';
 
 import { registerFixture } from './runner';
 

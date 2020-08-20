@@ -19,13 +19,12 @@ import path from 'path';
 import os from 'os';
 import childProcess from 'child_process';
 import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
-import { TestServer } from '../utils/testserver/';
+import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './coverage';
-import { registerFixture, registerWorkerFixture, registerOption, registerOptionGenerator } from './runner';
-import './runner/builtin.fixtures';
+import { parameters, registerFixture, registerWorkerFixture, registerParameter } from './runner';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
 
@@ -51,13 +50,8 @@ declare global {
     httpsServer: TestServer;
     browserServer: BrowserServer;
   }
-  interface Options {
+  interface FixtureParameters {
     browserName: string;
-    CHROMIUM: boolean;
-    FFOX: boolean;
-    WEBKIT: boolean;
-    HEADLESS: boolean;
-    WIRE: boolean;
   }
 }
 
@@ -69,7 +63,7 @@ registerWorkerFixture('httpService', async ({}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + options.parallelIndex * 2;
+  const port = 8907 + parameters.parallelIndex * 2;
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
@@ -137,7 +131,7 @@ registerWorkerFixture('playwright', async({browserName}, test) => {
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(__dirname, 'coverage-report', options.parallelIndex + '.json');
+    const coveragePath = path.join(__dirname, 'coverage-report', parameters.parallelIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
@@ -199,17 +193,19 @@ registerWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-registerOptionGenerator('browserName', () => {
+registerParameter('browserName', () => {
   if (process.env.BROWSER)
     return [process.env.BROWSER];
   return ['chromium', 'webkit', 'firefox'];
 });
 
-registerOption('CHROMIUM', ({browserName}) => browserName === 'chromium');
-registerOption('FFOX', ({browserName}) => browserName === 'firefox');
-registerOption('WEBKIT', ({browserName}) => browserName === 'webkit');
-registerOption('HEADLESS', ({}) => !!valueFromEnv('HEADLESS', true));
-registerOption('WIRE', ({}) => process.env.PWWIRE);
+export const options = {
+  CHROMIUM: () => parameters.browserName === 'chromium',
+  FIREFOX: () => parameters.browserName === 'firefox',
+  WEBKIT: () => parameters.browserName === 'webkit',
+  HEADLESS : !!valueFromEnv('HEADLESS', true),
+  WIRE: !!process.env.PWWIRE,
+}
 
 function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))

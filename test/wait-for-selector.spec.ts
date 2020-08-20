@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './base.fixture';
+import './playwright.fixtures';
 import utils from './utils';
 
 async function giveItTimeToLog(frame) {

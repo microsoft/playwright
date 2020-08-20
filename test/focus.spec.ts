@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
-it.skip(options.FFOX)('should work', async function({page, server}) {
+it.skip(options.FIREFOX())('should work', async function({page, server}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
   await page.focus('#d1');
@@ -77,7 +77,7 @@ it('should traverse focus in all directions', async function({page}) {
 
 // Chromium and WebKit both have settings for tab traversing all links, but 
 // it is only on by default in WebKit.
-it.skip(!MAC || !options.WEBKIT)('should traverse only form elements', async function({page}) {
+it.skip(!MAC || !options.WEBKIT())('should traverse only form elements', async function({page}) {
   await page.setContent(`
     <input id="input-1">
     <button id="button">buttton</button>

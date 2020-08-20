@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import fs from 'fs';
 import path from 'path';
 
@@ -50,7 +50,7 @@ it('should work with status code 422', async({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it.skip(options.FFOX && !options.HEADLESS)('should allow mocking binary responses', async({page, server, golden}) => {
+it.skip(options.FIREFOX() && !options.HEADLESS)('should allow mocking binary responses', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
@@ -69,7 +69,7 @@ it.skip(options.FFOX && !options.HEADLESS)('should allow mocking binary response
   expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
 });
 
-it.skip(options.FFOX && !options.HEADLESS)('should allow mocking svg with charset', async({page, server, golden}) => {
+it.skip(options.FIREFOX() && !options.HEADLESS)('should allow mocking svg with charset', async({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     route.fulfill({

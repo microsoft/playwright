@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -26,8 +27,8 @@ function dimensions() {
   };
 }
 
-it.fail(options.FFOX && WIN)('should click the document', async({page, server}) => {
-  // Occasionally times out on options.FFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
+it.fail(options.FIREFOX() && WIN)('should click the document', async({page, server}) => {
+  // Occasionally times out on options.FIREFOX() on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
   await page.evaluate(() => {
     window["clickPromise"] = new Promise(resolve => {
       document.addEventListener('click', event => {
@@ -126,7 +127,7 @@ it('should set modifier keys on click', async({page, server}) => {
   await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window["lastEvent"] = e, true));
   const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};
   // In Firefox, the Meta modifier only exists on Mac
-  if (options.FFOX && !MAC)
+  if (options.FIREFOX() && !MAC)
     delete modifiers['Meta'];
   for (const modifier in modifiers) {
     await page.keyboard.down(modifier);
@@ -144,7 +145,7 @@ it('should set modifier keys on click', async({page, server}) => {
 
 it('should tween mouse movement', async({page}) => {
   // The test becomes flaky on WebKit without next line.
-  if (options.WEBKIT)
+  if (options.WEBKIT())
     await page.evaluate(() => new Promise(requestAnimationFrame));
   await page.mouse.move(100, 100);
   await page.evaluate(() => {
@@ -163,7 +164,7 @@ it('should tween mouse movement', async({page}) => {
   ]);
 });
 
-it.skip(options.FFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+it.skip(options.FIREFOX())('should work with mobile viewports and cross process navigations', async({browser, server}) => {
   // @see https://crbug.com/929806
   const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });
   const page = await context.newPage();

@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import { Route } from '..';
 
 it('should pick up ongoing navigation', async({page, server}) => {
@@ -77,8 +77,8 @@ it('should wait for load state of empty url popup', async({browser, page}) => {
     }),
   ]);
   await popup.waitForLoadState();
-  expect(readyState).toBe(options.FFOX ? 'uninitialized' : 'complete');
-  expect(await popup.evaluate(() => document.readyState)).toBe(options.FFOX ? 'uninitialized' : 'complete');
+  expect(readyState).toBe(options.FIREFOX() ? 'uninitialized' : 'complete');
+  expect(await popup.evaluate(() => document.readyState)).toBe(options.FIREFOX() ? 'uninitialized' : 'complete');
 });
 
 it('should wait for load state of about:blank popup ', async({browser, page}) => {

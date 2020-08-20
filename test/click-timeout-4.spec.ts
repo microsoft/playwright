@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import './playwright.fixtures';
 
 it('should timeout waiting for stable position', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

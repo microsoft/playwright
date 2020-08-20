@@ -14,8 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import './playwright.fixtures';
 import { Frame, Page } from '..';
 import { TestServer } from '../utils/testserver';
 
