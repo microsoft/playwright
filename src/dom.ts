@@ -257,7 +257,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (!quads || !quads.length)
       return 'error:notvisible';
 
-    const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 1);
+    // Allow 1x1 elements. Compensate for rounding errors by comparing with 0.99 instead.
+    const filtered = quads.map(quad => intersectQuadWithViewport(quad)).filter(quad => computeQuadArea(quad) > 0.99);
     if (!filtered.length)
       return 'error:notinviewport';
     // Return the middle point of the first quad.
@@ -266,6 +267,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       result.x += point.x / 4;
       result.y += point.y / 4;
     }
+    compensateHalfIntegerRoundingError(result);
     return result;
   }
 
@@ -813,6 +815,26 @@ function roundPoint(point: types.Point): types.Point {
     x: (point.x * 100 | 0) / 100,
     y: (point.y * 100 | 0) / 100,
   };
+}
+
+function compensateHalfIntegerRoundingError(point: types.Point) {
+  // Firefox internally uses integer coordinates, so 8.5 is converted to 9 when clicking.
+  //
+  // This does not work nicely for small elements. For example, 1x1 square with corners
+  // (8;8) and (9;9) is targeted when clicking at (8;8) but not when clicking at (9;9).
+  // So, clicking at (8.5;8.5) will effectively click at (9;9) and miss the target.
+  //
+  // Therefore, we skew half-integer values from the interval (8.49, 8.51) towards
+  // (8.47, 8.49) that is rounded towards 8. This means clicking at (8.5;8.5) will
+  // be replaced with (8.48;8.48) and will effectively click at (8;8).
+  //
+  // Other browsers use float coordinates, so this change should not matter.
+  const remainderX = point.x - Math.floor(point.x);
+  if (remainderX > 0.49 && remainderX < 0.51)
+    point.x -= 0.02;
+  const remainderY = point.y - Math.floor(point.y);
+  if (remainderY > 0.49 && remainderY < 0.51)
+    point.y -= 0.02;
 }
 
 export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;

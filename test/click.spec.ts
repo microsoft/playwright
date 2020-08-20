@@ -70,6 +70,12 @@ it('should not throw UnhandledPromiseRejection when page closes', async({browser
   await context.close();
 });
 
+it('should click the 1x1 div', async({page, server}) => {
+  await page.setContent(`<div style="width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
+});
+
 it('should click the button after navigation ', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.click('button');
