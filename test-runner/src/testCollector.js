@@ -25,6 +25,7 @@ class TestCollector {
   constructor(files, matrix, options) {
     this._matrix = matrix;
     for (const name of Object.keys(matrix))
+      //@ts-ignore
       registerWorkerFixture(name, async ({}, test) => test());
     this._options = options;
     this.suite = new Mocha.Suite('', new Mocha.Context(), true);

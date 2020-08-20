@@ -14,21 +14,45 @@
  * limitations under the License.
  */
 
-const debug = require('debug');
+import debug from 'debug';
+
+declare global {
+  interface WorkerState {
+  }
+
+  interface TestState {
+  }
+
+  interface FixtureParameters {
+  }
+}
 
 const registrations = new Map();
 const registrationsByFile = new Map();
-let parameters = {};
-const parameterRegistrations = new Map();
+export let parameters: FixtureParameters = {} as FixtureParameters;
+export const parameterRegistrations = new Map();
 
-function setParameters(params) {
+export function setParameters(params: any) {
   parameters = Object.assign(parameters, params);
   for (const name of Object.keys(params))
-    registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
+    registerWorkerFixture(name as keyof WorkerState, async ({}, test) => await test(parameters[name] as never));
 }
 
+
 class Fixture {
-  constructor(pool, name, scope, fn) {
+  pool: FixturePool;
+  name: string;
+  scope: any;
+  fn: any;
+  deps: any;
+  usages: Set<unknown>;
+  hasGeneratorValue: boolean;
+  value: any;
+  _teardownFenceCallback: (value?: unknown) => void;
+  _tearDownComplete: any;
+  _setup: boolean;
+  _teardown: any;
+  constructor(pool: FixturePool, name: string, scope: any, fn: any) {
     this.pool = pool;
     this.name = name;
     this.scope = scope;
@@ -50,16 +74,16 @@ class Fixture {
     const params = {};
     for (const n of this.deps)
       params[n] = this.pool.instances.get(n).value;
-    let setupFenceFulfill;
-    let setupFenceReject;
+    let setupFenceFulfill: { (): void; (value?: unknown): void; };
+    let setupFenceReject: { (arg0: any): any; (reason?: any): void; };
     const setupFence = new Promise((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
     const teardownFence = new Promise(f => this._teardownFenceCallback = f);
     debug('pw:test:hook')(`setup "${this.name}"`);
-    this._tearDownComplete = this.fn(params, async value => {
+    this._tearDownComplete = this.fn(params, async (value: any) => {
       this.value = value;
       setupFenceFulfill();
       await teardownFence;
-    }).catch(e => setupFenceReject(e));
+    }).catch((e: any) => setupFenceReject(e));
     await setupFence;
     this._setup = true;
   }
@@ -85,12 +109,13 @@ class Fixture {
   }
 }
 
-class FixturePool {
+export class FixturePool {
+  instances: Map<any, any>;
   constructor() {
     this.instances = new Map();
   }
 
-  async setupFixture(name) {
+  async setupFixture(name: string) {
     let fixture = this.instances.get(name);
     if (fixture)
       return fixture;
@@ -104,14 +129,14 @@ class FixturePool {
     return fixture;
   }
 
-  async teardownScope(scope) {
+  async teardownScope(scope: string) {
     for (const [name, fixture] of this.instances) {
       if (fixture.scope === scope)
         await fixture.teardown();
     }
   }
 
-  async resolveParametersAndRun(fn) {
+  async resolveParametersAndRun(fn: (arg0: {}) => any) {
     const names = fixtureParameterNames(fn);
     for (const name of names)
       await this.setupFixture(name);
@@ -121,7 +146,7 @@ class FixturePool {
     return fn(params);
   }
 
-  wrapTestCallback(callback) {
+  wrapTestCallback(callback: any) {
     if (!callback)
       return callback;
     return async() => {
@@ -134,9 +159,9 @@ class FixturePool {
   }
 }
 
-function fixturesForCallback(callback) {
-  const names = new Set();
-  const visit  = (callback) => {
+export function fixturesForCallback(callback: any): string[] {
+  const names = new Set<string>();
+  const visit  = (callback: any) => {
     for (const name of fixtureParameterNames(callback)) {
       if (name in names)
         continue;
@@ -154,26 +179,28 @@ function fixturesForCallback(callback) {
   return result;
 }
 
-function fixtureParameterNames(fn) {
+function fixtureParameterNames(fn: { toString: () => any; }) {
   const text = fn.toString();
   const match = text.match(/async(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
   if (!match || !match[1].trim())
     return [];
   let signature = match[1];
-  return signature.split(',').map(t => t.trim());
+  return signature.split(',').map((t: string) => t.trim());
 }
 
-function optionParameterNames(fn) {
+function optionParameterNames(fn: { toString: () => any; }) {
   const text = fn.toString();
   const match = text.match(/(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
   if (!match || !match[1].trim())
     return [];
   let signature = match[1];
-  return signature.split(',').map(t => t.trim());
+  return signature.split(',').map((t: string) => t.trim());
 }
 
-function innerRegisterFixture(name, scope, fn) {
-  const stackFrame = new Error().stack.split('\n').slice(1).filter(line => !line.includes(__filename))[0];
+function innerRegisterFixture(name: any, scope: string, fn: any, caller: Function) {
+  const obj = {stack: ''};
+  Error.captureStackTrace(obj, caller);
+  const stackFrame = obj.stack.split('\n')[1];
   const location = stackFrame.replace(/.*at Object.<anonymous> \((.*)\)/, '$1');
   const file = location.replace(/^(.+):\d+:\d+$/, '$1');
   const registration = { name, scope, fn, file, location };
@@ -183,32 +210,32 @@ function innerRegisterFixture(name, scope, fn) {
   registrationsByFile.get(file).push(registration);
 };
 
-function registerFixture(name, fn) {
-  innerRegisterFixture(name, 'test', fn);
+export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, test: (arg: TestState[T]) => Promise<void>) => Promise<void>) {
+  innerRegisterFixture(name, 'test', fn, registerFixture);
 };
 
-function registerWorkerFixture(name, fn) {
-  innerRegisterFixture(name, 'worker', fn);
+export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, test: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>) => Promise<void>) {
+  innerRegisterFixture(name, 'worker', fn, registerWorkerFixture);
 };
 
-function registerParameter(name, fn) {
-  registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
+export function registerParameter<T extends keyof WorkerState>(name: T, fn: () => WorkerState[T][]) {
+  registerWorkerFixture(name, async ({}: any, test: (arg0: any) => any) => await test(parameters[name]));
   parameterRegistrations.set(name, fn);
 }
 
-function collectRequires(file, result) {
+function collectRequires(file: string | number, result: Set<unknown>) {
   if (result.has(file))
     return;
   result.add(file);
   const cache = require.cache[file];
   if (!cache)
     return;
-  const deps = cache.children.map(m => m.id).slice().reverse();
+  const deps = cache.children.map((m: { id: any; }) => m.id).slice().reverse();
   for (const dep of deps)
     collectRequires(dep, result);
 }
 
-function lookupRegistrations(file, scope) {
+export function lookupRegistrations(file: any, scope: any) {
   const deps = new Set();
   collectRequires(file, deps);
   const allDeps = [...deps].reverse();
@@ -226,11 +253,9 @@ function lookupRegistrations(file, scope) {
   return result;
 }
 
-function rerunRegistrations(file, scope) {
+export function rerunRegistrations(file: any, scope: any) {
   // When we are running several tests in the same worker, we should re-run registrations before
   // each file. That way we erase potential fixture overrides from the previous test runs.
   for (const registration of lookupRegistrations(file, scope).values())
     registrations.set(registration.name, registration);
 }
-
-module.exports = { FixturePool, registerFixture, registerWorkerFixture, rerunRegistrations, lookupRegistrations, fixturesForCallback, registerParameter, setParameters, parameterRegistrations, parameters };

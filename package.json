@@ -9,19 +9,19 @@
     "node": ">=10.15.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium node test/runner/cli test/",
-    "ftest": "cross-env BROWSER=firefox node test/runner/cli test/",
-    "wtest": "cross-env BROWSER=webkit node test/runner/cli test/",
-    "test": "node test/runner/cli test/",
+    "ctest": "cross-env BROWSER=chromium node test-runner/cli test/",
+    "ftest": "cross-env BROWSER=firefox node test-runner/cli test/",
+    "wtest": "cross-env BROWSER=webkit node test-runner/cli test/",
+    "test": "node test-runner/cli test/",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
-    "test-infra": "node test/runner/cli utils/doclint/check_public_api/test/test.js && node test/runner/cli utils/doclint/preprocessor/test.js",
+    "test-infra": "node test-runner/cli utils/doclint/check_public_api/test/test.js && node test-runner/cli utils/doclint/preprocessor/test.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && npm run generate-channels && npm run test-types && npm run test-infra",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
-    "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run generate-types",
+    "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run build-testrunner && npm run generate-types",
     "watch": "node utils/watch.js",
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && npm run typecheck-tests",
     "generate-types": "node utils/generate_types/",
@@ -30,7 +30,8 @@
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/checkCoverage.js",
     "check-deps": "node utils/check_deps.js",
-    "build-driver": "pkg --public --targets node12-linux-x64,node12-macos-x64,node12-win-x64 --out-path=drivers packages/playwright-driver/main.js"
+    "build-driver": "pkg --public --targets node12-linux-x64,node12-macos-x64,node12-win-x64 --out-path=drivers packages/playwright-driver/main.js",
+    "build-testrunner": "tsc -p test-runner"
   },
   "author": {
     "name": "Microsoft Corporation"

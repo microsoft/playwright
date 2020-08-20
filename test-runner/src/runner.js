@@ -200,8 +200,8 @@ class OopWorker extends EventEmitter {
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
       env: {
-        FORCE_COLOR: process.stdout.isTTY ? 1 : 0,
-        DEBUG_COLORS: process.stdout.isTTY ? 1 : 0,
+        FORCE_COLOR: process.stdout.isTTY ? '1' : '0',
+        DEBUG_COLORS: process.stdout.isTTY ? '1' : '0',
         ...process.env
       },
       // Can't pipe since piping slows down termination for some reason.

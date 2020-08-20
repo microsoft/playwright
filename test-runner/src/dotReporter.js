@@ -69,7 +69,7 @@ class DotReporter extends Base {
       this.failures.forEach((failure, index) => {
         const relativePath = path.relative(process.cwd(), failure.file);
         const header = `  ${index +1}. ${terminalLink(relativePath, `file://${os.hostname()}${failure.file}`)} › ${failure.title}`;
-        console.log(colors.bold.red(header));
+        console.log(colors.bold(colors.red(header)));
         const stack = failure.err.stack;
         if (stack) {
           console.log('');

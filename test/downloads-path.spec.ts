@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-import { registerFixture } from './runner';
+import { registerFixture } from '../test-runner';
 
 import path from 'path';
 import fs from 'fs';

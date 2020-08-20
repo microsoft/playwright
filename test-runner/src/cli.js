@@ -25,21 +25,21 @@ let beforeFunction;
 let afterFunction;
 let matrix = {};
 
-global.before = (fn => beforeFunction = fn);
-global.after = (fn => afterFunction = fn);
-global.matrix = (m => matrix = m);
+global['before'] = (fn => beforeFunction = fn);
+global['after'] = (fn => afterFunction = fn);
+global['matrix'] = (m => matrix = m);
 
 program
-  .version('Version ' + require('../../package.json').version)
+  .version('Version ' + /** @type {any} */ (require)('../package.json').version)
   .option('--forbid-only', 'Fail if exclusive test(s) encountered', false)
   .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
-  .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2))
+  .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2).toString())
   .option('--reporter <reporter>', 'Specify reporter to use', '')
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
   .option('--quiet', 'Suppress stdio', false)
   .option('--debug', 'Run tests in-process for debugging', false)
   .option('--output <outputDir>', 'Folder for output artifacts, default: test-results', path.join(process.cwd(), 'test-results'))
-  .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', 10000)
+  .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', '10000')
   .option('-u, --update-snapshots', 'Use this flag to re-record every snapshot that fails during this test run')
   .action(async (command) => {
     // Collect files]
@@ -101,7 +101,7 @@ program
     try {
       if (beforeFunction)
         await beforeFunction();
-      await runner.run(files);
+      await runner.run();
       await runner.stop();
     } finally {
       if (afterFunction)
