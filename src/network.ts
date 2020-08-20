@@ -190,10 +190,15 @@ export class Route {
     await this._delegate.abort(errorCode);
   }
 
-  async fulfill(response: types.NormalizedFulfillResponse) {
+  async fulfill(response: { status?: number, headers?: types.HeadersArray, body?: string, isBase64?: boolean }) {
     assert(!this._handled, 'Route is already handled!');
     this._handled = true;
-    await this._delegate.fulfill(response);
+    await this._delegate.fulfill({
+      status: response.status === undefined ? 200 : response.status,
+      headers: response.headers || [],
+      body: response.body || '',
+      isBase64: response.isBase64 || false,
+    });
   }
 
   async continue(overrides: types.NormalizedContinueOverrides = {}) {

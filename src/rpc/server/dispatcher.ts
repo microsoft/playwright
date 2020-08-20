@@ -16,7 +16,7 @@
 
 import { EventEmitter } from 'events';
 import { helper, debugAssert, assert } from '../../helper';
-import { Channel } from '../channels';
+import * as channels from '../channels';
 import { serializeError } from '../serializers';
 import { createScheme, Validator, ValidationError } from '../validator';
 
@@ -36,7 +36,7 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
   return object ? lookupDispatcher(object) : undefined;
 }
 
-export class Dispatcher<Type, Initializer> extends EventEmitter implements Channel {
+export class Dispatcher<Type, Initializer> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
   private _isScope: boolean;
   // Parent is always "isScope".

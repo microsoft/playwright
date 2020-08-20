@@ -15,11 +15,11 @@
  */
 
 import { ConsoleMessage } from '../../console';
-import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../channels';
+import * as channels from '../channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 
-export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, ConsoleMessageInitializer> implements ConsoleMessageChannel {
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageInitializer> implements channels.ConsoleMessageChannel {
   constructor(scope: DispatcherScope, message: ConsoleMessage) {
     super(scope, message, 'ConsoleMessage', {
       type: message.type(),
