@@ -27,7 +27,7 @@ const GoldenUtils = require('./GoldenUtils');
 class NullReporter {}
 
 class TestRunner extends EventEmitter {
-  constructor(entry, options) {
+  constructor(entry, options, workerId) {
     super();
     this.mocha = new Mocha({
       reporter: NullReporter,
@@ -53,8 +53,15 @@ class TestRunner extends EventEmitter {
     this._parsedGeneratorConfiguration = new Map();
     for (const {name, value} of this._configurationObject)
       this._parsedGeneratorConfiguration.set(name, value);
+    this._parsedGeneratorConfiguration.set('parallelIndex', workerId);
     this._relativeTestFile = path.relative(options.testDir, this._file);
     this.mocha.addFile(this._file);
+  }
+
+  async stop() {
+    this._trialRun = true;
+    const constants = Mocha.Runner.constants;
+    return new Promise(f => this._runner.once(constants.EVENT_RUN_END, f));
   }
 
   async run() {
@@ -63,10 +70,10 @@ class TestRunner extends EventEmitter {
     setOptions(this._parsedGeneratorConfiguration);
     this.mocha.loadFiles();
     rerunRegistrations(this._file, 'test');
-    const runner = this.mocha.run(callback);
+    this._runner = this.mocha.run(callback);
 
     const constants = Mocha.Runner.constants;
-    runner.on(constants.EVENT_TEST_BEGIN, test => {
+    this._runner.on(constants.EVENT_TEST_BEGIN, test => {
       relativeTestFile = this._relativeTestFile;
       if (this._failedWithError)
         return;
@@ -77,7 +84,7 @@ class TestRunner extends EventEmitter {
       this.emit('test', { test: this._serializeTest(test, ordinal) });
     });
 
-    runner.on(constants.EVENT_TEST_PENDING, test => {
+    this._runner.on(constants.EVENT_TEST_PENDING, test => {
       if (this._failedWithError)
         return;
       const ordinal = ++this._currentOrdinal;
@@ -88,7 +95,7 @@ class TestRunner extends EventEmitter {
       this.emit('pending', { test: this._serializeTest(test, ordinal) });
     });
 
-    runner.on(constants.EVENT_TEST_PASS, test => {
+    this._runner.on(constants.EVENT_TEST_PASS, test => {
       if (this._failedWithError)
         return;
 
@@ -99,7 +106,7 @@ class TestRunner extends EventEmitter {
       this.emit('pass', { test: this._serializeTest(test, ordinal) });
     });
 
-    runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
+    this._runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
       if (this._failedWithError)
         return;
       ++this._failures;
@@ -110,12 +117,12 @@ class TestRunner extends EventEmitter {
       });
     });
 
-    runner.once(constants.EVENT_RUN_END, async () => {
+    this._runner.once(constants.EVENT_RUN_END, async () => {
       this.emit('done', {
-        stats: this._serializeStats(runner.stats),
+        stats: this._serializeStats(this._runner.stats),
         error: this._failedWithError,
         remaining: [...this._remaining],
-        total: runner.stats.tests
+        total: this._runner.stats.tests
       });
     });
     await result;

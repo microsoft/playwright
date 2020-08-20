@@ -64,17 +64,17 @@ function apiForBrowser(browserName) {
   const BROWSER_CONFIGS = [
     {
       name: 'Firefox',
-      events: require('../../lib/events').Events,
+      events: require('../lib/events').Events,
     },
     {
       name: 'WebKit',
-      events: require('../../lib/events').Events,
+      events: require('../lib/events').Events,
     },
     {
       name: 'Chromium',
       events: {
-        ...require('../../lib/events').Events,
-        ...require('../../lib/chromium/events').Events,
+        ...require('../lib/events').Events,
+        ...require('../lib/chromium/events').Events,
       }
     },
   ];
@@ -82,7 +82,7 @@ function apiForBrowser(browserName) {
   const events = browserConfig.events;
   // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
   const api = {
-    ...require('../../lib/rpc/client/api'),
+    ...require('../lib/rpc/client/api'),
   };
 
   const filteredKeys = Object.keys(api).filter(apiName => {

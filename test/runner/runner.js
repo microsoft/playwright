@@ -15,12 +15,13 @@
  */
 
 const child_process = require('child_process');
+const crypto = require('crypto');
 const path = require('path');
 const { EventEmitter } = require('events');
 const Mocha = require('mocha');
 const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
-const { computeWorkerHash } = require('./fixtures');
+const { lookupRegistrations } = require('./fixtures');
 
 const constants = Mocha.Runner.constants;
 // Mocha runner does not remove uncaughtException listeners.
@@ -263,15 +264,13 @@ class InProcessWorker extends EventEmitter {
 
   async init() {
     const { initializeImageMatcher } = require('./testRunner');
-    const { initializeWorker } = require('./builtin.fixtures');
     initializeImageMatcher(this.runner._options);
-    initializeWorker({ ...this.runner._options.outputDir, workerId: 0 });
   }
 
   async run(entry) {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
-    const testRunner = new TestRunner(entry, this.runner._options);
+    const testRunner = new TestRunner(entry, this.runner._options, 0);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();
@@ -295,6 +294,17 @@ function chunkFromParams(params) {
   if (typeof params === 'string')
     return params;
   return Buffer.from(params.buffer, 'base64');
+}
+
+function computeWorkerHash(file) {
+  // At this point, registrationsByFile contains all the files with worker fixture registrations.
+  // For every test, build the require closure and map each file to fixtures declared in it.
+  // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
+  // Tests with the matching "worker hash" will reuse the same worker.
+  const hash = crypto.createHash('sha1');
+  for (const registration of lookupRegistrations(file, 'worker').values())
+    hash.update(registration.location);
+  return hash.digest('hex');
 }
 
 module.exports = { Runner };

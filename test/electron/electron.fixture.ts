@@ -15,7 +15,7 @@
  */
 
 import '../base.fixture';
-import { registerFixture } from '../runner/fixtures';
+import { registerFixture } from '../runner';
 import {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
 

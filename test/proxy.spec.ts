@@ -97,7 +97,7 @@ it.fail(options.CHROMIUM && !options.HEADLESS)('should exclude patterns', async 
   await browser.close();
 });
 
-it('should use socks proxy', async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
+it('should use socks proxy', async ({ browserType, defaultBrowserOptions }) => {
   const server = socks.createServer((info, accept, deny) => {
     let socket;
     if (socket = accept(true)) {
@@ -114,7 +114,7 @@ it('should use socks proxy', async ({ browserType, defaultBrowserOptions, parall
       ].join('\r\n'));
     }
   });
-  const socksPort = 9107 + parallelIndex * 2;
+  const socksPort = 9107 + options.parallelIndex * 2;
   server.listen(socksPort, 'localhost');
   server.useAuth(socks.auth.None());
 

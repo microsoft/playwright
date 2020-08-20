@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-const { gracefullyCloseAll } = require('../../lib/server/processLauncher');
 const { TestRunner, initializeImageMatcher, fixturePool } = require('./testRunner');
-const { initializeWorker } = require('./builtin.fixtures');
 
 const util = require('util');
 
@@ -44,22 +42,25 @@ process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT',() => {});
 process.on('SIGTERM',() => {});
 
+let workerId;
+let testRunner;
+
 process.on('message', async message => {
   if (message.method === 'init') {
-    initializeWorker(message.params);
+    workerId = message.params.workerId;
     initializeImageMatcher(message.params);
     return;
   }
   if (message.method === 'stop') {
-    await fixturePool.teardownScope('worker');
     await gracefullyCloseAndExit();
     return;
   }
   if (message.method === 'run') {
-    const testRunner = new TestRunner(message.params.entry, message.params.options);
+    testRunner = new TestRunner(message.params.entry, message.params.options, workerId);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();
+    testRunner = null;
     // Mocha runner adds these; if we don't remove them, we'll get a leak.
     process.removeAllListeners('uncaughtException');
   }
@@ -72,7 +73,9 @@ async function gracefullyCloseAndExit() {
   // Force exit after 30 seconds.
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully close all browsers.
-  await gracefullyCloseAll();
+  if (testRunner)
+    await testRunner.stop();
+  await fixturePool.teardownScope('worker');
   process.exit(0);
 }
 

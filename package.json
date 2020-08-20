@@ -9,10 +9,10 @@
     "node": ">=10.15.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium node test/runner test/",
-    "ftest": "cross-env BROWSER=firefox node test/runner test/",
-    "wtest": "cross-env BROWSER=webkit node test/runner test/",
-    "test": "npm run ctest && npm run ftest && npm run wtest",
+    "ctest": "cross-env BROWSER=chromium node test/runner/cli test/",
+    "ftest": "cross-env BROWSER=firefox node test/runner/cli test/",
+    "wtest": "cross-env BROWSER=webkit node test/runner/cli test/",
+    "test": "node test/runner/cli test/",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
@@ -28,7 +28,7 @@
     "generate-channels": "node utils/generate_channels.js",
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
-    "coverage": "node test/runner/checkCoverage.js",
+    "coverage": "node test/checkCoverage.js",
     "check-deps": "node utils/check_deps.js",
     "build-driver": "pkg --public --targets node12-linux-x64,node12-macos-x64,node12-win-x64 --out-path=drivers packages/playwright-driver/main.js"
   },
