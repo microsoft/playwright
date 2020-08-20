@@ -33,6 +33,7 @@ class BrowserHandler {
       if (!this._shouldAttachToTarget(target))
         continue;
       const session = this._dispatcher.createSession();
+      target.initSession(session);
       target.connectSession(session);
       this._attachedSessions.set(target, session);
       this._session.emitEvent('Browser.attachedToTarget', {
@@ -43,7 +44,7 @@ class BrowserHandler {
 
     this._eventListeners = [
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
-      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
+      helper.on(this._targetRegistry, TargetRegistry.Events.TargetWillBeDestroyed, this._onTargetWillBeDestroyed.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadCreated, this._onDownloadCreated.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadFinished, this._onDownloadFinished.bind(this)),
     ];
@@ -91,6 +92,7 @@ class BrowserHandler {
     if (!this._shouldAttachToTarget(target))
       return;
     const session = this._dispatcher.createSession();
+    target.initSession(session);
     this._attachedSessions.set(target, session);
     this._session.emitEvent('Browser.attachedToTarget', {
       sessionId: session.sessionId(),
@@ -99,7 +101,11 @@ class BrowserHandler {
     sessions.push(session);
   }
 
-  async _onTargetDestroyed(target) {
+  _onTargetWillBeDestroyed({target, pendingActivity}) {
+    pendingActivity.push(this._detachFromTarget(target));
+  }
+
+  async _detachFromTarget(target) {
     const session = this._attachedSessions.get(target);
     if (!session)
       return;

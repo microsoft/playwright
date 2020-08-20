@@ -134,8 +134,7 @@ class TargetRegistry {
         if (!target)
           return;
         target.emit('crashed');
-        target.dispose();
-        this.emit(TargetRegistry.Events.TargetDestroyed, target);
+        this._destroyTarget(target).catch(e => dump(`Failed to destroy target: ${e}`));
       }
     }, 'oop-frameloader-crashed');
 
@@ -182,7 +181,6 @@ class TargetRegistry {
         const sessions = [];
         const readyData = { sessions, target };
         this.emit(TargetRegistry.Events.TargetCreated, readyData);
-        sessions.forEach(session => target._initSession(session));
         return {
           scriptsToEvaluateOnNewDocument: browserContext ? browserContext.scriptsToEvaluateOnNewDocument : [],
           bindings: browserContext ? browserContext.bindings : [],
@@ -204,10 +202,7 @@ class TargetRegistry {
       const tab = event.target;
       const linkedBrowser = tab.linkedBrowser;
       const target = this._browserToTarget.get(linkedBrowser);
-      if (target) {
-        target.dispose();
-        this.emit(TargetRegistry.Events.TargetDestroyed, target);
-      }
+      this._destroyTarget(target).catch(e => dump(`Failed to destroy target: ${e}`));
     };
 
     Services.wm.addListener({
@@ -243,6 +238,16 @@ class TargetRegistry {
 
     const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
     extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
+  }
+
+  async _destroyTarget(target) {
+    if (!target)
+      return;
+    const event = { pendingActivity: [], target };
+    this.emit(TargetRegistry.Events.TargetWillBeDestroyed, event);
+    await Promise.all(event.pendingActivity);
+    target.dispose();
+    this.emit(TargetRegistry.Events.TargetDestroyed, target);
   }
 
   setBrowserProxy(proxy) {
@@ -400,7 +405,6 @@ class PageTarget {
   }
 
   connectSession(session) {
-    this._initSession(session);
     this._channel.connect('').send('attach', { sessionId: session.sessionId() });
   }
 
@@ -415,7 +419,7 @@ class PageTarget {
     });
   }
 
-  _initSession(session) {
+  initSession(session) {
     const pageHandler = new PageHandler(this, session, this._channel);
     const networkHandler = new NetworkHandler(this, session, this._channel);
     session.registerHandler('Page', pageHandler);
@@ -738,6 +742,7 @@ function setViewportSizeForBrowser(viewportSize, browser, window) {
 
 TargetRegistry.Events = {
   TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
+  TargetWillBeDestroyed: Symbol('TargetRegistry.Events.TargetWillBeDestroyed'),
   TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
   DownloadCreated: Symbol('TargetRegistry.Events.DownloadCreated'),
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),

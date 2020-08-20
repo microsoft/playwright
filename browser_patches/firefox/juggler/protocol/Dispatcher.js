@@ -31,7 +31,7 @@ class Dispatcher {
 
   async destroySession(session) {
     this._sessions.delete(session.sessionId());
-    await session.dispose();
+    await session._dispose();
   }
 
   _dispose() {
@@ -108,7 +108,7 @@ class ProtocolSession {
     this._handlers.set(domainName, handler);
   }
 
-  async dispose() {
+  async _dispose() {
     const promises = [];
     for (const [domainName, handler] of this._handlers) {
       if (typeof handler.dispose !== 'function')
