@@ -22,7 +22,7 @@ import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
 declare global {
-  interface FixtureState {
+  interface TestState {
     application: ElectronApplication;
     window: ElectronPage;
   }

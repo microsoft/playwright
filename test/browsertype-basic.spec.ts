@@ -25,11 +25,11 @@ it.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH))
 });
 
 it('browserType.name should work', async({browserType}) => {
-  if (options.WEBKIT())
+  if (options.WEBKIT)
     expect(browserType.name()).toBe('webkit');
-  else if (options.FIREFOX())
+  else if (options.FIREFOX)
     expect(browserType.name()).toBe('firefox');
-  else if (options.CHROMIUM())
+  else if (options.CHROMIUM)
     expect(browserType.name()).toBe('chromium');
   else
     throw new Error('Unknown browser');

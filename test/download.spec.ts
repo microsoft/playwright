@@ -217,7 +217,7 @@ it(`should report download path within page.on('download', …) handler for Blob
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await page.close();
 })
-it.fail(options.FIREFOX() || options.WEBKIT())('should report alt-click downloads', async({browser, server}) => {
+it.fail(options.FIREFOX || options.WEBKIT)('should report alt-click downloads', async({browser, server}) => {
   // Firefox does not download on alt-click by default.
   // Our WebKit embedder does not download on alt-click, although Safari does.
   server.setRoute('/download', (req, res) => {
@@ -238,7 +238,7 @@ it.fail(options.FIREFOX() || options.WEBKIT())('should report alt-click download
   await page.close();
 });
 
-it.fail(options.CHROMIUM() && !options.HEADLESS)('should report new window downloads', async({browser, server}) => {
+it.fail(options.CHROMIUM && !options.HEADLESS)('should report new window downloads', async({browser, server}) => {
   // TODO: - the test fails in headful Chromium as the popup page gets closed along
   // with the session before download completed event arrives.
   // - WebKit doesn't close the popup page

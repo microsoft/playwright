@@ -22,7 +22,7 @@ it('should select textarea', async ({ page, server }) => {
   const textarea = await page.$('textarea');
   await textarea.evaluate(textarea => textarea.value = 'some value');
   await textarea.selectText();
-  if (options.FIREFOX()) {
+  if (options.FIREFOX) {
     expect(await textarea.evaluate(el => el.selectionStart)).toBe(0);
     expect(await textarea.evaluate(el => el.selectionEnd)).toBe(10);
   } else {
@@ -35,7 +35,7 @@ it('should select input', async ({ page, server }) => {
   const input = await page.$('input');
   await input.evaluate(input => input.value = 'some value');
   await input.selectText();
-  if (options.FIREFOX()) {
+  if (options.FIREFOX) {
     expect(await input.evaluate(el => el.selectionStart)).toBe(0);
     expect(await input.evaluate(el => el.selectionEnd)).toBe(10);
   } else {

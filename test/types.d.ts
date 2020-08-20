@@ -31,10 +31,13 @@ type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>)
     repeat(n: number): ItFunction<STATE>;
 };
 
+interface FixtureParameters {
+}
+
 interface WorkerState {
 }
 
-interface FixtureState {
+interface TestState {
 }
 
 declare module '' {
@@ -50,13 +53,13 @@ declare const expect: typeof import('expect');
 declare const describe: DescribeFunction;
 declare const fdescribe: DescribeFunction;
 declare const xdescribe: DescribeFunction;
-declare const it: ItFunction<FixtureState & WorkerState>;
-declare const fit: ItFunction<FixtureState & WorkerState>;
-declare const dit: ItFunction<FixtureState & WorkerState>;
-declare const xit: ItFunction<FixtureState & WorkerState>;
+declare const it: ItFunction<TestState & WorkerState & FixtureParameters>;
+declare const fit: ItFunction<TestState & WorkerState & FixtureParameters>;
+declare const dit: ItFunction<TestState & WorkerState & FixtureParameters>;
+declare const xit: ItFunction<TestState & WorkerState & FixtureParameters>;
 
-declare const beforeEach: (inner: (state: FixtureState & WorkerState) => Promise<void>) => void;
-declare const afterEach: (inner: (state: FixtureState & WorkerState) => Promise<void>) => void;
+declare const beforeEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
+declare const afterEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
 declare const beforeAll: (inner: (state: WorkerState) => Promise<void>) => void;
 declare const afterAll: (inner: (state: WorkerState) => Promise<void>) => void;
 
@@ -68,3 +71,7 @@ declare var WIN: boolean;
 
 // keyboard.html
 declare function getResult(): string;
+
+declare const before: (f: () => Promise<any>) => void;
+declare const after: (f: () => Promise<any>) => void;
+declare const matrix: (m: any) => void;

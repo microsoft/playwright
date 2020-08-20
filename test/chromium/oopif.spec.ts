@@ -26,14 +26,14 @@ registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, te
   await browser.close();
 });
 
-it.skip(!options.CHROMIUM())('should report oopif frames', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('should report oopif frames', async function({browser, page, server}) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   expect(page.frames().length).toBe(2);
   expect(await page.frames()[1].evaluate(() => '' + location.href)).toBe(server.CROSS_PROCESS_PREFIX + '/grid.html');
 });
 
-it.skip(!options.CHROMIUM())('should handle oopif detach', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('should handle oopif detach', async function({browser, page, server}) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   expect(page.frames().length).toBe(2);
@@ -46,7 +46,7 @@ it.skip(!options.CHROMIUM())('should handle oopif detach', async function({brows
   expect(detachedFrame).toBe(frame);
 });
 
-it.skip(!options.CHROMIUM())('should handle remote -> local -> remote transitions', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('should handle remote -> local -> remote transitions', async function({browser, page, server}) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -84,7 +84,7 @@ it.fail(true)('should get the proper viewport', async({browser, page, server}) =
   expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
 });
 
-it.skip(!options.CHROMIUM())('should expose function', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should expose function', async({browser, page, server}) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -96,7 +96,7 @@ it.skip(!options.CHROMIUM())('should expose function', async({browser, page, ser
   expect(result).toBe(36);
 });
 
-it.skip(!options.CHROMIUM())('should emulate media', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should emulate media', async({browser, page, server}) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -106,7 +106,7 @@ it.skip(!options.CHROMIUM())('should emulate media', async({browser, page, serve
   expect(await oopif.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it.skip(!options.CHROMIUM())('should emulate offline', async({browser, page, context, server}) => {
+it.skip(!options.CHROMIUM)('should emulate offline', async({browser, page, context, server}) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -116,7 +116,7 @@ it.skip(!options.CHROMIUM())('should emulate offline', async({browser, page, con
   expect(await oopif.evaluate(() => navigator.onLine)).toBe(false);
 });
 
-it.skip(!options.CHROMIUM())('should support context options', async({browser, server, playwright}) => {
+it.skip(!options.CHROMIUM)('should support context options', async({browser, server, playwright}) => {
   const iPhone = playwright.devices['iPhone 6']
   const context = await browser.newContext({ ...iPhone, timezoneId: 'America/Jamaica', locale: 'fr-CH', userAgent: 'UA' });
   const page = await context.newPage();
@@ -138,7 +138,7 @@ it.skip(!options.CHROMIUM())('should support context options', async({browser, s
   await context.close();
 });
 
-it.skip(!options.CHROMIUM())('should respect route', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should respect route', async({browser, page, server}) => {
   let intercepted = false;
   await page.route('**/digits/0.png', route => {
     intercepted = true;
@@ -150,7 +150,7 @@ it.skip(!options.CHROMIUM())('should respect route', async({browser, page, serve
   expect(intercepted).toBe(true);
 });
 
-it.skip(!options.CHROMIUM())('should take screenshot', async({browser, page, server, golden}) => {
+it.skip(!options.CHROMIUM)('should take screenshot', async({browser, page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
@@ -158,13 +158,13 @@ it.skip(!options.CHROMIUM())('should take screenshot', async({browser, page, ser
   expect(await page.screenshot()).toMatchImage(golden('screenshot-oopif.png'), { threshold: 0.3 });
 });
 
-it.skip(!options.CHROMIUM())('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
+it.skip(!options.CHROMIUM)('should load oopif iframes with subresources and request interception', async function({browser, page, server, context}) {
   await page.route('**/*', route => route.continue());
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
 });
 
-it.skip(!options.CHROMIUM())('should report main requests', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('should report main requests', async function({browser, page, server}) {
   const requestFrames = [];
   page.on('request', r => requestFrames.push(r.frame()));
   const finishedFrames = [];
@@ -202,7 +202,7 @@ it.skip(!options.CHROMIUM())('should report main requests', async function({brow
   expect(finishedFrames[2]).toBe(grandChild);
 });
 
-it.skip(!options.CHROMIUM())('should support exposeFunction', async function({browser, context, page, server}) {
+it.skip(!options.CHROMIUM)('should support exposeFunction', async function({browser, context, page, server}) {
   await context.exposeFunction('dec', a => a - 1);
   await page.exposeFunction('inc', a => a + 1);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -214,7 +214,7 @@ it.skip(!options.CHROMIUM())('should support exposeFunction', async function({br
   expect(await page.frames()[1].evaluate(() => window['dec'](4))).toBe(3);
 });
 
-it.skip(!options.CHROMIUM())('should support addInitScript', async function({browser, context, page, server}) {
+it.skip(!options.CHROMIUM)('should support addInitScript', async function({browser, context, page, server}) {
   await context.addInitScript(() => window['bar'] = 17);
   await page.addInitScript(() => window['foo'] = 42);
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -226,14 +226,14 @@ it.skip(!options.CHROMIUM())('should support addInitScript', async function({bro
   expect(await page.frames()[1].evaluate(() => window['bar'])).toBe(17);
 });
 // @see https://github.com/microsoft/playwright/issues/1240
-it.skip(!options.CHROMIUM())('should click a button when it overlays oopif', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('should click a button when it overlays oopif', async function({browser, page, server}) {
   await page.goto(server.PREFIX + '/button-overlay-oopif.html');
   expect(await countOOPIFs(browser)).toBe(1);
   await page.click('button');
   expect(await page.evaluate(() => window['BUTTON_CLICKED'])).toBe(true);
 });
 
-it.skip(!options.CHROMIUM())('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
+it.skip(!options.CHROMIUM)('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/2548
   // https://google.com is isolated by default in Chromium embedder.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false});
@@ -258,7 +258,7 @@ it.skip(!options.CHROMIUM())('should report google.com frame with headful', asyn
   await browser.close();
 });
 
-it.skip(!options.CHROMIUM())('ElementHandle.boundingBox() should work', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('ElementHandle.boundingBox() should work', async function({browser, page, server}) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await page.$eval('iframe', iframe => {
     iframe.style.width = '500px';
@@ -281,7 +281,7 @@ it.skip(!options.CHROMIUM())('ElementHandle.boundingBox() should work', async fu
   expect(await handle2.boundingBox()).toEqual({ x: 100 + 42, y: 50 + 17, width: 50, height: 50 });
 });
 
-it.skip(!options.CHROMIUM())('should click', async function({browser, page, server}) {
+it.skip(!options.CHROMIUM)('should click', async function({browser, page, server}) {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   await page.$eval('iframe', iframe => {
     iframe.style.width = '500px';

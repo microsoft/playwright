@@ -24,7 +24,7 @@ import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/rpc/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './coverage';
-import { parameters, registerFixture, registerWorkerFixture, registerParameter } from './runner';
+import { parameters, registerFixture, registerWorkerFixture } from './runner';
 
 import {mkdtempAsync, removeFolderAsync} from './utils';
 
@@ -39,10 +39,9 @@ declare global {
     golden: (path: string) => string;
     playwright: typeof import('../index');
     browserType: BrowserType<Browser>;
-    browserName: string;
     browser: Browser;
   }
-  interface FixtureState {
+  interface TestState {
     toImpl: (rpcObject: any) => any;
     context: BrowserContext;
     server: TestServer;
@@ -52,6 +51,9 @@ declare global {
   }
   interface FixtureParameters {
     browserName: string;
+    headless: boolean;
+    wire: boolean;
+    slowMo: boolean;
   }
 }
 
@@ -88,22 +90,22 @@ const getExecutablePath = (browserName) => {
     return process.env.WKPATH;
 }
 
-registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
+registerWorkerFixture('defaultBrowserOptions', async({browserName, headless, slowMo}, test) => {
   let executablePath = getExecutablePath(browserName);
 
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await test({
     handleSIGINT: false,
-    slowMo: valueFromEnv('SLOW_MO', 0),
-    headless: options.HEADLESS,
+    slowMo,
+    headless,
     executablePath
   });
 });
 
-registerWorkerFixture('playwright', async({browserName}, test) => {
+registerWorkerFixture('playwright', async({browserName, wire}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
-  if (options.WIRE) {
+  if (wire) {
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
       stdio: 'pipe',
@@ -146,6 +148,10 @@ registerFixture('toImpl', async ({playwright}, test) => {
 registerWorkerFixture('browserType', async ({playwright, browserName}, test) => {
   const browserType = playwright[browserName];
   await test(browserType);
+});
+
+registerWorkerFixture('browserName', async ({}, test) => {
+  await test('chromium');
 });
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
@@ -193,22 +199,10 @@ registerWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-registerParameter('browserName', () => {
-  if (process.env.BROWSER)
-    return [process.env.BROWSER];
-  return ['chromium', 'webkit', 'firefox'];
-});
-
 export const options = {
-  CHROMIUM: () => parameters.browserName === 'chromium',
-  FIREFOX: () => parameters.browserName === 'firefox',
-  WEBKIT: () => parameters.browserName === 'webkit',
-  HEADLESS : !!valueFromEnv('HEADLESS', true),
-  WIRE: !!process.env.PWWIRE,
-}
-
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
+  CHROMIUM: parameters.browserName === 'chromium',
+  FIREFOX: parameters.browserName === 'firefox',
+  WEBKIT: parameters.browserName === 'webkit',
+  HEADLESS : parameters.headless,
+  WIRE: parameters.wire,
 }

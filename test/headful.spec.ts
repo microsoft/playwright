@@ -26,7 +26,7 @@ it('should have default url when launching browser', async ({browserType, defaul
   await browserContext.close();
 });
 
-it.fail(WIN && options.CHROMIUM()).slow()('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
+it.fail(WIN && options.CHROMIUM).slow()('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
   // see https://github.com/microsoft/playwright/issues/717
   const userDataDir = await makeUserDataDir();
   // Write a cookie in headful chrome
@@ -106,7 +106,7 @@ it('should(not) block third party cookies', async({browserType, defaultBrowserOp
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = options.CHROMIUM() || options.FIREFOX();
+  const allowsThirdParty = options.CHROMIUM || options.FIREFOX;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -128,7 +128,7 @@ it('should(not) block third party cookies', async({browserType, defaultBrowserOp
   await browser.close();
 });
 
-it.fail(options.WEBKIT())('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
+it.fail(options.WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const context = await browser.newContext({ viewport: null });

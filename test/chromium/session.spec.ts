@@ -16,7 +16,7 @@
 import { options } from '../playwright.fixtures';
 import { ChromiumBrowserContext, ChromiumBrowser } from "../../types/types";
 
-it.skip(!options.CHROMIUM())('should work', async function({page}) {
+it.skip(!options.CHROMIUM)('should work', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
 
   await Promise.all([
@@ -27,7 +27,7 @@ it.skip(!options.CHROMIUM())('should work', async function({page}) {
   expect(foo).toBe('bar');
 });
 
-it.skip(!options.CHROMIUM())('should send events', async function({page, server}) {
+it.skip(!options.CHROMIUM)('should send events', async function({page, server}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
   await client.send('Network.enable');
   const events = [];
@@ -36,12 +36,12 @@ it.skip(!options.CHROMIUM())('should send events', async function({page, server}
   expect(events.length).toBe(1);
 });
 
-it.skip(!options.CHROMIUM())('should only accept a page', async function({page}) {
+it.skip(!options.CHROMIUM)('should only accept a page', async function({page}) {
   const error = await (page.context() as ChromiumBrowserContext).newCDPSession(page.context() as any).catch(e => e);
   expect(error.message).toContain('page: expected Page');
 });
 
-it.skip(!options.CHROMIUM())('should enable and disable domains independently', async function({page}) {
+it.skip(!options.CHROMIUM)('should enable and disable domains independently', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
   await client.send('Runtime.enable');
   await client.send('Debugger.enable');
@@ -59,7 +59,7 @@ it.skip(!options.CHROMIUM())('should enable and disable domains independently', 
   ]);
 });
 
-it.skip(!options.CHROMIUM())('should be able to detach session', async function({page}) {
+it.skip(!options.CHROMIUM)('should be able to detach session', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
   await client.send('Runtime.enable');
   const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
@@ -74,7 +74,7 @@ it.skip(!options.CHROMIUM())('should be able to detach session', async function(
   expect(error.message).toContain('Target browser or context has been closed');
 });
 
-it.skip(!options.CHROMIUM())('should throw nice errors', async function({page}) {
+it.skip(!options.CHROMIUM)('should throw nice errors', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
   const error = await theSourceOfTheProblems().catch(error => error);
   expect(error.stack).toContain('theSourceOfTheProblems');
@@ -85,7 +85,7 @@ it.skip(!options.CHROMIUM())('should throw nice errors', async function({page}) 
   }
 });
 
-it.skip(!options.CHROMIUM())('should not break page.close()', async function({browser}) {
+it.skip(!options.CHROMIUM)('should not break page.close()', async function({browser}) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const session = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
@@ -94,7 +94,7 @@ it.skip(!options.CHROMIUM())('should not break page.close()', async function({br
   await context.close();
 });
 
-it.skip(!options.CHROMIUM())('should detach when page closes', async function({browser}) {
+it.skip(!options.CHROMIUM)('should detach when page closes', async function({browser}) {
   const context = await browser.newContext() as ChromiumBrowserContext;
   const page = await context.newPage();
   const session = await context.newCDPSession(page);
@@ -105,7 +105,7 @@ it.skip(!options.CHROMIUM())('should detach when page closes', async function({b
   await context.close();
 });
 
-it.skip(!options.CHROMIUM())('should work', async function({browser}) {
+it.skip(!options.CHROMIUM)('should work', async function({browser}) {
   const session = await (browser as ChromiumBrowser).newBrowserCDPSession();
 
   const version = await session.send('Browser.getVersion');

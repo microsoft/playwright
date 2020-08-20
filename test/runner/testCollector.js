@@ -16,13 +16,16 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { fixturesForCallback, parameterRegistrations } = require('./fixtures');
+const { fixturesForCallback, registerWorkerFixture } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 
 class NullReporter {}
 
 class TestCollector {
-  constructor(files, options) {
+  constructor(files, matrix, options) {
+    this._matrix = matrix;
+    for (const name of Object.keys(matrix))
+      registerWorkerFixture(name, async ({}, test) => test());
     this._options = options;
     this.suite = new Mocha.Suite('', new Mocha.Context(), true);
     this._total = 0;
@@ -69,9 +72,9 @@ class TestCollector {
       // to build different workers for them.
       const generatorConfigurations = [];
       for (const name of fixtures) {
-        if (!parameterRegistrations.has(name))
+        const values = this._matrix[name];
+        if (!values)
           continue;
-        const values = parameterRegistrations.get(name)();
         let state = generatorConfigurations.length ? generatorConfigurations.slice() : [[]];
         generatorConfigurations.length = 0;
         for (const gen of state) {

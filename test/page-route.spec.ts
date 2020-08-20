@@ -189,9 +189,9 @@ it('should be abortable with custom error codes', async({page, server}) => {
   page.on('requestfailed', request => failedRequest = request);
   await page.goto(server.EMPTY_PAGE).catch(e => {});
   expect(failedRequest).toBeTruthy();
-  if (options.WEBKIT())
+  if (options.WEBKIT)
     expect(failedRequest.failure().errorText).toBe('Request intercepted');
-  else if (options.FIREFOX())
+  else if (options.FIREFOX)
     expect(failedRequest.failure().errorText).toBe('NS_ERROR_OFFLINE');
   else
     expect(failedRequest.failure().errorText).toBe('net::ERR_INTERNET_DISCONNECTED');
@@ -214,9 +214,9 @@ it('should fail navigation when aborting main resource', async({page, server}) =
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
-  if (options.WEBKIT())
+  if (options.WEBKIT)
     expect(error.message).toContain('Request intercepted');
-  else if (options.FIREFOX())
+  else if (options.FIREFOX)
     expect(error.message).toContain('NS_ERROR_FAILURE');
   else
     expect(error.message).toContain('net::ERR_FAILED');

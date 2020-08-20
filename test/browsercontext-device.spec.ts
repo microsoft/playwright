@@ -16,7 +16,7 @@
  */
 import { options } from './playwright.fixtures';
 
-it.skip(options.FIREFOX())('should work', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX)('should work', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -26,7 +26,7 @@ it.skip(options.FIREFOX())('should work', async({playwright, browser, server}) =
   await context.close();
 });
 
-it.skip(options.FIREFOX())('should support clicking', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX)('should support clicking', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -38,7 +38,7 @@ it.skip(options.FIREFOX())('should support clicking', async({playwright, browser
   await context.close();
 });
 
-it.skip(options.FIREFOX())('should scroll to click', async({browser, server}) => {
+it.skip(options.FIREFOX)('should scroll to click', async({browser, server}) => {
   const context = await browser.newContext({
     viewport: {
       width: 400,

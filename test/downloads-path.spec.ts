@@ -26,7 +26,7 @@ import {mkdtempAsync, removeFolderAsync} from './utils';
 import { Browser, BrowserContext } from '..';
 
 declare global {
-  interface FixtureState {
+  interface TestState {
     downloadsBrowser: Browser;
     persistentDownloadsContext: BrowserContext;
   }

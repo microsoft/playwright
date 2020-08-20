@@ -16,7 +16,7 @@
 
 const path = require('path');
 const Mocha = require('mocha');
-const { FixturePool, rerunRegistrations, setParameters } = require('./fixtures');
+const { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } = require('./fixtures');
 const { fixturesUI } = require('./fixturesUI');
 const { EventEmitter } = require('events');
 
@@ -51,8 +51,10 @@ class TestRunner extends EventEmitter {
     this._configurationObject = entry.configurationObject;
     this._configurationString = entry.configurationString;
     this._parsedGeneratorConfiguration = {};
-    for (const {name, value} of this._configurationObject)
+    for (const {name, value} of this._configurationObject) {
       this._parsedGeneratorConfiguration[name] = value;
+      registerWorkerFixture(name, async ({}, test) => await test(value));
+    }
     this._parsedGeneratorConfiguration['parallelIndex'] = workerId;
     this._relativeTestFile = path.relative(options.testDir, this._file);
     this.mocha.addFile(this._file);
