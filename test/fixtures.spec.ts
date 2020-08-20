@@ -39,7 +39,7 @@ class Wrapper {
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
-      executablePath: browserType.executablePath(),
+      executablePath: defaultBrowserOptions.executablePath || browserType.executablePath(),
       logger: undefined,
     };
     const options = {
