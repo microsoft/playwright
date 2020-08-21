@@ -19,17 +19,9 @@ import Mocha from 'mocha';
 import { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } from './fixtures';
 import { fixturesUI } from './fixturesUI';
 import { EventEmitter } from 'events';
+import { setCurrentTestFile } from './expect';
 
 export const fixturePool = new FixturePool();
-declare global {
-  namespace NodeJS {
-    interface Global { 
-      expect: typeof import('expect')
-    }
-  }
-}
-global.expect = require('expect');
-const GoldenUtils = require('./GoldenUtils');
 
 export type TestRunnerEntry = {
   file: string;
@@ -106,7 +98,7 @@ export class TestRunner extends EventEmitter {
 
     const constants = Mocha.Runner.constants;
     this._runner.on(constants.EVENT_TEST_BEGIN, test => {
-      relativeTestFile = this._relativeTestFile;
+      setCurrentTestFile(this._relativeTestFile);
       if (this._failedWithError)
         return;
       const ordinal = ++this._currentOrdinal;
@@ -239,14 +231,4 @@ function serializeError(error) {
     }
   }
   return trimCycles(error);
-}
-
-let relativeTestFile;
-
-export function initializeImageMatcher(options) {
-  function toMatchImage(received, name, config) {
-    const { pass, message } = GoldenUtils.compare(received, name, { ...options, relativeTestFile, config });
-    return { pass, message: () => message };
-  };
-  global.expect.extend({ toMatchImage });
 }

@@ -15,4 +15,5 @@
  * limitations under the License.
  */
 import './builtin.fixtures';
+import './expect';
 export {registerFixture, registerWorkerFixture, registerParameter, parameters} from './fixtures';

@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-const { TestRunner, initializeImageMatcher, fixturePool } = require('./testRunner');
+const { initializeImageMatcher } = require('./expect');
+const { TestRunner, fixturePool } = require('./testRunner');
 
 const util = require('util');
 

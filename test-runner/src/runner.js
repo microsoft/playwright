@@ -263,7 +263,7 @@ class InProcessWorker extends EventEmitter {
   }
 
   async init() {
-    const { initializeImageMatcher } = require('./testRunner');
+    const { initializeImageMatcher } = require('./expect');
     initializeImageMatcher(this.runner._options);
   }
 

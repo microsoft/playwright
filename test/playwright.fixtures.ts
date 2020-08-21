@@ -58,9 +58,14 @@ declare global {
   }
 }
 
-(global as any).MAC = platform === 'darwin';
-(global as any).LINUX = platform === 'linux';
-(global as any).WIN = platform === 'win32';
+declare global {
+  const MAC: boolean;
+  const LINUX: boolean;
+  const WIN: boolean;
+}
+global['MAC'] = platform === 'darwin';
+global['LINUX'] = platform === 'linux';
+global['WIN'] = platform === 'win32';
 
 registerWorkerFixture('httpService', async ({}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
