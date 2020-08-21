@@ -17,7 +17,7 @@
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
-    "test-infra": "node test-runner/cli utils/doclint/check_public_api/test/test.js && node test-runner/cli utils/doclint/preprocessor/test.js",
+    "test-infra": "node test-runner/cli utils/doclint/check_public_api/test/test.js && node test-runner/cli utils/doclint/preprocessor/test.js && npm run test-testrunner",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && npm run generate-channels && npm run test-types && npm run test-infra",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
@@ -31,7 +31,8 @@
     "coverage": "node test/checkCoverage.js",
     "check-deps": "node utils/check_deps.js",
     "build-driver": "pkg --public --targets node12-linux-x64,node12-macos-x64,node12-win-x64 --out-path=drivers packages/playwright-driver/main.js",
-    "build-testrunner": "tsc -p test-runner"
+    "build-testrunner": "tsc -p test-runner",
+    "test-testrunner": "node test-runner/cli test-runner/test"
   },
   "author": {
     "name": "Microsoft Corporation"
