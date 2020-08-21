@@ -323,6 +323,11 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: !!this._requestInterceptor });
   }
 
+  async _enableScreencast(options: types.ContextScreencastOptions): Promise<void> {
+    await super._enableScreencast(options);
+    await this._browser._connection.send('Browser.setScreencastOptions', Object.assign({}, options, { browserContextId: this._browserContextId || undefined}));
+  }
+
   async _doClose() {
     assert(this._browserContextId);
     await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });

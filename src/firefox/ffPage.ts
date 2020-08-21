@@ -32,6 +32,7 @@ import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { Screencast } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -50,6 +51,7 @@ export class FFPage implements PageDelegate {
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
+  private readonly _idToScreencast = new Map<string, Screencast>();
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -82,6 +84,8 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.workerDestroyed', this._onWorkerDestroyed.bind(this)),
       helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
       helper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
+      helper.addEventListener(this._session, 'Page.screencastStarted', this._onScreencastStarted.bind(this)),
+      helper.addEventListener(this._session, 'Page.screencastStopped', this._onScreencastStopped.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pageCallback = f);
     session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
@@ -253,6 +257,20 @@ export class FFPage implements PageDelegate {
   async _onCrashed(event: Protocol.Page.crashedPayload) {
     this._session.markAsCrashed();
     this._page._didCrash();
+  }
+
+  _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
+    const screencast = new Screencast(event.file, this._page);
+    this._idToScreencast.set(event.uid, screencast);
+    this._browserContext.emit(Events.BrowserContext.ScreencastStarted, screencast);
+  }
+
+  _onScreencastStopped(event: Protocol.Page.screencastStoppedPayload) {
+    const screencast = this._idToScreencast.get(event.uid);
+    if (!screencast)
+      return;
+    this._idToScreencast.delete(event.uid);
+    this._browserContext.emit(Events.BrowserContext.ScreencastStopped, screencast);
   }
 
   async exposeBinding(binding: PageBinding) {
