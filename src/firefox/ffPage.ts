@@ -17,7 +17,6 @@
 
 import * as dialog from '../dialog';
 import * as dom from '../dom';
-import { Events } from '../events';
 import * as frames from '../frames';
 import { assert, helper, RegisteredListener } from '../helper';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
@@ -32,7 +31,7 @@ import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { rewriteErrorMessage } from '../utils/stackTrace';
-import { Screencast } from '../browserContext';
+import { Screencast, BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -62,7 +61,7 @@ export class FFPage implements PageDelegate {
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);
     this._networkManager = new FFNetworkManager(session, this._page);
-    this._page.on(Events.Page.FrameDetached, frame => this._removeContextsForFrame(frame));
+    this._page.on(Page.Events.FrameDetached, frame => this._removeContextsForFrame(frame));
     // TODO: remove Page.willOpenNewWindowAsynchronously from the protocol.
     this._eventListeners = [
       helper.addEventListener(this._session, 'Page.eventFired', this._onEventFired.bind(this)),
@@ -179,7 +178,7 @@ export class FFPage implements PageDelegate {
     const message = params.message.startsWith('Error: ') ? params.message.substring(7) : params.message;
     const error = new Error(message);
     error.stack = params.stack;
-    this._page.emit(Events.Page.PageError, error);
+    this._page.emit(Page.Events.PageError, error);
   }
 
   _onConsole(payload: Protocol.Runtime.consolePayload) {
@@ -189,7 +188,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onDialogOpened(params: Protocol.Page.dialogOpenedPayload) {
-    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
         params.type,
         params.message,
         async (accept: boolean, promptText?: string) => {
@@ -262,7 +261,7 @@ export class FFPage implements PageDelegate {
   _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
     const screencast = new Screencast(event.file, this._page);
     this._idToScreencast.set(event.uid, screencast);
-    this._browserContext.emit(Events.BrowserContext.ScreencastStarted, screencast);
+    this._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
   }
 
   _onScreencastStopped(event: Protocol.Page.screencastStoppedPayload) {
@@ -270,7 +269,7 @@ export class FFPage implements PageDelegate {
     if (!screencast)
       return;
     this._idToScreencast.delete(event.uid);
-    this._browserContext.emit(Events.BrowserContext.ScreencastStopped, screencast);
+    this._browserContext.emit(BrowserContext.Events.ScreencastStopped, screencast);
   }
 
   async exposeBinding(binding: PageBinding) {

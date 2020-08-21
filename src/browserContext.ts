@@ -23,7 +23,6 @@ import { Page, PageBinding } from './page';
 import { TimeoutSettings } from './timeoutSettings';
 import * as frames from './frames';
 import * as types from './types';
-import { Events } from './events';
 import { Download } from './download';
 import { Browser } from './browser';
 import { EventEmitter } from 'events';
@@ -40,6 +39,13 @@ export class Screencast {
 }
 
 export abstract class BrowserContext extends EventEmitter {
+  static Events = {
+    Close: 'close',
+    Page: 'page',
+    ScreencastStarted: 'screencaststarted',
+    ScreencastStopped: 'screencaststopped',
+  };
+
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
@@ -81,7 +87,7 @@ export abstract class BrowserContext extends EventEmitter {
     this._closedStatus = 'closed';
     this._downloads.clear();
     this._closePromiseFulfill!(new Error('Context closed'));
-    this.emit(Events.BrowserContext.Close);
+    this.emit(BrowserContext.Events.Close);
   }
 
   // BrowserContext methods.
@@ -160,7 +166,7 @@ export abstract class BrowserContext extends EventEmitter {
 
   async _loadDefaultContext(progress: Progress) {
     if (!this.pages().length) {
-      const waitForEvent = helper.waitForEvent(progress, this, Events.BrowserContext.Page);
+      const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
       await waitForEvent.promise;
     }

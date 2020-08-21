@@ -17,7 +17,6 @@
 
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import { Events } from './events';
 import { assert, helper, RegisteredListener, debugLogger } from './helper';
 import * as js from './javascript';
 import * as network from './network';
@@ -50,7 +49,6 @@ type ConsoleTagHandler = () => void;
 
 export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame}, ...args: any) => any;
 
-export const kNavigationEvent = Symbol('navigation');
 export type NavigationEvent = {
   // New frame url after navigation.
   url: string,
@@ -63,8 +61,6 @@ export type NavigationEvent = {
   // the navigation did not commit.
   error?: Error,
 };
-export const kAddLifecycleEvent = Symbol('addLifecycle');
-export const kRemoveLifecycleEvent = Symbol('removeLifecycle');
 
 export class FrameManager {
   private _page: Page;
@@ -120,7 +116,7 @@ export class FrameManager {
       assert(!this._frames.has(frameId));
       const frame = new Frame(this._page, frameId, parentFrame);
       this._frames.set(frameId, frame);
-      this._page.emit(Events.Page.FrameAttached, frame);
+      this._page.emit(Page.Events.FrameAttached, frame);
       return frame;
     }
   }
@@ -197,10 +193,10 @@ export class FrameManager {
 
     frame._onClearLifecycle();
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument };
-    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
+    frame.emit(Frame.Events.Navigation, navigationEvent);
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
-      this._page.emit(Events.Page.FrameNavigated, frame);
+      this._page.emit(Page.Events.FrameNavigated, frame);
     }
     // Restore pending if any - see comments above about keepPending.
     frame._pendingDocument = keepPending;
@@ -212,9 +208,9 @@ export class FrameManager {
       return;
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name };
-    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
+    frame.emit(Frame.Events.Navigation, navigationEvent);
     debugLogger.log('api', `  navigated to "${url}"`);
-    this._page.emit(Events.Page.FrameNavigated, frame);
+    this._page.emit(Page.Events.FrameNavigated, frame);
   }
 
   frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
@@ -230,7 +226,7 @@ export class FrameManager {
       error: new Error(errorText),
     };
     frame._pendingDocument = undefined;
-    frame._eventEmitter.emit(kNavigationEvent, navigationEvent);
+    frame.emit(Frame.Events.Navigation, navigationEvent);
   }
 
   frameDetached(frameId: string) {
@@ -266,13 +262,13 @@ export class FrameManager {
 
   requestReceivedResponse(response: network.Response) {
     if (!response.request()._isFavicon)
-      this._page.emit(Events.Page.Response, response);
+      this._page.emit(Page.Events.Response, response);
   }
 
   requestFinished(request: network.Request) {
     this._inflightRequestFinished(request);
     if (!request._isFavicon)
-      this._page.emit(Events.Page.RequestFinished, request);
+      this._page.emit(Page.Events.RequestFinished, request);
   }
 
   requestFailed(request: network.Request, canceled: boolean) {
@@ -285,7 +281,7 @@ export class FrameManager {
       this.frameAbortedNavigation(frame._id, errorText, frame._pendingDocument.documentId);
     }
     if (!request._isFavicon)
-      this._page.emit(Events.Page.RequestFailed, request);
+      this._page.emit(Page.Events.RequestFailed, request);
   }
 
   removeChildFramesRecursively(frame: Frame) {
@@ -297,7 +293,7 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._onDetached();
     this._frames.delete(frame._id);
-    this._page.emit(Events.Page.FrameDetached, frame);
+    this._page.emit(Page.Events.FrameDetached, frame);
   }
 
   private _inflightRequestFinished(request: network.Request) {
@@ -333,8 +329,13 @@ export class FrameManager {
   }
 }
 
-export class Frame {
-  readonly _eventEmitter: EventEmitter;
+export class Frame extends EventEmitter {
+  static Events = {
+    Navigation: 'navigation',
+    AddLifecycle: 'addlifecycle',
+    RemoveLifecycle: 'removelifecycle',
+  };
+
   _id: string;
   private _firedLifecycleEvents = new Set<types.LifecycleEvent>();
   _subtreeLifecycleEvents = new Set<types.LifecycleEvent>();
@@ -354,8 +355,8 @@ export class Frame {
   private _detachedCallback = () => {};
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
-    this._eventEmitter = new EventEmitter();
-    this._eventEmitter.setMaxListeners(0);
+    super();
+    this.setMaxListeners(0);
     this._id = id;
     this._page = page;
     this._parentFrame = parentFrame;
@@ -406,18 +407,18 @@ export class Frame {
     for (const event of events) {
       // Checking whether we have already notified about this event.
       if (!this._subtreeLifecycleEvents.has(event)) {
-        this._eventEmitter.emit(kAddLifecycleEvent, event);
+        this.emit(Frame.Events.AddLifecycle, event);
         if (this === mainFrame && this._url !== 'about:blank')
           debugLogger.log('api', `  "${event}" event fired`);
         if (this === mainFrame && event === 'load')
-          this._page.emit(Events.Page.Load);
+          this._page.emit(Page.Events.Load);
         if (this === mainFrame && event === 'domcontentloaded')
-          this._page.emit(Events.Page.DOMContentLoaded);
+          this._page.emit(Page.Events.DOMContentLoaded);
       }
     }
     for (const event of this._subtreeLifecycleEvents) {
       if (!events.has(event))
-        this._eventEmitter.emit(kRemoveLifecycleEvent, event);
+        this.emit(Frame.Events.RemoveLifecycle, event);
     }
     this._subtreeLifecycleEvents = events;
   }
@@ -436,13 +437,13 @@ export class Frame {
       }
       url = helper.completeUserURL(url);
 
-      const sameDocument = helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (e: NavigationEvent) => !e.newDocument);
+      const sameDocument = helper.waitForEvent(progress, this, Frame.Events.Navigation, (e: NavigationEvent) => !e.newDocument);
       const navigateResult = await this._page._delegate.navigateFrame(this, url, referer);
 
       let event: NavigationEvent;
       if (navigateResult.newDocumentId) {
         sameDocument.dispose();
-        event = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
+        event = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
           // We are interested either in this specific document, or any other document that
           // did commit and replaced the expected document.
           return event.newDocument && (event.newDocument.documentId === navigateResult.newDocumentId || !event.error);
@@ -460,7 +461,7 @@ export class Frame {
       }
 
       if (!this._subtreeLifecycleEvents.has(waitUntil))
-        await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+        await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = event.newDocument ? event.newDocument.request : undefined;
       const response = request ? request._finalRequest().response() : null;
@@ -474,7 +475,7 @@ export class Frame {
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.log(`waiting for navigation until "${waitUntil}"`);
 
-      const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this._eventEmitter, kNavigationEvent, (event: NavigationEvent) => {
+      const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
         // Any failed navigation results in a rejection.
         if (event.error)
           return true;
@@ -485,7 +486,7 @@ export class Frame {
         throw navigationEvent.error;
 
       if (!this._subtreeLifecycleEvents.has(waitUntil))
-        await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+        await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
       const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
       return request ? request._finalRequest().response() : null;
@@ -499,7 +500,7 @@ export class Frame {
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
     const waitUntil = verifyLifecycle('state', state);
     if (!this._subtreeLifecycleEvents.has(waitUntil))
-      await helper.waitForEvent(progress, this._eventEmitter, kAddLifecycleEvent, (e: types.LifecycleEvent) => e === waitUntil).promise;
+      await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
   async frameElement(): Promise<dom.ElementHandle> {
@@ -752,7 +753,7 @@ export class Frame {
       resolve();
     });
     const errorPromise = new Promise(resolve => {
-      listeners.push(helper.addEventListener(this._page, Events.Page.Console, (message: ConsoleMessage) => {
+      listeners.push(helper.addEventListener(this._page, Page.Events.Console, (message: ConsoleMessage) => {
         if (message.type() === 'error' && message.text().includes('Content Security Policy')) {
           cspMessage = message;
           resolve();
@@ -1045,7 +1046,7 @@ class SignalBarrier {
 
   async addFrameNavigation(frame: Frame) {
     this.retain();
-    const waiter = helper.waitForEvent(null, frame._eventEmitter, kNavigationEvent, (e: NavigationEvent) => {
+    const waiter = helper.waitForEvent(null, frame, Frame.Events.Navigation, (e: NavigationEvent) => {
       if (!e.error && this._progress)
         this._progress.log(`  navigated to "${frame._url}"`);
       return true;

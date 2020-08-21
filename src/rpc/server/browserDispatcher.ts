@@ -15,7 +15,6 @@
  */
 
 import { Browser } from '../../browser';
-import { Events } from '../../events';
 import * as channels from '../channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
@@ -26,7 +25,7 @@ import { PageDispatcher } from './pageDispatcher';
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
   constructor(scope: DispatcherScope, browser: Browser, guid?: string) {
     super(scope, browser, 'Browser', { version: browser.version() }, true, guid);
-    browser.on(Events.Browser.Disconnected, () => this._didClose());
+    browser.on(Browser.Events.Disconnected, () => this._didClose());
   }
 
   _didClose() {

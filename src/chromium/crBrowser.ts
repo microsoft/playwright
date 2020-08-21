@@ -17,7 +17,6 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { Events as CommonEvents } from '../events';
 import { assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
@@ -26,7 +25,6 @@ import * as types from '../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
 import { CRPage } from './crPage';
 import { readProtocolStream } from './crProtocolHelper';
-import { Events } from './events';
 import { Protocol } from './protocol';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRDevTools } from './crDevTools';
@@ -151,7 +149,7 @@ export class CRBrowser extends Browser {
       const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       backgroundPage.pageOrError().then(() => {
-        context!.emit(Events.ChromiumBrowserContext.BackgroundPage, backgroundPage._page);
+        context!.emit(CRBrowserContext.CREvents.BackgroundPage, backgroundPage._page);
       });
       return;
     }
@@ -164,11 +162,11 @@ export class CRBrowser extends Browser {
         const page = crPage._page;
         if (pageOrError instanceof Error)
           page._setIsError();
-        context!.emit(CommonEvents.BrowserContext.Page, page);
+        context!.emit(BrowserContext.Events.Page, page);
         if (opener) {
           opener.pageOrError().then(openerPage => {
             if (openerPage instanceof Page && !openerPage.isClosed())
-              openerPage.emit(CommonEvents.Page.Popup, page);
+              openerPage.emit(Page.Events.Popup, page);
           });
         }
       });
@@ -178,7 +176,7 @@ export class CRBrowser extends Browser {
     if (targetInfo.type === 'service_worker') {
       const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
-      context.emit(Events.ChromiumBrowserContext.ServiceWorker, serviceWorker);
+      context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
       return;
     }
 
@@ -202,7 +200,7 @@ export class CRBrowser extends Browser {
     const serviceWorker = this._serviceWorkers.get(targetId);
     if (serviceWorker) {
       this._serviceWorkers.delete(targetId);
-      serviceWorker.emit(CommonEvents.Worker.Close);
+      serviceWorker.emit(Worker.Events.Close);
       return;
     }
   }
@@ -280,6 +278,11 @@ class CRServiceWorker extends Worker {
 }
 
 export class CRBrowserContext extends BrowserContext {
+  static CREvents = {
+    BackgroundPage: 'backgroundpage',
+    ServiceWorker: 'serviceworker',
+  };
+
   readonly _browser: CRBrowser;
   readonly _browserContextId: string | null;
   readonly _evaluateOnNewDocumentSources: string[];
@@ -432,7 +435,7 @@ export class CRBrowserContext extends BrowserContext {
       // asynchronously and we get detached from them later.
       // To avoid the wrong order of notifications, we manually fire
       // "close" event here and forget about the serivce worker.
-      serviceWorker.emit(CommonEvents.Worker.Close);
+      serviceWorker.emit(Worker.Events.Close);
       this._browser._serviceWorkers.delete(targetId);
     }
   }

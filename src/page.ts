@@ -24,7 +24,6 @@ import * as network from './network';
 import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from './timeoutSettings';
 import * as types from './types';
-import { Events } from './events';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
@@ -91,6 +90,29 @@ type PageState = {
 };
 
 export class Page extends EventEmitter {
+  static Events = {
+    Close: 'close',
+    Crash: 'crash',
+    Console: 'console',
+    Dialog: 'dialog',
+    Download: 'download',
+    FileChooser: 'filechooser',
+    DOMContentLoaded: 'domcontentloaded',
+    // Can't use just 'error' due to node.js special treatment of error events.
+    // @see https://nodejs.org/api/events.html#events_error_events
+    PageError: 'pageerror',
+    Request: 'request',
+    Response: 'response',
+    RequestFailed: 'requestfailed',
+    RequestFinished: 'requestfinished',
+    FrameAttached: 'frameattached',
+    FrameDetached: 'framedetached',
+    FrameNavigated: 'framenavigated',
+    Load: 'load',
+    Popup: 'popup',
+    Worker: 'worker',
+  };
+
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
   private _closedCallback: () => void;
   private _closedPromise: Promise<void>;
@@ -154,13 +176,13 @@ export class Page extends EventEmitter {
     this._frameManager.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
-    this.emit(Events.Page.Close);
+    this.emit(Page.Events.Close);
     this._closedCallback();
   }
 
   _didCrash() {
     this._frameManager.dispose();
-    this.emit(Events.Page.Crash);
+    this.emit(Page.Events.Crash);
     this._crashedCallback(new Error('Page crashed'));
   }
 
@@ -179,12 +201,12 @@ export class Page extends EventEmitter {
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {
     const multiple = await handle.evaluate(element => !!(element as HTMLInputElement).multiple);
-    if (!this.listenerCount(Events.Page.FileChooser)) {
+    if (!this.listenerCount(Page.Events.FileChooser)) {
       handle.dispose();
       return;
     }
     const fileChooser = new FileChooser(this, handle, multiple);
-    this.emit(Events.Page.FileChooser, fileChooser);
+    this.emit(Page.Events.FileChooser, fileChooser);
   }
 
   context(): BrowserContext {
@@ -235,10 +257,10 @@ export class Page extends EventEmitter {
   _addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
     const message = new ConsoleMessage(type, text, args, location);
     const intercepted = this._frameManager.interceptConsoleMessage(message);
-    if (intercepted || !this.listenerCount(Events.Page.Console))
+    if (intercepted || !this.listenerCount(Page.Events.Console))
       args.forEach(arg => arg.dispose());
     else
-      this.emit(Events.Page.Console, message);
+      this.emit(Page.Events.Console, message);
   }
 
   async reload(options?: types.NavigateOptions): Promise<network.Response | null> {
@@ -315,7 +337,7 @@ export class Page extends EventEmitter {
   }
 
   _requestStarted(request: network.Request) {
-    this.emit(Events.Page.Request, request);
+    this.emit(Page.Events.Request, request);
     const route = request._route();
     if (!route)
       return;
@@ -362,20 +384,20 @@ export class Page extends EventEmitter {
 
   _addWorker(workerId: string, worker: Worker) {
     this._workers.set(workerId, worker);
-    this.emit(Events.Page.Worker, worker);
+    this.emit(Page.Events.Worker, worker);
   }
 
   _removeWorker(workerId: string) {
     const worker = this._workers.get(workerId);
     if (!worker)
       return;
-    worker.emit(Events.Worker.Close, worker);
+    worker.emit(Worker.Events.Close, worker);
     this._workers.delete(workerId);
   }
 
   _clearWorkers() {
     for (const [workerId, worker] of this._workers) {
-      worker.emit(Events.Worker.Close, worker);
+      worker.emit(Worker.Events.Close, worker);
       this._workers.delete(workerId);
     }
   }
@@ -386,6 +408,10 @@ export class Page extends EventEmitter {
 }
 
 export class Worker extends EventEmitter {
+  static Events = {
+    Close: 'close',
+  };
+
   private _url: string;
   private _executionContextPromise: Promise<js.ExecutionContext>;
   private _executionContextCallback: (value?: js.ExecutionContext) => void;

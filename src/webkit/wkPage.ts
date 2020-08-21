@@ -15,13 +15,12 @@
  * limitations under the License.
  */
 
-import { Screencast } from '../browserContext';
+import { Screencast, BrowserContext } from '../browserContext';
 import * as frames from '../frames';
 import { helper, RegisteredListener, assert, debugAssert } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
 import { WKSession } from './wkConnection';
-import { Events } from '../events';
 import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
@@ -81,7 +80,7 @@ export class WKPage implements PageDelegate {
     this._workers = new WKWorkers(this._page);
     this._session = undefined as any as WKSession;
     this._browserContext = browserContext;
-    this._page.on(Events.Page.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
+    this._page.on(Page.Events.FrameDetached, (frame: frames.Frame) => this._removeContextsForFrame(frame, false));
     this._eventListeners = [
       helper.addEventListener(this._pageProxySession, 'Target.targetCreated', this._onTargetCreated.bind(this)),
       helper.addEventListener(this._pageProxySession, 'Target.targetDestroyed', this._onTargetDestroyed.bind(this)),
@@ -474,7 +473,7 @@ export class WKPage implements PageDelegate {
       } else {
         error.stack = '';
       }
-      this._page.emit(Events.Page.PageError, error);
+      this._page.emit(Page.Events.PageError, error);
       return;
     }
 
@@ -524,7 +523,7 @@ export class WKPage implements PageDelegate {
   }
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
-    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
         event.type as dialog.DialogType,
         event.message,
         async (accept: boolean, promptText?: string) => {
@@ -718,7 +717,7 @@ export class WKPage implements PageDelegate {
         height: options.height,
         scale: options.scale,
       });
-      this._browserContext.emit(Events.BrowserContext.ScreencastStarted, new Screencast(options.outputFile, this._initializedPage!));
+      this._browserContext.emit(BrowserContext.Events.ScreencastStarted, new Screencast(options.outputFile, this._initializedPage!));
     } catch (e) {
       this._recordingVideoFile = null;
       throw e;
@@ -731,7 +730,7 @@ export class WKPage implements PageDelegate {
     const fileName = this._recordingVideoFile;
     this._recordingVideoFile = null;
     await this._pageProxySession.send('Screencast.stopVideoRecording');
-    this._browserContext.emit(Events.BrowserContext.ScreencastStopped, new Screencast(fileName, this._initializedPage!));
+    this._browserContext.emit(BrowserContext.Events.ScreencastStopped, new Screencast(fileName, this._initializedPage!));
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
