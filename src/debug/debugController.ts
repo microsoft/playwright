@@ -15,7 +15,6 @@
  */
 
 import { BrowserContext } from '../browserContext';
-import { Events } from '../events';
 import * as frames from '../frames';
 import * as js from '../javascript';
 import { Page } from '../page';
@@ -23,10 +22,10 @@ import DebugScript from './injected/debugScript';
 
 export class DebugController {
   constructor(context: BrowserContext) {
-    context.on(Events.BrowserContext.Page, (page: Page) => {
+    context.on(BrowserContext.Events.Page, (page: Page) => {
       for (const frame of page.frames())
         this.ensureInstalledInFrame(frame);
-      page.on(Events.Page.FrameNavigated, frame => this.ensureInstalledInFrame(frame));
+      page.on(Page.Events.FrameNavigated, frame => this.ensureInstalledInFrame(frame));
     });
   }
 

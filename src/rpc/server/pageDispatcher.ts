@@ -15,7 +15,6 @@
  */
 
 import { BrowserContext } from '../../browserContext';
-import { Events } from '../../events';
 import { Frame } from '../../frames';
 import { Request } from '../../network';
 import { Page, Worker } from '../../page';
@@ -44,29 +43,29 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       isClosed: page.isClosed()
     });
     this._page = page;
-    page.on(Events.Page.Close, () => this._dispatchEvent('close'));
-    page.on(Events.Page.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
-    page.on(Events.Page.Crash, () => this._dispatchEvent('crash'));
-    page.on(Events.Page.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
-    page.on(Events.Page.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
-    page.on(Events.Page.Download, dialog => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, dialog) }));
-    this._page.on(Events.Page.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
+    page.on(Page.Events.Close, () => this._dispatchEvent('close'));
+    page.on(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
+    page.on(Page.Events.Crash, () => this._dispatchEvent('crash'));
+    page.on(Page.Events.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
+    page.on(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
+    page.on(Page.Events.Download, dialog => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, dialog) }));
+    this._page.on(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
     }));
-    page.on(Events.Page.FrameAttached, frame => this._onFrameAttached(frame));
-    page.on(Events.Page.FrameDetached, frame => this._onFrameDetached(frame));
-    page.on(Events.Page.Load, () => this._dispatchEvent('load'));
-    page.on(Events.Page.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
-    page.on(Events.Page.Popup, page => this._dispatchEvent('popup', { page: lookupDispatcher<PageDispatcher>(page) }));
-    page.on(Events.Page.Request, request => this._dispatchEvent('request', { request: RequestDispatcher.from(this._scope, request) }));
-    page.on(Events.Page.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
+    page.on(Page.Events.FrameAttached, frame => this._onFrameAttached(frame));
+    page.on(Page.Events.FrameDetached, frame => this._onFrameDetached(frame));
+    page.on(Page.Events.Load, () => this._dispatchEvent('load'));
+    page.on(Page.Events.PageError, error => this._dispatchEvent('pageError', { error: serializeError(error) }));
+    page.on(Page.Events.Popup, page => this._dispatchEvent('popup', { page: lookupDispatcher<PageDispatcher>(page) }));
+    page.on(Page.Events.Request, request => this._dispatchEvent('request', { request: RequestDispatcher.from(this._scope, request) }));
+    page.on(Page.Events.RequestFailed, (request: Request) => this._dispatchEvent('requestFailed', {
       request: RequestDispatcher.from(this._scope, request),
       failureText: request._failureText
     }));
-    page.on(Events.Page.RequestFinished, request => this._dispatchEvent('requestFinished', { request: RequestDispatcher.from(scope, request) }));
-    page.on(Events.Page.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
-    page.on(Events.Page.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
+    page.on(Page.Events.RequestFinished, request => this._dispatchEvent('requestFinished', { request: RequestDispatcher.from(scope, request) }));
+    page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
+    page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 
   async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams): Promise<void> {
@@ -232,7 +231,7 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerInitiali
     super(scope, worker, 'Worker', {
       url: worker.url()
     });
-    worker.on(Events.Worker.Close, () => this._dispatchEvent('close'));
+    worker.on(Worker.Events.Close, () => this._dispatchEvent('close'));
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams): Promise<channels.WorkerEvaluateExpressionResult> {

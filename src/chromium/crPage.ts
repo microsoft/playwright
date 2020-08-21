@@ -24,7 +24,6 @@ import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import { Page, Worker, PageBinding } from '../page';
 import { Protocol } from './protocol';
-import { Events } from '../events';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
 import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
@@ -590,7 +589,7 @@ class FrameSession {
       const args = event.args.map(o => worker._existingExecutionContext!.createHandle(o));
       this._page._addConsoleMessage(event.type, args, toConsoleMessageLocation(event.stackTrace));
     });
-    session.on('Runtime.exceptionThrown', exception => this._page.emit(Events.Page.PageError, exceptionToError(exception.exceptionDetails)));
+    session.on('Runtime.exceptionThrown', exception => this._page.emit(Page.Events.PageError, exceptionToError(exception.exceptionDetails)));
     // TODO: attribute workers to the right frame.
     this._networkManager.instrumentNetworkEvents(session, this._page._frameManager.frame(this._targetId)!);
   }
@@ -664,7 +663,7 @@ class FrameSession {
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
-    this._page.emit(Events.Page.Dialog, new dialog.Dialog(
+    this._page.emit(Page.Events.Dialog, new dialog.Dialog(
         event.type,
         event.message,
         async (accept: boolean, promptText?: string) => {
@@ -674,7 +673,7 @@ class FrameSession {
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.emit(Events.Page.PageError, exceptionToError(exceptionDetails));
+    this._page.emit(Page.Events.PageError, exceptionToError(exceptionDetails));
   }
 
   async _onTargetCrashed() {
@@ -692,7 +691,7 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page.emit(Events.Page.Console, new ConsoleMessage(level, text, [], location));
+      this._page.emit(Page.Events.Console, new ConsoleMessage(level, text, [], location));
     }
   }
 

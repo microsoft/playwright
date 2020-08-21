@@ -17,7 +17,6 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { Events } from '../events';
 import { assert, helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
@@ -129,12 +128,12 @@ export class FFBrowser extends Browser {
       const page = ffPage._page;
       if (pageOrError instanceof Error)
         page._setIsError();
-      context.emit(Events.BrowserContext.Page, page);
+      context.emit(BrowserContext.Events.Page, page);
       if (!opener)
         return;
       const openerPage = await opener.pageOrError();
       if (openerPage instanceof Page && !openerPage.isClosed())
-        openerPage.emit(Events.Page.Popup, page);
+        openerPage.emit(Page.Events.Popup, page);
     });
   }
 

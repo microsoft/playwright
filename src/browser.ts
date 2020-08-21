@@ -19,7 +19,6 @@ import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
-import { Events } from './events';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
 
@@ -40,6 +39,10 @@ export type BrowserOptions = types.UIOptions & {
 };
 
 export abstract class Browser extends EventEmitter {
+  static Events = {
+    Disconnected: 'disconnected',
+  };
+
   readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
@@ -87,7 +90,7 @@ export abstract class Browser extends EventEmitter {
       context._browserClosed();
     if (this._defaultContext)
       this._defaultContext._browserClosed();
-    this.emit(Events.Browser.Disconnected);
+    this.emit(Browser.Events.Disconnected);
   }
 
   async close() {
@@ -96,7 +99,7 @@ export abstract class Browser extends EventEmitter {
       await this._options.browserProcess.close();
     }
     if (this.isConnected())
-      await new Promise(x => this.once(Events.Browser.Disconnected, x));
+      await new Promise(x => this.once(Browser.Events.Disconnected, x));
   }
 }
 

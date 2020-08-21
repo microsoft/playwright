@@ -15,14 +15,12 @@
  */
 
 import { BrowserContext } from '../../browserContext';
-import { Events } from '../../events';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import * as channels from '../channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { Events as ChromiumEvents } from '../../chromium/events';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -33,8 +31,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
     for (const page of context.pages())
       this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) });
-    context.on(Events.BrowserContext.Page, page => this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) }));
-    context.on(Events.BrowserContext.Close, () => {
+    context.on(BrowserContext.Events.Page, page => this._dispatchEvent('page', { page: new PageDispatcher(this._scope, page) }));
+    context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
     });
@@ -42,10 +40,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     if (context._browser._options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
         this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) });
-      context.on(ChromiumEvents.ChromiumBrowserContext.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
+      context.on(CRBrowserContext.CREvents.BackgroundPage, page => this._dispatchEvent('crBackgroundPage', { page: new PageDispatcher(this._scope, page) }));
       for (const serviceWorker of (context as CRBrowserContext).serviceWorkers())
         this._dispatchEvent('crServiceWorker', new WorkerDispatcher(this._scope, serviceWorker));
-      context.on(ChromiumEvents.ChromiumBrowserContext.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
+      context.on(CRBrowserContext.CREvents.ServiceWorker, serviceWorker => this._dispatchEvent('crServiceWorker', { worker: new WorkerDispatcher(this._scope, serviceWorker) }));
     }
   }
 

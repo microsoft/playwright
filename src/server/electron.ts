@@ -18,7 +18,6 @@ import * as path from 'path';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
-import { Events } from '../events';
 import * as js from '../javascript';
 import { Page } from '../page';
 import { TimeoutSettings } from '../timeoutSettings';
@@ -42,19 +41,17 @@ export type ElectronLaunchOptionsBase = {
   timeout?: number,
 };
 
-export const ElectronEvents = {
-  ElectronApplication: {
-    Close: 'close',
-    Window: 'window',
-  }
-};
-
 export interface ElectronPage extends Page {
   browserWindow: js.JSHandle<BrowserWindow>;
   _browserWindowId: number;
 }
 
 export class ElectronApplication extends EventEmitter {
+  static Events = {
+    Close: 'close',
+    Window: 'window',
+  };
+
   private _browserContext: CRBrowserContext;
   private _nodeConnection: CRConnection;
   private _nodeSession: CRSession;
@@ -67,11 +64,11 @@ export class ElectronApplication extends EventEmitter {
   constructor(browser: CRBrowser, nodeConnection: CRConnection) {
     super();
     this._browserContext = browser._defaultContext as CRBrowserContext;
-    this._browserContext.on(Events.BrowserContext.Close, () => {
+    this._browserContext.on(BrowserContext.Events.Close, () => {
       // Emit application closed after context closed.
-      Promise.resolve().then(() => this.emit(ElectronEvents.ElectronApplication.Close));
+      Promise.resolve().then(() => this.emit(ElectronApplication.Events.Close));
     });
-    this._browserContext.on(Events.BrowserContext.Page, event => this._onPage(event));
+    this._browserContext.on(BrowserContext.Events.Page, event => this._onPage(event));
     this._nodeConnection = nodeConnection;
     this._nodeSession = nodeConnection.rootSession;
   }
@@ -85,13 +82,13 @@ export class ElectronApplication extends EventEmitter {
       return;
     page.browserWindow = handle;
     page._browserWindowId = windowId;
-    page.on(Events.Page.Close, () => {
+    page.on(Page.Events.Close, () => {
       page.browserWindow.dispose();
       this._windows.delete(page);
     });
     this._windows.add(page);
     await page.mainFrame().waitForLoadState('domcontentloaded').catch(e => {}); // can happen after detach
-    this.emit(ElectronEvents.ElectronApplication.Window, page);
+    this.emit(ElectronApplication.Events.Window, page);
   }
 
   async newBrowserWindow(options: any): Promise<Page> {
@@ -106,7 +103,7 @@ export class ElectronApplication extends EventEmitter {
         return page;
     }
 
-    return await this._waitForEvent(ElectronEvents.ElectronApplication.Window, (page: ElectronPage) => page._browserWindowId === windowId);
+    return await this._waitForEvent(ElectronApplication.Events.Window, (page: ElectronPage) => page._browserWindowId === windowId);
   }
 
   context(): BrowserContext {
@@ -114,7 +111,7 @@ export class ElectronApplication extends EventEmitter {
   }
 
   async close() {
-    const closed = this._waitForEvent(ElectronEvents.ElectronApplication.Close);
+    const closed = this._waitForEvent(ElectronApplication.Events.Close);
     await this._nodeElectronHandle!.evaluate(({ app }) => app.quit());
     this._nodeConnection.close();
     await closed;
@@ -122,7 +119,7 @@ export class ElectronApplication extends EventEmitter {
 
   private async _waitForEvent(event: string, predicate?: Function): Promise<any> {
     const progressController = new ProgressController(this._timeoutSettings.timeout({}));
-    if (event !== ElectronEvents.ElectronApplication.Close)
+    if (event !== ElectronApplication.Events.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
     return progressController.run(progress => helper.waitForEvent(progress, this, event, predicate).promise);
   }

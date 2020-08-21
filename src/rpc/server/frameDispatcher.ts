@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Frame, kAddLifecycleEvent, kRemoveLifecycleEvent, kNavigationEvent, NavigationEvent } from '../../frames';
+import { Frame, NavigationEvent } from '../../frames';
 import * as types from '../../types';
 import * as channels from '../channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
@@ -38,13 +38,13 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
       loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
-    frame._eventEmitter.on(kAddLifecycleEvent, (event: types.LifecycleEvent) => {
+    frame.on(Frame.Events.AddLifecycle, (event: types.LifecycleEvent) => {
       this._dispatchEvent('loadstate', { add: event });
     });
-    frame._eventEmitter.on(kRemoveLifecycleEvent, (event: types.LifecycleEvent) => {
+    frame.on(Frame.Events.RemoveLifecycle, (event: types.LifecycleEvent) => {
       this._dispatchEvent('loadstate', { remove: event });
     });
-    frame._eventEmitter.on(kNavigationEvent, (event: NavigationEvent) => {
+    frame.on(Frame.Events.Navigation, (event: NavigationEvent) => {
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };
       if (event.newDocument)
         (params as any).newDocument = { request: RequestDispatcher.fromNullable(this._scope, event.newDocument.request || null) };

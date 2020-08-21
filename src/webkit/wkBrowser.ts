@@ -17,7 +17,6 @@
 
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { Events } from '../events';
 import { helper, RegisteredListener, assert } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
@@ -150,13 +149,13 @@ export class WKBrowser extends Browser {
       const page = wkPage._page;
       if (pageOrError instanceof Error)
         page._setIsError();
-      context!.emit(Events.BrowserContext.Page, page);
+      context!.emit(BrowserContext.Events.Page, page);
       if (!opener)
         return;
       await opener.pageOrError();
       const openerPage = opener._page;
       if (!openerPage.isClosed())
-        openerPage.emit(Events.Page.Popup, page);
+        openerPage.emit(Page.Events.Popup, page);
     });
   }
 

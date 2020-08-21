@@ -61,32 +61,11 @@ function traceAPICoverage(apiCoverage, api, events) {
  * @param {string} browserName
  */
 function apiForBrowser(browserName) {
-  const BROWSER_CONFIGS = [
-    {
-      name: 'Firefox',
-      events: require('../lib/events').Events,
-    },
-    {
-      name: 'WebKit',
-      events: require('../lib/events').Events,
-    },
-    {
-      name: 'Chromium',
-      events: {
-        ...require('../lib/events').Events,
-        ...require('../lib/chromium/events').Events,
-      }
-    },
-  ];
-  const browserConfig = BROWSER_CONFIGS.find(config => config.name.toLowerCase() === browserName);
-  const events = browserConfig.events;
-  // TODO: we should rethink our api.ts approach to ensure coverage and async stacks.
-  const api = {
-    ...require('../lib/rpc/client/api'),
-  };
-
+  const events = require('../lib/rpc/client/events').Events;
+  const api = require('../lib/rpc/client/api');
+  const otherBrowsers = ['chromium', 'webkit', 'firefox'].filter(name => name.toLowerCase() !== browserName.toLowerCase());
   const filteredKeys = Object.keys(api).filter(apiName => {
-    return !BROWSER_CONFIGS.some(config => apiName.startsWith(config.name)) || apiName.startsWith(browserConfig.name);
+    return !otherBrowsers.some(otherName => apiName.toLowerCase().startsWith(otherName));
   });
   const filteredAPI = {};
   for (const key of filteredKeys)
