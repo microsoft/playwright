@@ -43,7 +43,7 @@ program
   .option('-u, --update-snapshots', 'Use this flag to re-record every snapshot that fails during this test run')
   .action(async (command) => {
     // Collect files]
-    const testDir = path.join(process.cwd(), command.args[0]);
+    const testDir = path.resolve(process.cwd(), command.args[0]);
     const files = collectFiles(testDir, '', command.args.slice(1));
 
     const revertBabelRequire = installTransform();
