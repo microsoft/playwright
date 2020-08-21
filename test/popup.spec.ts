@@ -221,7 +221,7 @@ it('should not dispatch binding on a closed page', async function({browser, serv
   await Promise.all([
     page.waitForEvent('popup').then(popup => {
       if (popup.isClosed())
-        messages.push('alreadyclosed');
+        messages.push('close');
       else
         return popup.waitForEvent('close').then(() => messages.push('close'));
     }),
