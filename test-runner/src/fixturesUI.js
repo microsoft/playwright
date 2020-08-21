@@ -63,7 +63,7 @@ function fixturesUI(wrappers, suite) {
 
       if (suite.isPending())
         fn = null;
-      const wrapper = fn ? wrappers.testWrapper(fn) : undefined;
+      const wrapper = fn ? wrappers.testWrapper(fn, title, file, specs.slow && specs.slow[0]) : undefined;
       if (wrapper) {
         wrapper.toString = () => fn.toString();
         wrapper.__original = fn;
@@ -72,8 +72,6 @@ function fixturesUI(wrappers, suite) {
       test.file = file;
       suite.addTest(test);
       const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
-      if (specs.slow && specs.slow[0])
-        test.timeout(90000);
       if (only)
         test.__only = true;
       if (!only && specs.skip && specs.skip[0])

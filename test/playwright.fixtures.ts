@@ -41,9 +41,9 @@ declare global {
     browserType: BrowserType<Browser>;
     browser: Browser;
     httpService: {server: TestServer, httpsServer: TestServer}
+    toImpl: (rpcObject: any) => any;
   }
   interface TestState {
-    toImpl: (rpcObject: any) => any;
     context: BrowserContext;
     server: TestServer;
     page: Page;
@@ -142,7 +142,7 @@ registerWorkerFixture('playwright', async({browserName, wire}, test) => {
 
 });
 
-registerFixture('toImpl', async ({playwright}, test) => {
+registerWorkerFixture('toImpl', async ({playwright}, test) => {
   await test((playwright as any)._toImpl);
 });
 
@@ -165,6 +165,14 @@ registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, te
   await browser.close();
 });
 
+registerWorkerFixture('asset', async ({}, test) => {
+  await test(p => path.join(__dirname, `assets`, p));
+});
+
+registerWorkerFixture('golden', async ({browserName}, test) => {
+  await test(p => path.join(browserName, p));
+});
+
 registerFixture('context', async ({browser}, test) => {
   const context = await browser.newContext();
   await test(context);
@@ -173,7 +181,13 @@ registerFixture('context', async ({browser}, test) => {
 
 registerFixture('page', async ({context}, test) => {
   const page = await context.newPage();
-  await test(page);
+  const { success, info } = await test(page);
+  if (!success) {
+    const relativePath = path.relative(info.testDir, info.file).replace(/\.spec\.[jt]s/, '');
+    const sanitizedTitle = info.title.replace(/[^\w\d]+/g, '_');
+    const assetPath = path.join(info.outputDir, relativePath, sanitizedTitle) + '-failed.png';
+    await page.screenshot({ path: assetPath });
+  }
 });
 
 registerFixture('server', async ({httpService}, test) => {
@@ -190,14 +204,6 @@ registerFixture('tmpDir', async ({}, test) => {
   const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   await test(tmpDir);
   await removeFolderAsync(tmpDir).catch(e => {});
-});
-
-registerWorkerFixture('asset', async ({}, test) => {
-  await test(p => path.join(__dirname, `assets`, p));
-});
-
-registerWorkerFixture('golden', async ({browserName}, test) => {
-  await test(p => path.join(browserName, p));
 });
 
 export const options = {
