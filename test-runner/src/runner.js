@@ -50,19 +50,19 @@ class Runner extends EventEmitter {
     this._testsByConfiguredFile = new Map();
 
     suite.eachTest(test => {
-      const configuredFile = `${test.file}::[${test.__configurationString}]`;
+      const configuredFile = `${test.file}::[${test._configurationString}]`;
       if (!this._testsByConfiguredFile.has(configuredFile)) {
         this._testsByConfiguredFile.set(configuredFile, {
           file: test.file,
           configuredFile,
           ordinals: [],
-          configurationObject: test.__configurationObject,
-          configurationString: test.__configurationString
+          configurationObject: test._configurationObject,
+          configurationString: test._configurationString
         });
       }
       const { ordinals } = this._testsByConfiguredFile.get(configuredFile);
-      ordinals.push(test.__ordinal);
-      this._testById.set(`${test.__ordinal}@${configuredFile}`, test);
+      ordinals.push(test._ordinal);
+      this._testById.set(`${test._ordinal}@${configuredFile}`, test);
     });
 
     if (process.stdout.isTTY) {

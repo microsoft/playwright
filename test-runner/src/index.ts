@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 import './builtin.fixtures';
 import './expect';
 export {registerFixture, registerWorkerFixture, registerParameter, parameters} from './fixtures';
