@@ -25,7 +25,7 @@ import { DispatcherScope, DispatcherConnection } from './server/dispatcher';
 import { BrowserTypeDispatcher } from './server/browserTypeDispatcher';
 import { BrowserDispatcher } from './server/browserDispatcher';
 import { BrowserContextDispatcher } from './server/browserContextDispatcher';
-import { BrowserNewContextParams, BrowserContextChannel } from './channels';
+import { BrowserNewContextParams, BrowserContextChannel } from '../protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 

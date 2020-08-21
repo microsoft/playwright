@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { JSHandleChannel, JSHandleInitializer, SerializedArgument, SerializedValue, Channel } from '../channels';
+import { JSHandleChannel, JSHandleInitializer, SerializedArgument, SerializedValue, Channel } from '../../protocol/channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
-import { parseSerializedValue, serializeValue } from '../serializers';
+import { parseSerializedValue, serializeValue } from '../../protocol/serializers';
 
 type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
 type Unboxed<Arg> =

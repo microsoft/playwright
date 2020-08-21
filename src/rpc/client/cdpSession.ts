@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { CDPSessionChannel, CDPSessionInitializer } from '../channels';
+import { CDPSessionChannel, CDPSessionInitializer } from '../../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Protocol } from '../../chromium/protocol';
 

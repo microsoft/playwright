@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElectronChannel, ElectronInitializer, ElectronApplicationChannel, ElectronApplicationInitializer, ElectronLaunchParams, ElectronLaunchOptions } from '../channels';
+import { ElectronChannel, ElectronInitializer, ElectronApplicationChannel, ElectronApplicationInitializer, ElectronLaunchParams, ElectronLaunchOptions } from '../../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';

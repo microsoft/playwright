@@ -29,7 +29,7 @@ if (process.argv[3] === 'all')
 const playwright = require(requireName);
 
 // Requiring internals should work.
-const errors = require(requireName + '/lib/errors');
+const errors = require(requireName + '/lib/utils/errors');
 const installer = require(requireName + '/lib/install/installer');
 
 (async () => {

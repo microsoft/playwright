@@ -21,7 +21,7 @@ import childProcess from 'child_process';
 import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/rpc/client/connection';
-import { Transport } from '../lib/rpc/transport';
+import { Transport } from '../lib/protocol/transport';
 import { setUnderTest } from '../lib/helper';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';

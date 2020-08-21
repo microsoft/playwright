@@ -17,7 +17,7 @@
 import * as childProcess from 'child_process';
 import * as path from 'path';
 import { Connection } from './client/connection';
-import { Transport } from './transport';
+import { Transport } from '../protocol/transport';
 
 (async () => {
   const spawnedProcess = childProcess.fork(path.join(__dirname, 'server'), [], { stdio: 'pipe' });

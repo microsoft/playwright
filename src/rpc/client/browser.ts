@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../channels';
+import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';

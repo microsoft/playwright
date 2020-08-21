@@ -16,7 +16,7 @@
 
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { Electron, ElectronApplication, ElectronPage } from '../../server/electron';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';

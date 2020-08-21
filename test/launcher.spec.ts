@@ -20,7 +20,7 @@ import path from 'path';
 import utils from './utils';
 
 it('should require top-level Errors', async({}) => {
-  const Errors = require(path.join(utils.projectRoot(), '/lib/errors.js'));
+  const Errors = require(path.join(utils.projectRoot(), '/lib/utils/errors.js'));
   expect(String(Errors.TimeoutError)).toContain('TimeoutError');
 });
 

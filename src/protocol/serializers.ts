@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TimeoutError } from '../errors';
+import { TimeoutError } from '../utils/errors';
 import { helper } from '../helper';
 import { SerializedError, SerializedValue } from './channels';
 

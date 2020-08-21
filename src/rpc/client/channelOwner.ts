@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import type { Channel } from '../channels';
+import type { Channel } from '../../protocol/channels';
 import type { Connection } from './connection';
 import type { LoggerSink } from './types';
 import { debugLogger } from '../../helper';

@@ -15,7 +15,7 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { Selectors } from '../../selectors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import * as dom from '../../dom';

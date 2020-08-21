@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -23,7 +23,7 @@ import { assert, helper } from '../../helper';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import * as WebSocket from 'ws';
 import { Connection } from './connection';
-import { serializeError } from '../serializers';
+import { serializeError } from '../../protocol/serializers';
 import { Events } from './events';
 import { TimeoutSettings } from '../../timeoutSettings';
 import { ChildProcess } from 'child_process';
