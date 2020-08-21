@@ -194,8 +194,20 @@ export class Page extends EventEmitter {
     this._disconnectedCallback(new Error('Page closed'));
   }
 
+  _captureSnapshot(options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
+    return runAbortableTask(async progress => {
+      await this._doSnapshot(progress, options.label || 'snapshot');
+    }, this._timeoutSettings.timeout(options));
+  }
+
+  async _doSnapshot(progress: Progress, label: string): Promise<void> {
+    if (this._browserContext._traceRecorder)
+      await this._browserContext._traceRecorder.captureSnapshot(progress, this, label);
+  }
+
   async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
     return runAbortableTask(async progress => {
+      await this._doSnapshot(progress, 'progress');
       return task(progress);
     }, timeout);
   }

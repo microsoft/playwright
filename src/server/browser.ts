@@ -21,6 +21,7 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
+import { helper } from './helper';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -44,6 +45,7 @@ export abstract class Browser extends EventEmitter {
   };
 
   readonly _options: BrowserOptions;
+  readonly id: string;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
@@ -52,6 +54,7 @@ export abstract class Browser extends EventEmitter {
   constructor(options: BrowserOptions) {
     super();
     this._options = options;
+    this.id = 'browser@' + helper.guid();
   }
 
   abstract newContext(options?: types.BrowserContextOptions): Promise<BrowserContext>;

@@ -180,13 +180,21 @@ registerWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-registerFixture('context', async ({browser}, test) => {
+registerFixture('context', async ({browser, toImpl}, runTest, info) => {
   const context = await browser.newContext();
-  await test(context);
+  const { test, config } = info;
+  if (toImpl) {
+    const traceStorageDir = path.join(config.outputDir, 'trace-storage');
+    const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
+    const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+    const traceFile = path.join(config.outputDir, relativePath, sanitizedTitle + '.trace');
+    toImpl(context)._traceTo(traceStorageDir, traceFile);
+  }
+  await runTest(context);
   await context.close();
 });
 
-registerFixture('page', async ({context}, runTest, info) => {
+registerFixture('page', async ({context, toImpl}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
   const { test, config, result } = info;
@@ -195,6 +203,8 @@ registerFixture('page', async ({context}, runTest, info) => {
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
     await page.screenshot({ path: assetPath });
+    if (toImpl)
+      await toImpl(page)._captureSnapshot({ timeout: 5000, label: 'Test Failed' });
   }
 });
 

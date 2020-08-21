@@ -104,6 +104,7 @@ DEPS['src/server/'] = [
   'src/server/common/**',
   'src/server/injected/**',
   'src/server/debug/**',
+  'src/server/trace/**',
 ];
 
 // No dependencies for code shared between node and page.

@@ -71,6 +71,17 @@ class Helper {
     return crypto.randomBytes(16).toString('hex');
   }
 
+  static monotonicTime(): number {
+    const [seconds, nanoseconds] = process.hrtime();
+    return seconds * 1000 + (nanoseconds / 1000000 | 0);
+  }
+
+  static sha1(buffer: Buffer): string {
+    const hash = crypto.createHash('sha1');
+    hash.update(buffer);
+    return hash.digest('hex');
+  }
+
   static getViewportSizeFromWindowFeatures(features: string[]): types.Size | null {
     const widthString = features.find(f => f.startsWith('width='));
     const heightString = features.find(f => f.startsWith('height='));
