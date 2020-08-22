@@ -63,13 +63,16 @@ function fixturesUI(wrappers, suite) {
 
       if (suite.isPending())
         fn = null;
-      const wrapper = fn ? wrappers.testWrapper(fn, title, file, specs.slow && specs.slow[0]) : undefined;
+      const isSlow = specs.slow && specs.slow[0];
+      const wrapper = fn ? wrappers.testWrapper(fn, title, file, isSlow) : undefined;
       if (wrapper) {
         wrapper.toString = () => fn.toString();
         wrapper.__original = fn;
       }
       const test = new Test(title, wrapper);
+      // HACK: save isSlow on the test object to use in hookWrapper.
       test.file = file;
+      test._isSlow = isSlow;
       suite.addTest(test);
       const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
       if (only)

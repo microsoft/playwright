@@ -184,9 +184,9 @@ registerFixture('context', async ({browser}, test) => {
   await context.close();
 });
 
-registerFixture('page', async ({context}, test) => {
+registerFixture('page', async ({context}, test, info) => {
   const page = await context.newPage();
-  const { success, info } = await test(page);
+  const { success } = await test(page);
   if (!success) {
     const relativePath = path.relative(info.testDir, info.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = info.title.replace(/[^\w\d]+/g, '_');

@@ -48,7 +48,6 @@ type TestInfo = {
 
 type TestResult = {
   success: boolean;
-  info: TestInfo;
   error?: Error;
 };
 
@@ -65,6 +64,7 @@ class Fixture {
   _tearDownComplete: any;
   _setup: boolean;
   _teardown: any;
+
   constructor(pool: FixturePool, name: string, scope: any, fn: any) {
     this.pool = pool;
     this.name = name;
@@ -76,11 +76,11 @@ class Fixture {
     this.value = this.hasGeneratorValue ? parameters[name] : null;
   }
 
-  async setup() {
+  async setup(info: TestInfo) {
     if (this.hasGeneratorValue)
       return;
     for (const name of this.deps) {
-      await this.pool.setupFixture(name);
+      await this.pool.setupFixture(name, info);
       this.pool.instances.get(name).usages.add(this.name);
     }
 
@@ -96,7 +96,7 @@ class Fixture {
       this.value = value;
       setupFenceFulfill();
       return await teardownFence;
-    }).catch((e: any) => setupFenceReject(e));
+    }, this.scope === 'test' ? info : undefined).catch((e: any) => setupFenceReject(e));
     await setupFence;
     this._setup = true;
   }
@@ -128,7 +128,7 @@ export class FixturePool {
     this.instances = new Map();
   }
 
-  async setupFixture(name: string) {
+  async setupFixture(name: string, info: TestInfo) {
     let fixture = this.instances.get(name);
     if (fixture)
       return fixture;
@@ -138,7 +138,7 @@ export class FixturePool {
     const { scope, fn } = registrations.get(name);
     fixture = new Fixture(this, name, scope, fn);
     this.instances.set(name, fixture);
-    await fixture.setup();
+    await fixture.setup(info);
     return fixture;
   }
 
@@ -149,10 +149,10 @@ export class FixturePool {
     }
   }
 
-  async resolveParametersAndRun(fn: (arg0: {}) => any, timeout: number) {
+  async resolveParametersAndRun(fn: (arg0: {}) => any, timeout: number, info: TestInfo) {
     const names = fixtureParameterNames(fn);
     for (const name of names)
-      await this.setupFixture(name);
+      await this.setupFixture(name, info);
     const params = {};
     for (const n of names)
       params[n] = this.instances.get(n).value;
@@ -171,10 +171,10 @@ export class FixturePool {
   wrapTestCallback(callback: any, timeout: number, info: TestInfo) {
     if (!callback)
       return callback;
-    const testResult: TestResult = { success: true, info };
+    const testResult: TestResult = { success: true };
     return async() => {
       try {
-        await this.resolveParametersAndRun(callback, timeout);
+        await this.resolveParametersAndRun(callback, timeout, info);
       } catch (e) {
         testResult.success = false;
         testResult.error = e;
@@ -228,7 +228,7 @@ function innerRegisterFixture(name: any, scope: string, fn: any, caller: Functio
   registrationsByFile.get(file).push(registration);
 };
 
-export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, test: (arg: TestState[T]) => Promise<TestResult>) => Promise<void>) {
+export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, test: (arg: TestState[T]) => Promise<TestResult>, info: TestInfo) => Promise<void>) {
   innerRegisterFixture(name, 'test', fn, registerFixture);
 };
 

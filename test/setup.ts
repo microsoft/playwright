@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-declare const before: (f: () => Promise<any>) => void;
-declare const after: (f: () => Promise<any>) => void;
+type GlobalInfo = { outputDir: string };
+declare const before: (f: (info: GlobalInfo) => Promise<any>) => void;
+declare const after: (f: (info: GlobalInfo) => Promise<any>) => void;
 declare const matrix: (m: any) => void;
 
 matrix({
@@ -28,7 +29,7 @@ matrix({
 before(async () => {
 });
 
-after(async () => {  
+after(async () => {
 });
 
 function valueFromEnv(name, defaultValue) {

@@ -152,17 +152,11 @@ export class TestRunner extends EventEmitter {
     await result;
   }
 
-  _shouldRunTest(hook = false) {
+  _shouldRunTest() {
     if (this._trialRun || this._failedWithError)
       return false;
-    if (hook) {
-      // Hook starts before we bump the test ordinal.
-      if (!this._ordinals.has(this._currentOrdinal + 1))
-        return false;
-    } else {
-      if (!this._ordinals.has(this._currentOrdinal))
-        return false;
-    }
+    if (!this._ordinals.has(this._currentOrdinal))
+      return false;
     return true;
   }
 
@@ -185,10 +179,21 @@ export class TestRunner extends EventEmitter {
   }
 
   _hookWrapper(hook, fn) {
-    if (!this._shouldRunTest(true))
-      return;
-    return hook(async () => {
-      return await fixturePool.resolveParametersAndRun(fn, 0);
+    // HACK: we use |this| object provided by mocha to access currentTest,
+    // and |self| to access TestRunner.
+    let self = this;
+    return hook(async function() {
+      if (!self._shouldRunTest())
+        return;
+      const test = this.currentTest;
+      const timeout = test._isSlow ? self._timeout * 3 : self._timeout;
+      return await fixturePool.resolveParametersAndRun(fn, 0, {
+        outputDir: self._outDir,
+        testDir: self._testDir,
+        title: test.title,
+        file: test.file,
+        timeout,
+      });
     });
   }
 
@@ -198,7 +203,7 @@ export class TestRunner extends EventEmitter {
       duration: test.duration,
     };
   }
-  
+
   _serializeStats(stats) {
     return {
       passes: this._passes,
@@ -206,7 +211,7 @@ export class TestRunner extends EventEmitter {
       pending: this._pending,
       duration: stats.duration || 0,
     }
-  }  
+  }
 }
 
 function trimCycles(obj) {

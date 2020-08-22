@@ -17,6 +17,13 @@
 import './test-runner-helper';
 import { registerFixture } from '../test-runner';
 
+type TestInfo = {
+  file: string;
+  title: string;
+  timeout: number;
+  outputDir: string;
+  testDir: string;
+};
 declare global {
   interface TestState {
     a: string;
@@ -24,6 +31,8 @@ declare global {
     ab: string;
     zero: number;
     tear: string;
+    info1: TestInfo;
+    info2: TestInfo;
   }
 }
 
@@ -46,4 +55,31 @@ registerFixture('ab', async ({a, b}, test) => {
 
 it('should eval fixture once', async ({ab}) => {
   expect(ab).toBe('a0b0');
+});
+
+let beforeEachInfo1;
+beforeEach(async ({info1}) => {
+  beforeEachInfo1 = info1;
+});
+
+registerFixture('info1', async ({}, test, info) => {
+  await test(info);
+});
+registerFixture('info2', async ({}, test, info) => {
+  await test(info);
+});
+
+it('should get info', async ({info2}) => {
+  function expectInfo(info) {
+    expect(info.file).toContain('test-runner.spec');
+    expect(typeof info.timeout).toBe('number');
+    expect(typeof info.outputDir).toBe('string');
+    expect(info.title).toBe('should get info');
+  }
+
+  // Info passed directly to the fixture.
+  expectInfo(info2);
+
+  // Info passed to fixture invoked from beforeEach.
+  expectInfo(beforeEachInfo1);
 });

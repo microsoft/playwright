@@ -94,18 +94,18 @@ program
       retries: command.retries,
       snapshotDir: path.join(testDir, '__snapshots__'),
       testDir,
-      timeout: command.timeout,
+      timeout: +command.timeout,
       trialRun: command.trialRun,
       updateSnapshots: command.updateSnapshots
     });
     try {
       if (beforeFunction)
-        await beforeFunction();
+        await beforeFunction({ outputDir: command.output });
       await runner.run();
       await runner.stop();
     } finally {
       if (afterFunction)
-        await afterFunction();
+        await afterFunction({ outputDir: command.output });
     }
     process.exit(runner.stats.failures ? 1 : 0);
   });
