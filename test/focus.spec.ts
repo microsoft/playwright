@@ -15,14 +15,14 @@
  */
 import { options } from './playwright.fixtures';
 
-it.skip(options.FIREFOX)('should work', async function({page, server}) {
+it.skip(options.FIREFOX)('should work', async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
   await page.focus('#d1');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
 });
 
-it('should emit focus event', async function({page, server}) {
+it('should emit focus event', async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   let focused = false;
   await page.exposeFunction('focusEvent', () => focused = true);
@@ -31,7 +31,7 @@ it('should emit focus event', async function({page, server}) {
   expect(focused).toBe(true);
 });
 
-it('should emit blur event', async function({page, server}) {
+it('should emit blur event', async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
   await page.focus('#d1');
   let focused = false;

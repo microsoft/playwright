@@ -15,9 +15,9 @@
  */
 
 import path from 'path';
-import Mocha from 'mocha';
 import { fixturesForCallback, registerWorkerFixture } from './fixtures';
-import { Configuration, NoMocha, Test, Suite } from './test';
+import { Configuration, Test, Suite } from './test';
+import { fixturesUI } from './fixturesUI';
 
 export class TestCollector {
   suite: Suite;
@@ -50,20 +50,15 @@ export class TestCollector {
   }
 
   _addFile(file) {
-    const noMocha = new NoMocha(file, {
-      forbidOnly: this._options.forbidOnly,
-      timeout: this._options.timeout,
-      testWrapper: (test, fn) => () => {},
-      hookWrapper: (hook, fn) => () => {},
-    });
+    const suite = new Suite('');
+    const revertBabelRequire = fixturesUI(suite, file, this._options.timeout);
+    require(file);
+    revertBabelRequire();
+    suite._renumber();
 
     const workerGeneratorConfigurations = new Map();
 
-    let ordinal = 0;
-    noMocha.suite.eachTest((test: Test) => {
-      // All tests are identified with their ordinals.
-      test._ordinal = ordinal++;
-
+    suite.eachTest((test: Test) => {
       // Get all the fixtures that the test needs.
       const fixtures = fixturesForCallback(test.fn);
 
@@ -102,7 +97,7 @@ export class TestCollector {
     // Clone the suite as many times as there are worker hashes.
     // Only include the tests that requested these generations.
     for (const [hash, {configurationObject, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
-      const clone = this._cloneSuite(noMocha.suite, configurationObject, configurationString, tests);
+      const clone = this._cloneSuite(suite, configurationObject, configurationString, tests);
       this.suite.addSuite(clone);
       clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '');
     }
@@ -111,19 +106,22 @@ export class TestCollector {
   _cloneSuite(suite: Suite, configurationObject: Configuration, configurationString: string, tests: Set<Test>) {
     const copy = suite.clone();
     copy.only = suite.only;
-    for (const child of suite.suites)
-      copy.addSuite(this._cloneSuite(child, configurationObject, configurationString, tests));
-    for (const test of suite.tests) {
-      if (!tests.has(test))
-        continue;
-      if (this._grep && !this._grep.test(test.fullTitle()))
-        continue;
-      const testCopy = test.clone();
-      testCopy.only = test.only;
-      testCopy._ordinal = test._ordinal;
-      testCopy._configurationObject = configurationObject;
-      testCopy._configurationString = configurationString;
-      copy.addTest(testCopy);
+    for (const entry of suite._entries) {
+      if (entry instanceof Suite) {
+        copy.addSuite(this._cloneSuite(entry, configurationObject, configurationString, tests));
+      } else {
+        const test = entry;
+        if (!tests.has(test))
+          continue;
+        if (this._grep && !this._grep.test(test.fullTitle()))
+          continue;
+        const testCopy = test.clone();
+        testCopy.only = test.only;
+        testCopy._ordinal = test._ordinal;
+        testCopy._configurationObject = configurationObject;
+        testCopy._configurationString = configurationString;
+        copy.addTest(testCopy);
+      }
     }
     return copy;
   }

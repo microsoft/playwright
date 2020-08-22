@@ -18,14 +18,9 @@ const child_process = require('child_process');
 const crypto = require('crypto');
 const path = require('path');
 const { EventEmitter } = require('events');
-const Mocha = require('mocha');
 const builtinReporters = require('mocha/lib/reporters');
 const DotRunner = require('./dotReporter');
 const { lookupRegistrations } = require('./fixtures');
-
-const constants = Mocha.Runner.constants;
-// Mocha runner does not remove uncaughtException listeners.
-process.setMaxListeners(0);
 
 class Runner extends EventEmitter {
   constructor(suite, total, options) {
@@ -81,12 +76,12 @@ class Runner extends EventEmitter {
   }
 
   async run() {
-    this.emit(constants.EVENT_RUN_BEGIN, {});
+    this.emit('start', {});
     this._queue = this._filesSortedByWorkerHash();
     // Loop in case job schedules more jobs
     while (this._queue.length)
       await this._dispatchQueue();
-    this.emit(constants.EVENT_RUN_END, {});
+    this.emit('end', {});
   }
 
   async _dispatchQueue() {
@@ -109,16 +104,11 @@ class Runner extends EventEmitter {
     let doneCallback;
     const result = new Promise(f => doneCallback = f);
     worker.once('done', params => {
-      this.stats.duration += params.stats.duration;
-      this.stats.failures += params.stats.failures;
-      this.stats.passes += params.stats.passes;
-      this.stats.pending += params.stats.pending;
-      this.stats.tests += params.stats.passes + params.stats.pending + params.stats.failures;
       // When worker encounters error, we will restart it.
-      if (params.error) {
+      if (params.error || params.fatalError) {
         this._restartWorker(worker);
         // If there are remaining tests, we will queue them.
-        if (params.remaining.length)
+        if (params.remaining.length && !params.fatalError)
           this._queue.unshift({ ...entry, ordinals: params.remaining });
       } else {
         this._workerAvailable(worker);
@@ -150,17 +140,28 @@ class Runner extends EventEmitter {
 
   _createWorker() {
     const worker = this._options.debug ? new InProcessWorker(this) : new OopWorker(this);
-    worker.on('test', params => this.emit(constants.EVENT_TEST_BEGIN, this._updateTest(params.test)));
-    worker.on('pending', params => this.emit(constants.EVENT_TEST_PENDING, this._updateTest(params.test)));
-    worker.on('pass', params => this.emit(constants.EVENT_TEST_PASS, this._updateTest(params.test)));
+    worker.on('test', params => {
+      ++this.stats.tests;
+      this.emit('test', this._updateTest(params.test));
+    });
+    worker.on('pending', params => {
+      ++this.stats.tests;
+      ++this.stats.pending;
+      this.emit('pending', this._updateTest(params.test));
+    });
+    worker.on('pass', params => {
+      ++this.stats.passes;
+      this.emit('pass', this._updateTest(params.test));
+    });
     worker.on('fail', params => {
+      ++this.stats.failures;
       const out = worker.takeOut();
       if (out.length)
         params.error.stack += '\n\x1b[33mstdout: ' + out.join('\n') + '\x1b[0m';
       const err = worker.takeErr();
       if (err.length)
         params.error.stack += '\n\x1b[33mstderr: ' + err.join('\n') + '\x1b[0m';
-      this.emit(constants.EVENT_TEST_FAIL, this._updateTest(params.test), params.error);
+      this.emit('fail', this._updateTest(params.test), params.error);
     });
     worker.on('exit', () => {
       this._workers.delete(worker);

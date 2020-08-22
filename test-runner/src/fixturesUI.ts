@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-import Mocha from 'mocha';
 import { Test, Suite } from './test';
 import { installTransform } from './transform';
 
 Error.stackTraceLimit = 15;
-
-let revertBabelRequire: () => void;
 
 function specBuilder(modifiers, specCallback) {
   function builder(specs, last) {
@@ -52,65 +49,54 @@ function specBuilder(modifiers, specCallback) {
   return builder({}, null);
 }
 
-export function fixturesUI(options, mochaSuite: any) {
-  const suites = [mochaSuite.__nomocha as Suite];
+export function fixturesUI(suite: Suite, file: string, timeout: number): () => void {
+  const suites = [suite];
 
-  mochaSuite.on(Mocha.Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file) {
-    const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
-      const suite = suites[0];
-      const test = new Test(title, fn);
-      test.file = file;
-      test.slow = specs.slow && specs.slow[0];
-      test.timeout = options.timeout;
+  const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
+    const suite = suites[0];
+    const test = new Test(title, fn);
+    test.file = file;
+    test.slow = specs.slow && specs.slow[0];
+    test.timeout = timeout;
 
-      const only = specs.only && specs.only[0];
-      if (only)
-        test.only = true;
-      if (!only && specs.skip && specs.skip[0])
-        test.pending = true;
-      if (!only && specs.fail && specs.fail[0])
-        test.pending = true;
-
-      test.pending = test.pending || suite.isPending();
-      if (test.pending)
-        fn = null;
-      const wrapper = fn ? options.testWrapper(test, fn) : undefined;
-      if (wrapper)
-        wrapper.toString = () => fn.toString();
-      test._materialize(wrapper);
-      suite.addTest(test);
-      return test;
-    });
-
-    const describe = specBuilder(['skip', 'fail', 'only'], (specs, title, fn) => {
-      const child = new Suite(title, suites[0]);
-      suites[0].addSuite(child);
-      child.file = file;
-      const only = specs.only && specs.only[0];
-      if (only)
-        child.only = true;
-      if (!only && specs.skip && specs.skip[0])
-        child.pending = true;
-      if (!only && specs.fail && specs.fail[0])
-        child.pending = true;
-      suites.unshift(child);
-      fn();
-      suites.shift();
-    });
-
-    context.beforeEach = fn => options.hookWrapper(mochaSuite.beforeEach.bind(mochaSuite), fn);
-    context.afterEach = fn => options.hookWrapper(mochaSuite.afterEach.bind(mochaSuite), fn);
-    context.describe = describe;
-    (context as any).fdescribe = describe.only(true);
-    context.xdescribe = describe.skip(true);
-    context.it = it;
-    (context as any).fit = it.only(true);
-    context.xit = it.skip(true);
-
-    revertBabelRequire = installTransform();
+    const only = specs.only && specs.only[0];
+    if (only)
+      test.only = true;
+    if (!only && specs.skip && specs.skip[0])
+      test.pending = true;
+    if (!only && specs.fail && specs.fail[0])
+      test.pending = true;
+    test.pending = test.pending || suite.isPending();
+    suite.addTest(test);
+    return test;
   });
 
-  mochaSuite.on(Mocha.Suite.constants.EVENT_FILE_POST_REQUIRE, function(context, file, mocha) {
-    revertBabelRequire();
+  const describe = specBuilder(['skip', 'fail', 'only'], (specs, title, fn) => {
+    const child = new Suite(title, suites[0]);
+    suites[0].addSuite(child);
+    child.file = file;
+    const only = specs.only && specs.only[0];
+    if (only)
+      child.only = true;
+    if (!only && specs.skip && specs.skip[0])
+      child.pending = true;
+    if (!only && specs.fail && specs.fail[0])
+      child.pending = true;
+    suites.unshift(child);
+    fn();
+    suites.shift();
   });
-};
+
+  (global as any).beforeEach = fn => suite._addHook('beforeEach', fn);
+  (global as any).afterEach = fn => suite._addHook('afterEach', fn);
+  (global as any).beforeAll = fn => suite._addHook('beforeAll', fn);
+  (global as any).afterAll = fn => suite._addHook('afterAll', fn);
+  (global as any).describe = describe;
+  (global as any).fdescribe = describe.only(true);
+  (global as any).xdescribe = describe.skip(true);
+  (global as any).it = it;
+  (global as any).fit = it.only(true);
+  (global as any).xit = it.skip(true);
+
+  return installTransform();
+}
