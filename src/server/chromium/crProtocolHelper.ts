@@ -19,8 +19,8 @@ import { CRSession } from './crConnection';
 import { Protocol } from './protocol';
 import * as fs from 'fs';
 import * as util from 'util';
-import * as types from '../types';
-import { mkdirIfNeeded } from '../utils/utils';
+import * as types from '../../types';
+import { mkdirIfNeeded } from '../../utils/utils';
 
 export function getExceptionMessage(exceptionDetails: Protocol.Runtime.ExceptionDetails): string {
   if (exceptionDetails.exception)

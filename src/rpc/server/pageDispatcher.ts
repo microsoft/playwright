@@ -29,7 +29,7 @@ import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networ
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../../fileChooser';
-import { CRCoverage } from '../../chromium/crCoverage';
+import { CRCoverage } from '../../server/chromium/crCoverage';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;

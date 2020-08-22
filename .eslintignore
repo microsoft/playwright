@@ -6,7 +6,7 @@ utils/testrunner/examples/
 lib/
 *.js
 src/generated/*
-src/chromium/protocol.ts
+src/server/chromium/protocol.ts
 src/firefox/protocol.ts
 src/webkit/protocol.ts
 /types/*

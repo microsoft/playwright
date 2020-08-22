@@ -16,14 +16,14 @@
  */
 
 import { CRSession } from './crConnection';
-import { Page } from '../page';
-import { helper, RegisteredListener } from '../helper';
+import { Page } from '../../page';
+import { helper, RegisteredListener } from '../../helper';
 import { Protocol } from './protocol';
-import * as network from '../network';
-import * as frames from '../frames';
-import * as types from '../types';
+import * as network from '../../network';
+import * as frames from '../../frames';
+import * as types from '../../types';
 import { CRPage } from './crPage';
-import { assert, headersObjectToArray } from '../utils/utils';
+import { assert, headersObjectToArray } from '../../utils/utils';
 
 export class CRNetworkManager {
   private _client: CRSession;

@@ -18,7 +18,7 @@ import * as util from 'util';
 import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
-import { getUbuntuVersion } from '../helper';
+import { getUbuntuVersion } from '../utils/ubuntuVersion';
 import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../install/browserPaths.js';
 
 const accessAsync = util.promisify(fs.access.bind(fs));

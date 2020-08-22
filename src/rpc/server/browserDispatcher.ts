@@ -19,7 +19,7 @@ import * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { CRBrowser } from '../../chromium/crBrowser';
+import { CRBrowser } from '../../server/chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {

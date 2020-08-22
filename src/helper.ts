@@ -17,15 +17,12 @@
 
 import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
-import * as fs from 'fs';
-import * as os from 'os';
 import * as removeFolder from 'rimraf';
 import * as util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
 
 const removeFolderAsync = util.promisify(removeFolder);
-const readFileAsync = util.promisify(fs.readFile.bind(fs));
 
 export type RegisteredListener = {
   emitter: EventEmitter;
@@ -110,45 +107,6 @@ class Helper {
       progress.cleanupWhenAborted(dispose);
     return { promise, dispose };
   }
-}
-
-export async function getUbuntuVersion(): Promise<string> {
-  if (os.platform() !== 'linux')
-    return '';
-  const osReleaseText = await readFileAsync('/etc/os-release', 'utf8').catch(e => '');
-  if (!osReleaseText)
-    return '';
-  return getUbuntuVersionInternal(osReleaseText);
-}
-
-export function getUbuntuVersionSync(): string {
-  if (os.platform() !== 'linux')
-    return '';
-  try {
-    const osReleaseText = fs.readFileSync('/etc/os-release', 'utf8');
-    if (!osReleaseText)
-      return '';
-    return getUbuntuVersionInternal(osReleaseText);
-  } catch (e) {
-    return '';
-  }
-}
-
-function getUbuntuVersionInternal(osReleaseText: string): string {
-  const fields = new Map();
-  for (const line of osReleaseText.split('\n')) {
-    const tokens = line.split('=');
-    const name = tokens.shift();
-    let value = tokens.join('=').trim();
-    if (value.startsWith('"') && value.endsWith('"'))
-      value = value.substring(1, value.length - 1);
-    if (!name)
-      continue;
-    fields.set(name.toLowerCase(), value);
-  }
-  if (!fields.get('name') || fields.get('name').toLowerCase() !== 'ubuntu')
-    return '';
-  return fields.get('version_id') || '';
 }
 
 export const helper = Helper;

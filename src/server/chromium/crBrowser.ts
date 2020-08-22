@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { assert } from '../utils/utils';
-import * as network from '../network';
-import { Page, PageBinding, Worker } from '../page';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
+import { Browser, BrowserOptions } from '../../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../../browserContext';
+import { assert } from '../../utils/utils';
+import * as network from '../../network';
+import { Page, PageBinding, Worker } from '../../page';
+import { ConnectionTransport } from '../../transport';
+import * as types from '../../types';
 import { ConnectionEvents, CRConnection, CRSession } from './crConnection';
 import { CRPage } from './crPage';
 import { readProtocolStream } from './crProtocolHelper';
