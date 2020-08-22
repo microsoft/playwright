@@ -21,24 +21,17 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as removeFolder from 'rimraf';
 import * as util from 'util';
-import * as path from 'path';
 import * as types from './types';
 import { Progress } from './progress';
-import * as debug from 'debug';
 
 const removeFolderAsync = util.promisify(removeFolder);
 const readFileAsync = util.promisify(fs.readFile.bind(fs));
-const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
 export type RegisteredListener = {
   emitter: EventEmitter;
   eventName: (string | symbol);
   handler: (...args: any[]) => void;
 };
-
-export type Listener = (...args: any[]) => void;
-
-const isInDebugMode = !!getFromENV('PWDEBUG');
 
 class Helper {
   static addEventListener(
@@ -59,30 +52,6 @@ class Helper {
     listeners.splice(0, listeners.length);
   }
 
-  static isString(obj: any): obj is string {
-    return typeof obj === 'string' || obj instanceof String;
-  }
-
-  static isNumber(obj: any): obj is number {
-    return typeof obj === 'number' || obj instanceof Number;
-  }
-
-  static isRegExp(obj: any): obj is RegExp {
-    return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
-  }
-
-  static isError(obj: any): obj is Error {
-    return obj instanceof Error || (obj && obj.__proto__ && obj.__proto__.name === 'Error');
-  }
-
-  static isObject(obj: any): obj is NonNullable<object> {
-    return typeof obj === 'object' && obj !== null;
-  }
-
-  static isBoolean(obj: any): obj is boolean {
-    return typeof obj === 'boolean' || obj instanceof Boolean;
-  }
-
   static completeUserURL(urlString: string): string {
     if (urlString.startsWith('localhost') || urlString.startsWith('127.0.0.1'))
       urlString = 'http://' + urlString;
@@ -99,41 +68,6 @@ class Helper {
 
   static enclosingIntSize(size: types.Size): types.Size {
     return { width: Math.floor(size.width + 1e-3), height: Math.floor(size.height + 1e-3) };
-  }
-
-  // See https://joel.tools/microtasks/
-  static makeWaitForNextTask() {
-    if (parseInt(process.versions.node, 10) >= 11)
-      return setImmediate;
-
-    // Unlike Node 11, Node 10 and less have a bug with Task and MicroTask execution order:
-    // - https://github.com/nodejs/node/issues/22257
-    //
-    // So we can't simply run setImmediate to dispatch code in a following task.
-    // However, we can run setImmediate from-inside setImmediate to make sure we're getting
-    // in the following task.
-
-    let spinning = false;
-    const callbacks: (() => void)[] = [];
-    const loop = () => {
-      const callback = callbacks.shift();
-      if (!callback) {
-        spinning = false;
-        return;
-      }
-      setImmediate(loop);
-      // Make sure to call callback() as the last thing since it's
-      // untrusted code that might throw.
-      callback();
-    };
-
-    return (callback: () => void) => {
-      callbacks.push(callback);
-      if (!spinning) {
-        spinning = true;
-        setImmediate(loop);
-      }
-    };
   }
 
   static guid(): string {
@@ -176,10 +110,6 @@ class Helper {
       progress.cleanupWhenAborted(dispose);
     return { promise, dispose };
   }
-
-  static isDebugMode(): boolean {
-    return isInDebugMode;
-  }
 }
 
 export async function getUbuntuVersion(): Promise<string> {
@@ -221,87 +151,4 @@ function getUbuntuVersionInternal(osReleaseText: string): string {
   return fields.get('version_id') || '';
 }
 
-export function assert(value: any, message?: string): asserts value {
-  if (!value)
-    throw new Error(message);
-}
-
-let _isUnderTest = false;
-
-export function setUnderTest() {
-  _isUnderTest = true;
-}
-
-export function isUnderTest(): boolean {
-  return _isUnderTest;
-}
-
-export function debugAssert(value: any, message?: string): asserts value {
-  if (_isUnderTest && !value)
-    throw new Error(message);
-}
-
-export function getFromENV(name: string) {
-  let value = process.env[name];
-  value = value || process.env[`npm_config_${name.toLowerCase()}`];
-  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
-  return value;
-}
-
-export async function doSlowMo(amount?: number) {
-  if (!amount)
-    return;
-  await new Promise(x => setTimeout(x, amount));
-}
-
-export async function mkdirIfNeeded(filePath: string) {
-  // This will harmlessly throw on windows if the dirname is the root directory.
-  await mkdirAsync(path.dirname(filePath), {recursive: true}).catch(() => {});
-}
-
 export const helper = Helper;
-
-const debugLoggerColorMap = {
-  'api': 45, // cyan
-  'protocol': 34, // green
-  'browser': 0, // reset
-  'error': 160, // red,
-  'channel:command': 33, // blue
-  'channel:response': 202, // orange
-  'channel:event': 207, // magenta
-};
-export type LogName = keyof typeof debugLoggerColorMap;
-
-export class DebugLogger {
-  private _debuggers = new Map<string, debug.IDebugger>();
-
-  constructor() {
-    if (process.env.DEBUG_FILE) {
-      const ansiRegex = new RegExp([
-        '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
-        '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
-      ].join('|'), 'g');
-      const stream = fs.createWriteStream(process.env.DEBUG_FILE);
-      (debug as any).log = (data: string) => {
-        stream.write(data.replace(ansiRegex, ''));
-        stream.write('\n');
-      };
-    }
-  }
-
-  log(name: LogName, message: string | Error | object) {
-    let cachedDebugger = this._debuggers.get(name);
-    if (!cachedDebugger) {
-      cachedDebugger = debug(`pw:${name}`);
-      this._debuggers.set(name, cachedDebugger);
-      (cachedDebugger as any).color = debugLoggerColorMap[name];
-    }
-    cachedDebugger(message);
-  }
-
-  isEnabled(name: LogName) {
-    return debug.enabled(`pw:${name}`);
-  }
-}
-
-export const debugLogger = new DebugLogger();

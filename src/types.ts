@@ -26,8 +26,7 @@ export type TimeoutOptions = { timeout?: number };
 
 export type WaitForElementOptions = TimeoutOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' };
 
-export type Polling = 'raf' | number;
-export type WaitForFunctionOptions = TimeoutOptions & { polling?: Polling };
+export type WaitForFunctionOptions = TimeoutOptions & { pollingInterval?: number };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);

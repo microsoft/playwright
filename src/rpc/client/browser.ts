@@ -20,9 +20,9 @@ import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import { BrowserType } from './browserType';
-import { headersObjectToArray } from '../../converters';
 import { BrowserContextOptions } from './types';
 import { validateHeaders } from './network';
+import { headersObjectToArray } from '../../utils/utils';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();

@@ -16,12 +16,11 @@
  */
 
 import * as frames from '../frames';
-import { assert } from '../helper';
 import * as network from '../network';
 import * as types from '../types';
 import { Protocol } from './protocol';
 import { WKSession } from './wkConnection';
-import { headersArrayToObject, headersObjectToArray } from '../converters';
+import { assert, headersObjectToArray, headersArrayToObject } from '../utils/utils';
 
 const errorReasons: { [reason: string]: Protocol.Network.ResourceErrorType } = {
   'aborted': 'Cancellation',

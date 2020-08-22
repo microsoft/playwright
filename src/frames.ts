@@ -17,7 +17,7 @@
 
 import { ConsoleMessage } from './console';
 import * as dom from './dom';
-import { assert, helper, RegisteredListener, debugLogger } from './helper';
+import { helper, RegisteredListener } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
@@ -26,6 +26,8 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
 import { EventEmitter } from 'events';
+import { assert, makeWaitForNextTask } from './utils/utils';
+import { debugLogger } from './utils/debugLogger';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
@@ -134,7 +136,7 @@ export class FrameManager {
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
-    await new Promise(helper.makeWaitForNextTask());
+    await new Promise(makeWaitForNextTask());
     return result;
   }
 
@@ -879,20 +881,15 @@ export class Frame extends EventEmitter {
   }
 
   async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
-    const { polling = 'raf' } = options;
-    if (helper.isString(polling))
-      assert(polling === 'raf', 'Unknown polling option: ' + polling);
-    else if (helper.isNumber(polling))
-      assert(polling > 0, 'Cannot poll with non-positive interval: ' + polling);
-    else
-      throw new Error('Unknown polling option: ' + polling);
+    if (typeof options.pollingInterval === 'number')
+      assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     const predicateBody = isFunction ? 'return (' + expression + ')(arg)' :  'return (' + expression + ')';
     const task: dom.SchedulableTask<R> = injectedScript => injectedScript.evaluateHandle((injectedScript, { predicateBody, polling, arg }) => {
       const innerPredicate = new Function('arg', predicateBody) as (arg: any) => R;
-      if (polling === 'raf')
+      if (typeof polling !== 'number')
         return injectedScript.pollRaf((progress, continuePolling) => innerPredicate(arg) || continuePolling);
       return injectedScript.pollInterval(polling, (progress, continuePolling) => innerPredicate(arg) || continuePolling);
-    }, { predicateBody, polling, arg });
+    }, { predicateBody, polling: options.pollingInterval, arg });
     return this._page._runAbortableTask(
         progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
         this._page._timeoutSettings.timeout(options));

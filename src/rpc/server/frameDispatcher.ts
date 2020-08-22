@@ -173,11 +173,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams): Promise<channels.FrameWaitForFunctionResult> {
-    const options = {
-      ...params,
-      polling: params.pollingInterval === undefined ? 'raf' as const : params.pollingInterval
-    };
-    return { handle: createHandle(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), options)) };
+    return { handle: createHandle(this._scope, await this._frame._waitForFunctionExpression(params.expression, params.isFunction, parseArgument(params.arg), params)) };
   }
 
   async title(): Promise<channels.FrameTitleResult> {

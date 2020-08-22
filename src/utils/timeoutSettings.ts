@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-import { TimeoutOptions } from './types';
-import { helper } from './helper';
+import { isDebugMode } from './utils';
 
-const DEFAULT_TIMEOUT = helper.isDebugMode() ? 0 : 30000;
+const DEFAULT_TIMEOUT = isDebugMode() ? 0 : 30000;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
@@ -37,7 +36,7 @@ export class TimeoutSettings {
     this._defaultNavigationTimeout = timeout;
   }
 
-  navigationTimeout(options: TimeoutOptions): number {
+  navigationTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (this._defaultNavigationTimeout !== null)
@@ -49,7 +48,7 @@ export class TimeoutSettings {
     return DEFAULT_TIMEOUT;
   }
 
-  timeout(options: TimeoutOptions): number {
+  timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (this._defaultTimeout !== null)
@@ -59,7 +58,7 @@ export class TimeoutSettings {
     return DEFAULT_TIMEOUT;
   }
 
-  static timeout(options: TimeoutOptions): number {
+  static timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     return DEFAULT_TIMEOUT;

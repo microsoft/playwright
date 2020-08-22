@@ -39,7 +39,7 @@ import { Stream } from './stream';
 import { createScheme, Validator, ValidationError } from '../../protocol/validator';
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
-import { debugLogger } from '../../helper';
+import { debugLogger } from '../../utils/debugLogger';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {

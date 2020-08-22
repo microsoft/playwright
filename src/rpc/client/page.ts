@@ -16,11 +16,10 @@
  */
 
 import { Events } from './events';
-import { assert, helper, Listener, mkdirIfNeeded } from '../../helper';
-import { TimeoutSettings } from '../../timeoutSettings';
+import { assert } from '../../utils/utils';
+import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PagePdfParams, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameGotoOptions, PageReloadOptions, PageGoBackOptions, PageGoForwardOptions, PageScreenshotOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../../protocol/channels';
 import { parseError, serializeError } from '../../protocol/serializers';
-import { headersObjectToArray } from '../../converters';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -42,6 +41,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
+import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../../utils/utils';
 
 type PDFOptions = Omit<PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -54,6 +54,7 @@ type PDFOptions = Omit<PagePdfParams, 'width' | 'height' | 'margin'> & {
   },
   path?: string,
 };
+type Listener = (...args: any[]) => void;
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
@@ -197,8 +198,8 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
   }
 
   frame(options: string | { name?: string, url?: URLMatch }): Frame | null {
-    const name = helper.isString(options) ? options : options.name;
-    const url = helper.isObject(options) ? options.url : undefined;
+    const name = isString(options) ? options : options.name;
+    const url = isObject(options) ? options.url : undefined;
     assert(name || url, 'Either name or url matcher should be specified');
     return this.frames().find(f => {
       if (name)
@@ -330,7 +331,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
     const predicate = (request: Request) => {
-      if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
+      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
     };
@@ -339,7 +340,7 @@ export class Page extends ChannelOwner<PageChannel, PageInitializer> {
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
     const predicate = (response: Response) => {
-      if (helper.isString(urlOrPredicate) || helper.isRegExp(urlOrPredicate))
+      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
     };

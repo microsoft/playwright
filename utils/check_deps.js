@@ -50,17 +50,28 @@ async function checkDeps() {
   }
 
   function allowImport(from, to) {
-    const rpc = path.join('src', 'rpc');
-    if (!from.includes(rpc) && to.includes(rpc))
+    from = from.substring(from.indexOf('src' + path.sep)).replace(/\\/g, '/');
+    to = to.substring(to.indexOf('src' + path.sep)).replace(/\\/g, '/') + '.ts';
+    while (from.lastIndexOf('/') !== -1) {
+      from = from.substring(0, from.lastIndexOf('/'));
+      const allowed = DEPS.get(from + '/');
+      if (!allowed)
+        continue;
+      for (const prefix of allowed) {
+        if (to.startsWith(prefix))
+          return true;
+      }
       return false;
-    const rpcClient = path.join('src', 'rpc', 'client');
-    const rpcServer = path.join('src', 'rpc', 'server');
-    if (from.includes(rpcClient) && to.includes(rpcServer))
-      return false;
-    // if (from.includes(rpcClient) && !to.includes(rpc))
-    //   return false;
-    return true;
+    }
+    return false;
   }
 }
+
+const DEPS = new Map([
+  ['src/utils/', ['src/utils/']],
+  ['src/protocol/', ['src/protocol/', 'src/utils/']],
+  ['src/rpc/client/', ['src/rpc/client/', 'src/utils/', 'src/protocol/', 'src/chromium/protocol.ts']],
+  ['src/', ['src/']],  // Allow everything else for now.
+]);
 
 checkDeps();

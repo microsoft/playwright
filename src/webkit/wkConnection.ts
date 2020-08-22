@@ -16,10 +16,11 @@
  */
 
 import { EventEmitter } from 'events';
-import { assert, debugLogger } from '../helper';
+import { assert } from '../utils/utils';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { debugLogger } from '../utils/debugLogger';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.

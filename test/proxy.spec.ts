@@ -19,6 +19,13 @@ import { options } from './playwright.fixtures';
 
 import socks from 'socksv5';
 
+it('should throw for bad server value', async ({browserType, defaultBrowserOptions}) => {
+  const error = await browserType.launch({
+    ...defaultBrowserOptions,
+    proxy: { server: 123 as any }
+  }).catch(e => e);
+  expect(error.message).toContain('proxy.server: expected string, got number');
+});
 
 it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {

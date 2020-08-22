@@ -18,17 +18,16 @@ import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, Br
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { headersObjectToArray } from '../../converters';
-import { assert, helper } from '../../helper';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import * as WebSocket from 'ws';
 import { Connection } from './connection';
 import { serializeError } from '../../protocol/serializers';
 import { Events } from './events';
-import { TimeoutSettings } from '../../timeoutSettings';
+import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
 import { validateHeaders } from './network';
+import { assert, makeWaitForNextTask, headersObjectToArray } from '../../utils/utils';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
@@ -122,7 +121,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
       // The 'ws' module in node sometimes sends us multiple messages in a single task.
       const waitForNextTask = options.slowMo
         ? (cb: () => any) => setTimeout(cb, options.slowMo)
-        : helper.makeWaitForNextTask();
+        : makeWaitForNextTask();
       connection.onmessage = message => {
         if (ws.readyState !== WebSocket.OPEN) {
           setTimeout(() => {

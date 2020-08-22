@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from './helper';
+import { assert } from './utils/utils';
 import * as keyboardLayout from './usKeyboardLayout';
 import * as types from './types';
 import type { Page } from './page';

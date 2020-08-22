@@ -18,12 +18,12 @@ import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewI
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
-import { helper, assert, mkdirIfNeeded } from '../../helper';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
+import { assert, isString, mkdirIfNeeded } from '../../utils/utils';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
@@ -246,7 +246,7 @@ export function convertSelectOptionValues(values: string | ElementHandle | Selec
     assert(values[i] !== null, `options[${i}]: expected object, got null`);
   if (values[0] instanceof ElementHandle)
     return { elements: (values as ElementHandle[]).map((v: ElementHandle) => v._elementChannel) };
-  if (helper.isString(values[0]))
+  if (isString(values[0]))
     return { options: (values as string[]).map(value => ({ value })) };
   return { options: values as SelectOption[] };
 }

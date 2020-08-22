@@ -22,7 +22,7 @@ import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServe
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/rpc/client/connection';
 import { Transport } from '../lib/protocol/transport';
-import { setUnderTest } from '../lib/helper';
+import { setUnderTest } from '../lib/utils/utils';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';
 

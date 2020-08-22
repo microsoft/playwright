@@ -20,7 +20,7 @@ import { helper } from './helper';
 import * as network from './network';
 import * as path from 'path';
 import { Page, PageBinding } from './page';
-import { TimeoutSettings } from './timeoutSettings';
+import { TimeoutSettings } from './utils/timeoutSettings';
 import * as frames from './frames';
 import * as types from './types';
 import { Download } from './download';
@@ -28,6 +28,7 @@ import { Browser } from './browser';
 import { EventEmitter } from 'events';
 import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
+import { isDebugMode } from './utils/utils';
 
 export class Screencast {
   readonly path: string;
@@ -68,7 +69,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _initialize() {
-    if (helper.isDebugMode())
+    if (isDebugMode())
       new DebugController(this);
   }
 
@@ -250,24 +251,16 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
     return;
   geolocation.accuracy = geolocation.accuracy || 0;
   const { longitude, latitude, accuracy } = geolocation;
-  if (!helper.isNumber(longitude))
-    throw new Error(`geolocation.longitude: expected number, got ${typeof longitude}`);
   if (longitude < -180 || longitude > 180)
     throw new Error(`geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.`);
-  if (!helper.isNumber(latitude))
-    throw new Error(`geolocation.latitude: expected number, got ${typeof latitude}`);
   if (latitude < -90 || latitude > 90)
     throw new Error(`geolocation.latitude: precondition -90 <= LATITUDE <= 90 failed.`);
-  if (!helper.isNumber(accuracy))
-    throw new Error(`geolocation.accuracy: expected number, got ${typeof accuracy}`);
   if (accuracy < 0)
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
 }
 
 export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySettings {
   let { server, bypass } = proxy;
-  if (!helper.isString(server))
-    throw new Error(`Invalid proxy.server: ` + server);
   let url = new URL(server);
   if (!['http:', 'https:', 'socks5:'].includes(url.protocol)) {
     url = new URL('http://' + server);

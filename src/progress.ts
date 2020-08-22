@@ -15,8 +15,9 @@
  */
 
 import { TimeoutError } from './utils/errors';
-import { assert, debugLogger, LogName } from './helper';
+import { assert } from './utils/utils';
 import { rewriteErrorMessage } from './utils/stackTrace';
+import { debugLogger, LogName } from './utils/debugLogger';
 
 export interface Progress {
   readonly aborted: Promise<void>;

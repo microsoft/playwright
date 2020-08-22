@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { assert, debugLogger } from './helper';
+import { assert } from './utils/utils';
+import { debugLogger } from './utils/debugLogger';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 

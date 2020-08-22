@@ -18,12 +18,11 @@ import { URLSearchParams } from 'url';
 import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
-import { headersArrayToObject, headersObjectToArray } from '../../converters';
 import { Headers } from './types';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as util from 'util';
-import { helper } from '../../helper';
+import { isString, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
 
 export type NetworkCookie = {
   name: string,
@@ -175,7 +174,7 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
       body = buffer.toString('base64');
       isBase64 = true;
       length = buffer.length;
-    } else if (helper.isString(response.body)) {
+    } else if (isString(response.body)) {
       body = response.body;
       isBase64 = false;
       length = Buffer.byteLength(body);
@@ -204,7 +203,7 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
   }
 
   async continue(overrides: { method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    const postDataBuffer = helper.isString(overrides.postData) ? Buffer.from(overrides.postData, 'utf8') : overrides.postData;
+    const postDataBuffer = isString(overrides.postData) ? Buffer.from(overrides.postData, 'utf8') : overrides.postData;
     await this._channel.continue({
       method: overrides.method,
       headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
@@ -284,7 +283,7 @@ export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer>
 export function validateHeaders(headers: Headers) {
   for (const key of Object.keys(headers)) {
     const value = headers[key];
-    if (!Object.is(value, undefined) && !helper.isString(value))
+    if (!Object.is(value, undefined) && !isString(value))
       throw new Error(`Expected value of header "${key}" to be String, but "${typeof value}" is found.`);
   }
 }

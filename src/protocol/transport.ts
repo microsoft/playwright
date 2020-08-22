@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { helper } from '../helper';
+import { makeWaitForNextTask } from '../utils/utils';
 
 export class Transport {
   private _pipeWrite: NodeJS.WritableStream;
   private _data = Buffer.from([]);
-  private _waitForNextTask = helper.makeWaitForNextTask();
+  private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
   private _bytesLeft = 0;
 
