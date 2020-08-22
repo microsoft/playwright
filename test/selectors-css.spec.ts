@@ -70,7 +70,6 @@ it('should work with comma separated list', async({page, server}) => {
   expect(await page.$eval(`css=doesnotexist , section #root1`, e => e.id)).toBe('root1');
   expect(await page.$$eval(`css=doesnotexist ,section #root1`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span,div span`, els => els.length)).toBe(4);
-  expect(await page.$$eval(`css=span,div span`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=span,div span,div div span`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=#target,[attr="value\\ space"]`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"]`, els => els.length)).toBe(4);
