@@ -14,22 +14,26 @@
  * limitations under the License.
  */
 
-const path = require('path');
-const Mocha = require('mocha');
-const { fixturesForCallback, registerWorkerFixture } = require('./fixtures');
-const { fixturesUI } = require('./fixturesUI');
+import path from 'path';
+import Mocha from 'mocha';
+import { fixturesForCallback, registerWorkerFixture } from './fixtures';
+import { Configuration, NoMocha, Test, Suite } from './test';
 
-class NullReporter {}
+export class TestCollector {
+  suite: Suite;
 
-class TestCollector {
-  constructor(files, matrix, options) {
+  private _matrix: { [key: string]: string; };
+  private _options: any;
+  private _grep: RegExp;
+  private _hasOnly: boolean;
+
+  constructor(files: string[], matrix: { [key: string] : string }, options) {
     this._matrix = matrix;
     for (const name of Object.keys(matrix))
       //@ts-ignore
       registerWorkerFixture(name, async ({}, test) => test());
     this._options = options;
-    this.suite = new Mocha.Suite('', new Mocha.Context(), true);
-    this._total = 0;
+    this.suite = new Suite('');
     if (options.grep) {
       const match = options.grep.match(/^\/(.*)\/(g|i|)$|.*/);
       this._grep = new RegExp(match[1] || match[0], match[2]);
@@ -46,28 +50,22 @@ class TestCollector {
   }
 
   _addFile(file) {
-    const mocha = new Mocha({
+    const noMocha = new NoMocha(file, {
       forbidOnly: this._options.forbidOnly,
-      reporter: NullReporter,
       timeout: this._options.timeout,
-      ui: fixturesUI.bind(null, {
-        testWrapper: (fn) => done => done(),
-        hookWrapper: (hook, fn) => {},
-        ignoreOnly: false,
-      }),
+      testWrapper: (test, fn) => () => {},
+      hookWrapper: (hook, fn) => () => {},
     });
-    mocha.addFile(file);
-    mocha.loadFiles();
 
     const workerGeneratorConfigurations = new Map();
 
     let ordinal = 0;
-    mocha.suite.eachTest(test => {
+    noMocha.suite.eachTest((test: Test) => {
       // All tests are identified with their ordinals.
-      test.__ordinal = ordinal++;
+      test._ordinal = ordinal++;
 
       // Get all the fixtures that the test needs.
-      const fixtures = fixturesForCallback(test.fn.__original);
+      const fixtures = fixturesForCallback(test.fn);
 
       // For generator fixtures, collect all variants of the fixture values
       // to build different workers for them.
@@ -104,15 +102,15 @@ class TestCollector {
     // Clone the suite as many times as there are worker hashes.
     // Only include the tests that requested these generations.
     for (const [hash, {configurationObject, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
-      const clone = this._cloneSuite(mocha.suite, configurationObject, configurationString, tests);
+      const clone = this._cloneSuite(noMocha.suite, configurationObject, configurationString, tests);
       this.suite.addSuite(clone);
       clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '');
     }
   }
 
-  _cloneSuite(suite, configurationObject, configurationString, tests) {
+  _cloneSuite(suite: Suite, configurationObject: Configuration, configurationString: string, tests: Set<Test>) {
     const copy = suite.clone();
-    copy.__only = suite.__only;
+    copy.only = suite.only;
     for (const child of suite.suites)
       copy.addSuite(this._cloneSuite(child, configurationObject, configurationString, tests));
     for (const test of suite.tests) {
@@ -121,18 +119,18 @@ class TestCollector {
       if (this._grep && !this._grep.test(test.fullTitle()))
         continue;
       const testCopy = test.clone();
-      testCopy.__only = test.__only;
-      testCopy.__ordinal = test.__ordinal;
-      testCopy.__configurationObject = configurationObject;
-      testCopy.__configurationString = configurationString;
+      testCopy.only = test.only;
+      testCopy._ordinal = test._ordinal;
+      testCopy._configurationObject = configurationObject;
+      testCopy._configurationString = configurationString;
       copy.addTest(testCopy);
     }
     return copy;
   }
 
   _filterOnly(suite) {
-    const onlySuites = suite.suites.filter(child => this._filterOnly(child) || child.__only);
-    const onlyTests = suite.tests.filter(test => test.__only);
+    const onlySuites = suite.suites.filter(child => this._filterOnly(child) || child.only);
+    const onlyTests = suite.tests.filter(test => test.only);
     if (onlySuites.length || onlyTests.length) {
       suite.suites = onlySuites;
       suite.tests = onlyTests;

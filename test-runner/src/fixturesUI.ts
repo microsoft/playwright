@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-const { Test, Suite } = require('mocha');
-const { installTransform } = require('./transform');
-const commonSuite = require('mocha/lib/interfaces/common');
+import Mocha from 'mocha';
+import { Test, Suite } from './test';
+import { installTransform } from './transform';
 
 Error.stackTraceLimit = 15;
 
-let revertBabelRequire;
+let revertBabelRequire: () => void;
 
 function specBuilder(modifiers, specCallback) {
   function builder(specs, last) {
@@ -52,67 +52,65 @@ function specBuilder(modifiers, specCallback) {
   return builder({}, null);
 }
 
-function fixturesUI(wrappers, suite) {
-  const suites = [suite];
+export function fixturesUI(options, mochaSuite: any) {
+  const suites = [mochaSuite.__nomocha as Suite];
 
-  suite.on(Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file, mocha) {
-    const common = commonSuite(suites, context, mocha);
-
+  mochaSuite.on(Mocha.Suite.constants.EVENT_FILE_PRE_REQUIRE, function(context, file) {
     const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
       const suite = suites[0];
-
-      if (suite.isPending())
-        fn = null;
-      const wrapper = fn ? wrappers.testWrapper(fn, title, file, specs.slow && specs.slow[0]) : undefined;
-      if (wrapper) {
-        wrapper.toString = () => fn.toString();
-        wrapper.__original = fn;
-      }
-      const test = new Test(title, wrapper);
+      const test = new Test(title, fn);
       test.file = file;
-      suite.addTest(test);
-      const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
+      test.slow = specs.slow && specs.slow[0];
+      test.timeout = options.timeout;
+
+      const only = specs.only && specs.only[0];
       if (only)
-        test.__only = true;
+        test.only = true;
       if (!only && specs.skip && specs.skip[0])
         test.pending = true;
       if (!only && specs.fail && specs.fail[0])
         test.pending = true;
+
+      test.pending = test.pending || suite.isPending();
+      if (test.pending)
+        fn = null;
+      const wrapper = fn ? options.testWrapper(test, fn) : undefined;
+      if (wrapper)
+        wrapper.toString = () => fn.toString();
+      test._materialize(wrapper);
+      suite.addTest(test);
       return test;
     });
 
     const describe = specBuilder(['skip', 'fail', 'only'], (specs, title, fn) => {
-      const suite = common.suite.create({
-        title: title,
-        file: file,
-        fn: fn
-      });
-      const only = wrappers.ignoreOnly ? false : specs.only && specs.only[0];
+      const child = new Suite(title, suites[0]);
+      suites[0].addSuite(child);
+      child.file = file;
+      const only = specs.only && specs.only[0];
       if (only)
-        suite.__only = true;
+        child.only = true;
       if (!only && specs.skip && specs.skip[0])
-        suite.pending = true;
+        child.pending = true;
       if (!only && specs.fail && specs.fail[0])
-        suite.pending = true;
-      return suite;
+        child.pending = true;
+      suites.unshift(child);
+      fn();
+      suites.shift();
     });
 
-    context.beforeEach = fn => wrappers.hookWrapper(common.beforeEach.bind(common), fn);
-    context.afterEach = fn => wrappers.hookWrapper(common.afterEach.bind(common), fn);
-    context.run = mocha.options.delay && common.runWithSuite(suite);
+    context.beforeEach = fn => options.hookWrapper(mochaSuite.beforeEach.bind(mochaSuite), fn);
+    context.afterEach = fn => options.hookWrapper(mochaSuite.afterEach.bind(mochaSuite), fn);
     context.describe = describe;
-    context.fdescribe = describe.only(true);
+    (context as any).fdescribe = describe.only(true);
     context.xdescribe = describe.skip(true);
     context.it = it;
-    context.fit = it.only(true);
+    (context as any).fit = it.only(true);
     context.xit = it.skip(true);
 
     revertBabelRequire = installTransform();
   });
 
-  suite.on(Suite.constants.EVENT_FILE_POST_REQUIRE, function(context, file, mocha) {
+  mochaSuite.on(Mocha.Suite.constants.EVENT_FILE_POST_REQUIRE, function(context, file, mocha) {
     revertBabelRequire();
   });
 };
-
-module.exports = { fixturesUI };

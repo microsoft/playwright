@@ -43,7 +43,7 @@ class DotReporter extends Base {
     });
 
     runner.on(constants.EVENT_TEST_FAIL, test => {
-      if (test.duration >= test.timeout())
+      if (test.duration >= test.timeout)
         process.stdout.write(colors.red('T'));
       else
         process.stdout.write(colors.red('F'));

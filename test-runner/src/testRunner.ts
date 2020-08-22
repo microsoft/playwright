@@ -15,11 +15,10 @@
  */
 
 import path from 'path';
-import Mocha from 'mocha';
 import { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } from './fixtures';
-import { fixturesUI } from './fixturesUI';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
+import { NoMocha, Runner, Test } from './test';
 
 export const fixturePool = new FixturePool();
 
@@ -30,10 +29,7 @@ export type TestRunnerEntry = {
   configurationObject: any;
 };
 
-class NullReporter {}
-
 export class TestRunner extends EventEmitter {
-  mocha: any;
   private _currentOrdinal = -1;
   private _failedWithError = false;
   private _file: any;
@@ -47,22 +43,13 @@ export class TestRunner extends EventEmitter {
   private _configurationObject: any;
   private _parsedGeneratorConfiguration: any = {};
   private _relativeTestFile: string;
-  private _runner: Mocha.Runner;
+  private _runner: Runner;
   private _outDir: string;
   private _timeout: number;
   private _testDir: string;
 
   constructor(entry: TestRunnerEntry, options, workerId) {
     super();
-    this.mocha = new Mocha({
-      reporter: NullReporter,
-      timeout: 0,
-      ui: fixturesUI.bind(null, {
-        testWrapper: (fn, title, file, isSlow) => this._testWrapper(fn, title, file, isSlow),
-        hookWrapper: (hook, fn) => this._hookWrapper(hook, fn),
-        ignoreOnly: true
-      }),
-    });
     this._file = entry.file;
     this._ordinals = new Set(entry.ordinals);
     this._remaining = new Set(entry.ordinals);
@@ -79,25 +66,27 @@ export class TestRunner extends EventEmitter {
     }
     this._parsedGeneratorConfiguration['parallelIndex'] = workerId;
     this._relativeTestFile = path.relative(options.testDir, this._file);
-    this.mocha.addFile(this._file);
   }
 
   async stop() {
     this._trialRun = true;
-    const constants = Mocha.Runner.constants;
-    return new Promise(f => this._runner.once(constants.EVENT_RUN_END, f));
+    return new Promise(f => this._runner.once('done', f));
   }
 
   async run() {
     let callback;
     const result = new Promise(f => callback = f);
     setParameters(this._parsedGeneratorConfiguration);
-    this.mocha.loadFiles();
-    rerunRegistrations(this._file, 'test');
-    this._runner = this.mocha.run(callback);
 
-    const constants = Mocha.Runner.constants;
-    this._runner.on(constants.EVENT_TEST_BEGIN, test => {
+    const noMocha = new NoMocha(this._file, {
+      timeout: 0,
+      testWrapper: (test, fn) => this._testWrapper(test, fn),
+      hookWrapper: (hook, fn) => this._hookWrapper(hook, fn),
+    });
+    rerunRegistrations(this._file, 'test');
+    this._runner = noMocha.run(callback);
+
+    this._runner.on('test', test => {
       setCurrentTestFile(this._relativeTestFile);
       if (this._failedWithError)
         return;
@@ -108,7 +97,7 @@ export class TestRunner extends EventEmitter {
       this.emit('test', { test: this._serializeTest(test, ordinal) });
     });
 
-    this._runner.on(constants.EVENT_TEST_PENDING, test => {
+    this._runner.on('pending', test => {
       if (this._failedWithError)
         return;
       const ordinal = ++this._currentOrdinal;
@@ -119,7 +108,7 @@ export class TestRunner extends EventEmitter {
       this.emit('pending', { test: this._serializeTest(test, ordinal) });
     });
 
-    this._runner.on(constants.EVENT_TEST_PASS, test => {
+    this._runner.on('pass', test => {
       if (this._failedWithError)
         return;
 
@@ -130,7 +119,7 @@ export class TestRunner extends EventEmitter {
       this.emit('pass', { test: this._serializeTest(test, ordinal) });
     });
 
-    this._runner.on(constants.EVENT_TEST_FAIL, (test, error) => {
+    this._runner.on('fail', (test, error) => {
       if (this._failedWithError)
         return;
       ++this._failures;
@@ -141,12 +130,12 @@ export class TestRunner extends EventEmitter {
       });
     });
 
-    this._runner.once(constants.EVENT_RUN_END, async () => {
+    this._runner.once('done', async () => {
       this.emit('done', {
-        stats: this._serializeStats(this._runner.stats),
+        stats: this._serializeStats(),
         error: this._failedWithError,
         remaining: [...this._remaining],
-        total: this._runner.stats.tests
+        total: this._passes + this._failures + this._pending
       });
     });
     await result;
@@ -166,14 +155,11 @@ export class TestRunner extends EventEmitter {
     return true;
   }
 
-  _testWrapper(fn, title, file, isSlow) {
-    const timeout = isSlow ? this._timeout * 3 : this._timeout;
-    const wrapped = fixturePool.wrapTestCallback(fn, timeout, {
+  _testWrapper(test: Test, fn: Function) {
+    const timeout = test.slow ? this._timeout * 3 : this._timeout;
+    const wrapped = fixturePool.wrapTestCallback(fn, timeout, test, {
       outputDir: this._outDir,
       testDir: this._testDir,
-      title,
-      file,
-      timeout
     });
     return wrapped ? (done, ...args) => {
       if (!this._shouldRunTest()) {
@@ -199,12 +185,12 @@ export class TestRunner extends EventEmitter {
     };
   }
   
-  _serializeStats(stats) {
+  _serializeStats() {
     return {
       passes: this._passes,
       failures: this._failures,
       pending: this._pending,
-      duration: stats.duration || 0,
+      duration: this._runner.duration(),
     }
   }  
 }

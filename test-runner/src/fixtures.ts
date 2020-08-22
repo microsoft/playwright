@@ -15,6 +15,7 @@
  */
 
 import debug from 'debug';
+import { Test } from './test';
 
 declare global {
   interface WorkerState {
@@ -38,17 +39,15 @@ export function setParameters(params: any) {
     registerWorkerFixture(name as keyof WorkerState, async ({}, test) => await test(parameters[name] as never));
 }
 
-type TestInfo = {
-  file: string;
-  title: string;
-  timeout: number;
+type TestConfig = {
   outputDir: string;
   testDir: string;
 };
 
 type TestResult = {
   success: boolean;
-  info: TestInfo;
+  test: Test;
+  config: TestConfig;
   error?: Error;
 };
 
@@ -168,10 +167,10 @@ export class FixturePool {
     ]);
   }
 
-  wrapTestCallback(callback: any, timeout: number, info: TestInfo) {
+  wrapTestCallback(callback: any, timeout: number, test: Test, config: TestConfig) {
     if (!callback)
       return callback;
-    const testResult: TestResult = { success: true, info };
+    const testResult: TestResult = { success: true, test, config };
     return async() => {
       try {
         await this.resolveParametersAndRun(callback, timeout);
