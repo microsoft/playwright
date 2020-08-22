@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { PageChannel, PageKeyboardTypeOptions, PageKeyboardPressOptions, PageMouseDownOptions, PageMouseUpOptions, PageMouseClickOptions } from '../channels';
+import { PageChannel, PageKeyboardTypeOptions, PageKeyboardPressOptions, PageMouseDownOptions, PageMouseUpOptions, PageMouseClickOptions } from '../../protocol/channels';
 
 export class Keyboard {
   private _channel: PageChannel;

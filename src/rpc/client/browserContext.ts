@@ -18,7 +18,7 @@
 import * as frames from './frame';
 import { Page, BindingCall } from './page';
 import * as network from './network';
-import { BrowserContextChannel, BrowserContextInitializer } from '../channels';
+import { BrowserContextChannel, BrowserContextInitializer } from '../../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { isUnderTest, deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';

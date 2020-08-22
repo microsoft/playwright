@@ -15,7 +15,7 @@
  */
 
 import { Dialog } from '../../dialog';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogInitializer> implements channels.DialogChannel {

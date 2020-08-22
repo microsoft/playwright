@@ -120,7 +120,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     await copyToPackage(path.join(ROOT_PATH, file), path.join(packagePath, file));
 
   await copyToPackage(path.join(ROOT_PATH, 'docs/api.md'), path.join(packagePath, 'api.md'));
-  await copyToPackage(path.join(ROOT_PATH, 'src/rpc/protocol.yml'), path.join(packagePath, 'protocol.yml'));
+  await copyToPackage(path.join(ROOT_PATH, 'src/protocol/protocol.yml'), path.join(packagePath, 'protocol.yml'));
 
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));

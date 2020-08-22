@@ -157,7 +157,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   };
 `];
 
-const yml = fs.readFileSync(path.join(__dirname, '..', 'src', 'rpc', 'protocol.yml'), 'utf-8');
+const yml = fs.readFileSync(path.join(__dirname, '..', 'src', 'protocol', 'protocol.yml'), 'utf-8');
 const protocol = yaml.parse(yml);
 
 function addScheme(name, s) {
@@ -243,6 +243,6 @@ function writeFile(filePath, content) {
   fs.writeFileSync(filePath, content, 'utf8');
 }
 
-writeFile(path.join(__dirname, '..', 'src', 'rpc', 'channels.ts'), channels_ts.join('\n'));
-writeFile(path.join(__dirname, '..', 'src', 'rpc', 'validator.ts'), validator_ts.join('\n'));
+writeFile(path.join(__dirname, '..', 'src', 'protocol', 'channels.ts'), channels_ts.join('\n'));
+writeFile(path.join(__dirname, '..', 'src', 'protocol', 'validator.ts'), validator_ts.join('\n'));
 process.exit(hasChanges ? 1 : 0);

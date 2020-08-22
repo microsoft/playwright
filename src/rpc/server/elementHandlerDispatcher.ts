@@ -16,7 +16,7 @@
 
 import { ElementHandle } from '../../dom';
 import * as js from '../../javascript';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';

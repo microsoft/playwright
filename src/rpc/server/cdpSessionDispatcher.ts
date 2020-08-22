@@ -15,7 +15,7 @@
  */
 
 import { CRSession, CRSessionEvents } from '../../chromium/crConnection';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionInitializer> implements channels.CDPSessionChannel {

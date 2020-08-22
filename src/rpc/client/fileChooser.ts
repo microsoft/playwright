@@ -17,7 +17,7 @@
 import { ElementHandle } from './elementHandle';
 import { Page } from './page';
 import { FilePayload } from './types';
-import { ElementHandleSetInputFilesOptions } from '../channels';
+import { ElementHandleSetInputFilesOptions } from '../../protocol/channels';
 
 export class FileChooser {
   private _page: Page;

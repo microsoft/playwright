@@ -15,7 +15,7 @@
  */
 
 import { URLSearchParams } from 'url';
-import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../channels';
+import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { headersArrayToObject, headersObjectToArray } from '../../converters';

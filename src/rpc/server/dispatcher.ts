@@ -16,9 +16,9 @@
 
 import { EventEmitter } from 'events';
 import { helper, debugAssert, assert } from '../../helper';
-import * as channels from '../channels';
-import { serializeError } from '../serializers';
-import { createScheme, Validator, ValidationError } from '../validator';
+import * as channels from '../../protocol/channels';
+import { serializeError } from '../../protocol/serializers';
+import { createScheme, Validator, ValidationError } from '../../protocol/validator';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 

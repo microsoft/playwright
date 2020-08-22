@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { SelectorsChannel, SelectorsInitializer } from '../channels';
+import { SelectorsChannel, SelectorsInitializer } from '../../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { evaluationScript } from './clientHelper';

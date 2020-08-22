@@ -15,7 +15,7 @@
  */
 
 import { ConsoleMessage } from '../../console';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { createHandle } from './elementHandlerDispatcher';
 

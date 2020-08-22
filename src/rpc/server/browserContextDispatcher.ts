@@ -17,7 +17,7 @@
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../../chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';

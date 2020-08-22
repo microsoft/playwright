@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../../helper';
-import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../channels';
+import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';

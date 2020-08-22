@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PageChannel, PageCrStartJSCoverageOptions, PageCrStopJSCoverageResult, PageCrStartCSSCoverageOptions, PageCrStopCSSCoverageResult } from '../channels';
+import { PageChannel, PageCrStartJSCoverageOptions, PageCrStopJSCoverageResult, PageCrStartCSSCoverageOptions, PageCrStopCSSCoverageResult } from '../../protocol/channels';
 
 let __dummyJSResult: PageCrStopJSCoverageResult;
 type PageCrStopJSCoverageResultEntries = typeof __dummyJSResult.entries;

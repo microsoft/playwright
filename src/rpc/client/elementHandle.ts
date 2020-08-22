@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions, ElementHandleWaitForSelectorOptions, ElementHandleWaitForElementStateOptions, ElementHandleSetInputFilesParams } from '../channels';
+import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions, ElementHandleWaitForSelectorOptions, ElementHandleWaitForElementStateOptions, ElementHandleSetInputFilesParams } from '../../protocol/channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';

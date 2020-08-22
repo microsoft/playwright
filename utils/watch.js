@@ -25,11 +25,11 @@ const spawns = [
 ];
 process.on('exit', () => spawns.forEach(s => s.kill()));
 
-runOnChanges(['src/rpc/protocol.yml'], 'utils/generate_channels.js');
+runOnChanges(['src/protocol/protocol.yml'], 'utils/generate_channels.js');
 runOnChanges(['docs/api.md', 'utils/generate_types/overrides.d.ts', 'utils/generate_types/exported.json'], 'utils/generate_types/index.js');
 
 /**
- * @param {string[][]} paths 
+ * @param {string[][]} paths
  * @param {string} nodeFile
  */
 function runOnChanges(paths, nodeFile) {
@@ -41,9 +41,9 @@ function runOnChanges(paths, nodeFile) {
     }
     fs.watchFile(filePath, callback);
   }
-  
+
   callback();
-  
+
   function callback() {
     child_process.spawnSync('node', [path.join(__dirname, '..', ...nodeFile.split('/'))]);
   }

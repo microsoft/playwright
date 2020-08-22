@@ -16,7 +16,7 @@
 
 import { Frame, NavigationEvent } from '../../frames';
 import * as types from '../../types';
-import * as channels from '../channels';
+import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';

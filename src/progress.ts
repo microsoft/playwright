@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TimeoutError } from './errors';
+import { TimeoutError } from './utils/errors';
 import { assert, debugLogger, LogName } from './helper';
 import { rewriteErrorMessage } from './utils/stackTrace';
 

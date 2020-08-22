@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Transport } from './transport';
+import { Transport } from '../protocol/transport';
 import { DispatcherConnection } from './server/dispatcher';
 import { Playwright } from '../server/playwright';
 import { PlaywrightDispatcher } from './server/playwrightDispatcher';
