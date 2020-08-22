@@ -18,7 +18,8 @@ import path from 'path';
 import { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } from './fixtures';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
-import { NoMocha, Runner, Test } from './test';
+import { Test, Suite } from './test';
+import { fixturesUI } from './fixturesUI';
 
 export const fixturePool = new FixturePool();
 
@@ -31,19 +32,15 @@ export type TestRunnerEntry = {
 
 export class TestRunner extends EventEmitter {
   private _currentOrdinal = -1;
-  private _failedWithError = false;
+  private _failedWithError: Error | undefined;
+  private _fatalError: Error | undefined;
   private _file: any;
   private _ordinals: Set<number>;
   private _remaining: Set<number>;
   private _trialRun: any;
-  private _passes = 0;
-  private _failures = 0;
-  private _pending = 0;
   private _configuredFile: any;
   private _configurationObject: any;
   private _parsedGeneratorConfiguration: any = {};
-  private _relativeTestFile: string;
-  private _runner: Runner;
   private _outDir: string;
   private _timeout: number;
   private _testDir: string;
@@ -65,134 +62,114 @@ export class TestRunner extends EventEmitter {
       registerWorkerFixture(name, async ({}, test) => await test(value));
     }
     this._parsedGeneratorConfiguration['parallelIndex'] = workerId;
-    this._relativeTestFile = path.relative(options.testDir, this._file);
+    setCurrentTestFile(path.relative(options.testDir, this._file));
   }
 
-  async stop() {
+  stop() {
     this._trialRun = true;
-    return new Promise(f => this._runner.once('done', f));
   }
 
   async run() {
-    let callback;
-    const result = new Promise(f => callback = f);
     setParameters(this._parsedGeneratorConfiguration);
 
-    const noMocha = new NoMocha(this._file, {
-      timeout: 0,
-      testWrapper: (test, fn) => this._testWrapper(test, fn),
-      hookWrapper: (hook, fn) => this._hookWrapper(hook, fn),
-    });
+    const suite = new Suite('');
+    const revertBabelRequire = fixturesUI(suite, this._file, this._timeout);
+    require(this._file);
+    revertBabelRequire();
+    suite._renumber();
+
     rerunRegistrations(this._file, 'test');
-    this._runner = noMocha.run(callback);
+    await this._runSuite(suite);
+    this._reportDone();
+  }
 
-    this._runner.on('test', test => {
-      setCurrentTestFile(this._relativeTestFile);
-      if (this._failedWithError)
-        return;
-      const ordinal = ++this._currentOrdinal;
-      if (this._ordinals.size && !this._ordinals.has(ordinal))
-        return;
-      this._remaining.delete(ordinal);
-      this.emit('test', { test: this._serializeTest(test, ordinal) });
-    });
+  private async _runSuite(suite: Suite) {
+    try {
+      await this._runHooks(suite, 'beforeAll', 'before');
+    } catch (e) {
+      this._fatalError = e;
+      this._reportDone();
+    }
+    for (const entry of suite._entries) {
+      if (entry instanceof Suite) {
+        await this._runSuite(entry);
+      } else {
+        await this._runTest(entry);
+      }
+    }
+    try {
+      await this._runHooks(suite, 'afterAll', 'after');
+    } catch (e) {
+      this._fatalError = e;
+      this._reportDone();
+    }
+  }
 
-    this._runner.on('pending', test => {
-      if (this._failedWithError)
-        return;
-      const ordinal = ++this._currentOrdinal;
-      if (this._ordinals.size && !this._ordinals.has(ordinal))
-        return;
-      this._remaining.delete(ordinal);
-      ++this._pending;
-      this.emit('pending', { test: this._serializeTest(test, ordinal) });
-    });
+  private async _runTest(test: Test) {
+    if (this._failedWithError)
+      return false;
+    const ordinal = ++this._currentOrdinal;
+    if (this._ordinals.size && !this._ordinals.has(ordinal))
+      return;
+    this._remaining.delete(ordinal);
+    if (test.pending) {
+      this.emit('pending', { test: this._serializeTest(test) });
+      return;
+    }
 
-    this._runner.on('pass', test => {
-      if (this._failedWithError)
-        return;
-
-      const ordinal = this._currentOrdinal;
-      if (this._ordinals.size && !this._ordinals.has(ordinal))
-        return;
-      ++this._passes;
-      this.emit('pass', { test: this._serializeTest(test, ordinal) });
-    });
-
-    this._runner.on('fail', (test, error) => {
-      if (this._failedWithError)
-        return;
-      ++this._failures;
+    this.emit('test', { test: this._serializeTest(test) });
+    try {
+      await this._runHooks(test.suite, 'beforeEach', 'before');
+      test._startTime = Date.now();
+      if (!this._trialRun)
+        await this._testWrapper(test)();
+      this.emit('pass', { test: this._serializeTest(test) });
+      await this._runHooks(test.suite, 'afterEach', 'after');
+    } catch (error) {
       this._failedWithError = error;
       this.emit('fail', {
-        test: this._serializeTest(test, this._currentOrdinal),
+        test: this._serializeTest(test),
         error: serializeError(error),
       });
-    });
-
-    this._runner.once('done', async () => {
-      this.emit('done', {
-        stats: this._serializeStats(),
-        error: this._failedWithError,
-        remaining: [...this._remaining],
-        total: this._passes + this._failures + this._pending
-      });
-    });
-    await result;
-  }
-
-  _shouldRunTest(hook = false) {
-    if (this._trialRun || this._failedWithError)
-      return false;
-    if (hook) {
-      // Hook starts before we bump the test ordinal.
-      if (!this._ordinals.has(this._currentOrdinal + 1))
-        return false;
-    } else {
-      if (!this._ordinals.has(this._currentOrdinal))
-        return false;
     }
-    return true;
   }
 
-  _testWrapper(test: Test, fn: Function) {
+  private async _runHooks(suite: Suite, type: string, dir: 'before' | 'after') {
+    if (!suite._hasTestsToRun())
+      return;
+    const all = [];
+    for (let s = suite; s; s = s.parent) {
+      const funcs = s._hooks.filter(e => e.type === type).map(e => e.fn);
+      all.push(...funcs.reverse());
+    }
+    if (dir === 'before')
+      all.reverse();
+    for (const hook of all)
+      await fixturePool.resolveParametersAndRun(hook, 0);
+  }
+
+  private _reportDone() {
+    this.emit('done', {
+      error: this._failedWithError,
+      fatalError: this._fatalError,
+      remaining: [...this._remaining],
+    });
+  }
+
+  private _testWrapper(test: Test) {
     const timeout = test.slow ? this._timeout * 3 : this._timeout;
-    const wrapped = fixturePool.wrapTestCallback(fn, timeout, test, {
+    return fixturePool.wrapTestCallback(test.fn, timeout, test, {
       outputDir: this._outDir,
       testDir: this._testDir,
     });
-    return wrapped ? (done, ...args) => {
-      if (!this._shouldRunTest()) {
-        done();
-        return;
-      }
-      wrapped(...args).then(done).catch(done);
-    } : undefined;
   }
 
-  _hookWrapper(hook, fn) {
-    if (!this._shouldRunTest(true))
-      return;
-    return hook(async () => {
-      return await fixturePool.resolveParametersAndRun(fn, 0);
-    });
-  }
-
-  _serializeTest(test, ordinal) {
+  private _serializeTest(test) {
     return {
-      id: `${ordinal}@${this._configuredFile}`,
-      duration: test.duration,
+      id: `${test._ordinal}@${this._configuredFile}`,
+      duration: Date.now() - test._startTime,
     };
   }
-  
-  _serializeStats() {
-    return {
-      passes: this._passes,
-      failures: this._failures,
-      pending: this._pending,
-      duration: this._runner.duration(),
-    }
-  }  
 }
 
 function trimCycles(obj) {

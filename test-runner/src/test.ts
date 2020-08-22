@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-import Mocha from 'mocha';
-import { fixturesUI } from './fixturesUI';
-import { EventEmitter } from 'events';
-
 export type Configuration = { name: string, value: string }[];
 
 export class Test {
@@ -34,16 +30,11 @@ export class Test {
   _configurationObject: Configuration;
   _configurationString: string;
   _overriddenFn: Function;
-  _impl: any;
+  _startTime: number;
 
   constructor(title: string, fn: Function) {
     this.title = title;
     this.fn = fn;
-  }
-
-  _materialize(overriddenFn: Function) {
-    this._impl = new Mocha.Test(this.title, overriddenFn);
-    this._impl.pending = this.pending;
   }
 
   clone(): Test {
@@ -54,7 +45,6 @@ export class Test {
     test.pending = this.pending;
     test.timeout = this.timeout;
     test._overriddenFn = this._overriddenFn;
-    test._materialize(this._overriddenFn);
     return test;
   }
 
@@ -80,13 +70,12 @@ export class Suite {
   pending = false;
   file: string;
 
-  _impl: any;
+  _hooks: { type: string, fn: Function } [] = [];
+  _entries: (Suite | Test)[] = [];
 
   constructor(title: string, parent?: Suite) {
     this.title = title;
     this.parent = parent;
-    this._impl = new Mocha.Suite(title, new Mocha.Context());
-    this._impl.__nomocha = this;
   }
 
   titlePath(): string[] {
@@ -97,7 +86,9 @@ export class Suite {
 
   total(): number {
     let count = 0;
-    this.eachTest(fn => ++count);
+    this.eachTest(fn => {
+      ++count;
+    });
     return count;
   }
 
@@ -108,20 +99,25 @@ export class Suite {
   addTest(test: Test) {
     test.suite = this;
     this.tests.push(test);
-    this._impl.addTest(test._impl);
+    this._entries.push(test);
   }
 
   addSuite(suite: Suite) {
     suite.parent = this;
     this.suites.push(suite);
-    this._impl.addSuite(suite._impl);
+    this._entries.push(suite);
   }
 
-  eachTest(fn: (test: Test) => void) {
-    for (const suite of this.suites)
-      suite.eachTest(fn);
-    for (const test of this.tests)
-      fn(test);
+  eachTest(fn: (test: Test) => boolean | void): boolean {
+    for (const suite of this.suites) {
+      if (suite.eachTest(fn))
+        return true;
+    }
+    for (const test of this.tests) {
+      if (fn(test))
+        return true;
+    }
+    return false;
   }
 
   clone(): Suite {
@@ -129,84 +125,29 @@ export class Suite {
     suite.only = this.only;
     suite.file = this.file;
     suite.pending = this.pending;
-    suite._impl = this._impl.clone();
     return suite;
   }
-}
 
-class NullReporter {
-  stats = {
-    suites: 0,
-    tests: 0,
-    passes: 0,
-    pending: 0,
-    failures: 0
-  };
-  runner = null;
-  failures = [];
-  epilogue: () => {};
-}
-
-type NoMockaOptions = {
-  forbidOnly?: boolean;
-  timeout: number;
-  testWrapper: (test: Test, fn: Function) => Function;
-  hookWrapper: (hook: any, fn: Function) => Function;
-};
-
-class PatchedMocha extends Mocha {
-  suite: any;
-  static pendingSuite: Suite;
-
-  constructor(suite, options) {
-    PatchedMocha.pendingSuite = suite;
-    super(options);
-  }
-
-  grep(...args) {
-    this.suite = new Mocha.Suite('', new Mocha.Context());
-    this.suite.__nomocha = PatchedMocha.pendingSuite;
-    PatchedMocha.pendingSuite._impl = this.suite;
-    return super.grep(...args);
-  }
-}
-
-export class Runner extends EventEmitter {
-  private _mochaRunner: any;
-
-  constructor(mochaRunner: any) {
-    super();
-    const constants = Mocha.Runner.constants;
-    this._mochaRunner = mochaRunner;
-    this._mochaRunner.on(constants.EVENT_TEST_BEGIN, test => this.emit('test', test));
-    this._mochaRunner.on(constants.EVENT_TEST_PENDING, test => this.emit('pending', test));
-    this._mochaRunner.on(constants.EVENT_TEST_PASS, test => this.emit('pass', test));
-    this._mochaRunner.on(constants.EVENT_TEST_FAIL, (test, err) => this.emit('fail', test, err));
-    this._mochaRunner.on(constants.EVENT_RUN_END, () => this.emit('done'));
-  }
-
-  duration(): number {
-    return this._mochaRunner.stats.duration || 0;
-  }
-}
-
-export class NoMocha {
-  suite: Suite;
-  private _mocha: Mocha;
-
-  constructor(file: string, options: NoMockaOptions) {
-    this.suite = new Suite('');
-    this._mocha = new PatchedMocha(this.suite, {
-      forbidOnly: options.forbidOnly,
-      reporter: NullReporter,
-      timeout: options.timeout,
-      ui: fixturesUI.bind(null, options)
+  _renumber() {
+    let ordinal = 0;
+    this.eachTest((test: Test) => {
+      // All tests are identified with their ordinals.
+      test._ordinal = ordinal++;
     });
-    this._mocha.addFile(file);
-    (this._mocha as any).loadFiles();
   }
 
-  run(cb: () => void): Runner {
-    return new Runner(this._mocha.run(cb));
+  _addHook(type: string, fn: any) {
+    this._hooks.push({ type, fn });
+  }
+
+  _hasTestsToRun(): boolean {
+    let found = false;
+    this.eachTest(test => {
+      if (!test.pending) {
+        found = true;
+        return true;
+      }
+    });
+    return found;
   }
 }
