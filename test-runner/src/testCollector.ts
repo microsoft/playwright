@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { fixturesForCallback, registerWorkerFixture } from './fixtures';
+import { fixturesForCallback } from './fixtures';
 import { Configuration, Test, Suite } from './test';
 import { fixturesUI } from './fixturesUI';
 
@@ -29,9 +29,6 @@ export class TestCollector {
 
   constructor(files: string[], matrix: { [key: string] : string }, options) {
     this._matrix = matrix;
-    for (const name of Object.keys(matrix))
-      //@ts-ignore
-      registerWorkerFixture(name, async ({}, test) => test());
     this._options = options;
     this.suite = new Suite('');
     if (options.grep) {
@@ -106,6 +103,7 @@ export class TestCollector {
   _cloneSuite(suite: Suite, configurationObject: Configuration, configurationString: string, tests: Set<Test>) {
     const copy = suite.clone();
     copy.only = suite.only;
+    copy.configuration = configurationObject;
     for (const entry of suite._entries) {
       if (entry instanceof Suite) {
         copy.addSuite(this._cloneSuite(entry, configurationObject, configurationString, tests));

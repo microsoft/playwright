@@ -22,8 +22,9 @@ import fs from 'fs';
 import os from 'os';
 import terminalLink from 'terminal-link';
 import StackUtils from 'stack-utils';
-import { Test } from './test';
+import { Test, Suite } from './test';
 import { EventEmitter } from 'ws';
+import { RunnerConfig } from './runnerConfig';
 
 const stackUtils = new StackUtils();
 
@@ -33,6 +34,8 @@ class BaseReporter {
   failures: Test[] = [];
   duration = 0;
   startTime: number;
+  config: RunnerConfig;
+  suite: Suite;
 
   constructor(runner: EventEmitter) {
     process.on('SIGINT', async () => {
@@ -52,8 +55,10 @@ class BaseReporter {
       this.failures.push(test);
     });
 
-    runner.once('begin', () => {
+    runner.once('begin', (options: { config: RunnerConfig, suite: Suite }) => {
       this.startTime = Date.now();
+      this.config = options.config;
+      this.suite = options.suite;
     });
 
     runner.once('end', () => {
@@ -167,6 +172,44 @@ export class ListReporter extends BaseReporter {
   }
 }
 
+export class JSONReporter extends BaseReporter {
+  constructor(runner: EventEmitter) {
+    super(runner);
+
+    runner.once('end', () => {
+      const result = {
+        config: this.config,
+        tests: this.suite.tests.map(test => this._serializeTest(test)),
+        suites: this.suite.suites.map(suite => this._serializeSuite(suite))
+      };
+      console.log(JSON.stringify(result, undefined, 2));
+    });
+  }
+
+  private _serializeSuite(suite: Suite): any {
+    return {
+      title: suite.title,
+      file: suite.file,
+      configuration: suite.configuration,
+      tests: suite.tests.map(test => this._serializeTest(test)),
+      suites: suite.suites.map(suite => this._serializeSuite(suite))
+    };
+  }
+
+  private _serializeTest(test: Test): any {
+    return {
+      title: test.title,
+      file: test.file,
+      only: test.only,
+      pending: test.pending,
+      slow: test.slow,
+      duration: test.duration,
+      timeout: test.timeout,
+      error: test.error
+    };
+  }
+}
+
 function indent(lines: string, tab: string) {
   return lines.replace(/^/gm, tab);
 }
@@ -181,3 +224,9 @@ function positionInFile(stack: string, file: string): { column: number; line: nu
   }
   return null;
 }
+
+export const reporters = {
+  'dot': DotReporter,
+  'list': ListReporter,
+  'json': JSONReporter
+};

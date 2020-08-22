@@ -25,12 +25,16 @@ import { Transport } from '../lib/protocol/transport';
 import { setUnderTest } from '../lib/utils/utils';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';
-
 import {mkdtempAsync, removeFolderAsync} from './utils';
 
-setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
-
-const platform = os.platform();
+export const options = {
+  CHROMIUM: parameters.browserName === 'chromium',
+  FIREFOX: parameters.browserName === 'firefox',
+  WEBKIT: parameters.browserName === 'webkit',
+  HEADLESS : !!valueFromEnv('HEADLESS', true),
+  WIRE: !!process.env.PWWIRE,
+  SLOW_MO: valueFromEnv('SLOW_MO', 0),
+}
 
 declare global {
   interface WorkerState {
@@ -52,9 +56,6 @@ declare global {
   }
   interface FixtureParameters {
     browserName: string;
-    headless: boolean;
-    wire: boolean;
-    slowMo: number;
   }
 }
 
@@ -63,6 +64,7 @@ declare global {
   const LINUX: boolean;
   const WIN: boolean;
 }
+const platform = os.platform();
 global['MAC'] = platform === 'darwin';
 global['LINUX'] = platform === 'linux';
 global['WIN'] = platform === 'win32';
@@ -96,22 +98,24 @@ const getExecutablePath = (browserName) => {
     return process.env.WKPATH;
 }
 
-registerWorkerFixture('defaultBrowserOptions', async({browserName, headless, slowMo}, test) => {
+registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
   let executablePath = getExecutablePath(browserName);
 
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await test({
     handleSIGINT: false,
-    slowMo,
-    headless,
+    slowMo: options.SLOW_MO,
+    headless: options.HEADLESS,
     executablePath
   });
 });
 
-registerWorkerFixture('playwright', async({browserName, wire}, test) => {
+registerWorkerFixture('playwright', async({browserName}, test) => {
+  setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
+
   const {coverage, uninstall} = installCoverageHooks(browserName);
-  if (wire) {
+  if (options.WIRE) {
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
       stdio: 'pipe',
@@ -184,10 +188,10 @@ registerFixture('context', async ({browser}, test) => {
   await context.close();
 });
 
-registerFixture('page', async ({context}, runTest) => {
+registerFixture('page', async ({context}, runTest, config, test) => {
   const page = await context.newPage();
-  const { success, test, config } = await runTest(page);
-  if (!success) {
+  await runTest(page);
+  if (test.error) {
     const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
@@ -211,10 +215,8 @@ registerFixture('tmpDir', async ({}, test) => {
   await removeFolderAsync(tmpDir).catch(e => {});
 });
 
-export const options = {
-  CHROMIUM: parameters.browserName === 'chromium',
-  FIREFOX: parameters.browserName === 'firefox',
-  WEBKIT: parameters.browserName === 'webkit',
-  HEADLESS : parameters.headless,
-  WIRE: parameters.wire,
+function valueFromEnv(name, defaultValue) {
+  if (!(name in process.env))
+    return defaultValue;
+  return JSON.parse(process.env[name]);
 }

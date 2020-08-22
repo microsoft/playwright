@@ -18,28 +18,13 @@ import child_process from 'child_process';
 import crypto from 'crypto';
 import path from 'path';
 import { EventEmitter } from 'events';
-import { DotReporter, ListReporter} from './reporters';
 import { lookupRegistrations, FixturePool } from './fixtures';
 import { Suite } from './test';
 import { TestRunnerEntry } from './testRunner';
-
-type RunnerOptions = {
-  jobs: number;
-  reporter: any;
-  outputDir: string;
-  snapshotDir: string;
-  testDir: string;
-  timeout: number;
-  debug?: boolean;
-  quiet?: boolean;
-  grep?: string;
-  trialRun?: boolean;
-  updateSnapshots?: boolean;
-};
+import { RunnerConfig } from './runnerConfig';
 
 export class Runner extends EventEmitter {
-  readonly _options: RunnerOptions;
-  private _workers =new Set<Worker>();
+  private _workers = new Set<Worker>();
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
   stats: { duration: number; failures: number; passes: number; pending: number; tests: number; };
@@ -48,10 +33,13 @@ export class Runner extends EventEmitter {
   private _testsByConfiguredFile = new Map<any, any>();
   private _queue: TestRunnerEntry[] = [];
   private _stopCallback: () => void;
+  readonly _config: RunnerConfig;
+  private _suite: Suite;
 
-  constructor(suite: Suite, total: number, options: RunnerOptions) {
+  constructor(suite: Suite, total: number, config: RunnerConfig) {
     super();
-    this._options = options;
+
+    this._config = config;
     this.stats = {
       duration: 0,
       failures: 0,
@@ -59,13 +47,11 @@ export class Runner extends EventEmitter {
       pending: 0,
       tests: 0,
     };
-    const reporterFactory = options.reporter === 'list' ? ListReporter : DotReporter;
-    new reporterFactory(this);
 
     this._testById = new Map();
     this._testsByConfiguredFile = new Map();
-
-    suite.eachTest(test => {
+    this._suite = suite;
+    this._suite.eachTest(test => {
       const configuredFile = `${test.file}::[${test._configurationString}]`;
       if (!this._testsByConfiguredFile.has(configuredFile)) {
         this._testsByConfiguredFile.set(configuredFile, {
@@ -83,7 +69,7 @@ export class Runner extends EventEmitter {
 
     if (process.stdout.isTTY) {
       console.log();
-      const jobs = Math.min(options.jobs, this._testsByConfiguredFile.size);
+      const jobs = Math.min(config.jobs, this._testsByConfiguredFile.size);
       console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${jobs} worker${ jobs > 1 ? 's' : ''}`);
     }
   }
@@ -97,7 +83,7 @@ export class Runner extends EventEmitter {
   }
 
   async run() {
-    this.emit('begin', {});
+    this.emit('begin', { config: this._config, suite: this._suite });
     this._queue = this._filesSortedByWorkerHash();
     // Loop in case job schedules more jobs
     while (this._queue.length)
@@ -144,7 +130,7 @@ export class Runner extends EventEmitter {
     if (this._freeWorkers.length)
       return this._freeWorkers.pop();
     // If we can create worker, create it.
-    if (this._workers.size < this._options.jobs)
+    if (this._workers.size < this._config.jobs)
       this._createWorker();
     // Wait for the next available worker.
     await new Promise(f => this._workerClaimers.push(f));
@@ -160,7 +146,7 @@ export class Runner extends EventEmitter {
   }
 
   _createWorker() {
-    const worker = this._options.debug ? new InProcessWorker(this) : new OopWorker(this);
+    const worker = this._config.debug ? new InProcessWorker(this) : new OopWorker(this);
     worker.on('test', params => {
       ++this.stats.tests;
       this.emit('test', this._updateTest(params.test));
@@ -216,7 +202,7 @@ export class Runner extends EventEmitter {
 let lastWorkerId = 0;
 
 class Worker extends EventEmitter {
-  runner: any;
+  runner: Runner;
   hash: string;
 
   constructor(runner) {
@@ -254,26 +240,26 @@ class OopWorker extends Worker {
     this.stderr = [];
     this.on('stdout', params => {
       const chunk = chunkFromParams(params);
-      if (!runner._options.quiet)
+      if (!runner._config.quiet)
         process.stdout.write(chunk);
       this.stdout.push(chunk);
     });
     this.on('stderr', params => {
       const chunk = chunkFromParams(params);
-      if (!runner._options.quiet)
+      if (!runner._config.quiet)
         process.stderr.write(chunk);
       this.stderr.push(chunk);
     });
   }
 
   async init() {
-    this.process.send({ method: 'init', params: { workerId: lastWorkerId++, ...this.runner._options } });
+    this.process.send({ method: 'init', params: { workerId: lastWorkerId++, ...this.runner._config } });
     await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
   run(entry) {
     this.hash = entry.hash;
-    this.process.send({ method: 'run', params: { entry, options: this.runner._options } });
+    this.process.send({ method: 'run', params: { entry, config: this.runner._config } });
   }
 
   stop() {
@@ -294,22 +280,22 @@ class OopWorker extends Worker {
 }
 
 class InProcessWorker extends Worker {
-  fixturePool: FixturePool;
+  fixturePool: FixturePool<RunnerConfig>;
 
   constructor(runner: Runner) {
     super(runner);
-    this.fixturePool = require('./testRunner').fixturePool;
+    this.fixturePool = require('./testRunner').fixturePool as FixturePool<RunnerConfig>;
   }
 
   async init() {
     const { initializeImageMatcher } = require('./expect');
-    initializeImageMatcher(this.runner._options);
+    initializeImageMatcher(this.runner._config);
   }
 
   async run(entry) {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
-    const testRunner = new TestRunner(entry, this.runner._options, 0);
+    const testRunner = new TestRunner(entry, this.runner._config, 0);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();

@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-const { initializeImageMatcher } = require('./expect');
-const { TestRunner, fixturePool } = require('./testRunner');
-
-const util = require('util');
+import { initializeImageMatcher } from './expect';
+import { TestRunner, fixturePool } from './testRunner';
+import * as util from 'util';
 
 let closed = false;
 
@@ -45,8 +44,8 @@ process.on('disconnect', gracefullyCloseAndExit);
 process.on('SIGINT',() => {});
 process.on('SIGTERM',() => {});
 
-let workerId;
-let testRunner;
+let workerId: number;
+let testRunner: TestRunner;
 
 process.on('message', async message => {
   if (message.method === 'init') {
@@ -59,7 +58,7 @@ process.on('message', async message => {
     return;
   }
   if (message.method === 'run') {
-    testRunner = new TestRunner(message.params.entry, message.params.options, workerId);
+    testRunner = new TestRunner(message.params.entry, message.params.config, workerId);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();

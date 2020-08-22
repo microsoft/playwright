@@ -15,13 +15,14 @@
  */
 
 import path from 'path';
-import { FixturePool, registerWorkerFixture, rerunRegistrations, setParameters } from './fixtures';
+import { FixturePool, rerunRegistrations, setParameters } from './fixtures';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
 import { Test, Suite } from './test';
 import { fixturesUI } from './fixturesUI';
+import { RunnerConfig } from './runnerConfig';
 
-export const fixturePool = new FixturePool();
+export const fixturePool = new FixturePool<RunnerConfig>();
 
 export type TestRunnerEntry = {
   file: string;
@@ -40,30 +41,23 @@ export class TestRunner extends EventEmitter {
   private _remaining: Set<number>;
   private _trialRun: any;
   private _configuredFile: any;
-  private _configurationObject: any;
   private _parsedGeneratorConfiguration: any = {};
-  private _outDir: string;
+  private _config: RunnerConfig;
   private _timeout: number;
-  private _testDir: string;
 
-  constructor(entry: TestRunnerEntry, options, workerId) {
+  constructor(entry: TestRunnerEntry, config: RunnerConfig, workerId: number) {
     super();
     this._file = entry.file;
     this._ordinals = new Set(entry.ordinals);
     this._remaining = new Set(entry.ordinals);
-    this._trialRun = options.trialRun;
-    this._timeout = options.timeout;
-    this._testDir = options.testDir;
-    this._outDir = options.outputDir;
+    this._trialRun = config.trialRun;
+    this._timeout = config.timeout;
+    this._config = config;
     this._configuredFile = entry.configuredFile;
-    this._configurationObject = entry.configurationObject;
-    for (const {name, value} of this._configurationObject) {
+    for (const {name, value} of entry.configurationObject)
       this._parsedGeneratorConfiguration[name] = value;
-      // @ts-ignore
-      registerWorkerFixture(name, async ({}, test) => await test(value));
-    }
     this._parsedGeneratorConfiguration['parallelIndex'] = workerId;
-    setCurrentTestFile(path.relative(options.testDir, this._file));
+    setCurrentTestFile(path.relative(config.testDir, this._file));
   }
 
   stop() {
@@ -146,7 +140,7 @@ export class TestRunner extends EventEmitter {
     if (dir === 'before')
       all.reverse();
     for (const hook of all)
-      await fixturePool.resolveParametersAndRun(hook, 0);
+      await fixturePool.resolveParametersAndRun(hook, 0, this._config);
   }
 
   private _reportDone() {
@@ -159,10 +153,7 @@ export class TestRunner extends EventEmitter {
 
   private _testWrapper(test: Test) {
     const timeout = test.slow ? this._timeout * 3 : this._timeout;
-    return fixturePool.wrapTestCallback(test.fn, timeout, test, {
-      outputDir: this._outDir,
-      testDir: this._testDir,
-    });
+    return fixturePool.wrapTestCallback(test.fn, timeout, { ...this._config }, test);
   }
 
   private _serializeTest(test) {
