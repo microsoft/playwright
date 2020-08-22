@@ -39,32 +39,21 @@ export function setParameters(params: any) {
     registerWorkerFixture(name as keyof WorkerState, async ({}, test) => await test(parameters[name] as never));
 }
 
-type TestConfig = {
-  outputDir: string;
-  testDir: string;
-};
-
-type TestResult = {
-  success: boolean;
-  test: Test;
-  config: TestConfig;
-  error?: Error;
-};
-
-class Fixture {
-  pool: FixturePool;
+class Fixture<Config> {
+  pool: FixturePool<Config>;
   name: string;
-  scope: any;
-  fn: any;
-  deps: any;
-  usages: Set<unknown>;
+  scope: string;
+  fn: Function;
+  deps: string[];
+  usages: Set<string>;
   hasGeneratorValue: boolean;
   value: any;
   _teardownFenceCallback: (value?: unknown) => void;
-  _tearDownComplete: any;
-  _setup: boolean;
-  _teardown: any;
-  constructor(pool: FixturePool, name: string, scope: any, fn: any) {
+  _tearDownComplete: Promise<void>;
+  _setup = false;
+  _teardown = false;
+
+  constructor(pool: FixturePool<Config>, name: string, scope: string, fn: any) {
     this.pool = pool;
     this.name = name;
     this.scope = scope;
@@ -75,11 +64,11 @@ class Fixture {
     this.value = this.hasGeneratorValue ? parameters[name] : null;
   }
 
-  async setup() {
+  async setup(config: Config, test?: Test) {
     if (this.hasGeneratorValue)
       return;
     for (const name of this.deps) {
-      await this.pool.setupFixture(name);
+      await this.pool.setupFixture(name, config, test);
       this.pool.instances.get(name).usages.add(this.name);
     }
 
@@ -95,12 +84,12 @@ class Fixture {
       this.value = value;
       setupFenceFulfill();
       return await teardownFence;
-    }).catch((e: any) => setupFenceReject(e));
+    }, config, test).catch((e: any) => setupFenceReject(e));
     await setupFence;
     this._setup = true;
   }
 
-  async teardown(testResult: TestResult) {
+  async teardown() {
     if (this.hasGeneratorValue)
       return;
     if (this._teardown)
@@ -110,24 +99,24 @@ class Fixture {
       const fixture = this.pool.instances.get(name);
       if (!fixture)
         continue;
-      await fixture.teardown(testResult);
+      await fixture.teardown();
     }
     if (this._setup) {
       debug('pw:test:hook')(`teardown "${this.name}"`);
-      this._teardownFenceCallback(testResult);
+      this._teardownFenceCallback();
     }
     await this._tearDownComplete;
     this.pool.instances.delete(this.name);
   }
 }
 
-export class FixturePool {
-  instances: Map<any, any>;
+export class FixturePool<Config> {
+  instances: Map<string, Fixture<Config>>;
   constructor() {
     this.instances = new Map();
   }
 
-  async setupFixture(name: string) {
+  async setupFixture(name: string, config: Config, test?: Test) {
     let fixture = this.instances.get(name);
     if (fixture)
       return fixture;
@@ -137,21 +126,21 @@ export class FixturePool {
     const { scope, fn } = registrations.get(name);
     fixture = new Fixture(this, name, scope, fn);
     this.instances.set(name, fixture);
-    await fixture.setup();
+    await fixture.setup(config, test);
     return fixture;
   }
 
-  async teardownScope(scope: string, testResult?: TestResult) {
+  async teardownScope(scope: string) {
     for (const [name, fixture] of this.instances) {
       if (fixture.scope === scope)
-        await fixture.teardown(testResult);
+        await fixture.teardown();
     }
   }
 
-  async resolveParametersAndRun(fn: (arg0: {}) => any, timeout: number) {
+  async resolveParametersAndRun(fn: (arg0: {}) => any, timeout: number, config: Config, test?: Test) {
     const names = fixtureParameterNames(fn);
     for (const name of names)
-      await this.setupFixture(name);
+      await this.setupFixture(name, config, test);
     const params = {};
     for (const n of names)
       params[n] = this.instances.get(n).value;
@@ -167,19 +156,14 @@ export class FixturePool {
     ]);
   }
 
-  wrapTestCallback(callback: any, timeout: number, test: Test, config: TestConfig) {
+  wrapTestCallback(callback: any, timeout: number, config: Config, test: Test) {
     if (!callback)
       return callback;
-    const testResult: TestResult = { success: true, test, config };
     return async() => {
       try {
-        await this.resolveParametersAndRun(callback, timeout);
-      } catch (e) {
-        testResult.success = false;
-        testResult.error = e;
-        throw e;
+        await this.resolveParametersAndRun(callback, timeout, config, test);
       } finally {
-        await this.teardownScope('test', testResult);
+        await this.teardownScope('test');
       }
     };
   }
@@ -205,7 +189,7 @@ export function fixturesForCallback(callback: any): string[] {
   return result;
 }
 
-function fixtureParameterNames(fn: { toString: () => any; }) {
+function fixtureParameterNames(fn: { toString: () => any; }): string[] {
   const text = fn.toString();
   const match = text.match(/async(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
   if (!match || !match[1].trim())
@@ -214,10 +198,10 @@ function fixtureParameterNames(fn: { toString: () => any; }) {
   return signature.split(',').map((t: string) => t.trim());
 }
 
-function innerRegisterFixture(name: any, scope: string, fn: any, caller: Function) {
+function innerRegisterFixture(name: string, scope: string, fn: Function, caller: Function) {
   const obj = {stack: ''};
   Error.captureStackTrace(obj, caller);
-  const stackFrame = obj.stack.split('\n')[1];
+  const stackFrame = obj.stack.split('\n')[2];
   const location = stackFrame.replace(/.*at Object.<anonymous> \((.*)\)/, '$1');
   const file = location.replace(/^(.+):\d+:\d+$/, '$1');
   const registration = { name, scope, fn, file, location };
@@ -227,11 +211,11 @@ function innerRegisterFixture(name: any, scope: string, fn: any, caller: Functio
   registrationsByFile.get(file).push(registration);
 };
 
-export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, test: (arg: TestState[T]) => Promise<TestResult>) => Promise<void>) {
+export function registerFixture<Config, T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, config: Config, test: Test) => Promise<void>) {
   innerRegisterFixture(name, 'test', fn, registerFixture);
 };
 
-export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, test: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>) => Promise<void>) {
+export function registerWorkerFixture<Config, T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: Config) => Promise<void>) {
   innerRegisterFixture(name, 'worker', fn, registerWorkerFixture);
 };
 

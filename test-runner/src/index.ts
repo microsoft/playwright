@@ -17,4 +17,15 @@
 
 import './builtin.fixtures';
 import './expect';
-export {registerFixture, registerWorkerFixture, registerParameter, parameters} from './fixtures';
+import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT } from './fixtures';
+import { RunnerConfig } from './runnerConfig';
+import { Test } from './test';
+export { parameters, registerParameter } from './fixtures';
+
+export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, config: RunnerConfig, test: Test) => Promise<void>) {
+  registerFixtureT<RunnerConfig, T>(name, fn);
+};
+
+export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: RunnerConfig) => Promise<void>) {
+  registerWorkerFixtureT<RunnerConfig, T>(name, fn);
+};

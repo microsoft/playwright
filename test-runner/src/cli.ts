@@ -17,6 +17,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import program from 'commander';
+import { reporters } from './reporters';
 import { installTransform } from './transform';
 import { Runner } from './runner';
 import { TestCollector } from './testCollector';
@@ -90,13 +91,15 @@ program
       grep: command.grep,
       jobs,
       outputDir: command.output,
-      reporter: command.reporter,
       snapshotDir: path.join(testDir, '__snapshots__'),
       testDir,
       timeout: command.timeout,
       trialRun: command.trialRun,
       updateSnapshots: command.updateSnapshots
     });
+    const reporterFactory = reporters[command.reporter || 'dot'];
+    new reporterFactory(runner);
+
     try {
       if (beforeFunction)
         await beforeFunction();

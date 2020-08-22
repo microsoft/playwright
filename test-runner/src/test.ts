@@ -22,6 +22,7 @@ export class Test {
   file: string;
   only = false;
   pending = false;
+  slow = false;
   duration = 0;
   timeout = 0;
   fn: Function;
@@ -56,10 +57,6 @@ export class Test {
   fullTitle(): string {
     return this.titlePath().join(' ');
   }
-
-  slow(): number {
-    return 10000;
-  }
 }
 
 export class Suite {
@@ -70,6 +67,7 @@ export class Suite {
   only = false;
   pending = false;
   file: string;
+  configuration: Configuration;
 
   _hooks: { type: string, fn: Function } [] = [];
   _entries: (Suite | Test)[] = [];
