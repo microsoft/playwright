@@ -15,11 +15,10 @@
  */
 
 import { TimeoutError } from '../utils/errors';
-import { helper } from '../helper';
 import { SerializedError, SerializedValue } from './channels';
 
 export function serializeError(e: any): SerializedError {
-  if (helper.isError(e))
+  if (isError(e))
     return { error: { message: e.message, stack: e.stack, name: e.name } };
   return { value: serializeValue(e, value => ({ fallThrough: value }), new Set()) };
 }

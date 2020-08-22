@@ -18,7 +18,8 @@
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import * as frames from '../frames';
-import { assert, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
+import { assert } from '../utils/utils';
 import { Page, PageBinding, PageDelegate, Worker } from '../page';
 import { kScreenshotDuringNavigationError } from '../screenshotter';
 import * as types from '../types';

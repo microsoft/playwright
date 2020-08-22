@@ -19,7 +19,7 @@ import * as input from '../input';
 import * as types from '../types';
 import { CRSession } from './crConnection';
 import { macEditingCommands } from '../macEditingCommands';
-import { helper } from '../helper';
+import { isString } from '../utils/utils';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   let mask = 0;
@@ -51,7 +51,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut] || [];
-    if (helper.isString(commands))
+    if (isString(commands))
       commands = [commands];
     // remove the trailing : to match the Chromium command names.
     return commands.map(c => c.substring(0, c.length - 1));

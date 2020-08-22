@@ -16,7 +16,6 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { helper, assert } from './helper';
 import * as js from './javascript';
 import * as types from './types';
 import { ParsedSelector, parseSelector } from './common/selectorParser';
@@ -116,7 +115,6 @@ export class Selectors {
   }
 
   _parseSelector(selector: string): SelectorInfo {
-    assert(helper.isString(selector), `selector must be a string`);
     const parsed = parseSelector(selector);
     for (const {name} of parsed.parts) {
       if (!this._builtinEngines.has(name) && !this._engines.has(name))

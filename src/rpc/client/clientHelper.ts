@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { isUnderTest as commonIsUnderTest, helper } from '../../helper';
 import * as types from './types';
 import * as fs from 'fs';
 import * as util from 'util';
+import { isString, isRegExp } from '../../utils/utils';
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {
@@ -26,10 +26,6 @@ export function deprecate(methodName: string, message: string) {
     return;
   deprecatedHits.add(methodName);
   console.warn(message);
-}
-
-export function isUnderTest() {
-  return commonIsUnderTest();
 }
 
 export function envObjectToArray(env: types.Env): { name: string, value: string }[] {
@@ -49,7 +45,7 @@ export async function evaluationScript(fun: Function | string | { path?: string,
   }
   if (arg !== undefined)
     throw new Error('Cannot evaluate a string with arguments');
-  if (helper.isString(fun))
+  if (isString(fun))
     return fun;
   if (fun.content !== undefined)
     return fun.content;
@@ -65,9 +61,9 @@ export async function evaluationScript(fun: Function | string | { path?: string,
 export function urlMatches(urlString: string, match: types.URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
-  if (helper.isString(match))
+  if (isString(match))
     match = globToRegex(match);
-  if (helper.isRegExp(match))
+  if (isRegExp(match))
     return match.test(urlString);
   if (typeof match === 'string' && match === urlString)
     return true;

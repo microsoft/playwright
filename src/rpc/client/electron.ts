@@ -19,7 +19,7 @@ import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
 import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from './jsHandle';
-import { TimeoutSettings } from '../../timeoutSettings';
+import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { Events } from './events';
 import { WaitForEventOptions, Env, LoggerSink } from './types';

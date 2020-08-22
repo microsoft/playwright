@@ -17,7 +17,7 @@
 
 import { Screencast, BrowserContext } from '../browserContext';
 import * as frames from '../frames';
-import { helper, RegisteredListener, assert, debugAssert } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
 import * as network from '../network';
 import { WKSession } from './wkConnection';
@@ -37,7 +37,7 @@ import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { JSHandle } from '../javascript';
-import { headersArrayToObject } from '../converters';
+import { assert, debugAssert, headersArrayToObject } from '../utils/utils';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';

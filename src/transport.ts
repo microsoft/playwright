@@ -16,8 +16,8 @@
  */
 
 import * as WebSocket from 'ws';
-import { helper } from './helper';
 import { Progress } from './progress';
+import { makeWaitForNextTask } from './utils/utils';
 
 export type ProtocolRequest = {
   id: number;
@@ -85,7 +85,7 @@ export class WebSocketTransport implements ConnectionTransport {
     // In Web, all IO callbacks (e.g. WebSocket callbacks)
     // are dispatched into separate tasks, so there's no need
     // to do anything extra.
-    const messageWrap: (cb: () => void) => void = helper.makeWaitForNextTask();
+    const messageWrap: (cb: () => void) => void = makeWaitForNextTask();
 
     this._ws.addEventListener('message', event => {
       messageWrap(() => {

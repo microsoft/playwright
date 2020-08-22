@@ -15,14 +15,16 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener, debugLogger } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { makeWaitForNextTask } from '../utils/utils';
+import { debugLogger } from '../utils/debugLogger';
 
 export class PipeTransport implements ConnectionTransport {
   private _pipeWrite: NodeJS.WritableStream;
   private _pendingMessage = '';
   private _eventListeners: RegisteredListener[];
-  private _waitForNextTask = helper.makeWaitForNextTask();
+  private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
 
   onmessage?: (message: ProtocolResponse) => void;

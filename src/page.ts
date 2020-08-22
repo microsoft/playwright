@@ -17,12 +17,11 @@
 
 import * as dom from './dom';
 import * as frames from './frames';
-import { assert, helper, debugLogger } from './helper';
 import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
 import { Screenshotter } from './screenshotter';
-import { TimeoutSettings } from './timeoutSettings';
+import { TimeoutSettings } from './utils/timeoutSettings';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
@@ -30,6 +29,8 @@ import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { Progress, runAbortableTask } from './progress';
+import { assert, isError } from './utils/utils';
+import { debugLogger } from './utils/debugLogger';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -462,7 +463,7 @@ export class PageBinding {
       const result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
       context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
-      if (helper.isError(error))
+      if (isError(error))
         context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
       else
         context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));

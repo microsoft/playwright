@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-import { assert, debugLogger } from '../helper';
+import { assert } from '../utils/utils';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { debugLogger } from '../utils/debugLogger';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')

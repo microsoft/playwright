@@ -17,7 +17,7 @@
 
 import * as dom from '../dom';
 import * as frames from '../frames';
-import { helper, RegisteredListener, assert } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
 import { CRExecutionContext } from './crExecutionContext';
@@ -36,7 +36,7 @@ import * as types from '../types';
 import { ConsoleMessage } from '../console';
 import * as sourceMap from '../utils/sourceMap';
 import { rewriteErrorMessage } from '../utils/stackTrace';
-import { headersArrayToObject } from '../converters';
+import { assert, headersArrayToObject } from '../utils/utils';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';

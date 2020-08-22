@@ -17,9 +17,9 @@
 
 import * as input from '../input';
 import * as types from '../types';
-import { helper } from '../helper';
 import { macEditingCommands } from '../macEditingCommands';
 import { WKSession } from './wkConnection';
+import { isString } from '../utils/utils';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h
@@ -56,7 +56,7 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     parts.push(code);
     const shortcut = parts.join('+');
     let commands = macEditingCommands[shortcut];
-    if (helper.isString(commands))
+    if (isString(commands))
       commands = [commands];
     await this._pageProxySession.send('Input.dispatchKeyEvent', {
       type: 'keyDown',

@@ -22,13 +22,13 @@ import { BrowserContext, verifyProxySettings, validateBrowserContextOptions } fr
 import * as browserPaths from '../install/browserPaths';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserOptions, Browser, BrowserProcess } from '../browser';
-import { assert, helper } from '../helper';
 import { launchProcess, Env, waitForLine, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, runAbortableTask } from '../progress';
 import * as types from '../types';
-import { TimeoutSettings } from '../timeoutSettings';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
+import { assert, isDebugMode } from '../utils/utils';
 
 export interface BrowserType {
   executablePath(): string;
@@ -223,7 +223,7 @@ function copyTestHooks(from: object, to: object) {
 }
 
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
-  const { devtools = false, headless = !helper.isDebugMode() && !devtools } = options;
+  const { devtools = false, headless = !isDebugMode() && !devtools } = options;
   return { ...options, devtools, headless };
 }
 

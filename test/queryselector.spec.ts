@@ -17,6 +17,11 @@
 
 import './playwright.fixtures';
 
+it('should throw for non-string selector', async({page}) => {
+  const error = await page.$(null).catch(e => e);
+  expect(error.message).toContain('selector: expected string, got object');
+});
+
 it('should query existing element with css selector', async({page, server}) => {
   await page.setContent('<section>test</section>');
   const element = await page.$('css=section');

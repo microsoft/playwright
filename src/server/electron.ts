@@ -20,7 +20,7 @@ import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
 import * as js from '../javascript';
 import { Page } from '../page';
-import { TimeoutSettings } from '../timeoutSettings';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import { WebSocketTransport } from '../transport';
 import * as types from '../types';
 import { launchProcess, waitForLine, envArrayToObject } from './processLauncher';

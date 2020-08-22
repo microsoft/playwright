@@ -17,13 +17,13 @@
 
 import { CRSession } from './crConnection';
 import { Page } from '../page';
-import { assert, helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as network from '../network';
 import * as frames from '../frames';
 import * as types from '../types';
 import { CRPage } from './crPage';
-import { headersObjectToArray } from '../converters';
+import { assert, headersObjectToArray } from '../utils/utils';
 
 export class CRNetworkManager {
   private _client: CRSession;

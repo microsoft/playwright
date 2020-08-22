@@ -23,7 +23,7 @@ import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
-import { assert, getFromENV } from '../helper';
+import { assert, getFromENV } from '../utils/utils';
 import * as browserPaths from './browserPaths';
 import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths';
 
