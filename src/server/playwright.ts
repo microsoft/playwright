@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Chromium } from './chromium';
+import { Chromium } from './chromium/chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
 import { selectors } from '../selectors';

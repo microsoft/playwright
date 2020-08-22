@@ -15,7 +15,6 @@
  */
 
 import { Frame, NavigationEvent } from '../../frames';
-import * as types from '../../types';
 import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
@@ -38,11 +37,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
       loadStates: Array.from(frame._subtreeLifecycleEvents),
     });
     this._frame = frame;
-    frame.on(Frame.Events.AddLifecycle, (event: types.LifecycleEvent) => {
-      this._dispatchEvent('loadstate', { add: event });
+    frame.on(Frame.Events.AddLifecycle, lifecycleEvent => {
+      this._dispatchEvent('loadstate', { add: lifecycleEvent });
     });
-    frame.on(Frame.Events.RemoveLifecycle, (event: types.LifecycleEvent) => {
-      this._dispatchEvent('loadstate', { remove: event });
+    frame.on(Frame.Events.RemoveLifecycle, lifecycleEvent => {
+      this._dispatchEvent('loadstate', { remove: lifecycleEvent });
     });
     frame.on(Frame.Events.Navigation, (event: NavigationEvent) => {
       const params = { url: event.url, name: event.name, error: event.error ? event.error.message : undefined };

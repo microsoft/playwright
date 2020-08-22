@@ -16,11 +16,11 @@
  */
 
 import { CRSession } from './crConnection';
-import { helper, RegisteredListener } from '../helper';
+import { helper, RegisteredListener } from '../../helper';
 import { Protocol } from './protocol';
-import * as types from '../types';
-import * as sourceMap from '../utils/sourceMap';
-import { assert } from '../utils/utils';
+import * as types from '../../types';
+import * as sourceMap from '../../utils/sourceMap';
+import { assert } from '../../utils/utils';
 
 export class CRCoverage {
   private _jsCoverage: JSCoverage;

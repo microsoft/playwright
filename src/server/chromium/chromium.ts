@@ -17,17 +17,17 @@
 
 import * as path from 'path';
 import * as os from 'os';
-import { CRBrowser } from '../chromium/crBrowser';
-import { Env } from './processLauncher';
-import { kBrowserCloseMessageId } from '../chromium/crConnection';
-import { rewriteErrorMessage } from '../utils/stackTrace';
-import { BrowserTypeBase } from './browserType';
-import { ConnectionTransport, ProtocolRequest } from '../transport';
-import { BrowserDescriptor } from '../install/browserPaths';
-import { CRDevTools } from '../chromium/crDevTools';
-import { BrowserOptions } from '../browser';
-import * as types from '../types';
-import { isDebugMode, getFromENV } from '../utils/utils';
+import { CRBrowser } from './crBrowser';
+import { Env } from '../processLauncher';
+import { kBrowserCloseMessageId } from './crConnection';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { BrowserTypeBase } from '../browserType';
+import { ConnectionTransport, ProtocolRequest } from '../../transport';
+import type { BrowserDescriptor } from '../../install/browserPaths';
+import { CRDevTools } from './crDevTools';
+import { BrowserOptions } from '../../browser';
+import * as types from '../../types';
+import { isDebugMode, getFromENV } from '../../utils/utils';
 
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;

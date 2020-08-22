@@ -15,9 +15,9 @@
  */
 
 import * as path from 'path';
-import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
-import { CRConnection, CRSession } from '../chromium/crConnection';
-import { CRExecutionContext } from '../chromium/crExecutionContext';
+import { CRBrowser, CRBrowserContext } from './chromium/crBrowser';
+import { CRConnection, CRSession } from './chromium/crConnection';
+import { CRExecutionContext } from './chromium/crExecutionContext';
 import * as js from '../javascript';
 import { Page } from '../page';
 import { TimeoutSettings } from '../utils/timeoutSettings';
