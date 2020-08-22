@@ -28,12 +28,13 @@ export type TestRunnerEntry = {
   ordinals: number[];
   configuredFile: string;
   configurationObject: any;
+  hash: string;
 };
 
 export class TestRunner extends EventEmitter {
   private _currentOrdinal = -1;
-  private _failedWithError: Error | undefined;
-  private _fatalError: Error | undefined;
+  private _failedWithError: any | undefined;
+  private _fatalError: any | undefined;
   private _file: any;
   private _ordinals: Set<number>;
   private _remaining: Set<number>;
@@ -87,7 +88,7 @@ export class TestRunner extends EventEmitter {
     try {
       await this._runHooks(suite, 'beforeAll', 'before');
     } catch (e) {
-      this._fatalError = e;
+      this._fatalError = serializeError(e);
       this._reportDone();
     }
     for (const entry of suite._entries) {
@@ -100,7 +101,7 @@ export class TestRunner extends EventEmitter {
     try {
       await this._runHooks(suite, 'afterAll', 'after');
     } catch (e) {
-      this._fatalError = e;
+      this._fatalError = serializeError(e);
       this._reportDone();
     }
   }
@@ -126,10 +127,10 @@ export class TestRunner extends EventEmitter {
       this.emit('pass', { test: this._serializeTest(test) });
       await this._runHooks(test.suite, 'afterEach', 'after');
     } catch (error) {
-      this._failedWithError = error;
+      test.error = serializeError(error);
+      this._failedWithError = test.error;
       this.emit('fail', {
         test: this._serializeTest(test),
-        error: serializeError(error),
       });
     }
   }
@@ -167,12 +168,13 @@ export class TestRunner extends EventEmitter {
   private _serializeTest(test) {
     return {
       id: `${test._ordinal}@${this._configuredFile}`,
+      error: test.error,
       duration: Date.now() - test._startTime,
     };
   }
 }
 
-function trimCycles(obj) {
+function trimCycles(obj: any): any {
   const cache = new Set();
   return JSON.parse(
     JSON.stringify(obj, function(key, value) {
@@ -186,7 +188,7 @@ function trimCycles(obj) {
   );
 }
 
-function serializeError(error) {
+function serializeError(error: Error): any {
   if (error instanceof Error) {
     return {
       message: error.message,

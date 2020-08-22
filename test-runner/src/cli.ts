@@ -91,7 +91,6 @@ program
       jobs,
       outputDir: command.output,
       reporter: command.reporter,
-      retries: command.retries,
       snapshotDir: path.join(testDir, '__snapshots__'),
       testDir,
       timeout: command.timeout,

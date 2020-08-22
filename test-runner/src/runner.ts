@@ -14,23 +14,44 @@
  * limitations under the License.
  */
 
-const child_process = require('child_process');
-const crypto = require('crypto');
-const path = require('path');
-const { EventEmitter } = require('events');
-const builtinReporters = require('mocha/lib/reporters');
-const DotRunner = require('./dotReporter');
-const { lookupRegistrations } = require('./fixtures');
+import child_process from 'child_process';
+import crypto from 'crypto';
+import path from 'path';
+import { EventEmitter } from 'events';
+import { DotReporter, ListReporter} from './reporters';
+import { lookupRegistrations, FixturePool } from './fixtures';
+import { Suite } from './test';
+import { TestRunnerEntry } from './testRunner';
 
-class Runner extends EventEmitter {
-  constructor(suite, total, options) {
+type RunnerOptions = {
+  jobs: number;
+  reporter: any;
+  outputDir: string;
+  snapshotDir: string;
+  testDir: string;
+  timeout: number;
+  debug?: boolean;
+  quiet?: boolean;
+  grep?: string;
+  trialRun?: boolean;
+  updateSnapshots?: boolean;
+};
+
+export class Runner extends EventEmitter {
+  readonly _options: RunnerOptions;
+  private _workers =new Set<Worker>();
+  private _freeWorkers: Worker[] = [];
+  private _workerClaimers: (() => void)[] = [];
+  stats: { duration: number; failures: number; passes: number; pending: number; tests: number; };
+
+  private _testById = new Map<any, any>();
+  private _testsByConfiguredFile = new Map<any, any>();
+  private _queue: TestRunnerEntry[] = [];
+  private _stopCallback: () => void;
+
+  constructor(suite: Suite, total: number, options: RunnerOptions) {
     super();
-    this._suite = suite;
     this._options = options;
-    this._workers = new Set();
-    this._freeWorkers = [];
-    this._workerClaimers = [];
-    this._lastWorkerId = 0;
     this.stats = {
       duration: 0,
       failures: 0,
@@ -38,8 +59,8 @@ class Runner extends EventEmitter {
       pending: 0,
       tests: 0,
     };
-    const reporterFactory = builtinReporters[options.reporter] || DotRunner;
-    this._reporter = new reporterFactory(this, {});
+    const reporterFactory = options.reporter === 'list' ? ListReporter : DotReporter;
+    new reporterFactory(this);
 
     this._testById = new Map();
     this._testsByConfiguredFile = new Map();
@@ -76,7 +97,7 @@ class Runner extends EventEmitter {
   }
 
   async run() {
-    this.emit('start', {});
+    this.emit('begin', {});
     this._queue = this._filesSortedByWorkerHash();
     // Loop in case job schedules more jobs
     while (this._queue.length)
@@ -157,11 +178,11 @@ class Runner extends EventEmitter {
       ++this.stats.failures;
       const out = worker.takeOut();
       if (out.length)
-        params.error.stack += '\n\x1b[33mstdout: ' + out.join('\n') + '\x1b[0m';
+        params.test.error.stack += '\n\x1b[33mstdout: ' + out.join('\n') + '\x1b[0m';
       const err = worker.takeErr();
       if (err.length)
-        params.error.stack += '\n\x1b[33mstderr: ' + err.join('\n') + '\x1b[0m';
-      this.emit('fail', this._updateTest(params.test), params.error);
+        params.test.error.stack += '\n\x1b[33mstderr: ' + err.join('\n') + '\x1b[0m';
+      this.emit('fail', this._updateTest(params.test));
     });
     worker.on('exit', () => {
       this._workers.delete(worker);
@@ -180,6 +201,7 @@ class Runner extends EventEmitter {
   _updateTest(serialized) {
     const test = this._testById.get(serialized.id);
     test.duration = serialized.duration;
+    test.error = serialized.error;
     return test;
   }
 
@@ -193,10 +215,25 @@ class Runner extends EventEmitter {
 
 let lastWorkerId = 0;
 
-class OopWorker extends EventEmitter {
+class Worker extends EventEmitter {
+  runner: any;
+  hash: string;
+
   constructor(runner) {
     super();
     this.runner = runner;
+  }
+
+  stop() {
+  }
+}
+
+class OopWorker extends Worker {
+  process: child_process.ChildProcess;
+  stdout: any[];
+  stderr: any[];
+  constructor(runner: Runner) {
+    super(runner);
 
     this.process = child_process.fork(path.join(__dirname, 'worker.js'), {
       detached: false,
@@ -256,10 +293,11 @@ class OopWorker extends EventEmitter {
   }
 }
 
-class InProcessWorker extends EventEmitter {
-  constructor(runner) {
-    super();
-    this.runner = runner;
+class InProcessWorker extends Worker {
+  fixturePool: FixturePool;
+
+  constructor(runner: Runner) {
+    super(runner);
     this.fixturePool = require('./testRunner').fixturePool;
   }
 
