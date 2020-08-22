@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../../protocol/channels';
+import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
@@ -22,7 +22,7 @@ import { Events } from './events';
 import { BrowserType } from './browserType';
 import { BrowserContextOptions } from './types';
 import { validateHeaders } from './network';
-import { headersObjectToArray } from '../../utils/utils';
+import { headersObjectToArray } from '../utils/utils';
 
 export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();

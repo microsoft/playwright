@@ -18,7 +18,7 @@
 import * as types from './types';
 import * as fs from 'fs';
 import * as util from 'util';
-import { isString, isRegExp } from '../../utils/utils';
+import { isString, isRegExp } from '../utils/utils';
 
 const deprecatedHits = new Set();
 export function deprecate(methodName: string, message: string) {

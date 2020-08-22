@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { PlaywrightChannel, PlaywrightInitializer } from '../../protocol/channels';
+import { PlaywrightChannel, PlaywrightInitializer } from '../protocol/channels';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Selectors } from './selectors';
 import { Electron } from './electron';
-import { TimeoutError } from '../../utils/errors';
+import { TimeoutError } from '../utils/errors';
 import { Size } from './types';
 
 type DeviceDescriptor = {

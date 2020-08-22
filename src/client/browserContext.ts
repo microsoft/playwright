@@ -18,15 +18,15 @@
 import * as frames from './frame';
 import { Page, BindingCall } from './page';
 import * as network from './network';
-import { BrowserContextChannel, BrowserContextInitializer } from '../../protocol/channels';
+import { BrowserContextChannel, BrowserContextInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';
 import { Events } from './events';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions } from './types';
-import { isUnderTest, headersObjectToArray } from '../../utils/utils';
+import { isUnderTest, headersObjectToArray } from '../utils/utils';
 
 export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
   _pages = new Set<Page>();

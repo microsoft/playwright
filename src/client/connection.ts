@@ -27,19 +27,19 @@ import { Worker } from './worker';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
 import { Download } from './download';
-import { parseError } from '../../protocol/serializers';
+import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import { Channel } from '../../protocol/channels';
+import { Channel } from '../protocol/channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Selectors } from './selectors';
 import { Stream } from './stream';
-import { createScheme, Validator, ValidationError } from '../../protocol/validator';
+import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 
 class Root extends ChannelOwner<Channel, {}> {
   constructor(connection: Connection) {

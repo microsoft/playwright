@@ -16,7 +16,7 @@
 
 import * as util from 'util';
 import { JSHandle } from './jsHandle';
-import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../../protocol/channels';
+import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
 type ConsoleMessageLocation = ConsoleMessageInitializer['location'];

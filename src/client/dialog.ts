@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DialogChannel, DialogInitializer } from '../../protocol/channels';
+import { DialogChannel, DialogInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
 export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {

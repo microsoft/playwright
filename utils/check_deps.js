@@ -69,8 +69,9 @@ async function checkDeps() {
 
 const DEPS = new Map([
   ['src/utils/', ['src/utils/']],
+  ['src/common/', ['src/common/']],
   ['src/protocol/', ['src/protocol/', 'src/utils/']],
-  ['src/rpc/client/', ['src/rpc/client/', 'src/utils/', 'src/protocol/', 'src/chromium/protocol.ts']],
+  ['src/client/', ['src/client/', 'src/utils/', 'src/protocol/', 'src/chromium/protocol.ts']],
   ['src/', ['src/']],  // Allow everything else for now.
 ]);
 

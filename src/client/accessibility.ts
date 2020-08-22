@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { PageChannel, AXNode } from '../../protocol/channels';
+import { PageChannel, AXNode } from '../protocol/channels';
 import { ElementHandle } from './elementHandle';
 
 type SerializedAXNode = Omit<AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {

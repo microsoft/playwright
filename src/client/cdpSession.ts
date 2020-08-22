@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { CDPSessionChannel, CDPSessionInitializer } from '../../protocol/channels';
+import { CDPSessionChannel, CDPSessionInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { Protocol } from '../../chromium/protocol';
+import { Protocol } from '../chromium/protocol';
 
 export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitializer> {
   static from(cdpSession: CDPSessionChannel): CDPSession {

@@ -16,9 +16,9 @@
 
 import { DispatcherConnection } from './server/dispatcher';
 import type { Playwright as PlaywrightImpl } from '../server/playwright';
-import type { Playwright as PlaywrightAPI } from './client/playwright';
+import type { Playwright as PlaywrightAPI } from '../client/playwright';
 import { PlaywrightDispatcher } from './server/playwrightDispatcher';
-import { Connection } from './client/connection';
+import { Connection } from '../client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { isUnderTest } from '../utils/utils';
 

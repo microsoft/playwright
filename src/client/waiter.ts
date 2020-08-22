@@ -15,8 +15,8 @@
  */
 
 import { EventEmitter } from 'events';
-import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { TimeoutError } from '../../utils/errors';
+import { rewriteErrorMessage } from '../utils/stackTrace';
+import { TimeoutError } from '../utils/errors';
 
 export class Waiter {
   private _dispose: (() => void)[] = [];
