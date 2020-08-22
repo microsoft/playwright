@@ -25,6 +25,7 @@ export class Test {
   duration = 0;
   timeout = 0;
   fn: Function;
+  error: any;
 
   _ordinal: number;
   _configurationObject: Configuration;
@@ -80,7 +81,7 @@ export class Suite {
 
   titlePath(): string[] {
     if (!this.parent)
-      return [this.title];
+      return [];
     return [...this.parent.titlePath(), this.title];
   }
 

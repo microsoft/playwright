@@ -77,7 +77,6 @@
     "esprima": "^4.0.0",
     "expect": "^26.3.0",
     "formidable": "^1.2.1",
-    "mocha": "^8.1.1",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.8.2",
     "pirates": "^4.0.1",
