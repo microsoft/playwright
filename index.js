@@ -15,7 +15,7 @@
  */
 
 const { Playwright } = require('./lib/server/playwright');
-const { Electron } = require('./lib/server/electron');
+const { Electron } = require('./lib/server/electron/electron');
 const { setupInProcess } = require('./lib/rpc/inprocess');
 const path = require('path');
 

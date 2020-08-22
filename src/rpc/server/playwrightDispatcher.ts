@@ -19,7 +19,7 @@ import * as channels from '../../protocol/channels';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
-import { Electron } from '../../server/electron';
+import { Electron } from '../../server/electron/electron';
 import { ElectronDispatcher } from './electronDispatcher';
 import { DeviceDescriptors } from '../../deviceDescriptors';
 
