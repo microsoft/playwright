@@ -16,7 +16,7 @@
  */
 
 import { Page } from './page';
-import { BrowserContextInitializer } from '../../protocol/channels';
+import { BrowserContextInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { CDPSession } from './cdpSession';
 import { Events } from './events';

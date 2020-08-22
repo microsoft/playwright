@@ -15,10 +15,10 @@
  */
 
 import { EventEmitter } from 'events';
-import type { Channel } from '../../protocol/channels';
+import type { Channel } from '../protocol/channels';
 import type { Connection } from './connection';
 import type { LoggerSink } from './types';
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger } from '../utils/debugLogger';
 
 export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;

@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-import { PageChannel, PageCrStartJSCoverageOptions, PageCrStopJSCoverageResult, PageCrStartCSSCoverageOptions, PageCrStopCSSCoverageResult } from '../../protocol/channels';
-
-let __dummyJSResult: PageCrStopJSCoverageResult;
-type PageCrStopJSCoverageResultEntries = typeof __dummyJSResult.entries;
-let __dummyCSSResult: PageCrStopCSSCoverageResult;
-type PageCrStopCSSCoverageResultEntries = typeof __dummyCSSResult.entries;
+import { PageChannel, PageCrStartJSCoverageOptions, PageCrStopJSCoverageResult, PageCrStartCSSCoverageOptions, PageCrStopCSSCoverageResult } from '../protocol/channels';
 
 export class ChromiumCoverage {
   private _channel: PageChannel;
@@ -32,7 +27,7 @@ export class ChromiumCoverage {
     await this._channel.crStartJSCoverage(options);
   }
 
-  async stopJSCoverage(): Promise<PageCrStopJSCoverageResultEntries> {
+  async stopJSCoverage(): Promise<PageCrStopJSCoverageResult['entries']> {
     return (await this._channel.crStopJSCoverage()).entries;
   }
 
@@ -40,7 +35,7 @@ export class ChromiumCoverage {
     await this._channel.crStartCSSCoverage(options);
   }
 
-  async stopCSSCoverage(): Promise<PageCrStopCSSCoverageResultEntries> {
+  async stopCSSCoverage(): Promise<PageCrStopCSSCoverageResult['entries']> {
     return (await this._channel.crStopCSSCoverage()).entries;
   }
 }

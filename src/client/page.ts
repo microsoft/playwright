@@ -16,10 +16,10 @@
  */
 
 import { Events } from './events';
-import { assert } from '../../utils/utils';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
-import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PagePdfParams, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameGotoOptions, PageReloadOptions, PageGoBackOptions, PageGoForwardOptions, PageScreenshotOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../../protocol/channels';
-import { parseError, serializeError } from '../../protocol/serializers';
+import { assert } from '../utils/utils';
+import { TimeoutSettings } from '../utils/timeoutSettings';
+import { BindingCallChannel, BindingCallInitializer, PageChannel, PageInitializer, PagePdfParams, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameGotoOptions, PageReloadOptions, PageGoBackOptions, PageGoForwardOptions, PageScreenshotOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../protocol/channels';
+import { parseError, serializeError } from '../protocol/serializers';
 import { Accessibility } from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -41,7 +41,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
-import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../../utils/utils';
+import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 
 type PDFOptions = Omit<PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,

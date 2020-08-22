@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { LaunchServerOptions } from './client/types';
+import { LaunchServerOptions } from '../client/types';
 import { BrowserTypeBase } from '../server/browserType';
 import * as ws from 'ws';
 import { helper } from '../helper';
@@ -26,8 +26,8 @@ import { BrowserTypeDispatcher } from './server/browserTypeDispatcher';
 import { BrowserDispatcher } from './server/browserDispatcher';
 import { BrowserContextDispatcher } from './server/browserContextDispatcher';
 import { BrowserNewContextParams, BrowserContextChannel } from '../protocol/channels';
-import { BrowserServerLauncher, BrowserServer } from './client/browserType';
-import { envObjectToArray } from './client/clientHelper';
+import { BrowserServerLauncher, BrowserServer } from '../client/browserType';
+import { envObjectToArray } from '../client/clientHelper';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserTypeBase;

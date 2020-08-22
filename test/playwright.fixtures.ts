@@ -20,7 +20,7 @@ import os from 'os';
 import childProcess from 'child_process';
 import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver';
-import { Connection } from '../lib/rpc/client/connection';
+import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { setUnderTest } from '../lib/utils/utils';
 import { installCoverageHooks } from './coverage';

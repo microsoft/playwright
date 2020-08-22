@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-import { globToRegex } from '../lib/rpc/client/clientHelper';
+import { globToRegex } from '../lib/client/clientHelper';
 import vm from 'vm';
 
 it('should work with navigation', async({page, server}) => {

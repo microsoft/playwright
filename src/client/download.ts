@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DownloadChannel, DownloadInitializer } from '../../protocol/channels';
+import { DownloadChannel, DownloadInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 import { Stream } from './stream';

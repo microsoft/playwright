@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { BrowserNewContextOptions, BrowserTypeLaunchOptions } from '../../protocol/channels';
+import { BrowserNewContextOptions, BrowserTypeLaunchOptions } from '../protocol/channels';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
 export interface LoggerSink {

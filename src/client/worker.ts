@@ -15,7 +15,7 @@
  */
 
 import { Events } from './events';
-import { WorkerChannel, WorkerInitializer } from '../../protocol/channels';
+import { WorkerChannel, WorkerInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { assertMaxArguments, Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';

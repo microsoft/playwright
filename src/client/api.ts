@@ -25,7 +25,7 @@ export { Download } from './download';
 export { ElementHandle } from './elementHandle';
 export { FileChooser } from './fileChooser';
 export { Logger } from './types';
-export { TimeoutError } from '../../utils/errors';
+export { TimeoutError } from '../utils/errors';
 export { Frame } from './frame';
 export { Keyboard, Mouse } from './input';
 export { JSHandle } from './jsHandle';

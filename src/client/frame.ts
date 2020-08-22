@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { assert } from '../../utils/utils';
-import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../../protocol/channels';
+import { assert } from '../utils/utils';
+import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';

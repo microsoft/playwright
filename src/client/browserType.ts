@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../../protocol/channels';
+import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import * as WebSocket from 'ws';
 import { Connection } from './connection';
-import { serializeError } from '../../protocol/serializers';
+import { serializeError } from '../protocol/serializers';
 import { Events } from './events';
-import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
 import { validateHeaders } from './network';
-import { assert, makeWaitForNextTask, headersObjectToArray } from '../../utils/utils';
+import { assert, makeWaitForNextTask, headersObjectToArray } from '../utils/utils';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;

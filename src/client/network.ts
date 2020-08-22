@@ -15,14 +15,14 @@
  */
 
 import { URLSearchParams } from 'url';
-import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../../protocol/channels';
+import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Headers } from './types';
 import * as fs from 'fs';
 import * as mime from 'mime';
 import * as util from 'util';
-import { isString, headersObjectToArray, headersArrayToObject } from '../../utils/utils';
+import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
 
 export type NetworkCookie = {
   name: string,
