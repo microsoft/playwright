@@ -18,7 +18,7 @@ import { Chromium } from './chromium/chromium';
 import { WebKit } from './webkit';
 import { Firefox } from './firefox';
 import { selectors } from '../selectors';
-import * as browserPaths from '../install/browserPaths';
+import * as browserPaths from '../utils/browserPaths';
 
 export class Playwright {
   readonly selectors = selectors;

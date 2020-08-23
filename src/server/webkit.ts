@@ -22,7 +22,7 @@ import { kBrowserCloseMessageId } from '../webkit/wkConnection';
 import { BrowserTypeBase } from './browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
-import { BrowserDescriptor } from '../install/browserPaths';
+import { BrowserDescriptor } from '../utils/browserPaths';
 import * as types from '../types';
 
 export class WebKit extends BrowserTypeBase {

@@ -24,7 +24,7 @@ import { BrowserTypeBase } from './browserType';
 import { Env } from './processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
-import { BrowserDescriptor } from '../install/browserPaths';
+import { BrowserDescriptor } from '../utils/browserPaths';
 import * as types from '../types';
 
 export class Firefox extends BrowserTypeBase {

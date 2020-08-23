@@ -74,6 +74,7 @@ const DEPS = new Map([
   ['src/common/', ['src/common/']],
   ['src/protocol/', ['src/protocol/', 'src/utils/']],
   ['src/install/', ['src/install/', 'src/utils/']],
+  ['src/server/chromium/', ['src/server/chromium/', 'src/utils/', 'src/', 'src/common/', 'src/server/']],
   ['src/client/', ['src/client/', 'src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts']],
 ]);
 
