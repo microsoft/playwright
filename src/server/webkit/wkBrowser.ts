@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { helper, RegisteredListener } from '../helper';
-import { assert } from '../utils/utils';
-import * as network from '../network';
-import { Page, PageBinding } from '../page';
+import { Browser, BrowserOptions } from '../../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../../browserContext';
+import { helper, RegisteredListener } from '../../helper';
+import { assert } from '../../utils/utils';
+import * as network from '../../network';
+import { Page, PageBinding } from '../../page';
 import * as path from 'path';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
+import { ConnectionTransport } from '../../transport';
+import * as types from '../../types';
 import { Protocol } from './protocol';
 import { kPageProxyMessageReceived, PageProxyMessageReceivedPayload, WKConnection, WKSession } from './wkConnection';
 import { WKPage } from './wkPage';

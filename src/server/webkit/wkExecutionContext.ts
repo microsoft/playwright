@@ -17,9 +17,9 @@
 
 import { WKSession, isSwappedOutError } from './wkConnection';
 import { Protocol } from './protocol';
-import * as js from '../javascript';
-import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
-import * as sourceMap from '../utils/sourceMap';
+import * as js from '../../javascript';
+import { parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
+import * as sourceMap from '../../utils/sourceMap';
 
 export class WKExecutionContext implements js.ExecutionContextDelegate {
   private readonly _session: WKSession;

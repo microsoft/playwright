@@ -8,7 +8,7 @@ lib/
 src/generated/*
 src/server/chromium/protocol.ts
 src/firefox/protocol.ts
-src/webkit/protocol.ts
+src/server/webkit/protocol.ts
 /types/*
 /index.d.ts
 /electron-types.d.ts
