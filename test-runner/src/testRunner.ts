@@ -107,7 +107,7 @@ export class TestRunner extends EventEmitter {
     if (this._ordinals.size && !this._ordinals.has(ordinal))
       return;
     this._remaining.delete(ordinal);
-    if (test.pending) {
+    if (test.pending || test.suite._isPending()) {
       this.emit('pending', { test: this._serializeTest(test) });
       return;
     }

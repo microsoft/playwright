@@ -18,21 +18,26 @@ import path from 'path';
 import { fixturesForCallback } from './fixtures';
 import { Configuration, Test, Suite } from './test';
 import { fixturesUI } from './fixturesUI';
+import { RunnerConfig } from './runnerConfig';
+
+export type Matrix = {
+  [key: string]: string[]
+};
 
 export class TestCollector {
   suite: Suite;
 
-  private _matrix: { [key: string]: string; };
-  private _options: any;
+  private _matrix: Matrix;
+  private _config: RunnerConfig;
   private _grep: RegExp;
   private _hasOnly: boolean;
 
-  constructor(files: string[], matrix: { [key: string] : string }, options) {
+  constructor(files: string[], matrix: Matrix, config: RunnerConfig) {
     this._matrix = matrix;
-    this._options = options;
+    this._config = config;
     this.suite = new Suite('');
-    if (options.grep) {
-      const match = options.grep.match(/^\/(.*)\/(g|i|)$|.*/);
+    if (config.grep) {
+      const match = config.grep.match(/^\/(.*)\/(g|i|)$|.*/);
       this._grep = new RegExp(match[1] || match[0], match[2]);
     }
 
@@ -46,9 +51,9 @@ export class TestCollector {
     return this._hasOnly;
   }
 
-  _addFile(file) {
+  _addFile(file: string) {
     const suite = new Suite('');
-    const revertBabelRequire = fixturesUI(suite, file, this._options.timeout);
+    const revertBabelRequire = fixturesUI(suite, file, this._config.timeout);
     require(file);
     revertBabelRequire();
     suite._renumber();
@@ -95,30 +100,30 @@ export class TestCollector {
     // Only include the tests that requested these generations.
     for (const [hash, {configurationObject, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
       const clone = this._cloneSuite(suite, configurationObject, configurationString, tests);
-      this.suite.addSuite(clone);
+      this.suite._addSuite(clone);
       clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '');
     }
   }
 
   _cloneSuite(suite: Suite, configurationObject: Configuration, configurationString: string, tests: Set<Test>) {
-    const copy = suite.clone();
+    const copy = suite._clone();
     copy.only = suite.only;
     copy.configuration = configurationObject;
     for (const entry of suite._entries) {
       if (entry instanceof Suite) {
-        copy.addSuite(this._cloneSuite(entry, configurationObject, configurationString, tests));
+        copy._addSuite(this._cloneSuite(entry, configurationObject, configurationString, tests));
       } else {
         const test = entry;
         if (!tests.has(test))
           continue;
         if (this._grep && !this._grep.test(test.fullTitle()))
           continue;
-        const testCopy = test.clone();
+        const testCopy = test._clone();
         testCopy.only = test.only;
         testCopy._ordinal = test._ordinal;
         testCopy._configurationObject = configurationObject;
         testCopy._configurationString = configurationString;
-        copy.addTest(testCopy);
+        copy._addTest(testCopy);
       }
     }
     return copy;

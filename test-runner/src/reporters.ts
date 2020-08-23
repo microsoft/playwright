@@ -179,20 +179,22 @@ export class JSONReporter extends BaseReporter {
     runner.once('end', () => {
       const result = {
         config: this.config,
-        tests: this.suite.tests.map(test => this._serializeTest(test)),
-        suites: this.suite.suites.map(suite => this._serializeSuite(suite))
+        suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s)
       };
       console.log(JSON.stringify(result, undefined, 2));
     });
   }
 
   private _serializeSuite(suite: Suite): any {
+    if (!suite.eachTest(test => true))
+      return null;
+    const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s);
     return {
       title: suite.title,
       file: suite.file,
       configuration: suite.configuration,
       tests: suite.tests.map(test => this._serializeTest(test)),
-      suites: suite.suites.map(suite => this._serializeSuite(suite))
+      suites: suites.length ? suites : undefined
     };
   }
 

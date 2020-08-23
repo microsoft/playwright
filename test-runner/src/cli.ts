@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
+import program from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import program from 'commander';
+import { collectTests, runTests, RunnerConfig } from '.';
 import { reporters } from './reporters';
-import { installTransform } from './transform';
-import { Runner } from './runner';
-import { TestCollector } from './testCollector';
-
-let beforeFunction;
-let afterFunction;
-let matrix = {};
-
-global['before'] = (fn => beforeFunction = fn);
-global['after'] = (fn => afterFunction = fn);
-global['matrix'] = (m => matrix = m);
 
 program
   .version('Version ' + /** @type {any} */ (require)('../package.json').version)
@@ -43,39 +33,32 @@ program
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', '10000')
   .option('-u, --update-snapshots', 'Use this flag to re-record every snapshot that fails during this test run')
   .action(async (command) => {
-    // Collect files]
     const testDir = path.resolve(process.cwd(), command.args[0]);
-    const files = collectFiles(testDir, '', command.args.slice(1));
-
-    const revertBabelRequire = installTransform();
-    let hasSetup = false;
-    try {
-      hasSetup = fs.statSync(path.join(testDir, 'setup.js')).isFile();
-    } catch (e) {
-    }
-    try {
-      hasSetup = hasSetup || fs.statSync(path.join(testDir, 'setup.ts')).isFile();
-    } catch (e) {
-    }
-
-    if (hasSetup)
-      require(path.join(testDir, 'setup'));
-    revertBabelRequire();
-
-    const testCollector = new TestCollector(files, matrix, {
-      forbidOnly: command.forbidOnly || undefined,
+    const config: RunnerConfig = {
+      debug: command.debug,
+      quiet: command.quiet,
       grep: command.grep,
+      jobs: command.jobs,
+      outputDir: command.output,
+      snapshotDir: path.join(testDir, '__snapshots__'),
+      testDir,
       timeout: command.timeout,
-    });
-    const rootSuite = testCollector.suite;
-    if (command.forbidOnly && testCollector.hasOnly()) {
-      console.error('=====================================');
-      console.error(' --forbid-only found a focused test.');
-      console.error('=====================================');
-      process.exit(1);
+      trialRun: command.trialRun,
+      updateSnapshots: command.updateSnapshots
+    };
+    const files = collectFiles(testDir, '', command.args.slice(1));
+    const suite = collectTests(config, files);
+    if (command.forbidOnly) {
+      const hasOnly = suite.eachTest(t => t.only) || suite.eachSuite(s => s.only);
+      if (hasOnly) {
+        console.error('=====================================');
+        console.error(' --forbid-only found a focused test.');
+        console.error('=====================================');
+        process.exit(1);
+      }
     }
 
-    const total = rootSuite.total();
+    const total = suite.total();
     if (!total) {
       console.error('=================');
       console.error(' no tests found.');
@@ -83,38 +66,15 @@ program
       process.exit(1);
     }
 
-    // Trial run does not need many workers, use one.
-    const jobs = (command.trialRun || command.debug) ? 1 : command.jobs;
-    const runner = new Runner(rootSuite, total, {
-      debug: command.debug,
-      quiet: command.quiet,
-      grep: command.grep,
-      jobs,
-      outputDir: command.output,
-      snapshotDir: path.join(testDir, '__snapshots__'),
-      testDir,
-      timeout: command.timeout,
-      trialRun: command.trialRun,
-      updateSnapshots: command.updateSnapshots
-    });
     const reporterFactory = reporters[command.reporter || 'dot'];
-    new reporterFactory(runner);
-
-    try {
-      if (beforeFunction)
-        await beforeFunction();
-      await runner.run();
-      await runner.stop();
-    } finally {
-      if (afterFunction)
-        await afterFunction();
-    }
-    process.exit(runner.stats.failures ? 1 : 0);
+    await runTests(config, suite, reporterFactory);
+    const hasFailures = suite.eachTest(t => t.error);
+    process.exit(hasFailures ? 1 : 0);
   });
 
 program.parse(process.argv);
 
-function collectFiles(testDir, dir, filters) {
+function collectFiles(testDir: string, dir: string, filters: string[]): string[] {
   const fullDir = path.join(testDir, dir);
   if (fs.statSync(fullDir).isFile())
     return [fullDir];
