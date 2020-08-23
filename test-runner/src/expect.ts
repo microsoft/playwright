@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import GoldenUtils from './GoldenUtils';
+import { compare } from './golden';
+import { RunnerConfig } from './runnerConfig';
 
 declare global {
   const expect: typeof import('expect');
@@ -28,16 +29,16 @@ declare module 'expect/build/types' {
 
 global['expect'] = require('expect');
 
-let relativeTestFile: string;
+let testFile: string;
 
-export function initializeImageMatcher(options) {
-  function toMatchImage(received, name, config) {
-    const { pass, message } = GoldenUtils.compare(received, name, { ...options, relativeTestFile, config });
+export function initializeImageMatcher(config: RunnerConfig) {
+  function toMatchImage(received: Buffer, name: string, options?: { threshold?: number }) {
+    const { pass, message } = compare(received, name, config, testFile, options);
     return { pass, message: () => message };
   };
   expect.extend({ toMatchImage });
 }
 
-export function setCurrentTestFile(testFile: string) {
-  relativeTestFile = testFile;
+export function setCurrentTestFile(file: string) {
+  testFile = file;
 }

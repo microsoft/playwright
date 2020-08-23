@@ -17,32 +17,29 @@
 import debug from 'debug';
 import { Test } from './test';
 
-declare global {
-  interface WorkerState {
-  }
+type Scope = 'test' | 'worker';
 
-  interface TestState {
-  }
+type FixtureRegistration = {
+  name: string;
+  scope: Scope;
+  fn: Function; 
+};
 
-  interface FixtureParameters {
-  }
-}
-
-const registrations = new Map();
-const registrationsByFile = new Map();
-export let parameters: FixtureParameters = {} as FixtureParameters;
+const registrations = new Map<string, FixtureRegistration>();
+const registrationsByFile = new Map<string, FixtureRegistration[]>();
+export let parameters: any = {};
 export const parameterRegistrations = new Map();
 
 export function setParameters(params: any) {
   parameters = Object.assign(parameters, params);
   for (const name of Object.keys(params))
-    registerWorkerFixture(name as keyof WorkerState, async ({}, test) => await test(parameters[name] as never));
+    registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
 }
 
 class Fixture<Config> {
   pool: FixturePool<Config>;
   name: string;
-  scope: string;
+  scope: Scope;
   fn: Function;
   deps: string[];
   usages: Set<string>;
@@ -53,7 +50,7 @@ class Fixture<Config> {
   _setup = false;
   _teardown = false;
 
-  constructor(pool: FixturePool<Config>, name: string, scope: string, fn: any) {
+  constructor(pool: FixturePool<Config>, name: string, scope: Scope, fn: any) {
     this.pool = pool;
     this.name = name;
     this.scope = scope;
@@ -137,7 +134,7 @@ export class FixturePool<Config> {
     }
   }
 
-  async resolveParametersAndRun(fn: (arg0: {}) => any, timeout: number, config: Config, test?: Test) {
+  async resolveParametersAndRun(fn: Function, timeout: number, config: Config, test?: Test) {
     const names = fixtureParameterNames(fn);
     for (const name of names)
       await this.setupFixture(name, config, test);
@@ -148,7 +145,7 @@ export class FixturePool<Config> {
     if (!timeout)
       return fn(params);
 
-    let timer;
+    let timer: NodeJS.Timer;
     let timerPromise = new Promise(f => timer = setTimeout(f, timeout));
     return Promise.race([
       Promise.resolve(fn(params)).then(() => clearTimeout(timer)),
@@ -169,9 +166,9 @@ export class FixturePool<Config> {
   }
 }
 
-export function fixturesForCallback(callback: any): string[] {
+export function fixturesForCallback(callback: Function): string[] {
   const names = new Set<string>();
-  const visit  = (callback: any) => {
+  const visit  = (callback: Function) => {
     for (const name of fixtureParameterNames(callback)) {
       if (name in names)
         continue;
@@ -189,7 +186,7 @@ export function fixturesForCallback(callback: any): string[] {
   return result;
 }
 
-function fixtureParameterNames(fn: { toString: () => any; }): string[] {
+function fixtureParameterNames(fn: Function): string[] {
   const text = fn.toString();
   const match = text.match(/async(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
   if (!match || !match[1].trim())
@@ -198,7 +195,7 @@ function fixtureParameterNames(fn: { toString: () => any; }): string[] {
   return signature.split(',').map((t: string) => t.trim());
 }
 
-function innerRegisterFixture(name: string, scope: string, fn: Function, caller: Function) {
+function innerRegisterFixture(name: string, scope: Scope, fn: Function, caller: Function) {
   const obj = {stack: ''};
   Error.captureStackTrace(obj, caller);
   const stackFrame = obj.stack.split('\n')[2];
@@ -211,20 +208,20 @@ function innerRegisterFixture(name: string, scope: string, fn: Function, caller:
   registrationsByFile.get(file).push(registration);
 };
 
-export function registerFixture<Config, T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, config: Config, test: Test) => Promise<void>) {
+export function registerFixture<Config>(name: string, fn: (params: any, runTest: (arg: any) => Promise<void>, config: Config, test: Test) => Promise<void>) {
   innerRegisterFixture(name, 'test', fn, registerFixture);
 };
 
-export function registerWorkerFixture<Config, T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: Config) => Promise<void>) {
+export function registerWorkerFixture<Config>(name: string, fn: (params: any, runTest: (arg: any) => Promise<void>, config: Config) => Promise<void>) {
   innerRegisterFixture(name, 'worker', fn, registerWorkerFixture);
 };
 
-export function registerParameter<T extends keyof WorkerState>(name: T, fn: () => WorkerState[T][]) {
-  registerWorkerFixture(name, async ({}: any, test: (arg0: any) => any) => await test(parameters[name]));
+export function registerParameter(name: string, fn: () => any) {
+  registerWorkerFixture(name, async ({}: any, test: Function) => await test(parameters[name]));
   parameterRegistrations.set(name, fn);
 }
 
-function collectRequires(file: string | number, result: Set<unknown>) {
+function collectRequires(file: string, result: Set<string>) {
   if (result.has(file))
     return;
   result.add(file);
@@ -236,8 +233,8 @@ function collectRequires(file: string | number, result: Set<unknown>) {
     collectRequires(dep, result);
 }
 
-export function lookupRegistrations(file: any, scope: any) {
-  const deps = new Set();
+export function lookupRegistrations(file: string, scope: Scope) {
+  const deps = new Set<string>();
   collectRequires(file, deps);
   const allDeps = [...deps].reverse();
   let result = new Map();
@@ -254,7 +251,7 @@ export function lookupRegistrations(file: any, scope: any) {
   return result;
 }
 
-export function rerunRegistrations(file: any, scope: any) {
+export function rerunRegistrations(file: string, scope: Scope) {
   // When we are running several tests in the same worker, we should re-run registrations before
   // each file. That way we erase potential fixture overrides from the previous test runs.
   for (const registration of lookupRegistrations(file, scope).values())
