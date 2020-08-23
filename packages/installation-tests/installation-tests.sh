@@ -49,6 +49,7 @@ function run_tests {
   test_playwright_global_installation
   test_playwright_global_installation_cross_package
   test_playwright_electron_should_work
+  test_electron_types
 }
 
 function test_typescript_types {
@@ -239,6 +240,16 @@ function test_playwright_electron_should_work {
   npm install electron@9.0
   copy_test_scripts
   xvfb-run --auto-servernum -- bash -c "node sanity-electron.js"
+}
+
+function test_electron_types {
+  initialize_test "${FUNCNAME[0]}"
+  npm install ${PLAYWRIGHT_ELECTRON_TGZ}
+  npm install electron@9.0
+  npm install -D typescript@3.8
+  npm install -D @types/node@10.17
+  echo "import { Page, electron, ElectronApplication, ElectronLauncher } from 'playwright-electron';" > "test.ts"
+  npx tsc "test.ts"
 }
 
 function initialize_test {

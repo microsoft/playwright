@@ -15,7 +15,7 @@
  */
 
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
-import { Electron, ElectronApplication, ElectronPage } from '../../server/electron';
+import { Electron, ElectronApplication, ElectronPage } from '../../server/electron/electron';
 import * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { PageDispatcher } from './pageDispatcher';
