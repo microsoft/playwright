@@ -24,8 +24,8 @@ import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
 import { assert, getFromENV } from '../utils/utils';
-import * as browserPaths from './browserPaths';
-import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths';
+import * as browserPaths from '../utils/browserPaths';
+import { BrowserName, BrowserPlatform, BrowserDescriptor } from '../utils/browserPaths';
 
 // `https-proxy-agent` v5 is written in Typescript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables

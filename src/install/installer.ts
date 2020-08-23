@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 import * as removeFolder from 'rimraf';
-import * as browserPaths from './browserPaths';
+import * as browserPaths from '../utils/browserPaths';
 import * as browserFetcher from './browserFetcher';
 import { getFromENV } from '../utils/utils';
 

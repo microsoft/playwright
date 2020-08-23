@@ -19,7 +19,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
 import { BrowserContext, verifyProxySettings, validateBrowserContextOptions } from '../browserContext';
-import * as browserPaths from '../install/browserPaths';
+import * as browserPaths from '../utils/browserPaths';
 import { ConnectionTransport, WebSocketTransport } from '../transport';
 import { BrowserOptions, Browser, BrowserProcess } from '../browser';
 import { launchProcess, Env, waitForLine, envArrayToObject } from './processLauncher';
