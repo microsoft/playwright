@@ -51,6 +51,7 @@ function specBuilder(modifiers, specCallback) {
 
 export function fixturesUI(suite: Suite, file: string, timeout: number): () => void {
   const suites = [suite];
+  suite.file = file;
 
   const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
     const suite = suites[0];
@@ -66,14 +67,13 @@ export function fixturesUI(suite: Suite, file: string, timeout: number): () => v
       test.pending = true;
     if (!only && specs.fail && specs.fail[0])
       test.pending = true;
-    test.pending = test.pending || suite.isPending();
-    suite.addTest(test);
+    suite._addTest(test);
     return test;
   });
 
   const describe = specBuilder(['skip', 'fail', 'only'], (specs, title, fn) => {
     const child = new Suite(title, suites[0]);
-    suites[0].addSuite(child);
+    suites[0]._addSuite(child);
     child.file = file;
     const only = specs.only && specs.only[0];
     if (only)

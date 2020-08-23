@@ -39,7 +39,15 @@ export class Test {
     this.fn = fn;
   }
 
-  clone(): Test {
+  titlePath(): string[] {
+    return [...this.suite.titlePath(), this.title];
+  }
+
+  fullTitle(): string {
+    return this.titlePath().join(' ');
+  }
+
+  _clone(): Test {
     const test = new Test(this.title, this.fn);
     test.suite = this.suite;
     test.only = this.only;
@@ -48,14 +56,6 @@ export class Test {
     test.timeout = this.timeout;
     test._overriddenFn = this._overriddenFn;
     return test;
-  }
-
-  titlePath(): string[] {
-    return [...this.suite.titlePath(), this.title];
-  }
-
-  fullTitle(): string {
-    return this.titlePath().join(' ');
   }
 }
 
@@ -91,20 +91,28 @@ export class Suite {
     return count;
   }
 
-  isPending(): boolean {
-    return this.pending || (this.parent && this.parent.isPending());
+  _isPending(): boolean {
+    return this.pending || (this.parent && this.parent._isPending());
   }
 
-  addTest(test: Test) {
+  _addTest(test: Test) {
     test.suite = this;
     this.tests.push(test);
     this._entries.push(test);
   }
 
-  addSuite(suite: Suite) {
+  _addSuite(suite: Suite) {
     suite.parent = this;
     this.suites.push(suite);
     this._entries.push(suite);
+  }
+
+  eachSuite(fn: (suite: Suite) => boolean | void): boolean {
+    for (const suite of this.suites) {
+      if (suite.eachSuite(fn))
+        return true;
+    }
+    return false;
   }
 
   eachTest(fn: (test: Test) => boolean | void): boolean {
@@ -119,7 +127,7 @@ export class Suite {
     return false;
   }
 
-  clone(): Suite {
+  _clone(): Suite {
     const suite = new Suite(this.title);
     suite.only = this.only;
     suite.file = this.file;

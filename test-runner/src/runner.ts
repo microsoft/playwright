@@ -36,7 +36,7 @@ export class Runner extends EventEmitter {
   readonly _config: RunnerConfig;
   private _suite: Suite;
 
-  constructor(suite: Suite, total: number, config: RunnerConfig) {
+  constructor(suite: Suite, config: RunnerConfig) {
     super();
 
     this._config = config;
@@ -68,6 +68,7 @@ export class Runner extends EventEmitter {
     });
 
     if (process.stdout.isTTY) {
+      const total = suite.total();
       console.log();
       const jobs = Math.min(config.jobs, this._testsByConfiguredFile.size);
       console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${jobs} worker${ jobs > 1 ? 's' : ''}`);
