@@ -14,15 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-const path = require('path');
-const fs = require('fs');
-const Diff = require('text-diff');
-const PNG = require('pngjs').PNG;
-const jpeg = require('jpeg-js');
-const pixelmatch = require('pixelmatch');
-const c = require('colors/safe');
-
-module.exports = {compare};
+import c from 'colors/safe';
+import fs from 'fs';
+import jpeg from 'jpeg-js';
+import path from 'path';
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
+import Diff from 'text-diff';
+import { RunnerConfig } from './runnerConfig';
 
 const extensionToMimeType = {
   'png': 'image/png',
@@ -37,14 +36,7 @@ const GoldenComparators = {
   'text/plain': compareText
 };
 
-
-/**
- * @param {?Object} actualBuffer
- * @param {!Buffer} expectedBuffer
- * @param {!string} mimeType
- * @return {?{diff?: Object, errorMessage?: string}}
- */
-function compareImages(actualBuffer, expectedBuffer, mimeType, config = {}) {
+function compareImages(actualBuffer: Buffer, expectedBuffer: Buffer, mimeType: string, options = {}): { diff?: object; errorMessage?: string; } | null {
   if (!actualBuffer || !(actualBuffer instanceof Buffer))
     return { errorMessage: 'Actual result should be Buffer.' };
 
@@ -56,16 +48,11 @@ function compareImages(actualBuffer, expectedBuffer, mimeType, config = {}) {
     };
   }
   const diff = new PNG({width: expected.width, height: expected.height});
-  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, {threshold: 0.2, ...config});
+  const count = pixelmatch(expected.data, actual.data, diff.data, expected.width, expected.height, { threshold: 0.2, ...options });
   return count > 0 ? { diff: PNG.sync.write(diff) } : null;
 }
 
-/**
- * @param {?Object} actual
- * @param {!Buffer} expectedBuffer
- * @return {?{diff?: Object, errorMessage?: string, diffExtension?: string}}
- */
-function compareText(actual, expectedBuffer) {
+function compareText(actual: Buffer, expectedBuffer: Buffer): { diff?: object; errorMessage?: string; diffExtension?: string; } | null {
   if (typeof actual !== 'string')
     return { errorMessage: 'Actual result should be string' };
   const expected = expectedBuffer.toString('utf-8');
@@ -83,19 +70,14 @@ function compareText(actual, expectedBuffer) {
   };
 }
 
-/**
- * @param {?Object} actual
- * @param {string} name
- * @return {!{pass: boolean, message?: string}}
- */
-function compare(actual, name, options) {
-  const { relativeTestFile, snapshotDir, outputDir, updateSnapshots } = options;
-  let expectedPath;
+export function compare(actual: Buffer, name: string, config: RunnerConfig, testFile: string, options?: { threshold?: number } ): { pass: boolean; message?: string; } {
+  let expectedPath: string;
+  const relativeTestFile = path.relative(config.testDir, testFile);
   const testAssetsDir = relativeTestFile.replace(/\.spec\.[jt]s/, '');
   if (path.isAbsolute(name))
     expectedPath = name;
   else
-    expectedPath = path.join(snapshotDir, testAssetsDir, name);
+    expectedPath = path.join(config.snapshotDir, testAssetsDir, name);
   if (!fs.existsSync(expectedPath)) {
     fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
     fs.writeFileSync(expectedPath, actual);
@@ -115,11 +97,11 @@ function compare(actual, name, options) {
     };
   }
 
-  const result = comparator(actual, expected, mimeType, options.config);
+  const result = comparator(actual, expected, mimeType, options);
   if (!result)
     return { pass: true };
 
-  if (updateSnapshots) {
+  if (config.updateSnapshots) {
     fs.mkdirSync(path.dirname(expectedPath), { recursive: true });
     fs.writeFileSync(expectedPath, actual);
     return {
@@ -134,7 +116,7 @@ function compare(actual, name, options) {
     actualPath = addSuffix(expectedPath, '-actual');
     diffPath = addSuffix(expectedPath, '-diff', result.diffExtension);
   } else {
-    const outputPath = path.join(outputDir, testAssetsDir, name);
+    const outputPath = path.join(config.outputDir, testAssetsDir, name);
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
     const expectedPathOut = addSuffix(outputPath, '-expected');
     actualPath = addSuffix(outputPath, '-actual');
@@ -162,13 +144,7 @@ function compare(actual, name, options) {
   };
 }
 
-/**
- * @param {string} filePath
- * @param {string} suffix
- * @param {string=} customExtension
- * @return {string}
- */
-function addSuffix(filePath, suffix, customExtension) {
+function addSuffix(filePath: string, suffix: string, customExtension?: string): string {
   const dirname = path.dirname(filePath);
   const ext = path.extname(filePath);
   const name = path.basename(filePath, ext);

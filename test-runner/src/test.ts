@@ -29,8 +29,6 @@ export class Test {
   error: any;
 
   _ordinal: number;
-  _configurationObject: Configuration;
-  _configurationString: string;
   _overriddenFn: Function;
   _startTime: number;
 
@@ -68,6 +66,7 @@ export class Suite {
   pending = false;
   file: string;
   configuration: Configuration;
+  _configurationString: string;
 
   _hooks: { type: string, fn: Function } [] = [];
   _entries: (Suite | Test)[] = [];

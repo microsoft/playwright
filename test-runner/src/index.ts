@@ -30,6 +30,17 @@ export { parameters, registerParameter } from './fixtures';
 export { RunnerConfig } from './runnerConfig';
 export { Suite, Test } from './test';
 
+declare global {
+  interface WorkerState {
+  }
+
+  interface TestState {
+  }
+
+  interface FixtureParameters {
+  }
+}
+
 let beforeFunctions: Function[] = [];
 let afterFunctions: Function[] = [];
 let matrix: Matrix = {};
@@ -39,11 +50,11 @@ global['after'] = (fn: Function) => afterFunctions.push(fn);
 global['matrix'] = (m: Matrix) => matrix = m;
 
 export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, config: RunnerConfig, test: Test) => Promise<void>) {
-  registerFixtureT<RunnerConfig, T>(name, fn);
+  registerFixtureT<RunnerConfig>(name, fn);
 };
 
 export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: RunnerConfig) => Promise<void>) {
-  registerWorkerFixtureT<RunnerConfig, T>(name, fn);
+  registerWorkerFixtureT<RunnerConfig>(name, fn);
 };
 
 export function collectTests(config: RunnerConfig, files: string[]): Suite {

@@ -19,7 +19,7 @@ import crypto from 'crypto';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { lookupRegistrations, FixturePool } from './fixtures';
-import { Suite } from './test';
+import { Suite, Test, Configuration } from './test';
 import { TestRunnerEntry } from './testRunner';
 import { RunnerConfig } from './runnerConfig';
 
@@ -29,8 +29,7 @@ export class Runner extends EventEmitter {
   private _workerClaimers: (() => void)[] = [];
   stats: { duration: number; failures: number; passes: number; pending: number; tests: number; };
 
-  private _testById = new Map<any, any>();
-  private _testsByConfiguredFile = new Map<any, any>();
+  private _testById = new Map<string, Test>();
   private _queue: TestRunnerEntry[] = [];
   private _stopCallback: () => void;
   readonly _config: RunnerConfig;
@@ -48,37 +47,34 @@ export class Runner extends EventEmitter {
       tests: 0,
     };
 
-    this._testById = new Map();
-    this._testsByConfiguredFile = new Map();
     this._suite = suite;
-    this._suite.eachTest(test => {
-      const configuredFile = `${test.file}::[${test._configurationString}]`;
-      if (!this._testsByConfiguredFile.has(configuredFile)) {
-        this._testsByConfiguredFile.set(configuredFile, {
-          file: test.file,
-          configuredFile,
-          ordinals: [],
-          configurationObject: test._configurationObject,
-          configurationString: test._configurationString
-        });
-      }
-      const { ordinals } = this._testsByConfiguredFile.get(configuredFile);
-      ordinals.push(test._ordinal);
-      this._testById.set(`${test._ordinal}@${configuredFile}`, test);
-    });
+    for (const suite of this._suite.suites) {
+      suite.eachTest(test => {
+        this._testById.set(`${test._ordinal}@${suite.file}::[${suite._configurationString}]`, test);
+      });
+    }
 
     if (process.stdout.isTTY) {
       const total = suite.total();
       console.log();
-      const jobs = Math.min(config.jobs, this._testsByConfiguredFile.size);
+      const jobs = Math.min(config.jobs, suite.suites.length);
       console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${jobs} worker${ jobs > 1 ? 's' : ''}`);
     }
   }
 
-  _filesSortedByWorkerHash() {
-    const result = [];
-    for (const entry of this._testsByConfiguredFile.values())
-      result.push({ ...entry, hash: entry.configurationString + '@' + computeWorkerHash(entry.file) });
+  _filesSortedByWorkerHash(): TestRunnerEntry[] {
+    const result: TestRunnerEntry[] = [];
+    for (const suite of this._suite.suites) {
+      const ordinals: number[] = [];
+      suite.eachTest(test => ordinals.push(test._ordinal) && false);
+      result.push({
+        ordinals,
+        file: suite.file,
+        configuration: suite.configuration,
+        configurationString: suite._configurationString,
+        hash: suite._configurationString + '@' + computeWorkerHash(suite.file)
+      });
+    }
     result.sort((a, b) => a.hash < b.hash ? -1 : (a.hash === b.hash ? 0 : 1));
     return result;
   }
@@ -258,7 +254,7 @@ class OopWorker extends Worker {
     await new Promise(f => this.process.once('message', f));  // Ready ack
   }
 
-  run(entry) {
+  run(entry: TestRunnerEntry) {
     this.hash = entry.hash;
     this.process.send({ method: 'run', params: { entry, config: this.runner._config } });
   }
@@ -316,13 +312,13 @@ class InProcessWorker extends Worker {
   }
 }
 
-function chunkFromParams(params) {
+function chunkFromParams(params: string | { buffer: string }): string | Buffer {
   if (typeof params === 'string')
     return params;
   return Buffer.from(params.buffer, 'base64');
 }
 
-function computeWorkerHash(file) {
+function computeWorkerHash(file: string) {
   // At this point, registrationsByFile contains all the files with worker fixture registrations.
   // For every test, build the require closure and map each file to fixtures declared in it.
   // This collection of fixtures is the fingerprint of the worker setup, a "worker hash".
@@ -332,5 +328,3 @@ function computeWorkerHash(file) {
     hash.update(registration.location);
   return hash.digest('hex');
 }
-
-module.exports = { Runner };

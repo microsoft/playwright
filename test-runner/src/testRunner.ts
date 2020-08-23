@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { FixturePool, rerunRegistrations, setParameters } from './fixtures';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
-import { Test, Suite } from './test';
+import { Test, Suite, Configuration } from './test';
 import { fixturesUI } from './fixturesUI';
 import { RunnerConfig } from './runnerConfig';
 
@@ -27,8 +26,8 @@ export const fixturePool = new FixturePool<RunnerConfig>();
 export type TestRunnerEntry = {
   file: string;
   ordinals: number[];
-  configuredFile: string;
-  configurationObject: any;
+  configurationString: string;
+  configuration: Configuration;
   hash: string;
 };
 
@@ -53,11 +52,11 @@ export class TestRunner extends EventEmitter {
     this._trialRun = config.trialRun;
     this._timeout = config.timeout;
     this._config = config;
-    this._configuredFile = entry.configuredFile;
-    for (const {name, value} of entry.configurationObject)
+    this._configuredFile = entry.file + `::[${entry.configurationString}]`;
+    for (const {name, value} of entry.configuration)
       this._parsedGeneratorConfiguration[name] = value;
     this._parsedGeneratorConfiguration['parallelIndex'] = workerId;
-    setCurrentTestFile(path.relative(config.testDir, this._file));
+    setCurrentTestFile(this._file);
   }
 
   stop() {

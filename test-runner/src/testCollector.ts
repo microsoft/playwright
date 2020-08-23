@@ -16,7 +16,7 @@
 
 import path from 'path';
 import { fixturesForCallback } from './fixtures';
-import { Configuration, Test, Suite } from './test';
+import { Test, Suite } from './test';
 import { fixturesUI } from './fixturesUI';
 import { RunnerConfig } from './runnerConfig';
 
@@ -51,7 +51,7 @@ export class TestCollector {
     return this._hasOnly;
   }
 
-  _addFile(file: string) {
+  private _addFile(file: string) {
     const suite = new Suite('');
     const revertBabelRequire = fixturesUI(suite, file, this._config.timeout);
     require(file);
@@ -83,35 +83,36 @@ export class TestCollector {
       if (!generatorConfigurations.length)
         generatorConfigurations.push([]);
 
-      for (const configurationObject of generatorConfigurations) {
+      for (const configuration of generatorConfigurations) {
         // Serialize configuration as readable string, we will use it as a hash.
         const tokens = [];
-        for (const { name, value } of configurationObject)
+        for (const { name, value } of configuration)
           tokens.push(`${name}=${value}`);
         const configurationString = tokens.join(', ');
         // Allocate worker for this configuration, add test into it.
         if (!workerGeneratorConfigurations.has(configurationString))
-          workerGeneratorConfigurations.set(configurationString, { configurationObject, configurationString, tests: new Set() });
+          workerGeneratorConfigurations.set(configurationString, { configuration, configurationString, tests: new Set() });
         workerGeneratorConfigurations.get(configurationString).tests.add(test);
       }
     });
 
     // Clone the suite as many times as there are worker hashes.
     // Only include the tests that requested these generations.
-    for (const [hash, {configurationObject, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
-      const clone = this._cloneSuite(suite, configurationObject, configurationString, tests);
+    for (const [hash, {configuration, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
+      const clone = this._cloneSuite(suite, tests);
       this.suite._addSuite(clone);
       clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '');
+      clone.configuration = configuration;
+      clone._configurationString = configurationString;
     }
   }
 
-  _cloneSuite(suite: Suite, configurationObject: Configuration, configurationString: string, tests: Set<Test>) {
+  private _cloneSuite(suite: Suite, tests: Set<Test>) {
     const copy = suite._clone();
     copy.only = suite.only;
-    copy.configuration = configurationObject;
     for (const entry of suite._entries) {
       if (entry instanceof Suite) {
-        copy._addSuite(this._cloneSuite(entry, configurationObject, configurationString, tests));
+        copy._addSuite(this._cloneSuite(entry, tests));
       } else {
         const test = entry;
         if (!tests.has(test))
@@ -121,15 +122,13 @@ export class TestCollector {
         const testCopy = test._clone();
         testCopy.only = test.only;
         testCopy._ordinal = test._ordinal;
-        testCopy._configurationObject = configurationObject;
-        testCopy._configurationString = configurationString;
         copy._addTest(testCopy);
       }
     }
     return copy;
   }
 
-  _filterOnly(suite) {
+  private _filterOnly(suite) {
     const onlySuites = suite.suites.filter(child => this._filterOnly(child) || child.only);
     const onlyTests = suite.tests.filter(test => test.only);
     if (onlySuites.length || onlyTests.length) {
@@ -140,5 +139,3 @@ export class TestCollector {
     return false;
   }
 }
-
-module.exports = { TestCollector };
