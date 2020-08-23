@@ -17,7 +17,7 @@
 import path from 'path';
 import { fixturesForCallback } from './fixtures';
 import { Test, Suite } from './test';
-import { fixturesUI } from './fixturesUI';
+import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
 
 export type Matrix = {
@@ -53,7 +53,7 @@ export class TestCollector {
 
   private _addFile(file: string) {
     const suite = new Suite('');
-    const revertBabelRequire = fixturesUI(suite, file, this._config.timeout);
+    const revertBabelRequire = spec(suite, file, this._config.timeout);
     require(file);
     revertBabelRequire();
     suite._renumber();

@@ -49,7 +49,7 @@ function specBuilder(modifiers, specCallback) {
   return builder({}, null);
 }
 
-export function fixturesUI(suite: Suite, file: string, timeout: number): () => void {
+export function spec(suite: Suite, file: string, timeout: number): () => void {
   const suites = [suite];
   suite.file = file;
 

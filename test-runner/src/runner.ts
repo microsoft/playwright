@@ -19,11 +19,12 @@ import crypto from 'crypto';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { lookupRegistrations, FixturePool } from './fixtures';
-import { Suite, Test, Configuration } from './test';
+import { Suite, Test } from './test';
 import { TestRunnerEntry } from './testRunner';
 import { RunnerConfig } from './runnerConfig';
+import { Reporter } from './reporter';
 
-export class Runner extends EventEmitter {
+export class Runner {
   private _workers = new Set<Worker>();
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
@@ -34,11 +35,11 @@ export class Runner extends EventEmitter {
   private _stopCallback: () => void;
   readonly _config: RunnerConfig;
   private _suite: Suite;
+  private _reporter: Reporter;
 
-  constructor(suite: Suite, config: RunnerConfig) {
-    super();
-
+  constructor(suite: Suite, config: RunnerConfig, reporter: Reporter) {
     this._config = config;
+    this._reporter = reporter;
     this.stats = {
       duration: 0,
       failures: 0,
@@ -80,12 +81,12 @@ export class Runner extends EventEmitter {
   }
 
   async run() {
-    this.emit('begin', { config: this._config, suite: this._suite });
+    this._reporter.onBegin(this._config, this._suite);
     this._queue = this._filesSortedByWorkerHash();
     // Loop in case job schedules more jobs
     while (this._queue.length)
       await this._dispatchQueue();
-    this.emit('end', {});
+    this._reporter.onEnd();
   }
 
   async _dispatchQueue() {
@@ -146,16 +147,16 @@ export class Runner extends EventEmitter {
     const worker = this._config.debug ? new InProcessWorker(this) : new OopWorker(this);
     worker.on('test', params => {
       ++this.stats.tests;
-      this.emit('test', this._updateTest(params.test));
+      this._reporter.onTest(this._updateTest(params.test));
     });
     worker.on('pending', params => {
       ++this.stats.tests;
       ++this.stats.pending;
-      this.emit('pending', this._updateTest(params.test));
+      this._reporter.onPending(this._updateTest(params.test));
     });
     worker.on('pass', params => {
       ++this.stats.passes;
-      this.emit('pass', this._updateTest(params.test));
+      this._reporter.onPass(this._updateTest(params.test));
     });
     worker.on('fail', params => {
       ++this.stats.failures;
@@ -165,7 +166,7 @@ export class Runner extends EventEmitter {
       const err = worker.takeErr();
       if (err.length)
         params.test.error.stack += '\n\x1b[33mstderr: ' + err.join('\n') + '\x1b[0m';
-      this.emit('fail', this._updateTest(params.test));
+        this._reporter.onFail(this._updateTest(params.test));
     });
     worker.on('exit', () => {
       this._workers.delete(worker);

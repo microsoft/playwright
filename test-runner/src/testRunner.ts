@@ -18,7 +18,7 @@ import { FixturePool, rerunRegistrations, setParameters } from './fixtures';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
 import { Test, Suite, Configuration } from './test';
-import { fixturesUI } from './fixturesUI';
+import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
 
 export const fixturePool = new FixturePool<RunnerConfig>();
@@ -67,7 +67,7 @@ export class TestRunner extends EventEmitter {
     setParameters(this._parsedGeneratorConfiguration);
 
     const suite = new Suite('');
-    const revertBabelRequire = fixturesUI(suite, this._file, this._timeout);
+    const revertBabelRequire = spec(suite, this._file, this._timeout);
     require(this._file);
     revertBabelRequire();
     suite._renumber();

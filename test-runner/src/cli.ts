@@ -18,7 +18,15 @@ import program from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import { collectTests, runTests, RunnerConfig } from '.';
-import { reporters } from './reporters';
+import { DotReporter } from './reporters/dot';
+import { ListReporter } from './reporters/list';
+import { JSONReporter } from './reporters/json';
+
+export const reporters = {
+  'dot': DotReporter,
+  'list': ListReporter,
+  'json': JSONReporter
+};
 
 program
   .version('Version ' + /** @type {any} */ (require)('../package.json').version)
@@ -66,8 +74,8 @@ program
       process.exit(1);
     }
 
-    const reporterFactory = reporters[command.reporter || 'dot'];
-    await runTests(config, suite, reporterFactory);
+    const reporter = new (reporters[command.reporter || 'dot'])();
+    await runTests(config, suite, reporter);
     const hasFailures = suite.eachTest(t => t.error);
     process.exit(hasFailures ? 1 : 0);
   });
