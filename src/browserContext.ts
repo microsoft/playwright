@@ -27,7 +27,7 @@ import { Download } from './download';
 import { Browser } from './browser';
 import { EventEmitter } from 'events';
 import { Progress } from './progress';
-import { DebugController } from './debug/debugController';
+import { DebugController } from './server/debug/debugController';
 import { isDebugMode } from './utils/utils';
 
 export class Screencast {

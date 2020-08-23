@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import * as types from '../types';
+import type * as types from '../../types';
 import { createAttributeEngine } from './attributeSelectorEngine';
 import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector } from '../common/selectorParser';
-import { FatalDOMError } from '../common/domErrors';
+import { ParsedSelector } from '../../common/selectorParser';
+import { FatalDOMError } from '../../common/domErrors';
 
 type Predicate<T> = (progress: types.InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 

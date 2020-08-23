@@ -15,7 +15,7 @@
  */
 
 import { ConsoleAPI } from './consoleApi';
-import InjectedScript from '../../injected/injectedScript';
+import type InjectedScript from '../../injected/injectedScript';
 
 export default class DebugScript {
   consoleAPI: ConsoleAPI | undefined;

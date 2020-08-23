@@ -38,9 +38,9 @@ module.exports = {
   output: {
     libraryTarget: 'var',
     filename: 'debugScriptSource.js',
-    path: path.resolve(__dirname, '../../../lib/injected/packed')
+    path: path.resolve(__dirname, '../../../../lib/server/injected/packed')
   },
   plugins: [
-    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'debugScriptSource.ts')),
+    new InlineSource(path.join(__dirname, '..', '..', '..', 'generated', 'debugScriptSource.ts')),
   ]
 };
