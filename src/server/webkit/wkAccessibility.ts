@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import * as accessibility from '../accessibility';
+import * as accessibility from '../../accessibility';
 import { WKSession } from './wkConnection';
 import { Protocol } from './protocol';
-import * as dom from '../dom';
-import * as types from '../types';
+import * as dom from '../../dom';
+import * as types from '../../types';
 
 export async function getAccessibilityTree(session: WKSession, needle?: dom.ElementHandle) {
   const objectId = needle ? needle._objectId : undefined;

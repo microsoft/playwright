@@ -29,7 +29,7 @@ async function generateChromiumProtocol(executablePath) {
 }
 
 async function generateWebKitProtocol(folderPath) {
-  const outputPath = path.join(__dirname, '..', '..', 'src', 'webkit', 'protocol.ts');
+  const outputPath = path.join(__dirname, '..', '..', 'src', 'server', 'webkit', 'protocol.ts');
   const json = JSON.parse(await fs.promises.readFile(path.join(folderPath, '..', 'protocol.json'), 'utf8'));
   await fs.promises.writeFile(outputPath, jsonToTS({domains: json}));
   console.log(`Wrote protocol.ts for WebKit to ${path.relative(process.cwd(), outputPath)}`);

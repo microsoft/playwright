@@ -15,7 +15,7 @@
  */
 
 import { Chromium } from './chromium/chromium';
-import { WebKit } from './webkit';
+import { WebKit } from './webkit/webkit';
 import { Firefox } from './firefox';
 import { selectors } from '../selectors';
 import * as browserPaths from '../utils/browserPaths';

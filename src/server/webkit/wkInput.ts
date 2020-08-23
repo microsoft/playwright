@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import * as input from '../input';
-import * as types from '../types';
-import { macEditingCommands } from '../macEditingCommands';
+import * as input from '../../input';
+import * as types from '../../types';
+import { macEditingCommands } from '../../macEditingCommands';
 import { WKSession } from './wkConnection';
-import { isString } from '../utils/utils';
+import { isString } from '../../utils/utils';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
   // From Source/WebKit/Shared/WebEvent.h

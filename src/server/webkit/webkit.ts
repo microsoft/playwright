@@ -16,14 +16,14 @@
  */
 
 import { WKBrowser } from '../webkit/wkBrowser';
-import { Env } from './processLauncher';
+import { Env } from '../processLauncher';
 import * as path from 'path';
-import { kBrowserCloseMessageId } from '../webkit/wkConnection';
-import { BrowserTypeBase } from './browserType';
-import { ConnectionTransport } from '../transport';
-import { BrowserOptions } from '../browser';
-import { BrowserDescriptor } from '../utils/browserPaths';
-import * as types from '../types';
+import { kBrowserCloseMessageId } from './wkConnection';
+import { BrowserTypeBase } from '../browserType';
+import { ConnectionTransport } from '../../transport';
+import { BrowserOptions } from '../../browser';
+import { BrowserDescriptor } from '../../utils/browserPaths';
+import * as types from '../../types';
 
 export class WebKit extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {
