@@ -7,7 +7,7 @@ lib/
 *.js
 src/generated/*
 src/server/chromium/protocol.ts
-src/firefox/protocol.ts
+src/server/firefox/protocol.ts
 src/server/webkit/protocol.ts
 /types/*
 /index.d.ts

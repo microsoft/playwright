@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-import { Browser, BrowserOptions } from '../browser';
-import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { helper, RegisteredListener } from '../helper';
-import { assert } from '../utils/utils';
-import * as network from '../network';
-import { Page, PageBinding } from '../page';
-import { ConnectionTransport } from '../transport';
-import * as types from '../types';
+import { Browser, BrowserOptions } from '../../browser';
+import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../../browserContext';
+import { helper, RegisteredListener } from '../../helper';
+import { assert } from '../../utils/utils';
+import * as network from '../../network';
+import { Page, PageBinding } from '../../page';
+import { ConnectionTransport } from '../../transport';
+import * as types from '../../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';

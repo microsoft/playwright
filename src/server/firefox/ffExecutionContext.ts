@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import * as js from '../javascript';
+import * as js from '../../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
-import * as sourceMap from '../utils/sourceMap';
-import { rewriteErrorMessage } from '../utils/stackTrace';
-import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
+import * as sourceMap from '../../utils/sourceMap';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { parseEvaluationResultValue } from '../../common/utilityScriptSerializers';
 
 export class FFExecutionContext implements js.ExecutionContextDelegate {
   _session: FFSession;
