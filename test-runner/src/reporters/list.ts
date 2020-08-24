@@ -19,7 +19,7 @@ import { BaseReporter } from './base';
 import { RunnerConfig } from '../runnerConfig';
 import { Suite, Test } from '../test';
 
-export class ListReporter extends BaseReporter {
+class ListReporter extends BaseReporter {
   _failure = 0;
 
   onBegin(config: RunnerConfig, suite: Suite) {
@@ -58,3 +58,5 @@ export class ListReporter extends BaseReporter {
     this.epilogue();
   }
 }
+
+export default ListReporter;

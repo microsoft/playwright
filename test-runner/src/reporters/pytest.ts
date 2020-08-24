@@ -38,7 +38,7 @@ type Row = {
 
 const statusRows = 2;
 
-export class PytestReporter extends BaseReporter {
+class PytestReporter extends BaseReporter {
   private _rows = new Map<string, Row>();
   private _suiteIds = new Map<Suite, string>();
   private _lastOrdinal = 0;
@@ -197,7 +197,6 @@ export class PytestReporter extends BaseReporter {
       }
       bars.push(bar);
     }
-    const barLength = length * worked / total | 0;
     return '[' + bars.join('') + '] ' + worked + '/' + total;
   }
 }
@@ -242,3 +241,5 @@ class Throttler {
     this._callback();
   }
 }
+
+export default PytestReporter;

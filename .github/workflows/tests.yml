@@ -37,16 +37,22 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 && npm run coverage"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --reporter=dot,json && npm run coverage"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
+        PWRUNNER_JSON_REPORT: "test-results.json"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results.json
+        path: test-results.json
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -68,11 +74,12 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000
+    - run: node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --reporter=dot,json
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
+        PWRUNNER_JSON_REPORT: "test-results.json"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -83,6 +90,11 @@ jobs:
       with:
         name: ${{ matrix.browser }}-mac-testrun.log
         path: testrun.log
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-mac-test-results.json
+        path: test-results.json
 
   test_win:
     name: "Windows"
@@ -102,12 +114,13 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000
+    - run: node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --reporter=dot,json
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
+        PWRUNNER_JSON_REPORT: "test-results.json"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
@@ -118,6 +131,11 @@ jobs:
       with:
         name: ${{ matrix.browser }}-win-testrun.log
         path: testrun.log
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: ${{ matrix.browser }}-win-test-results.json
+        path: test-results.json
 
   test-package-installations:
     runs-on: ubuntu-latest
@@ -159,17 +177,23 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --reporter=dot,json"
       if: ${{ always() }}
       env:
         BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
         DEBUG_FILE: "testrun.log"
+        PWRUNNER_JSON_REPORT: "test-results.json"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: headful-${{ matrix.browser }}-linux-test-results
         path: test-results
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: headful-${{ matrix.browser }}-linux-test-results.json
+        path: test-results.json
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -197,17 +221,23 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --reporter=dot,json"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
         PWWIRE: true
+        PWRUNNER_JSON_REPORT: "test-results.json"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:
         name: wire-${{ matrix.browser }}-linux-test-results
         path: test-results
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: wire-${{ matrix.browser }}-linux-test-results.json
+        path: test-results.json
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:

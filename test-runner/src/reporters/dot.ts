@@ -18,7 +18,7 @@ import colors from 'colors/safe';
 import { BaseReporter } from './base';
 import { Test } from '../test';
 
-export class DotReporter extends BaseReporter {  
+class DotReporter extends BaseReporter {
   onPending(test: Test) {
     super.onPending(test);
     process.stdout.write(colors.yellow('∘'))
@@ -43,3 +43,5 @@ export class DotReporter extends BaseReporter {
     this.epilogue();
   }
 }
+
+export default DotReporter;

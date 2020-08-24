@@ -16,15 +16,20 @@
 
 import { BaseReporter } from './base';
 import { Suite, Test } from '../test';
+import * as fs from 'fs';
 
-export class JSONReporter extends BaseReporter {
+class JSONReporter extends BaseReporter {
   onEnd() {
     super.onEnd();
     const result = {
       config: this.config,
       suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s)
     };
-    console.log(JSON.stringify(result, undefined, 2));
+    const report = JSON.stringify(result, undefined, 2);
+    if (process.env.PWRUNNER_JSON_REPORT)
+      fs.writeFileSync(process.env.PWRUNNER_JSON_REPORT, report);
+    else
+      console.log(report);
   }
 
   private _serializeSuite(suite: Suite): any {
@@ -53,3 +58,5 @@ export class JSONReporter extends BaseReporter {
     };
   }
 }
+
+export default JSONReporter;
