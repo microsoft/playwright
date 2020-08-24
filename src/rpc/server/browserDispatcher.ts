@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Browser } from '../../browser';
+import { Browser } from '../../server/browser';
 import * as channels from '../../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';

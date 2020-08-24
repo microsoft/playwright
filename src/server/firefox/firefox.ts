@@ -22,10 +22,10 @@ import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserTypeBase } from '../browserType';
 import { Env } from '../processLauncher';
-import { ConnectionTransport } from '../../transport';
-import { BrowserOptions } from '../../browser';
+import { ConnectionTransport } from '../transport';
+import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../../utils/browserPaths';
-import * as types from '../../types';
+import * as types from '../types';
 
 export class Firefox extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {

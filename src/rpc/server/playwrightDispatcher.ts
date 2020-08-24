@@ -21,7 +21,7 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 import { Electron } from '../../server/electron/electron';
 import { ElectronDispatcher } from './electronDispatcher';
-import { DeviceDescriptors } from '../../deviceDescriptors';
+import { DeviceDescriptors } from '../../server/deviceDescriptors';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {

@@ -17,7 +17,7 @@
 
 import * as WebSocket from 'ws';
 import { Progress } from './progress';
-import { makeWaitForNextTask } from './utils/utils';
+import { makeWaitForNextTask } from '../utils/utils';
 
 export type ProtocolRequest = {
   id: number;

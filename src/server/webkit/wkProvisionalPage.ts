@@ -16,7 +16,7 @@
 
 import { WKSession } from './wkConnection';
 import { WKPage } from './wkPage';
-import { RegisteredListener, helper } from '../../helper';
+import { RegisteredListener, helper } from '../helper';
 import { Protocol } from './protocol';
 import { assert } from '../../utils/utils';
 

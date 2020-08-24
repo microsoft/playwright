@@ -21,7 +21,7 @@ import * as input from './input';
 import * as js from './javascript';
 import * as network from './network';
 import { Screenshotter } from './screenshotter';
-import { TimeoutSettings } from './utils/timeoutSettings';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
@@ -29,8 +29,8 @@ import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
 import { Progress, runAbortableTask } from './progress';
-import { assert, isError } from './utils/utils';
-import { debugLogger } from './utils/debugLogger';
+import { assert, isError } from '../utils/utils';
+import { debugLogger } from '../utils/debugLogger';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;

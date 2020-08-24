@@ -20,10 +20,10 @@ import { Env } from '../processLauncher';
 import * as path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserTypeBase } from '../browserType';
-import { ConnectionTransport } from '../../transport';
-import { BrowserOptions } from '../../browser';
+import { ConnectionTransport } from '../transport';
+import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../../utils/browserPaths';
-import * as types from '../../types';
+import * as types from '../types';
 
 export class WebKit extends BrowserTypeBase {
   constructor(packagePath: string, browser: BrowserDescriptor) {

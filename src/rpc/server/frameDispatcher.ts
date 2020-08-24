@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Frame, NavigationEvent } from '../../frames';
+import { Frame, NavigationEvent } from '../../server/frames';
 import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';

@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener } from '../../helper';
+import { helper, RegisteredListener } from '../helper';
 import { FFSession } from './ffConnection';
-import { Page } from '../../page';
-import * as network from '../../network';
-import * as frames from '../../frames';
-import * as types from '../../types';
+import { Page } from '../page';
+import * as network from '../network';
+import * as frames from '../frames';
+import * as types from '../types';
 import { Protocol } from './protocol';
 
 export class FFNetworkManager {

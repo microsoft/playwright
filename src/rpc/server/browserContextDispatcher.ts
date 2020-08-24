@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
+import { BrowserContext } from '../../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import * as channels from '../../protocol/channels';

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../../browserContext';
-import { Frame } from '../../frames';
-import { Request } from '../../network';
-import { Page, Worker } from '../../page';
+import { BrowserContext } from '../../server/browserContext';
+import { Frame } from '../../server/frames';
+import { Request } from '../../server/network';
+import { Page, Worker } from '../../server/page';
 import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupDispatcher, lookupNullableDispatcher } from './dispatcher';
 import { parseError, serializeError } from '../../protocol/serializers';
@@ -28,7 +28,7 @@ import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
-import { FileChooser } from '../../fileChooser';
+import { FileChooser } from '../../server/fileChooser';
 import { CRCoverage } from '../../server/chromium/crCoverage';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {

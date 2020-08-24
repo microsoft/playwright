@@ -57,9 +57,7 @@ async function checkDeps() {
     if (fromDirectory === toDirectory)
       return true;
 
-    if (['src/', 'src/rpc/server/', 'src/rpc/'].includes(fromDirectory))
-      return true;  // Temporary.
-    if (toDirectory === 'src/')
+    if (['src/rpc/server/', 'src/rpc/'].includes(fromDirectory))
       return true;  // Temporary.
 
     while (!DEPS[from]) {
@@ -87,20 +85,28 @@ async function checkDeps() {
 const DEPS = {};
 
 // No deps for code shared between node and page.
-DEPS['src/common/'] = [];
+DEPS['src/server/common/'] = [];
 
 DEPS['src/protocol/'] = ['src/utils/'];
 DEPS['src/install/'] = ['src/utils/'];
 
+// Client depends on chromium protocol for types.
 DEPS['src/client/'] = ['src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts'];
 
-DEPS['src/server/'] = ['src/utils/', 'src/common/', 'src/server/injected/'];
+DEPS['src/server/'] = [
+  'src/utils/',
+  'src/server/common/',
+  'src/server/injected/',
+  'src/generated/',
+  // TODO: remove the server->debug dependency.
+  'src/server/debug/**',
+];
 
 // Strict deps for injected code.
-// TODO: reverse the injected->types dependency.
-DEPS['src/server/injected/'] = ['src/common/', 'src/types.ts'];
+// TODO: remove the injected->types dependency.
+DEPS['src/server/injected/'] = ['src/server/common/', 'src/server/types.ts'];
 
-DEPS['src/server/debug/'] = [...DEPS['src/server/'], 'src/server/debug/**'];
+DEPS['src/server/debug/'] = [...DEPS['src/server/'], 'src/server/', 'src/server/debug/**'];
 
 DEPS['src/server/chromium/'] = [...DEPS['src/server/'], 'src/server/'];
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/', 'src/server/chromium/'];

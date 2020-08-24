@@ -15,25 +15,25 @@
  * limitations under the License.
  */
 
-import * as dom from '../../dom';
-import * as frames from '../../frames';
-import { helper, RegisteredListener } from '../../helper';
-import * as network from '../../network';
+import * as dom from '../dom';
+import * as frames from '../frames';
+import { helper, RegisteredListener } from '../helper';
+import * as network from '../network';
 import { CRSession, CRConnection, CRSessionEvents } from './crConnection';
 import { CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
-import { Page, Worker, PageBinding } from '../../page';
+import { Page, Worker, PageBinding } from '../page';
 import { Protocol } from './protocol';
 import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crProtocolHelper';
-import * as dialog from '../../dialog';
-import { PageDelegate } from '../../page';
+import * as dialog from '../dialog';
+import { PageDelegate } from '../page';
 import { RawMouseImpl, RawKeyboardImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './crCoverage';
 import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
-import * as types from '../../types';
-import { ConsoleMessage } from '../../console';
+import * as types from '../types';
+import { ConsoleMessage } from '../console';
 import * as sourceMap from '../../utils/sourceMap';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject } from '../../utils/utils';

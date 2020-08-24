@@ -18,18 +18,18 @@ import * as path from 'path';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
-import * as js from '../../javascript';
-import { Page } from '../../page';
+import * as js from '../javascript';
+import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
-import { WebSocketTransport } from '../../transport';
-import * as types from '../../types';
+import { WebSocketTransport } from '../transport';
+import * as types from '../types';
 import { launchProcess, waitForLine, envArrayToObject } from '../processLauncher';
-import { BrowserContext } from '../../browserContext';
+import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { runAbortableTask, ProgressController } from '../../progress';
+import { runAbortableTask, ProgressController } from '../progress';
 import { EventEmitter } from 'events';
-import { helper } from '../../helper';
-import { BrowserProcess } from '../../browser';
+import { helper } from '../helper';
+import { BrowserProcess } from '../browser';
 
 export type ElectronLaunchOptionsBase = {
   args?: string[],

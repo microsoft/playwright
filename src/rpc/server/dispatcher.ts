@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper } from '../../helper';
+import { helper } from '../../server/helper';
 import * as channels from '../../protocol/channels';
 import { serializeError } from '../../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../../protocol/validator';

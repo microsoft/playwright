@@ -17,8 +17,8 @@
 import { LaunchServerOptions } from '../client/types';
 import { BrowserTypeBase } from '../server/browserType';
 import * as ws from 'ws';
-import { helper } from '../helper';
-import { Browser } from '../browser';
+import { helper } from '../server/helper';
+import { Browser } from '../server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
 import { DispatcherScope, DispatcherConnection } from './server/dispatcher';
