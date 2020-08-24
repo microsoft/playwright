@@ -78,7 +78,7 @@ export class FFConnection extends EventEmitter {
 
   _rawSend(message: ProtocolRequest) {
     if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+      debugLogger.log('protocol', 'SEND ► ' + JSON.stringify(message));
     this._transport.send(message);
   }
 
@@ -216,12 +216,4 @@ function createProtocolError(error: Error, method: string, protocolError: { mess
   if ('data' in protocolError)
     message += ` ${protocolError.data}`;
   return rewriteErrorMessage(error, message);
-}
-
-function rewriteInjectedScriptEvaluationLog(message: ProtocolRequest): string {
-  // Injected script is very long and clutters protocol logs.
-  // To increase development velocity, we skip replace it with short description in the log.
-  if (message.method === 'Runtime.evaluate' && message.params && message.params.expression && message.params.expression.includes('src/injected/injected.ts'))
-    return `{"id":${message.id} [evaluate injected script]}`;
-  return JSON.stringify(message);
 }

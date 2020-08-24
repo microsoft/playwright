@@ -18,7 +18,7 @@ const path = require('path');
 const InlineSource = require('./webpack-inline-source-plugin.js');
 
 module.exports = {
-  entry: path.join(__dirname, 'injectedScript.ts'),
+  entry: path.join(__dirname, 'utilityScript.ts'),
   devtool: 'source-map',
   module: {
     rules: [
@@ -36,10 +36,11 @@ module.exports = {
     extensions: [ '.tsx', '.ts', '.js' ]
   },
   output: {
-    filename: 'injectedScriptSource.js',
-    path: path.resolve(__dirname, '../../lib/injected/packed')
+    libraryTarget: 'var',
+    filename: 'utilityScriptSource.js',
+    path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },
   plugins: [
-    new InlineSource(path.join(__dirname, '..', 'generated', 'injectedScriptSource.ts')),
+    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'utilityScriptSource.ts')),
   ]
 };

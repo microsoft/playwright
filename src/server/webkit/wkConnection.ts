@@ -54,7 +54,7 @@ export class WKConnection {
 
   rawSend(message: ProtocolRequest) {
     if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', 'SEND ► ' + rewriteInjectedScriptEvaluationLog(message));
+      debugLogger.log('protocol', 'SEND ► ' + JSON.stringify(message));
     this._transport.send(message);
   }
 
@@ -180,12 +180,4 @@ export function createProtocolError(error: Error, method: string, protocolError:
 
 export function isSwappedOutError(e: Error) {
   return e.message.includes('Target was swapped out.');
-}
-
-function rewriteInjectedScriptEvaluationLog(message: any): string {
-  // Injected script is very long and clutters protocol logs.
-  // To increase development velocity, we skip replace it with short description in the log.
-  if (message.params && message.params.message && message.params.message.includes('Runtime.evaluate') && message.params.message.includes('src/injected/injected.ts'))
-    return `{"id":${message.id},"method":"${message.method}","params":{"message":[evaluate injected script],"targetId":"${message.params.targetId}"},"pageProxyId":${message.pageProxyId}}`;
-  return JSON.stringify(message);
 }

@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../browserContext';
-import * as frames from '../frames';
-import * as js from '../javascript';
-import { Page } from '../page';
-import DebugScript from './injected/debugScript';
+import { BrowserContext } from '../../browserContext';
+import * as frames from '../../frames';
+import * as js from '../../javascript';
+import { Page } from '../../page';
+import type DebugScript from './injected/debugScript';
 
 export class DebugController {
   constructor(context: BrowserContext) {

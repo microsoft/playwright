@@ -74,6 +74,9 @@ const DEPS = new Map([
   ['src/common/', ['src/common/']],
   ['src/protocol/', ['src/protocol/', 'src/utils/']],
   ['src/install/', ['src/install/', 'src/utils/']],
+  ['src/server/debug/', ['src/server/debug/', 'src/common/', 'src/server/injected/', 'src/', 'src/server/debug/injected/']],
+  // TODO: reverse the injected->types dependency.
+  ['src/server/injected/', ['src/server/injected/', 'src/common/', 'src/types.ts']],
   ['src/server/chromium/', ['src/server/chromium/', 'src/utils/', 'src/', 'src/common/', 'src/server/']],
   ['src/server/electron/', ['src/server/electron/', 'src/server/chromium/', 'src/utils/', 'src/', 'src/server/']],
   ['src/server/firefox/', ['src/server/firefox/', 'src/utils/', 'src/', 'src/common/', 'src/server/']],

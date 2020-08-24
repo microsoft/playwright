@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ParsedSelector, parseSelector } from '../../common/selectorParser';
+import { ParsedSelector, parseSelector } from '../../../common/selectorParser';
 import type InjectedScript from '../../injected/injectedScript';
 import { html } from './html';
 
