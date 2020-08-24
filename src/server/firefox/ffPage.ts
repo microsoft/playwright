@@ -15,14 +15,14 @@
  * limitations under the License.
  */
 
-import * as dialog from '../../dialog';
-import * as dom from '../../dom';
-import * as frames from '../../frames';
-import { helper, RegisteredListener } from '../../helper';
+import * as dialog from '../dialog';
+import * as dom from '../dom';
+import * as frames from '../frames';
+import { helper, RegisteredListener } from '../helper';
 import { assert } from '../../utils/utils';
-import { Page, PageBinding, PageDelegate, Worker } from '../../page';
-import { kScreenshotDuringNavigationError } from '../../screenshotter';
-import * as types from '../../types';
+import { Page, PageBinding, PageDelegate, Worker } from '../page';
+import { kScreenshotDuringNavigationError } from '../screenshotter';
+import * as types from '../types';
 import { getAccessibilityTree } from './ffAccessibility';
 import { FFBrowserContext } from './ffBrowser';
 import { FFSession, FFSessionEvents } from './ffConnection';
@@ -30,9 +30,9 @@ import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
-import { selectors } from '../../selectors';
+import { selectors } from '../selectors';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { Screencast, BrowserContext } from '../../browserContext';
+import { Screencast, BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

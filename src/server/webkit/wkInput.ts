@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import * as input from '../../input';
-import * as types from '../../types';
-import { macEditingCommands } from '../../macEditingCommands';
+import * as input from '../input';
+import * as types from '../types';
+import { macEditingCommands } from '../macEditingCommands';
 import { WKSession } from './wkConnection';
 import { isString } from '../../utils/utils';
 

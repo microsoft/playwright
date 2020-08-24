@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import * as input from '../../input';
-import * as types from '../../types';
+import * as input from '../input';
+import * as types from '../types';
 import { CRSession } from './crConnection';
-import { macEditingCommands } from '../../macEditingCommands';
+import { macEditingCommands } from '../macEditingCommands';
 import { isString } from '../../utils/utils';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {

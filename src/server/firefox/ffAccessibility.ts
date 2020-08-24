@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import * as accessibility from '../../accessibility';
+import * as accessibility from '../accessibility';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
-import * as dom from '../../dom';
-import * as types from '../../types';
+import * as dom from '../dom';
+import * as types from '../types';
 
 export async function getAccessibilityTree(session: FFSession, needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
   const objectId = needle ? needle._objectId : undefined;

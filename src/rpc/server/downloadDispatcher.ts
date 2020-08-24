@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Download } from '../../download';
+import { Download } from '../../server/download';
 import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';

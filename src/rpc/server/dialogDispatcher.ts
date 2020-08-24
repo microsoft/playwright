@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Dialog } from '../../dialog';
+import { Dialog } from '../../server/dialog';
 import * as channels from '../../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 

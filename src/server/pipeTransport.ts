@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import { helper, RegisteredListener } from '../helper';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { helper, RegisteredListener } from './helper';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from './transport';
 import { makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 

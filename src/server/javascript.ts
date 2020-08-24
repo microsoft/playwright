@@ -15,10 +15,10 @@
  */
 
 import * as dom from './dom';
-import * as utilityScriptSource from './generated/utilityScriptSource';
-import * as sourceMap from './utils/sourceMap';
+import * as utilityScriptSource from '../generated/utilityScriptSource';
+import * as sourceMap from '../utils/sourceMap';
 import { serializeAsCallArgument } from './common/utilityScriptSerializers';
-import type UtilityScript from './server/injected/utilityScript';
+import type UtilityScript from './injected/utilityScript';
 
 type ObjectId = string;
 export type RemoteObject = {

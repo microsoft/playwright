@@ -16,9 +16,9 @@
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as channels from '../../protocol/channels';
-import { Selectors } from '../../selectors';
+import { Selectors } from '../../server/selectors';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import * as dom from '../../dom';
+import * as dom from '../../server/dom';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsInitializer> implements channels.SelectorsChannel {
   constructor(scope: DispatcherScope, selectors: Selectors) {

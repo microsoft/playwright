@@ -19,7 +19,7 @@ import * as fs from 'fs';
 import * as util from 'util';
 import { Page } from './page';
 import { Readable } from 'stream';
-import { assert, mkdirIfNeeded } from './utils/utils';
+import { assert, mkdirIfNeeded } from '../utils/utils';
 
 export class Download {
   private _downloadsPath: string;

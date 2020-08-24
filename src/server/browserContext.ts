@@ -20,15 +20,15 @@ import { helper } from './helper';
 import * as network from './network';
 import * as path from 'path';
 import { Page, PageBinding } from './page';
-import { TimeoutSettings } from './utils/timeoutSettings';
+import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as frames from './frames';
 import * as types from './types';
 import { Download } from './download';
 import { Browser } from './browser';
 import { EventEmitter } from 'events';
 import { Progress } from './progress';
-import { DebugController } from './server/debug/debugController';
-import { isDebugMode } from './utils/utils';
+import { DebugController } from './debug/debugController';
+import { isDebugMode } from '../utils/utils';
 
 export class Screencast {
   readonly path: string;

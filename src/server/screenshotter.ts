@@ -19,9 +19,9 @@ import * as dom from './dom';
 import { helper } from './helper';
 import { Page } from './page';
 import * as types from './types';
-import { rewriteErrorMessage } from './utils/stackTrace';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 import { Progress } from './progress';
-import { assert } from './utils/utils';
+import { assert } from '../utils/utils';
 
 export class Screenshotter {
   private _queue = new TaskQueue();

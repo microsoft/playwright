@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../../utils/utils';
-import * as types from '../../types';
+import * as types from '../types';
 import { CRSession } from './crConnection';
 import { readProtocolStream } from './crProtocolHelper';
 

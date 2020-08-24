@@ -15,16 +15,16 @@
  */
 
 import * as frames from './frames';
-import { assert } from './utils/utils';
-import type InjectedScript from './server/injected/injectedScript';
-import * as injectedScriptSource from './generated/injectedScriptSource';
-import * as debugScriptSource from './generated/debugScriptSource';
+import { assert } from '../utils/utils';
+import type InjectedScript from './injected/injectedScript';
+import * as injectedScriptSource from '../generated/injectedScriptSource';
+import * as debugScriptSource from '../generated/debugScriptSource';
 import * as js from './javascript';
 import { Page } from './page';
 import { selectors, SelectorInfo } from './selectors';
 import * as types from './types';
 import { Progress } from './progress';
-import type DebugScript from './server/debug/injected/debugScript';
+import type DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 
 export class FrameExecutionContext extends js.ExecutionContext {

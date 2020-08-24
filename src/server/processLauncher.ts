@@ -19,9 +19,9 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import * as stream from 'stream';
-import { helper } from '../helper';
-import { Progress } from '../progress';
-import * as types from '../types';
+import { helper } from './helper';
+import { Progress } from './progress';
+import * as types from './types';
 import { isUnderTest } from '../utils/utils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};

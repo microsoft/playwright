@@ -15,28 +15,28 @@
  * limitations under the License.
  */
 
-import { Screencast, BrowserContext } from '../../browserContext';
-import * as frames from '../../frames';
-import { helper, RegisteredListener } from '../../helper';
-import * as dom from '../../dom';
-import * as network from '../../network';
+import { Screencast, BrowserContext } from '../browserContext';
+import * as frames from '../frames';
+import { helper, RegisteredListener } from '../helper';
+import * as dom from '../dom';
+import * as network from '../network';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
-import { Page, PageDelegate, PageBinding } from '../../page';
+import { Page, PageDelegate, PageBinding } from '../page';
 import { Protocol } from './protocol';
-import * as dialog from '../../dialog';
+import * as dialog from '../dialog';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
-import * as types from '../../types';
-import * as accessibility from '../../accessibility';
+import * as types from '../types';
+import * as accessibility from '../accessibility';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKBrowserContext } from './wkBrowser';
-import { selectors } from '../../selectors';
+import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
-import { JSHandle } from '../../javascript';
+import { JSHandle } from '../javascript';
 import { assert, debugAssert, headersArrayToObject } from '../../utils/utils';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';

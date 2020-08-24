@@ -26,8 +26,8 @@ import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
 import { EventEmitter } from 'events';
-import { assert, makeWaitForNextTask } from './utils/utils';
-import { debugLogger } from './utils/debugLogger';
+import { assert, makeWaitForNextTask } from '../utils/utils';
+import { debugLogger } from '../utils/debugLogger';
 
 type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
