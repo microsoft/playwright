@@ -23,7 +23,7 @@ it('should run all three tests', async() => {
 });
 
 it('should ignore a test', async() => {
-  const result = runTest('three-tests', '--test-ignore=b.spec.js');
+  const result = runTest('three-tests', '--ignore=b.spec.js');
   expect(result.passing).toBe(2);
   expect(result.exitCode).toBe(0);
 });
@@ -33,7 +33,7 @@ it('should filter tests', async() => {
   expect(runTest('three-tests', 'c.test', 'b.spec').passing).toBe(2);
 });
 
-fit('should use a different test match', async() => {
+it('should use a different test match', async() => {
   const result = runTest('three-tests', '--test-match=*.ts');
   expect(result.passing).toBe(2);
   expect(result.exitCode).toBe(0);
