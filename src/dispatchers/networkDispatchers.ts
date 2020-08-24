@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Request, Response, Route } from '../../server/network';
-import * as channels from '../../protocol/channels';
+import { Request, Response, Route } from '../server/network';
+import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 

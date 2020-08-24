@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import { DispatcherConnection } from './server/dispatcher';
-import type { Playwright as PlaywrightImpl } from '../server/playwright';
-import type { Playwright as PlaywrightAPI } from '../client/playwright';
-import { PlaywrightDispatcher } from './server/playwrightDispatcher';
-import { Connection } from '../client/connection';
+import { DispatcherConnection } from './dispatchers/dispatcher';
+import type { Playwright as PlaywrightImpl } from './server/playwright';
+import type { Playwright as PlaywrightAPI } from './client/playwright';
+import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
+import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
-import { isUnderTest } from '../utils/utils';
+import { isUnderTest } from './utils/utils';
 
 export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
   const clientConnection = new Connection();

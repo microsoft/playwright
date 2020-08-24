@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ElementHandle } from '../../server/dom';
-import * as js from '../../server/javascript';
-import * as channels from '../../protocol/channels';
+import { ElementHandle } from '../server/dom';
+import * as js from '../server/javascript';
+import * as channels from '../protocol/channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
