@@ -164,3 +164,27 @@ export function serializeConfiguration(configuration: Configuration): string {
       tokens.push(`${name}=${value}`);
   return tokens.join(', ');
 }
+
+export function serializeError(error: Error): any {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack
+    }
+  }
+  return trimCycles(error);
+}
+
+function trimCycles(obj: any): any {
+  const cache = new Set();
+  return JSON.parse(
+    JSON.stringify(obj, function(key, value) {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value))
+          return '' + value;
+        cache.add(value);
+      }
+      return value;
+    })
+  );
+}
