@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type * as types from '../types';
 import { createAttributeEngine } from './attributeSelectorEngine';
 import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
@@ -23,9 +22,24 @@ import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
 
-type Predicate<T> = (progress: types.InjectedScriptProgress, continuePolling: symbol) => T | symbol;
+type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
-export default class InjectedScript {
+export type InjectedScriptProgress = {
+  aborted: boolean,
+  log: (message: string) => void,
+  logRepeating: (message: string) => void,
+};
+
+export type InjectedScriptPoll<T> = {
+  result: Promise<T>,
+  // Takes more logs, waiting until at least one message is available.
+  takeNextLogs: () => Promise<string[]>,
+  // Takes all current logs without waiting.
+  takeLastLogs: () => string[],
+  cancel: () => void,
+};
+
+export class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
 
   constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
@@ -105,7 +119,7 @@ export default class InjectedScript {
     return rect.width > 0 && rect.height > 0;
   }
 
-  pollRaf<T>(predicate: Predicate<T>): types.InjectedScriptPoll<T> {
+  pollRaf<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
     return this._runAbortableTask(progress => {
       let fulfill: (result: T) => void;
       let reject: (error: Error) => void;
@@ -131,7 +145,7 @@ export default class InjectedScript {
     });
   }
 
-  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): types.InjectedScriptPoll<T> {
+  pollInterval<T>(pollInterval: number, predicate: Predicate<T>): InjectedScriptPoll<T> {
     return this._runAbortableTask(progress => {
       let fulfill: (result: T) => void;
       let reject: (error: Error) => void;
@@ -157,7 +171,7 @@ export default class InjectedScript {
     });
   }
 
-  private _runAbortableTask<T>(task: (progess: types.InjectedScriptProgress) => Promise<T>): types.InjectedScriptPoll<T> {
+  private _runAbortableTask<T>(task: (progess: InjectedScriptProgress) => Promise<T>): InjectedScriptPoll<T> {
     let unsentLogs: string[] = [];
     let takeNextLogsCallback: ((logs: string[]) => void) | undefined;
     const logReady = () => {
@@ -175,7 +189,7 @@ export default class InjectedScript {
     });
 
     let lastLog = '';
-    const progress: types.InjectedScriptProgress = {
+    const progress: InjectedScriptProgress = {
       aborted: false,
       log: (message: string) => {
         lastLog = message;
@@ -203,7 +217,7 @@ export default class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | types.SelectOption)[]): string[] | 'error:notconnected' | FatalDOMError {
+  selectOptions(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | FatalDOMError {
     if (node.nodeName.toLowerCase() !== 'select')
       return 'error:notselect';
     if (!node.isConnected)
@@ -234,7 +248,7 @@ export default class InjectedScript {
     return options.filter(option => option.selected).map(option => option.value);
   }
 
-  waitForEnabledAndFill(node: Node, value: string): types.InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
+  waitForEnabledAndFill(node: Node, value: string): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
     return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
@@ -299,7 +313,7 @@ export default class InjectedScript {
     });
   }
 
-  waitForVisibleAndSelectText(node: Node): types.InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'done'> {
+  waitForVisibleAndSelectText(node: Node): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'done'> {
     return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
@@ -344,7 +358,7 @@ export default class InjectedScript {
     return 'done';
   }
 
-  waitForNodeVisible(node: Node): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+  waitForNodeVisible(node: Node): InjectedScriptPoll<'error:notconnected' | 'done'> {
     return this.pollRaf((progress, continuePolling) => {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
@@ -357,7 +371,7 @@ export default class InjectedScript {
     });
   }
 
-  waitForNodeHidden(node: Node): types.InjectedScriptPoll<'done'> {
+  waitForNodeHidden(node: Node): InjectedScriptPoll<'done'> {
     return this.pollRaf((progress, continuePolling) => {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
@@ -370,7 +384,7 @@ export default class InjectedScript {
     });
   }
 
-  waitForNodeEnabled(node: Node): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+  waitForNodeEnabled(node: Node): InjectedScriptPoll<'error:notconnected' | 'done'> {
     return this.pollRaf((progress, continuePolling) => {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
@@ -383,7 +397,7 @@ export default class InjectedScript {
     });
   }
 
-  waitForNodeDisabled(node: Node): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
+  waitForNodeDisabled(node: Node): InjectedScriptPoll<'error:notconnected' | 'done'> {
     return this.pollRaf((progress, continuePolling) => {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
@@ -438,7 +452,7 @@ export default class InjectedScript {
     throw new Error('Not a checkbox');
   }
 
-  async setInputFiles(node: Node, payloads: types.FilePayload[]) {
+  async setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'Node is not of type HTMLElement';
     const element: Element | undefined = node as Element;
@@ -461,8 +475,8 @@ export default class InjectedScript {
     input.dispatchEvent(new Event('change', { 'bubbles': true }));
   }
 
-  waitForDisplayedAtStablePosition(node: Node, rafCount: number, waitForEnabled: boolean): types.InjectedScriptPoll<'error:notconnected' | 'done'> {
-    let lastRect: types.Rect | undefined;
+  waitForDisplayedAtStablePosition(node: Node, rafCount: number, waitForEnabled: boolean): InjectedScriptPoll<'error:notconnected' | 'done'> {
+    let lastRect: { x: number, y: number, width: number, height: number } | undefined;
     let counter = 0;
     let samePositionCounter = 0;
     let lastTime = 0;
@@ -517,7 +531,7 @@ export default class InjectedScript {
     });
   }
 
-  checkHitTargetAt(node: Node, point: types.Point): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
+  checkHitTargetAt(node: Node, point: { x: number, y: number }): 'error:notconnected' | 'done' | { hitTargetDescription: string } {
     let element: Element | null | undefined = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
     if (!element || !element.isConnected)
       return 'error:notconnected';
@@ -683,3 +697,5 @@ const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'
   ['dragexit', 'drag'],
   ['drop', 'drag'],
 ]);
+
+export default InjectedScript;
