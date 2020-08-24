@@ -16,7 +16,7 @@
 
 import * as frames from './frames';
 import { assert } from '../utils/utils';
-import type InjectedScript from './injected/injectedScript';
+import type { InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as debugScriptSource from '../generated/debugScriptSource';
 import * as js from './javascript';
@@ -718,9 +718,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 // - cancels the poll when progress cancels.
 export class InjectedScriptPollHandler<T> {
   private _progress: Progress;
-  private _poll: js.JSHandle<types.InjectedScriptPoll<T>> | null;
+  private _poll: js.JSHandle<InjectedScriptPoll<T>> | null;
 
-  constructor(progress: Progress, poll: js.JSHandle<types.InjectedScriptPoll<T>>) {
+  constructor(progress: Progress, poll: js.JSHandle<InjectedScriptPoll<T>>) {
     this._progress = progress;
     this._poll = poll;
     // Ensure we cancel the poll before progress aborts and returns:
@@ -836,7 +836,7 @@ function compensateHalfIntegerRoundingError(point: types.Point) {
     point.y -= 0.02;
 }
 
-export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<types.InjectedScriptPoll<T>>>;
+export type SchedulableTask<T> = (injectedScript: js.JSHandle<InjectedScript>) => Promise<js.JSHandle<InjectedScriptPoll<T>>>;
 
 export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 'detached' | 'visible' | 'hidden', root?: ElementHandle): SchedulableTask<Element | undefined> {
   return injectedScript => injectedScript.evaluateHandle((injected, { parsed, state, root }) => {

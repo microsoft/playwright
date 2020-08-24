@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-// NOTE: No imports allowed - only primitive, self-contained types are allowed here.
-
 export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };
 export type Rect = Size & Point;
@@ -156,21 +154,6 @@ export type JSCoverageEntry = {
     isBlockCoverage: boolean,
     ranges: JSRange[]
   }[]
-};
-
-export type InjectedScriptProgress = {
-  aborted: boolean,
-  log: (message: string) => void,
-  logRepeating: (message: string) => void,
-};
-
-export type InjectedScriptPoll<T> = {
-  result: Promise<T>,
-  // Takes more logs, waiting until at least one message is available.
-  takeNextLogs: () => Promise<string[]>,
-  // Takes all current logs without waiting.
-  takeLastLogs: () => string[],
-  cancel: () => void,
 };
 
 export type ProxySettings = {

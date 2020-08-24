@@ -108,11 +108,10 @@ DEPS['src/server/'] = [
 
 // No dependencies for code shared between node and page.
 DEPS['src/server/common/'] = [];
-
 // Strict dependencies for injected code.
-// TODO: remove the injected->types dependency.
-DEPS['src/server/injected/'] = ['src/server/common/', 'src/server/types.ts'];
+DEPS['src/server/injected/'] = ['src/server/common/'];
 
+// Electron uses chromium internally.
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
 DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/'];
