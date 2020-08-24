@@ -16,16 +16,25 @@
 import "../lib"
 import { runTest } from "./runTest";
 
-it('should fail', async() => {
-  const result = runTest('one-failure.js');
-  expect(result.exitCode).toBe(1);
-  expect(result.passing).toBe(0);
-  expect(result.failing).toBe(1);
+it('should run all three tests', async() => {
+  const result = runTest('three-tests');
+  expect(result.passing).toBe(3);
+  expect(result.exitCode).toBe(0);
 });
 
-it('should succeed', async() => {
-  const result = runTest('one-success.js');
+it('should ignore a test', async() => {
+  const result = runTest('three-tests', '--test-ignore=b.spec.js');
+  expect(result.passing).toBe(2);
   expect(result.exitCode).toBe(0);
-  expect(result.passing).toBe(1);
-  expect(result.failing).toBe(0);
+});
+
+it('should filter tests', async() => {
+  expect(runTest('three-tests', 'c.test').passing).toBe(1);
+  expect(runTest('three-tests', 'c.test', 'b.spec').passing).toBe(2);
+});
+
+fit('should use a different test match', async() => {
+  const result = runTest('three-tests', '--test-match=*.ts');
+  expect(result.passing).toBe(2);
+  expect(result.exitCode).toBe(0);
 });

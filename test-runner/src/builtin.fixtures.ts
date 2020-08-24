@@ -30,7 +30,7 @@ declare global {
     repeat(n: number): DescribeFunction;
   };
 
-  type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
+  type ItFunction<STATE> = ((name: string, inner: (state: STATE) => (void|Promise<void>)) => void) & {
     fail(condition: boolean): ItFunction<STATE>;
     skip(condition: boolean): ItFunction<STATE>;
     slow(): ItFunction<STATE>;
@@ -45,10 +45,10 @@ declare global {
   const dit: ItFunction<TestState & WorkerState & FixtureParameters>;
   const xit: ItFunction<TestState & WorkerState & FixtureParameters>;
 
-  const beforeEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
-  const afterEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
-  const beforeAll: (inner: (state: WorkerState & FixtureParameters) => Promise<void>) => void;
-  const afterAll: (inner: (state: WorkerState & FixtureParameters) => Promise<void>) => void;
+  const beforeEach: (inner: (state: TestState & WorkerState & FixtureParameters) => (void|Promise<void>)) => void;
+  const afterEach: (inner: (state: TestState & WorkerState & FixtureParameters) => (void|Promise<void>)) => void;
+  const beforeAll: (inner: (state: WorkerState & FixtureParameters) => (void|Promise<void>)) => void;
+  const afterAll: (inner: (state: WorkerState & FixtureParameters) => (void|Promise<void>)) => void;
 }
 
 const mkdtempAsync = promisify(fs.mkdtemp);

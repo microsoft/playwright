@@ -41,7 +41,8 @@ program
   .option('--output <outputDir>', 'Folder for output artifacts, default: test-results', path.join(process.cwd(), 'test-results'))
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', '10000')
   .option('-u, --update-snapshots', 'Use this flag to re-record every snapshot that fails during this test run')
-  .option('--test-match <match>', 'Pattern used to find test files', '**/?(*.)+(spec|test).[jt]s')
+  .option('--test-match <pattern>', 'Pattern used to find test files', '**/?(*.)+(spec|test).[jt]s')
+  .option('--test-ignore <pattern>', 'Pattern used to ignore test files', '**/node_modules/**')
   .action(async (command) => {
     const testDir = path.resolve(process.cwd(), command.args[0]);
     const config: RunnerConfig = {
@@ -56,7 +57,7 @@ program
       trialRun: command.trialRun,
       updateSnapshots: command.updateSnapshots
     };
-    const files = collectFiles(testDir, '', command.args.slice(1), command.testMatch);
+    const files = collectFiles(testDir, '', command.args.slice(1), command.testMatch, command.testIgnore);
     const suite = collectTests(config, files);
     if (command.forbidOnly) {
       const hasOnly = suite.eachTest(t => t.only) || suite.eachSuite(s => s.only);
@@ -84,18 +85,20 @@ program
 
 program.parse(process.argv);
 
-function collectFiles(testDir: string, dir: string, filters: string[], testMatch: string): string[] {
+function collectFiles(testDir: string, dir: string, filters: string[], testMatch: string, testIgnore: string): string[] {
   const fullDir = path.join(testDir, dir);
   if (fs.statSync(fullDir).isFile())
     return [fullDir];
   const files = [];
   for (const name of fs.readdirSync(fullDir)) {
+    const relativeName = path.join(dir, name);
+    if (isMatch(relativeName, testIgnore))
+      continue;
     if (fs.lstatSync(path.join(fullDir, name)).isDirectory()) {
-      files.push(...collectFiles(testDir, path.join(dir, name), filters, testMatch));
+      files.push(...collectFiles(testDir, path.join(dir, name), filters, testMatch, testIgnore));
       continue;
     }
-    const relativeName = path.join(dir, name);
-    if (!isMatch(relativeName, [testMatch]))
+    if (!isMatch(relativeName, testMatch))
       continue;
     const fullName = path.join(testDir, relativeName);
     if (!filters.length) {

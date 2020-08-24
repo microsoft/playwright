@@ -32,7 +32,7 @@
     "check-deps": "node utils/check_deps.js",
     "build-driver": "pkg --public --targets node12-linux-x64,node12-macos-x64,node12-win-x64 --out-path=drivers packages/playwright-driver/main.js",
     "build-testrunner": "tsc -p test-runner",
-    "test-testrunner": "node test-runner/cli test-runner/test"
+    "test-testrunner": "node test-runner/cli --test-ignore='**/assets/**' test-runner/test"
   },
   "author": {
     "name": "Microsoft Corporation"
