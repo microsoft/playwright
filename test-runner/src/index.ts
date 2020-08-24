@@ -81,7 +81,7 @@ export async function runTests(config: RunnerConfig, suite: Suite, reporter: Rep
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
   const runner = new Runner(suite, { ...config, jobs }, reporter);
-
+  fs.mkdirSync(config.outputDir, { recursive: true });
   try {
     for (const f of beforeFunctions)
       await f();

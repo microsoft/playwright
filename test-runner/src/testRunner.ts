@@ -17,7 +17,7 @@
 import { FixturePool, rerunRegistrations, setParameters } from './fixtures';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
-import { Test, Suite, Configuration } from './test';
+import { Test, Suite, Configuration, serializeError } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
 
@@ -162,28 +162,4 @@ export class TestRunner extends EventEmitter {
       duration: Date.now() - test._startTime,
     };
   }
-}
-
-function trimCycles(obj: any): any {
-  const cache = new Set();
-  return JSON.parse(
-    JSON.stringify(obj, function(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value))
-          return '' + value;
-        cache.add(value);
-      }
-      return value;
-    })
-  );
-}
-
-function serializeError(error: Error): any {
-  if (error instanceof Error) {
-    return {
-      message: error.message,
-      stack: error.stack
-    }
-  }
-  return trimCycles(error);
 }

@@ -16,10 +16,10 @@
 
 import os from 'os';
 import path from 'path';
-import {promisify} from 'util';
+import { promisify } from 'util';
 import fs from 'fs';
 import rimraf from 'rimraf';
-import {registerFixture} from './fixtures';
+import { registerFixture } from './fixtures';
 
 
 declare global {

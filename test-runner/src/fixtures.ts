@@ -15,7 +15,7 @@
  */
 
 import debug from 'debug';
-import { Test } from './test';
+import { Test, serializeError } from './test';
 
 type Scope = 'test' | 'worker';
 
@@ -159,6 +159,9 @@ export class FixturePool<Config> {
     return async() => {
       try {
         await this.resolveParametersAndRun(callback, timeout, config, test);
+      } catch (e) {
+        test.error = serializeError(e);
+        throw e;
       } finally {
         await this.teardownScope('test');
       }
