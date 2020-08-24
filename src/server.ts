@@ -33,6 +33,6 @@ transport.onclose = async () => {
 transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
 dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
 
-const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
+const playwright = new Playwright(__dirname, require('../browsers.json')['browsers']);
 (playwright as any).electron = new Electron();
 new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);

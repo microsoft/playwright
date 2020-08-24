@@ -117,7 +117,7 @@ registerWorkerFixture('playwright', async({browserName}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     const connection = new Connection();
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'server'), [], {
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'server.js'), [], {
       stdio: 'pipe',
       detached: true,
     });
