@@ -21,6 +21,7 @@ import { Page } from '..';
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
+import { tmpdir } from 'os';
 
 
 declare global {
@@ -257,7 +258,7 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
   }
 });
 
-it.fail(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+fit('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.
@@ -265,22 +266,21 @@ it.fail(options.CHROMIUM)('should fire start/stop events when page created/close
   await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
   expect(context._screencastOptions).toBeTruthy();
 
-  const [startEvent, newPage] = await Promise.all([
+  const [screencast, newPage] = await Promise.all([
     new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
     context.newPage(),
   ]);
-  expect(startEvent.page === newPage).toBe(true);
-  expect(startEvent.path).toBeTruthy();
+  expect(screencast.page === newPage).toBe(true);
 
-  const [stopEvent] = await Promise.all([
-    new Promise(resolve => context.on('screencaststopped', resolve)) as Promise<any>,
+  const [videoFile] = await Promise.all([
+    screencast.path(),
     newPage.close(),
   ]);
-  expect(stopEvent.page === newPage).toBe(true);
+  expect(path.dirname(videoFile)).toBe(tmpDir);
   await context.close();
 });
 
-it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
+fit('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.
@@ -290,7 +290,7 @@ it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, 
 
   const page = await context.newPage();
   await page.mainFrame().goto(server.EMPTY_PAGE);
-  const [startEvent, popup] = await Promise.all([
+  const [screencast, popup] = await Promise.all([
     new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
     new Promise(resolve => context.on('page', resolve)) as Promise<any>,
     page.mainFrame()._evaluateExpression(() => {
@@ -298,7 +298,7 @@ it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, 
       win.close();
     }, true)
   ]);
-  expect(startEvent.path).toBeTruthy();
-  expect(startEvent.page === popup).toBe(true);
+  expect(screencast.page === popup).toBe(true);
+  expect(path.dirname(await screencast.path())).toBe(tmpDir);
   await context.close();
 });

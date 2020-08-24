@@ -718,13 +718,15 @@ export class WKPage implements PageDelegate {
       throw new Error('Already recording');
     this._recordingVideoFile = options.outputFile;
     try {
-      await this._pageProxySession.send('Screencast.startVideoRecording', {
+      const {screencastId} = await this._pageProxySession.send('Screencast.start', {
         file: options.outputFile,
         width: options.width,
         height: options.height,
         scale: options.scale,
-      });
-      this._browserContext.emit(BrowserContext.Events.ScreencastStarted, new Screencast(options.outputFile, this._page));
+      }) as any;
+      const screencast = new Screencast(options.outputFile, this._page);
+      this._browserContext._idToScreencast.set(screencastId, screencast);
+      this._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
     } catch (e) {
       this._recordingVideoFile = null;
       throw e;
@@ -734,10 +736,8 @@ export class WKPage implements PageDelegate {
   async stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
       throw new Error('No video recording in progress');
-    const fileName = this._recordingVideoFile;
     this._recordingVideoFile = null;
-    await this._pageProxySession.send('Screencast.stopVideoRecording');
-    this._browserContext.emit(BrowserContext.Events.ScreencastStopped, new Screencast(fileName, this._initializedPage!));
+    await this._pageProxySession.send('Screencast.stop');
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {

@@ -62,6 +62,7 @@ export class WKBrowser extends Browser {
       helper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.screencastFinished', this._onScreencastFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
   }
@@ -122,6 +123,13 @@ export class WKBrowser extends Browser {
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
     this._downloadFinished(payload.uuid, payload.error);
+  }
+
+  _onScreencastFinished(payload: Protocol.Playwright.screencastFinishedPayload) {
+    const context = this._contexts.get(payload.browserContextId);
+    if (!context)
+      return;
+    context._screencastFinished(payload.uuid);
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
@@ -324,6 +332,12 @@ export class WKBrowserContext extends BrowserContext {
   async _doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as WKPage).updateRequestInterception();
+  }
+
+  _screencastFinished(uid: string) {
+    const screencast = this._idToScreencast.get(uid);
+    this._idToScreencast.delete(uid);
+    screencast!._finishCallback();
   }
 
   async _doClose() {

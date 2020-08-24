@@ -31,11 +31,24 @@ import { DebugController } from './debug/debugController';
 import { isDebugMode } from '../utils/utils';
 
 export class Screencast {
-  readonly path: string;
   readonly page: Page;
+  private readonly _path: string;
+  _finishCallback: () => void = () => {};
+  private readonly _finishedPromise: Promise<void>;
   constructor(path: string, page: Page) {
-    this.path = path;
+    this._path = path;
     this.page = page;
+    this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
+  }
+
+  async path(): Promise<string | null> {
+    await this._finishedPromise;
+    return this._path;
+  }
+
+  async failure(): Promise<string | null> {
+    await this._finishedPromise;
+    return null;
   }
 }
 
@@ -58,6 +71,7 @@ export abstract class BrowserContext extends EventEmitter {
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
+  readonly _idToScreencast = new Map<string, Screencast>();
   readonly _browser: Browser;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, isPersistentContext: boolean) {
