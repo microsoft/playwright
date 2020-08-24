@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { DialogChannel, DialogInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
-export class Dialog extends ChannelOwner<DialogChannel, DialogInitializer> {
-  static from(dialog: DialogChannel): Dialog {
+export class Dialog extends ChannelOwner<channels.DialogChannel, channels.DialogInitializer> {
+  static from(dialog: channels.DialogChannel): Dialog {
     return (dialog as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: DialogInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.DialogInitializer) {
     super(parent, type, guid, initializer);
   }
 

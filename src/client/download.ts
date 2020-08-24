@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { DownloadChannel, DownloadInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 import { Stream } from './stream';
 
-export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer> {
-  static from(download: DownloadChannel): Download {
+export class Download extends ChannelOwner<channels.DownloadChannel, channels.DownloadInitializer> {
+  static from(download: channels.DownloadChannel): Download {
     return (download as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: DownloadInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.DownloadInitializer) {
     super(parent, type, guid, initializer);
   }
 

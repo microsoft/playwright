@@ -16,7 +16,7 @@
  */
 
 import { assert } from '../utils/utils';
-import { FrameChannel, FrameInitializer, FrameNavigatedEvent, FrameGotoOptions, FrameWaitForSelectorOptions, FrameDispatchEventOptions, FrameSetContentOptions, FrameClickOptions, FrameDblclickOptions, FrameFillOptions, FrameFocusOptions, FrameTextContentOptions, FrameInnerTextOptions, FrameInnerHTMLOptions, FrameGetAttributeOptions, FrameHoverOptions, FrameSetInputFilesOptions, FrameTypeOptions, FramePressOptions, FrameCheckOptions, FrameUncheckOptions } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
@@ -40,7 +40,7 @@ export type WaitForNavigationOptions = {
   url?: URLMatch,
 };
 
-export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
+export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameInitializer> {
   _eventEmitter: EventEmitter;
   _loadStates: Set<LifecycleEvent>;
   _parentFrame: Frame | null = null;
@@ -50,15 +50,15 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
   _childFrames = new Set<Frame>();
   _page: Page | undefined;
 
-  static from(frame: FrameChannel): Frame {
+  static from(frame: channels.FrameChannel): Frame {
     return (frame as any)._object;
   }
 
-  static fromNullable(frame: FrameChannel | undefined): Frame | null {
+  static fromNullable(frame: channels.FrameChannel | undefined): Frame | null {
     return frame ? Frame.from(frame) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: FrameInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.FrameInitializer) {
     super(parent, type, guid, initializer);
     this._eventEmitter = new EventEmitter();
     this._eventEmitter.setMaxListeners(0);
@@ -93,7 +93,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     return this._page!;
   }
 
-  async goto(url: string, options: FrameGotoOptions = {}): Promise<network.Response | null> {
+  async goto(url: string, options: channels.FrameGotoOptions = {}): Promise<network.Response | null> {
     return this._wrapApiCall(this._apiName('goto'), async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       return network.Response.fromNullable((await this._channel.goto({ url, ...options, waitUntil })).response);
@@ -119,7 +119,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
       const toUrl = typeof options.url === 'string' ? ` to "${options.url}"` : '';
       waiter.log(`waiting for navigation${toUrl} until "${waitUntil}"`);
 
-      const navigatedEvent = await waiter.waitForEvent<FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
+      const navigatedEvent = await waiter.waitForEvent<channels.FrameNavigatedEvent>(this._eventEmitter, 'navigated', event => {
         // Any failed navigation results in a rejection.
         if (event.error)
           return true;
@@ -193,7 +193,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
-  async waitForSelector(selector: string, options: FrameWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
+  async waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
     return this._wrapApiCall(this._apiName('waitForSelector'), async () => {
       if ((options as any).visibility)
         throw new Error('options.visibility is not supported, did you mean options.state?');
@@ -204,7 +204,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
-  async dispatchEvent(selector: string, type: string, eventInit?: any, options: FrameDispatchEventOptions = {}): Promise<void> {
+  async dispatchEvent(selector: string, type: string, eventInit?: any, options: channels.FrameDispatchEventOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('dispatchEvent'), async () => {
       await this._channel.dispatchEvent({ selector, type, eventInit: serializeArgument(eventInit), ...options });
     });
@@ -243,7 +243,7 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
-  async setContent(html: string, options: FrameSetContentOptions = {}): Promise<void> {
+  async setContent(html: string, options: channels.FrameSetContentOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('setContent'), async () => {
       const waitUntil = verifyLoadState('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       await this._channel.setContent({ html, ...options, waitUntil });
@@ -292,57 +292,57 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
-  async click(selector: string, options: FrameClickOptions = {}) {
+  async click(selector: string, options: channels.FrameClickOptions = {}) {
     return this._wrapApiCall(this._apiName('click'), async () => {
       return await this._channel.click({ selector, ...options });
     });
   }
 
-  async dblclick(selector: string, options: FrameDblclickOptions = {}) {
+  async dblclick(selector: string, options: channels.FrameDblclickOptions = {}) {
     return this._wrapApiCall(this._apiName('dblclick'), async () => {
       return await this._channel.dblclick({ selector, ...options });
     });
   }
 
-  async fill(selector: string, value: string, options: FrameFillOptions = {}) {
+  async fill(selector: string, value: string, options: channels.FrameFillOptions = {}) {
     return this._wrapApiCall(this._apiName('fill'), async () => {
       return await this._channel.fill({ selector, value, ...options });
     });
   }
 
-  async focus(selector: string, options: FrameFocusOptions = {}) {
+  async focus(selector: string, options: channels.FrameFocusOptions = {}) {
     return this._wrapApiCall(this._apiName('focus'), async () => {
       await this._channel.focus({ selector, ...options });
     });
   }
 
-  async textContent(selector: string, options: FrameTextContentOptions = {}): Promise<null|string> {
+  async textContent(selector: string, options: channels.FrameTextContentOptions = {}): Promise<null|string> {
     return this._wrapApiCall(this._apiName('textContent'), async () => {
       const value = (await this._channel.textContent({ selector, ...options })).value;
       return value === undefined ? null : value;
     });
   }
 
-  async innerText(selector: string, options: FrameInnerTextOptions = {}): Promise<string> {
+  async innerText(selector: string, options: channels.FrameInnerTextOptions = {}): Promise<string> {
     return this._wrapApiCall(this._apiName('innerText'), async () => {
       return (await this._channel.innerText({ selector, ...options })).value;
     });
   }
 
-  async innerHTML(selector: string, options: FrameInnerHTMLOptions = {}): Promise<string> {
+  async innerHTML(selector: string, options: channels.FrameInnerHTMLOptions = {}): Promise<string> {
     return this._wrapApiCall(this._apiName('innerHTML'), async () => {
       return (await this._channel.innerHTML({ selector, ...options })).value;
     });
   }
 
-  async getAttribute(selector: string, name: string, options: FrameGetAttributeOptions = {}): Promise<string | null> {
+  async getAttribute(selector: string, name: string, options: channels.FrameGetAttributeOptions = {}): Promise<string | null> {
     return this._wrapApiCall(this._apiName('getAttribute'), async () => {
       const value = (await this._channel.getAttribute({ selector, name, ...options })).value;
       return value === undefined ? null : value;
     });
   }
 
-  async hover(selector: string, options: FrameHoverOptions = {}) {
+  async hover(selector: string, options: channels.FrameHoverOptions = {}) {
     return this._wrapApiCall(this._apiName('hover'), async () => {
       await this._channel.hover({ selector, ...options });
     });
@@ -354,31 +354,31 @@ export class Frame extends ChannelOwner<FrameChannel, FrameInitializer> {
     });
   }
 
-  async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: FrameSetInputFilesOptions = {}): Promise<void> {
+  async setInputFiles(selector: string, files: string | FilePayload | string[] | FilePayload[], options: channels.FrameSetInputFilesOptions = {}): Promise<void> {
     return this._wrapApiCall(this._apiName('setInputFiles'), async () => {
       await this._channel.setInputFiles({ selector, files: await convertInputFiles(files), ...options });
     });
   }
 
-  async type(selector: string, text: string, options: FrameTypeOptions = {}) {
+  async type(selector: string, text: string, options: channels.FrameTypeOptions = {}) {
     return this._wrapApiCall(this._apiName('type'), async () => {
       await this._channel.type({ selector, text, ...options });
     });
   }
 
-  async press(selector: string, key: string, options: FramePressOptions = {}) {
+  async press(selector: string, key: string, options: channels.FramePressOptions = {}) {
     return this._wrapApiCall(this._apiName('press'), async () => {
       await this._channel.press({ selector, key, ...options });
     });
   }
 
-  async check(selector: string, options: FrameCheckOptions = {}) {
+  async check(selector: string, options: channels.FrameCheckOptions = {}) {
     return this._wrapApiCall(this._apiName('check'), async () => {
       await this._channel.check({ selector, ...options });
     });
   }
 
-  async uncheck(selector: string, options: FrameUncheckOptions = {}) {
+  async uncheck(selector: string, options: channels.FrameUncheckOptions = {}) {
     return this._wrapApiCall(this._apiName('uncheck'), async () => {
       await this._channel.uncheck({ selector, ...options });
     });

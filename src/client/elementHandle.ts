@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElementHandleChannel, JSHandleInitializer, ElementHandleScrollIntoViewIfNeededOptions, ElementHandleHoverOptions, ElementHandleClickOptions, ElementHandleDblclickOptions, ElementHandleFillOptions, ElementHandleSetInputFilesOptions, ElementHandlePressOptions, ElementHandleCheckOptions, ElementHandleUncheckOptions, ElementHandleScreenshotOptions, ElementHandleTypeOptions, ElementHandleSelectTextOptions, ElementHandleWaitForSelectorOptions, ElementHandleWaitForElementStateOptions, ElementHandleSetInputFilesParams } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { Frame } from './frame';
 import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
@@ -28,19 +28,19 @@ import { assert, isString, mkdirIfNeeded } from '../utils/utils';
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
-  readonly _elementChannel: ElementHandleChannel;
+  readonly _elementChannel: channels.ElementHandleChannel;
 
-  static from(handle: ElementHandleChannel): ElementHandle {
+  static from(handle: channels.ElementHandleChannel): ElementHandle {
     return (handle as any)._object;
   }
 
-  static fromNullable(handle: ElementHandleChannel | undefined): ElementHandle | null {
+  static fromNullable(handle: channels.ElementHandleChannel | undefined): ElementHandle | null {
     return handle ? ElementHandle.from(handle) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: JSHandleInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.JSHandleInitializer) {
     super(parent, type, guid, initializer);
-    this._elementChannel = this._channel as ElementHandleChannel;
+    this._elementChannel = this._channel as channels.ElementHandleChannel;
   }
 
   asElement(): ElementHandle<T> | null {
@@ -91,25 +91,25 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async scrollIntoViewIfNeeded(options: ElementHandleScrollIntoViewIfNeededOptions = {}) {
+  async scrollIntoViewIfNeeded(options: channels.ElementHandleScrollIntoViewIfNeededOptions = {}) {
     return this._wrapApiCall('elementHandle.scrollIntoViewIfNeeded', async () => {
       await this._elementChannel.scrollIntoViewIfNeeded(options);
     });
   }
 
-  async hover(options: ElementHandleHoverOptions = {}): Promise<void> {
+  async hover(options: channels.ElementHandleHoverOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.hover', async () => {
       await this._elementChannel.hover(options);
     });
   }
 
-  async click(options: ElementHandleClickOptions = {}): Promise<void> {
+  async click(options: channels.ElementHandleClickOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.click', async () => {
       return await this._elementChannel.click(options);
     });
   }
 
-  async dblclick(options: ElementHandleDblclickOptions = {}): Promise<void> {
+  async dblclick(options: channels.ElementHandleDblclickOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.dblclick', async () => {
       return await this._elementChannel.dblclick(options);
     });
@@ -122,19 +122,19 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async fill(value: string, options: ElementHandleFillOptions = {}): Promise<void> {
+  async fill(value: string, options: channels.ElementHandleFillOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.fill', async () => {
       return await this._elementChannel.fill({ value, ...options });
     });
   }
 
-  async selectText(options: ElementHandleSelectTextOptions = {}): Promise<void> {
+  async selectText(options: channels.ElementHandleSelectTextOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.selectText', async () => {
       await this._elementChannel.selectText(options);
     });
   }
 
-  async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: ElementHandleSetInputFilesOptions = {}) {
+  async setInputFiles(files: string | FilePayload | string[] | FilePayload[], options: channels.ElementHandleSetInputFilesOptions = {}) {
     return this._wrapApiCall('elementHandle.setInputFiles', async () => {
       await this._elementChannel.setInputFiles({ files: await convertInputFiles(files), ...options });
     });
@@ -146,25 +146,25 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async type(text: string, options: ElementHandleTypeOptions = {}): Promise<void> {
+  async type(text: string, options: channels.ElementHandleTypeOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.type', async () => {
       await this._elementChannel.type({ text, ...options });
     });
   }
 
-  async press(key: string, options: ElementHandlePressOptions = {}): Promise<void> {
+  async press(key: string, options: channels.ElementHandlePressOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.press', async () => {
       await this._elementChannel.press({ key, ...options });
     });
   }
 
-  async check(options: ElementHandleCheckOptions = {}) {
+  async check(options: channels.ElementHandleCheckOptions = {}) {
     return this._wrapApiCall('elementHandle.check', async () => {
       return await this._elementChannel.check(options);
     });
   }
 
-  async uncheck(options: ElementHandleUncheckOptions = {}) {
+  async uncheck(options: channels.ElementHandleUncheckOptions = {}) {
     return this._wrapApiCall('elementHandle.uncheck', async () => {
       return await this._elementChannel.uncheck(options);
     });
@@ -177,7 +177,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async screenshot(options: ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
+  async screenshot(options: channels.ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('elementHandle.screenshot', async () => {
       const type = determineScreenshotType(options);
       const result = await this._elementChannel.screenshot({ ...options, type });
@@ -221,13 +221,13 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: ElementHandleWaitForElementStateOptions = {}): Promise<void> {
+  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: channels.ElementHandleWaitForElementStateOptions = {}): Promise<void> {
     return this._wrapApiCall('elementHandle.waitForElementState', async () => {
       return await this._elementChannel.waitForElementState({ state, ...options });
     });
   }
 
-  async waitForSelector(selector: string, options: ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
+  async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
     return this._wrapApiCall('elementHandle.waitForSelector', async () => {
       const result = await this._elementChannel.waitForSelector({ selector, ...options });
       return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
@@ -235,7 +235,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
   }
 }
 
-export function convertSelectOptionValues(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null): { elements?: ElementHandleChannel[], options?: SelectOption[] } {
+export function convertSelectOptionValues(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
   if (values === null)
     return {};
   if (!Array.isArray(values))
@@ -251,7 +251,7 @@ export function convertSelectOptionValues(values: string | ElementHandle | Selec
   return { options: values as SelectOption[] };
 }
 
-type SetInputFilesFiles = ElementHandleSetInputFilesParams['files'];
+type SetInputFilesFiles = channels.ElementHandleSetInputFilesParams['files'];
 export async function convertInputFiles(files: string | FilePayload | string[] | FilePayload[]): Promise<SetInputFilesFiles> {
   const items: (string | FilePayload)[] = Array.isArray(files) ? files : [ files ];
   const filePayloads: SetInputFilesFiles = await Promise.all(items.map(async item => {

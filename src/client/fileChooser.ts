@@ -17,7 +17,7 @@
 import { ElementHandle } from './elementHandle';
 import { Page } from './page';
 import { FilePayload } from './types';
-import { ElementHandleSetInputFilesOptions } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 
 export class FileChooser {
   private _page: Page;
@@ -42,7 +42,7 @@ export class FileChooser {
     return this._page;
   }
 
-  async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: ElementHandleSetInputFilesOptions) {
+  async setFiles(files: string | FilePayload | string[] | FilePayload[], options?: channels.ElementHandleSetInputFilesOptions) {
     return this._elementHandle.setInputFiles(files, options);
   }
 }

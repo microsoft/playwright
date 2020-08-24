@@ -16,7 +16,7 @@
  */
 
 import { Page } from './page';
-import { BrowserContextInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { CDPSession } from './cdpSession';
 import { Events } from './events';
@@ -27,7 +27,7 @@ export class ChromiumBrowserContext extends BrowserContext {
   _backgroundPages = new Set<Page>();
   _serviceWorkers = new Set<Worker>();
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
     super(parent, type, guid, initializer, 'chromium');
     this._channel.on('crBackgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);

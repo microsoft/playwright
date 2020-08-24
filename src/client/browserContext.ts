@@ -18,7 +18,7 @@
 import * as frames from './frame';
 import { Page, BindingCall } from './page';
 import * as network from './network';
-import { BrowserContextChannel, BrowserContextInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';
@@ -28,7 +28,7 @@ import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions } from './types';
 import { isUnderTest, headersObjectToArray } from '../utils/utils';
 
-export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
+export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | undefined;
@@ -39,15 +39,15 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
 
-  static from(context: BrowserContextChannel): BrowserContext {
+  static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
   }
 
-  static fromNullable(context: BrowserContextChannel | null): BrowserContext | null {
+  static fromNullable(context: channels.BrowserContextChannel | null): BrowserContext | null {
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer, browserName: string) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer, browserName: string) {
     super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;

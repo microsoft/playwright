@@ -31,7 +31,7 @@ import { parseError } from '../protocol/serializers';
 import { CDPSession } from './cdpSession';
 import { Playwright } from './playwright';
 import { Electron, ElectronApplication } from './electron';
-import { Channel } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Selectors } from './selectors';
@@ -41,7 +41,7 @@ import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
 
-class Root extends ChannelOwner<Channel, {}> {
+class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
     super(connection, '', '', {});
   }
