@@ -45,6 +45,10 @@
 * [playwright-aws-lambda](https://github.com/austinkelleher/playwright-aws-lambda): Playwright setup on AWS Lambda
 * [playwright-jest-circus-allure](https://github.com/d-shch/playwright-jest-circus-allure): Example how to use allure-report and jest-circus with playwright
 
+## Guides
+
+* [theheadless.dev](https://theheadless.dev): Practical guides and runnable examples on Playwright (and Puppeteer)
+
 ## Contributing
 
 Did we miss something in this list? Send us a PR!
