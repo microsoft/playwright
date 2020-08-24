@@ -44,92 +44,25 @@ main() {
   fi
 }
 
-copyLibrariesForWPE() {
-  # Expect target directory to be passed in as first argument.
-  local tmpdir=$1
-
-  # copy all relevant binaries
-  cp -t $tmpdir ./WebKitBuild/WPE/Release/bin/MiniBrowser ./WebKitBuild/WPE/Release/bin/WPE*Process
-  # copy all relevant shared objects
-  # - exclude gstreamer plugins
-  LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/MiniBrowser \
-      | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-      | grep -v '/libgst.*so' \
-      | xargs cp -t $tmpdir
-  LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPENetworkProcess \
-      | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-      | grep -v '/libgst.*so' \
-      | xargs cp -t $tmpdir
-  LD_LIBRARY_PATH="$PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib" ldd WebKitBuild/WPE/Release/bin/WPEWebProcess \
-      | grep -o '[^ ]*WebKitBuild/WPE/[^ ]*' \
-      | grep -v '/libgst.*so' \
-      | xargs cp -t $tmpdir
-  # Copy some wayland libraries required for Web Process
-  if ls WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-* 2>&1 >/dev/null; then
-    cp -d -t $tmpdir WebKitBuild/WPE/DependenciesWPE/Root/lib/libva\-*
-  fi
-  # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
-  cp -t $tmpdir WebKitBuild/WPE/Release/lib/libWPEInjectedBundle.so
-  if test -d $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/; then
-    mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/WPE/DependenciesWPE/Root/lib/gio/modules/*
-  fi
-
-  cd $tmpdir
-  ln -s libWPEBackend-fdo-1.0.so.1 libWPEBackend-fdo-1.0.so
-  cd -
-
-  # Strip copied binaries.
-  cd $tmpdir
-  strip --strip-unneeded * || true
-  cd -
-}
-
-copyLibrariesForGTK() {
-  # Expect target directory to be passed in as first argument.
-  local tmpdir=$1
-
-  # copy all relevant binaries
-  cp -t $tmpdir ./WebKitBuild/GTK/Release/bin/MiniBrowser ./WebKitBuild/GTK/Release/bin/WebKit*Process
-  # copy all relevant shared objects
-  # - exclude gstreamer plugins
-  # - exclude libdrm
-  LD_LIBRARY_PATH="$PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib" ldd WebKitBuild/GTK/Release/bin/MiniBrowser \
-      | grep -o '[^ ]*WebKitBuild/GTK/[^ ]*' \
-      | grep -v '/libgst.*so' \
-      | grep -v '/libdrm.so' \
-      | xargs cp -t $tmpdir
-
-  # Injected bundle is loaded dynamicly via dlopen => not bt listed by ldd.
-  cp -t $tmpdir WebKitBuild/GTK/Release/lib/libwebkit2gtkinjectedbundle.so
-  if test -d $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules; then
-    mkdir -p $tmpdir/gio/modules
-    cp -t $tmpdir/gio/modules $PWD/WebKitBuild/GTK/DependenciesGTK/Root/lib/gio/modules/*
-  fi
-
-  # we failed to nicely build libgdk_pixbuf - expect it in the env
-  rm -f $tmpdir/libgdk_pixbuf*
-
-  # tar resulting directory and cleanup TMP.
-  cd $tmpdir
-  strip --strip-unneeded * || true
-  cd -
-}
 
 createZipForLinux() {
   # create a TMP directory to copy all necessary files
   local tmpdir=$(mktemp -d -t webkit-deploy-XXXXXXXXXX)
   mkdir -p $tmpdir
-  mkdir -p $tmpdir/minibrowser-gtk
-  mkdir -p $tmpdir/minibrowser-wpe
 
   # copy runner
   cp -t $tmpdir $SCRIPTS_DIR/pw_run.sh
   # copy protocol
   node $SCRIPTS_DIR/concat_protocol.js > $tmpdir/protocol.json
 
-  copyLibrariesForWPE $tmpdir/minibrowser-wpe
-  copyLibrariesForGTK $tmpdir/minibrowser-gtk
+  # Generate and unpack MiniBrowser bundles for each port
+  for port in gtk wpe; do
+    WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/${port^^} Tools/Scripts/generate-bundle \
+        --bundle=MiniBrowser --release \
+        --platform=${port} --destination=${tmpdir}
+     unzip ${tmpdir}/MiniBrowser_${port}_release.zip -d ${tmpdir}/minibrowser-${port}
+     rm -f ${tmpdir}/MiniBrowser_${port}_release.zip
+  done
 
   # tar resulting directory and cleanup TMP.
   cd $tmpdir
