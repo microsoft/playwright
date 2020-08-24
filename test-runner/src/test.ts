@@ -157,3 +157,10 @@ export class Suite {
     return found;
   }
 }
+
+export function serializeConfiguration(configuration: Configuration): string {
+  const tokens = [];
+  for (const { name, value } of configuration)
+      tokens.push(`${name}=${value}`);
+  return tokens.join(', ');
+}

@@ -32,6 +32,7 @@ export class BaseReporter implements Reporter  {
   pending: Test[] = [];
   passes: Test[] = [];
   failures: Test[] = [];
+  timeouts: Test[] = [];
   duration = 0;
   startTime: number;
   config: RunnerConfig;
@@ -62,7 +63,10 @@ export class BaseReporter implements Reporter  {
   }
 
   onFail(test: Test) {
-    this.failures.push(test);
+    if (test.duration >= test.timeout)
+      this.timeouts.push(test);
+    else
+      this.failures.push(test);
   }
 
   onEnd() {
@@ -72,43 +76,53 @@ export class BaseReporter implements Reporter  {
   epilogue() {
     console.log('');
 
-    console.log(colors.green(`  ${this.passes.length} passing`) + colors.dim(` (${milliseconds(this.duration)})`));  
+    console.log(colors.green(`  ${this.passes.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));  
 
     if (this.pending.length)
       console.log(colors.yellow(`  ${this.pending.length} skipped`));
 
-    if (this.failures.length) {  
-      console.log(colors.red(`  ${this.failures.length} failing`));
+    if (this.failures.length) {
+      console.log(colors.red(`  ${this.failures.length} failed`));
       console.log('');
-      this.failures.forEach((failure, index) => {
-        const relativePath = path.relative(process.cwd(), failure.file);
-        const header = `  ${index +1}. ${terminalLink(relativePath, `file://${os.hostname()}${failure.file}`)} › ${failure.title}`;
-        console.log(colors.bold(colors.red(header)));
-        const stack = failure.error.stack;
-        if (stack) {
+      this._printFailures(this.failures);
+    }
+
+    if (this.timeouts.length) {
+      console.log(colors.red(`  ${this.timeouts.length} timed out`));
+      console.log('');
+      this._printFailures(this.timeouts);
+    }
+  }
+
+  private _printFailures(failures: Test[]) {
+    failures.forEach((failure, index) => {
+      const relativePath = path.relative(process.cwd(), failure.file);
+      const header = `  ${index +1}. ${terminalLink(relativePath, `file://${os.hostname()}${failure.file}`)} › ${failure.title}`;
+      console.log(colors.bold(colors.red(header)));
+      const stack = failure.error.stack;
+      if (stack) {
+        console.log('');
+        const messageLocation = failure.error.stack.indexOf(failure.error.message);
+        const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
+        console.log(indent(preamble, '    '));
+        const position = positionInFile(stack, failure.file);
+        if (position) {
+          const source = fs.readFileSync(failure.file, 'utf8');
           console.log('');
-          const messageLocation = failure.error.stack.indexOf(failure.error.message);
-          const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
-          console.log(indent(preamble, '    '));
-          const position = positionInFile(stack, failure.file);
-          if (position) {
-            const source = fs.readFileSync(failure.file, 'utf8');
-            console.log('');
-            console.log(indent(codeFrameColumns(source, {
-                start: position,
-              },
-              { highlightCode: true}
-            ), '    '));
-          }
-          console.log('');
-          console.log(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
-        } else {
-          console.log('');
-          console.log(indent(String(failure.error), '    '));
+          console.log(indent(codeFrameColumns(source, {
+              start: position,
+            },
+            { highlightCode: true}
+          ), '    '));
         }
         console.log('');
-      });
-    }
+        console.log(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
+      } else {
+        console.log('');
+        console.log(indent(String(failure.error), '    '));
+      }
+      console.log('');
+    });
   }
 }
 
