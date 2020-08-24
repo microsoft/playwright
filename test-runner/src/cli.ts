@@ -17,6 +17,7 @@
 import program from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
+import { isMatch } from 'micromatch';
 import { collectTests, runTests, RunnerConfig } from '.';
 import { DotReporter } from './reporters/dot';
 import { ListReporter } from './reporters/list';
@@ -40,6 +41,7 @@ program
   .option('--output <outputDir>', 'Folder for output artifacts, default: test-results', path.join(process.cwd(), 'test-results'))
   .option('--timeout <timeout>', 'Specify test timeout threshold (in milliseconds), default: 10000', '10000')
   .option('-u, --update-snapshots', 'Use this flag to re-record every snapshot that fails during this test run')
+  .option('--test-match <match>', 'Pattern used to find test files', '**/?(*.)+(spec|test).[jt]s')
   .action(async (command) => {
     const testDir = path.resolve(process.cwd(), command.args[0]);
     const config: RunnerConfig = {
@@ -54,7 +56,7 @@ program
       trialRun: command.trialRun,
       updateSnapshots: command.updateSnapshots
     };
-    const files = collectFiles(testDir, '', command.args.slice(1));
+    const files = collectFiles(testDir, '', command.args.slice(1), command.testMatch);
     const suite = collectTests(config, files);
     if (command.forbidOnly) {
       const hasOnly = suite.eachTest(t => t.only) || suite.eachSuite(s => s.only);
@@ -82,19 +84,19 @@ program
 
 program.parse(process.argv);
 
-function collectFiles(testDir: string, dir: string, filters: string[]): string[] {
+function collectFiles(testDir: string, dir: string, filters: string[], testMatch: string): string[] {
   const fullDir = path.join(testDir, dir);
   if (fs.statSync(fullDir).isFile())
     return [fullDir];
   const files = [];
   for (const name of fs.readdirSync(fullDir)) {
     if (fs.lstatSync(path.join(fullDir, name)).isDirectory()) {
-      files.push(...collectFiles(testDir, path.join(dir, name), filters));
+      files.push(...collectFiles(testDir, path.join(dir, name), filters, testMatch));
       continue;
     }
-    if (!name.endsWith('spec.ts'))
-      continue;
     const relativeName = path.join(dir, name);
+    if (!isMatch(relativeName, [testMatch]))
+      continue;
     const fullName = path.join(testDir, relativeName);
     if (!filters.length) {
       files.push(fullName);
