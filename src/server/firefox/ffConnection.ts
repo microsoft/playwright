@@ -16,11 +16,11 @@
  */
 
 import { EventEmitter } from 'events';
-import { assert } from '../utils/utils';
-import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
+import { assert } from '../../utils/utils';
+import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../../transport';
 import { Protocol } from './protocol';
-import { rewriteErrorMessage } from '../utils/stackTrace';
-import { debugLogger } from '../utils/debugLogger';
+import { rewriteErrorMessage } from '../../utils/stackTrace';
+import { debugLogger } from '../../utils/debugLogger';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),

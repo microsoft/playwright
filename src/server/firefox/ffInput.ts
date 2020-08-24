@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
-import * as input from '../input';
-import * as types from '../types';
+import * as input from '../../input';
+import * as types from '../../types';
 import { FFSession } from './ffConnection';
 
 function toModifiersMask(modifiers: Set<types.KeyboardModifier>): number {
