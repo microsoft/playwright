@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { CRSession, CRSessionEvents } from '../../server/chromium/crConnection';
-import * as channels from '../../protocol/channels';
+import { CRSession, CRSessionEvents } from '../server/chromium/crConnection';
+import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class CDPSessionDispatcher extends Dispatcher<CRSession, channels.CDPSessionInitializer> implements channels.CDPSessionChannel {

@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-import { Dialog } from '../../server/dialog';
-import * as channels from '../../protocol/channels';
+import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
+import * as stream from 'stream';
 
-export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogInitializer> implements channels.DialogChannel {
-  constructor(scope: DispatcherScope, dialog: Dialog) {
-    super(scope, dialog, 'Dialog', {
-      type: dialog.type(),
-      message: dialog.message(),
-      defaultValue: dialog.defaultValue(),
-    });
+export class StreamDispatcher extends Dispatcher<stream.Readable, channels.StreamInitializer> implements channels.StreamChannel {
+  constructor(scope: DispatcherScope, stream: stream.Readable) {
+    super(scope, stream, 'Stream', {});
   }
 
-  async accept(params: { promptText?: string }): Promise<void> {
-    await this._object.accept(params.promptText);
-  }
-
-  async dismiss(): Promise<void> {
-    await this._object.dismiss();
+  async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
+    const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
+    return { binary: buffer ? buffer.toString('base64') : '' };
   }
 }

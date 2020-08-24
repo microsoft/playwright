@@ -35,5 +35,5 @@ const util = require('util');
     return;
   }
 
-  require('../../lib/rpc/server');
+  require('../../lib/server');
 })();

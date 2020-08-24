@@ -14,17 +14,18 @@
  * limitations under the License.
  */
 
-import * as channels from '../../protocol/channels';
+import { ConsoleMessage } from '../server/console';
+import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import * as stream from 'stream';
+import { createHandle } from './elementHandlerDispatcher';
 
-export class StreamDispatcher extends Dispatcher<stream.Readable, channels.StreamInitializer> implements channels.StreamChannel {
-  constructor(scope: DispatcherScope, stream: stream.Readable) {
-    super(scope, stream, 'Stream', {});
-  }
-
-  async read(params: channels.StreamReadParams): Promise<channels.StreamReadResult> {
-    const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
-    return { binary: buffer ? buffer.toString('base64') : '' };
+export class ConsoleMessageDispatcher extends Dispatcher<ConsoleMessage, channels.ConsoleMessageInitializer> implements channels.ConsoleMessageChannel {
+  constructor(scope: DispatcherScope, message: ConsoleMessage) {
+    super(scope, message, 'ConsoleMessage', {
+      type: message.type(),
+      text: message.text(),
+      args: message.args().map(a => createHandle(scope, a)),
+      location: message.location(),
+    });
   }
 }

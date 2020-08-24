@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-import { LaunchServerOptions } from '../client/types';
-import { BrowserTypeBase } from '../server/browserType';
+import { LaunchServerOptions } from './client/types';
+import { BrowserTypeBase } from './server/browserType';
 import * as ws from 'ws';
-import { helper } from '../server/helper';
-import { Browser } from '../server/browser';
+import { helper } from './server/helper';
+import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
-import { DispatcherScope, DispatcherConnection } from './server/dispatcher';
-import { BrowserTypeDispatcher } from './server/browserTypeDispatcher';
-import { BrowserDispatcher } from './server/browserDispatcher';
-import { BrowserContextDispatcher } from './server/browserContextDispatcher';
-import { BrowserNewContextParams, BrowserContextChannel } from '../protocol/channels';
-import { BrowserServerLauncher, BrowserServer } from '../client/browserType';
-import { envObjectToArray } from '../client/clientHelper';
+import { DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
+import { BrowserTypeDispatcher } from './dispatchers/browserTypeDispatcher';
+import { BrowserDispatcher } from './dispatchers/browserDispatcher';
+import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
+import { BrowserNewContextParams, BrowserContextChannel } from './protocol/channels';
+import { BrowserServerLauncher, BrowserServer } from './client/browserType';
+import { envObjectToArray } from './client/clientHelper';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserTypeBase;
