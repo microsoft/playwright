@@ -20,13 +20,14 @@ import * as path from 'path';
 import './builtin.fixtures';
 import './expect';
 import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT } from './fixtures';
-import { reporters } from './reporters';
+import { Reporter } from './reporter';
 import { Runner } from './runner';
 import { RunnerConfig } from './runnerConfig';
 import { Suite, Test } from './test';
 import { Matrix, TestCollector } from './testCollector';
 import { installTransform } from './transform';
 export { parameters, registerParameter } from './fixtures';
+export { Reporter } from './reporter';
 export { RunnerConfig } from './runnerConfig';
 export { Suite, Test } from './test';
 
@@ -76,11 +77,10 @@ export function collectTests(config: RunnerConfig, files: string[]): Suite {
   return testCollector.suite;
 }
 
-export async function runTests(config: RunnerConfig, suite: Suite, reporterFactory: any) {
+export async function runTests(config: RunnerConfig, suite: Suite, reporter: Reporter) {
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
-  const runner = new Runner(suite, { ...config, jobs });
-  new reporterFactory(runner);
+  const runner = new Runner(suite, { ...config, jobs }, reporter);
 
   try {
     for (const f of beforeFunctions)
