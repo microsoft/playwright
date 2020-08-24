@@ -13,6 +13,7 @@ container, including browsers.
   * [Build the image](#build-the-image)
   * [Push](#push)
 - [Base images](#base-images)
+- [Full Tag Listing](#full-tag-listing)
   * [Alpine](#alpine)
 <!-- GEN:stop -->
 
@@ -91,6 +92,10 @@ images:
 ## Base images
 
 `playwright:bionic` is based on Ubuntu 18.04 LTS (Bionic Beaver).
+
+## Full Tag Listing
+
+You can retrieve a list of all available Docker tags for Playwright [here](https://mcr.microsoft.com/v2/playwright/tags/list).
 
 ### Alpine
 
