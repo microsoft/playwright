@@ -26,7 +26,7 @@ export class DotReporter extends BaseReporter {
   
   onPass(test: Test) {
     super.onPass(test);
-    process.stdout.write(colors.green('\u00B7'));
+    process.stdout.write(colors.green('·'));
   }
   
   onFail(test: Test) {

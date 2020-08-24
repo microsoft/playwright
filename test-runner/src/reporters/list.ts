@@ -36,21 +36,21 @@ export class ListReporter extends BaseReporter {
     super.onPending(test);
     process.stdout.write(colors.green('  - ') + colors.cyan(test.fullTitle()));
     process.stdout.write('\n');
-}
+  }
 
   onPass(test: Test) {
     super.onPass(test);
     process.stdout.write('\u001b[2K\u001b[0G');
     process.stdout.write(colors.green('  ✓ ') + colors.gray(test.fullTitle()));
     process.stdout.write('\n');
-}
+  }
 
   onFail(test: Test) {
     super.onFail(test);
     process.stdout.write('\u001b[2K\u001b[0G');
     process.stdout.write(colors.red(`  ${++this._failure}) ` + test.fullTitle()));
     process.stdout.write('\n');
-}
+  }
 
   onEnd() {
     super.onEnd();

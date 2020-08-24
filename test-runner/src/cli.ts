@@ -21,18 +21,20 @@ import { collectTests, runTests, RunnerConfig } from '.';
 import { DotReporter } from './reporters/dot';
 import { ListReporter } from './reporters/list';
 import { JSONReporter } from './reporters/json';
+import { PytestReporter } from './reporters/pytest';
 
 export const reporters = {
   'dot': DotReporter,
   'list': ListReporter,
-  'json': JSONReporter
+  'json': JSONReporter,
+  'pytest': PytestReporter,
 };
 
 program
   .version('Version ' + /** @type {any} */ (require)('../package.json').version)
   .option('--forbid-only', 'Fail if exclusive test(s) encountered', false)
   .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
-  .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2).toString())
+  .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2) as any)
   .option('--reporter <reporter>', 'Specify reporter to use', '')
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
   .option('--quiet', 'Suppress stdio', false)

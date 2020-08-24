@@ -208,6 +208,9 @@ class Worker extends EventEmitter {
     this.runner = runner;
   }
 
+  run(entry: TestRunnerEntry) {
+  }
+
   stop() {
   }
 }
@@ -290,7 +293,7 @@ class InProcessWorker extends Worker {
     initializeImageMatcher(this.runner._config);
   }
 
-  async run(entry) {
+  async run(entry: TestRunnerEntry) {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
     const testRunner = new TestRunner(entry, this.runner._config, 0);

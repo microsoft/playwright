@@ -16,7 +16,7 @@
 
 import path from 'path';
 import { fixturesForCallback } from './fixtures';
-import { Test, Suite } from './test';
+import { Test, Suite, serializeConfiguration } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
 
@@ -85,10 +85,7 @@ export class TestCollector {
 
       for (const configuration of generatorConfigurations) {
         // Serialize configuration as readable string, we will use it as a hash.
-        const tokens = [];
-        for (const { name, value } of configuration)
-          tokens.push(`${name}=${value}`);
-        const configurationString = tokens.join(', ');
+        const configurationString = serializeConfiguration(configuration);
         // Allocate worker for this configuration, add test into it.
         if (!workerGeneratorConfigurations.has(configurationString))
           workerGeneratorConfigurations.set(configurationString, { configuration, configurationString, tests: new Set() });
