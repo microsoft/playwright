@@ -8340,7 +8340,7 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d1a9d5650
+index 0000000000000000000000000000000000000000..54f5897a8812b5654629e9cecdd003b2e5027be5
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,157 @@
@@ -8459,7 +8459,7 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +        callback->sendFailure("Not recording"_s);
 +        return;
 +    }
-+    m_encoder->finish([protectRef = m_encoder.copyRef(), callback = WTFMove(callback)] {
++    m_encoder->finish([callback = WTFMove(callback)] {
 +        callback->sendSuccess();
 +    });
 +    m_encoder = nullptr;
@@ -8585,7 +8585,7 @@ index 0000000000000000000000000000000000000000..1ff1e813de838a60f4ab030e31b24891
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b33d5babec7709e003bc968434a8ba96486d5cea
+index 0000000000000000000000000000000000000000..53a5cb8dd3fad3a38168397d9ead79c289cf5e11
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 @@ -0,0 +1,380 @@
@@ -8960,7 +8960,7 @@ index 0000000000000000000000000000000000000000..b33d5babec7709e003bc968434a8ba96
 +    }
 +
 +    flushLastFrame();
-+    m_vpxCodec->finishAsync([callback = WTFMove(callback)] () mutable {
++    m_vpxCodec->finishAsync([protectRef = makeRef(*this), callback = WTFMove(callback)] () mutable {
 +        RunLoop::main().dispatch([callback = WTFMove(callback)] {
 +            callback();
 +        });
