@@ -42,7 +42,7 @@ async function checkDeps() {
   function visit(node, fileName) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const importName = node.moduleSpecifier.text;
-      const importPath = path.resolve(path.dirname(fileName), importName);
+      const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
       if (!allowImport(fileName, importPath))
         errors.push(`Disallowed import from ${path.relative(root, fileName)} to ${path.relative(root, importPath)}`);
     }
@@ -51,37 +51,61 @@ async function checkDeps() {
 
   function allowImport(from, to) {
     from = from.substring(from.indexOf('src' + path.sep)).replace(/\\/g, '/');
-    to = to.substring(to.indexOf('src' + path.sep)).replace(/\\/g, '/') + '.ts';
+    to = to.substring(to.indexOf('src' + path.sep)).replace(/\\/g, '/');
+    const fromDirectory = from.substring(0, from.lastIndexOf('/') + 1);
     const toDirectory = to.substring(0, to.lastIndexOf('/') + 1);
-    while (from.lastIndexOf('/') !== -1) {
-      from = from.substring(0, from.lastIndexOf('/'));
-      const allowed = DEPS.get(from + '/');
-      if (!allowed)
-        continue;
-      for (const dep of allowed) {
-        if (to === dep || toDirectory === dep )
+    if (fromDirectory === toDirectory)
+      return true;
+
+    if (['src/', 'src/rpc/server/', 'src/rpc/'].includes(fromDirectory))
+      return true;  // Temporary.
+    if (toDirectory === 'src/')
+      return true;  // Temporary.
+
+    while (!DEPS[from]) {
+      if (from.endsWith('/'))
+        from = from.substring(0, from.length - 1);
+      if (from.lastIndexOf('/') === -1)
+        break;
+      from = from.substring(0, from.lastIndexOf('/') + 1);
+    }
+
+    const deps = DEPS[from] || [`+${fromDirectory}`];
+    for (const dep of deps) {
+      if (to === dep || toDirectory === dep)
+        return true;
+      if (dep.endsWith('**')) {
+        const parent = dep.substring(0, dep.length - 2);
+        if (to.startsWith(parent))
           return true;
       }
-      return false;
     }
-    // Allow everything else for now.
-    return true;
+    return false;
   }
 }
 
-const DEPS = new Map([
-  ['src/utils/', ['src/utils/']],
-  ['src/common/', ['src/common/']],
-  ['src/protocol/', ['src/protocol/', 'src/utils/']],
-  ['src/install/', ['src/install/', 'src/utils/']],
-  ['src/server/debug/', ['src/server/debug/', 'src/common/', 'src/server/injected/', 'src/', 'src/server/debug/injected/']],
-  // TODO: reverse the injected->types dependency.
-  ['src/server/injected/', ['src/server/injected/', 'src/common/', 'src/types.ts']],
-  ['src/server/chromium/', ['src/server/chromium/', 'src/utils/', 'src/', 'src/common/', 'src/server/']],
-  ['src/server/electron/', ['src/server/electron/', 'src/server/chromium/', 'src/utils/', 'src/', 'src/server/']],
-  ['src/server/firefox/', ['src/server/firefox/', 'src/utils/', 'src/', 'src/common/', 'src/server/']],
-  ['src/server/webkit/', ['src/server/webkit/', 'src/utils/', 'src/', 'src/common/', 'src/server/']],
-  ['src/client/', ['src/client/', 'src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts']],
-]);
+const DEPS = {};
+
+// No deps for code shared between node and page.
+DEPS['src/common/'] = [];
+
+DEPS['src/protocol/'] = ['src/utils/'];
+DEPS['src/install/'] = ['src/utils/'];
+
+DEPS['src/client/'] = ['src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts'];
+
+DEPS['src/server/'] = ['src/utils/', 'src/common/', 'src/server/injected/'];
+
+// Strict deps for injected code.
+// TODO: reverse the injected->types dependency.
+DEPS['src/server/injected/'] = ['src/common/', 'src/types.ts'];
+
+DEPS['src/server/debug/'] = [...DEPS['src/server/'], 'src/server/debug/**'];
+
+DEPS['src/server/chromium/'] = [...DEPS['src/server/'], 'src/server/'];
+DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/', 'src/server/chromium/'];
+DEPS['src/server/firefox/'] = [...DEPS['src/server/'], 'src/server/'];
+DEPS['src/server/webkit/'] = [...DEPS['src/server/'], 'src/server/'];
+DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/'];
 
 checkDeps();
