@@ -267,10 +267,8 @@ export class FFPage implements PageDelegate {
 
   _onScreencastStopped(event: Protocol.Page.screencastStoppedPayload) {
     const screencast = this._idToScreencast.get(event.uid);
-    if (!screencast)
-      return;
     this._idToScreencast.delete(event.uid);
-    this._browserContext.emit(BrowserContext.Events.ScreencastStopped, screencast);
+    screencast!._finishCallback();
   }
 
   async exposeBinding(binding: PageBinding) {
