@@ -42,7 +42,7 @@ export class FFBrowser extends Browser {
       browser._initVersion(),
     ];
     if (options.persistent) {
-      browser._defaultContext = new FFBrowserContext(browser, null, options.persistent);
+      browser._defaultContext = new FFBrowserContext(browser, undefined, options.persistent);
       promises.push((browser._defaultContext as FFBrowserContext)._initialize());
     }
     if (options.proxy) {
@@ -165,17 +165,15 @@ export class FFBrowser extends Browser {
 
 export class FFBrowserContext extends BrowserContext {
   readonly _browser: FFBrowser;
-  readonly _browserContextId: string | null;
 
-  constructor(browser: FFBrowser, browserContextId: string | null, options: types.BrowserContextOptions) {
-    super(browser, options, !browserContextId);
+  constructor(browser: FFBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
+    super(browser, options, browserContextId);
     this._browser = browser;
-    this._browserContextId = browserContextId;
   }
 
   async _initialize() {
     assert(!this._ffPages().length);
-    const browserContextId = this._browserContextId || undefined;
+    const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];
     if (this._browser._options.downloadsPath) {
       promises.push(this._browser._connection.send('Browser.setDownloadOptions', {
@@ -233,7 +231,7 @@ export class FFBrowserContext extends BrowserContext {
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser._connection.send('Browser.newPage', {
-      browserContextId: this._browserContextId || undefined
+      browserContextId: this._browserContextId
     }).catch(e =>  {
       if (e.message.includes('Failed to override timezone'))
         throw new Error(`Invalid timezone ID: ${this._options.timezoneId}`);
@@ -250,7 +248,7 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
-    const { cookies } = await this._browser._connection.send('Browser.getCookies', { browserContextId: this._browserContextId || undefined });
+    const { cookies } = await this._browser._connection.send('Browser.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { ... c };
       delete copy.size;
@@ -260,11 +258,11 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async addCookies(cookies: types.SetNetworkCookieParam[]) {
-    await this._browser._connection.send('Browser.setCookies', { browserContextId: this._browserContextId || undefined, cookies: network.rewriteCookies(cookies) });
+    await this._browser._connection.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: network.rewriteCookies(cookies) });
   }
 
   async clearCookies() {
-    await this._browser._connection.send('Browser.clearCookies', { browserContextId: this._browserContextId || undefined });
+    await this._browser._connection.send('Browser.clearCookies', { browserContextId: this._browserContextId });
   }
 
   async _doGrantPermissions(origin: string, permissions: string[]) {
@@ -280,17 +278,17 @@ export class FFBrowserContext extends BrowserContext {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId || undefined, permissions: filtered});
+    await this._browser._connection.send('Browser.grantPermissions', { origin: origin, browserContextId: this._browserContextId, permissions: filtered});
   }
 
   async _doClearPermissions() {
-    await this._browser._connection.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
+    await this._browser._connection.send('Browser.resetPermissions', { browserContextId: this._browserContextId });
   }
 
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {
     verifyGeolocation(geolocation);
     this._options.geolocation = geolocation;
-    await this._browser._connection.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId || undefined, geolocation: geolocation || null });
+    await this._browser._connection.send('Browser.setGeolocationOverride', { browserContextId: this._browserContextId, geolocation: geolocation || null });
   }
 
   async setExtraHTTPHeaders(headers: types.HeadersArray): Promise<void> {
@@ -298,34 +296,34 @@ export class FFBrowserContext extends BrowserContext {
     let allHeaders = this._options.extraHTTPHeaders;
     if (this._options.locale)
       allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
-    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId || undefined, headers: allHeaders });
+    await this._browser._connection.send('Browser.setExtraHTTPHeaders', { browserContextId: this._browserContextId, headers: allHeaders });
   }
 
   async setOffline(offline: boolean): Promise<void> {
     this._options.offline = offline;
-    await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId || undefined, override: offline ? 'offline' : 'online' });
+    await this._browser._connection.send('Browser.setOnlineOverride', { browserContextId: this._browserContextId, override: offline ? 'offline' : 'online' });
   }
 
   async _doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
     this._options.httpCredentials = httpCredentials;
-    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId || undefined, credentials: httpCredentials || null });
+    await this._browser._connection.send('Browser.setHTTPCredentials', { browserContextId: this._browserContextId, credentials: httpCredentials || null });
   }
 
   async _doAddInitScript(source: string) {
-    await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId || undefined, script: source });
+    await this._browser._connection.send('Browser.addScriptToEvaluateOnNewDocument', { browserContextId: this._browserContextId, script: source });
   }
 
   async _doExposeBinding(binding: PageBinding) {
-    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId || undefined, name: binding.name, script: binding.source });
+    await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, name: binding.name, script: binding.source });
   }
 
   async _doUpdateRequestInterception(): Promise<void> {
-    await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId || undefined, enabled: !!this._requestInterceptor });
+    await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
   }
 
   async _enableScreencast(options: types.ContextScreencastOptions): Promise<void> {
     await super._enableScreencast(options);
-    await this._browser._connection.send('Browser.setScreencastOptions', Object.assign({}, options, { browserContextId: this._browserContextId || undefined}));
+    await this._browser._connection.send('Browser.setScreencastOptions', Object.assign({}, options, { browserContextId: this._browserContextId}));
   }
 
   async _doClose() {

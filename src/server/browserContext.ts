@@ -68,12 +68,14 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _downloads = new Set<Download>();
   readonly _idToScreencast = new Map<string, Screencast>();
   readonly _browser: Browser;
+  readonly _browserContextId: string | undefined;
 
-  constructor(browser: Browser, options: types.BrowserContextOptions, isPersistentContext: boolean) {
+  constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
     this._browser = browser;
     this._options = options;
-    this._isPersistentContext = isPersistentContext;
+    this._browserContextId = browserContextId;
+    this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
