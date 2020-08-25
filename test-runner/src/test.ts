@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { FixturePool } from "./fixtures";
+
 export type Configuration = { name: string, value: string }[];
 
 export class Test {
@@ -42,7 +44,7 @@ export class Test {
   }
 
   fullTitle(): string {
-    return this.titlePath().join(' ');
+    return this.titlePath().filter(x => x).join(' ');
   }
 
   _clone(): Test {
@@ -156,4 +158,118 @@ export class Suite {
     });
     return found;
   }
+
+  async run(options: {
+    testFilter: (test: Test) => boolean;
+    onResult: (test: Test, status: 'pass'|'skip'|'fail', error?: any) => void;
+    onTestStart: (test: Test) => void;
+    fixturePool: FixturePool<any>;
+    timeout: number;
+    trialRun: boolean;
+  }) {
+    const beforeResult = {success: true, error: undefined};
+    try {
+      if (!options.trialRun)
+        await this._runHooks(options.fixturePool, options.timeout, 'beforeAll');
+    } catch (e) {
+      beforeResult.success = false;
+      beforeResult.error = e
+    }
+    for (const entry of this._entries) {
+      if (entry instanceof Suite) {
+        await entry.run(options);
+      } else {
+        if (!options.testFilter(entry))
+          continue;
+        if (entry.pending || this._isPending())
+          options.onResult(entry, 'skip');
+        else {
+          if (options.trialRun) {
+            options.onResult(entry, 'pass')
+          } else if (!beforeResult.success) {
+            entry.error = serializeError(beforeResult.error);
+            options.onResult(entry, 'fail', entry.error);
+          } else {
+            options.onTestStart(entry);
+            const {status, error} = await this._runTest(options.fixturePool, options.timeout, entry);
+            options.onResult(entry, status, error);
+          }
+        }
+      }
+    }
+    try {
+      if (!options.trialRun)
+        await this._runHooks(options.fixturePool, options.timeout, 'afterAll');
+    } catch (e) {
+    }
+  }
+
+  private async _runTest(fixturePool: FixturePool<any>, timeout: number, test: Test): Promise<{status: 'pass'|'fail', error?: any}> {
+    try {
+      await this._runHooks(fixturePool, timeout, 'beforeEach');
+      test._startTime = Date.now();
+      await fixturePool.wrapTestCallback(test.fn, test.slow ? timeout * 3 : timeout, test)();
+      await this._runHooks(fixturePool, timeout, 'afterEach');
+    } catch (error) {
+      test.error = serializeError(error);
+      return { status: 'fail', error };
+    }
+    return { status: 'pass' };
+  }
+
+  private async _runHooks(fixturePool: FixturePool<any>, timeout: number, type: 'beforeEach'|'afterEach'|'beforeAll'|'afterAll') {
+    if (!this._hasTestsToRun())
+      return;
+    const all = [];
+    for (let s: Suite = this; s; s = s.parent) {
+      const funcs = s._hooks.filter(e => e.type === type).map(e => e.fn);
+      all.push(...funcs.reverse());
+      if (type === 'beforeAll' || type === 'afterAll')
+        break;
+    }
+    if (type === 'beforeAll' || type === 'beforeEach')
+      all.reverse();
+    for (const hook of all)
+      await fixturePool.resolveParametersAndRun(hook, timeout);
+  }
+
+  filterOnly() {
+    const onlySuites = this.suites.filter(child => child.filterOnly() || child.only);
+    const onlyTests = this.tests.filter(test => test.only);
+    if (onlySuites.length || onlyTests.length) {
+      this.suites = onlySuites;
+      this.tests = onlyTests;
+      const all = new Set([...this.suites, ...this.tests]);
+      this._entries = this._entries.filter(x => all.has(x));
+      return true;
+    }
+    return false;
+  }
+}
+
+
+function trimCycles(obj: any): any {
+  if (obj === undefined)
+    return undefined;
+  const cache = new Set();
+  return JSON.parse(
+    JSON.stringify(obj, function(key, value) {
+      if (typeof value === 'object' && value !== null) {
+        if (cache.has(value))
+          return '' + value;
+        cache.add(value);
+      }
+      return value;
+    })
+  );
+}
+
+function serializeError(error: any): any {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack
+    }
+  }
+  return trimCycles(error);
 }

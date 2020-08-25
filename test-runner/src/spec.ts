@@ -22,12 +22,15 @@ Error.stackTraceLimit = 15;
 function specBuilder(modifiers, specCallback) {
   function builder(specs, last) {
     const callable = (...args) => {
-      if (!last || (typeof args[0] === 'string' && typeof args[1] === 'function')) {
+      const [nameOrConditionOrBody, maybeBody] = args;
+      const body = typeof maybeBody === 'function' ? maybeBody : typeof nameOrConditionOrBody === 'function' ? nameOrConditionOrBody : null;
+      if (!last || body) {
+        const name = typeof maybeBody === 'function' ? nameOrConditionOrBody : '';
         // Looks like a body (either it or describe). Assume that last modifier is true.
         const newSpecs = { ...specs };
         if (last)
           newSpecs[last] = [true];
-        return specCallback(newSpecs, ...args);
+        return specCallback(newSpecs, name, body);
       }
       const newSpecs = { ...specs };
       newSpecs[last] = args;
@@ -49,7 +52,7 @@ function specBuilder(modifiers, specCallback) {
   return builder({}, null);
 }
 
-export function spec(suite: Suite, file: string, timeout: number): () => void {
+export function makeApi(suite: Suite, file: string, timeout: number) {
   const suites = [suite];
   suite.file = file;
 
@@ -87,16 +90,23 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
     suites.shift();
   });
 
-  (global as any).beforeEach = fn => suite._addHook('beforeEach', fn);
-  (global as any).afterEach = fn => suite._addHook('afterEach', fn);
-  (global as any).beforeAll = fn => suite._addHook('beforeAll', fn);
-  (global as any).afterAll = fn => suite._addHook('afterAll', fn);
-  (global as any).describe = describe;
-  (global as any).fdescribe = describe.only(true);
-  (global as any).xdescribe = describe.skip(true);
-  (global as any).it = it;
-  (global as any).fit = it.only(true);
-  (global as any).xit = it.skip(true);
+  return {
+    beforeEach: fn => suites[0]._addHook('beforeEach', fn),
+    afterEach: fn => suites[0]._addHook('afterEach', fn),
+    beforeAll: fn => suites[0]._addHook('beforeAll', fn),
+    afterAll: fn => suites[0]._addHook('afterAll', fn),
+    describe: describe,
+    fdescribe: describe.only(true),
+    xdescribe: describe.skip(true),
+    it: it,
+    fit: it.only(true),
+    xit: it.skip(true),
+  }
+}
 
+export function spec(suite: Suite, file: string, timeout: number): () => void {
+  const api = makeApi(suite, file, timeout);
+  for (const name in api)
+    global[name] = api[name];
   return installTransform();
 }

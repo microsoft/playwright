@@ -30,7 +30,6 @@ export class TestCollector {
   private _matrix: Matrix;
   private _config: RunnerConfig;
   private _grep: RegExp;
-  private _hasOnly: boolean;
 
   constructor(files: string[], matrix: Matrix, config: RunnerConfig) {
     this._matrix = matrix;
@@ -43,12 +42,7 @@ export class TestCollector {
 
     for (const file of files)
       this._addFile(file);
-
-    this._hasOnly = this._filterOnly(this.suite);
-  }
-
-  hasOnly() {
-    return this._hasOnly;
+    this.suite.filterOnly();
   }
 
   private _addFile(file: string) {
@@ -126,16 +120,5 @@ export class TestCollector {
       }
     }
     return copy;
-  }
-
-  private _filterOnly(suite) {
-    const onlySuites = suite.suites.filter(child => this._filterOnly(child) || child.only);
-    const onlyTests = suite.tests.filter(test => test.only);
-    if (onlySuites.length || onlyTests.length) {
-      suite.suites = onlySuites;
-      suite.tests = onlyTests;
-      return true;
-    }
-    return false;
   }
 }

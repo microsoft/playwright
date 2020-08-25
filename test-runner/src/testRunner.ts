@@ -21,8 +21,6 @@ import { Test, Suite, Configuration } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
 
-export const fixturePool = new FixturePool<RunnerConfig>();
-
 export type TestRunnerEntry = {
   file: string;
   ordinals: number[];
@@ -41,17 +39,18 @@ export class TestRunner extends EventEmitter {
   private _trialRun: any;
   private _configuredFile: any;
   private _parsedGeneratorConfiguration: any = {};
-  private _config: RunnerConfig;
   private _timeout: number;
+  private _fixturePool: FixturePool<RunnerConfig>;
 
-  constructor(entry: TestRunnerEntry, config: RunnerConfig, workerId: number) {
+  constructor(fixturePool: FixturePool<RunnerConfig>, entry: TestRunnerEntry, config: RunnerConfig, workerId: number) {
     super();
+    this._fixturePool = fixturePool;
     this._file = entry.file;
     this._ordinals = new Set(entry.ordinals);
     this._remaining = new Set(entry.ordinals);
     this._trialRun = config.trialRun;
     this._timeout = config.timeout;
-    this._config = config;
+    fixturePool.config = config;
     this._configuredFile = entry.file + `::[${entry.configurationString}]`;
     for (const {name, value} of entry.configuration)
       this._parsedGeneratorConfiguration[name] = value;
@@ -60,6 +59,7 @@ export class TestRunner extends EventEmitter {
   }
 
   stop() {
+    //TODO fix stop
     this._trialRun = true;
   }
 
@@ -73,73 +73,39 @@ export class TestRunner extends EventEmitter {
     suite._renumber();
 
     rerunRegistrations(this._file, 'test');
-    await this._runSuite(suite);
+    await suite.run({
+      fixturePool: this._fixturePool,
+      onResult: (test, status, error) => {
+        if (status === 'fail') {
+          this.emit('fail', {
+            test: this._serializeTest(test),
+          });
+        } else if (status === 'pass') {
+          this.emit('pass', {
+            test: this._serializeTest(test),
+          });
+        } else if (status === 'skip') {
+          this.emit('pending', {
+            test: this._serializeTest(test),
+          });
+        }
+      },
+      onTestStart: test => {
+        this.emit('test', { test: this._serializeTest(test) });
+      },
+      testFilter: test => {
+        // if (this._failedWithError)
+        //   return false;
+        const ordinal = ++this._currentOrdinal;
+        if (this._ordinals.size && !this._ordinals.has(ordinal))
+          return false;
+        this._remaining.delete(ordinal);
+        return true;
+      },
+      timeout: this._timeout,
+      trialRun: this._trialRun,
+    });
     this._reportDone();
-  }
-
-  private async _runSuite(suite: Suite) {
-    try {
-      await this._runHooks(suite, 'beforeAll', 'before');
-    } catch (e) {
-      this._fatalError = serializeError(e);
-      this._reportDone();
-    }
-    for (const entry of suite._entries) {
-      if (entry instanceof Suite) {
-        await this._runSuite(entry);
-      } else {
-        await this._runTest(entry);
-      }
-    }
-    try {
-      await this._runHooks(suite, 'afterAll', 'after');
-    } catch (e) {
-      this._fatalError = serializeError(e);
-      this._reportDone();
-    }
-  }
-
-  private async _runTest(test: Test) {
-    if (this._failedWithError)
-      return false;
-    const ordinal = ++this._currentOrdinal;
-    if (this._ordinals.size && !this._ordinals.has(ordinal))
-      return;
-    this._remaining.delete(ordinal);
-    if (test.pending || test.suite._isPending()) {
-      this.emit('pending', { test: this._serializeTest(test) });
-      return;
-    }
-
-    this.emit('test', { test: this._serializeTest(test) });
-    try {
-      await this._runHooks(test.suite, 'beforeEach', 'before');
-      test._startTime = Date.now();
-      if (!this._trialRun)
-        await this._testWrapper(test)();
-      this.emit('pass', { test: this._serializeTest(test) });
-      await this._runHooks(test.suite, 'afterEach', 'after');
-    } catch (error) {
-      test.error = serializeError(error);
-      this._failedWithError = test.error;
-      this.emit('fail', {
-        test: this._serializeTest(test),
-      });
-    }
-  }
-
-  private async _runHooks(suite: Suite, type: string, dir: 'before' | 'after') {
-    if (!suite._hasTestsToRun())
-      return;
-    const all = [];
-    for (let s = suite; s; s = s.parent) {
-      const funcs = s._hooks.filter(e => e.type === type).map(e => e.fn);
-      all.push(...funcs.reverse());
-    }
-    if (dir === 'before')
-      all.reverse();
-    for (const hook of all)
-      await fixturePool.resolveParametersAndRun(hook, 0, this._config);
   }
 
   private _reportDone() {
@@ -150,11 +116,6 @@ export class TestRunner extends EventEmitter {
     });
   }
 
-  private _testWrapper(test: Test) {
-    const timeout = test.slow ? this._timeout * 3 : this._timeout;
-    return fixturePool.wrapTestCallback(test.fn, timeout, { ...this._config }, test);
-  }
-
   private _serializeTest(test) {
     return {
       id: `${test._ordinal}@${this._configuredFile}`,
@@ -162,28 +123,4 @@ export class TestRunner extends EventEmitter {
       duration: Date.now() - test._startTime,
     };
   }
-}
-
-function trimCycles(obj: any): any {
-  const cache = new Set();
-  return JSON.parse(
-    JSON.stringify(obj, function(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value))
-          return '' + value;
-        cache.add(value);
-      }
-      return value;
-    })
-  );
-}
-
-function serializeError(error: Error): any {
-  if (error instanceof Error) {
-    return {
-      message: error.message,
-      stack: error.stack
-    }
-  }
-  return trimCycles(error);
 }

@@ -22,7 +22,7 @@ type Scope = 'test' | 'worker';
 type FixtureRegistration = {
   name: string;
   scope: Scope;
-  fn: Function; 
+  fn: FixtureFn; 
 };
 
 const registrations = new Map<string, FixtureRegistration>();
@@ -36,21 +36,23 @@ export function setParameters(params: any) {
     registerWorkerFixture(name, async ({}, test) => await test(parameters[name]));
 }
 
-class Fixture<Config> {
+type FixtureFn<Config = any, Value = any> = (params: any, complete: (value: Value) => Promise<void>, config: Config, test: Test) => Promise<void>;
+
+class Fixture<Config, Value = any> {
   pool: FixturePool<Config>;
   name: string;
   scope: Scope;
-  fn: Function;
+  fn: FixtureFn<Config, Value>;
   deps: string[];
   usages: Set<string>;
   hasGeneratorValue: boolean;
-  value: any;
-  _teardownFenceCallback: (value?: unknown) => void;
+  value: Value;
+  _teardownFenceCallback: () => void;
   _tearDownComplete: Promise<void>;
   _setup = false;
   _teardown = false;
 
-  constructor(pool: FixturePool<Config>, name: string, scope: Scope, fn: any) {
+  constructor(pool: FixturePool<Config>, name: string, scope: Scope, fn: FixtureFn<Config, Value>) {
     this.pool = pool;
     this.name = name;
     this.scope = scope;
@@ -61,11 +63,11 @@ class Fixture<Config> {
     this.value = this.hasGeneratorValue ? parameters[name] : null;
   }
 
-  async setup(config: Config, test?: Test) {
+  async setup(test?: Test) {
     if (this.hasGeneratorValue)
       return;
     for (const name of this.deps) {
-      await this.pool.setupFixture(name, config, test);
+      await this.pool.setupFixture(name, test);
       this.pool.instances.get(name).usages.add(this.name);
     }
 
@@ -75,13 +77,13 @@ class Fixture<Config> {
     let setupFenceFulfill: { (): void; (value?: unknown): void; };
     let setupFenceReject: { (arg0: any): any; (reason?: any): void; };
     const setupFence = new Promise((f, r) => { setupFenceFulfill = f; setupFenceReject = r; });
-    const teardownFence = new Promise(f => this._teardownFenceCallback = f);
+    const teardownFence = new Promise<void>(f => this._teardownFenceCallback = f);
     debug('pw:test:hook')(`setup "${this.name}"`);
     this._tearDownComplete = this.fn(params, async (value: any) => {
       this.value = value;
       setupFenceFulfill();
       return await teardownFence;
-    }, config, test).catch((e: any) => setupFenceReject(e));
+    }, this.pool.config, test).catch((e: any) => setupFenceReject(e));
     await setupFence;
     this._setup = true;
   }
@@ -109,11 +111,12 @@ class Fixture<Config> {
 
 export class FixturePool<Config> {
   instances: Map<string, Fixture<Config>>;
+  config: Config; 
   constructor() {
     this.instances = new Map();
   }
 
-  async setupFixture(name: string, config: Config, test?: Test) {
+  async setupFixture(name: string, test?: Test) {
     let fixture = this.instances.get(name);
     if (fixture)
       return fixture;
@@ -123,7 +126,7 @@ export class FixturePool<Config> {
     const { scope, fn } = registrations.get(name);
     fixture = new Fixture(this, name, scope, fn);
     this.instances.set(name, fixture);
-    await fixture.setup(config, test);
+    await fixture.setup(test);
     return fixture;
   }
 
@@ -134,10 +137,10 @@ export class FixturePool<Config> {
     }
   }
 
-  async resolveParametersAndRun(fn: Function, timeout: number, config: Config, test?: Test) {
+  async resolveParametersAndRun(fn: Function, timeout: number, test?: Test) {
     const names = fixtureParameterNames(fn);
     for (const name of names)
-      await this.setupFixture(name, config, test);
+      await this.setupFixture(name, test);
     const params = {};
     for (const n of names)
       params[n] = this.instances.get(n).value;
@@ -153,12 +156,12 @@ export class FixturePool<Config> {
     ]);
   }
 
-  wrapTestCallback(callback: any, timeout: number, config: Config, test: Test) {
+  wrapTestCallback(callback: any, timeout: number, test: Test) {
     if (!callback)
       return callback;
     return async() => {
       try {
-        await this.resolveParametersAndRun(callback, timeout, config, test);
+        await this.resolveParametersAndRun(callback, timeout, test);
       } finally {
         await this.teardownScope('test');
       }
@@ -195,7 +198,7 @@ function fixtureParameterNames(fn: Function): string[] {
   return signature.split(',').map((t: string) => t.trim());
 }
 
-function innerRegisterFixture(name: string, scope: Scope, fn: Function, caller: Function) {
+function innerRegisterFixture(name: string, scope: Scope, fn: FixtureFn, caller: Function) {
   const obj = {stack: ''};
   Error.captureStackTrace(obj, caller);
   const stackFrame = obj.stack.split('\n')[2];

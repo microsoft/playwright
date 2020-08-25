@@ -15,8 +15,11 @@
  */
 
 import { initializeImageMatcher } from './expect';
-import { TestRunner, fixturePool } from './testRunner';
+import { TestRunner } from './testRunner';
 import * as util from 'util';
+import { FixturePool } from './fixtures';
+import { RunnerConfig } from './runnerConfig';
+import { Console } from 'console';
 
 let closed = false;
 
@@ -29,6 +32,12 @@ function chunkToParams(chunk) {
     return util.inspect(chunk);
   return chunk;
 }
+
+global.console = new Console({
+  stdout: process.stdout,
+  stderr: process.stderr,
+  colorMode: process.env.FORCE_COLOR === '1',
+})
 
 process.stdout.write = chunk => {
   sendMessageToParent('stdout', chunkToParams(chunk));
@@ -46,9 +55,11 @@ process.on('SIGTERM',() => {});
 
 let workerId: number;
 let testRunner: TestRunner;
+let fixturePool: FixturePool<RunnerConfig>;
 
 process.on('message', async message => {
   if (message.method === 'init') {
+    fixturePool = new FixturePool<RunnerConfig>();
     workerId = message.params.workerId;
     initializeImageMatcher(message.params);
     return;
@@ -58,7 +69,7 @@ process.on('message', async message => {
     return;
   }
   if (message.method === 'run') {
-    testRunner = new TestRunner(message.params.entry, message.params.config, workerId);
+    testRunner = new TestRunner(fixturePool, message.params.entry, message.params.config, workerId);
     for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();
@@ -77,7 +88,8 @@ async function gracefullyCloseAndExit() {
   // Meanwhile, try to gracefully close all browsers.
   if (testRunner)
     await testRunner.stop();
-  await fixturePool.teardownScope('worker');
+  if (fixturePool)
+    await fixturePool.teardownScope('worker');
   process.exit(0);
 }
 
