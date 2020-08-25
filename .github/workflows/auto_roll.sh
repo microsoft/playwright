@@ -27,18 +27,6 @@ fi
 ./browser_patches/prepare_checkout.sh "$browser_name"
 
 if [[ "${browser_name}" == "webkit" ]]; then
-    ./browser_patches/webkit/checkout/Tools/gtk/install-dependencies
-    ./browser_patches/webkit/checkout/Tools/wpe/install-dependencies
-
-    ./browser_patches/webkit/checkout/Tools/Scripts/update-webkitwpe-libs
-    ./browser_patches/webkit/checkout/Tools/Scripts/update-webkitgtk-libs
-elif [[ "${browser_name}" == "firefox" ]]; then
-    cd browser_patches/firefox/checkout
-    SHELL=/bin/bash ./mach bootstrap --no-interactive --application-choice="Firefox for Desktop"
-    cd -
-fi
-
-if [[ "${browser_name}" == "webkit" ]]; then
   cd ./browser_patches/webkit/checkout
   # Rebase WebKit atop of master branch.
   git rebase browser_upstream/master
@@ -48,6 +36,15 @@ elif [[ "${browser_name}" == "firefox" ]]; then
   # We keep firefox atop of beta branch since it's much more stable.
   git rebase browser_upstream/beta
   cd -
+fi
+
+if [[ "${browser_name}" == "webkit" ]]; then
+    ./browser_patches/webkit/checkout/Tools/gtk/install-dependencies
+    ./browser_patches/webkit/checkout/Tools/wpe/install-dependencies
+elif [[ "${browser_name}" == "firefox" ]]; then
+    cd browser_patches/firefox/checkout
+    SHELL=/bin/bash ./mach bootstrap --no-interactive --application-choice="Firefox for Desktop"
+    cd -
 fi
 
 echo "Building $browser_name"
