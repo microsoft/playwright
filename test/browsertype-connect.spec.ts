@@ -16,6 +16,7 @@
  */
 
 import { options } from './playwright.fixtures';
+import utils from './utils';
 
 it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
@@ -64,4 +65,25 @@ it.skip(options.WIRE)('should throw when used after isConnected returns false', 
   expect(remote.isConnected()).toBe(false);
   const error = await page.evaluate('1 + 1').catch(e => e) as Error;
   expect(error.message).toContain('has been closed');
+});
+
+it.skip(options.WIRE)('should respect selectors', async({playwright, browserType, defaultBrowserOptions}) => {
+  const mycss = () => ({
+    create(root, target) {},
+    query(root, selector) {
+      return root.querySelector(selector);
+    },
+    queryAll(root: HTMLElement, selector: string) {
+      return Array.from(root.querySelectorAll(selector));
+    }
+  });
+  await utils.registerEngine(playwright, 'mycss', mycss);
+
+  const browserServer = await browserType.launchServer(defaultBrowserOptions);
+  const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
+  const page = await browser.newPage();
+  await page.setContent(`<div>hello</div>`);
+  expect(await page.innerHTML('css=div')).toBe('hello');
+  expect(await page.innerHTML('mycss=div')).toBe('hello');
+  await browserServer.close();
 });
