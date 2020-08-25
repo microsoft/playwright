@@ -66,7 +66,6 @@ export abstract class BrowserContext extends EventEmitter {
   private _closePromiseFulfill: ((error: Error) => void) | undefined;
   readonly _permissions = new Map<string, string[]>();
   readonly _downloads = new Set<Download>();
-  readonly _idToScreencast = new Map<string, Screencast>();
   readonly _browser: Browser;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, isPersistentContext: boolean) {

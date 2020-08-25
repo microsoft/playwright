@@ -78,6 +78,7 @@ export class FFBrowser extends Browser {
       helper.addEventListener(this._connection, 'Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this)),
       helper.addEventListener(this._connection, 'Browser.downloadCreated', this._onDownloadCreated.bind(this)),
       helper.addEventListener(this._connection, 'Browser.downloadFinished', this._onDownloadFinished.bind(this)),
+      helper.addEventListener(this._connection, 'Browser.screencastFinished', this._onScreencastFinished.bind(this)),
     ];
   }
 
@@ -160,6 +161,10 @@ export class FFBrowser extends Browser {
   _onDownloadFinished(payload: Protocol.Browser.downloadFinishedPayload) {
     const error = payload.canceled ? 'canceled' : payload.error;
     this._downloadFinished(payload.uuid, error);
+  }
+
+  _onScreencastFinished(payload: Protocol.Browser.screencastFinishedPayload) {
+    this._screencastFinished(payload.screencastId);
   }
 }
 

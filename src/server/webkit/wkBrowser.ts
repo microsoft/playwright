@@ -126,10 +126,7 @@ export class WKBrowser extends Browser {
   }
 
   _onScreencastFinished(payload: Protocol.Playwright.screencastFinishedPayload) {
-    const context = this._contexts.get(payload.browserContextId);
-    if (!context)
-      return;
-    context._screencastFinished(payload.screencastId);
+    this._screencastFinished(payload.screencastId);
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
@@ -332,12 +329,6 @@ export class WKBrowserContext extends BrowserContext {
   async _doUpdateRequestInterception(): Promise<void> {
     for (const page of this.pages())
       await (page._delegate as WKPage).updateRequestInterception();
-  }
-
-  _screencastFinished(uid: string) {
-    const screencast = this._idToScreencast.get(uid);
-    this._idToScreencast.delete(uid);
-    screencast!._finishCallback();
   }
 
   async _doClose() {

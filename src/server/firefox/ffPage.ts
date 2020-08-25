@@ -85,7 +85,6 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.dispatchMessageFromWorker', this._onDispatchMessageFromWorker.bind(this)),
       helper.addEventListener(this._session, 'Page.crashed', this._onCrashed.bind(this)),
       helper.addEventListener(this._session, 'Page.screencastStarted', this._onScreencastStarted.bind(this)),
-      helper.addEventListener(this._session, 'Page.screencastStopped', this._onScreencastStopped.bind(this)),
     ];
     this._pagePromise = new Promise(f => this._pageCallback = f);
     session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
@@ -260,15 +259,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
-    const screencast = new Screencast(event.file, this._page);
-    this._idToScreencast.set(event.uid, screencast);
-    this._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
-  }
-
-  _onScreencastStopped(event: Protocol.Page.screencastStoppedPayload) {
-    const screencast = this._idToScreencast.get(event.uid);
-    this._idToScreencast.delete(event.uid);
-    screencast!._finishCallback();
+    this._browserContext._browser._screencastStarted(event.screencastId, event.file, this._page);
   }
 
   async exposeBinding(binding: PageBinding) {
