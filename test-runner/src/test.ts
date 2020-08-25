@@ -165,7 +165,7 @@ export function serializeConfiguration(configuration: Configuration): string {
   return tokens.join(', ');
 }
 
-export function serializeError(error: Error): any {
+export function serializeError(error: Error | any): any {
   if (error instanceof Error) {
     return {
       message: error.message,
