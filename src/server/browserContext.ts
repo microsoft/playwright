@@ -45,11 +45,6 @@ export class Screencast {
     await this._finishedPromise;
     return this._path;
   }
-
-  async failure(): Promise<string | null> {
-    await this._finishedPromise;
-    return null;
-  }
 }
 
 export abstract class BrowserContext extends EventEmitter {
