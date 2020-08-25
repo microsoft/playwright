@@ -41,23 +41,13 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "testrun.log"
-        PWRUNNER_JSON_REPORT: "test-results.json"
+        DEBUG_FILE: "test-results/debug.log"
+        PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: always()
       with:
         name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results.json
-        path: test-results.json
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-${{ matrix.os }}-testrun.log
-        path: testrun.log
 
   test_mac:
     name: "macOS"
@@ -78,23 +68,13 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "testrun.log"
-        PWRUNNER_JSON_REPORT: "test-results.json"
+        DEBUG_FILE: "test-results/debug.log"
+        PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-mac-test-results
         path: test-results
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-mac-testrun.log
-        path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-mac-test-results.json
-        path: test-results.json
 
   test_win:
     name: "Windows"
@@ -119,23 +99,13 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "testrun.log"
-        PWRUNNER_JSON_REPORT: "test-results.json"
+        DEBUG_FILE: "test-results/debug.log"
+        PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: ${{ matrix.browser }}-win-test-results
         path: test-results
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-win-testrun.log
-        path: testrun.log
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: ${{ matrix.browser }}-win-test-results.json
-        path: test-results.json
 
   test-package-installations:
     runs-on: ubuntu-latest
@@ -182,23 +152,13 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
-        DEBUG_FILE: "testrun.log"
-        PWRUNNER_JSON_REPORT: "test-results.json"
+        DEBUG_FILE: "test-results/debug.log"
+        PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: headful-${{ matrix.browser }}-linux-test-results
         path: test-results
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: headful-${{ matrix.browser }}-linux-test-results.json
-        path: test-results.json
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: headful-${{ matrix.browser }}-linux-testrun.log
-        path: testrun.log
 
   wire_linux:
     name: "Wire Linux"
@@ -225,21 +185,11 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "testrun.log"
+        DEBUG_FILE: "test-results/debug.log"
         PWWIRE: true
-        PWRUNNER_JSON_REPORT: "test-results.json"
+        PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
-      if: failure()
+      if: ${{ always() }}
       with:
         name: wire-${{ matrix.browser }}-linux-test-results
         path: test-results
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: wire-${{ matrix.browser }}-linux-test-results.json
-        path: test-results.json
-    - uses: actions/upload-artifact@v1
-      if: ${{ always() }}
-      with:
-        name: wire-${{ matrix.browser }}-linux-testrun.log
-        path: testrun.log

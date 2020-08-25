@@ -16,6 +16,7 @@
 
 import * as debug from 'debug';
 import * as fs from 'fs';
+import * as path from 'path';
 
 const debugLoggerColorMap = {
   'api': 45, // cyan
@@ -33,6 +34,7 @@ class DebugLogger {
 
   constructor() {
     if (process.env.DEBUG_FILE) {
+      fs.mkdirSync(path.dirname(process.env.DEBUG_FILE), { recursive: true });
       const ansiRegex = new RegExp([
         '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
         '(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))'
