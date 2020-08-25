@@ -15,12 +15,12 @@
  */
 
 import { EventEmitter } from 'events';
-import type { Channel } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import type { Connection } from './connection';
-import type { LoggerSink } from './types';
+import type { Logger } from './types';
 import { debugLogger } from '../utils/debugLogger';
 
-export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}> extends EventEmitter {
+export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
   private _parent: ChannelOwner | undefined;
   private _objects = new Map<string, ChannelOwner>();
@@ -29,7 +29,7 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
   readonly _guid: string;
   readonly _channel: T;
   readonly _initializer: Initializer;
-  _logger: LoggerSink | undefined;
+  _logger: Logger | undefined;
 
   constructor(parent: ChannelOwner | Connection, type: string, guid: string, initializer: Initializer) {
     super();
@@ -87,7 +87,7 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
     };
   }
 
-  protected async _wrapApiCall<T>(apiName: string, func: () => Promise<T>, logger?: LoggerSink): Promise<T> {
+  protected async _wrapApiCall<T>(apiName: string, func: () => Promise<T>, logger?: Logger): Promise<T> {
     const stackObject: any = {};
     Error.captureStackTrace(stackObject);
     const stack = stackObject.stack.startsWith('Error') ? stackObject.stack.substring(5) : stackObject.stack;
@@ -119,7 +119,7 @@ export abstract class ChannelOwner<T extends Channel = Channel, Initializer = {}
   }
 }
 
-function logApiCall(logger: LoggerSink | undefined, message: string) {
+function logApiCall(logger: Logger | undefined, message: string) {
   if (logger && logger.isEnabled('api', 'info'))
     logger.log('api', 'info', message, [], { color: 'cyan' });
   debugLogger.log('api', message);

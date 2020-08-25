@@ -15,17 +15,17 @@
  * limitations under the License.
  */
 
-import { PageChannel, AXNode } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ElementHandle } from './elementHandle';
 
-type SerializedAXNode = Omit<AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
+type SerializedAXNode = Omit<channels.AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
   value?: string|number,
   checked?: boolean | 'mixed',
   pressed?: boolean | 'mixed',
   children?: SerializedAXNode[]
 };
 
-function axNodeFromProtocol(axNode: AXNode): SerializedAXNode {
+function axNodeFromProtocol(axNode: channels.AXNode): SerializedAXNode {
   const result: SerializedAXNode = {
     ...axNode,
     value: axNode.valueNumber !== undefined ? axNode.valueNumber : axNode.valueString,
@@ -39,9 +39,9 @@ function axNodeFromProtocol(axNode: AXNode): SerializedAXNode {
 }
 
 export class Accessibility {
-  private _channel: PageChannel;
+  private _channel: channels.PageChannel;
 
-  constructor(channel: PageChannel) {
+  constructor(channel: channels.PageChannel) {
     this._channel = channel;
   }
 

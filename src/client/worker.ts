@@ -15,22 +15,22 @@
  */
 
 import { Events } from './events';
-import { WorkerChannel, WorkerInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { assertMaxArguments, Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
 import { Page } from './page';
 import { BrowserContext } from './browserContext';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 
-export class Worker extends ChannelOwner<WorkerChannel, WorkerInitializer> {
+export class Worker extends ChannelOwner<channels.WorkerChannel, channels.WorkerInitializer> {
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
 
-  static from(worker: WorkerChannel): Worker {
+  static from(worker: channels.WorkerChannel): Worker {
     return (worker as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: WorkerInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WorkerInitializer) {
     super(parent, type, guid, initializer);
     this._channel.on('close', () => {
       if (this._page)

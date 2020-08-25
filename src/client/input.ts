@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 
-import { PageChannel, PageKeyboardTypeOptions, PageKeyboardPressOptions, PageMouseDownOptions, PageMouseUpOptions, PageMouseClickOptions } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 
 export class Keyboard {
-  private _channel: PageChannel;
+  private _channel: channels.PageChannel;
 
-  constructor(channel: PageChannel) {
+  constructor(channel: channels.PageChannel) {
     this._channel = channel;
   }
 
@@ -36,19 +36,19 @@ export class Keyboard {
     await this._channel.keyboardInsertText({ text });
   }
 
-  async type(text: string, options: PageKeyboardTypeOptions = {}) {
+  async type(text: string, options: channels.PageKeyboardTypeOptions = {}) {
     await this._channel.keyboardType({ text, ...options });
   }
 
-  async press(key: string, options: PageKeyboardPressOptions = {}) {
+  async press(key: string, options: channels.PageKeyboardPressOptions = {}) {
     await this._channel.keyboardPress({ key, ...options });
   }
 }
 
 export class Mouse {
-  private _channel: PageChannel;
+  private _channel: channels.PageChannel;
 
-  constructor(channel: PageChannel) {
+  constructor(channel: channels.PageChannel) {
     this._channel = channel;
   }
 
@@ -56,19 +56,19 @@ export class Mouse {
     await this._channel.mouseMove({ x, y, ...options });
   }
 
-  async down(options: PageMouseDownOptions = {}) {
+  async down(options: channels.PageMouseDownOptions = {}) {
     await this._channel.mouseDown({ ...options });
   }
 
-  async up(options: PageMouseUpOptions = {}) {
+  async up(options: channels.PageMouseUpOptions = {}) {
     await this._channel.mouseUp(options);
   }
 
-  async click(x: number, y: number, options: PageMouseClickOptions = {}) {
+  async click(x: number, y: number, options: channels.PageMouseClickOptions = {}) {
     await this._channel.mouseClick({ x, y, ...options });
   }
 
-  async dblclick(x: number, y: number, options: Omit<PageMouseClickOptions, 'clickCount'> = {}) {
+  async dblclick(x: number, y: number, options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {}) {
     await this.click(x, y, { ...options, clickCount: 2 });
   }
 }

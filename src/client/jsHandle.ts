@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { JSHandleChannel, JSHandleInitializer, SerializedArgument, SerializedValue, Channel } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
@@ -35,14 +35,14 @@ export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
 export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
 export type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
 
-export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleInitializer> {
+export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, channels.JSHandleInitializer> {
   private _preview: string;
 
-  static from(handle: JSHandleChannel): JSHandle {
+  static from(handle: channels.JSHandleChannel): JSHandle {
     return (handle as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: JSHandleInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.JSHandleInitializer) {
     super(parent, type, guid, initializer);
     this._preview = this._initializer.preview;
     this._channel.on('previewUpdated', ({preview}) => this._preview = preview);
@@ -93,9 +93,9 @@ export class JSHandle<T = any> extends ChannelOwner<JSHandleChannel, JSHandleIni
 
 // This function takes care of converting all JSHandles to their channels,
 // so that generic channel serializer converts them to guids.
-export function serializeArgument(arg: any): SerializedArgument {
-  const handles: Channel[] = [];
-  const pushHandle = (channel: Channel): number => {
+export function serializeArgument(arg: any): channels.SerializedArgument {
+  const handles: channels.Channel[] = [];
+  const pushHandle = (channel: channels.Channel): number => {
     handles.push(channel);
     return handles.length - 1;
   };
@@ -107,7 +107,7 @@ export function serializeArgument(arg: any): SerializedArgument {
   return { value, handles };
 }
 
-export function parseResult(value: SerializedValue): any {
+export function parseResult(value: channels.SerializedValue): any {
   return parseSerializedValue(value, undefined);
 }
 

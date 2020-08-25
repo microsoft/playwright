@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-import { PageChannel, PageCrStartJSCoverageOptions, PageCrStopJSCoverageResult, PageCrStartCSSCoverageOptions, PageCrStopCSSCoverageResult } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 
 export class ChromiumCoverage {
-  private _channel: PageChannel;
+  private _channel: channels.PageChannel;
 
-  constructor(channel: PageChannel) {
+  constructor(channel: channels.PageChannel) {
     this._channel = channel;
   }
 
-  async startJSCoverage(options: PageCrStartJSCoverageOptions = {}) {
+  async startJSCoverage(options: channels.PageCrStartJSCoverageOptions = {}) {
     await this._channel.crStartJSCoverage(options);
   }
 
-  async stopJSCoverage(): Promise<PageCrStopJSCoverageResult['entries']> {
+  async stopJSCoverage(): Promise<channels.PageCrStopJSCoverageResult['entries']> {
     return (await this._channel.crStopJSCoverage()).entries;
   }
 
-  async startCSSCoverage(options: PageCrStartCSSCoverageOptions = {}) {
+  async startCSSCoverage(options: channels.PageCrStartCSSCoverageOptions = {}) {
     await this._channel.crStartCSSCoverage(options);
   }
 
-  async stopCSSCoverage(): Promise<PageCrStopCSSCoverageResult['entries']> {
+  async stopCSSCoverage(): Promise<channels.PageCrStopCSSCoverageResult['entries']> {
     return (await this._channel.crStopCSSCoverage()).entries;
   }
 }

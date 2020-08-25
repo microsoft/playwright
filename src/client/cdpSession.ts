@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { CDPSessionChannel, CDPSessionInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Protocol } from '../server/chromium/protocol';
 
-export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitializer> {
-  static from(cdpSession: CDPSessionChannel): CDPSession {
+export class CDPSession extends ChannelOwner<channels.CDPSessionChannel, channels.CDPSessionInitializer> {
+  static from(cdpSession: channels.CDPSessionChannel): CDPSession {
     return (cdpSession as any)._object;
   }
 
@@ -29,7 +29,7 @@ export class CDPSession extends ChannelOwner<CDPSessionChannel, CDPSessionInitia
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: CDPSessionInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.CDPSessionInitializer) {
     super(parent, type, guid, initializer);
 
     this._channel.on('event', ({ method, params }) => {

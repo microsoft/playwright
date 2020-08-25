@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElectronChannel, ElectronInitializer, ElectronApplicationChannel, ElectronApplicationInitializer, ElectronLaunchParams, ElectronLaunchOptions } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
@@ -22,20 +22,20 @@ import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from '.
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { WaitForEventOptions, Env, LoggerSink } from './types';
+import { WaitForEventOptions, Env, Logger } from './types';
 import { envObjectToArray } from './clientHelper';
 
-type ElectronOptions = Omit<ElectronLaunchOptions, 'env'> & {
+type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'> & {
   env?: Env,
-  logger?: LoggerSink,
+  logger?: Logger,
 };
 
-export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer> {
-  static from(electron: ElectronChannel): Electron {
+export class Electron extends ChannelOwner<channels.ElectronChannel, channels.ElectronInitializer> {
+  static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronInitializer) {
     super(parent, type, guid, initializer);
   }
 
@@ -43,7 +43,7 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
     const logger = options.logger;
     options = { ...options, logger: undefined };
     return this._wrapApiCall('electron.launch', async () => {
-      const params: ElectronLaunchParams = {
+      const params: channels.ElectronLaunchParams = {
         ...options,
         env: options.env ? envObjectToArray(options.env) : undefined,
         executablePath,
@@ -53,16 +53,16 @@ export class Electron extends ChannelOwner<ElectronChannel, ElectronInitializer>
   }
 }
 
-export class ElectronApplication extends ChannelOwner<ElectronApplicationChannel, ElectronApplicationInitializer> {
+export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel, channels.ElectronApplicationInitializer> {
   private _context?: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
 
-  static from(electronApplication: ElectronApplicationChannel): ElectronApplication {
+  static from(electronApplication: channels.ElectronApplicationChannel): ElectronApplication {
     return (electronApplication as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ElectronApplicationInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ElectronApplicationInitializer) {
     super(parent, type, guid, initializer);
     this._channel.on('context', ({ context }) => this._context = BrowserContext.from(context));
     this._channel.on('window', ({ page, browserWindow }) => {

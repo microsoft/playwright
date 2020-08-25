@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserChannel, BrowserInitializer, BrowserNewContextParams } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
@@ -24,22 +24,22 @@ import { BrowserContextOptions } from './types';
 import { validateHeaders } from './network';
 import { headersObjectToArray } from '../utils/utils';
 
-export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
+export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
   readonly _browserType: BrowserType;
 
-  static from(browser: BrowserChannel): Browser {
+  static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
   }
 
-  static fromNullable(browser: BrowserChannel | null): Browser | null {
+  static fromNullable(browser: channels.BrowserChannel | null): Browser | null {
     return browser ? Browser.from(browser) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
     super(parent, type, guid, initializer);
     this._browserType = parent as BrowserType;
     this._channel.on('close', () => this._didClose());
@@ -51,7 +51,7 @@ export class Browser extends ChannelOwner<BrowserChannel, BrowserInitializer> {
     return this._wrapApiCall('browser.newContext', async () => {
       if (options.extraHTTPHeaders)
         validateHeaders(options.extraHTTPHeaders);
-      const contextOptions: BrowserNewContextParams = {
+      const contextOptions: channels.BrowserNewContextParams = {
         ...options,
         viewport: options.viewport === null ? undefined : options.viewport,
         noDefaultViewport: options.viewport === null,
