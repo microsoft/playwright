@@ -3900,10 +3900,11 @@ Continues route's request with optional overrides.
 ```js
 await page.route('**/*', (route, request) => {
   // Override headers
-  const headers = Object.assign({}, request.headers(), {
+  const headers = {
+    ...request.headers(),
     foo: 'bar', // set "foo" header
     origin: undefined, // remove "origin" header
-  });
+  };
   route.continue({headers});
 });
 ```
