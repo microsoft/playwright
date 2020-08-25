@@ -21,7 +21,6 @@ import { helper, RegisteredListener } from '../helper';
 import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
-import * as path from 'path';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
@@ -252,12 +251,6 @@ export class WKBrowserContext extends BrowserContext {
       throw result;
     if (result.isClosed())
       throw new Error('Page has been closed.');
-    if (result._browserContext._screencastOptions) {
-      const contextOptions = result._browserContext._screencastOptions;
-      const outputFile = path.join(contextOptions.dir, helper.guid() + '.webm');
-      const options = Object.assign({}, contextOptions, {outputFile});
-      await wkPage.startScreencast(options);
-    }
     return result;
   }
 

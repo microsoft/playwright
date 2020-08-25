@@ -279,3 +279,26 @@ it.fail(options.CHROMIUM)('should fire start/stop events when page created/close
   expect(stopEvent.page === newPage).toBe(true);
   await context.close();
 });
+
+it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
+  if (!toImpl)
+   return;
+  // Use server side of the context. All the code below also uses server side APIs.
+  const context = toImpl(await browser.newContext());
+  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+  expect(context._screencastOptions).toBeTruthy();
+
+  const page = await context.newPage();
+  await page.mainFrame().goto(server.EMPTY_PAGE);
+  const [startEvent, popup] = await Promise.all([
+    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    new Promise(resolve => context.on('page', resolve)) as Promise<any>,
+    page.mainFrame()._evaluateExpression(() => {
+      const win = window.open('about:blank');
+      win.close();
+    }, true)
+  ]);
+  expect(startEvent.path).toBeTruthy();
+  expect(startEvent.page === popup).toBe(true);
+  await context.close();
+});
