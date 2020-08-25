@@ -18,10 +18,12 @@ import program from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import { collectTests, runTests, RunnerConfig } from '.';
-import { DotReporter } from './reporters/dot';
-import { ListReporter } from './reporters/list';
-import { JSONReporter } from './reporters/json';
-import { PytestReporter } from './reporters/pytest';
+import PytestReporter from './reporters/pytest';
+import DotReporter from './reporters/dot';
+import ListReporter from './reporters/list';
+import JSONReporter from './reporters/json';
+import { Reporter } from './reporter';
+import { Multiplexer } from './reporters/multiplexer';
 
 export const reporters = {
   'dot': DotReporter,
@@ -35,7 +37,7 @@ program
   .option('--forbid-only', 'Fail if exclusive test(s) encountered', false)
   .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
   .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2) as any)
-  .option('--reporter <reporter>', 'Specify reporter to use', '')
+  .option('--reporter <reporter>', 'Specify reporter to use, comma-separated, can be "dot", "list", "json"', 'dot')
   .option('--trial-run', 'Only collect the matching tests and report them as passing')
   .option('--quiet', 'Suppress stdio', false)
   .option('--debug', 'Run tests in-process for debugging', false)
@@ -76,8 +78,19 @@ program
       process.exit(1);
     }
 
-    const reporter = new (reporters[command.reporter || 'dot'])();
-    await runTests(config, suite, reporter);
+    const reporterList = command.reporter.split(',');
+    const reporterObjects: Reporter[] = reporterList.map(c => {
+      if (reporters[c])
+        return new reporters[c]();
+      try {
+        const p = path.resolve(process.cwd(), c);
+        return new (require(p).default);
+      } catch (e) {
+        console.error('Invalid reporter ' + c, e);
+        process.exit(1);
+      }
+    });
+    await runTests(config, suite, new Multiplexer(reporterObjects));
     const hasFailures = suite.eachTest(t => t.error);
     process.exit(hasFailures ? 1 : 0);
   });
