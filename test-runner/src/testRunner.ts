@@ -43,6 +43,7 @@ export class TestRunner extends EventEmitter {
   private _parsedGeneratorConfiguration: any = {};
   private _config: RunnerConfig;
   private _timeout: number;
+  private _test: Test | null = null;
 
   constructor(entry: TestRunnerEntry, config: RunnerConfig, workerId: number) {
     super();
@@ -61,6 +62,17 @@ export class TestRunner extends EventEmitter {
 
   stop() {
     this._trialRun = true;
+  }
+
+  fatalError(error: Error | any) {
+    this._fatalError = serializeError(error);
+    if (this._test) {
+      this._test.error = this._fatalError;
+      this.emit('fail', {
+        test: this._serializeTest(),
+      });
+    }
+    this._reportDone();
   }
 
   async run() {
@@ -102,30 +114,32 @@ export class TestRunner extends EventEmitter {
   private async _runTest(test: Test) {
     if (this._failedWithError)
       return false;
+    this._test = test;
     const ordinal = ++this._currentOrdinal;
     if (this._ordinals.size && !this._ordinals.has(ordinal))
       return;
     this._remaining.delete(ordinal);
     if (test.pending || test.suite._isPending()) {
-      this.emit('pending', { test: this._serializeTest(test) });
+      this.emit('pending', { test: this._serializeTest() });
       return;
     }
 
-    this.emit('test', { test: this._serializeTest(test) });
+    this.emit('test', { test: this._serializeTest() });
     try {
       await this._runHooks(test.suite, 'beforeEach', 'before');
       test._startTime = Date.now();
       if (!this._trialRun)
         await this._testWrapper(test)();
-      this.emit('pass', { test: this._serializeTest(test) });
+      this.emit('pass', { test: this._serializeTest() });
       await this._runHooks(test.suite, 'afterEach', 'after');
     } catch (error) {
       test.error = serializeError(error);
       this._failedWithError = test.error;
       this.emit('fail', {
-        test: this._serializeTest(test),
+        test: this._serializeTest(),
       });
     }
+    this._test = null;
   }
 
   private async _runHooks(suite: Suite, type: string, dir: 'before' | 'after') {
@@ -139,7 +153,7 @@ export class TestRunner extends EventEmitter {
     if (dir === 'before')
       all.reverse();
     for (const hook of all)
-      await fixturePool.resolveParametersAndRun(hook, 0, this._config);
+      await fixturePool.resolveParametersAndRun(hook, this._config);
   }
 
   private _reportDone() {
@@ -155,11 +169,11 @@ export class TestRunner extends EventEmitter {
     return fixturePool.wrapTestCallback(test.fn, timeout, { ...this._config }, test);
   }
 
-  private _serializeTest(test) {
+  private _serializeTest() {
     return {
-      id: `${test._ordinal}@${this._configuredFile}`,
-      error: test.error,
-      duration: Date.now() - test._startTime,
+      id: `${this._test._ordinal}@${this._configuredFile}`,
+      error: this._test.error,
+      duration: Date.now() - this._test._startTime,
     };
   }
 }

@@ -47,6 +47,16 @@ process.on('SIGTERM',() => {});
 let workerId: number;
 let testRunner: TestRunner;
 
+process.on('unhandledRejection', (reason, promise) => {
+  if (testRunner && !closed)
+    testRunner.fatalError(reason);
+});
+
+process.on('uncaughtException', error => {
+  if (testRunner && !closed)
+    testRunner.fatalError(error);
+});
+
 process.on('message', async message => {
   if (message.method === 'init') {
     workerId = message.params.workerId;
@@ -76,7 +86,7 @@ async function gracefullyCloseAndExit() {
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully close all browsers.
   if (testRunner)
-    await testRunner.stop();
+    testRunner.stop();
   await fixturePool.teardownScope('worker');
   process.exit(0);
 }

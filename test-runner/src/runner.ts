@@ -233,6 +233,7 @@ class OopWorker extends Worker {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc']
     });
     this.process.on('exit', () => this.emit('exit'));
+    this.process.on('error', (e) => {});  // do not yell at a send to dead process.
     this.process.on('message', message => {
       const { method, params } = message;
       this.emit(method, params);

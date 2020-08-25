@@ -44,20 +44,33 @@ it('should access error in fixture', async() => {
   expect(data.message).toContain('Object.is equality');
 });
 
-async function runTest(filePath: string) {
+it('should handle worker fixture timeout', async() => {
+  const result = await runTest('worker-fixture-timeout.js', 1000);
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Timeout of 1000ms');
+});
+
+it('should handle worker fixture error', async() => {
+  const result = await runTest('worker-fixture-error.js');
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('Worker failed');
+});
+
+async function runTest(filePath: string, timeout = 10000) {
   const outputDir = path.join(__dirname, 'test-results')
   await removeFolderAsync(outputDir).catch(e => {});
 
   const { output, status } = spawnSync('node', [
     path.join(__dirname, '..', 'cli.js'),
     path.join(__dirname, 'assets', filePath),
-    '--output=' + outputDir
+    '--output=' + outputDir,
+    '--timeout=' + timeout
   ]);
   const passed = (/(\d+) passed/.exec(output.toString()) || [])[1];
   const failed = (/(\d+) failed/.exec(output.toString()) || [])[1];
   return {
     exitCode: status,
-    output,
+    output: output.toString(),
     passed: parseInt(passed),
     failed: parseInt(failed || '0')
   }

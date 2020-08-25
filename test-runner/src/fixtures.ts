@@ -101,8 +101,8 @@ class Fixture<Config> {
     if (this._setup) {
       debug('pw:test:hook')(`teardown "${this.name}"`);
       this._teardownFenceCallback();
+      await this._tearDownComplete;
     }
-    await this._tearDownComplete;
     this.pool.instances.delete(this.name);
   }
 }
@@ -134,31 +134,27 @@ export class FixturePool<Config> {
     }
   }
 
-  async resolveParametersAndRun(fn: Function, timeout: number, config: Config, test?: Test) {
+  async resolveParametersAndRun(fn: Function, config: Config, test?: Test) {
     const names = fixtureParameterNames(fn);
     for (const name of names)
       await this.setupFixture(name, config, test);
     const params = {};
     for (const n of names)
       params[n] = this.instances.get(n).value;
-
-    if (!timeout)
-      return fn(params);
-
-    let timer: NodeJS.Timer;
-    let timerPromise = new Promise(f => timer = setTimeout(f, timeout));
-    return Promise.race([
-      Promise.resolve(fn(params)).then(() => clearTimeout(timer)),
-      timerPromise.then(() => Promise.reject(new Error(`Timeout of ${timeout}ms exceeded`)))
-    ]);
+    return fn(params);
   }
 
   wrapTestCallback(callback: any, timeout: number, config: Config, test: Test) {
     if (!callback)
       return callback;
     return async() => {
+      let timer: NodeJS.Timer;
+      let timerPromise = new Promise(f => timer = setTimeout(f, timeout));
       try {
-        await this.resolveParametersAndRun(callback, timeout, config, test);
+        await Promise.race([
+          this.resolveParametersAndRun(callback, config, test).then(() => clearTimeout(timer)),
+          timerPromise.then(() => Promise.reject(new Error(`Timeout of ${timeout}ms exceeded`)))
+        ]);
       } catch (e) {
         test.error = serializeError(e);
         throw e;
