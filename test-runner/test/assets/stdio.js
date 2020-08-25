@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-import { RunnerConfig } from './runnerConfig';
-import { Suite, Test } from './test';
+require('../../..');
 
-export interface Reporter {
-  onBegin(config: RunnerConfig, suite: Suite): void;
-  onTest(test: Test): void;
-  onPending(test: Test): void;
-  onStdOut(test: Test, chunk: string | Buffer);
-  onStdErr(test: Test, chunk: string | Buffer);
-  onPass(test: Test): void;
-  onFail(test: Test): void;
-  onEnd(): void;
-}
+it('stdio', () => {
+  process.stdout.write('stdout text');
+  process.stdout.write(Buffer.from('stdout buffer'));
+  process.stderr.write('stderr text');
+  process.stderr.write(Buffer.from('stderr buffer'));
+});

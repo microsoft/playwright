@@ -88,12 +88,22 @@ class PytestReporter extends BaseReporter {
     super.onPending(test);
     this._append(test, colors.yellow('∘'));
     this._progress.push('S');
+    this._throttler.schedule();
+  }
+
+  onStdOut(test: Test, chunk: string | Buffer) {
+    this._repaint(chunk);
+  }
+
+  onStdErr(test: Test, chunk: string | Buffer) {
+    this._repaint(chunk);
   }
 
   onPass(test: Test) {
     super.onPass(test);
     this._append(test, colors.green('✓'));
     this._progress.push('P');
+    this._throttler.schedule();
   }
 
   onFail(test: Test) {
@@ -103,13 +113,7 @@ class PytestReporter extends BaseReporter {
     row.failed = true;
     this._failed = true;
     this._progress.push('F');
-  }
-
-  onEnd() {
-    super.onEnd();
-    this._repaint();
-    if (this._failed)
-      this.epilogue();
+    this._repaint(this.formatFailure(test) + '\n');
   }
 
   private _append(test: Test, s: string): Row {
@@ -118,11 +122,10 @@ class PytestReporter extends BaseReporter {
     row.track.push(s);
     if (row.track.length === row.total)
       row.finishTime = Date.now();
-    this._throttler.schedule();
     return row;
   }
 
-  private _repaint() {
+  private _repaint(prependChunk?: string | Buffer) {
     const rowList = [...this._rows.values()];
     const running = rowList.filter(r => r.startTime && !r.finishTime);
     const finished = rowList.filter(r => r.finishTime).sort((a, b) => b.finishTime - a.finishTime);
@@ -160,6 +163,8 @@ class PytestReporter extends BaseReporter {
     lines.push('');
 
     process.stdout.write((cursorPrevLine + eraseLine).repeat(this._visibleRows + statusRows));
+    if (prependChunk)
+      process.stdout.write(prependChunk);
     process.stdout.write(lines.join('\n'));
   }
 

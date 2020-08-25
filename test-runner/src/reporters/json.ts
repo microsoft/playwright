@@ -54,9 +54,18 @@ class JSONReporter extends BaseReporter {
       slow: test.slow,
       duration: test.duration,
       timeout: test.timeout,
-      error: test.error
+      error: test.error,
+      stdout: test.stdout.map(s => stdioEntry(s)),
+      stderr: test.stderr.map(s => stdioEntry(s)),
+      data: test.data
     };
   }
+}
+
+function stdioEntry(s: string | Buffer): any {
+  if (typeof s === 'string')
+    return { text: s };
+  return { buffer: s.toString('base64') }
 }
 
 export default JSONReporter;

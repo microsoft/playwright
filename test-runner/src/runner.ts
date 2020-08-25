@@ -20,7 +20,7 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { lookupRegistrations, FixturePool } from './fixtures';
 import { Suite, Test } from './test';
-import { TestRunnerEntry } from './testRunner';
+import { TestRunnerEntry, SerializedTest } from './testRunner';
 import { RunnerConfig } from './runnerConfig';
 import { Reporter } from './reporter';
 
@@ -160,13 +160,19 @@ export class Runner {
     });
     worker.on('fail', params => {
       ++this.stats.failures;
-      const out = worker.takeOut();
-      if (out.length)
-        params.test.error.stack += '\n\x1b[33mstdout: ' + out.join('\n') + '\x1b[0m';
-      const err = worker.takeErr();
-      if (err.length)
-        params.test.error.stack += '\n\x1b[33mstderr: ' + err.join('\n') + '\x1b[0m';
-        this._reporter.onFail(this._updateTest(params.test));
+      this._reporter.onFail(this._updateTest(params.test));
+    });
+    worker.on('stdout', params => {
+      const chunk = chunkFromParams(params);
+      const test = this._testById.get(params.testId);
+      test.stdout.push(chunk);
+      this._reporter.onStdOut(test, chunk);
+    });
+    worker.on('stderr', params => {
+      const chunk = chunkFromParams(params);
+      const test = this._testById.get(params.testId);
+      test.stderr.push(chunk);
+      this._reporter.onStdErr(test, chunk);
     });
     worker.on('exit', () => {
       this._workers.delete(worker);
@@ -182,10 +188,11 @@ export class Runner {
     this._createWorker();
   }
 
-  _updateTest(serialized) {
+  _updateTest(serialized: SerializedTest): Test {
     const test = this._testById.get(serialized.id);
     test.duration = serialized.duration;
     test.error = serialized.error;
+    test.data = serialized.data;
     return test;
   }
 
@@ -238,20 +245,6 @@ class OopWorker extends Worker {
       const { method, params } = message;
       this.emit(method, params);
     });
-    this.stdout = [];
-    this.stderr = [];
-    this.on('stdout', params => {
-      const chunk = chunkFromParams(params);
-      if (!runner._config.quiet)
-        process.stdout.write(chunk);
-      this.stdout.push(chunk);
-    });
-    this.on('stderr', params => {
-      const chunk = chunkFromParams(params);
-      if (!runner._config.quiet)
-        process.stderr.write(chunk);
-      this.stderr.push(chunk);
-    });
   }
 
   async init() {
@@ -266,18 +259,6 @@ class OopWorker extends Worker {
 
   stop() {
     this.process.send({ method: 'stop' });
-  }
-
-  takeOut() {
-    const result = this.stdout;
-    this.stdout = [];
-    return result;
-  }
-
-  takeErr() {
-    const result = this.stderr;
-    this.stderr = [];
-    return result;
   }
 }
 
@@ -298,7 +279,7 @@ class InProcessWorker extends Worker {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
     const testRunner = new TestRunner(entry, this.runner._config, 0);
-    for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
+    for (const event of ['test', 'pending', 'pass', 'fail', 'done', 'stdout', 'stderr'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();
   }
@@ -307,19 +288,11 @@ class InProcessWorker extends Worker {
     await this.fixturePool.teardownScope('worker');
     this.emit('exit');
   }
-
-  takeOut() {
-    return [];
-  }
-
-  takeErr() {
-    return [];
-  }
 }
 
-function chunkFromParams(params: string | { buffer: string }): string | Buffer {
-  if (typeof params === 'string')
-    return params;
+function chunkFromParams(params: { testId: string, buffer?: string, text?: string }): string | Buffer {
+  if (typeof params.text === 'string')
+    return params.text;
   return Buffer.from(params.buffer, 'base64');
 }
 

@@ -16,27 +16,20 @@
 
 import { initializeImageMatcher } from './expect';
 import { TestRunner, fixturePool } from './testRunner';
-import * as util from 'util';
 
 let closed = false;
 
 sendMessageToParent('ready');
 
-function chunkToParams(chunk) {
-  if (chunk instanceof Buffer)
-    return { buffer: chunk.toString('base64') };
-  if (typeof chunk !== 'string')
-    return util.inspect(chunk);
-  return chunk;
-}
-
 process.stdout.write = chunk => {
-  sendMessageToParent('stdout', chunkToParams(chunk));
+  if (testRunner && !closed)
+    testRunner.stdout(chunk);
   return true;
 };
 
 process.stderr.write = chunk => {
-  sendMessageToParent('stderr', chunkToParams(chunk));
+  if (testRunner && !closed)
+    testRunner.stderr(chunk);
   return true;
 };
 
@@ -69,7 +62,7 @@ process.on('message', async message => {
   }
   if (message.method === 'run') {
     testRunner = new TestRunner(message.params.entry, message.params.config, workerId);
-    for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
+    for (const event of ['test', 'pending', 'pass', 'fail', 'done', 'stdout', 'stderr'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();
     testRunner = null;
