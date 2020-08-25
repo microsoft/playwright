@@ -20,6 +20,7 @@ import { setCurrentTestFile } from './expect';
 import { Test, Suite, Configuration, serializeError } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
+import * as util from 'util';
 
 export const fixturePool = new FixturePool<RunnerConfig>();
 
@@ -29,6 +30,21 @@ export type TestRunnerEntry = {
   configurationString: string;
   configuration: Configuration;
   hash: string;
+};
+
+function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: string } {
+  if (chunk instanceof Buffer)
+    return { buffer: chunk.toString('base64') };
+  if (typeof chunk !== 'string')
+    return { text: util.inspect(chunk) };
+  return { text: chunk };
+}
+
+export type SerializedTest = {
+  id: string,
+  error: any,
+  duration: number,
+  data: any[]
 };
 
 export class TestRunner extends EventEmitter {
@@ -73,6 +89,14 @@ export class TestRunner extends EventEmitter {
       });
     }
     this._reportDone();
+  }
+
+  stdout(chunk: string | Buffer) {
+    this.emit('stdout', { testId: this._testId(), ...chunkToParams(chunk) })
+  }
+
+  stderr(chunk: string | Buffer) {
+    this.emit('stderr', { testId: this._testId(), ...chunkToParams(chunk) })
   }
 
   async run() {
@@ -130,14 +154,12 @@ export class TestRunner extends EventEmitter {
       test._startTime = Date.now();
       if (!this._trialRun)
         await this._testWrapper(test)();
-      this.emit('pass', { test: this._serializeTest() });
+      this.emit('pass', { test: this._serializeTest(true) });
       await this._runHooks(test.suite, 'afterEach', 'after');
     } catch (error) {
       test.error = serializeError(error);
       this._failedWithError = test.error;
-      this.emit('fail', {
-        test: this._serializeTest(),
-      });
+      this.emit('fail', { test: this._serializeTest(true) });
     }
     this._test = null;
   }
@@ -169,11 +191,16 @@ export class TestRunner extends EventEmitter {
     return fixturePool.wrapTestCallback(test.fn, timeout, { ...this._config }, test);
   }
 
-  private _serializeTest() {
+  private _testId() {
+    return `${this._test._ordinal}@${this._configuredFile}`;
+  }
+
+  private _serializeTest(full = false): SerializedTest {
     return {
-      id: `${this._test._ordinal}@${this._configuredFile}`,
+      id: this._testId(),
       error: this._test.error,
       duration: Date.now() - this._test._startTime,
+      data: full ? this._test.data : undefined
     };
   }
 }

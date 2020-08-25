@@ -27,6 +27,9 @@ export class Test {
   timeout = 0;
   fn: Function;
   error: any;
+  stdout: (string | Buffer)[] = [];
+  stderr: (string | Buffer)[] = [];
+  data: any = {};
 
   _ordinal: number;
   _overriddenFn: Function;

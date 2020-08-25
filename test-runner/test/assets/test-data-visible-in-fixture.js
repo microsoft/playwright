@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-import { RunnerConfig } from './runnerConfig';
-import { Suite, Test } from './test';
+const { registerFixture } = require('../../');
+const fs = require('fs');
+const path = require('path');
 
-export interface Reporter {
-  onBegin(config: RunnerConfig, suite: Suite): void;
-  onTest(test: Test): void;
-  onPending(test: Test): void;
-  onStdOut(test: Test, chunk: string | Buffer);
-  onStdErr(test: Test, chunk: string | Buffer);
-  onPass(test: Test): void;
-  onFail(test: Test): void;
-  onEnd(): void;
-}
+registerFixture('postProcess', async ({}, runTest, config, test) => {
+  await runTest('');
+  test.data['myname'] = 'myvalue';
+});
+
+it('ensure fixture handles test error', async ({ postProcess }) => {
+  console.log('console.log');
+  console.error('console.error');
+  expect(true).toBe(false);
+});

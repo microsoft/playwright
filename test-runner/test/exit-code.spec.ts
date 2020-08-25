@@ -44,6 +44,16 @@ it('should access error in fixture', async() => {
   expect(data.message).toContain('Object.is equality');
 });
 
+it('should access data in fixture', async() => {
+  const result = await runTest('test-data-visible-in-fixture.js');
+  expect(result.exitCode).toBe(1);
+  const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'results.json')).toString());
+  const test = data.suites[0].tests[0];
+  expect(test.data).toEqual({ 'myname': 'myvalue' });
+  expect(test.stdout).toEqual([{ text: 'console.log\n' }]);
+  expect(test.stderr).toEqual([{ text: 'console.error\n' }]);
+});
+
 it('should handle worker fixture timeout', async() => {
   const result = await runTest('worker-fixture-timeout.js', 1000);
   expect(result.exitCode).toBe(1);
@@ -56,6 +66,16 @@ it('should handle worker fixture error', async() => {
   expect(result.output).toContain('Worker failed');
 });
 
+it('should collect stdio', async() => {
+  const result = await runTest('stdio.js');
+  expect(result.exitCode).toBe(0);
+  const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'results.json')).toString());
+  const test = data.suites[0].tests[0];
+  const { stdout, stderr } = test;
+  expect(stdout).toEqual([{ text: 'stdout text' }, { buffer: Buffer.from('stdout buffer').toString('base64') }]);
+  expect(stderr).toEqual([{ text: 'stderr text' }, { buffer: Buffer.from('stderr buffer').toString('base64') }]);
+});
+
 async function runTest(filePath: string, timeout = 10000) {
   const outputDir = path.join(__dirname, 'test-results')
   await removeFolderAsync(outputDir).catch(e => {});
@@ -64,8 +84,14 @@ async function runTest(filePath: string, timeout = 10000) {
     path.join(__dirname, '..', 'cli.js'),
     path.join(__dirname, 'assets', filePath),
     '--output=' + outputDir,
-    '--timeout=' + timeout
-  ]);
+    '--timeout=' + timeout,
+    '--reporter=dot,json'
+  ], {
+    env: {
+      ...process.env,
+      PWRUNNER_JSON_REPORT: path.join(__dirname, 'test-results', 'results.json'),
+    }
+  });
   const passed = (/(\d+) passed/.exec(output.toString()) || [])[1];
   const failed = (/(\d+) failed/.exec(output.toString()) || [])[1];
   return {

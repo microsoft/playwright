@@ -58,6 +58,16 @@ export class BaseReporter implements Reporter  {
     this.pending.push(test);
   }
 
+  onStdOut(test: Test, chunk: string | Buffer) {
+    if (!this.config.quiet)
+      process.stdout.write(chunk);
+  }
+
+  onStdErr(test: Test, chunk: string | Buffer) {
+    if (!this.config.quiet)
+      process.stderr.write(chunk);
+  }
+
   onPass(test: Test) {
     this.passes.push(test);
   }
@@ -96,33 +106,39 @@ export class BaseReporter implements Reporter  {
 
   private _printFailures(failures: Test[]) {
     failures.forEach((failure, index) => {
-      const relativePath = path.relative(process.cwd(), failure.file);
-      const header = `  ${index +1}. ${terminalLink(relativePath, `file://${os.hostname()}${failure.file}`)} › ${failure.title}`;
-      console.log(colors.bold(colors.red(header)));
-      const stack = failure.error.stack;
-      if (stack) {
-        console.log('');
-        const messageLocation = failure.error.stack.indexOf(failure.error.message);
-        const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
-        console.log(indent(preamble, '    '));
-        const position = positionInFile(stack, failure.file);
-        if (position) {
-          const source = fs.readFileSync(failure.file, 'utf8');
-          console.log('');
-          console.log(indent(codeFrameColumns(source, {
-              start: position,
-            },
-            { highlightCode: true}
-          ), '    '));
-        }
-        console.log('');
-        console.log(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
-      } else {
-        console.log('');
-        console.log(indent(String(failure.error), '    '));
-      }
-      console.log('');
+      console.log(this.formatFailure(failure, index + 1));
     });
+  }
+
+  formatFailure(failure: Test, index?: number): string {
+    const tokens: string[] = [];
+    const relativePath = path.relative(process.cwd(), failure.file);
+    const header = `  ${index ? index + ')' : ''} ${terminalLink(relativePath, `file://${os.hostname()}${failure.file}`)} › ${failure.title}`;
+    tokens.push(colors.bold(colors.red(header)));
+    const stack = failure.error.stack;
+    if (stack) {
+      tokens.push('');
+      const messageLocation = failure.error.stack.indexOf(failure.error.message);
+      const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
+      tokens.push(indent(preamble, '    '));
+      const position = positionInFile(stack, failure.file);
+      if (position) {
+        const source = fs.readFileSync(failure.file, 'utf8');
+        tokens.push('');
+        tokens.push(indent(codeFrameColumns(source, {
+            start: position,
+          },
+          { highlightCode: true}
+        ), '    '));
+      }
+      tokens.push('');
+      tokens.push(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
+    } else {
+      tokens.push('');
+      tokens.push(indent(String(failure.error), '    '));
+    }
+    tokens.push('');
+    return tokens.join('\n');
   }
 }
 
