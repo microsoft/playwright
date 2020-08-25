@@ -29,9 +29,9 @@ class Dispatcher {
     return session;
   }
 
-  async destroySession(session) {
+  destroySession(session) {
     this._sessions.delete(session.sessionId());
-    await session._dispose();
+    session._dispose();
   }
 
   _dispose() {
@@ -108,15 +108,13 @@ class ProtocolSession {
     this._handlers.set(domainName, handler);
   }
 
-  async _dispose() {
-    const promises = [];
+  _dispose() {
     for (const [domainName, handler] of this._handlers) {
       if (typeof handler.dispose !== 'function')
         throw new Error(`Handler for "${domainName}" domain does not define |dispose| method!`);
-      promises.push(handler.dispose());
+      handler.dispose();
     }
     this._handlers.clear();
-    await Promise.all(promises);
     this._dispatcher = null;
   }
 
