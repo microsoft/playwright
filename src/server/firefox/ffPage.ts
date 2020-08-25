@@ -32,7 +32,7 @@ import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { selectors } from '../selectors';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { Screencast, BrowserContext } from '../browserContext';
+import { Screencast } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 

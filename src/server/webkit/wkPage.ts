@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Screencast, BrowserContext } from '../browserContext';
 import * as frames from '../frames';
 import { helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
