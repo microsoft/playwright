@@ -53,6 +53,7 @@ declare global {
     page: Page;
     httpsServer: TestServer;
     browserServer: BrowserServer;
+    launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
   }
   interface FixtureParameters {
     browserName: string;
@@ -197,6 +198,20 @@ registerFixture('page', async ({context}, runTest, config, test) => {
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
     await page.screenshot({ path: assetPath });
   }
+});
+
+registerFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, browserType}, test) => {
+  let context;
+  async function launchPersistent(options) {
+    if (context)
+      throw new Error('can only launch one persitent context');
+    context = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, ...options});
+    const page = context.pages()[0];
+    return {context, page};
+  }
+  await test(launchPersistent);
+  if (context)
+    await context.close();
 });
 
 registerFixture('server', async ({httpService}, test) => {
