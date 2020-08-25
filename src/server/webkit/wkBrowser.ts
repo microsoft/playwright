@@ -129,7 +129,7 @@ export class WKBrowser extends Browser {
     const context = this._contexts.get(payload.browserContextId);
     if (!context)
       return;
-    context._screencastFinished(payload.uuid);
+    context._screencastFinished(payload.screencastId);
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
