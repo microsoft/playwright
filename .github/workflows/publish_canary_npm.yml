@@ -6,9 +6,6 @@ on:
       - master
       - release-*
 
-env:
-  CI: true
-
 jobs:
   publish-canary-npm:
     name: "publish to NPM"

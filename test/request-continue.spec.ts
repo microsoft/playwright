@@ -14,13 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import { helper } from '../lib/helper';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
+import './playwright.fixtures';
 
 it('should work', async({page, server}) => {
   await page.route('**/*', route => route.continue());

@@ -1,7 +1,7 @@
 /node_modules/
-/test/output-chromium
-/test/output-firefox
-/test/output-webkit
+/test-results/
+/test-runner/test/test-results/
+/test/coverage-report
 /test/test-user-data-dir*
 .local-browsers/
 /.dev_profile*
@@ -15,3 +15,4 @@ yarn.lock
 lib/
 /types/*
 jest-report.json
+drivers/

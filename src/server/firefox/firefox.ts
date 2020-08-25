@@ -1,0 +1,93 @@
+/**
+ * Copyright 2017 Google Inc. All rights reserved.
+ * Modifications copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import * as os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
+import { FFBrowser } from './ffBrowser';
+import { kBrowserCloseMessageId } from './ffConnection';
+import { BrowserTypeBase } from '../browserType';
+import { Env } from '../processLauncher';
+import { ConnectionTransport } from '../transport';
+import { BrowserOptions } from '../browser';
+import { BrowserDescriptor } from '../../utils/browserPaths';
+import * as types from '../types';
+
+export class Firefox extends BrowserTypeBase {
+  constructor(packagePath: string, browser: BrowserDescriptor) {
+    const webSocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
+    super(packagePath, browser, { webSocketRegex, stream: 'stdout' });
+  }
+
+  _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
+    return FFBrowser.connect(transport, options);
+  }
+
+  _rewriteStartupError(error: Error): Error {
+    return error;
+  }
+
+  _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
+    return os.platform() === 'linux' ? {
+      ...env,
+      // On linux Juggler ships the libstdc++ it was linked against.
+      LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
+    } : env;
+  }
+
+  _amendArguments(browserArguments: string[]): string[] {
+    return browserArguments;
+  }
+
+  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
+    const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
+    transport.send(message);
+  }
+
+  _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {
+    const { args = [], devtools, headless } = options;
+    if (devtools)
+      console.warn('devtools parameter is not supported as a launch argument in Firefox. You can launch the devtools window manually.');
+    const userDataDirArg = args.find(arg => arg.startsWith('-profile') || arg.startsWith('--profile'));
+    if (userDataDirArg)
+      throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
+    if (args.find(arg => arg.startsWith('-juggler')))
+      throw new Error('Use the port parameter instead of -juggler argument');
+    const firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
+    if (firefoxUserPrefs) {
+      const lines: string[] = [];
+      for (const [name, value] of Object.entries(firefoxUserPrefs))
+        lines.push(`user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
+      fs.writeFileSync(path.join(userDataDir, 'user.js'), lines.join('\n'));
+    }
+    const firefoxArguments = ['-no-remote'];
+    if (headless) {
+      firefoxArguments.push('-headless');
+    } else {
+      firefoxArguments.push('-wait-for-browser');
+      firefoxArguments.push('-foreground');
+    }
+    firefoxArguments.push(`-profile`, userDataDir);
+    firefoxArguments.push('-juggler', '0');
+    firefoxArguments.push(...args);
+    if (isPersistent)
+      firefoxArguments.push('about:blank');
+    else
+      firefoxArguments.push('-silent');
+    return firefoxArguments;
+  }
+}

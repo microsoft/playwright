@@ -4,7 +4,7 @@ const fs = require('fs');
 const util = require('util');
 const path = require('path');
 const {spawn} = require('child_process');
-const browserPaths = require('playwright/lib/install/browserPaths.js');
+const browserPaths = require('playwright/lib/utils/browserPaths.js');
 
 const readdirAsync = util.promisify(fs.readdir.bind(fs));
 const readFileAsync = util.promisify(fs.readFile.bind(fs));

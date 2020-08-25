@@ -14,11 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-
-import utils from './utils';
-
-const {USES_HOOKS} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should await navigation when clicking anchor', async({page, server}) => {
   const messages = [];
@@ -204,7 +200,7 @@ it('should work with goto following click', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 });
 
-it.skip(USES_HOOKS)('should report navigation in the log when clicking anchor', async({page, server}) => {
+it.skip(options.WIRE)('should report navigation in the log when clicking anchor', async({page, server}) => {
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);
   const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));
   const error = await page.click('a', { timeout: 5000, __testHookAfterPointerAction } as any).catch(e => e);

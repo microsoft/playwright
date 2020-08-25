@@ -23,9 +23,9 @@ import * as ProgressBar from 'progress';
 import { getProxyForUrl } from 'proxy-from-env';
 import * as URL from 'url';
 import * as util from 'util';
-import { assert, logPolitely, getFromENV } from '../helper';
-import * as browserPaths from './browserPaths';
-import { BrowserName, BrowserPlatform, BrowserDescriptor } from './browserPaths';
+import { assert, getFromENV } from '../utils/utils';
+import * as browserPaths from '../utils/browserPaths';
+import { BrowserName, BrowserPlatform, BrowserDescriptor } from '../utils/browserPaths';
 
 // `https-proxy-agent` v5 is written in Typescript and exposes generated types.
 // However, as of June 2020, its types are generated with tsconfig that enables
@@ -183,20 +183,6 @@ function toMegabytes(bytes: number) {
   return `${Math.round(mb * 10) / 10} Mb`;
 }
 
-export async function canDownload(browser: BrowserDescriptor, platform: BrowserPlatform): Promise<boolean> {
-  const url = revisionURL(browser, platform);
-  let resolve: (result: boolean) => void = () => {};
-  const promise = new Promise<boolean>(x => resolve = x);
-  const request = httpRequest(url, 'HEAD', response => {
-    resolve(response.statusCode === 200);
-  });
-  request.on('error', (error: any) => {
-    console.error(error);  // eslint-disable-line no-console
-    resolve(false);
-  });
-  return promise;
-}
-
 function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<any> {
   let fulfill: () => void = () => {};
   let reject: (error: any) => void = () => {};
@@ -263,4 +249,12 @@ function httpRequest(url: string, method: string, response: (r: any) => void) {
     require('http').request(options, requestCallback);
   request.end();
   return request;
+}
+
+export function logPolitely(toBeLogged: string) {
+  const logLevel = process.env.npm_config_loglevel;
+  const logLevelDisplay = ['silent', 'error', 'warn'].indexOf(logLevel || '') > -1;
+
+  if (!logLevelDisplay)
+    console.log(toBeLogged);  // eslint-disable-line no-console
 }

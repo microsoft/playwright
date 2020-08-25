@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-import { ConsoleMessage } from '..';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
+import './playwright.fixtures';
+import { ConsoleMessage } from '..';
 
 it('Page.workers', async function({page, server}) {
   await Promise.all([

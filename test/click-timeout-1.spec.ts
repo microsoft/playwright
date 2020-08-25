@@ -14,12 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import utils from './utils';
-const {USES_HOOKS} = testOptions;
+import { options } from './playwright.fixtures';
 
-it.skip(USES_HOOKS)('should avoid side effects after timeout', async({page, server}) => {
+it.skip(options.WIRE)('should avoid side effects after timeout', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))} as any).catch(e => e);
   await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.

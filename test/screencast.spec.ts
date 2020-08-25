@@ -13,52 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
+import { registerFixture } from '../test-runner';
 import { Page } from '..';
 
-const fs = require('fs');
-const os = require('os');
-const path = require('path');
-const url = require('url');
-const {mkdtempAsync, removeFolderAsync} = require('./utils');
+import fs from 'fs';
+import path from 'path';
+import url from 'url';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC, LINUX, WIN, HEADLESS, USES_HOOKS} = testOptions;
 
 declare global {
-  interface FixtureState {
-    persistentDirectory: string;
+  interface TestState {
     videoPlayer: VideoPlayer;
-  }  
-}
-
-registerFixture('persistentDirectory', async ({}, test) => {
-  const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  try {
-    await test(persistentDirectory);
-  } finally {
-    await removeFolderAsync(persistentDirectory);
   }
-});
+}
 
 registerFixture('videoPlayer', async ({playwright, context}, test) => {
   let firefox;
-  if (WEBKIT && !LINUX) {
+  if (options.WEBKIT && !LINUX) {
     // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
     firefox = await playwright.firefox.launch();
     context = await firefox.newContext();
   }
 
-  let page;
-  try {
-    page = await context.newPage();
-    const player = new VideoPlayer(page);
-    await test(player);
-  } finally {
-    if (firefox)
-      await firefox.close();
-    else
-      await page.close();
-  }
+  const page = await context.newPage();
+  const player = new VideoPlayer(page);
+  await test(player);
+  if (firefox)
+    await firefox.close();
+  else
+    await page.close();
 });
 
 function almostRed(r, g, b, alpha) {
@@ -98,7 +83,7 @@ function expectAll(pixels, rgbaPredicate) {
       checkPixel(i);
   } catch(e) {
     // Log pixel values on failure.
-    console.log(pixels);
+    e.message += `\n\nActual pixels=[${pixels}]`;
     throw e;
   }
 }
@@ -148,6 +133,17 @@ class VideoPlayer {
     }, timestamp);
   }
 
+  async seekFirstNonEmptyFrame() {
+    let time = 0;
+    for (let i = 0; i < 10; i++) {
+      await this.seek(time);
+      const pixels = await this.pixels();
+      if (!pixels.every(p => p === 255))
+        return;
+      time += 0.1;
+    }
+  }
+
   async seekLastNonEmptyFrame() {
     const duration = await this.duration();
     let time = duration - 0.01;
@@ -160,8 +156,8 @@ class VideoPlayer {
     }
   }
 
-  async pixels() {
-    const pixels = await this._page.$eval('video', (video:HTMLVideoElement) => {
+  async pixels(point = {x: 0, y: 0}) {
+    const pixels = await this._page.$eval('video', (video:HTMLVideoElement, point) => {
       let canvas = document.createElement("canvas");
       if (!video.videoWidth || !video.videoHeight)
         throw new Error("Video element is empty");
@@ -169,26 +165,25 @@ class VideoPlayer {
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
       context.drawImage(video, 0, 0);
-      const imgd = context.getImageData(0, 0, 10, 10);
+      const imgd = context.getImageData(point.x, point.y, 10, 10);
       return Array.from(imgd.data);
-    });
+    }, point);
     return pixels;
   }
 }
 
-// TODO: the test fails in headful Firefox when running under xvfb.
-it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture static page', async({page, persistentDirectory, videoPlayer, toImpl}) => {
+it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
-  const videoFile = path.join(persistentDirectory, 'v.webm');
+  const videoFile = path.join(tmpDir, 'v.webm');
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && WEBKIT)
+  if (options.HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopVideoRecording();
+  await toImpl(page)._delegate.stopScreencast();
   expect(fs.existsSync(videoFile)).toBe(true);
 
   await videoPlayer.load(videoFile);
@@ -203,21 +198,20 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture static page', async({pa
   expectAll(pixels, almostRed);
 });
 
-// TODO: the test fails in headful Firefox when running under xvfb.
-it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({page, persistentDirectory, server, videoPlayer, toImpl}) => {
+it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
-  const videoFile = path.join(persistentDirectory, 'v.webm');
+  const videoFile = path.join(tmpDir, 'v.webm');
   await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-  await toImpl(page)._delegate.startVideoRecording({outputFile: videoFile, width: 640, height: 480});
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
   // TODO: in WebKit figure out why video size is not reported correctly for
   // static pictures.
-  if (HEADLESS && WEBKIT)
+  if (options.HEADLESS && options.WEBKIT)
     await page.setViewportSize({width: 1270, height: 950});
   await new Promise(r => setTimeout(r, 300));
   await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
   await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopVideoRecording();
+  await toImpl(page)._delegate.stopScreencast();
   expect(fs.existsSync(videoFile)).toBe(true);
 
   await videoPlayer.load(videoFile);
@@ -225,7 +219,7 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({pag
   expect(duration).toBeGreaterThan(0);
 
   {
-    await videoPlayer.seek(0);
+    await videoPlayer.seekFirstNonEmptyFrame();
     const pixels = await videoPlayer.pixels();
     expectAll(pixels, almostBlack);
   }
@@ -235,4 +229,76 @@ it.fail(CHROMIUM || (FFOX && !HEADLESS))('should capture navigation', async({pag
     const pixels = await videoPlayer.pixels();
     expectAll(pixels, almostGrey);
   }
+});
+
+// Accelerated compositing is disabled in WebKit on Windows.
+it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+  if (!toImpl)
+    return;
+  const videoFile = path.join(tmpDir, 'v.webm');
+  await page.goto(server.PREFIX + '/rotate-z.html');
+  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+  // TODO: in WebKit figure out why video size is not reported correctly for
+  // static pictures.
+  if (options.HEADLESS && options.WEBKIT)
+    await page.setViewportSize({width: 1270, height: 950});
+  await new Promise(r => setTimeout(r, 300));
+  await toImpl(page)._delegate.stopScreencast();
+  expect(fs.existsSync(videoFile)).toBe(true);
+
+  await videoPlayer.load(videoFile);
+  const duration = await videoPlayer.duration();
+  expect(duration).toBeGreaterThan(0);
+
+  {
+    await videoPlayer.seekLastNonEmptyFrame();
+    const pixels = await videoPlayer.pixels({x: 95, y: 45});
+    expectAll(pixels, almostRed);
+  }
+});
+
+it.fail(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+  if (!toImpl)
+   return;
+  // Use server side of the context. All the code below also uses server side APIs.
+  const context = toImpl(await browser.newContext());
+  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+  expect(context._screencastOptions).toBeTruthy();
+
+  const [startEvent, newPage] = await Promise.all([
+    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    context.newPage(),
+  ]);
+  expect(startEvent.page === newPage).toBe(true);
+  expect(startEvent.path).toBeTruthy();
+
+  const [stopEvent] = await Promise.all([
+    new Promise(resolve => context.on('screencaststopped', resolve)) as Promise<any>,
+    newPage.close(),
+  ]);
+  expect(stopEvent.page === newPage).toBe(true);
+  await context.close();
+});
+
+it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
+  if (!toImpl)
+   return;
+  // Use server side of the context. All the code below also uses server side APIs.
+  const context = toImpl(await browser.newContext());
+  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+  expect(context._screencastOptions).toBeTruthy();
+
+  const page = await context.newPage();
+  await page.mainFrame().goto(server.EMPTY_PAGE);
+  const [startEvent, popup] = await Promise.all([
+    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    new Promise(resolve => context.on('page', resolve)) as Promise<any>,
+    page.mainFrame()._evaluateExpression(() => {
+      const win = window.open('about:blank');
+      win.close();
+    }, true)
+  ]);
+  expect(startEvent.path).toBeTruthy();
+  expect(startEvent.page === popup).toBe(true);
+  await context.close();
 });

@@ -33,17 +33,18 @@ class BrowserHandler {
       if (!this._shouldAttachToTarget(target))
         continue;
       const session = this._dispatcher.createSession();
-      target.connectSession(session);
       this._attachedSessions.set(target, session);
       this._session.emitEvent('Browser.attachedToTarget', {
         sessionId: session.sessionId(),
         targetInfo: target.info()
       });
+      target.initSession(session);
+      target.connectSession(session);
     }
 
     this._eventListeners = [
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
-      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
+      helper.on(this._targetRegistry, TargetRegistry.Events.TargetWillBeDestroyed, this._onTargetWillBeDestroyed.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadCreated, this._onDownloadCreated.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadFinished, this._onDownloadFinished.bind(this)),
     ];
@@ -64,11 +65,11 @@ class BrowserHandler {
     this._createdBrowserContextIds.delete(browserContextId);
   }
 
-  dispose() {
+  async dispose() {
     helper.removeListeners(this._eventListeners);
     for (const [target, session] of this._attachedSessions) {
       target.disconnectSession(session);
-      this._dispatcher.destroySession(session);
+      await this._dispatcher.destroySession(session);
     }
     this._attachedSessions.clear();
     for (const browserContextId of this._createdBrowserContextIds) {
@@ -96,15 +97,20 @@ class BrowserHandler {
       sessionId: session.sessionId(),
       targetInfo: target.info()
     });
+    target.initSession(session);
     sessions.push(session);
   }
 
-  _onTargetDestroyed(target) {
+  _onTargetWillBeDestroyed({target, pendingActivity}) {
+    pendingActivity.push(this._detachFromTarget(target));
+  }
+
+  async _detachFromTarget(target) {
     const session = this._attachedSessions.get(target);
     if (!session)
       return;
     this._attachedSessions.delete(target);
-    this._dispatcher.destroySession(session);
+    await this._dispatcher.destroySession(session);
     this._session.emitEvent('Browser.detachedFromTarget', {
       sessionId: session.sessionId(),
       targetId: target.id(),
@@ -182,6 +188,10 @@ class BrowserHandler {
 
   async setColorScheme({browserContextId, colorScheme}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('colorScheme', nullToUndefined(colorScheme));
+  }
+
+  async setScreencastOptions({browserContextId, dir, width, height, scale}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setScreencastOptions({dir, width, height, scale});
   }
 
   async setUserAgentOverride({browserContextId, userAgent}) {

@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it('should emulate type', async({page, server}) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
@@ -115,7 +114,7 @@ it('should work in cross-process iframe', async({browser, server}) => {
   await page.close();
 });
 
-it.fail(FFOX)('should change the actual colors in css', async({page}) => {
+it.fail(options.FIREFOX)('should change the actual colors in css', async({page}) => {
   await page.setContent(`
     <style>
       @media (prefers-color-scheme: dark) {

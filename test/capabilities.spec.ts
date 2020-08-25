@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
 import url from 'url';
+import { options } from './playwright.fixtures';
 
-const {FFOX, CHROMIUM, WEBKIT, WIN, LINUX, ASSETS_DIR} = testOptions;
-
-it.fail(WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
+it.fail(options.WEBKIT && WIN)('Web Assembly should work', async function({page, server}) {
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });
@@ -51,14 +48,14 @@ it('should respect CSP', async({page, server}) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it.fail(WEBKIT && (WIN || LINUX))('should play video', async({page}) => {
+it.fail(options.WEBKIT && (WIN || LINUX))('should play video', async({page, asset}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.
   //
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.
-  const fileName = WEBKIT ? 'video_mp4.html' : 'video.html';
-  const absolutePath = path.join(ASSETS_DIR, fileName);
+  const fileName = options.WEBKIT ? 'video_mp4.html' : 'video.html';
+  const absolutePath = asset(fileName);
   // Our test server doesn't support range requests required to play on Mac,
   // so we load the page using a file url.
   await page.goto(url.pathToFileURL(absolutePath).href);

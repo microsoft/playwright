@@ -6,12 +6,13 @@ utils/testrunner/examples/
 lib/
 *.js
 src/generated/*
-src/chromium/protocol.ts
-src/firefox/protocol.ts
-src/webkit/protocol.ts
+src/server/chromium/protocol.ts
+src/server/firefox/protocol.ts
+src/server/webkit/protocol.ts
 /types/*
 /index.d.ts
 /electron-types.d.ts
 utils/generate_types/overrides.d.ts
 utils/generate_types/test/test.ts
 test/
+test-runner/

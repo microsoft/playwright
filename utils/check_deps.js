@@ -37,12 +37,18 @@ async function checkDeps() {
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
   for (const error of errors)
     console.log(error);
+  if (errors.length) {
+    console.log(`--------------------------------------------------------`);
+    console.log(`Changing the project structure or adding new components?`);
+    console.log(`Update DEPS in //${path.relative(root, __filename)}.`);
+    console.log(`--------------------------------------------------------`);
+  }
   process.exit(errors.length ? 1 : 0);
 
   function visit(node, fileName) {
     if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
       const importName = node.moduleSpecifier.text;
-      const importPath = path.resolve(path.dirname(fileName), importName);
+      const importPath = path.resolve(path.dirname(fileName), importName) + '.ts';
       if (!allowImport(fileName, importPath))
         errors.push(`Disallowed import from ${path.relative(root, fileName)} to ${path.relative(root, importPath)}`);
     }
@@ -50,17 +56,65 @@ async function checkDeps() {
   }
 
   function allowImport(from, to) {
-    const rpc = path.join('src', 'rpc');
-    if (!from.includes(rpc) && to.includes(rpc))
-      return false;
-    const rpcClient = path.join('src', 'rpc', 'client');
-    const rpcServer = path.join('src', 'rpc', 'server');
-    if (from.includes(rpcClient) && to.includes(rpcServer))
-      return false;
-    // if (from.includes(rpcClient) && !to.includes(rpc))
-    //   return false;
-    return true;
+    from = from.substring(from.indexOf('src' + path.sep)).replace(/\\/g, '/');
+    to = to.substring(to.indexOf('src' + path.sep)).replace(/\\/g, '/');
+    const fromDirectory = from.substring(0, from.lastIndexOf('/') + 1);
+    const toDirectory = to.substring(0, to.lastIndexOf('/') + 1);
+    if (fromDirectory === toDirectory)
+      return true;
+
+    while (!DEPS[from]) {
+      if (from.endsWith('/'))
+        from = from.substring(0, from.length - 1);
+      if (from.lastIndexOf('/') === -1)
+        throw new Error(`Cannot find DEPS for ${fromDirectory}`);
+      from = from.substring(0, from.lastIndexOf('/') + 1);
+    }
+
+    for (const dep of DEPS[from]) {
+      if (to === dep || toDirectory === dep)
+        return true;
+      if (dep.endsWith('**')) {
+        const parent = dep.substring(0, dep.length - 2);
+        if (to.startsWith(parent))
+          return true;
+      }
+    }
+    return false;
   }
 }
+
+const DEPS = {};
+
+DEPS['src/protocol/'] = ['src/utils/'];
+DEPS['src/install/'] = ['src/utils/'];
+
+// Client depends on chromium protocol for types.
+DEPS['src/client/'] = ['src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts'];
+
+DEPS['src/dispatchers/'] = ['src/utils/', 'src/protocol/', 'src/server/**'];
+
+// Generic dependencies for server-side code.
+DEPS['src/server/'] = [
+  'src/utils/',
+  'src/generated/',
+  // Can depend on files directly in the server directory.
+  'src/server/',
+  // Can depend on any files in these subdirectories.
+  'src/server/common/**',
+  'src/server/injected/**',
+  'src/server/debug/**',
+];
+
+// No dependencies for code shared between node and page.
+DEPS['src/server/common/'] = [];
+// Strict dependencies for injected code.
+DEPS['src/server/injected/'] = ['src/server/common/'];
+
+// Electron uses chromium internally.
+DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
+
+DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/'];
+DEPS['src/server.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 checkDeps();

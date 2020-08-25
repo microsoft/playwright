@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-const {runCommands, ensureTipOfTreeAPILinks} = require('.');
+const {runCommands} = require('.');
 const Source = require('../Source');
-const TestRunner  = require('../../testrunner/');
-const runner = new TestRunner();
-
-const {describe, xdescribe, fdescribe} = runner.api();
-const {it, fit, xit} = runner.api();
-const {beforeAll, beforeEach, afterAll, afterEach} = runner.api();
-const {expect} = runner.api();
 
 describe('runCommands', function() {
   const OPTIONS_REL = {
@@ -201,6 +194,4 @@ describe('runCommands', function() {
     });
   });
 });
-
-runner.run();
 

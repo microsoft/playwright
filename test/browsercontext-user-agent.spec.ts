@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import './playwright.fixtures';
 
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
 const {devices} = require('..');
 
 it('should work', async({browser, server}) => {

@@ -14,13 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-
+import { options } from './playwright.fixtures';
 import utils from './utils';
 
-const {FFOX, WEBKIT, CHROMIUM, MAC} = testOptions;
-
-it('should type into a textarea', async ({page, server}) => {
+it('should type into a textarea', async ({page}) => {
   await page.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);
@@ -85,24 +82,24 @@ it('insertText should only emit input event', async ({page, server}) => {
   expect(await events.jsonValue()).toEqual(['input']);
 });
 
-it.fail(FFOX && MAC)('should report shiftKey', async ({page, server}) => {
+it.fail(options.FIREFOX && MAC)('should report shiftKey', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
   const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
   for (const modifierKey in codeForKey) {
     await keyboard.down(modifierKey);
-    expect(await page.evaluate(() => getResult())).toBe('Keydown: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' [' + modifierKey + ']');
+    expect(await page.evaluate('getResult()')).toBe('Keydown: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' [' + modifierKey + ']');
     await keyboard.down('!');
     // Shift+! will generate a keypress
     if (modifierKey === 'Shift')
-      expect(await page.evaluate(() => getResult())).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']\nKeypress: ! Digit1 33 33 [' + modifierKey + ']');
+      expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']\nKeypress: ! Digit1 33 33 [' + modifierKey + ']');
     else
-      expect(await page.evaluate(() => getResult())).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']');
+      expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']');
 
     await keyboard.up('!');
-    expect(await page.evaluate(() => getResult())).toBe('Keyup: ! Digit1 49 [' + modifierKey + ']');
+    expect(await page.evaluate('getResult()')).toBe('Keyup: ! Digit1 49 [' + modifierKey + ']');
     await keyboard.up(modifierKey);
-    expect(await page.evaluate(() => getResult())).toBe('Keyup: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' []');
+    expect(await page.evaluate('getResult()')).toBe('Keyup: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' []');
   }
 });
 
@@ -110,28 +107,28 @@ it('should report multiple modifiers', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
   await keyboard.down('Control');
-  expect(await page.evaluate(() => getResult())).toBe('Keydown: Control ControlLeft 17 [Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keydown: Control ControlLeft 17 [Control]');
   await keyboard.down('Alt');
-  expect(await page.evaluate(() => getResult())).toBe('Keydown: Alt AltLeft 18 [Alt Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keydown: Alt AltLeft 18 [Alt Control]');
   await keyboard.down(';');
-  expect(await page.evaluate(() => getResult())).toBe('Keydown: ; Semicolon 186 [Alt Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keydown: ; Semicolon 186 [Alt Control]');
   await keyboard.up(';');
-  expect(await page.evaluate(() => getResult())).toBe('Keyup: ; Semicolon 186 [Alt Control]');
+  expect(await page.evaluate('getResult()')).toBe('Keyup: ; Semicolon 186 [Alt Control]');
   await keyboard.up('Control');
-  expect(await page.evaluate(() => getResult())).toBe('Keyup: Control ControlLeft 17 [Alt]');
+  expect(await page.evaluate('getResult()')).toBe('Keyup: Control ControlLeft 17 [Alt]');
   await keyboard.up('Alt');
-  expect(await page.evaluate(() => getResult())).toBe('Keyup: Alt AltLeft 18 []');
+  expect(await page.evaluate('getResult()')).toBe('Keyup: Alt AltLeft 18 []');
 });
 
 it('should send proper codes while typing', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.type('!');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: ! Digit1 49 []',
         'Keypress: ! Digit1 33 33 []',
         'Keyup: ! Digit1 49 []'].join('\n'));
   await page.keyboard.type('^');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: ^ Digit6 54 []',
         'Keypress: ^ Digit6 94 94 []',
         'Keyup: ^ Digit6 54 []'].join('\n'));
@@ -142,7 +139,7 @@ it('should send proper codes while typing with shift', async ({page, server}) =>
   const keyboard = page.keyboard;
   await keyboard.down('Shift');
   await page.keyboard.type('~');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: ~ Backquote 192 [Shift]', // 192 is ` keyCode
         'Keypress: ~ Backquote 126 126 [Shift]', // 126 is ~ charCode
@@ -170,7 +167,7 @@ it('should not type canceled events', async ({page, server}) => {
 it('should press plus', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('+');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: + Equal 187 []', // 192 is ` keyCode
         'Keypress: + Equal 43 43 []', // 126 is ~ charCode
         'Keyup: + Equal 187 []'].join('\n'));
@@ -179,7 +176,7 @@ it('should press plus', async ({page, server}) => {
 it('should press shift plus', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift++');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: + Equal 187 [Shift]', // 192 is ` keyCode
         'Keypress: + Equal 43 43 [Shift]', // 126 is ~ charCode
@@ -190,7 +187,7 @@ it('should press shift plus', async ({page, server}) => {
 it('should support plus-separated modifiers', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+~');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: ~ Backquote 192 [Shift]', // 192 is ` keyCode
         'Keypress: ~ Backquote 126 126 [Shift]', // 126 is ~ charCode
@@ -201,7 +198,7 @@ it('should support plus-separated modifiers', async ({page, server}) => {
 it('should support multiple plus-separated modifiers', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Control+Shift+~');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: Control ControlLeft 17 [Control]',
         'Keydown: Shift ShiftLeft 16 [Control Shift]',
         'Keydown: ~ Backquote 192 [Control Shift]', // 192 is ` keyCode
@@ -213,7 +210,7 @@ it('should support multiple plus-separated modifiers', async ({page, server}) =>
 it('should shift raw codes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   await page.keyboard.press('Shift+Digit3');
-  expect(await page.evaluate(() => getResult())).toBe(
+  expect(await page.evaluate('getResult()')).toBe(
       [ 'Keydown: Shift ShiftLeft 16 [Shift]',
         'Keydown: # Digit3 51 [Shift]', // 51 is # keyCode
         'Keypress: # Digit3 35 35 [Shift]', // 35 is # charCode
@@ -356,17 +353,17 @@ it('should press the meta key', async ({page}) => {
   const lastEvent = await captureLastKeydown(page);
   await page.keyboard.press('Meta');
   const {key, code, metaKey} = await lastEvent.jsonValue();
-  if (FFOX && !MAC)
+  if (options.FIREFOX && !MAC)
     expect(key).toBe('OS');
   else
     expect(key).toBe('Meta');
 
-  if (FFOX)
+  if (options.FIREFOX)
     expect(code).toBe('OSLeft');
   else
     expect(code).toBe('MetaLeft');
 
-  if (FFOX && !MAC)
+  if (options.FIREFOX && !MAC)
     expect(metaKey).toBe(false);
   else
     expect(metaKey).toBe(true);
@@ -382,7 +379,7 @@ it('should work after a cross origin navigation', async ({page, server}) => {
 });
 
 // event.keyIdentifier has been removed from all browsers except WebKit
-it.skip(!WEBKIT)('should expose keyIdentifier in webkit', async ({page, server}) => {
+it.skip(!options.WEBKIT)('should expose keyIdentifier in webkit', async ({page, server}) => {
   const lastEvent = await captureLastKeydown(page);
   const keyMap = {
     'ArrowUp': 'Up',

@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
+import './playwright.fixtures';
 
-it('should work with function', async({page, server}) => {
+it('should work with function', async({page}) => {
   const windowHandle = await page.evaluateHandle(() => {
     window['foo'] = [1, 2];
     return window;
@@ -26,7 +25,7 @@ it('should work with function', async({page, server}) => {
   expect(await windowHandle.evaluate(w => w['foo'])).toEqual([1, 2]);
 });
 
-it('should work with expression', async({page, server}) => {
+it('should work with expression', async({page}) => {
   const windowHandle = await page.evaluateHandle(() => {
     window['foo'] = [1, 2];
     return window;

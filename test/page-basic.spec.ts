@@ -14,12 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should reject all promises when page is closed', async({context}) => {
   const newPage = await context.newPage();
@@ -48,9 +44,9 @@ it('should run beforeunload if asked for', async({context, server}) => {
   const dialog = await newPage.waitForEvent('dialog');
   expect(dialog.type()).toBe('beforeunload');
   expect(dialog.defaultValue()).toBe('');
-  if (CHROMIUM)
+  if (options.CHROMIUM)
     expect(dialog.message()).toBe('');
-  else if (WEBKIT)
+  else if (options.WEBKIT)
     expect(dialog.message()).toBe('Leave?');
   else
     expect(dialog.message()).toBe('This page is asking you to confirm that you want to leave - data you have entered may not be saved.');
@@ -147,7 +143,7 @@ it('should fail with error upon disconnect', async({page, server}) => {
   expect(error.message).toContain('Page closed');
 });
 
-it('page.ur should work', async({page, server}) => {
+it('page.url should work', async({page, server}) => {
   expect(page.url()).toBe('about:blank');
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
@@ -215,7 +211,7 @@ it('should have sane user agent', async ({page}) => {
   // Second part in parenthesis is platform - ignore it.
 
   // Third part for Firefox is the last one and encodes engine and browser versions.
-  if (FFOX) {
+  if (options.FIREFOX) {
     const [engine, browser] = part3.split(' ');
     expect(engine.startsWith('Gecko')).toBe(true);
     expect(browser.startsWith('Firefox')).toBe(true);
@@ -223,13 +219,13 @@ it('should have sane user agent', async ({page}) => {
     expect(part5).toBe(undefined);
     return;
   }
-  // For both CHROMIUM and WEBKIT, third part is the AppleWebKit version.
+  // For both options.CHROMIUM and options.WEBKIT, third part is the AppleWebKit version.
   expect(part3.startsWith('AppleWebKit/')).toBe(true);
   expect(part4).toBe('KHTML, like Gecko');
   // 5th part encodes real browser name and engine version.
   const [engine, browser] = part5.split(' ');
   expect(browser.startsWith('Safari/')).toBe(true);
-  if (CHROMIUM)
+  if (options.CHROMIUM)
     expect(engine.includes('Chrome/')).toBe(true);
   else
     expect(engine.startsWith('Version/')).toBe(true);
@@ -246,4 +242,14 @@ it('frame.press should work', async({page, server}) => {
   const frame = page.frame('inner');
   await frame.press('textarea', 'a');
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
+});
+
+it.fail(options.FIREFOX)('frame.focus should work multiple times', async ({ context, server }) => {
+  const page1 = await context.newPage()
+  const page2 = await context.newPage()
+  for (const page of [page1, page2]) {
+    await page.setContent(`<button id="foo" onfocus="window.gotFocus=true"></button>`)
+    await page.focus("#foo")
+    expect(await page.evaluate(() => !!window['gotFocus'])).toBe(true)
+  }
 });

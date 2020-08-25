@@ -8,7 +8,7 @@
   }
 
   const path = require('path');
-  const { setUnderTest } = require(path.join(playwrightPath, 'lib', 'helper'));
+  const { setUnderTest } = require(path.join(playwrightPath, 'lib', 'utils', 'utils'));
   setUnderTest();
   const playwright = require(path.join(playwrightPath, 'index'));
 

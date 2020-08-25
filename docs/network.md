@@ -28,12 +28,9 @@ const page = await context.newPage();
 await page.goto('https://example.com');
 ```
 
-You can also use [`browserContext.setHTTPCredentials`](./api.md#browsercontextsethttpcredentialshttpcredentials) to update HTTP credentials of an existing context.
-
 #### API reference
 
 - [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`browserContext.setHTTPCredentials(httpCredentials)`](./api.md#browsercontextsethttpcredentialshttpcredentials)
 
 <br/>
 

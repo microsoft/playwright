@@ -14,12 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
 it('should throw an error if no options are provided', async({page, server}) => {
   let error = null;
@@ -77,7 +74,7 @@ it('should work with a path', async({page, server}) => {
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
 
-it.skip(WEBKIT)('should include sourceURL when path is provided', async({page, server}) => {
+it.skip(options.WEBKIT)('should include sourceURL when path is provided', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
   const result = await page.evaluate(() => window['__injectedError'].stack);
@@ -91,7 +88,7 @@ it('should work with content', async({page, server}) => {
   expect(await page.evaluate(() => window['__injected'])).toBe(35);
 });
 
-it.fail(FFOX)('should throw when added with content to the CSP page', async({page, server}) => {
+it.fail(options.FIREFOX)('should throw when added with content to the CSP page', async({page, server}) => {
   // Firefox fires onload for blocked script before it issues the CSP console error.
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;

@@ -13,29 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-import os from 'os';
-import {mkdtempAsync, removeFolderAsync} from './utils';
 
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
-
-declare global {
-  interface FixtureState {
-    persistentDirectory: string;
-  }
-}
-registerFixture('persistentDirectory', async ({}, test) => {
-  const persistentDirectory = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  try {
-    await test(persistentDirectory);
-  } finally {
-    await removeFolderAsync(persistentDirectory);
-  }
-});
 
 beforeEach(async ({server}) => {
   server.setRoute('/download', (req, res) => {
@@ -77,28 +61,28 @@ it('should report downloads with acceptDownloads: true', async({browser, server}
   await page.close();
 });
 
-it('should save to user-specified path', async({persistentDirectory, browser, server}) => {
+it('should save to user-specified path', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(persistentDirectory, "download.txt");
+  const userPath = path.join(tmpDir, "download.txt");
   await download.saveAs(userPath);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it('should save to user-specified path without updating original path', async({persistentDirectory, browser, server}) => {
+it('should save to user-specified path without updating original path', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(persistentDirectory, "download.txt");
+  const userPath = path.join(tmpDir, "download.txt");
   await download.saveAs(userPath);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
@@ -109,77 +93,77 @@ it('should save to user-specified path without updating original path', async({p
   await page.close();
 });
 
-it('should save to two different paths with multiple saveAs calls', async({persistentDirectory, browser, server}) => {
+it('should save to two different paths with multiple saveAs calls', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(persistentDirectory, "download.txt");
+  const userPath = path.join(tmpDir, "download.txt");
   await download.saveAs(userPath);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
 
-  const anotherUserPath = path.join(persistentDirectory, "download (2).txt");
+  const anotherUserPath = path.join(tmpDir, "download (2).txt");
   await download.saveAs(anotherUserPath);
   expect(fs.existsSync(anotherUserPath)).toBeTruthy();
   expect(fs.readFileSync(anotherUserPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it('should save to overwritten filepath', async({persistentDirectory, browser, server}) => {
+it('should save to overwritten filepath', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(persistentDirectory, "download.txt");
+  const userPath = path.join(tmpDir, "download.txt");
   await download.saveAs(userPath);
-  expect((await util.promisify(fs.readdir)(persistentDirectory)).length).toBe(1);
+  expect((await util.promisify(fs.readdir)(tmpDir)).length).toBe(1);
   await download.saveAs(userPath);
-  expect((await util.promisify(fs.readdir)(persistentDirectory)).length).toBe(1);
+  expect((await util.promisify(fs.readdir)(tmpDir)).length).toBe(1);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it('should create subdirectories when saving to non-existent user-specified path', async({persistentDirectory, browser, server}) => {
+it('should create subdirectories when saving to non-existent user-specified path', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const nestedPath = path.join(persistentDirectory, "these", "are", "directories", "download.txt");
+  const nestedPath = path.join(tmpDir, "these", "are", "directories", "download.txt");
   await download.saveAs(nestedPath)
   expect(fs.existsSync(nestedPath)).toBeTruthy();
   expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it('should error when saving with downloads disabled', async({persistentDirectory, browser, server}) => {
+it('should error when saving with downloads disabled', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: false });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(persistentDirectory, "download.txt");
+  const userPath = path.join(tmpDir, "download.txt");
   const { message } = await download.saveAs(userPath).catch(e => e);
   expect(message).toContain('Pass { acceptDownloads: true } when you are creating your browser context');
   await page.close();
 });
 
-it('should error when saving after deletion', async({persistentDirectory, browser, server}) => {
+it('should error when saving after deletion', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(persistentDirectory, "download.txt");
+  const userPath = path.join(tmpDir, "download.txt");
   await download.delete();
   const { message } = await download.saveAs(userPath).catch(e => e);
   expect(message).toContain('Download already deleted. Save before deleting.');
@@ -233,7 +217,7 @@ it(`should report download path within page.on('download', …) handler for Blob
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await page.close();
 })
-it.fail(FFOX || WEBKIT)('should report alt-click downloads', async({browser, server}) => {
+it.fail(options.FIREFOX || options.WEBKIT)('should report alt-click downloads', async({browser, server}) => {
   // Firefox does not download on alt-click by default.
   // Our WebKit embedder does not download on alt-click, although Safari does.
   server.setRoute('/download', (req, res) => {
@@ -254,7 +238,7 @@ it.fail(FFOX || WEBKIT)('should report alt-click downloads', async({browser, ser
   await page.close();
 });
 
-it.fail(CHROMIUM && !HEADLESS)('should report new window downloads', async({browser, server}) => {
+it.fail(options.CHROMIUM && !options.HEADLESS)('should report new window downloads', async({browser, server}) => {
   // TODO: - the test fails in headful Chromium as the popup page gets closed along
   // with the session before download completed event arrives.
   // - WebKit doesn't close the popup page

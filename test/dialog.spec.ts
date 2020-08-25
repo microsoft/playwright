@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should fire', async({page, server}) => {
   page.on('dialog', dialog => {
@@ -28,7 +27,7 @@ it('should fire', async({page, server}) => {
   await page.evaluate(() => alert('yo'));
 });
 
-it('should allow accepting prompts', async({page, server}) => {
+it('should allow accepting prompts', async({page}) => {
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('prompt');
     expect(dialog.defaultValue()).toBe('yes.');
@@ -39,7 +38,7 @@ it('should allow accepting prompts', async({page, server}) => {
   expect(result).toBe('answer!');
 });
 
-it('should dismiss the prompt', async({page, server}) => {
+it('should dismiss the prompt', async({page}) => {
   page.on('dialog', dialog => {
     dialog.dismiss();
   });
@@ -47,7 +46,7 @@ it('should dismiss the prompt', async({page, server}) => {
   expect(result).toBe(null);
 });
 
-it('should accept the confirm prompt', async({page, server}) => {
+it('should accept the confirm prompt', async({page}) => {
   page.on('dialog', dialog => {
     dialog.accept();
   });
@@ -55,7 +54,7 @@ it('should accept the confirm prompt', async({page, server}) => {
   expect(result).toBe(true);
 });
 
-it('should dismiss the confirm prompt', async({page, server}) => {
+it('should dismiss the confirm prompt', async({page}) => {
   page.on('dialog', dialog => {
     dialog.dismiss();
   });
@@ -63,25 +62,7 @@ it('should dismiss the confirm prompt', async({page, server}) => {
   expect(result).toBe(false);
 });
 
-it.fail(CHANNEL)('should log prompt actions', async({browser}) => {
-  const messages = [];
-  const context = await browser.newContext({
-    logger: {
-      isEnabled: () => true,
-      log: (name, severity, message) => messages.push(message),
-    }
-  });
-  const page = await context.newPage();
-  const promise = page.evaluate(() => confirm('01234567890123456789012345678901234567890123456789012345678901234567890123456789'));
-  const dialog = await page.waitForEvent('dialog');
-  expect(messages.join()).toContain('confirm "0123456789012345678901234567890123456789012345678…" was shown');
-  await dialog.accept('123');
-  await promise;
-  expect(messages.join()).toContain('confirm "0123456789012345678901234567890123456789012345678…" was accepted');
-  await context.close();
-});
-
-it.fail(WEBKIT)('should be able to close context with open alert', async({browser}) => {
+it.fail(options.WEBKIT)('should be able to close context with open alert', async({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const alertPromise = page.waitForEvent('dialog');

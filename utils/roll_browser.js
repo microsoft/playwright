@@ -74,7 +74,7 @@ Example:
   // 4. Generate types.
   console.log('\nGenerating protocol types...');
   const browser = { name: browserName, revision };
-  const browserPaths = require('../lib/install/browserPaths');
+  const browserPaths = require('../lib/utils/browserPaths');
   const browserDir = browserPaths.browserDirectory(browserPaths.browsersPath(ROOT_PATH), browser);
   const executablePath = browserPaths.executablePath(browserDir, browser);
   await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);

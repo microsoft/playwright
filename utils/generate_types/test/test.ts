@@ -768,3 +768,14 @@ playwright.chromium.launch().then(async browser => {
               .removeListener('close', listener)
               .off('close', listener);
 });
+
+// exported types
+import {
+  LaunchOptions,
+  ConnectOptions,
+  Cookie,
+  BrowserContextOptions,
+  ViewportSize,
+  Geolocation,
+  HTTPCredentials,
+} from '../../../';

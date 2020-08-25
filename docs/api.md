@@ -74,7 +74,7 @@ This object can be used to launch or connect to Chromium, returning instances of
 #### playwright.devices
 - returns: <[Object]>
 
-Returns a list of devices to be used with [`browser.newContext([options])`](#browsernewcontextoptions) or [`browser.newPage([options])`](#browsernewpageoptions). Actual list of devices can be found in [src/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/deviceDescriptors.ts).
+Returns a list of devices to be used with [`browser.newContext([options])`](#browsernewcontextoptions) or [`browser.newPage([options])`](#browsernewpageoptions). Actual list of devices can be found in [src/server/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/server/deviceDescriptors.ts).
 
 ```js
 const { webkit, devices } = require('playwright');
@@ -617,7 +617,7 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 
 Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
 
-> **NOTE** Browsers may cache credentials that resulted in successful auth. That means passing different credentials after successful authentication or passing `null` to disable authentication is unreliable. Instead, create a separate browser context that will not have previous credentials cached.
+> **NOTE** Browsers may cache credentials after successful authentication. Passing different credentials or passing `null` to disable authentication will be unreliable. To remove or replace credentials, create a new browser context instead.
 
 #### browserContext.setOffline(offline)
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
@@ -902,12 +902,12 @@ Emitted when a request fails, for example by timing out.
 #### event: 'requestfinished'
 - <[Request]>
 
-Emitted when a request finishes successfully.
+Emitted when a request finishes successfully after downloading the response body. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### event: 'response'
 - <[Response]>
 
-Emitted when a [response] is received.
+Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### event: 'worker'
 - <[Worker]>
@@ -976,7 +976,7 @@ const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 1
 
 Adds a script which would be evaluated in one of the following scenarios:
 - Whenever the page is navigated.
-- Whenever the child frame is attached or navigated. In this case, the scritp is evaluated in the context of the newly attached frame.
+- Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly attached frame.
 
 The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend  the JavaScript environment, e.g. to seed `Math.random`.
 
@@ -2092,6 +2092,7 @@ console.log(text);
 - [frame.innerText(selector[, options])](#frameinnertextselector-options)
 - [frame.isDetached()](#frameisdetached)
 - [frame.name()](#framename)
+- [frame.page()](#framepage)
 - [frame.parentFrame()](#frameparentframe)
 - [frame.press(selector, key[, options])](#framepressselector-key-options)
 - [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
@@ -2458,6 +2459,11 @@ If the name is empty, returns the id attribute instead.
 
 > **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed later.
 
+#### frame.page()
+- returns: <[Page]>
+
+Returns the page containing this frame.
+
 #### frame.parentFrame()
 - returns: <[null]|[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
 
@@ -2742,6 +2748,8 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
+- [elementHandle.waitForElementState(state[, options])](#elementhandlewaitforelementstatestate-options)
+- [elementHandle.waitForSelector(selector[, options])](#elementhandlewaitforselectorselector-options)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-JSHandle -->
 - [jsHandle.asElement()](#jshandleaselement)
@@ -3103,6 +3111,44 @@ This method checks the element by performing the following steps:
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
+
+#### elementHandle.waitForElementState(state[, options])
+- `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled"> A state to wait for, see below for more details.
+- `options` <[Object]>
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]> Promise that resolves when the element satisfies the `state`.
+
+Depending on the `state` parameter, this method waits for one of the [actionability](./actionability.md) checks to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
+- `"visible"` Wait until the element is [visible](./actionability.md#visible).
+- `"hidden"` Wait until the element is [not visible](./actionability.md#visible) or [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
+- `"stable"` Wait until the element is both [visible](./actionability.md#visible) and [stable](./actionability.md#stable).
+- `"enabled"` Wait until the element is [enabled](./actionability.md#enabled).
+- `"disabled"` Wait until the element is [not enabled](./actionability.md#enabled).
+
+If the element does not satisfy the condition for the `timeout` milliseconds, this method will throw.
+
+
+#### elementHandle.waitForSelector(selector[, options])
+- `selector` <[string]> A selector of an element to wait for, relative to the element handle. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `state` <"attached"|"detached"|"visible"|"hidden"> Defaults to `'visible'`. Can be either:
+    - `'attached'` - wait for element to be present in DOM.
+    - `'detached'` - wait for element to not be present in DOM.
+    - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
+    - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<[null]|[ElementHandle]>> Promise that resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
+
+Wait for the `selector` relative to the element handle to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
+
+```js
+await page.setContent(`<div><span></span></div>`);
+const div = await page.$('div');
+// Waiting for the 'span' selector relative to the div.
+const span = await div.waitForSelector('span', { state: 'attached' });
+```
+
+> **NOTE** This method does not work across navigations, use [page.waitForSelector(selector[, options])](#pagewaitforselectorselector-options) instead.
 
 ### class: JSHandle
 
@@ -3584,9 +3630,9 @@ Dispatches a `mouseup` event.
 
 ### class: Request
 
-Whenever the page sends a request, such as for a network resource, the following events are emitted by playwright's page:
+Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
 - [`'request'`](#event-request) emitted when the request is issued by the page.
-- [`'response'`](#event-response) emitted when/if the response is received for the request.
+- [`'response'`](#event-response) emitted when/if the response status and headers are received for the request.
 - [`'requestfinished'`](#event-requestfinished) emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  [`'requestfailed'`](#event-requestfailed) event is emitted.
@@ -3854,10 +3900,11 @@ Continues route's request with optional overrides.
 ```js
 await page.route('**/*', (route, request) => {
   // Override headers
-  const headers = Object.assign({}, request.headers(), {
+  const headers = {
+    ...request.headers(),
     foo: 'bar', // set "foo" header
     origin: undefined, // remove "origin" header
-  });
+  };
   route.continue({headers});
 });
 ```

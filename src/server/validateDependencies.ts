@@ -18,8 +18,8 @@ import * as util from 'util';
 import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
-import { getUbuntuVersion } from '../helper';
-import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../install/browserPaths.js';
+import { getUbuntuVersion } from '../utils/ubuntuVersion';
+import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../utils/browserPaths.js';
 
 const accessAsync = util.promisify(fs.access.bind(fs));
 const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
@@ -220,6 +220,9 @@ async function missingDLOPENLibraries(browser: BrowserDescriptor): Promise<strin
   const libraries = DL_OPEN_LIBRARIES[browser.name];
   if (!libraries.length)
     return [];
+  // NOTE: Using full-qualified path to `ldconfig` since `/sbin` is not part of the
+  // default PATH in CRON.
+  // @see https://github.com/microsoft/playwright/issues/3397
   const {stdout, code, error} = await spawnAsync('/sbin/ldconfig', ['-p'], {});
   if (code !== 0 || error)
     return [];

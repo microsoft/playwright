@@ -14,12 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
+import './playwright.fixtures';
 import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
 
 it('should work', async({page, server}) => {
   let message = null;

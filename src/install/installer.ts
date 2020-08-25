@@ -15,13 +15,13 @@
  */
 
 import * as crypto from 'crypto';
-import { getFromENV, logPolitely } from '../helper';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 import * as removeFolder from 'rimraf';
-import * as browserPaths from './browserPaths';
+import * as browserPaths from '../utils/browserPaths';
 import * as browserFetcher from './browserFetcher';
+import { getFromENV } from '../utils/utils';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
@@ -36,7 +36,7 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
   const linksDir = path.join(browsersPath, '.links');
 
   if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
-    logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
+    browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
   await fsMkdirAsync(linksDir,  { recursive: true });
@@ -65,7 +65,7 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
       }
     } catch (e) {
       if (linkTarget)
-        logPolitely('Failed to process descriptor at ' + linkTarget);
+        browserFetcher.logPolitely('Failed to process descriptor at ' + linkTarget);
       await fsUnlinkAsync(linkPath).catch(e => {});
     }
   }
@@ -77,7 +77,7 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   for (const browserPath of usedBrowserPaths)
     directories.delete(browserPath);
   for (const directory of directories) {
-    logPolitely('Removing unused browser at ' + directory);
+    browserFetcher.logPolitely('Removing unused browser at ' + directory);
     await removeFolderAsync(directory).catch(e => {});
   }
 

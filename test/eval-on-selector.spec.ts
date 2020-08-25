@@ -14,11 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+import './playwright.fixtures';
 
 it('should work with css selector', async({page, server}) => {
   await page.setContent('<section id="testAttribute">43543</section>');

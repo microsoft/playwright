@@ -149,9 +149,7 @@ class NetworkRequest {
 
     const pageNetwork = this._activePageNetwork();
     if (pageNetwork) {
-      const browserContext = pageNetwork._target.browserContext();
-      if (browserContext)
-        appendExtraHTTPHeaders(httpChannel, browserContext.extraHTTPHeaders);
+      appendExtraHTTPHeaders(httpChannel, pageNetwork._target.browserContext().extraHTTPHeaders);
       appendExtraHTTPHeaders(httpChannel, pageNetwork._extraHTTPHeaders);
     }
 
@@ -296,13 +294,12 @@ class NetworkRequest {
     const pageNetwork = this._activePageNetwork();
     if (!pageNetwork)
       return false;
-    const browserContext = pageNetwork._target.browserContext();
     let credentials = null;
     if (authInfo.flags & Ci.nsIAuthInformation.AUTH_PROXY) {
       const proxy = this._networkObserver._targetRegistry.getProxyInfo(aChannel);
       credentials = proxy ? {username: proxy.username, password: proxy.password} : null;
     } else {
-      credentials = browserContext ? browserContext.httpCredentials : undefined;
+      credentials = pageNetwork._target.browserContext().httpCredentials;
     }
     if (!credentials)
       return false;
@@ -369,7 +366,7 @@ class NetworkRequest {
     }
 
     const browserContext = pageNetwork._target.browserContext();
-    if (browserContext && browserContext.settings.onlineOverride === 'offline') {
+    if (browserContext.settings.onlineOverride === 'offline') {
       // Implement offline.
       this.abort(Cr.NS_ERROR_OFFLINE);
       return;
@@ -447,9 +444,9 @@ class NetworkRequest {
     if (pageNetwork._requestInterceptionEnabled)
       return true;
     const browserContext = pageNetwork._target.browserContext();
-    if (browserContext && browserContext.requestInterceptionEnabled)
+    if (browserContext.requestInterceptionEnabled)
       return true;
-    if (browserContext && browserContext.settings.onlineOverride === 'offline')
+    if (browserContext.settings.onlineOverride === 'offline')
       return true;
     return false;
   }

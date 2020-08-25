@@ -14,23 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
-
+import './playwright.fixtures';
 
 it('should work', async({page, server}) => {
   await page.setExtraHTTPHeaders({
-    foo: 'bar'
+    foo: 'bar',
+    baz: undefined,
   });
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
     page.goto(server.EMPTY_PAGE),
   ]);
   expect(request.headers['foo']).toBe('bar');
+  expect(request.headers['baz']).toBe(undefined);
 });
 
 it('should work with redirects', async({page, server}) => {
@@ -76,12 +73,11 @@ it('should override extra headers from browser context', async({browser, server}
   expect(request.headers['bar']).toBe('foO');
 });
 
-it('should throw for non-string header values', async({page, server}) => {
-  let error = null;
-  try {
-    await page.setExtraHTTPHeaders({ 'foo': 1 as any });
-  } catch (e) {
-    error = e;
-  }
-  expect(error.message).toContain('Expected value of header "foo" to be String, but "number" is found.');
+it('should throw for non-string header values', async({browser, page}) => {
+  const error1 = await page.setExtraHTTPHeaders({ 'foo': 1 as any }).catch(e => e);
+  expect(error1.message).toContain('Expected value of header "foo" to be String, but "number" is found.');
+  const error2 = await page.context().setExtraHTTPHeaders({ 'foo': true as any }).catch(e => e);
+  expect(error2.message).toContain('Expected value of header "foo" to be String, but "boolean" is found.');
+  const error3 = await browser.newContext({ extraHTTPHeaders: { 'foo': null as any } }).catch(e => e);
+  expect(error3.message).toContain('Expected value of header "foo" to be String, but "object" is found.');
 });

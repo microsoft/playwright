@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
-const {FFOX, CHROMIUM, LINUX, WEBKIT, MAC} = testOptions;
-
-it('should work', async function({page, server}) {
+it.skip(options.FIREFOX)('should work', async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
   await page.focus('#d1');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('d1');
 });
 
-it('should emit focus event', async function({page, server}) {
+it('should emit focus event', async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   let focused = false;
   await page.exposeFunction('focusEvent', () => focused = true);
@@ -33,7 +31,7 @@ it('should emit focus event', async function({page, server}) {
   expect(focused).toBe(true);
 });
 
-it('should emit blur event', async function({page, server}) {
+it('should emit blur event', async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0>DIV1</div><div id=d2 tabIndex=0>DIV2</div>`);
   await page.focus('#d1');
   let focused = false;
@@ -76,9 +74,10 @@ it('should traverse focus in all directions', async function({page}) {
   await page.keyboard.press('Shift+Tab');
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
+
 // Chromium and WebKit both have settings for tab traversing all links, but 
 // it is only on by default in WebKit.
-it.skip(!MAC || !WEBKIT)('should traverse only form elements', async function({page}) {
+it.skip(!MAC || !options.WEBKIT)('should traverse only form elements', async function({page}) {
   await page.setContent(`
     <input id="input-1">
     <button id="button">buttton</button>

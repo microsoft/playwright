@@ -14,12 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
-import utils from './utils';
-const {FFOX} = testOptions;
-
-it.skip(FFOX)('should work', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX)('should work', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -29,7 +26,7 @@ it.skip(FFOX)('should work', async({playwright, browser, server}) => {
   await context.close();
 });
 
-it.skip(FFOX)('should support clicking', async({playwright, browser, server}) => {
+it.skip(options.FIREFOX)('should support clicking', async({playwright, browser, server}) => {
   const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone });
   const page = await context.newPage();
@@ -41,7 +38,7 @@ it.skip(FFOX)('should support clicking', async({playwright, browser, server}) =>
   await context.close();
 });
 
-it.skip(FFOX)('should scroll to click', async({browser, server}) => {
+it.skip(options.FIREFOX)('should scroll to click', async({browser, server}) => {
   const context = await browser.newContext({
     viewport: {
       width: 400,

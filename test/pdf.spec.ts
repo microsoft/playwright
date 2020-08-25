@@ -13,21 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 import fs from 'fs'
 import path from 'path'
 
-const {FFOX, CHROMIUM, WEBKIT, OUTPUT_DIR, HEADLESS} = testOptions;
 
 // Printing to pdf is currently only supported in headless chromium.
-it.skip(!(HEADLESS && CHROMIUM))('should be able to save file', async({page}) => {
-  const outputFile = path.join(OUTPUT_DIR, 'output.pdf');
+it.skip(!(options.HEADLESS && options.CHROMIUM))('should be able to save file', async({page, tmpDir}) => {
+  const outputFile = path.join(tmpDir, 'output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
   fs.unlinkSync(outputFile);
 });
 
-it.skip(CHROMIUM)('should be able to save file', async({page}) => {
+it.skip(options.CHROMIUM)('should be able to save file', async({page}) => {
   expect(page.pdf).toBe(undefined);
 });

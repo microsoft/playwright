@@ -14,14 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-import fs from 'fs';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
-it('should work', async({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE)('should work', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const browserContext = await browser.newContext();
@@ -31,12 +27,10 @@ it('should work', async({browserType, defaultBrowserOptions, toImpl}) => {
   expect(await page.evaluate('11 * 11')).toBe(121);
   await page.close();
   await browser.close();
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should fire "disconnected" when closing the server', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should fire "disconnected" when closing the server', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const disconnectedEventPromise = new Promise(resolve => browser.once('disconnected', resolve));
@@ -48,7 +42,7 @@ it('should fire "disconnected" when closing the server', async({browserType, def
   ]);
 });
 
-it('should fire "close" event during kill', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should fire "close" event during kill', async({browserType, defaultBrowserOptions}) => {
   const order = [];
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const closedPromise = new Promise(f => browserServer.on('close', () => {
@@ -62,13 +56,13 @@ it('should fire "close" event during kill', async({browserType, defaultBrowserOp
   expect(order).toEqual(['closed', 'killed']);
 });
 
-it('should return child_process instance', async ({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should return child_process instance', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   expect(browserServer.process().pid).toBeGreaterThan(0);
   await browserServer.close();
 });
 
-it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should fire close event', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const [result] = await Promise.all([
     new Promise(f => (browserServer as any).on('close', (exitCode, signal) => f({ exitCode, signal }))),
@@ -78,7 +72,7 @@ it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
   expect(result['signal']).toBe(null);
 });
 
-it('should reject navigation when browser closes', async({browserType, defaultBrowserOptions, server, toImpl}) => {
+it.skip(options.WIRE)('should reject navigation when browser closes', async({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/one-style.css', () => {});
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -88,12 +82,10 @@ it('should reject navigation when browser closes', async({browserType, defaultBr
   await remote.close();
   const error = await navigationPromise;
   expect(error.message).toContain('Navigation failed because page was closed!');
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should reject waitForSelector when browser closes', async({browserType, defaultBrowserOptions, server, toImpl}) => {
+it.skip(options.WIRE)('should reject waitForSelector when browser closes', async({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/empty.html', () => {});
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -106,24 +98,20 @@ it('should reject waitForSelector when browser closes', async({browserType, defa
   await remote.close();
   const error = await watchdog;
   expect(error.message).toContain('Protocol error');
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should throw if used after disconnect', async({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE)('should throw if used after disconnect', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const page = await remote.newPage();
   await remote.close();
   const error = await page.evaluate('1 + 1').catch(e => e);
   expect((error as Error).message).toContain('has been closed');
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should emit close events on pages and contexts', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should emit close events on pages and contexts', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const context = await remote.newContext();
@@ -137,7 +125,7 @@ it('should emit close events on pages and contexts', async({browserType, default
   expect(pageClosed).toBeTruthy();
 });
 
-it('should terminate network waiters', async({browserType, defaultBrowserOptions, server}) => {
+it.skip(options.WIRE)('should terminate network waiters', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const newPage = await remote.newPage();

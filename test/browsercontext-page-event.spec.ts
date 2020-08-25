@@ -14,10 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, CHANNEL, HEADLESS} = testOptions;
-const {devices} = require('..');
+import { options } from './playwright.fixtures';
 
 it('should have url', async({browser, server}) => {
   const context = await browser.newContext();
@@ -159,7 +156,7 @@ it('should fire page lifecycle events', async function({browser, server}) {
   await context.close();
 });
 
-it.fail(WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
+it.fail(options.WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
   // WebKit: Shift+Click does not open a new window.
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -173,7 +170,7 @@ it.fail(WEBKIT)('should work with Shift-clicking', async({browser, server}) => {
   await context.close();
 });
 
-it.fail(WEBKIT || FFOX)('should work with Ctrl-clicking', async({browser, server}) => {
+it.fail(options.WEBKIT || options.FIREFOX)('should work with Ctrl-clicking', async({browser, server}) => {
   // Firefox: reports an opener in this case.
   // WebKit: Ctrl+Click does not open a new tab.
   const context = await browser.newContext();

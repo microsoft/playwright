@@ -13,11 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { parameters } from '../test-runner';
+import { options } from './playwright.fixtures';
 
 import socks from 'socksv5';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, HEADLESS} = testOptions;
+
+it('should throw for bad server value', async ({browserType, defaultBrowserOptions}) => {
+  const error = await browserType.launch({
+    ...defaultBrowserOptions,
+    proxy: { server: 123 as any }
+  }).catch(e => e);
+  expect(error.message).toContain('proxy.server: expected string, got number');
+});
 
 it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
@@ -55,7 +63,7 @@ it('should authenticate', async ({browserType, defaultBrowserOptions, server}) =
   await browser.close();
 });
 
-it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
+it.fail(options.CHROMIUM && !options.HEADLESS)('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
   // Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
@@ -93,16 +101,10 @@ it.fail(CHROMIUM && !HEADLESS)('should exclude patterns', async ({browserType, d
     expect(await page.title()).toBe('Served by the proxy');
   }
 
-  if (CHROMIUM) {
-    // Should successfully navigate to the error page.
-    await page.waitForEvent('framenavigated', frame => frame.url() === 'chrome-error://chromewebdata/');
-    expect(page.url()).toBe('chrome-error://chromewebdata/');
-  }
-
   await browser.close();
 });
 
-it('should use socks proxy', async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
+it('should use socks proxy', async ({ browserType, defaultBrowserOptions }) => {
   const server = socks.createServer((info, accept, deny) => {
     let socket;
     if (socket = accept(true)) {
@@ -119,7 +121,7 @@ it('should use socks proxy', async ({ browserType, defaultBrowserOptions, parall
       ].join('\r\n'));
     }
   });
-  const socksPort = 9107 + parallelIndex * 2;
+  const socksPort = 9107 + parameters.parallelIndex * 2;
   server.listen(socksPort, 'localhost');
   server.useAuth(socks.auth.None());
 

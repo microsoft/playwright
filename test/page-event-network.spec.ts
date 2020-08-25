@@ -14,12 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('Page.Events.Request', async({page, server}) => {
   const requests = [];
@@ -57,9 +53,9 @@ it('Page.Events.RequestFailed', async({page, server}) => {
   expect(failedRequests[0].url()).toContain('one-style.css');
   expect(await failedRequests[0].response()).toBe(null);
   expect(failedRequests[0].resourceType()).toBe('stylesheet');
-  if (CHROMIUM) {
+  if (options.CHROMIUM) {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
-  } else if (WEBKIT) {
+  } else if (options.WEBKIT) {
     if (MAC)
       expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
     else if (WIN)

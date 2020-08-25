@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import utils from './utils';
+import './playwright.fixtures';
 import path from 'path';
-const { FFOX, CHROMIUM, WEBKIT, USES_HOOKS } = testOptions;
 
 it('should evaluate before anything else on the page', async ({ page, server }) => {
   await page.addInitScript(function () {

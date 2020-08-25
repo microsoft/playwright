@@ -134,8 +134,8 @@ class TargetRegistry {
         if (!target)
           return;
         target.emit('crashed');
-        target.dispose();
-        this.emit(TargetRegistry.Events.TargetDestroyed, target);
+        if (target)
+          target.dispose().catch(e => dump(`Failed to destroy target: ${e}`));
       }
     }, 'oop-frameloader-crashed');
 
@@ -175,12 +175,13 @@ class TargetRegistry {
           openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
         }
         const browserContext = this._userContextIdToBrowserContext.get(userContextId);
+        if (!browserContext)
+          throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
         const target = new PageTarget(this, window, gBrowser, tab, linkedBrowser, browserContext, openerTarget);
 
         const sessions = [];
         const readyData = { sessions, target };
         this.emit(TargetRegistry.Events.TargetCreated, readyData);
-        sessions.forEach(session => target._initSession(session));
         return {
           scriptsToEvaluateOnNewDocument: browserContext ? browserContext.scriptsToEvaluateOnNewDocument : [],
           bindings: browserContext ? browserContext.bindings : [],
@@ -202,10 +203,8 @@ class TargetRegistry {
       const tab = event.target;
       const linkedBrowser = tab.linkedBrowser;
       const target = this._browserToTarget.get(linkedBrowser);
-      if (target) {
-        target.dispose();
-        this.emit(TargetRegistry.Events.TargetDestroyed, target);
-      }
+      if (target)
+          target.dispose().catch(e => dump(`Failed to destroy target: ${e}`));
     };
 
     Services.wm.addListener({
@@ -374,10 +373,8 @@ class PageTarget {
     ];
 
     this._disposed = false;
-    if (browserContext) {
-      browserContext.pages.add(this);
-      browserContext._firstPageCallback();
-    }
+    browserContext.pages.add(this);
+    browserContext._firstPageCallback();
     this._registry._browserToTarget.set(this._linkedBrowser, this);
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
   }
@@ -400,7 +397,6 @@ class PageTarget {
   }
 
   connectSession(session) {
-    this._initSession(session);
     this._channel.connect('').send('attach', { sessionId: session.sessionId() });
   }
 
@@ -415,7 +411,7 @@ class PageTarget {
     });
   }
 
-  _initSession(session) {
+  initSession(session) {
     const pageHandler = new PageHandler(this, session, this._channel);
     const networkHandler = new NetworkHandler(this, session, this._channel);
     session.registerHandler('Page', pageHandler);
@@ -434,7 +430,7 @@ class PageTarget {
     return {
       targetId: this.id(),
       type: 'page',
-      browserContextId: this._browserContext ? this._browserContext.browserContextId : undefined,
+      browserContextId: this._browserContext.browserContextId,
       openerId: this._openerId,
     };
   }
@@ -464,13 +460,18 @@ class PageTarget {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
 
-  dispose() {
+  async dispose() {
     this._disposed = true;
-    if (this._browserContext)
-      this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
     helper.removeListeners(this._eventListeners);
+
+    const event = { pendingActivity: [], target: this };
+    this._registry.emit(TargetRegistry.Events.TargetWillBeDestroyed, event);
+    await Promise.all(event.pendingActivity);
+
+    this._browserContext.pages.delete(this);
+    this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
 
@@ -497,6 +498,7 @@ class BrowserContext {
     this.ignoreHTTPSErrors = undefined;
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
+    this.screencastOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
     this.settings = {};
@@ -684,6 +686,10 @@ class BrowserContext {
     }
     return result;
   }
+
+  setScreencastOptions(options) {
+    this.screencastOptions = options;
+  }
 }
 
 function dirPath(path) {
@@ -734,6 +740,7 @@ function setViewportSizeForBrowser(viewportSize, browser, window) {
 
 TargetRegistry.Events = {
   TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
+  TargetWillBeDestroyed: Symbol('TargetRegistry.Events.TargetWillBeDestroyed'),
   TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
   DownloadCreated: Symbol('TargetRegistry.Events.DownloadCreated'),
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),

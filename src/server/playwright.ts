@@ -14,34 +14,19 @@
  * limitations under the License.
  */
 
-import * as types from '../types';
-import * as api from '../api';
-import { helper } from '../helper';
-import { TimeoutError } from '../errors';
-import { DeviceDescriptors } from '../deviceDescriptors';
-import { Chromium } from './chromium';
-import { WebKit } from './webkit';
-import { Firefox } from './firefox';
-import { selectors } from '../selectors';
-import * as browserPaths from '../install/browserPaths';
-
-for (const className in api) {
-  if (typeof (api as any)[className] === 'function')
-    helper.installApiHooks(className[0].toLowerCase() + className.substring(1), (api as any)[className]);
-}
+import { Chromium } from './chromium/chromium';
+import { WebKit } from './webkit/webkit';
+import { Firefox } from './firefox/firefox';
+import { selectors } from './selectors';
+import * as browserPaths from '../utils/browserPaths';
 
 export class Playwright {
   readonly selectors = selectors;
-  readonly devices: types.Devices;
-  readonly errors: { TimeoutError: typeof TimeoutError };
   readonly chromium: Chromium;
   readonly firefox: Firefox;
   readonly webkit: WebKit;
 
   constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
-    this.devices = DeviceDescriptors;
-    this.errors = { TimeoutError };
-
     const chromium = browsers.find(browser => browser.name === 'chromium');
     this.chromium = new Chromium(packagePath, chromium!);
 

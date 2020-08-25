@@ -1,0 +1,35 @@
+# NOTE: theoretically, we can remove this file, because we always create
+# a directory for each package and only copy necessary files there.
+# However, we keep it to double check the list of files.
+#
+# This ignores everything by default, except for package.json and LICENSE and README.md.
+# See https://docs.npmjs.com/misc/developers
+**/*
+
+# Include sources from lib, but not map files.
+!lib/**/*.js
+# Exclude injected files. A preprocessed version of these is included via lib/generated.
+# See src/server/injected/README.md.
+lib/server/injected/
+# Include Windows dependency checker executable.
+!bin/PrintDeps.exe
+# Include generated types and entrypoint.
+!types/*
+!index.d.ts
+# Include separate electron types.
+!electron-types.d.ts
+# Include main entrypoint.
+!index.js
+# Include main entrypoint for ES Modules.
+!index.mjs
+# Include installer.
+!install.js
+# Include essentials.
+!README.md
+!LICENSE
+!NOTICE
+# Include protocol and api docs, so that dependent packages can consume them.
+!api.md
+!protocol.yml
+# Include browser descriptors.
+!browsers.json

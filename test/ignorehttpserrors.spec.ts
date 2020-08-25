@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT, MAC} = testOptions;
+import './playwright.fixtures';
 
 it('should work', async({browser, httpsServer}) => {
   let error = null;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElectronLauncher } from 'playwright-core/electron-types';
-export * from 'playwright-core/types/types';
-export * from 'playwright-core/electron-types';
+import { ElectronLauncher } from './electron-types';
+export * from './types/types';
+export * from './electron-types';
 export const electron: ElectronLauncher;

@@ -14,11 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+import './playwright.fixtures';
 
 it('should work for open shadow roots', async({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
@@ -72,7 +69,6 @@ it('should work with comma separated list', async({page, server}) => {
   expect(await page.$$eval(`css=section #root1, div span`, els => els.length)).toBe(5);
   expect(await page.$eval(`css=doesnotexist , section #root1`, e => e.id)).toBe('root1');
   expect(await page.$$eval(`css=doesnotexist ,section #root1`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=span,div span`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=span,div span`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=span,div span,div div span`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=#target,[attr="value\\ space"]`, els => els.length)).toBe(2);

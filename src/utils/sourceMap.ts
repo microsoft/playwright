@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as util from 'util';
 import { getCallerFilePath } from './stackTrace';
-import { helper } from '../helper';
+import { isDebugMode } from './utils';
 
 type Position = {
   line: number;
@@ -37,7 +37,7 @@ export function ensureSourceUrl(expression: string): string {
 }
 
 export async function generateSourceMapUrl(functionText: string, generatedText: string): Promise<string> {
-  if (!helper.isDebugMode())
+  if (!isDebugMode())
     return generateSourceUrl();
   const sourceMapUrl = await innerGenerateSourceMapUrl(functionText, generatedText);
   return sourceMapUrl || generateSourceUrl();

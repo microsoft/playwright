@@ -14,14 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
-import path from 'path';
-import url from 'url';
 import { Frame } from '..';
-
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
 
 it('should work', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -75,14 +72,14 @@ it('should work with clicking on anchor links', async({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#foobar');
 });
 
-it('should work with clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
+it('should work with clicking on links which do not commit navigation', async({page, server, httpsServer, browserName}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
   const [error] = await Promise.all([
     page.waitForNavigation().catch(e => e),
     page.click('a'),
   ]);
-  utils.expectSSLError(error.message);
+  utils.expectSSLError(browserName, error.message);
 });
 
 it('should work with history.pushState()', async({page, server}) => {
@@ -144,7 +141,7 @@ it('should work with DOM history.back()/history.forward()', async({page, server}
   expect(page.url()).toBe(server.PREFIX + '/second.html');
 });
 
-it.fail(FFOX)('should work when subframe issues window.stop()', async({page, server}) => {
+it.fail(options.FIREFOX)('should work when subframe issues window.stop()', async({page, server}) => {
   server.setRoute('/frames/style.css', (req, res) => {});
   const navigationPromise = page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = await new Promise<Frame>(f => page.once('frameattached', f));

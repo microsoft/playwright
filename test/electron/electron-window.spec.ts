@@ -13,29 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+import { options } from '../playwright.fixtures';
 import './electron.fixture';
 
-const { CHROMIUM } = testOptions;
-
-it.skip(!CHROMIUM)('should click the button', async({window, server}) => {
+it.skip(!options.CHROMIUM)('should click the button', async({window, server}) => {
   await window.goto(server.PREFIX + '/input/button.html');
   await window.click('button');
   expect(await window.evaluate('result')).toBe('Clicked');
 });
 
-it.skip(!CHROMIUM)('should check the box', async({window}) => {
+it.skip(!options.CHROMIUM)('should check the box', async({window}) => {
   await window.setContent(`<input id='checkbox' type='checkbox'></input>`);
   await window.check('input');
   expect(await window.evaluate('checkbox.checked')).toBe(true);
 });
 
-it.skip(!CHROMIUM)('should not check the checked box', async({window}) => {
+it.skip(!options.CHROMIUM)('should not check the checked box', async({window}) => {
   await window.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
   await window.check('input');
   expect(await window.evaluate('checkbox.checked')).toBe(true);
 });
 
-it.skip(!CHROMIUM)('should type into a textarea', async({window, server}) => {
+it.skip(!options.CHROMIUM)('should type into a textarea', async({window, server}) => {
   await window.evaluate(() => {
     const textarea = document.createElement('textarea');
     document.body.appendChild(textarea);

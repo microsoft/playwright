@@ -28,7 +28,7 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE', '.npmignore'];
+const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE'];
 
 const PACKAGES = {
   'playwright': {
@@ -61,7 +61,7 @@ const PACKAGES = {
     version: '0.4.0', // Manually manage playwright-electron version.
     description: 'A high-level API to automate Electron',
     browsers: [],
-    files: PLAYWRIGHT_CORE_FILES,
+    files: [...PLAYWRIGHT_CORE_FILES, 'electron-types.d.ts'],
   },
 };
 
@@ -120,7 +120,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     await copyToPackage(path.join(ROOT_PATH, file), path.join(packagePath, file));
 
   await copyToPackage(path.join(ROOT_PATH, 'docs/api.md'), path.join(packagePath, 'api.md'));
-  await copyToPackage(path.join(ROOT_PATH, 'src/rpc/protocol.yml'), path.join(packagePath, 'protocol.yml'));
+  await copyToPackage(path.join(ROOT_PATH, 'src/protocol/protocol.yml'), path.join(packagePath, 'protocol.yml'));
 
   // 4. Generate package.json
   const pwInternalJSON = require(path.join(ROOT_PATH, 'package.json'));

@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import { options } from './playwright.fixtures';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS, USES_HOOKS} = testOptions;
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)
@@ -69,6 +68,12 @@ it('should not throw UnhandledPromiseRejection when page closes', async({browser
     page.mouse.click(1, 2),
   ]).catch(e => {});
   await context.close();
+});
+
+it('should click the 1x1 div', async({page, server}) => {
+  await page.setContent(`<div style="width: 1px; height: 1px;" onclick="window.__clicked = true"></div>`);
+  await page.click('div');
+  expect(await page.evaluate('window.__clicked')).toBe(true);
 });
 
 it('should click the button after navigation ', async({page, server}) => {
@@ -317,7 +322,7 @@ it('should click the button inside an iframe', async({page, server}) => {
   expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it.fail(CHROMIUM || WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
+it.fail(options.CHROMIUM || options.WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
   // @see https://chromium-review.googlesource.com/c/chromium/src/+/1742784
@@ -350,8 +355,8 @@ it('should click the button with px border with offset', async({page, server}) =
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 20 + 8 : 20);
-  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 10 + 8 : 10);
+  expect(await page.evaluate('offsetX')).toBe(options.WEBKIT ? 20 + 8 : 20);
+  expect(await page.evaluate('offsetY')).toBe(options.WEBKIT ? 10 + 8 : 10);
 });
 
 it('should click the button with em border with offset', async({page, server}) => {
@@ -361,8 +366,8 @@ it('should click the button with em border with offset', async({page, server}) =
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 12 * 2 + 20 : 20);
-  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 12 * 2 + 10 : 10);
+  expect(await page.evaluate('offsetX')).toBe(options.WEBKIT ? 12 * 2 + 20 : 20);
+  expect(await page.evaluate('offsetY')).toBe(options.WEBKIT ? 12 * 2 + 10 : 10);
 });
 
 it('should click a very large button with offset', async({page, server}) => {
@@ -372,8 +377,8 @@ it('should click a very large button with offset', async({page, server}) => {
   await page.click('button', { position: { x: 1900, y: 1910 } });
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 1900 + 8 : 1900);
-  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(options.WEBKIT ? 1900 + 8 : 1900);
+  expect(await page.evaluate('offsetY')).toBe(options.WEBKIT ? 1910 + 8 : 1910);
 });
 
 it('should click a button in scrolling container with offset', async({page, server}) => {
@@ -392,11 +397,11 @@ it('should click a button in scrolling container with offset', async({page, serv
   await page.click('button', { position: { x: 1900, y: 1910 } });
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(WEBKIT ? 1900 + 8 : 1900);
-  expect(await page.evaluate('offsetY')).toBe(WEBKIT ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(options.WEBKIT ? 1900 + 8 : 1900);
+  expect(await page.evaluate('offsetY')).toBe(options.WEBKIT ? 1910 + 8 : 1910);
 });
 
-it.skip(FFOX)('should click the button with offset with page scale', async({browser, server}) => {
+it.skip(options.FIREFOX)('should click the button with offset with page scale', async({browser, server}) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -408,10 +413,10 @@ it.skip(FFOX)('should click the button with offset with page scale', async({brow
   expect(await page.evaluate('result')).toBe('Clicked');
   const round = x => Math.round(x + 0.01);
   let expected = { x: 28, y: 18 };  // 20;10 + 8px of border in each direction
-  if (WEBKIT) {
+  if (options.WEBKIT) {
     // WebKit rounds up during css -> dip -> css conversion.
     expected = { x: 29, y: 19 };
-  } else if (CHROMIUM && HEADLESS) {
+  } else if (options.CHROMIUM && options.HEADLESS) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
     expected = { x: 27, y: 18 };
   }

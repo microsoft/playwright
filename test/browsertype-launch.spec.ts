@@ -14,12 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
 import path from 'path';
-import fs from 'fs';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should reject all promises when browser is closed', async({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);
@@ -39,7 +36,7 @@ it('should throw if userDataDir option is passed', async({browserType, defaultBr
   expect(waitError.message).toContain('launchPersistentContext');
 });
 
-it.skip(FFOX)('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.FIREFOX)('should throw if page argument is passed', async({browserType, defaultBrowserOptions}) => {
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
   await browserType.launch(options).catch(e => waitError = e);
@@ -61,22 +58,22 @@ it('should reject if executable path is invalid', async({browserType, defaultBro
   expect(waitError.message).toContain('Failed to launch');
 });
 
-it.skip(USES_HOOKS)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should handle timeout', async({browserType, defaultBrowserOptions}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
-  expect(error.message).toContain(`[browser] <launching>`);
-  expect(error.message).toContain(`[browser] <launched> pid=`);
+  expect(error.message).toContain(`<launching>`);
+  expect(error.message).toContain(`<launched> pid=`);
 });
 
-it.skip(USES_HOOKS)('should handle exception', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should handle exception', async({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain('Dummy');
 });
 
-it.skip(USES_HOOKS)('should report launch log', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should report launch log', async({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);

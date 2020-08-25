@@ -14,11 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
-
-const {WEBKIT} = testOptions;
 
 it('should create new context', async function({browser}) {
   expect(browser.contexts().length).toBe(0);
@@ -186,7 +184,7 @@ it('should disable javascript', async({browser}) => {
     await page.goto('data:text/html, <script>var something = "forbidden"</script>');
     let error = null;
     await page.evaluate('something').catch(e => error = e);
-    if (WEBKIT)
+    if (options.WEBKIT)
       expect(error.message).toContain('Can\'t find variable: something');
     else
       expect(error.message).toContain('something is not defined');

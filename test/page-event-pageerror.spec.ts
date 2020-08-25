@@ -14,10 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should fire', async({page, server}) => {
   const [error] = await Promise.all([
@@ -28,12 +26,12 @@ it('should fire', async({page, server}) => {
   expect(error.message).toBe('Fancy error!');
   let stack = await page.evaluate(() => window['e'].stack);
   // Note that WebKit reports the stack of the 'throw' statement instead of the Error constructor call.
-  if (WEBKIT)
+  if (options.WEBKIT)
     stack = stack.replace('14:25', '15:19');
   expect(error.stack).toBe(stack);
 });
 
-it.fail(WEBKIT)('should contain sourceURL', async({page, server}) => {
+it.fail(options.WEBKIT)('should contain sourceURL', async({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -53,24 +51,24 @@ it('should handle odd values', async ({page}) => {
       page.waitForEvent('pageerror'),
       page.evaluate(value => setTimeout(() => { throw value; }, 0), value),
     ]);
-    expect(error.message).toBe(FFOX ? 'uncaught exception: ' + message : message);
+    expect(error.message).toBe(options.FIREFOX ? 'uncaught exception: ' + message : message);
   }
 });
 
-it.fail(FFOX)('should handle object', async ({page}) => {
+it.fail(options.FIREFOX)('should handle object', async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw {}; }, 0)),
   ]);
-  expect(error.message).toBe(CHROMIUM ? 'Object' : '[object Object]');
+  expect(error.message).toBe(options.CHROMIUM ? 'Object' : '[object Object]');
 });
 
-it.fail(FFOX)('should handle window', async ({page}) => {
+it.fail(options.FIREFOX)('should handle window', async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.evaluate(() => setTimeout(() => { throw window; }, 0)),
   ]);
-  expect(error.message).toBe(CHROMIUM ? 'Window' : '[object Window]');
+  expect(error.message).toBe(options.CHROMIUM ? 'Window' : '[object Window]');
 });

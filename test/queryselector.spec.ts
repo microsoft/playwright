@@ -14,11 +14,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, CHANNEL, USES_HOOKS} = testOptions;
+import './playwright.fixtures';
+
+it('should throw for non-string selector', async({page}) => {
+  const error = await page.$(null).catch(e => e);
+  expect(error.message).toContain('selector: expected string, got object');
+});
 
 it('should query existing element with css selector', async({page, server}) => {
   await page.setContent('<section>test</section>');

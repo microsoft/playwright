@@ -14,9 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-const {WEBKIT, USES_HOOKS, FFOX} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should work', async ({ page, server }) => {
   const result = await page.evaluate(() => 7 * 3);
@@ -416,7 +415,7 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it.fail(WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
+it.fail(options.WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -434,8 +433,8 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it.fail(USES_HOOKS)('should transfer 100Mb of data from page to node.js', async ({ page }) => {
-  // This does not use hooks, but is slow in wire channel.
+it.fail(options.WIRE)('should transfer 100Mb of data from page to node.js', async ({ page }) => {
+  // This is too slow with wire.
   const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
   expect(a.length).toBe(100 * 1024 * 1024);
 });
@@ -454,7 +453,7 @@ it('should work even when JSON is set to null', async ({ page }) => {
   expect(result).toEqual({ abc: 123 });
 });
 
-it.fail(FFOX)('should await promise from popup', async ({ page, server }) => {
+it.fail(options.FIREFOX)('should await promise from popup', async ({ page, server }) => {
   // Something is wrong about the way Firefox waits for the chained promise
   await page.goto(server.EMPTY_PAGE);
   const result = await page.evaluate(() => {

@@ -14,10 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import utils from './utils';
-const {USES_HOOKS} = testOptions;
+import './playwright.fixtures';
 
 it('should timeout waiting for display:none to be gone', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

@@ -8,12 +8,12 @@
     },
     {
       "name": "firefox",
-      "revision": "1156",
+      "revision": "1166",
       "download": true
     },
     {
       "name": "webkit",
-      "revision": "1325",
+      "revision": "1330",
       "download": true
     }
   ]

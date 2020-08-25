@@ -114,7 +114,7 @@ if git show-ref --verify --quiet refs/heads/playwright-build; then
 fi
 git checkout -b playwright-build
 echo "-- applying patches"
-git apply --index $PATCHES_PATH/*
+git apply --index --whitespace=nowarn $PATCHES_PATH/*
 
 if [[ ! -z "${WEBKIT_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding WebKit embedders"
@@ -126,7 +126,7 @@ elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   git add juggler
 fi
 
-git commit -a --author="playwright-devops <devops@playwright.com>" -m "chore: bootstrap build #$BUILD_NUMBER"
+git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore: bootstrap build #$BUILD_NUMBER"
 
 echo
 echo

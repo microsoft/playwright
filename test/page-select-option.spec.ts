@@ -14,12 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
-import util from 'util';
-import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import './playwright.fixtures';
 
 it('should select single option', async({page, server}) => {
   await page.goto(server.PREFIX + '/input/select.html');

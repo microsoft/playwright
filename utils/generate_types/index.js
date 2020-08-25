@@ -31,13 +31,13 @@ let documentation;
   const typesDir = path.join(PROJECT_DIR, 'types');
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
-  fs.writeFileSync(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'chromium', 'protocol.ts')), 'utf8');
+  fs.writeFileSync(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts')), 'utf8');
   const browser = await chromium.launch();
   const page = await browser.newPage();
   const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
   const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api]);
   await browser.close();
-  const sources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'rpc', 'client'), '', []);
+  const sources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
   const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources);
   documentation = mergeDocumentation(mdDocumentation, jsDocumentation);
   const handledClasses = new Set();

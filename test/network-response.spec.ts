@@ -14,20 +14,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
+import './playwright.fixtures';
 import fs from 'fs';
 import path from 'path';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, MAC, WIN} = testOptions;
 
 it('should work', async({page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
+    res.setHeader('BaZ', 'bAz');
     res.end();
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.headers()['foo']).toBe('bar');
+  expect(response.headers()['baz']).toBe('bAz');
+  expect(response.headers()['BaZ']).toBe(undefined);
 });
 
 

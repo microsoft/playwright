@@ -14,14 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import utils from './utils';
-import path from 'path';
-import url from 'url';
+import './playwright.fixtures';
 import { Frame, Page } from '..';
 import { TestServer } from '../utils/testserver';
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
 
 it('should navigate to empty page with networkidle', async({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE, { waitUntil: 'networkidle' });

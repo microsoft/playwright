@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import { options } from './playwright.fixtures';
 
 import utils from './utils';
 const { makeUserDataDir, removeUserDataDir } = utils;
-const {FFOX, CHROMIUM, WEBKIT, WIN, MAC} = testOptions;
 
-it('should have default url when launching browser', async ({browserType, defaultBrowserOptions}) => {
-  const userDataDir = await makeUserDataDir();
-  const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false });
+it('should have default url when launching browser', async ({browserType, defaultBrowserOptions, tmpDir}) => {
+  const browserContext = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, headless: false });
   const urls = browserContext.pages().map(page => page.url());
   expect(urls).toEqual(['about:blank']);
   await browserContext.close();
-  await removeUserDataDir(userDataDir);
 });
 
-it.fail(WIN && CHROMIUM).slow()('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
+it.fail(WIN && options.CHROMIUM).slow()('headless should be able to read cookies written by headful', async({browserType, defaultBrowserOptions, server}) => {
   // see https://github.com/microsoft/playwright/issues/717
   const userDataDir = await makeUserDataDir();
   // Write a cookie in headful chrome
@@ -48,19 +46,17 @@ it.fail(WIN && CHROMIUM).slow()('headless should be able to read cookies written
   expect(cookie).toBe('foo=true');
 });
 
-it.slow()('should close browser with beforeunload page', async({browserType, defaultBrowserOptions, server}) => {
-  const userDataDir = await makeUserDataDir();
-  const browserContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
+it.slow()('should close browser with beforeunload page', async({browserType, defaultBrowserOptions, server, tmpDir}) => {
+  const browserContext = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, headless: false});
   const page = await browserContext.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
   // fire.
   await page.click('body');
   await browserContext.close();
-  await removeUserDataDir(userDataDir);
 });
 
-it('should not crash when creating second context', async ({browserType, defaultBrowserOptions, server}) => {
+it('should not crash when creating second context', async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   {
     const browserContext = await browser.newContext();
@@ -110,7 +106,7 @@ it('should(not) block third party cookies', async({browserType, defaultBrowserOp
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = CHROMIUM;
+  const allowsThirdParty = options.CHROMIUM || options.FIREFOX;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -132,7 +128,7 @@ it('should(not) block third party cookies', async({browserType, defaultBrowserOp
   await browser.close();
 });
 
-it.fail(WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
+it.fail(options.WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const context = await browser.newContext({ viewport: null });

@@ -14,10 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+import './playwright.fixtures';
 
 import utils from './utils';
-const {CHROMIUM, FFOX, MAC, HEADLESS} = testOptions;
 
 it('should get the proper default viewport size', async({page, server}) => {
   await utils.verifyViewport(page, 1280, 720);

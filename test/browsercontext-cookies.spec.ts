@@ -14,10 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-
-import utils from './utils';
-const {FFOX, WEBKIT, WIN} = testOptions;
+import { options } from './playwright.fixtures';
 
 it('should return no cookies in pristine browser context', async({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);
@@ -38,7 +35,7 @@ it('should get a cookie', async({context, page, server}) => {
     expires: -1,
     httpOnly: false,
     secure: false,
-    sameSite: FFOX ? 'Lax' : 'None',
+    sameSite: 'None',
   }]);
 });
 
@@ -60,7 +57,7 @@ it('should get a non-session cookie', async({context, page, server}) => {
     expires: date / 1000,
     httpOnly: false,
     secure: false,
-    sameSite: FFOX ? 'Lax' : 'None',
+    sameSite: 'None',
   }]);
 });
 
@@ -75,7 +72,7 @@ it('should properly report httpOnly cookie', async({context, page, server}) => {
   expect(cookies[0].httpOnly).toBe(true);
 });
 
-it.fail(WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
+it.fail(options.WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async({context, page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
     res.end();
@@ -86,7 +83,7 @@ it.fail(WEBKIT && WIN)('should properly report "Strict" sameSite cookie', async(
   expect(cookies[0].sameSite).toBe('Strict');
 });
 
-it.fail(WEBKIT && WIN)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
+it.fail(options.WEBKIT && WIN)('should properly report "Lax" sameSite cookie', async({context, page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');
     res.end();
@@ -116,7 +113,7 @@ it('should get multiple cookies', async({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: FFOX ? 'Lax' : 'None',
+      sameSite: 'None',
     },
     {
       name: 'username',
@@ -126,7 +123,7 @@ it('should get multiple cookies', async({context, page, server}) => {
       expires: -1,
       httpOnly: false,
       secure: false,
-      sameSite: FFOX ? 'Lax' : 'None',
+      sameSite: 'None',
     },
   ]);
 });

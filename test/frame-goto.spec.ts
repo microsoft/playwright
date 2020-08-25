@@ -14,12 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
+
+import './playwright.fixtures';
 
 import utils from './utils';
-import path from 'path';
-import url from 'url';
-const {FFOX, CHROMIUM, WEBKIT, ASSETS_DIR, MAC, WIN} = testOptions;
 
 it('should navigate subframes', async({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');

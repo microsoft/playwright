@@ -14,10 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-
+import { options } from './playwright.fixtures';
 import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
 
 it('should handle nested frames', async({page, server}) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
@@ -173,7 +171,7 @@ it('should report different frame instance when frame re-attaches', async({page,
   expect(frame1).not.toBe(frame2);
 });
 
-it.fail(FFOX)('should refuse to display x-frame-options:deny iframe', async({page, server}) => {
+it.fail(options.FIREFOX)('should refuse to display x-frame-options:deny iframe', async({page, server}) => {
   server.setRoute('/x-frame-options-deny.html', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -188,4 +186,10 @@ it.fail(FFOX)('should refuse to display x-frame-options:deny iframe', async({pag
   });
   await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX}/x-frame-options-deny.html"></iframe>`);
   expect(await refusalText).toMatch(/Refused to display 'http.*\/x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'deny'./i)
+});
+
+it('should return frame.page()', async({page, server}) => {
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  expect(page.mainFrame().page()).toBe(page);
+  expect(page.mainFrame().childFrames()[0].page()).toBe(page);
 });

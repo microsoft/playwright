@@ -14,12 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
-it.slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server, toImpl}) => {
+it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   {
     const browser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -35,33 +33,27 @@ it.slow()('should be able to reconnect to a browser', async({browserType, defaul
     await page.goto(server.EMPTY_PAGE);
     await browser.close();
   }
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it.fail(USES_HOOKS || (CHROMIUM && WIN)).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE).fail(options.CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
   const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
   expect(error.message).toContain('Dummy');
 });
 
-it('should set the browser connected state', async ({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE)('should set the browser connected state', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   expect(remote.isConnected()).toBe(true);
   await remote.close();
   expect(remote.isConnected()).toBe(false);
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should throw when used after isConnected returns false', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should throw when used after isConnected returns false', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const page = await remote.newPage();

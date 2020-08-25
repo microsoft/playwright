@@ -14,11 +14,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-const {FFOX, CHROMIUM, WEBKIT} = testOptions;
+import { options } from './playwright.fixtures';
 
-it('should work across sessions', async ({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE)('should work across sessions', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   expect(browser1.contexts().length).toBe(0);
@@ -35,12 +34,10 @@ it('should work across sessions', async ({browserType, defaultBrowserOptions, to
   await browser1.close();
   await browser2.close();
 
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it.slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async ({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE).slow()('should be emitted when: browser gets closed, disconnected or underlying websocket gets closed', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const originalBrowser = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const wsEndpoint = browserServer.wsEndpoint();
@@ -74,7 +71,7 @@ it.slow()('should be emitted when: browser gets closed, disconnected or underlyi
   expect(disconnectedRemote2).toBe(1);
 });
 
-it('should be able to connect multiple times to the same browser', async({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE)('should be able to connect multiple times to the same browser', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const browser1 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
   const browser2 = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -85,12 +82,10 @@ it('should be able to connect multiple times to the same browser', async({browse
   const page2 = await browser2.newPage();
   expect(await page2.evaluate(() => 7 * 6)).toBe(42); // original browser should still work
   await browser2.close();
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });
 
-it('should not be able to close remote browser', async({browserType, defaultBrowserOptions, toImpl}) => {
+it.skip(options.WIRE)('should not be able to close remote browser', async({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   {
     const remote = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() });
@@ -102,7 +97,5 @@ it('should not be able to close remote browser', async({browserType, defaultBrow
     await remote.newContext();
     await remote.close();
   }
-  if (toImpl)
-    await toImpl(browserServer)._checkLeaks();
   await browserServer.close();
 });

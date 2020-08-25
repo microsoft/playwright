@@ -14,25 +14,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import path from 'path';
 import fs from 'fs';
-import utils from './utils';
-const {FFOX, CHROMIUM, WEBKIT, WIN, USES_HOOKS, CHANNEL} = testOptions;
+import { options } from './playwright.fixtures';
 
-it('browserType.executablePath should work', async({browserType}) => {
+it.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH))('browserType.executablePath should work', async({browserType}) => {
   const executablePath = browserType.executablePath();
   expect(fs.existsSync(executablePath)).toBe(true);
   expect(fs.realpathSync(executablePath)).toBe(executablePath);
 });
 
 it('browserType.name should work', async({browserType}) => {
-  if (WEBKIT)
+  if (options.WEBKIT)
     expect(browserType.name()).toBe('webkit');
-  else if (FFOX)
+  else if (options.FIREFOX)
     expect(browserType.name()).toBe('firefox');
-  else if (CHROMIUM)
+  else if (options.CHROMIUM)
     expect(browserType.name()).toBe('chromium');
   else
     throw new Error('Unknown browser');

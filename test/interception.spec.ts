@@ -14,13 +14,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
 
-import fs from 'fs';
-import path from 'path';
-import { helper } from '../lib/helper';
+import './playwright.fixtures';
+
+import { globToRegex } from '../lib/client/clientHelper';
 import vm from 'vm';
-const {FFOX, CHROMIUM, WEBKIT, HEADLESS} = testOptions;
 
 it('should work with navigation', async({page, server}) => {
   const requests = new Map();
@@ -74,20 +72,20 @@ it('should intercept after a service worker', async({browser, page, server, cont
 });
 
 it('should work with glob', async() => {
-  expect(helper.globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
-  expect(helper.globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
-  expect(helper.globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();
-  expect(helper.globToRegex('https://**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
-  expect(helper.globToRegex('http://localhost:8080/simple/path.js').test('http://localhost:8080/simple/path.js')).toBeTruthy();
-  expect(helper.globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeTruthy();
-  expect(helper.globToRegex('**/{a,b}.js').test('https://localhost:8080/a.js')).toBeTruthy();
-  expect(helper.globToRegex('**/{a,b}.js').test('https://localhost:8080/b.js')).toBeTruthy();
-  expect(helper.globToRegex('**/{a,b}.js').test('https://localhost:8080/c.js')).toBeFalsy();
+  expect(globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
+  expect(globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
+  expect(globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();
+  expect(globToRegex('https://**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
+  expect(globToRegex('http://localhost:8080/simple/path.js').test('http://localhost:8080/simple/path.js')).toBeTruthy();
+  expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeTruthy();
+  expect(globToRegex('**/{a,b}.js').test('https://localhost:8080/a.js')).toBeTruthy();
+  expect(globToRegex('**/{a,b}.js').test('https://localhost:8080/b.js')).toBeTruthy();
+  expect(globToRegex('**/{a,b}.js').test('https://localhost:8080/c.js')).toBeFalsy();
 
-  expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpg')).toBeTruthy();
-  expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpeg')).toBeTruthy();
-  expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.png')).toBeTruthy();
-  expect(helper.globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
+  expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpg')).toBeTruthy();
+  expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.jpeg')).toBeTruthy();
+  expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.png')).toBeTruthy();
+  expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
 });
 
 it('should work with regular expression passed from a different context', async({page, server}) => {

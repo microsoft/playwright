@@ -14,17 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './base.fixture';
-
-import utils from './utils';
+import { options } from './playwright.fixtures';
 import { ChromiumBrowser } from '..';
-const { FFOX, CHROMIUM, WEBKIT, WIN, CHANNEL } = testOptions;
 
-it.skip(!CHANNEL)('should work', async({browser}) => {
+it('should work', async({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();
 });
 
-it.skip(!CHANNEL)('should scope context handles', async({browserType, browser, server}) => {
+it('should scope context handles', async({browserType, browser, server}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -68,7 +65,7 @@ it.skip(!CHANNEL)('should scope context handles', async({browserType, browser, s
   await expectScopeState(browser, GOLDEN_PRECONDITION);
 });
 
-it.skip(!CHANNEL || !CHROMIUM)('should scope CDPSession handles', async({browserType, browser, server}) => {
+it.skip(!options.CHROMIUM)('should scope CDPSession handles', async({browserType, browser, server}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -105,7 +102,7 @@ it.skip(!CHANNEL || !CHROMIUM)('should scope CDPSession handles', async({browser
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it.skip(!CHANNEL)('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
+it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
