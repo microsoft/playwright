@@ -9,11 +9,11 @@ container, including browsers.
   * [Pull the image](#pull-the-image)
   * [Run the image](#run-the-image)
   * [Using on CI](#using-on-ci)
+- [Image tags](#image-tags)
 - [Development](#development)
   * [Build the image](#build-the-image)
   * [Push](#push)
 - [Base images](#base-images)
-- [Full Tag Listing](#full-tag-listing)
   * [Alpine](#alpine)
 <!-- GEN:stop -->
 
@@ -61,6 +61,10 @@ a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b0
 
 See our [Continuous Integration guides](../ci.md) for sample configs.
 
+## Image tags
+
+See [all available image tags](https://mcr.microsoft.com/v2/playwright/tags/list).
+
 ## Development
 
 ### Build the image
@@ -88,14 +92,9 @@ images:
 - `mcr.microsoft.com/playwright:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
 
-
 ## Base images
 
 `playwright:bionic` is based on Ubuntu 18.04 LTS (Bionic Beaver).
-
-## Full Tag Listing
-
-You can retrieve a list of all available Docker tags for Playwright [here](https://mcr.microsoft.com/v2/playwright/tags/list).
 
 ### Alpine
 
