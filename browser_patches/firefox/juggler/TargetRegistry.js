@@ -134,8 +134,7 @@ class TargetRegistry {
         if (!target)
           return;
         target.emit('crashed');
-        if (target)
-          target.dispose().catch(e => dump(`Failed to destroy target: ${e}`));
+        target.dispose();
       }
     }, 'oop-frameloader-crashed');
 
@@ -204,7 +203,7 @@ class TargetRegistry {
       const linkedBrowser = tab.linkedBrowser;
       const target = this._browserToTarget.get(linkedBrowser);
       if (target)
-          target.dispose().catch(e => dump(`Failed to destroy target: ${e}`));
+          target.dispose();
     };
 
     Services.wm.addListener({
@@ -460,17 +459,12 @@ class PageTarget {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
 
-  async dispose() {
+  dispose() {
     this._disposed = true;
+    this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
     helper.removeListeners(this._eventListeners);
-
-    const event = { pendingActivity: [], target: this };
-    this._registry.emit(TargetRegistry.Events.TargetWillBeDestroyed, event);
-    await Promise.all(event.pendingActivity);
-
-    this._browserContext.pages.delete(this);
     this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
@@ -740,7 +734,6 @@ function setViewportSizeForBrowser(viewportSize, browser, window) {
 
 TargetRegistry.Events = {
   TargetCreated: Symbol('TargetRegistry.Events.TargetCreated'),
-  TargetWillBeDestroyed: Symbol('TargetRegistry.Events.TargetWillBeDestroyed'),
   TargetDestroyed: Symbol('TargetRegistry.Events.TargetDestroyed'),
   DownloadCreated: Symbol('TargetRegistry.Events.DownloadCreated'),
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),

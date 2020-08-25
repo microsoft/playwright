@@ -311,7 +311,7 @@ class PageHandler {
     const rect = this._pageTarget.linkedBrowser().getBoundingClientRect();
     const devicePixelRatio = this._pageTarget._window.devicePixelRatio;
     this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
-    this._session.emitEvent('Page.screencastStarted', {uid: '' + this._videoSessionId, file});
+    this._session.emitEvent('Page.screencastStarted', {screencastId: '' + this._videoSessionId, file});
   }
 
   async stopVideoRecording() {
@@ -320,7 +320,6 @@ class PageHandler {
     const videoSessionId = this._videoSessionId;
     this._videoSessionId = -1;
     const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
-    const session = this._session;
     const result = new Promise(resolve =>
       Services.obs.addObserver(function onStopped(subject, topic, data) {
         if (videoSessionId != data)
@@ -328,8 +327,6 @@ class PageHandler {
 
         Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
         resolve();
-
-        session.emitEvent('Page.screencastStopped', {uid: '' + videoSessionId});
       }, 'juggler-screencast-stopped')
     );
     screencast.stopVideoRecording(videoSessionId);
