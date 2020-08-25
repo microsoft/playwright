@@ -27,4 +27,8 @@ export class StreamDispatcher extends Dispatcher<stream.Readable, channels.Strea
     const buffer = this._object.read(Math.min(this._object.readableLength, params.size || this._object.readableLength));
     return { binary: buffer ? buffer.toString('base64') : '' };
   }
+
+  async close() {
+    this._object.destroy();
+  }
 }

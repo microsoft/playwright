@@ -109,7 +109,7 @@ class RemoteServer {
     return await this._exitPromise;
   }
 
-  async _close() {
+  async close() {
     if (!this._didExit)
       this._child.kill();
     return await this.childExitCode();
@@ -120,12 +120,12 @@ registerFixture('remoteServer', async ({browserType, defaultBrowserOptions}, tes
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, defaultBrowserOptions);
   await test(remoteServer);
-  await remoteServer._close();
+  await remoteServer.close();
 });
 
 registerFixture('stallingRemoteServer', async ({browserType, defaultBrowserOptions}, test) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
   await test(remoteServer);
-  await remoteServer._close();
+  await remoteServer.close();
 });

@@ -1769,9 +1769,15 @@ Download:
       returns:
         value: string?
 
+    # Blocks path/failure/delete/context.close until saved to the local |path|.
     saveAs:
       parameters:
         path: string
+
+    # Blocks path/failure/delete/context.close until the stream is closed.
+    saveAsStream:
+      returns:
+        stream: Stream
 
     failure:
       returns:
@@ -1796,6 +1802,7 @@ Stream:
       returns:
         binary: binary
 
+    close:
 
 
 CDPSession:
