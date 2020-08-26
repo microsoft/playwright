@@ -56,7 +56,7 @@ export function installTransform(): () => void {
     sourceMaps.set(filename, sourceMapPath);
     if (fs.existsSync(codePath))
       return fs.readFileSync(codePath, 'utf8');
-    
+
     const result = babel.transformFileSync(filename, {
       presets: [
         ['@babel/preset-env', { targets: {node: 'current'} }],
@@ -67,7 +67,7 @@ export function installTransform(): () => void {
     if (result.code) {
       fs.mkdirSync(path.dirname(cachePath), {recursive: true});
       if (result.map)
-        fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');  
+        fs.writeFileSync(sourceMapPath, JSON.stringify(result.map), 'utf8');
       fs.writeFileSync(codePath, result.code, 'utf8');
     }
     return result.code;

@@ -17,7 +17,7 @@
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
 import { RunnerConfig } from '../runnerConfig';
-import { Suite, Test } from '../test';
+import { Suite, Test, TestResult } from '../test';
 
 class ListReporter extends BaseReporter {
   _failure = 0;
@@ -27,29 +27,22 @@ class ListReporter extends BaseReporter {
     console.log();
   }
 
-  onTest(test: Test) {
-    super.onTest(test);
+  onTestBegin(test: Test) {
+    super.onTestBegin(test);
     process.stdout.write('    ' + colors.gray(test.fullTitle() + ': '));
   }
 
-  onSkippedTest(test: Test) {
-    super.onSkippedTest(test);
-    process.stdout.write(colors.green('  - ') + colors.cyan(test.fullTitle()));
-    process.stdout.write('\n');
-  }
-
-  onTestPassed(test: Test) {
-    super.onTestPassed(test);
-    process.stdout.write('\u001b[2K\u001b[0G');
-    process.stdout.write(colors.green('  ✓ ') + colors.gray(test.fullTitle()));
-    process.stdout.write('\n');
-  }
-
-  onTestFailed(test: Test) {
-    super.onTestFailed(test);
-    process.stdout.write('\u001b[2K\u001b[0G');
-    process.stdout.write(colors.red(`  ${++this._failure}) ` + test.fullTitle()));
-    process.stdout.write('\n');
+  onTestEnd(test: Test, result: TestResult) {
+    super.onTestEnd(test, result);
+    let text = '';
+    switch (result.status) {
+      case 'skipped': text = colors.green('  - ') + colors.cyan(test.fullTitle()); break;
+      case 'passed': text = '\u001b[2K\u001b[0G' + colors.green('  ✓ ') + colors.gray(test.fullTitle()); break;
+      case 'failed':
+        // fall through
+      case 'timedOut': text = '\u001b[2K\u001b[0G' + colors.red(`  ${++this._failure}) ` + test.fullTitle()); break;
+    }
+    process.stdout.write(text + '\n');
   }
 
   onEnd() {

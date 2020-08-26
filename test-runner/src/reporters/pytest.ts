@@ -17,12 +17,12 @@
 import colors from 'colors/safe';
 import milliseconds from 'ms';
 import * as path from 'path';
-import { Test, Suite, Configuration } from '../test';
+import { Test, Suite, Configuration, TestResult } from '../test';
 import { BaseReporter } from './base';
 import { RunnerConfig } from '../runnerConfig';
 
 const cursorPrevLine = '\u001B[F';
-const eraseLine = '\u001B[2K'
+const eraseLine = '\u001B[2K';
 
 type Row = {
   id: string;
@@ -43,7 +43,6 @@ class PytestReporter extends BaseReporter {
   private _suiteIds = new Map<Suite, string>();
   private _lastOrdinal = 0;
   private _visibleRows: number;
-  private _failed = false;
   private _total: number;
   private _progress: string[] = [];
   private _throttler = new Throttler(250, () => this._repaint());
@@ -77,18 +76,11 @@ class PytestReporter extends BaseReporter {
     }
   }
 
-  onTest(test: Test) {
-    super.onTest(test);
+  onTestBegin(test: Test) {
+    super.onTestBegin(test);
     const row = this._rows.get(this._id(test));
     if (!row.startTime)
       row.startTime = Date.now();
-  }
-
-  onSkippedTest(test: Test) {
-    super.onSkippedTest(test);
-    this._append(test, colors.yellow('∘'));
-    this._progress.push('S');
-    this._throttler.schedule();
   }
 
   onTestStdOut(test: Test, chunk: string | Buffer) {
@@ -99,21 +91,32 @@ class PytestReporter extends BaseReporter {
     this._repaint(chunk);
   }
 
-  onTestPassed(test: Test) {
-    super.onTestPassed(test);
-    this._append(test, colors.green('✓'));
-    this._progress.push('P');
-    this._throttler.schedule();
-  }
-
-  onTestFailed(test: Test) {
-    super.onTestFailed(test);
-    const title = test.duration >= test.timeout ? colors.red('T') : colors.red('F');
-    const row = this._append(test, title);
-    row.failed = true;
-    this._failed = true;
-    this._progress.push('F');
-    this._repaint(this.formatFailure(test) + '\n');
+  onTestEnd(test: Test, result: TestResult) {
+    super.onTestEnd(test, result);
+    switch (result.status) {
+      case 'skipped': {
+        this._append(test, colors.yellow('∘'));
+        this._progress.push('S');
+        this._throttler.schedule();
+        break;
+      }
+      case 'passed': {
+        this._append(test, colors.green('✓'));
+        this._progress.push('P');
+        this._throttler.schedule();
+        break;
+      }
+      case 'failed':
+        // fall through
+      case 'timedOut': {
+        const title = result.status === 'timedOut' ? colors.red('T') : colors.red('F');
+        const row = this._append(test, title);
+        row.failed = true;
+        this._progress.push('F');
+        this._repaint(this.formatFailure(test, result) + '\n');
+        break;
+      }
+    }
   }
 
   private _append(test: Test, s: string): Row {
@@ -146,14 +149,14 @@ class PytestReporter extends BaseReporter {
     }
 
     const status = [];
-    if (this.passes.length)
-      status.push(colors.green(`${this.passes.length} passed`));
+    if (this.passed.length)
+      status.push(colors.green(`${this.passed.length} passed`));
     if (this.skipped.length)
       status.push(colors.yellow(`${this.skipped.length} skipped`));
-    if (this.failures.length)
-      status.push(colors.red(`${this.failures.length} failed`));
-    if (this.timeouts.length)
-      status.push(colors.red(`${this.timeouts.length} timed out`));
+    if (this.failed.length)
+      status.push(colors.red(`${this.failed.length} failed`));
+    if (this.timedOut.length)
+      status.push(colors.red(`${this.timedOut.length} timed out`));
     status.push(colors.dim(`(${milliseconds(Date.now() - this.startTime)})`));
 
     for (let i = lines.length; i < this._visibleRows; ++i)
@@ -214,7 +217,7 @@ const yellowBar = colors.yellow('▇');
 function serializeConfiguration(configuration: Configuration): string {
   const tokens = [];
   for (const { name, value } of configuration)
-      tokens.push(`${name}=${value}`);
+    tokens.push(`${name}=${value}`);
   return tokens.join(', ');
 }
 

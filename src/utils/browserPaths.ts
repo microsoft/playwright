@@ -32,7 +32,9 @@ export type BrowserDescriptor = {
 export const hostPlatform = ((): BrowserPlatform => {
   const platform = os.platform();
   if (platform === 'darwin') {
-    const macVersion = execSync('sw_vers -productVersion').toString('utf8').trim().split('.').slice(0, 2).join('.');
+    const macVersion = execSync('sw_vers -productVersion', {
+      stdio: ['ignore', 'pipe', 'ignore']
+    }).toString('utf8').trim().split('.').slice(0, 2).join('.');
     return `mac${macVersion}` as BrowserPlatform;
   }
   if (platform === 'linux') {

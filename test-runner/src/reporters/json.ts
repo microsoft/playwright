@@ -15,7 +15,7 @@
  */
 
 import { BaseReporter } from './base';
-import { Suite, Test } from '../test';
+import { Suite, Test, TestResult } from '../test';
 import * as fs from 'fs';
 
 class JSONReporter extends BaseReporter {
@@ -50,14 +50,19 @@ class JSONReporter extends BaseReporter {
       title: test.title,
       file: test.file,
       only: test.only,
-      skipped: test.skipped,
       slow: test.slow,
-      duration: test.duration,
       timeout: test.timeout,
-      error: test.error,
-      stdout: test.stdout.map(s => stdioEntry(s)),
-      stderr: test.stderr.map(s => stdioEntry(s)),
-      data: test.data
+      results: test.results.map(r => this._serializeTestResult(r))
+    };
+  }
+
+  private _serializeTestResult(result: TestResult): any {
+    return {
+      duration: result.duration,
+      error: result.error,
+      stdout: result.stdout.map(s => stdioEntry(s)),
+      stderr: result.stderr.map(s => stdioEntry(s)),
+      data: result.data
     };
   }
 }
@@ -65,7 +70,7 @@ class JSONReporter extends BaseReporter {
 function stdioEntry(s: string | Buffer): any {
   if (typeof s === 'string')
     return { text: s };
-  return { buffer: s.toString('base64') }
+  return { buffer: s.toString('base64') };
 }
 
 export default JSONReporter;

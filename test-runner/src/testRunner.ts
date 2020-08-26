@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-import { FixturePool, rerunRegistrations, setParameters } from './fixtures';
+import { FixturePool, rerunRegistrations, setParameters, TestInfo } from './fixtures';
 import { EventEmitter } from 'events';
 import { setCurrentTestFile } from './expect';
-import { Test, Suite, Configuration, serializeError } from './test';
+import { Test, Suite, Configuration, serializeError, TestResult } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
 import * as util from 'util';
 
-export const fixturePool = new FixturePool<RunnerConfig>();
+export const fixturePool = new FixturePool();
 
 export type TestRunnerEntry = {
   file: string;
@@ -40,13 +40,6 @@ function chunkToParams(chunk: Buffer | string):  { text?: string, buffer?: strin
   return { text: chunk };
 }
 
-export type SerializedTest = {
-  id: string,
-  error: any,
-  duration: number,
-  data: any[]
-};
-
 export class TestRunner extends EventEmitter {
   private _failedTestId: string | undefined;
   private _fatalError: any | undefined;
@@ -58,7 +51,10 @@ export class TestRunner extends EventEmitter {
   private _parsedGeneratorConfiguration: any = {};
   private _config: RunnerConfig;
   private _timeout: number;
-  private _test: Test | null = null;
+  private _testId: string | null;
+  private _stdOutBuffer: (string | Buffer)[] = [];
+  private _stdErrBuffer: (string | Buffer)[] = [];
+  private _testResult: TestResult | null = null;
 
   constructor(entry: TestRunnerEntry, config: RunnerConfig, workerId: number) {
     super();
@@ -81,21 +77,32 @@ export class TestRunner extends EventEmitter {
 
   fatalError(error: Error | any) {
     this._fatalError = serializeError(error);
-    if (this._test) {
-      this._test.error = this._fatalError;
-      this.emit('fail', {
-        test: this._serializeTest(),
+    if (this._testResult) {
+      this._testResult.error = this._fatalError;
+      this.emit('testEnd', {
+        id: this._testId,
+        result: this._testResult
       });
     }
     this._reportDone();
   }
 
   stdout(chunk: string | Buffer) {
-    this.emit('stdout', { testId: this._testId(), ...chunkToParams(chunk) })
+    this._stdOutBuffer.push(chunk);
+    if (!this._testId)
+      return;
+    for (const c of this._stdOutBuffer)
+      this.emit('testStdOut', { id: this._testId, ...chunkToParams(c) });
+    this._stdOutBuffer = [];
   }
 
   stderr(chunk: string | Buffer) {
-    this.emit('stderr', { testId: this._testId(), ...chunkToParams(chunk) })
+    this._stdErrBuffer.push(chunk);
+    if (!this._testId)
+      return;
+    for (const c of this._stdErrBuffer)
+      this.emit('testStdErr', { id: this._testId, ...chunkToParams(c) });
+    this._stdErrBuffer = [];
   }
 
   async run() {
@@ -120,11 +127,11 @@ export class TestRunner extends EventEmitter {
       this._reportDone();
     }
     for (const entry of suite._entries) {
-      if (entry instanceof Suite) {
+      if (entry instanceof Suite)
         await this._runSuite(entry);
-      } else {
+      else
         await this._runTest(entry);
-      }
+
     }
     try {
       await this._runHooks(suite, 'afterAll', 'after');
@@ -137,32 +144,52 @@ export class TestRunner extends EventEmitter {
   private async _runTest(test: Test) {
     if (this._failedTestId)
       return false;
-    this._test = test;
     if (this._ordinals.size && !this._ordinals.has(test._ordinal))
       return;
     this._remaining.delete(test._ordinal);
-    if (test.skipped || test.suite._isSkipped()) {
-      this.emit('skipped', { test: this._serializeTest() });
+
+    const id = `${test._ordinal}@${this._configuredFile}`;
+    this._testId = id;
+    this.emit('testBegin', { id });
+
+    const result: TestResult = {
+      duration: 0,
+      status: 'none',
+      stdout: [],
+      stderr: [],
+      data: {}
+    };
+    this._testResult = result;
+
+    if (test._skipped || test.suite._isSkipped()) {
+      result.status = 'skipped';
+      this.emit('testEnd', { id, result });
       return;
     }
 
-    this.emit('test', { test: this._serializeTest() });
+    const startTime = Date.now();
     try {
-      await this._runHooks(test.suite, 'beforeEach', 'before');
-      test._startTime = Date.now();
-      if (!this._trialRun)
-        await this._testWrapper(test)();
-      await this._runHooks(test.suite, 'afterEach', 'after');
-      this.emit('pass', { test: this._serializeTest(true) });
+      const testInfo = { config: this._config, test, result };
+      await this._runHooks(test.suite, 'beforeEach', 'before', testInfo);
+      if (!this._trialRun) {
+        const timeout = test.slow ? this._timeout * 3 : this._timeout;
+        await fixturePool.runTestWithFixtures(test.fn, timeout, testInfo);
+      }
+      await this._runHooks(test.suite, 'afterEach', 'after', testInfo);
+      result.duration = Date.now() - startTime;
+      this.emit('testEnd', { id, result });
     } catch (error) {
-      test.error = serializeError(error);
-      this._failedTestId = this._testId();
-      this.emit('fail', { test: this._serializeTest(true) });
+      result.error = serializeError(error);
+      result.status = 'failed';
+      result.duration = Date.now() - startTime;
+      this._failedTestId = this._testId;
+      this.emit('testEnd', { id, result });
     }
-    this._test = null;
+    this._testResult = null;
+    this._testId = null;
   }
 
-  private async _runHooks(suite: Suite, type: string, dir: 'before' | 'after') {
+  private async _runHooks(suite: Suite, type: string, dir: 'before' | 'after', testInfo?: TestInfo) {
     if (!suite._hasTestsToRun())
       return;
     const all = [];
@@ -173,7 +200,7 @@ export class TestRunner extends EventEmitter {
     if (dir === 'before')
       all.reverse();
     for (const hook of all)
-      await fixturePool.resolveParametersAndRun(hook, this._config);
+      await fixturePool.resolveParametersAndRun(hook, this._config, testInfo);
   }
 
   private _reportDone() {
@@ -182,23 +209,5 @@ export class TestRunner extends EventEmitter {
       fatalError: this._fatalError,
       remaining: [...this._remaining],
     });
-  }
-
-  private _testWrapper(test: Test) {
-    const timeout = test.slow ? this._timeout * 3 : this._timeout;
-    return fixturePool.wrapTestCallback(test.fn, timeout, { ...this._config }, test);
-  }
-
-  private _testId() {
-    return `${this._test._ordinal}@${this._configuredFile}`;
-  }
-
-  private _serializeTest(full = false): SerializedTest {
-    return {
-      id: this._testId(),
-      error: this._test.error,
-      duration: Date.now() - this._test._startTime,
-      data: full ? this._test.data : undefined
-    };
   }
 }
