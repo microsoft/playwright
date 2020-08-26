@@ -113,6 +113,9 @@ registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
 });
 
 registerWorkerFixture('playwright', async({browserName}, test) => {
+  const playwrightCacheEntry = require.cache[require.resolve('../index')];
+  if (playwrightCacheEntry)
+    throw new Error('Could not set playwright to test mode because it was required directly from ' + playwrightCacheEntry.parent.id);
   setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
 
   const {coverage, uninstall} = installCoverageHooks(browserName);
