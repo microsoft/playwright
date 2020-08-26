@@ -6744,20 +6744,12 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       openerId?: PageProxyID;
     }
     export type pageProxyDestroyedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       pageProxyId: PageProxyID;
     }
     /**
      * Fired when provisional load fails.
      */
     export type provisionalLoadFailedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       /**
        * Unique identifier of the page proxy.
        */
@@ -6776,10 +6768,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
      */
     export type windowOpenPayload = {
       /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
-      /**
        * Unique identifier of the page proxy.
        */
       pageProxyId: PageProxyID;
@@ -6787,10 +6775,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       windowFeatures: string[];
     }
     export type downloadCreatedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       /**
        * Unique identifier of the page proxy.
        */
@@ -6803,26 +6787,14 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       url: string;
     }
     export type downloadFilenameSuggestedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       uuid: string;
       suggestedFilename: string;
     }
     export type downloadFinishedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       uuid: string;
       error: string;
     }
     export type screencastFinishedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       /**
        * Unique identifier of the screencast.
        */
