@@ -19,7 +19,7 @@ import { registerFixture } from '../../test-runner';
 
 import fs from 'fs';
 import path from 'path';
-import { ChromiumBrowser } from '../..';
+import type { ChromiumBrowser } from '../..';
 
 declare global {
   interface TestState {

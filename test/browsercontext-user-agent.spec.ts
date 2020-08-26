@@ -17,7 +17,6 @@
 import './playwright.fixtures';
 
 import utils from './utils';
-const {devices} = require('..');
 
 it('should work', async({browser, server}) => {
   {
@@ -57,7 +56,7 @@ it('should work for subframes', async({browser, server}) => {
   }
 });
 
-it('should emulate device user-agent', async({browser, server}) => {
+it('should emulate device user-agent', async({browser, server, playwright}) => {
   {
     const context = await browser.newContext();
     const page = await context.newPage();
@@ -66,7 +65,7 @@ it('should emulate device user-agent', async({browser, server}) => {
     await context.close();
   }
   {
-    const context = await browser.newContext({ userAgent: devices['iPhone 6'].userAgent });
+    const context = await browser.newContext({ userAgent: playwright.devices['iPhone 6'].userAgent });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
     expect(await page.evaluate(() => navigator.userAgent)).toContain('iPhone');

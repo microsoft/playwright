@@ -16,7 +16,7 @@
  */
 
 import './playwright.fixtures';
-import { Frame, Page } from '..';
+import type { Frame, Page } from '..';
 import { TestServer } from '../utils/testserver';
 
 it('should navigate to empty page with networkidle', async({page, server}) => {

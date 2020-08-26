@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 import { options } from './playwright.fixtures';
-import { ChromiumBrowser } from '..';
+import type { ChromiumBrowser } from '..';
 
 it('should work', async({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();

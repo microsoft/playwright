@@ -16,7 +16,7 @@
  */
 
 import { options } from './playwright.fixtures';
-import { Route } from '..';
+import type { Route } from '..';
 
 it('should pick up ongoing navigation', async({page, server}) => {
   let response = null;
