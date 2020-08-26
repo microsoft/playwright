@@ -113,7 +113,7 @@ class PytestReporter extends BaseReporter {
         const row = this._append(test, title);
         row.failed = true;
         this._progress.push('F');
-        this._repaint(this.formatFailure(test, result) + '\n');
+        this._repaint(this.formatFailure(test) + '\n');
         break;
       }
     }
