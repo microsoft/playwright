@@ -65,6 +65,9 @@ export module Protocol {
       canceled?: boolean;
       error?: string;
     }
+    export type screencastFinishedPayload = {
+      screencastId: string;
+    }
     export type enableParameters = {
       attachToDefaultContext: boolean;
     };
@@ -407,11 +410,8 @@ export module Protocol {
       message: string;
     }
     export type screencastStartedPayload = {
-      uid: string;
+      screencastId: string;
       file: string;
-    }
-    export type screencastStoppedPayload = {
-      uid: string;
     }
     export type closeParameters = {
       runBeforeUnload?: boolean;
@@ -931,6 +931,7 @@ export module Protocol {
     "Browser.detachedFromTarget": Browser.detachedFromTargetPayload;
     "Browser.downloadCreated": Browser.downloadCreatedPayload;
     "Browser.downloadFinished": Browser.downloadFinishedPayload;
+    "Browser.screencastFinished": Browser.screencastFinishedPayload;
     "Page.ready": Page.readyPayload;
     "Page.crashed": Page.crashedPayload;
     "Page.eventFired": Page.eventFiredPayload;
@@ -951,7 +952,6 @@ export module Protocol {
     "Page.workerDestroyed": Page.workerDestroyedPayload;
     "Page.dispatchMessageFromWorker": Page.dispatchMessageFromWorkerPayload;
     "Page.screencastStarted": Page.screencastStartedPayload;
-    "Page.screencastStopped": Page.screencastStoppedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
     "Runtime.executionContextDestroyed": Runtime.executionContextDestroyedPayload;
     "Runtime.console": Runtime.consolePayload;
