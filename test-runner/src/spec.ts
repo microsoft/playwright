@@ -64,9 +64,9 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
     if (only)
       test.only = true;
     if (!only && specs.skip && specs.skip[0])
-      test.pending = true;
+      test.skipped = true;
     if (!only && specs.fail && specs.fail[0])
-      test.pending = true;
+      test.skipped = true;
     suite._addTest(test);
     return test;
   });
@@ -79,9 +79,9 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
     if (only)
       child.only = true;
     if (!only && specs.skip && specs.skip[0])
-      child.pending = true;
+      child.skipped = true;
     if (!only && specs.fail && specs.fail[0])
-      child.pending = true;
+      child.skipped = true;
     suites.unshift(child);
     fn();
     suites.shift();

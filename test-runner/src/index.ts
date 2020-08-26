@@ -23,7 +23,7 @@ import { registerFixture as registerFixtureT, registerWorkerFixture as registerW
 import { Reporter } from './reporter';
 import { Runner } from './runner';
 import { RunnerConfig } from './runnerConfig';
-import { Suite, Test } from './test';
+import { Test } from './test';
 import { Matrix, TestCollector } from './testCollector';
 import { installTransform } from './transform';
 export { parameters, registerParameter } from './fixtures';
@@ -58,7 +58,9 @@ export function registerWorkerFixture<T extends keyof (WorkerState & FixturePara
   registerWorkerFixtureT<RunnerConfig>(name, fn);
 };
 
-export function collectTests(config: RunnerConfig, files: string[]): Suite {
+type RunResult = 'passed' | 'failed' | 'forbid-only' | 'no-tests';
+
+export async function run(config: RunnerConfig, files: string[], reporter: Reporter): Promise<RunResult> {
   const revertBabelRequire = installTransform();
   let hasSetup = false;
   try {
@@ -74,10 +76,17 @@ export function collectTests(config: RunnerConfig, files: string[]): Suite {
   revertBabelRequire();
 
   const testCollector = new TestCollector(files, matrix, config);
-  return testCollector.suite;
-}
+  const suite = testCollector.suite;
+  if (config.forbidOnly) {
+    const hasOnly = suite.findTest(t => t.only) || suite.eachSuite(s => s.only);
+    if (hasOnly)
+      return 'forbid-only';
+  }
 
-export async function runTests(config: RunnerConfig, suite: Suite, reporter: Reporter) {
+  const total = suite.total();
+  if (!total)
+    return 'no-tests';
+
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
   const runner = new Runner(suite, { ...config, jobs }, reporter);
@@ -91,4 +100,5 @@ export async function runTests(config: RunnerConfig, suite: Suite, reporter: Rep
     for (const f of afterFunctions)
       await f();
   }
+  return suite.findTest(t => t.error) ? 'failed' : 'passed';
 }

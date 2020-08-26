@@ -20,10 +20,10 @@ import { Suite, Test } from './test';
 export interface Reporter {
   onBegin(config: RunnerConfig, suite: Suite): void;
   onTest(test: Test): void;
-  onPending(test: Test): void;
-  onStdOut(test: Test, chunk: string | Buffer);
-  onStdErr(test: Test, chunk: string | Buffer);
-  onPass(test: Test): void;
-  onFail(test: Test): void;
+  onSkippedTest(test: Test): void;
+  onTestStdOut(test: Test, chunk: string | Buffer);
+  onTestStdErr(test: Test, chunk: string | Buffer);
+  onTestPassed(test: Test): void;
+  onTestFailed(test: Test): void;
   onEnd(): void;
 }

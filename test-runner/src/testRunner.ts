@@ -48,8 +48,7 @@ export type SerializedTest = {
 };
 
 export class TestRunner extends EventEmitter {
-  private _currentOrdinal = -1;
-  private _failedWithError: any | undefined;
+  private _failedTestId: string | undefined;
   private _fatalError: any | undefined;
   private _file: any;
   private _ordinals: Set<number>;
@@ -136,15 +135,14 @@ export class TestRunner extends EventEmitter {
   }
 
   private async _runTest(test: Test) {
-    if (this._failedWithError)
+    if (this._failedTestId)
       return false;
     this._test = test;
-    const ordinal = ++this._currentOrdinal;
-    if (this._ordinals.size && !this._ordinals.has(ordinal))
+    if (this._ordinals.size && !this._ordinals.has(test._ordinal))
       return;
-    this._remaining.delete(ordinal);
-    if (test.pending || test.suite._isPending()) {
-      this.emit('pending', { test: this._serializeTest() });
+    this._remaining.delete(test._ordinal);
+    if (test.skipped || test.suite._isSkipped()) {
+      this.emit('skipped', { test: this._serializeTest() });
       return;
     }
 
@@ -154,11 +152,11 @@ export class TestRunner extends EventEmitter {
       test._startTime = Date.now();
       if (!this._trialRun)
         await this._testWrapper(test)();
-      this.emit('pass', { test: this._serializeTest(true) });
       await this._runHooks(test.suite, 'afterEach', 'after');
+      this.emit('pass', { test: this._serializeTest(true) });
     } catch (error) {
       test.error = serializeError(error);
-      this._failedWithError = test.error;
+      this._failedTestId = this._testId();
       this.emit('fail', { test: this._serializeTest(true) });
     }
     this._test = null;
@@ -180,7 +178,7 @@ export class TestRunner extends EventEmitter {
 
   private _reportDone() {
     this.emit('done', {
-      error: this._failedWithError,
+      failedTestId: this._failedTestId,
       fatalError: this._fatalError,
       remaining: [...this._remaining],
     });

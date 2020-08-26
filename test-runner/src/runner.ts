@@ -28,7 +28,7 @@ export class Runner {
   private _workers = new Set<Worker>();
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
-  stats: { duration: number; failures: number; passes: number; pending: number; tests: number; };
+  stats: { duration: number; failures: number; passes: number; skipped: number; tests: number; };
 
   private _testById = new Map<string, Test>();
   private _queue: TestRunnerEntry[] = [];
@@ -44,13 +44,13 @@ export class Runner {
       duration: 0,
       failures: 0,
       passes: 0,
-      pending: 0,
+      skipped: 0,
       tests: 0,
     };
 
     this._suite = suite;
     for (const suite of this._suite.suites) {
-      suite.eachTest(test => {
+      suite.findTest(test => {
         this._testById.set(`${test._ordinal}@${suite.file}::[${suite._configurationString}]`, test);
       });
     }
@@ -67,7 +67,9 @@ export class Runner {
     const result: TestRunnerEntry[] = [];
     for (const suite of this._suite.suites) {
       const ordinals: number[] = [];
-      suite.eachTest(test => ordinals.push(test._ordinal) && false);
+      suite.findTest(test => ordinals.push(test._ordinal) && false);
+      if (!ordinals.length)
+        continue;
       result.push({
         ordinals,
         file: suite.file,
@@ -109,15 +111,26 @@ export class Runner {
     let doneCallback;
     const result = new Promise(f => doneCallback = f);
     worker.once('done', params => {
-      // When worker encounters error, we will restart it.
-      if (params.error || params.fatalError) {
-        this._restartWorker(worker);
-        // If there are remaining tests, we will queue them.
-        if (params.remaining.length && !params.fatalError)
-          this._queue.unshift({ ...entry, ordinals: params.remaining });
-      } else {
+      if (!params.failedTestId && !params.fatalError) {
         this._workerAvailable(worker);
+        doneCallback();
+        return;
       }
+
+      // When worker encounters error, we will restart it.
+      this._restartWorker(worker);
+
+      // In case of fatal error, we are done with the entry.
+      if (params.fatalError) {
+        doneCallback();
+        return;
+      }
+
+      const remaining = params.remaining;
+      if (params.remaining.length)
+        this._queue.unshift({ ...entry, ordinals: remaining });
+
+      // This job is over, we just scheduled another one.
       doneCallback();
     });
     return result;
@@ -149,30 +162,30 @@ export class Runner {
       ++this.stats.tests;
       this._reporter.onTest(this._updateTest(params.test));
     });
-    worker.on('pending', params => {
+    worker.on('skipped', params => {
       ++this.stats.tests;
-      ++this.stats.pending;
-      this._reporter.onPending(this._updateTest(params.test));
+      ++this.stats.skipped;
+      this._reporter.onSkippedTest(this._updateTest(params.test));
     });
     worker.on('pass', params => {
       ++this.stats.passes;
-      this._reporter.onPass(this._updateTest(params.test));
+      this._reporter.onTestPassed(this._updateTest(params.test));
     });
     worker.on('fail', params => {
       ++this.stats.failures;
-      this._reporter.onFail(this._updateTest(params.test));
+      this._reporter.onTestFailed(this._updateTest(params.test));
     });
     worker.on('stdout', params => {
       const chunk = chunkFromParams(params);
       const test = this._testById.get(params.testId);
       test.stdout.push(chunk);
-      this._reporter.onStdOut(test, chunk);
+      this._reporter.onTestStdOut(test, chunk);
     });
     worker.on('stderr', params => {
       const chunk = chunkFromParams(params);
       const test = this._testById.get(params.testId);
       test.stderr.push(chunk);
-      this._reporter.onStdErr(test, chunk);
+      this._reporter.onTestStdErr(test, chunk);
     });
     worker.on('exit', () => {
       this._workers.delete(worker);
@@ -279,7 +292,7 @@ class InProcessWorker extends Worker {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
     const testRunner = new TestRunner(entry, this.runner._config, 0);
-    for (const event of ['test', 'pending', 'pass', 'fail', 'done', 'stdout', 'stderr'])
+    for (const event of ['test', 'skipped', 'pass', 'fail', 'done', 'stdout', 'stderr'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();
   }

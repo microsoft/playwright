@@ -19,18 +19,18 @@ import { BaseReporter } from './base';
 import { Test } from '../test';
 
 class DotReporter extends BaseReporter {
-  onPending(test: Test) {
-    super.onPending(test);
+  onSkippedTest(test: Test) {
+    super.onSkippedTest(test);
     process.stdout.write(colors.yellow('∘'))
   }
   
-  onPass(test: Test) {
-    super.onPass(test);
+  onTestPassed(test: Test) {
+    super.onTestPassed(test);
     process.stdout.write(colors.green('·'));
   }
   
-  onFail(test: Test) {
-    super.onFail(test);
+  onTestFailed(test: Test) {
+    super.onTestFailed(test);
     if (test.duration >= test.timeout)
       process.stdout.write(colors.red('T'));
     else
