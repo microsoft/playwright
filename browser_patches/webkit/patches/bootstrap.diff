@@ -9999,10 +9999,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..2c5e2bc04b51b39ae4f3128c86afb29e0042b968
+index 0000000000000000000000000000000000000000..8e3989ef7f9947c685dcbe30d58561dab7f5ea5b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,848 @@
+@@ -0,0 +1,855 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10043,6 +10043,7 @@ index 0000000000000000000000000000000000000000..2c5e2bc04b51b39ae4f3128c86afb29e
 +#include "WebAutomationSession.h"
 +#include "WebGeolocationManagerProxy.h"
 +#include "WebGeolocationPosition.h"
++#include "WebInspectorUtilities.h"
 +#include "WebPageInspectorController.h"
 +#include "WebPageInspectorTarget.h"
 +#include "WebPageProxy.h"
@@ -10327,6 +10328,9 @@ index 0000000000000000000000000000000000000000..2c5e2bc04b51b39ae4f3128c86afb29e
 +    if (!m_isEnabled)
 +        return;
 +
++    if (isInspectorProcessPool(page.process().processPool()))
++        return;
++
 +    ASSERT(m_frontendChannel);
 +
 +    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
@@ -10352,6 +10356,9 @@ index 0000000000000000000000000000000000000000..2c5e2bc04b51b39ae4f3128c86afb29e
 +void InspectorPlaywrightAgent::willDestroyInspectorController(WebPageProxy& page)
 +{
 +    if (!m_isEnabled)
++        return;
++
++    if (isInspectorProcessPool(page.process().processPool()))
 +        return;
 +
 +    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
