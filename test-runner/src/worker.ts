@@ -16,10 +16,17 @@
 
 import { initializeImageMatcher } from './expect';
 import { TestRunner, fixturePool } from './testRunner';
+import { Console } from 'console';
 
 let closed = false;
 
 sendMessageToParent('ready');
+
+global.console = new Console({
+  stdout: process.stdout,
+  stderr: process.stderr,
+  colorMode: process.env.FORCE_COLOR === '1',
+});
 
 process.stdout.write = chunk => {
   if (testRunner && !closed)
