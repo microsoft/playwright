@@ -969,10 +969,10 @@ index 3b8fa18bd7e8d95d7e8f95b442afc63e550ce63a..a72174146a85d0db01b11fda3a120712
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594bf7ee510
+index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936afe5dd4ebf
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
-@@ -0,0 +1,251 @@
+@@ -0,0 +1,244 @@
 +{
 +    "domain": "Playwright",
 +    "availability": ["web"],
@@ -1165,7 +1165,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +        {
 +            "name": "pageProxyDestroyed",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID" }
 +            ]
 +        },
@@ -1173,7 +1172,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +            "name": "provisionalLoadFailed",
 +            "description": "Fired when provisional load fails.",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." },
 +                { "name": "error", "type": "string", "description": "Localized error string." }
@@ -1183,7 +1181,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +          "name": "windowOpen",
 +          "description": "Fired when page opens a new window.",
 +          "parameters": [
-+              { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +              { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +              { "name": "url", "type": "string" },
 +              { "name": "windowFeatures", "type": "array", "items": { "type": "string" } }
@@ -1192,7 +1189,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +        {
 +            "name": "downloadCreated",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "frameId", "$ref": "Network.FrameId", "description": "Unique identifier of the originating frame." },
 +                { "name": "uuid", "type": "string" },
@@ -1202,7 +1198,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +        {
 +            "name": "downloadFilenameSuggested",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "uuid", "type": "string" },
 +                { "name": "suggestedFilename", "type": "string" }
 +            ]
@@ -1210,7 +1205,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +        {
 +            "name": "downloadFinished",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "uuid", "type": "string" },
 +                { "name": "error", "type": "string" }
 +            ]
@@ -1218,7 +1212,6 @@ index 0000000000000000000000000000000000000000..d5d6ac78429a46cd46901c7eb760e594
 +        {
 +            "name": "screencastFinished",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "screencastId", "$ref": "Screencast.ScreencastId", "description": "Unique identifier of the screencast." }
 +            ]
 +        }
@@ -8250,7 +8243,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..a79bbb9bdc779e7ea2f6f859329dd6df
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b9917e7ac 100644
+index c5de4e7d0f59194f43a023b089e372c58cf8ee06..2de16cc22d0b6964cd05277922f272f13e2df805 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -8271,7 +8264,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
 +    , m_uuid(createCanonicalUUIDString())
  {
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadCreated(*m_dataStore, m_uuid, m_request, frameInfoData, originatingPage);
++      instrumentation->downloadCreated(m_uuid, m_request, frameInfoData, originatingPage);
  }
  
  DownloadProxy::~DownloadProxy()
@@ -8282,7 +8275,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
 -    
 +
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFilenameSuggested(*m_dataStore, m_uuid, suggestedFilename);
++      instrumentation->downloadFilenameSuggested(m_uuid, suggestedFilename);
 +
 +    if (m_processPool->networkProcess() && m_dataStore->allowDownloadForAutomation()) {
 +        SandboxExtension::Handle sandboxExtensionHandle;
@@ -8303,7 +8296,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
  
      m_processPool->downloadClient().didFinish(*this);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(*m_dataStore, m_uuid, String());
++      instrumentation->downloadFinished(m_uuid, String());
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8312,7 +8305,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
  
      m_processPool->downloadClient().didFail(*this, error);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(*m_dataStore, m_uuid, error.localizedDescription());
++      instrumentation->downloadFinished(m_uuid, error.localizedDescription());
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8327,7 +8320,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
  
      m_processPool->downloadClient().didCancel(*this);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(*m_dataStore, m_uuid, "canceled"_s);
++      instrumentation->downloadFinished(m_uuid, "canceled"_s);
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -10006,10 +9999,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4a5447f5d
+index 0000000000000000000000000000000000000000..2c5e2bc04b51b39ae4f3128c86afb29e0042b968
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,857 @@
+@@ -0,0 +1,848 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10364,9 +10357,7 @@ index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4
 +    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
 +    BrowserContext* browserContext = getExistingBrowserContext(browserContextID);
 +    browserContext->pages.remove(&page);
-+    m_frontendDispatcher->pageProxyDestroyed(
-+        browserContextID,
-+        toPageProxyIDProtocolString(page));
++    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
 +
 +    auto it = m_browserContextDeletions.find(browserContextID);
 +    if (it != m_browserContextDeletions.end()) {
@@ -10388,7 +10379,6 @@ index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4
 +        return;
 +
 +    m_frontendDispatcher->provisionalLoadFailed(
-+        toBrowserContextIDProtocolString(page.sessionID()),
 +        toPageProxyIDProtocolString(page),
 +        String::number(navigationID), error);
 +}
@@ -10399,7 +10389,6 @@ index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4
 +        return;
 +
 +    m_frontendDispatcher->windowOpen(
-+        toBrowserContextIDProtocolString(page.sessionID()),
 +        toPageProxyIDProtocolString(page),
 +        url.string(),
 +        getEnabledWindowFeatures(features));
@@ -10410,7 +10399,7 @@ index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4
 +    if (!m_isEnabled)
 +        return;
 +
-+    m_frontendDispatcher->screencastFinished(toBrowserContextIDProtocolString(sessionID), screencastID);
++    m_frontendDispatcher->screencastFinished(screencastID);
 +}
 +
 +void InspectorPlaywrightAgent::enable(ErrorString&)
@@ -10809,34 +10798,29 @@ index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4
 +    }
 +}
 +
-+void InspectorPlaywrightAgent::downloadCreated(const WebsiteDataStore& dataStore, const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
++void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
 +{
 +    if (!m_isEnabled)
 +        return;
 +    String frameID = WebCore::InspectorPageAgent::makeFrameID(page->process().coreProcessIdentifier(), frameInfoData.frameID ? *frameInfoData.frameID : page->mainFrame()->frameID());
 +    m_frontendDispatcher->downloadCreated(
-+        toBrowserContextIDProtocolString(dataStore.sessionID()),
 +        toPageProxyIDProtocolString(*page),
 +        frameID,
 +        uuid, request.url().string());
 +}
 +
-+void InspectorPlaywrightAgent::downloadFilenameSuggested(const WebsiteDataStore& dataStore, const String& uuid, const String& suggestedFilename)
++void InspectorPlaywrightAgent::downloadFilenameSuggested(const String& uuid, const String& suggestedFilename)
 +{
 +    if (!m_isEnabled)
 +        return;
-+    m_frontendDispatcher->downloadFilenameSuggested(
-+        toBrowserContextIDProtocolString(dataStore.sessionID()),
-+        uuid, suggestedFilename);
++    m_frontendDispatcher->downloadFilenameSuggested(uuid, suggestedFilename);
 +}
 +
-+void InspectorPlaywrightAgent::downloadFinished(const WebsiteDataStore& dataStore, const String& uuid, const String& error)
++void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
 +{
 +    if (!m_isEnabled)
 +        return;
-+    m_frontendDispatcher->downloadFinished(
-+        toBrowserContextIDProtocolString(dataStore.sessionID()),
-+        uuid, error);
++    m_frontendDispatcher->downloadFinished(uuid, error);
 +}
 +
 +BrowserContext* InspectorPlaywrightAgent::getExistingBrowserContext(const String& browserContextID)
@@ -10869,7 +10853,7 @@ index 0000000000000000000000000000000000000000..bf364bf4ba770597db2a56574d5135b4
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..d361ca89fff47877a67fdf3c4baacae0f72902ca
+index 0000000000000000000000000000000000000000..5e1606320cf6d0f5a14a53c9d61f979081a0270b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 @@ -0,0 +1,122 @@
@@ -10971,9 +10955,9 @@ index 0000000000000000000000000000000000000000..d361ca89fff47877a67fdf3c4baacae0
 +    void setDownloadBehavior(Inspector::ErrorString&, const String* behavior, const String* downloadPath, const String* browserContextID) override;
 +
 +    // DownloadInstrumentation
-+    void downloadCreated(const WebsiteDataStore&, const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
-+    void downloadFilenameSuggested(const WebsiteDataStore&, const String& uuid, const String& suggestedFilename) override;
-+    void downloadFinished(const WebsiteDataStore&, const String& uuid, const String& error) override;
++    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
++    void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) override;
++    void downloadFinished(const String& uuid, const String& error) override;
 +
 +    BrowserContext* getExistingBrowserContext(const String& browserContextID);
 +    BrowserContext* lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
@@ -12586,7 +12570,7 @@ index 4888723e0bda57838c28879dccf27e1e3b414f22..ea4b2ba7c509b24368ad9cd219830ce1
  void WebsiteDataStore::forwardAppBoundDomainsToITPIfInitialized(CompletionHandler<void()>&& completionHandler)
  {
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-index 4ec13e16fe482d26a2eafa3123e3233a737cb12b..0ab6e29755a572153312e61034348e7085564ab8 100644
+index 4ec13e16fe482d26a2eafa3123e3233a737cb12b..217fb521507e4ad98e0a08440eb909283d7b3243 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 @@ -83,6 +83,7 @@ class WebResourceLoadStatisticsStore;
@@ -12605,9 +12589,9 @@ index 4ec13e16fe482d26a2eafa3123e3233a737cb12b..0ab6e29755a572153312e61034348e70
 +
 +class DownloadInstrumentation {
 +public:
-+    virtual void downloadCreated(const WebsiteDataStore&, const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
-+    virtual void downloadFilenameSuggested(const WebsiteDataStore&, const String& uuid, const String& suggestedFilename) = 0;
-+    virtual void downloadFinished(const WebsiteDataStore&, const String& uuid, const String& error) = 0;
++    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
++    virtual void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) = 0;
++    virtual void downloadFinished(const String& uuid, const String& error) = 0;
 +    virtual ~DownloadInstrumentation() = default;
 +};
 +
