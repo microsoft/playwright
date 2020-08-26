@@ -71,7 +71,7 @@ export class TestCollector {
         const values = this._matrix[name];
         if (!values)
           continue;
-        let state = generatorConfigurations.length ? generatorConfigurations.slice() : [[]];
+        const state = generatorConfigurations.length ? generatorConfigurations.slice() : [[]];
         generatorConfigurations.length = 0;
         for (const gen of state) {
           for (const value of values)

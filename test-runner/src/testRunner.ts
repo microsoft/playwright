@@ -92,11 +92,11 @@ export class TestRunner extends EventEmitter {
   }
 
   stdout(chunk: string | Buffer) {
-    this.emit('stdout', { testId: this._testId(), ...chunkToParams(chunk) })
+    this.emit('stdout', { testId: this._testId(), ...chunkToParams(chunk) });
   }
 
   stderr(chunk: string | Buffer) {
-    this.emit('stderr', { testId: this._testId(), ...chunkToParams(chunk) })
+    this.emit('stderr', { testId: this._testId(), ...chunkToParams(chunk) });
   }
 
   async run() {
@@ -121,11 +121,11 @@ export class TestRunner extends EventEmitter {
       this._reportDone();
     }
     for (const entry of suite._entries) {
-      if (entry instanceof Suite) {
+      if (entry instanceof Suite)
         await this._runSuite(entry);
-      } else {
+      else
         await this._runTest(entry);
-      }
+
     }
     try {
       await this._runHooks(suite, 'afterAll', 'after');

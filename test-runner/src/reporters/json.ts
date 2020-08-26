@@ -65,7 +65,7 @@ class JSONReporter extends BaseReporter {
 function stdioEntry(s: string | Buffer): any {
   if (typeof s === 'string')
     return { text: s };
-  return { buffer: s.toString('base64') }
+  return { buffer: s.toString('base64') };
 }
 
 export default JSONReporter;

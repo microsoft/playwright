@@ -164,7 +164,7 @@ export class Suite {
 export function serializeConfiguration(configuration: Configuration): string {
   const tokens = [];
   for (const { name, value } of configuration)
-      tokens.push(`${name}=${value}`);
+    tokens.push(`${name}=${value}`);
   return tokens.join(', ');
 }
 
@@ -173,7 +173,7 @@ export function serializeError(error: Error | any): any {
     return {
       message: error.message,
       stack: error.stack
-    }
+    };
   }
   return trimCycles(error);
 }
@@ -181,13 +181,13 @@ export function serializeError(error: Error | any): any {
 function trimCycles(obj: any): any {
   const cache = new Set();
   return JSON.parse(
-    JSON.stringify(obj, function(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value))
-          return '' + value;
-        cache.add(value);
-      }
-      return value;
-    })
+      JSON.stringify(obj, function(key, value) {
+        if (typeof value === 'object' && value !== null) {
+          if (cache.has(value))
+            return '' + value;
+          cache.add(value);
+        }
+        return value;
+      })
   );
 }

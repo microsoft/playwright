@@ -22,7 +22,7 @@ type Scope = 'test' | 'worker';
 type FixtureRegistration = {
   name: string;
   scope: Scope;
-  fn: Function; 
+  fn: Function;
 };
 
 const registrations = new Map<string, FixtureRegistration>();
@@ -128,7 +128,7 @@ export class FixturePool<Config> {
   }
 
   async teardownScope(scope: string) {
-    for (const [name, fixture] of this.instances) {
+    for (const fixture of this.instances.values()) {
       if (fixture.scope === scope)
         await fixture.teardown();
     }
@@ -147,9 +147,9 @@ export class FixturePool<Config> {
   wrapTestCallback(callback: any, timeout: number, config: Config, test: Test) {
     if (!callback)
       return callback;
-    return async() => {
+    return async () => {
       let timer: NodeJS.Timer;
-      let timerPromise = new Promise(f => timer = setTimeout(f, timeout));
+      const timerPromise = new Promise(f => timer = setTimeout(f, timeout));
       try {
         await Promise.race([
           this.resolveParametersAndRun(callback, config, test).then(() => clearTimeout(timer)),
@@ -171,10 +171,10 @@ export function fixturesForCallback(callback: Function): string[] {
     for (const name of fixtureParameterNames(callback)) {
       if (name in names)
         continue;
-        names.add(name);
-      if (!registrations.has(name)) {
+      names.add(name);
+      if (!registrations.has(name))
         throw new Error('Using undefined fixture ' + name);
-      }
+
       const { fn } = registrations.get(name);
       visit(fn);
     }
@@ -190,7 +190,7 @@ function fixtureParameterNames(fn: Function): string[] {
   const match = text.match(/async(?:\s+function)?\s*\(\s*{\s*([^}]*)\s*}/);
   if (!match || !match[1].trim())
     return [];
-  let signature = match[1];
+  const signature = match[1];
   return signature.split(',').map((t: string) => t.trim());
 }
 
@@ -205,15 +205,15 @@ function innerRegisterFixture(name: string, scope: Scope, fn: Function, caller: 
   if (!registrationsByFile.has(file))
     registrationsByFile.set(file, []);
   registrationsByFile.get(file).push(registration);
-};
+}
 
 export function registerFixture<Config>(name: string, fn: (params: any, runTest: (arg: any) => Promise<void>, config: Config, test: Test) => Promise<void>) {
   innerRegisterFixture(name, 'test', fn, registerFixture);
-};
+}
 
 export function registerWorkerFixture<Config>(name: string, fn: (params: any, runTest: (arg: any) => Promise<void>, config: Config) => Promise<void>) {
   innerRegisterFixture(name, 'worker', fn, registerWorkerFixture);
-};
+}
 
 export function registerParameter(name: string, fn: () => any) {
   registerWorkerFixture(name, async ({}: any, test: Function) => await test(parameters[name]));
@@ -236,7 +236,7 @@ export function lookupRegistrations(file: string, scope: Scope) {
   const deps = new Set<string>();
   collectRequires(file, deps);
   const allDeps = [...deps].reverse();
-  let result = new Map();
+  const result = new Map();
   for (const dep of allDeps) {
     const registrationList = registrationsByFile.get(dep);
     if (!registrationList)
@@ -244,7 +244,7 @@ export function lookupRegistrations(file: string, scope: Scope) {
     for (const r of registrationList) {
       if (scope && r.scope !== scope)
         continue;
-        result.set(r.name, r);
+      result.set(r.name, r);
     }
   }
   return result;

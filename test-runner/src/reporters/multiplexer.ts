@@ -42,12 +42,12 @@ export class Multiplexer implements Reporter {
 
   onStdOut(test: Test, chunk: string | Buffer) {
     for (const reporter of this._reporters)
-      reporter.onStdOut(test, chunk);    
+      reporter.onStdOut(test, chunk);
   }
 
   onStdErr(test: Test, chunk: string | Buffer) {
     for (const reporter of this._reporters)
-      reporter.onStdErr(test, chunk);    
+      reporter.onStdErr(test, chunk);
   }
 
   onPass(test: Test) {

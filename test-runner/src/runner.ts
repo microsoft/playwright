@@ -59,7 +59,7 @@ export class Runner {
       const total = suite.total();
       console.log();
       const jobs = Math.min(config.jobs, suite.suites.length);
-      console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${jobs} worker${ jobs > 1 ? 's' : ''}`);
+      console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}`);
     }
   }
 
@@ -240,7 +240,7 @@ class OopWorker extends Worker {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc']
     });
     this.process.on('exit', () => this.emit('exit'));
-    this.process.on('error', (e) => {});  // do not yell at a send to dead process.
+    this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', message => {
       const { method, params } = message;
       this.emit(method, params);

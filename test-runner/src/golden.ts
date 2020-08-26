@@ -70,7 +70,7 @@ function compareText(actual: Buffer, expectedBuffer: Buffer): { diff?: object; e
   };
 }
 
-export function compare(actual: Buffer, name: string, config: RunnerConfig, testFile: string, options?: { threshold?: number } ): { pass: boolean; message?: string; } {
+export function compare(actual: Buffer, name: string, config: RunnerConfig, testFile: string, options?: { threshold?: number }): { pass: boolean; message?: string; } {
   let expectedPath: string;
   const relativeTestFile = path.relative(config.testDir, testFile);
   const testAssetsDir = relativeTestFile.replace(/\.spec\.[jt]s/, '');
@@ -125,8 +125,8 @@ export function compare(actual: Buffer, name: string, config: RunnerConfig, test
   }
   fs.writeFileSync(actualPath, actual);
   if (result.diff)
-    fs.writeFileSync(diffPath, result.diff);  
-  
+    fs.writeFileSync(diffPath, result.diff);
+
   const output = [
     c.red(`Image comparison failed:`),
   ];

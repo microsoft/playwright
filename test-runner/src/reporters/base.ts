@@ -26,7 +26,7 @@ import { Reporter } from '../reporter';
 import { RunnerConfig } from '../runnerConfig';
 import { Suite, Test } from '../test';
 
-const stackUtils = new StackUtils()
+const stackUtils = new StackUtils();
 
 export class BaseReporter implements Reporter  {
   pending: Test[] = [];
@@ -86,7 +86,7 @@ export class BaseReporter implements Reporter  {
   epilogue() {
     console.log('');
 
-    console.log(colors.green(`  ${this.passes.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));  
+    console.log(colors.green(`  ${this.passes.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
 
     if (this.pending.length)
       console.log(colors.yellow(`  ${this.pending.length} skipped`));
@@ -126,9 +126,9 @@ export class BaseReporter implements Reporter  {
         const source = fs.readFileSync(failure.file, 'utf8');
         tokens.push('');
         tokens.push(indent(codeFrameColumns(source, {
-            start: position,
-          },
-          { highlightCode: true}
+          start: position,
+        },
+        { highlightCode: true}
         ), '    '));
       }
       tokens.push('');

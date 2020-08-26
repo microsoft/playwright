@@ -35,7 +35,7 @@ export function initializeImageMatcher(config: RunnerConfig) {
   function toMatchImage(received: Buffer, name: string, options?: { threshold?: number }) {
     const { pass, message } = compare(received, name, config, testFile, options);
     return { pass, message: () => message };
-  };
+  }
   expect.extend({ toMatchImage });
 }
 

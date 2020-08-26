@@ -23,28 +23,28 @@ import '../lib';
 
 const removeFolderAsync = promisify(rimraf);
 
-it('should fail', async() => {
+it('should fail', async () => {
   const result = await runTest('one-failure.js');
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
 });
 
-it('should succeed', async() => {
+it('should succeed', async () => {
   const result = await runTest('one-success.js');
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(0);
 });
 
-it('should access error in fixture', async() => {
+it('should access error in fixture', async () => {
   const result = await runTest('test-error-visible-in-fixture.js');
   expect(result.exitCode).toBe(1);
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'test-error-visible-in-fixture.txt')).toString());
   expect(data.message).toContain('Object.is equality');
 });
 
-it('should access data in fixture', async() => {
+it('should access data in fixture', async () => {
   const result = await runTest('test-data-visible-in-fixture.js');
   expect(result.exitCode).toBe(1);
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'results.json')).toString());
@@ -54,19 +54,19 @@ it('should access data in fixture', async() => {
   expect(test.stderr).toEqual([{ text: 'console.error\n' }]);
 });
 
-it('should handle worker fixture timeout', async() => {
+it('should handle worker fixture timeout', async () => {
   const result = await runTest('worker-fixture-timeout.js', 1000);
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Timeout of 1000ms');
 });
 
-it('should handle worker fixture error', async() => {
+it('should handle worker fixture error', async () => {
   const result = await runTest('worker-fixture-error.js');
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Worker failed');
 });
 
-it('should collect stdio', async() => {
+it('should collect stdio', async () => {
   const result = await runTest('stdio.js');
   expect(result.exitCode).toBe(0);
   const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'results.json')).toString());
@@ -77,7 +77,7 @@ it('should collect stdio', async() => {
 });
 
 async function runTest(filePath: string, timeout = 10000) {
-  const outputDir = path.join(__dirname, 'test-results')
+  const outputDir = path.join(__dirname, 'test-results');
   await removeFolderAsync(outputDir).catch(e => {});
 
   const { output, status } = spawnSync('node', [
@@ -97,7 +97,7 @@ async function runTest(filePath: string, timeout = 10000) {
   return {
     exitCode: status,
     output: output.toString(),
-    passed: parseInt(passed),
-    failed: parseInt(failed || '0')
-  }
+    passed: parseInt(passed, 10),
+    failed: parseInt(failed || '0', 10)
+  };
 }

@@ -21,22 +21,22 @@ import { Test } from '../test';
 class DotReporter extends BaseReporter {
   onPending(test: Test) {
     super.onPending(test);
-    process.stdout.write(colors.yellow('∘'))
+    process.stdout.write(colors.yellow('∘'));
   }
-  
+
   onPass(test: Test) {
     super.onPass(test);
     process.stdout.write(colors.green('·'));
   }
-  
+
   onFail(test: Test) {
     super.onFail(test);
     if (test.duration >= test.timeout)
       process.stdout.write(colors.red('T'));
     else
       process.stdout.write(colors.red('F'));
-  } 
- 
+  }
+
   onEnd() {
     super.onEnd();
     process.stdout.write('\n');

@@ -13,7 +13,7 @@
     "ftest": "cross-env BROWSER=firefox node test-runner/cli test/",
     "wtest": "cross-env BROWSER=webkit node test-runner/cli test/",
     "test": "node test-runner/cli test/",
-    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts ./src || eslint --ext js,ts ./src",
+    "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts . || eslint --ext js,ts .",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",

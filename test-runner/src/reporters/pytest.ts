@@ -22,7 +22,7 @@ import { BaseReporter } from './base';
 import { RunnerConfig } from '../runnerConfig';
 
 const cursorPrevLine = '\u001B[F';
-const eraseLine = '\u001B[2K'
+const eraseLine = '\u001B[2K';
 
 type Row = {
   id: string;
@@ -214,7 +214,7 @@ const yellowBar = colors.yellow('▇');
 function serializeConfiguration(configuration: Configuration): string {
   const tokens = [];
   for (const { name, value } of configuration)
-      tokens.push(`${name}=${value}`);
+    tokens.push(`${name}=${value}`);
   return tokens.join(', ');
 }
 
