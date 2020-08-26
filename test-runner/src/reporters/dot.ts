@@ -24,7 +24,7 @@ class DotReporter extends BaseReporter {
     switch (result.status) {
       case 'skipped': process.stdout.write(colors.yellow('∘')); break;
       case 'passed': process.stdout.write(colors.green('·')); break;
-      case 'failed': process.stdout.write(colors.red('F')); break;
+      case 'failed': process.stdout.write(colors.red(test.results.length > 1 ? '' + test.results.length : 'F')); break;
       case 'timedOut': process.stdout.write(colors.red('T')); break;
     }
   }

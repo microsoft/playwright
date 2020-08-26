@@ -119,7 +119,14 @@ export class Runner {
       }
 
       const remaining = params.remaining;
-      if (params.remaining.length)
+      if (this._config.retries) {
+        const pair = this._testById.get(params.failedTestId);
+        if (pair.test.results.length < this._config.retries + 1) {
+          pair.result = pair.test._appendResult();
+          remaining.unshift(pair.test._ordinal);
+        }
+      }
+      if (remaining.length)
         this._queue.unshift({ ...entry, ordinals: remaining });
 
       // This job is over, we just scheduled another one.

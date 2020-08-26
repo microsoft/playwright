@@ -55,7 +55,7 @@ it('should access data in fixture', async () => {
 });
 
 it('should handle worker fixture timeout', async () => {
-  const result = await runTest('worker-fixture-timeout.js', 1000);
+  const result = await runTest('worker-fixture-timeout.js', { timeout: 1000 });
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('Timeout of 1000ms');
 });
@@ -81,7 +81,13 @@ it('should work with typescript', async () => {
   expect(result.exitCode).toBe(0);
 });
 
-async function runTest(filePath: string, timeout = 10000) {
+it('should retry failures', async () => {
+  const result = await runTest('retry-failures.js', { retries: 1 });
+  expect(result.exitCode).toBe(1);
+  expect(result.flaky).toBe(1);
+});
+
+async function runTest(filePath: string, params: any = {}) {
   const outputDir = path.join(__dirname, 'test-results');
   await removeFolderAsync(outputDir).catch(e => {});
 
@@ -89,8 +95,8 @@ async function runTest(filePath: string, timeout = 10000) {
     path.join(__dirname, '..', 'cli.js'),
     path.join(__dirname, 'assets', filePath),
     '--output=' + outputDir,
-    '--timeout=' + timeout,
-    '--reporter=dot,json'
+    '--reporter=dot,json',
+    ...Object.keys(params).map(key => `--${key}=${params[key]}`)
   ], {
     env: {
       ...process.env,
@@ -99,10 +105,12 @@ async function runTest(filePath: string, timeout = 10000) {
   });
   const passed = (/(\d+) passed/.exec(output.toString()) || [])[1];
   const failed = (/(\d+) failed/.exec(output.toString()) || [])[1];
+  const flaky = (/(\d+) flaky/.exec(output.toString()) || [])[1];
   return {
     exitCode: status,
     output: output.toString(),
     passed: parseInt(passed, 10),
-    failed: parseInt(failed || '0', 10)
+    failed: parseInt(failed || '0', 10),
+    flaky: parseInt(flaky || '0', 10)
   };
 }

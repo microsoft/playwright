@@ -30,9 +30,10 @@ const stackUtils = new StackUtils();
 
 export class BaseReporter implements Reporter  {
   skipped: Test[] = [];
-  passed: { test: Test, result: TestResult }[] = [];
-  failed: { test: Test, result: TestResult }[] = [];
-  timedOut: { test: Test, result: TestResult }[] = [];
+  passed: Test[] = [];
+  flaky: Test[] = [];
+  failed: Test[] = [];
+  timedOut: Test[] = [];
   duration = 0;
   startTime: number;
   config: RunnerConfig;
@@ -66,10 +67,27 @@ export class BaseReporter implements Reporter  {
 
   onTestEnd(test: Test, result: TestResult) {
     switch (result.status) {
-      case 'skipped': this.skipped.push(test); break;
-      case 'passed': this.passed.push({ test, result }); break;
-      case 'failed': this.failed.push({ test, result }); break;
-      case 'timedOut': this.timedOut.push({ test, result }); break;
+      case 'skipped': {
+        this.skipped.push(test);
+        return;
+      }
+      case 'passed':
+        if (test.results.length === 1)
+          this.passed.push(test);
+        else
+          this.flaky.push(test);
+        return;
+      case 'failed':
+        // Fall through.
+      case 'timedOut': {
+        if (test.results.length === this.config.retries + 1) {
+          if (result.status === 'timedOut')
+            this.timedOut.push(test);
+          else
+            this.failed.push(test);
+        }
+        return;
+      }
     }
   }
 
@@ -91,6 +109,12 @@ export class BaseReporter implements Reporter  {
       this._printFailures(this.failed);
     }
 
+    if (this.flaky.length) {
+      console.log(colors.red(`  ${this.flaky.length} flaky`));
+      console.log('');
+      this._printFailures(this.flaky);
+    }
+
     if (this.timedOut.length) {
       console.log(colors.red(`  ${this.timedOut.length} timed out`));
       console.log('');
@@ -98,43 +122,48 @@ export class BaseReporter implements Reporter  {
     }
   }
 
-  private _printFailures(failures: { test: Test, result: TestResult}[]) {
-    failures.forEach(({test, result}, index) => {
-      console.log(this.formatFailure(test, result, index + 1));
+  private _printFailures(failures: Test[]) {
+    failures.forEach((test, index) => {
+      console.log(this.formatFailure(test, index + 1));
     });
   }
 
-  formatFailure(test: Test, failure: TestResult, index?: number): string {
+  formatFailure(test: Test, index?: number): string {
     const tokens: string[] = [];
     const relativePath = path.relative(process.cwd(), test.file);
     const header = `  ${index ? index + ')' : ''} ${terminalLink(relativePath, `file://${os.hostname()}${test.file}`)} › ${test.title}`;
     tokens.push(colors.bold(colors.red(header)));
-    if (failure.status === 'timedOut') {
-      tokens.push('');
-      tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
-    } else {
-      const stack = failure.error.stack;
-      if (stack) {
+    for (const result of test.results) {
+      if (result.status === 'passed')
+        continue;
+      if (result.status === 'timedOut') {
         tokens.push('');
-        const messageLocation = failure.error.stack.indexOf(failure.error.message);
-        const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
-        tokens.push(indent(preamble, '    '));
-        const position = positionInFile(stack, test.file);
-        if (position) {
-          const source = fs.readFileSync(test.file, 'utf8');
-          tokens.push('');
-          tokens.push(indent(codeFrameColumns(source, {
-            start: position,
-          },
-          { highlightCode: true}
-          ), '    '));
-        }
-        tokens.push('');
-        tokens.push(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
+        tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
       } else {
-        tokens.push('');
-        tokens.push(indent(String(failure.error), '    '));
+        const stack = result.error.stack;
+        if (stack) {
+          tokens.push('');
+          const messageLocation = result.error.stack.indexOf(result.error.message);
+          const preamble = result.error.stack.substring(0, messageLocation + result.error.message.length);
+          tokens.push(indent(preamble, '    '));
+          const position = positionInFile(stack, test.file);
+          if (position) {
+            const source = fs.readFileSync(test.file, 'utf8');
+            tokens.push('');
+            tokens.push(indent(codeFrameColumns(source, {
+              start: position,
+            },
+            { highlightCode: true}
+            ), '    '));
+          }
+          tokens.push('');
+          tokens.push(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
+        } else {
+          tokens.push('');
+          tokens.push(indent(String(result.error), '    '));
+        }
       }
+      break;
     }
     tokens.push('');
     return tokens.join('\n');

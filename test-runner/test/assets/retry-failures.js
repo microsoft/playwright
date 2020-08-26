@@ -1,11 +1,11 @@
 /**
- * Copyright Microsoft Corporation. All rights reserved.
+ * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-export type RunnerConfig = {
-  forbidOnly?: boolean;
-  jobs: number;
-  outputDir: string;
-  snapshotDir: string;
-  testDir: string;
-  timeout: number;
-  debug?: boolean;
-  quiet?: boolean;
-  grep?: string;
-  retries: number,
-  trialRun?: boolean;
-  updateSnapshots?: boolean;
-};
+const fs = require('fs');
+const path = require('path');
+
+it('flake', async ({}) => {
+	try {
+		fs.readFileSync(path.join(__dirname, '..', 'test-results', 'retry-failures.txt'));
+	} catch (e) {
+		// First time this fails.
+		fs.writeFileSync(path.join(__dirname, '..', 'test-results', 'retry-failures.txt'), 'TRUE');
+		expect(true).toBe(false);
+	}
+});

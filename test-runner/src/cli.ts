@@ -36,8 +36,9 @@ program
     .version('Version ' + /** @type {any} */ (require)('../package.json').version)
     .option('--forbid-only', 'Fail if exclusive test(s) encountered', false)
     .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
-    .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', Math.ceil(require('os').cpus().length / 2) as any)
+    .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', String(Math.ceil(require('os').cpus().length / 2)))
     .option('--reporter <reporter>', 'Specify reporter to use, comma-separated, can be "dot", "list", "json"', 'dot')
+    .option('--retries <retries>', 'Specify retry count', '0')
     .option('--trial-run', 'Only collect the matching tests and report them as passing')
     .option('--quiet', 'Suppress stdio', false)
     .option('--debug', 'Run tests in-process for debugging', false)
@@ -51,8 +52,9 @@ program
         forbidOnly: command.forbidOnly,
         quiet: command.quiet,
         grep: command.grep,
-        jobs: command.jobs,
+        jobs: parseInt(command.jobs, 10),
         outputDir: command.output,
+        retries: parseInt(command.retries, 10),
         snapshotDir: path.join(testDir, '__snapshots__'),
         testDir,
         timeout: command.timeout,
