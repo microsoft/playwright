@@ -16,7 +16,7 @@
 
 import { options } from '../playwright.fixtures';
 import { registerFixture } from '../../test-runner';
-import {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
+import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
