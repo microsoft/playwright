@@ -57,7 +57,7 @@ program
         retries: parseInt(command.retries, 10),
         snapshotDir: path.join(testDir, '__snapshots__'),
         testDir,
-        timeout: command.timeout,
+        timeout: parseInt(command.timeout, 10),
         trialRun: command.trialRun,
         updateSnapshots: command.updateSnapshots
       };
