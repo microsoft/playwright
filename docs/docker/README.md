@@ -81,8 +81,6 @@ The image will be tagged as `playwright:localbuild` and could be run as:
 $ docker run --rm -it playwright:localbuild /bin/bash
 ```
 
-> **NOTE**: any commit that changes docker image should also update [`//docs/docker/CURRENT_DOCKER_IMAGE_SIZE`](CURRENT_DOCKER_IMAGE_SIZE). Please run [`//docs/docker/docker-image-size.sh`](docker-image-size.sh) locally and commit updated number.
-
 ### Push
 
 Docker images are published automatically by Github Actions. We currently publish the following
