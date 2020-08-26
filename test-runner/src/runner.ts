@@ -19,8 +19,8 @@ import crypto from 'crypto';
 import path from 'path';
 import { EventEmitter } from 'events';
 import { lookupRegistrations, FixturePool } from './fixtures';
-import { Suite, Test } from './test';
-import { TestRunnerEntry, SerializedTest } from './testRunner';
+import { Suite, Test, TestResult } from './test';
+import { TestRunnerEntry } from './testRunner';
 import { RunnerConfig } from './runnerConfig';
 import { Reporter } from './reporter';
 
@@ -28,9 +28,8 @@ export class Runner {
   private _workers = new Set<Worker>();
   private _freeWorkers: Worker[] = [];
   private _workerClaimers: (() => void)[] = [];
-  stats: { duration: number; failures: number; passes: number; skipped: number; tests: number; };
 
-  private _testById = new Map<string, Test>();
+  private _testById = new Map<string, { test: Test, result: TestResult }>();
   private _queue: TestRunnerEntry[] = [];
   private _stopCallback: () => void;
   readonly _config: RunnerConfig;
@@ -40,18 +39,11 @@ export class Runner {
   constructor(suite: Suite, config: RunnerConfig, reporter: Reporter) {
     this._config = config;
     this._reporter = reporter;
-    this.stats = {
-      duration: 0,
-      failures: 0,
-      passes: 0,
-      skipped: 0,
-      tests: 0,
-    };
 
     this._suite = suite;
     for (const suite of this._suite.suites) {
       suite.findTest(test => {
-        this._testById.set(`${test._ordinal}@${suite.file}::[${suite._configurationString}]`, test);
+        this._testById.set(`${test._ordinal}@${suite.file}::[${suite._configurationString}]`, { test, result: test._appendResult() });
       });
     }
 
@@ -59,7 +51,7 @@ export class Runner {
       const total = suite.total();
       console.log();
       const jobs = Math.min(config.jobs, suite.suites.length);
-      console.log(`Running ${total} test${ total > 1 ? 's' : '' } using ${jobs} worker${ jobs > 1 ? 's' : ''}`);
+      console.log(`Running ${total} test${total > 1 ? 's' : ''} using ${jobs} worker${jobs > 1 ? 's' : ''}`);
     }
   }
 
@@ -158,33 +150,29 @@ export class Runner {
 
   _createWorker() {
     const worker = this._config.debug ? new InProcessWorker(this) : new OopWorker(this);
-    worker.on('test', params => {
-      ++this.stats.tests;
-      this._reporter.onTest(this._updateTest(params.test));
+    worker.on('testBegin', params => {
+      const { test } = this._testById.get(params.id);
+      this._reporter.onTestBegin(test);
     });
-    worker.on('skipped', params => {
-      ++this.stats.tests;
-      ++this.stats.skipped;
-      this._reporter.onSkippedTest(this._updateTest(params.test));
+    worker.on('testEnd', params => {
+      const workerResult: TestResult = params.result;
+      // We were accumulating these below.
+      delete workerResult.stdout;
+      delete workerResult.stderr;
+      const { test, result } = this._testById.get(params.id);
+      Object.assign(result, workerResult);
+      this._reporter.onTestEnd(test, result);
     });
-    worker.on('pass', params => {
-      ++this.stats.passes;
-      this._reporter.onTestPassed(this._updateTest(params.test));
-    });
-    worker.on('fail', params => {
-      ++this.stats.failures;
-      this._reporter.onTestFailed(this._updateTest(params.test));
-    });
-    worker.on('stdout', params => {
+    worker.on('testStdOut', params => {
       const chunk = chunkFromParams(params);
-      const test = this._testById.get(params.testId);
-      test.stdout.push(chunk);
+      const { test, result } = this._testById.get(params.id);
+      result.stdout.push(chunk);
       this._reporter.onTestStdOut(test, chunk);
     });
-    worker.on('stderr', params => {
+    worker.on('testStdErr', params => {
       const chunk = chunkFromParams(params);
-      const test = this._testById.get(params.testId);
-      test.stderr.push(chunk);
+      const { test, result } = this._testById.get(params.id);
+      result.stderr.push(chunk);
       this._reporter.onTestStdErr(test, chunk);
     });
     worker.on('exit', () => {
@@ -199,14 +187,6 @@ export class Runner {
   async _restartWorker(worker) {
     await worker.stop();
     this._createWorker();
-  }
-
-  _updateTest(serialized: SerializedTest): Test {
-    const test = this._testById.get(serialized.id);
-    test.duration = serialized.duration;
-    test.error = serialized.error;
-    test.data = serialized.data;
-    return test;
   }
 
   async stop() {
@@ -253,7 +233,7 @@ class OopWorker extends Worker {
       stdio: ['ignore', 'ignore', 'ignore', 'ipc']
     });
     this.process.on('exit', () => this.emit('exit'));
-    this.process.on('error', (e) => {});  // do not yell at a send to dead process.
+    this.process.on('error', e => {});  // do not yell at a send to dead process.
     this.process.on('message', message => {
       const { method, params } = message;
       this.emit(method, params);
@@ -276,11 +256,11 @@ class OopWorker extends Worker {
 }
 
 class InProcessWorker extends Worker {
-  fixturePool: FixturePool<RunnerConfig>;
+  fixturePool: FixturePool;
 
   constructor(runner: Runner) {
     super(runner);
-    this.fixturePool = require('./testRunner').fixturePool as FixturePool<RunnerConfig>;
+    this.fixturePool = require('./testRunner').fixturePool as FixturePool;
   }
 
   async init() {
@@ -292,7 +272,7 @@ class InProcessWorker extends Worker {
     delete require.cache[entry.file];
     const { TestRunner } = require('./testRunner');
     const testRunner = new TestRunner(entry, this.runner._config, 0);
-    for (const event of ['test', 'skipped', 'pass', 'fail', 'done', 'stdout', 'stderr'])
+    for (const event of ['testBegin', 'testStdOut', 'testStdErr', 'testEnd', 'done'])
       testRunner.on(event, this.emit.bind(this, event));
     testRunner.run();
   }

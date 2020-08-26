@@ -30,7 +30,7 @@ declare global {
     repeat(n: number): DescribeFunction;
   };
 
-  type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
+  type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void> | void) => void) & {
     fail(condition: boolean): ItFunction<STATE>;
     skip(condition: boolean): ItFunction<STATE>;
     slow(): ItFunction<STATE>;

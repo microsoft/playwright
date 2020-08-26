@@ -189,10 +189,11 @@ registerFixture('context', async ({browser}, test) => {
   await context.close();
 });
 
-registerFixture('page', async ({context}, runTest, config, test) => {
+registerFixture('page', async ({context}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
-  if (test.error) {
+  const { test, config, result } = info;
+  if (result.status === 'failed' || result.status === 'timedOut') {
     const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';

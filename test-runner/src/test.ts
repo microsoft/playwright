@@ -21,15 +21,11 @@ export class Test {
   title: string;
   file: string;
   only = false;
-  skipped = false;
+  _skipped = false;
   slow = false;
-  duration = 0;
   timeout = 0;
   fn: Function;
-  error: any;
-  stdout: (string | Buffer)[] = [];
-  stderr: (string | Buffer)[] = [];
-  data: any = {};
+  results: TestResult[] = [];
 
   _ordinal: number;
   _overriddenFn: Function;
@@ -48,16 +44,36 @@ export class Test {
     return this.titlePath().join(' ');
   }
 
+  _appendResult(): TestResult {
+    const result: TestResult = {
+      duration: 0,
+      status: 'none',
+      stdout: [],
+      stderr: [],
+      data: {}
+    };
+    this.results.push(result);
+    return result;
+  }
+
   _clone(): Test {
     const test = new Test(this.title, this.fn);
     test.suite = this.suite;
     test.only = this.only;
     test.file = this.file;
-    test.skipped = this.skipped;
     test.timeout = this.timeout;
     test._overriddenFn = this._overriddenFn;
     return test;
   }
+}
+
+export type TestResult = {
+  duration: number;
+  status: 'none' | 'passed' | 'failed' | 'timedOut' | 'skipped';
+  error?: any;
+  stdout: (string | Buffer)[];
+  stderr: (string | Buffer)[];
+  data: any;
 }
 
 export class Suite {
@@ -152,7 +168,7 @@ export class Suite {
   _hasTestsToRun(): boolean {
     let found = false;
     this.findTest(test => {
-      if (!test.skipped) {
+      if (!test._skipped) {
         found = true;
         return true;
       }
@@ -164,7 +180,7 @@ export class Suite {
 export function serializeConfiguration(configuration: Configuration): string {
   const tokens = [];
   for (const { name, value } of configuration)
-      tokens.push(`${name}=${value}`);
+    tokens.push(`${name}=${value}`);
   return tokens.join(', ');
 }
 
@@ -173,7 +189,7 @@ export function serializeError(error: Error | any): any {
     return {
       message: error.message,
       stack: error.stack
-    }
+    };
   }
   return trimCycles(error);
 }
@@ -181,13 +197,13 @@ export function serializeError(error: Error | any): any {
 function trimCycles(obj: any): any {
   const cache = new Set();
   return JSON.parse(
-    JSON.stringify(obj, function(key, value) {
-      if (typeof value === 'object' && value !== null) {
-        if (cache.has(value))
-          return '' + value;
-        cache.add(value);
-      }
-      return value;
-    })
+      JSON.stringify(obj, function(key, value) {
+        if (typeof value === 'object' && value !== null) {
+          if (cache.has(value))
+            return '' + value;
+          cache.add(value);
+        }
+        return value;
+      })
   );
 }

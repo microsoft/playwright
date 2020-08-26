@@ -16,27 +16,19 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { Test } from '../test';
+import { Test, TestResult } from '../test';
 
 class DotReporter extends BaseReporter {
-  onSkippedTest(test: Test) {
-    super.onSkippedTest(test);
-    process.stdout.write(colors.yellow('∘'))
+  onTestEnd(test: Test, result: TestResult) {
+    super.onTestEnd(test, result);
+    switch (result.status) {
+      case 'skipped': process.stdout.write(colors.yellow('∘')); break;
+      case 'passed': process.stdout.write(colors.green('·')); break;
+      case 'failed': process.stdout.write(colors.red('F')); break;
+      case 'timedOut': process.stdout.write(colors.red('T')); break;
+    }
   }
-  
-  onTestPassed(test: Test) {
-    super.onTestPassed(test);
-    process.stdout.write(colors.green('·'));
-  }
-  
-  onTestFailed(test: Test) {
-    super.onTestFailed(test);
-    if (test.duration >= test.timeout)
-      process.stdout.write(colors.red('T'));
-    else
-      process.stdout.write(colors.red('F'));
-  } 
- 
+
   onEnd() {
     super.onEnd();
     process.stdout.write('\n');

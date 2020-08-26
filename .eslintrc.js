@@ -2,7 +2,6 @@ module.exports = {
     parser: '@typescript-eslint/parser',
     plugins: ['@typescript-eslint', 'notice'],
     parserOptions: {
-      project: ['./tsconfig.json', './test/tsconfig.json'],
       ecmaVersion: 9,
       sourceType: 'module',
     },
@@ -113,8 +112,5 @@ module.exports = {
             "mustMatch": "Copyright",
             "templateFile": "./utils/copyright.js",
         }],
-
-        // type-aware rules
-        "@typescript-eslint/no-unnecessary-type-assertion": 2,
     }
 };

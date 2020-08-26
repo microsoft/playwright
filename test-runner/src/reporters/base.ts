@@ -24,15 +24,15 @@ import StackUtils from 'stack-utils';
 import terminalLink from 'terminal-link';
 import { Reporter } from '../reporter';
 import { RunnerConfig } from '../runnerConfig';
-import { Suite, Test } from '../test';
+import { Suite, Test, TestResult } from '../test';
 
-const stackUtils = new StackUtils()
+const stackUtils = new StackUtils();
 
 export class BaseReporter implements Reporter  {
   skipped: Test[] = [];
-  passes: Test[] = [];
-  failures: Test[] = [];
-  timeouts: Test[] = [];
+  passed: { test: Test, result: TestResult }[] = [];
+  failed: { test: Test, result: TestResult }[] = [];
+  timedOut: { test: Test, result: TestResult }[] = [];
   duration = 0;
   startTime: number;
   config: RunnerConfig;
@@ -51,11 +51,7 @@ export class BaseReporter implements Reporter  {
     this.suite = suite;
   }
 
-  onTest(test: Test) {
-  }
-
-  onSkippedTest(test: Test) {
-    this.skipped.push(test);
+  onTestBegin(test: Test) {
   }
 
   onTestStdOut(test: Test, chunk: string | Buffer) {
@@ -68,15 +64,13 @@ export class BaseReporter implements Reporter  {
       process.stderr.write(chunk);
   }
 
-  onTestPassed(test: Test) {
-    this.passes.push(test);
-  }
-
-  onTestFailed(test: Test) {
-    if (test.duration >= test.timeout)
-      this.timeouts.push(test);
-    else
-      this.failures.push(test);
+  onTestEnd(test: Test, result: TestResult) {
+    switch (result.status) {
+      case 'skipped': this.skipped.push(test); break;
+      case 'passed': this.passed.push({ test, result }); break;
+      case 'failed': this.failed.push({ test, result }); break;
+      case 'timedOut': this.timedOut.push({ test, result }); break;
+    }
   }
 
   onEnd() {
@@ -86,56 +80,61 @@ export class BaseReporter implements Reporter  {
   epilogue() {
     console.log('');
 
-    console.log(colors.green(`  ${this.passes.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));  
+    console.log(colors.green(`  ${this.passed.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
 
     if (this.skipped.length)
       console.log(colors.yellow(`  ${this.skipped.length} skipped`));
 
-    if (this.failures.length) {
-      console.log(colors.red(`  ${this.failures.length} failed`));
+    if (this.failed.length) {
+      console.log(colors.red(`  ${this.failed.length} failed`));
       console.log('');
-      this._printFailures(this.failures);
+      this._printFailures(this.failed);
     }
 
-    if (this.timeouts.length) {
-      console.log(colors.red(`  ${this.timeouts.length} timed out`));
+    if (this.timedOut.length) {
+      console.log(colors.red(`  ${this.timedOut.length} timed out`));
       console.log('');
-      this._printFailures(this.timeouts);
+      this._printFailures(this.timedOut);
     }
   }
 
-  private _printFailures(failures: Test[]) {
-    failures.forEach((failure, index) => {
-      console.log(this.formatFailure(failure, index + 1));
+  private _printFailures(failures: { test: Test, result: TestResult}[]) {
+    failures.forEach(({test, result}, index) => {
+      console.log(this.formatFailure(test, result, index + 1));
     });
   }
 
-  formatFailure(failure: Test, index?: number): string {
+  formatFailure(test: Test, failure: TestResult, index?: number): string {
     const tokens: string[] = [];
-    const relativePath = path.relative(process.cwd(), failure.file);
-    const header = `  ${index ? index + ')' : ''} ${terminalLink(relativePath, `file://${os.hostname()}${failure.file}`)} › ${failure.title}`;
+    const relativePath = path.relative(process.cwd(), test.file);
+    const header = `  ${index ? index + ')' : ''} ${terminalLink(relativePath, `file://${os.hostname()}${test.file}`)} › ${test.title}`;
     tokens.push(colors.bold(colors.red(header)));
-    const stack = failure.error.stack;
-    if (stack) {
+    if (failure.status === 'timedOut') {
       tokens.push('');
-      const messageLocation = failure.error.stack.indexOf(failure.error.message);
-      const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
-      tokens.push(indent(preamble, '    '));
-      const position = positionInFile(stack, failure.file);
-      if (position) {
-        const source = fs.readFileSync(failure.file, 'utf8');
+      tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
+    } else {
+      const stack = failure.error.stack;
+      if (stack) {
         tokens.push('');
-        tokens.push(indent(codeFrameColumns(source, {
+        const messageLocation = failure.error.stack.indexOf(failure.error.message);
+        const preamble = failure.error.stack.substring(0, messageLocation + failure.error.message.length);
+        tokens.push(indent(preamble, '    '));
+        const position = positionInFile(stack, test.file);
+        if (position) {
+          const source = fs.readFileSync(test.file, 'utf8');
+          tokens.push('');
+          tokens.push(indent(codeFrameColumns(source, {
             start: position,
           },
           { highlightCode: true}
-        ), '    '));
+          ), '    '));
+        }
+        tokens.push('');
+        tokens.push(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
+      } else {
+        tokens.push('');
+        tokens.push(indent(String(failure.error), '    '));
       }
-      tokens.push('');
-      tokens.push(indent(colors.dim(stack.substring(preamble.length + 1)), '    '));
-    } else {
-      tokens.push('');
-      tokens.push(indent(String(failure.error), '    '));
     }
     tokens.push('');
     return tokens.join('\n');

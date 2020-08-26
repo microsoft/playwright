@@ -19,11 +19,10 @@ import * as fs from 'fs';
 import * as path from 'path';
 import './builtin.fixtures';
 import './expect';
-import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT } from './fixtures';
+import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT, TestInfo } from './fixtures';
 import { Reporter } from './reporter';
 import { Runner } from './runner';
 import { RunnerConfig } from './runnerConfig';
-import { Test } from './test';
 import { Matrix, TestCollector } from './testCollector';
 import { installTransform } from './transform';
 export { parameters, registerParameter } from './fixtures';
@@ -42,21 +41,21 @@ declare global {
   }
 }
 
-let beforeFunctions: Function[] = [];
-let afterFunctions: Function[] = [];
+const beforeFunctions: Function[] = [];
+const afterFunctions: Function[] = [];
 let matrix: Matrix = {};
 
 global['before'] = (fn: Function) => beforeFunctions.push(fn);
 global['after'] = (fn: Function) => afterFunctions.push(fn);
 global['matrix'] = (m: Matrix) => matrix = m;
 
-export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, config: RunnerConfig, test: Test) => Promise<void>) {
-  registerFixtureT<RunnerConfig>(name, fn);
-};
+export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, info: TestInfo) => Promise<void>) {
+  registerFixtureT(name, fn);
+}
 
-export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: RunnerConfig) => Promise<void>) {
-  registerWorkerFixtureT<RunnerConfig>(name, fn);
-};
+export function registerWorkerFixture<T extends keyof(WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: RunnerConfig) => Promise<void>) {
+  registerWorkerFixtureT(name, fn);
+}
 
 type RunResult = 'passed' | 'failed' | 'forbid-only' | 'no-tests';
 
@@ -100,5 +99,7 @@ export async function run(config: RunnerConfig, files: string[], reporter: Repor
     for (const f of afterFunctions)
       await f();
   }
-  return suite.findTest(t => t.error) ? 'failed' : 'passed';
+  return suite.findTest(test => {
+    return !!test.results.find(result => result.status === 'failed' || result.status === 'timedOut');
+  }) ? 'failed' : 'passed';
 }

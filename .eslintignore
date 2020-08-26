@@ -1,8 +1,5 @@
 test/assets/modernizr.js
-third_party/*
-utils/browser/playwright-web.js
 utils/doclint/check_public_api/test/
-utils/testrunner/examples/
 lib/
 *.js
 src/generated/*
@@ -14,5 +11,7 @@ src/server/webkit/protocol.ts
 /electron-types.d.ts
 utils/generate_types/overrides.d.ts
 utils/generate_types/test/test.ts
-test/
-test-runner/
+/test/
+node_modules/
+browser_patches/*/checkout/
+packages/**/*.d.ts

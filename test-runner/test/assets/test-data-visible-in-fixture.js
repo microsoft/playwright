@@ -18,9 +18,9 @@ const { registerFixture } = require('../../');
 const fs = require('fs');
 const path = require('path');
 
-registerFixture('postProcess', async ({}, runTest, config, test) => {
+registerFixture('postProcess', async ({}, runTest, info) => {
   await runTest('');
-  test.data['myname'] = 'myvalue';
+  info.result.data['myname'] = 'myvalue';
 });
 
 it('ensure fixture handles test error', async ({ postProcess }) => {
