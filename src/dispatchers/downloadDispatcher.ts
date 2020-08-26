@@ -18,6 +18,9 @@ import { Download } from '../server/download';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { StreamDispatcher } from './streamDispatcher';
+import * as fs from 'fs';
+import * as util from 'util';
+import { mkdirIfNeeded } from '../utils/utils';
 
 export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadInitializer> implements channels.DownloadChannel {
   constructor(scope: DispatcherScope, download: Download) {
@@ -28,20 +31,63 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
   }
 
   async path(): Promise<channels.DownloadPathResult> {
-    const path = await this._object.path();
+    const path = await this._object.localPath();
     return { value: path || undefined };
   }
 
-  async saveAs(params: channels.DownloadSaveAsParams): Promise<void> {
-    await this._object.saveAs(params.path);
+  async saveAs(params: channels.DownloadSaveAsParams): Promise<channels.DownloadSaveAsResult> {
+    return await new Promise((resolve, reject) => {
+      this._object.saveAs(async (localPath, error) => {
+        if (error !== undefined) {
+          reject(error);
+          return;
+        }
+
+        try {
+          await mkdirIfNeeded(params.path);
+          await util.promisify(fs.copyFile)(localPath, params.path);
+          resolve();
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
+  }
+
+  async saveAsStream(): Promise<channels.DownloadSaveAsStreamResult> {
+    return await new Promise((resolve, reject) => {
+      this._object.saveAs(async (localPath, error) => {
+        if (error !== undefined) {
+          reject(error);
+          return;
+        }
+
+        try {
+          const readable = fs.createReadStream(localPath);
+          await new Promise(f => readable.on('readable', f));
+          const stream = new StreamDispatcher(this._scope, readable);
+          // Resolve with a stream, so that client starts saving the data.
+          resolve({ stream });
+          // Block the download until the stream is consumed.
+          await new Promise<void>(resolve => {
+            readable.on('close', resolve);
+            readable.on('end', resolve);
+            readable.on('error', resolve);
+          });
+        } catch (e) {
+          reject(e);
+        }
+      });
+    });
   }
 
   async stream(): Promise<channels.DownloadStreamResult> {
-    const stream = await this._object.createReadStream();
-    if (!stream)
+    const fileName = await this._object.localPath();
+    if (!fileName)
       return {};
-    await new Promise(f => stream.on('readable', f));
-    return { stream: new StreamDispatcher(this._scope, stream) };
+    const readable = fs.createReadStream(fileName);
+    await new Promise(f => readable.on('readable', f));
+    return { stream: new StreamDispatcher(this._scope, readable) };
   }
 
   async failure(): Promise<channels.DownloadFailureResult> {

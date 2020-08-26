@@ -17,6 +17,7 @@
 
 import { options } from './playwright.fixtures';
 import utils from './utils';
+import './remoteServer.fixture';
 
 it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({browserType, defaultBrowserOptions, server}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
@@ -35,6 +36,13 @@ it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({
     await browser.close();
   }
   await browserServer.close();
+});
+
+it.skip(options.WIRE)('should connect to a remote server', async({ browserType, remoteServer }) => {
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  expect(await page.evaluate('2 + 3')).toBe(5);
+  await browser.close();
 });
 
 it.skip(options.WIRE).fail(options.CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, defaultBrowserOptions}) => {
@@ -86,4 +94,24 @@ it.skip(options.WIRE)('should respect selectors', async({playwright, browserType
   expect(await page.innerHTML('css=div')).toBe('hello');
   expect(await page.innerHTML('mycss=div')).toBe('hello');
   await browserServer.close();
+});
+
+it.skip(options.WIRE).fail(true)('should respect selectors when connected remotely', async({ playwright, browserType, remoteServer }) => {
+  const mycss = () => ({
+    create(root, target) {},
+    query(root, selector) {
+      return root.querySelector(selector);
+    },
+    queryAll(root: HTMLElement, selector: string) {
+      return Array.from(root.querySelectorAll(selector));
+    }
+  });
+  await utils.registerEngine(playwright, 'mycss', mycss);
+
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  await page.setContent(`<div>hello</div>`);
+  expect(await page.innerHTML('css=div')).toBe('hello');
+  expect(await page.innerHTML('mycss=div')).toBe('hello');
+  await browser.close();
 });

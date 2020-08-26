@@ -15,6 +15,7 @@
  */
 
 import { options } from './playwright.fixtures';
+import './remoteServer.fixture';
 
 import fs from 'fs';
 import path from 'path';
@@ -143,6 +144,23 @@ it('should create subdirectories when saving to non-existent user-specified path
   await page.close();
 });
 
+it.skip(options.WIRE)('should save when connected remotely', async({tmpDir, server, browserType, remoteServer}) => {
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const nestedPath = path.join(tmpDir, "these", "are", "directories", "download.txt");
+  await download.saveAs(nestedPath);
+  expect(fs.existsSync(nestedPath)).toBeTruthy();
+  expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
+  const error = await download.path().catch(e => e);
+  expect(error.message).toContain('Path is not available when using browserType.connect(). Use download.saveAs() to save a local copy.');
+  await browser.close();
+});
+
 it('should error when saving with downloads disabled', async({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: false });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -168,6 +186,21 @@ it('should error when saving after deletion', async({tmpDir, browser, server}) =
   const { message } = await download.saveAs(userPath).catch(e => e);
   expect(message).toContain('Download already deleted. Save before deleting.');
   await page.close();
+});
+
+it.skip(options.WIRE)('should error when saving after deletion when connected remotely', async({tmpDir, server, browserType, remoteServer}) => {
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [ download ] = await Promise.all([
+    page.waitForEvent('download'),
+    page.click('a')
+  ]);
+  const userPath = path.join(tmpDir, "download.txt");
+  await download.delete();
+  const { message } = await download.saveAs(userPath).catch(e => e);
+  expect(message).toContain('Download already deleted. Save before deleting.');
+  await browser.close();
 });
 
 it('should report non-navigation downloads', async({browser, server}) => {

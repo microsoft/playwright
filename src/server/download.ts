@@ -18,15 +18,16 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as util from 'util';
 import { Page } from './page';
-import { Readable } from 'stream';
-import { assert, mkdirIfNeeded } from '../utils/utils';
+import { assert } from '../utils/utils';
+
+type SaveCallback = (localPath: string, error?: string) => Promise<void>;
 
 export class Download {
   private _downloadsPath: string;
   private _uuid: string;
   private _finishedCallback: () => void;
   private _finishedPromise: Promise<void>;
-  private _saveAsRequests: { fulfill: () => void; reject: (error?: any) => void; path: string }[] = [];
+  private _saveCallbacks: SaveCallback[] = [];
   private _finished: boolean = false;
   private _page: Page;
   private _acceptDownloads: boolean;
@@ -63,7 +64,7 @@ export class Download {
     return this._suggestedFilename!;
   }
 
-  async path(): Promise<string | null> {
+  async localPath(): Promise<string | null> {
     if (!this._acceptDownloads)
       throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
     const fileName = path.join(this._downloadsPath, this._uuid);
@@ -73,7 +74,7 @@ export class Download {
     return fileName;
   }
 
-  async saveAs(path: string) {
+  saveAs(saveCallback: SaveCallback) {
     if (!this._acceptDownloads)
       throw new Error('Pass { acceptDownloads: true } when you are creating your browser context.');
     if (this._deleted)
@@ -82,17 +83,10 @@ export class Download {
       throw new Error('Download not found on disk. Check download.failure() for details.');
 
     if (this._finished) {
-      await this._saveAs(path);
+      saveCallback(path.join(this._downloadsPath, this._uuid));
       return;
     }
-
-    return new Promise((fulfill, reject) => this._saveAsRequests.push({fulfill, reject, path}));
-  }
-
-  async _saveAs(downloadPath: string) {
-    const fileName = path.join(this._downloadsPath, this._uuid);
-    await mkdirIfNeeded(downloadPath);
-    await util.promisify(fs.copyFile)(fileName, downloadPath);
+    this._saveCallbacks.push(saveCallback);
   }
 
   async failure(): Promise<string | null> {
@@ -102,15 +96,10 @@ export class Download {
     return this._failure;
   }
 
-  async createReadStream(): Promise<Readable | null> {
-    const fileName = await this.path();
-    return fileName ? fs.createReadStream(fileName) : null;
-  }
-
   async delete(): Promise<void> {
     if (!this._acceptDownloads)
       return;
-    const fileName = await this.path();
+    const fileName = await this.localPath();
     if (this._deleted)
       return;
     this._deleted = true;
@@ -123,18 +112,14 @@ export class Download {
     this._failure = error || null;
 
     if (error) {
-      for (const { reject } of this._saveAsRequests)
-        reject(error);
+      for (const callback of this._saveCallbacks)
+        callback('', error);
     } else {
-      for (const { fulfill, reject, path } of this._saveAsRequests) {
-        try {
-          await this._saveAs(path);
-          fulfill();
-        } catch (err) {
-          reject(err);
-        }
-      }
+      const fullPath = path.join(this._downloadsPath, this._uuid);
+      for (const callback of this._saveCallbacks)
+        await callback(fullPath);
     }
+    this._saveCallbacks = [];
 
     this._finishedCallback();
   }

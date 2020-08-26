@@ -146,6 +146,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         ws.addEventListener('open', async () => {
           const browser = (await connection.waitForObjectWithKnownName('connectedBrowser')) as Browser;
           browser._logger = logger;
+          browser._isRemote = true;
           const closeListener = () => {
             // Emulate all pages, contexts and the browser closing upon disconnect.
             for (const context of browser.contexts()) {

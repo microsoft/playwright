@@ -804,12 +804,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.DownloadSaveAsParams = tObject({
     path: tString,
   });
+  scheme.DownloadSaveAsStreamParams = tOptional(tObject({}));
   scheme.DownloadFailureParams = tOptional(tObject({}));
   scheme.DownloadStreamParams = tOptional(tObject({}));
   scheme.DownloadDeleteParams = tOptional(tObject({}));
   scheme.StreamReadParams = tObject({
     size: tOptional(tNumber),
   });
+  scheme.StreamCloseParams = tOptional(tObject({}));
   scheme.CDPSessionSendParams = tObject({
     method: tString,
     params: tOptional(tAny),

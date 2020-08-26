@@ -30,6 +30,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
   readonly _browserType: BrowserType;
+  _isRemote = false;
 
   static from(browser: channels.BrowserChannel): Browser {
     return (browser as any)._object;
