@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import childProcess from 'child_process';
-import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
+import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';

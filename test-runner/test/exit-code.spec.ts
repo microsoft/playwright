@@ -76,6 +76,11 @@ it('should collect stdio', async() => {
   expect(stderr).toEqual([{ text: 'stderr text' }, { buffer: Buffer.from('stderr buffer').toString('base64') }]);
 });
 
+it('should work with typescript', async() => {
+  const result = await runTest('typescript.ts');
+  expect(result.exitCode).toBe(0);
+});
+
 async function runTest(filePath: string, timeout = 10000) {
   const outputDir = path.join(__dirname, 'test-results')
   await removeFolderAsync(outputDir).catch(e => {});
