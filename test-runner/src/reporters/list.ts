@@ -32,21 +32,21 @@ class ListReporter extends BaseReporter {
     process.stdout.write('    ' + colors.gray(test.fullTitle() + ': '));
   }
 
-  onPending(test: Test) {
-    super.onPending(test);
+  onSkippedTest(test: Test) {
+    super.onSkippedTest(test);
     process.stdout.write(colors.green('  - ') + colors.cyan(test.fullTitle()));
     process.stdout.write('\n');
   }
 
-  onPass(test: Test) {
-    super.onPass(test);
+  onTestPassed(test: Test) {
+    super.onTestPassed(test);
     process.stdout.write('\u001b[2K\u001b[0G');
     process.stdout.write(colors.green('  ✓ ') + colors.gray(test.fullTitle()));
     process.stdout.write('\n');
   }
 
-  onFail(test: Test) {
-    super.onFail(test);
+  onTestFailed(test: Test) {
+    super.onTestFailed(test);
     process.stdout.write('\u001b[2K\u001b[0G');
     process.stdout.write(colors.red(`  ${++this._failure}) ` + test.fullTitle()));
     process.stdout.write('\n');

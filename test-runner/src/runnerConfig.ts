@@ -15,6 +15,7 @@
  */
 
 export type RunnerConfig = {
+  forbidOnly?: boolean;
   jobs: number;
   outputDir: string;
   snapshotDir: string;

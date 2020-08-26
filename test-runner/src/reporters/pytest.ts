@@ -84,30 +84,30 @@ class PytestReporter extends BaseReporter {
       row.startTime = Date.now();
   }
 
-  onPending(test: Test) {
-    super.onPending(test);
+  onSkippedTest(test: Test) {
+    super.onSkippedTest(test);
     this._append(test, colors.yellow('∘'));
     this._progress.push('S');
     this._throttler.schedule();
   }
 
-  onStdOut(test: Test, chunk: string | Buffer) {
+  onTestStdOut(test: Test, chunk: string | Buffer) {
     this._repaint(chunk);
   }
 
-  onStdErr(test: Test, chunk: string | Buffer) {
+  onTestStdErr(test: Test, chunk: string | Buffer) {
     this._repaint(chunk);
   }
 
-  onPass(test: Test) {
-    super.onPass(test);
+  onTestPassed(test: Test) {
+    super.onTestPassed(test);
     this._append(test, colors.green('✓'));
     this._progress.push('P');
     this._throttler.schedule();
   }
 
-  onFail(test: Test) {
-    super.onFail(test);
+  onTestFailed(test: Test) {
+    super.onTestFailed(test);
     const title = test.duration >= test.timeout ? colors.red('T') : colors.red('F');
     const row = this._append(test, title);
     row.failed = true;
@@ -148,8 +148,8 @@ class PytestReporter extends BaseReporter {
     const status = [];
     if (this.passes.length)
       status.push(colors.green(`${this.passes.length} passed`));
-    if (this.pending.length)
-      status.push(colors.yellow(`${this.pending.length} skipped`));
+    if (this.skipped.length)
+      status.push(colors.yellow(`${this.skipped.length} skipped`));
     if (this.failures.length)
       status.push(colors.red(`${this.failures.length} failed`));
     if (this.timeouts.length)

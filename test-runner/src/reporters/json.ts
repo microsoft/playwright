@@ -33,7 +33,7 @@ class JSONReporter extends BaseReporter {
   }
 
   private _serializeSuite(suite: Suite): any {
-    if (!suite.eachTest(test => true))
+    if (!suite.findTest(test => true))
       return null;
     const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s);
     return {
@@ -50,7 +50,7 @@ class JSONReporter extends BaseReporter {
       title: test.title,
       file: test.file,
       only: test.only,
-      pending: test.pending,
+      skipped: test.skipped,
       slow: test.slow,
       duration: test.duration,
       timeout: test.timeout,

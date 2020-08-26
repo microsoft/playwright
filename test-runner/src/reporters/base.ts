@@ -29,7 +29,7 @@ import { Suite, Test } from '../test';
 const stackUtils = new StackUtils()
 
 export class BaseReporter implements Reporter  {
-  pending: Test[] = [];
+  skipped: Test[] = [];
   passes: Test[] = [];
   failures: Test[] = [];
   timeouts: Test[] = [];
@@ -54,25 +54,25 @@ export class BaseReporter implements Reporter  {
   onTest(test: Test) {
   }
 
-  onPending(test: Test) {
-    this.pending.push(test);
+  onSkippedTest(test: Test) {
+    this.skipped.push(test);
   }
 
-  onStdOut(test: Test, chunk: string | Buffer) {
+  onTestStdOut(test: Test, chunk: string | Buffer) {
     if (!this.config.quiet)
       process.stdout.write(chunk);
   }
 
-  onStdErr(test: Test, chunk: string | Buffer) {
+  onTestStdErr(test: Test, chunk: string | Buffer) {
     if (!this.config.quiet)
       process.stderr.write(chunk);
   }
 
-  onPass(test: Test) {
+  onTestPassed(test: Test) {
     this.passes.push(test);
   }
 
-  onFail(test: Test) {
+  onTestFailed(test: Test) {
     if (test.duration >= test.timeout)
       this.timeouts.push(test);
     else
@@ -88,8 +88,8 @@ export class BaseReporter implements Reporter  {
 
     console.log(colors.green(`  ${this.passes.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));  
 
-    if (this.pending.length)
-      console.log(colors.yellow(`  ${this.pending.length} skipped`));
+    if (this.skipped.length)
+      console.log(colors.yellow(`  ${this.skipped.length} skipped`));
 
     if (this.failures.length) {
       console.log(colors.red(`  ${this.failures.length} failed`));

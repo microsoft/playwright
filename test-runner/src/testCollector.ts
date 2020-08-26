@@ -60,7 +60,7 @@ export class TestCollector {
 
     const workerGeneratorConfigurations = new Map();
 
-    suite.eachTest((test: Test) => {
+    suite.findTest((test: Test) => {
       // Get all the fixtures that the test needs.
       const fixtures = fixturesForCallback(test.fn);
 

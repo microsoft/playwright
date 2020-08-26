@@ -17,7 +17,7 @@
 import program from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
-import { collectTests, runTests, RunnerConfig } from '.';
+import { run, RunnerConfig } from '.';
 import PytestReporter from './reporters/pytest';
 import DotReporter from './reporters/dot';
 import ListReporter from './reporters/list';
@@ -48,6 +48,7 @@ program
     const testDir = path.resolve(process.cwd(), command.args[0]);
     const config: RunnerConfig = {
       debug: command.debug,
+      forbidOnly: command.forbidOnly,
       quiet: command.quiet,
       grep: command.grep,
       jobs: command.jobs,
@@ -58,25 +59,6 @@ program
       trialRun: command.trialRun,
       updateSnapshots: command.updateSnapshots
     };
-    const files = collectFiles(testDir, '', command.args.slice(1));
-    const suite = collectTests(config, files);
-    if (command.forbidOnly) {
-      const hasOnly = suite.eachTest(t => t.only) || suite.eachSuite(s => s.only);
-      if (hasOnly) {
-        console.error('=====================================');
-        console.error(' --forbid-only found a focused test.');
-        console.error('=====================================');
-        process.exit(1);
-      }
-    }
-
-    const total = suite.total();
-    if (!total) {
-      console.error('=================');
-      console.error(' no tests found.');
-      console.error('=================');
-      process.exit(1);
-    }
 
     const reporterList = command.reporter.split(',');
     const reporterObjects: Reporter[] = reporterList.map(c => {
@@ -90,9 +72,24 @@ program
         process.exit(1);
       }
     });
-    await runTests(config, suite, new Multiplexer(reporterObjects));
-    const hasFailures = suite.eachTest(t => t.error);
-    process.exit(hasFailures ? 1 : 0);
+
+    const files = collectFiles(testDir, '', command.args.slice(1));
+    const result = await run(config, files, new Multiplexer(reporterObjects));
+    if (result === 'forbid-only') {
+      console.error('=====================================');
+      console.error(' --forbid-only found a focused test.');
+      console.error('=====================================');
+      process.exit(1);
+    }
+
+    if (result === 'no-tests') {
+      console.error('=================');
+      console.error(' no tests found.');
+      console.error('=================');
+      process.exit(1);
+    }
+
+    process.exit(result === 'failed' ? 1 : 0);
   });
 
 program.parse(process.argv);

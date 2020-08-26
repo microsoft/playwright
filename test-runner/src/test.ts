@@ -21,7 +21,7 @@ export class Test {
   title: string;
   file: string;
   only = false;
-  pending = false;
+  skipped = false;
   slow = false;
   duration = 0;
   timeout = 0;
@@ -53,7 +53,7 @@ export class Test {
     test.suite = this.suite;
     test.only = this.only;
     test.file = this.file;
-    test.pending = this.pending;
+    test.skipped = this.skipped;
     test.timeout = this.timeout;
     test._overriddenFn = this._overriddenFn;
     return test;
@@ -66,7 +66,7 @@ export class Suite {
   suites: Suite[] = [];
   tests: Test[] = [];
   only = false;
-  pending = false;
+  skipped = false;
   file: string;
   configuration: Configuration;
   _configurationString: string;
@@ -87,14 +87,14 @@ export class Suite {
 
   total(): number {
     let count = 0;
-    this.eachTest(fn => {
+    this.findTest(fn => {
       ++count;
     });
     return count;
   }
 
-  _isPending(): boolean {
-    return this.pending || (this.parent && this.parent._isPending());
+  _isSkipped(): boolean {
+    return this.skipped || (this.parent && this.parent._isSkipped());
   }
 
   _addTest(test: Test) {
@@ -117,9 +117,9 @@ export class Suite {
     return false;
   }
 
-  eachTest(fn: (test: Test) => boolean | void): boolean {
+  findTest(fn: (test: Test) => boolean | void): boolean {
     for (const suite of this.suites) {
-      if (suite.eachTest(fn))
+      if (suite.findTest(fn))
         return true;
     }
     for (const test of this.tests) {
@@ -133,13 +133,13 @@ export class Suite {
     const suite = new Suite(this.title);
     suite.only = this.only;
     suite.file = this.file;
-    suite.pending = this.pending;
+    suite.skipped = this.skipped;
     return suite;
   }
 
   _renumber() {
     let ordinal = 0;
-    this.eachTest((test: Test) => {
+    this.findTest((test: Test) => {
       // All tests are identified with their ordinals.
       test._ordinal = ordinal++;
     });
@@ -151,8 +151,8 @@ export class Suite {
 
   _hasTestsToRun(): boolean {
     let found = false;
-    this.eachTest(test => {
-      if (!test.pending) {
+    this.findTest(test => {
+      if (!test.skipped) {
         found = true;
         return true;
       }
