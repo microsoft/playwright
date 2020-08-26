@@ -16,7 +16,7 @@
  */
 
 import './playwright.fixtures';
-import { ConsoleMessage } from '..';
+import type { ConsoleMessage } from '..';
 
 it('Page.workers', async function({page, server}) {
   await Promise.all([

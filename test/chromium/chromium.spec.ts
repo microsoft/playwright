@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { options } from '../playwright.fixtures';
-import { ChromiumBrowserContext } from '../..';
+import type { ChromiumBrowserContext } from '../..';
 
 it.skip(!options.CHROMIUM)('should create a worker from a service worker', async({page, server, context}) => {
   const [worker] = await Promise.all([

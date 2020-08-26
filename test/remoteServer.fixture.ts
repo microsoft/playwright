@@ -18,7 +18,7 @@ import { registerFixture } from '../test-runner/lib';
 
 import path from 'path';
 import { spawn } from 'child_process';
-import { BrowserType, Browser, LaunchOptions } from '..';
+import type { BrowserType, Browser, LaunchOptions } from '..';
 
 declare global {
   interface TestState {

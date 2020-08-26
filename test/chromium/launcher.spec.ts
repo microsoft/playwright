@@ -17,7 +17,7 @@ import { options } from '../playwright.fixtures';
 
 import path from 'path';
 import utils from '../utils';
-import { ChromiumBrowser, ChromiumBrowserContext } from '../..';
+import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 const { makeUserDataDir, removeUserDataDir } = utils;
 
 it.skip(options.WIRE || !options.CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {

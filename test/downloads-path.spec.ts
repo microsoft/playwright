@@ -23,7 +23,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import {mkdtempAsync, removeFolderAsync} from './utils';
-import { Browser, BrowserContext } from '..';
+import type { Browser, BrowserContext } from '..';
 
 declare global {
   interface TestState {
