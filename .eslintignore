@@ -14,4 +14,5 @@ utils/generate_types/test/test.ts
 /test/
 node_modules/
 browser_patches/*/checkout/
-packages/**/*.d.ts
+output
+
