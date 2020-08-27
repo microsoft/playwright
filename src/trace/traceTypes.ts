@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import type * as snapshotter from '../server/snapshotter';
+
 export type ContextCreatedTraceEvent = {
   type: 'context-created',
   browserName: string,
-  browserId: string,
   contextId: string,
   deviceScaleFactor: number,
   isMobile: boolean,
@@ -46,15 +47,5 @@ export type SnapshotTraceEvent = {
   sha1: string,
 };
 
-export type FrameSnapshot = {
-  frameId: string,
-  url: string,
-  html: string,
-  resourceOverrides: { url: string, sha1: string }[],
-};
-
-export type PageSnapshot = {
-  viewportSize?: { width: number, height: number },
-  // First frame is main frame.
-  frames: FrameSnapshot[],
-};
+export type FrameSnapshot = snapshotter.FrameSnapshot;
+export type PageSnapshot = snapshotter.PageSnapshot;

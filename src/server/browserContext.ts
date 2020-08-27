@@ -29,7 +29,7 @@ import { EventEmitter } from 'events';
 import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
 import { isDebugMode } from '../utils/utils';
-import { TraceRecorder } from './trace/traceRecorder';
+import { Snapshotter, SnapshotterDelegate } from './snapshotter';
 
 export class Screencast {
   readonly page: Page;
@@ -69,7 +69,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _downloads = new Set<Download>();
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
-  _traceRecorder?: TraceRecorder;
+  _snapshotter?: Snapshotter;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -86,8 +86,9 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   // Used by test runner.
-  _traceTo(traceStorageDir: string, traceFilePath: string) {
-    this._traceRecorder = new TraceRecorder(this, traceStorageDir, traceFilePath);
+  async _initSnapshotter(delegate: SnapshotterDelegate): Promise<Snapshotter> {
+    this._snapshotter = new Snapshotter(this, delegate);
+    return this._snapshotter;
   }
 
   _browserClosed() {
@@ -240,8 +241,8 @@ export abstract class BrowserContext extends EventEmitter {
       this._closedStatus = 'closing';
       await this._doClose();
       await Promise.all([...this._downloads].map(d => d.delete()));
-      if (this._traceRecorder)
-        await this._traceRecorder.dispose();
+      if (this._snapshotter)
+        this._snapshotter._dispose();
       this._didCloseInternal();
     }
     await this._closePromise;

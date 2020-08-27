@@ -17,7 +17,6 @@
 import { LaunchServerOptions } from './client/types';
 import { BrowserTypeBase } from './server/browserType';
 import * as ws from 'ws';
-import { helper } from './server/helper';
 import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
@@ -28,6 +27,7 @@ import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher
 import { BrowserNewContextParams, BrowserContextChannel } from './protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
+import { createGuid } from './utils/utils';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserTypeBase;
@@ -60,7 +60,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._browserType = browserType;
     this._browser = browser;
 
-    const token = helper.guid();
+    const token = createGuid();
     this._server = new ws.Server({ port });
     const address = this._server.address();
     this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;

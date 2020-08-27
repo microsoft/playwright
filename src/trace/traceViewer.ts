@@ -17,9 +17,9 @@
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import { NetworkResourceTraceEvent, SnapshotTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent, FrameSnapshot, PageSnapshot } from '../utils/traceTypes';
-import type { Browser, BrowserContext, Frame, Page, Route } from './api';
-import type { Playwright } from './playwright';
+import { NetworkResourceTraceEvent, SnapshotTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent, FrameSnapshot, PageSnapshot } from './traceTypes';
+import type { Browser, BrowserContext, Frame, Page, Route } from '../client/api';
+import type { Playwright } from '../client/playwright';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 type TraceEvent =

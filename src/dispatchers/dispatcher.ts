@@ -15,11 +15,10 @@
  */
 
 import { EventEmitter } from 'events';
-import { helper } from '../server/helper';
 import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { assert, debugAssert } from '../utils/utils';
+import { assert, createGuid, debugAssert } from '../utils/utils';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -51,7 +50,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
   readonly _scope: Dispatcher<any, any>;
   _object: Type;
 
-  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + helper.guid()) {
+  constructor(parent: Dispatcher<any, any> | DispatcherConnection, object: Type, type: string, initializer: Initializer, isScope?: boolean, guid = type + '@' + createGuid()) {
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;

@@ -16,7 +16,7 @@
 
 import { options } from './playwright.fixtures';
 
-it.skip(options.WIRE)('should not throw', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('should not throw', async ({page, server, context, toImpl}) => {
   await page.goto(server.PREFIX + '/snapshot/snapshot-with-css.html');
-  await toImpl(page)._captureSnapshot({ timeout: 5000, label: 'snapshot' });
+  await (context as any).__snapshotter.captureSnapshot(toImpl(page), { timeout: 5000, label: 'snapshot' });
 });

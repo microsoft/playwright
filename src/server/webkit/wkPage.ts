@@ -37,7 +37,7 @@ import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { JSHandle } from '../javascript';
-import { assert, debugAssert, headersArrayToObject } from '../../utils/utils';
+import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils/utils';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -116,7 +116,7 @@ export class WKPage implements PageDelegate {
     }
     if (this._browserContext._screencastOptions) {
       const contextOptions = this._browserContext._screencastOptions;
-      const outputFile = path.join(contextOptions.dir, helper.guid() + '.webm');
+      const outputFile = path.join(contextOptions.dir, createGuid() + '.webm');
       const options = Object.assign({}, contextOptions, {outputFile});
       promises.push(this.startScreencast(options));
     }

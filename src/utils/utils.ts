@@ -17,6 +17,7 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import * as util from 'util';
+import * as crypto from 'crypto';
 
 const mkdirAsync = util.promisify(fs.mkdir.bind(fs));
 
@@ -123,4 +124,19 @@ export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean):
   for (const { name, value } of headers)
     result[lowerCase ? name.toLowerCase() : name] = value;
   return result;
+}
+
+export function monotonicTime(): number {
+  const [seconds, nanoseconds] = process.hrtime();
+  return seconds * 1000 + (nanoseconds / 1000000 | 0);
+}
+
+export function calculateSha1(buffer: Buffer): string {
+  const hash = crypto.createHash('sha1');
+  hash.update(buffer);
+  return hash.digest('hex');
+}
+
+export function createGuid(): string {
+  return crypto.randomBytes(16).toString('hex');
 }

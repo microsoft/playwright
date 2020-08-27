@@ -14,69 +14,82 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../browserContext';
-import { Page } from '../page';
-import * as network from '../network';
-import { helper, RegisteredListener } from '../helper';
-import { Progress } from '../progress';
-import { FrameSnapshot, PageSnapshot, ContextCreatedTraceEvent, ContextDestroyedTraceEvent, SnapshotTraceEvent, NetworkResourceTraceEvent } from '../../utils/traceTypes';
-import { TraceFile } from './traceFile';
-import { debugLogger } from '../../utils/debugLogger';
-import { Frame } from '../frames';
-import * as js from '../javascript';
-import { SnapshotData, takeSnapshotInFrame } from './snapshotter';
+import { BrowserContext } from './browserContext';
+import { Page } from './page';
+import * as network from './network';
+import { helper, RegisteredListener } from './helper';
+import { Progress, runAbortableTask } from './progress';
+import { debugLogger } from '../utils/debugLogger';
+import { Frame } from './frames';
+import * as js from './javascript';
+import * as types from './types';
+import { SnapshotData, takeSnapshotInFrame } from './snapshotterInjected';
+import { assert, calculateSha1, createGuid } from '../utils/utils';
 
-export class TraceRecorder {
-  private _traceFile: TraceFile;
+export type SanpshotterResource = {
+  frameId: string,
+  url: string,
+  contentType: string,
+  responseHeaders: { name: string, value: string }[],
+  sha1: string,
+};
+
+export type SnapshotterBlob = {
+  buffer: Buffer,
+  sha1: string,
+};
+
+export type FrameSnapshot = {
+  frameId: string,
+  url: string,
+  html: string,
+  resourceOverrides: { url: string, sha1: string }[],
+};
+export type PageSnapshot = {
+  label: string,
+  viewportSize?: { width: number, height: number },
+  // First frame is the main frame.
+  frames: FrameSnapshot[],
+};
+
+export interface SnapshotterDelegate {
+  onContextCreated(context: BrowserContext): void;
+  onContextDestroyed(context: BrowserContext): void;
+  onBlob(context: BrowserContext, blob: SnapshotterBlob): void;
+  onResource(context: BrowserContext, resource: SanpshotterResource): void;
+  onSnapshot(context: BrowserContext, snapshot: PageSnapshot): void;
+}
+
+export class Snapshotter {
   private _context: BrowserContext;
-  private _contextId: string;
-  private _contextEventPromise: Promise<void>;
+  private _delegate: SnapshotterDelegate;
   private _eventListeners: RegisteredListener[];
 
-  constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
-    this._traceFile = new TraceFile(traceStorageDir, traceFile);
+  constructor(context: BrowserContext, delegate: SnapshotterDelegate) {
     this._context = context;
-    this._contextId = 'context@' + helper.guid();
+    this._delegate = delegate;
     this._eventListeners = [
       helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
-
-    const event: ContextCreatedTraceEvent = {
-      type: 'context-created',
-      browserName: context._browser._options.name,
-      browserId: context._browser.id,
-      contextId: this._contextId,
-      isMobile: !!this._context._options.isMobile,
-      deviceScaleFactor: this._context._options.deviceScaleFactor || 1,
-      viewportSize: this._context._options.viewport || undefined,
-    };
-    this._contextEventPromise = this._traceFile.appendTraceEvent(event);
+    this._delegate.onContextCreated(this._context);
   }
 
-  async dispose() {
+  async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
+    return runAbortableTask(async progress => {
+      await this._doSnapshot(progress, page, options.label || 'snapshot');
+    }, page._timeoutSettings.timeout(options));
+  }
+
+  _dispose() {
     helper.removeEventListeners(this._eventListeners);
-    const event: ContextDestroyedTraceEvent = {
-      type: 'context-destroyed',
-      contextId: this._contextId,
-    };
-    await this.appendTraceEvent(event);
-    await this._traceFile.dispose();
+    this._delegate.onContextDestroyed(this._context);
   }
 
-  async captureSnapshot(progress: Progress, page: Page, label: string): Promise<void> {
-    const snapshot = await this._snapshotPage(progress, page);
-    if (!snapshot)
-      return;
-    const buffer = Buffer.from(JSON.stringify(snapshot));
-    const sha1 = helper.sha1(buffer);
-    await this._traceFile.writeArtifact(sha1, buffer);
-    const snapshotEvent: SnapshotTraceEvent = {
-      type: 'snapshot',
-      contextId: this._contextId,
-      label,
-      sha1,
-    };
-    await this.appendTraceEvent(snapshotEvent);
+  async _doSnapshot(progress: Progress, page: Page, label: string): Promise<void> {
+    assert(page.context() === this._context);
+    const snapshot = await this._snapshotPage(progress, page, label);
+    if (snapshot)
+      this._delegate.onSnapshot(this._context, snapshot);
   }
 
   private _onPage(page: Page) {
@@ -103,21 +116,20 @@ export class TraceRecorder {
     }
 
     const body = await response.body().catch(e => debugLogger.log('error', e));
-    const resourceEvent: NetworkResourceTraceEvent = {
-      type: 'resource',
+    const sha1 = body ? calculateSha1(body) : 'none';
+    const resource: SanpshotterResource = {
       frameId: response.frame()._id,
-      contextId: this._contextId,
       url,
       contentType,
       responseHeaders: response.headers(),
-      sha1: body ? helper.sha1(body) : 'none',
+      sha1,
     };
-    await this.appendTraceEvent(resourceEvent);
+    this._delegate.onResource(this._context, resource);
     if (body)
-      await this._traceFile.writeArtifact(resourceEvent.sha1, body);
+      this._delegate.onBlob(this._context, { sha1, buffer: body });
   }
 
-  private async _snapshotPage(progress: Progress, page: Page): Promise<PageSnapshot | null> {
+  private async _snapshotPage(progress: Progress, page: Page, label: string): Promise<PageSnapshot | null> {
     const frames = page.frames();
     const promises = frames.map(frame => this._snapshotFrame(progress, frame));
     const results = await Promise.all(promises);
@@ -168,6 +180,7 @@ export class TraceRecorder {
     }
 
     return {
+      label,
       viewportSize,
       frames: [mainFrame.snapshot, ...childFrames],
     };
@@ -179,7 +192,7 @@ export class TraceRecorder {
         return null;
 
       const context = await frame._utilityContext();
-      const guid = helper.guid();
+      const guid = createGuid();
       const removeNoScript = !frame._page.context()._options.javaScriptEnabled;
       const result = await js.evaluate(context, false /* returnByValue */, takeSnapshotInFrame, guid, removeNoScript) as js.JSHandle;
       if (!progress.isRunning())
@@ -200,8 +213,8 @@ export class TraceRecorder {
 
       for (const { url, content } of data.resourceOverrides) {
         const buffer = Buffer.from(content);
-        const sha1 = helper.sha1(buffer);
-        await this._traceFile.writeArtifact(sha1, buffer);
+        const sha1 = calculateSha1(buffer);
+        this._delegate.onBlob(this._context, { sha1, buffer });
         snapshot.resourceOverrides.push({ url, sha1 });
       }
 
@@ -218,11 +231,6 @@ export class TraceRecorder {
     } catch (e) {
       return null;
     }
-  }
-
-  private async appendTraceEvent(event: any) {
-    await this._contextEventPromise;
-    await this._traceFile.appendTraceEvent(event);
   }
 }
 

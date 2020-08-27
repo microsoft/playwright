@@ -15,10 +15,9 @@
  */
 
 import { TimeoutError } from '../utils/errors';
-import { assert } from '../utils/utils';
+import { assert, monotonicTime } from '../utils/utils';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { debugLogger, LogName } from '../utils/debugLogger';
-import { helper } from './helper';
 
 export interface Progress {
   readonly aborted: Promise<void>;
@@ -57,7 +56,7 @@ export class ProgressController {
   constructor(timeout: number, logName: LogName = 'api') {
     this._logName = logName;
     this._timeout = timeout;
-    this._deadline = timeout ? helper.monotonicTime() + timeout : 0;
+    this._deadline = timeout ? monotonicTime() + timeout : 0;
 
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
@@ -75,7 +74,7 @@ export class ProgressController {
           this._logRecordring.push(message);
         debugLogger.log(this._logName, message);
       },
-      timeUntilDeadline: () => this._deadline ? this._deadline - helper.monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
+      timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
       isRunning: () => this._state === 'running',
       cleanupWhenAborted: (cleanup: () => any) => {
         if (this._state === 'running')

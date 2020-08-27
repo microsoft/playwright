@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as crypto from 'crypto';
 import { EventEmitter } from 'events';
 import * as removeFolder from 'rimraf';
 import * as util from 'util';
@@ -65,21 +64,6 @@ class Helper {
 
   static enclosingIntSize(size: types.Size): types.Size {
     return { width: Math.floor(size.width + 1e-3), height: Math.floor(size.height + 1e-3) };
-  }
-
-  static guid(): string {
-    return crypto.randomBytes(16).toString('hex');
-  }
-
-  static monotonicTime(): number {
-    const [seconds, nanoseconds] = process.hrtime();
-    return seconds * 1000 + (nanoseconds / 1000000 | 0);
-  }
-
-  static sha1(buffer: Buffer): string {
-    const hash = crypto.createHash('sha1');
-    hash.update(buffer);
-    return hash.digest('hex');
   }
 
   static getViewportSizeFromWindowFeatures(features: string[]): types.Size | null {
