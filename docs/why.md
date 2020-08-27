@@ -1,6 +1,6 @@
-# Why choose Playwright?
+# Key differentiators
 
-This guide lists the things to consider while deciding on a test automation tool and 
+This guide covers key differentiators for Playwright to help you decide on the right tool for your automated tests.
 
 <!-- GEN:toc-top-level -->
 - [Browsers and platforms to test on](#browsers-and-platforms-to-test-on)
@@ -10,13 +10,16 @@ This guide lists the things to consider while deciding on a test automation tool
 - [Deploy tests to CI](#deploy-tests-to-ci)
 <!-- GEN:stop -->
 
-## Supported browsers
-* Support for Chromium, Firefox and WebKit
-  * This covers all modern browser engines, including Apple Safari via WebKit
-  * Playwright WebKit can run across all platforms: macOS, Windows, Linux
-* Device emulation for mobile tests
+## Support for all browsers
+* Support for all modern browser engines: Chromium, Firefox and WebKit
+  * Chromium is used in Google Chrome and Microsoft Edge
+  * WebKit is used in Apple Safari
+  * Cross-platform WebKit builds: Test Safari rendering on Windows or Linux environments
+* **Mobile testing** with device emulation
+  * Playwright can test responsive web apps with [emulation](emulation.md).
+* Headless and headful execution
 
-## Speed and reliability
+## Fast and reliable execution
 * Timeout-free automation
   * Event-driven architecture that listens to browser events
   * No polling for browser state
@@ -24,18 +27,20 @@ This guide lists the things to consider while deciding on a test automation tool
 * Selectors that are easier to maintain
   * (Not tied to DOM structure, like xpath)
 
-## Automation capabilities
+## Superior automation capabilities
 * Unconstrained automation, with no trade-offs
   * Out-of-process automation driver that is not constrained by JS-in-page scope
+* Multiple page emulation 
 * Lean test isolation with browser contexts
 * Network interception
+  * Context wide request interception 
 * Newer web features
-  * Components
+  * Components/Shadow DOM
+* Chrome OOPIFs
 
-## Authoring and debugging experience
-* TypeScript support
+## Integrations with your tools
+* Built-in support for **TypeScript**
+* One-command installation
 * VS Code debugger integration
-* Language bindings for Python and C#
-
-## Deploy tests to CI
 * First-party Docker image and GitHub Actions to use CI as test runtime
+* Language bindings for Python and C#
