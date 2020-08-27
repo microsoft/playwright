@@ -22,7 +22,7 @@ import * as stream from 'stream';
 import { helper } from './helper';
 import { Progress } from './progress';
 import * as types from './types';
-import { isUnderTest } from '../utils/utils';
+import { isDevMode } from '../utils/utils';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -117,7 +117,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     listeners.push(helper.addEventListener(process, 'SIGINT', () => {
       gracefullyClose().then(() => {
         // Give tests a chance to dispatch any async calls.
-        if (isUnderTest())
+        if (isDevMode())
           setTimeout(() => process.exit(130), 0);
         else
           process.exit(130);

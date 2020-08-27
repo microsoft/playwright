@@ -22,10 +22,9 @@ import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, Browser
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
-import { setUnderTest } from '../lib/utils/utils';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';
-import {mkdtempAsync, removeFolderAsync} from './utils';
+import { mkdtempAsync, removeFolderAsync } from './utils';
 
 export const options = {
   CHROMIUM: parameters.browserName === 'chromium',
@@ -113,11 +112,6 @@ registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
 });
 
 registerWorkerFixture('playwright', async({browserName}, test) => {
-  const playwrightCacheEntry = require.cache[require.resolve('../index')];
-  if (playwrightCacheEntry)
-    throw new Error('Could not set playwright to test mode because it was required directly from ' + playwrightCacheEntry.parent.id);
-  setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
-
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     const connection = new Connection();

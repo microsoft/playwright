@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+const { setDevMode } = require('./lib/utils/utils');
+setDevMode(); // Note: we must call setDevMode before initializing.
+
 const { Playwright } = require('./lib/server/playwright');
 const { Electron } = require('./lib/server/electron/electron');
 const { setupInProcess } = require('./lib/inprocess');
@@ -21,9 +24,4 @@ const path = require('path');
 
 const playwright = new Playwright(__dirname, require(path.join(__dirname, 'browsers.json'))['browsers']);
 playwright.electron = new Electron();
-if (process.env.PWCHANNEL === 'none') {
-  playwright._toImpl = x => x;
-  module.exports = playwright;
-} else {
-  module.exports = setupInProcess(playwright);
-}
+module.exports = setupInProcess(playwright);
