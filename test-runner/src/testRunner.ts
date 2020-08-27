@@ -151,11 +151,15 @@ export class TestRunner extends EventEmitter {
 
     const id = test._id;
     this._testId = id;
-    this.emit('testBegin', { id });
+    this.emit('testBegin', {
+      id,
+      skipped: test._skipped,
+      flaky: test._flaky,
+    });
 
     const result: TestResult = {
       duration: 0,
-      status: 'none',
+      status: 'passed',
       stdout: [],
       stderr: [],
       data: {}
@@ -179,15 +183,15 @@ export class TestRunner extends EventEmitter {
       } else {
         result.status = 'passed';
       }
-      result.duration = Date.now() - startTime;
-      this.emit('testEnd', { id, result });
     } catch (error) {
-      result.error = serializeError(error);
+      // Error in the test fixture teardown.
       result.status = 'failed';
-      result.duration = Date.now() - startTime;
-      this._failedTestId = this._testId;
-      this.emit('testEnd', { id, result });
+      result.error = serializeError(error);
     }
+    result.duration = Date.now() - startTime;
+    this.emit('testEnd', { id, result });
+    if (result.status !== 'passed')
+      this._failedTestId = this._testId;
     this._testResult = null;
     this._testId = null;
   }

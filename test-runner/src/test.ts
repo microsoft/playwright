@@ -21,13 +21,14 @@ export class Test {
   title: string;
   file: string;
   only = false;
-  _skipped = false;
   slow = false;
   timeout = 0;
   fn: Function;
   results: TestResult[] = [];
 
   _id: string;
+  _skipped = false;
+  _flaky = false;
   _overriddenFn: Function;
   _startTime: number;
 
@@ -56,12 +57,25 @@ export class Test {
     return result;
   }
 
+  _ok(): boolean {
+    if (this._skipped)
+      return true;
+    const hasFailedResults = !!this.results.find(r => r.status !== 'passed' && r.status !== 'skipped');
+    if (!hasFailedResults)
+      return true;
+    if (!this._flaky)
+      return false;
+    const hasPassedResults = !!this.results.find(r => r.status === 'passed');
+    return hasPassedResults;
+  }
+
   _clone(): Test {
     const test = new Test(this.title, this.fn);
     test.suite = this.suite;
     test.only = this.only;
     test.file = this.file;
     test.timeout = this.timeout;
+    test._flaky = this._flaky;
     test._overriddenFn = this._overriddenFn;
     return test;
   }

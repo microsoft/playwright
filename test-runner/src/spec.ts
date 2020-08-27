@@ -53,7 +53,7 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
   const suites = [suite];
   suite.file = file;
 
-  const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
+  const it = specBuilder(['skip', 'fail', 'slow', 'only', 'flaky'], (specs, title, fn) => {
     const suite = suites[0];
     const test = new Test(title, fn);
     test.file = file;
@@ -67,11 +67,13 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
       test._skipped = true;
     if (!only && specs.fail && specs.fail[0])
       test._skipped = true;
+    if (specs.flaky && specs.flaky[0])
+      test._flaky = true;
     suite._addTest(test);
     return test;
   });
 
-  const describe = specBuilder(['skip', 'fail', 'only'], (specs, title, fn) => {
+  const describe = specBuilder(['skip', 'fixme', 'only'], (specs, title, fn) => {
     const child = new Suite(title, suites[0]);
     suites[0]._addSuite(child);
     child.file = file;
@@ -79,8 +81,6 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
     if (only)
       child.only = true;
     if (!only && specs.skip && specs.skip[0])
-      child.skipped = true;
-    if (!only && specs.fail && specs.fail[0])
       child.skipped = true;
     suites.unshift(child);
     fn();
