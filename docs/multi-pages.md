@@ -72,11 +72,15 @@ created in the context. This can be used to handle new pages opened by
 // Get page after a specific action (e.g. clicking a link)
 const [newPage] = await Promise.all([
   context.waitForEvent('page'),
-  page.evaluate(() => window.open('https://google.com', '_blank'))
+  page.click('a[target="_blank"]') // Opens a new tab
 ])
 await newPage.waitForLoadState();
 console.log(await newPage.title());
+```
 
+If the action that triggers the new page is unknown, the following pattern can be used.
+
+```js
 // Get all new pages (including popups) in the context
 context.on('page', async page => {
   await page.waitForLoadState();
@@ -104,7 +108,11 @@ const [popup] = await Promise.all([
 ]);
 await popup.waitForLoadState();
 await popup.title();
+```
 
+If the action that triggers the popup is unknown, the following pattern can be used.
+
+```js
 // Get all popups when they open
 page.on('popup', async popup => {
   await popup.waitForLoadState();
