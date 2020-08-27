@@ -147,7 +147,7 @@ it.fail(options.CHROMIUM || options.FIREFOX)('should work in iframes that failed
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it.fail(options.CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
+it.fixme(options.CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {

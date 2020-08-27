@@ -103,7 +103,11 @@ export class Runner {
     let doneCallback;
     const result = new Promise(f => doneCallback = f);
     worker.once('done', params => {
-      if (!params.failedTestId && !params.fatalError) {
+      // We won't file remaining if:
+      // - there are no remaining
+      // - we are here not because something failed
+      // - no unrecoverable worker error
+      if (!params.remaining.length && !params.failedTestId && !params.fatalError) {
         this._workerAvailable(worker);
         doneCallback();
         return;
@@ -112,8 +116,8 @@ export class Runner {
       // When worker encounters error, we will restart it.
       this._restartWorker(worker);
 
-      // In case of fatal error without test id, we are done with the entry.
-      if (params.fatalError && !params.failedTestId) {
+      // In case of fatal error, we are done with the entry.
+      if (params.fatalError) {
         // Report all the tests are failing with this error.
         for (const id of entry.ids) {
           const { test, result } = this._testById.get(id);
@@ -127,13 +131,16 @@ export class Runner {
       }
 
       const remaining = params.remaining;
-      if (this._config.retries) {
+
+      // Only retry expected failures, not passes and only if the test failed.
+      if (this._config.retries && params.failedTestId) {
         const pair = this._testById.get(params.failedTestId);
-        if (pair.test.results.length < this._config.retries + 1) {
+        if (pair.result.expectedStatus === 'passed' && pair.test.results.length < this._config.retries + 1) {
           pair.result = pair.test._appendResult();
           remaining.unshift(pair.test._id);
         }
       }
+
       if (remaining.length)
         this._queue.unshift({ ...entry, ids: remaining });
 
@@ -169,6 +176,7 @@ export class Runner {
       const { test } = this._testById.get(params.id);
       test._skipped = params.skipped;
       test._flaky = params.flaky;
+      test._expectedStatus = params.expectedStatus;
       this._reporter.onTestBegin(test);
     });
     worker.on('testEnd', params => {

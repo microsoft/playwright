@@ -75,7 +75,7 @@ it('should support extraHTTPHeaders option', async ({server, launchPersistent}) 
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should accept userDataDir', async ({launchPersistent, tmpDir}) => {
+it.flaky(options.CHROMIUM)('should accept userDataDir', async ({launchPersistent, tmpDir}) => {
   const {page, context} = await launchPersistent();
   // Note: we need an open page to make sure its functional.
   expect(fs.readdirSync(tmpDir).length).toBeGreaterThan(0);
@@ -111,7 +111,7 @@ it.slow()('should restore state from userDataDir', async({browserType, defaultBr
   await removeUserDataDir(userDataDir2);
 });
 
-it.fail(options.CHROMIUM && (WIN || MAC)).slow()('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
+it.slow()('should restore cookies from userDataDir', async({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
   const userDataDir = await makeUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
   const page = await browserContext.newPage();

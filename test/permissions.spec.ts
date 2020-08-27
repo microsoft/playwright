@@ -98,7 +98,7 @@ describe.skip(options.WEBKIT)('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it.fail(options.WEBKIT || options.FIREFOX || (options.CHROMIUM && !options.HEADLESS))('should trigger permission onchange', async({page, server, context}) => {
+  it.fail(options.WEBKIT || (options.CHROMIUM && !options.HEADLESS))('should trigger permission onchange', async({page, server, context}) => {
     //TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
     // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536

@@ -16,6 +16,7 @@
  */
 
 import './playwright.fixtures';
+import { options } from './playwright.fixtures';
 
 async function giveItAChanceToResolve(page) {
   for (let i = 0; i < 5; i++)

@@ -65,7 +65,7 @@ it.skip(!options.CHROMIUM)('should handle remote -> local -> remote transitions'
   expect(await countOOPIFs(browser)).toBe(1);
 });
 
-it.fail(true)('should get the proper viewport', async({browser, page, server}) => {
+it.fixme(options.CHROMIUM).skip(!options.CHROMIUM)('should get the proper viewport', async({browser, page, server}) => {
   expect(page.viewportSize()).toEqual({width: 1280, height: 720});
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);

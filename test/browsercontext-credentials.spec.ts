@@ -48,7 +48,7 @@ it('should work with correct credentials', async({browser, server}) => {
   await context.close();
 });
 
-it.fail(options.CHROMIUM && !options.HEADLESS)('should fail with wrong credentials', async({browser, server}) => {
+it('should fail with wrong credentials', async({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext({
     httpCredentials: { username: 'foo', password: 'bar' }

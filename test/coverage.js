@@ -24,12 +24,12 @@
 function traceAPICoverage(apiCoverage, api, events) {
   const uninstalls = [];
   for (const [name, classType] of Object.entries(api)) {
-    // console.log('trace', name);
     const className = name.substring(0, 1).toLowerCase() + name.substring(1);
     for (const methodName of Reflect.ownKeys(classType.prototype)) {
       const method = Reflect.get(classType.prototype, methodName);
       if (methodName === 'constructor' || typeof methodName !== 'string' || methodName.startsWith('_') || typeof method !== 'function')
         continue;
+ 
       apiCoverage.set(`${className}.${methodName}`, false);
       const override = function(...args) {
         apiCoverage.set(`${className}.${methodName}`, true);

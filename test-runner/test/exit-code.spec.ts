@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import colors from 'colors/safe';
 import { spawnSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -28,6 +29,14 @@ it('should fail', async () => {
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(0);
   expect(result.failed).toBe(1);
+});
+
+it('should timeout', async () => {
+  const { exitCode, passed, failed, timedOut } = await runTest('one-timeout.js', { timeout: 100 });
+  expect(exitCode).toBe(1);
+  expect(passed).toBe(0);
+  expect(failed).toBe(0);
+  expect(timedOut).toBe(1);
 });
 
 it('should succeed', async () => {
@@ -85,6 +94,15 @@ it('should retry failures', async () => {
   expect(result.flaky).toBe(1);
 });
 
+it('should retry timeout', async () => {
+  const { exitCode, passed, failed, timedOut, output } = await runTest('one-timeout.js', { timeout: 100, retries: 2 });
+  expect(exitCode).toBe(1);
+  expect(passed).toBe(0);
+  expect(failed).toBe(0);
+  expect(timedOut).toBe(1);
+  expect(output.split('\n')[0]).toBe(colors.red('T').repeat(3));
+});
+
 it('should repeat each', async () => {
   const { exitCode, report } = await runTest('one-success.js', { 'repeat-each': 3 });
   expect(exitCode).toBe(0);
@@ -106,6 +124,44 @@ it('should allow flaky', async () => {
   expect(result.flaky).toBe(1);
 });
 
+it('should fail on unexpected pass', async () => {
+  const { exitCode, failed, output } = await runTest('unexpected-pass.js');
+  expect(exitCode).toBe(1);
+  expect(failed).toBe(1);
+  expect(output).toContain('passed unexpectedly');
+});
+
+it('should fail on unexpected pass with retries', async () => {
+  const { exitCode, failed, output } = await runTest('unexpected-pass.js', { retries: 1 });
+  expect(exitCode).toBe(1);
+  expect(failed).toBe(1);
+  expect(output).toContain('passed unexpectedly');
+});
+
+it('should not retry unexpected pass', async () => {
+  const { exitCode, passed, failed, output } = await runTest('unexpected-pass.js', { retries: 2 });
+  expect(exitCode).toBe(1);
+  expect(passed).toBe(0);
+  expect(failed).toBe(1);
+  expect(output.split('\n')[0]).toBe(colors.red('P'));
+});
+
+it('should not retry expected failure', async () => {
+  const { exitCode, passed, failed, output } = await runTest('expected-failure.js', { retries: 2 });
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(2);
+  expect(failed).toBe(0);
+  expect(output.split('\n')[0]).toBe(colors.green('f') + colors.green('·'));
+});
+
+it('should respect nested skip', async () => {
+  const { exitCode, passed, failed, skipped } = await runTest('nested-skip.js');
+  expect(exitCode).toBe(0);
+  expect(passed).toBe(0);
+  expect(failed).toBe(0);
+  expect(skipped).toBe(1);
+});
+
 async function runTest(filePath: string, params: any = {}) {
   const outputDir = path.join(__dirname, 'test-results');
   const reportFile = path.join(outputDir, 'results.json');
@@ -125,14 +181,20 @@ async function runTest(filePath: string, params: any = {}) {
   });
   const passed = (/(\d+) passed/.exec(output.toString()) || [])[1];
   const failed = (/(\d+) failed/.exec(output.toString()) || [])[1];
+  const timedOut = (/(\d+) timed out/.exec(output.toString()) || [])[1];
   const flaky = (/(\d+) flaky/.exec(output.toString()) || [])[1];
+  const skipped = (/(\d+) skipped/.exec(output.toString()) || [])[1];
   const report = JSON.parse(fs.readFileSync(reportFile).toString());
+  let outputStr = output.toString();
+  outputStr = outputStr.substring(1, outputStr.length - 1);
   return {
     exitCode: status,
-    output: output.toString(),
+    output: outputStr,
     passed: parseInt(passed, 10),
     failed: parseInt(failed || '0', 10),
+    timedOut: parseInt(timedOut || '0', 10),
     flaky: parseInt(flaky || '0', 10),
+    skipped: parseInt(skipped || '0', 10),
     report
   };
 }

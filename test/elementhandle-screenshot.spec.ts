@@ -351,7 +351,7 @@ it.skip(ffheadful || options.WIRE)('should restore viewport after element screen
   await context.close();
 });
 
-it.skip(ffheadful)('should wait for element to stop moving', async({page, server, golden}) => {
+it.skip(ffheadful).flaky(options.WEBKIT && !options.HEADLESS && LINUX)('should wait for element to stop moving', async ({ page, server, golden }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
   const elementHandle = await page.$('.box:nth-of-type(3)');
