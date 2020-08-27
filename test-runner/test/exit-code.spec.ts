@@ -100,6 +100,12 @@ it('should report suite errors', async () => {
   expect(output).toContain('Suite error');
 });
 
+it('should allow flaky', async () => {
+  const result = await runTest('allow-flaky.js', { retries: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.flaky).toBe(1);
+});
+
 async function runTest(filePath: string, params: any = {}) {
   const outputDir = path.join(__dirname, 'test-results');
   const reportFile = path.join(outputDir, 'results.json');

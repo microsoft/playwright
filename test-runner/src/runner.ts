@@ -167,6 +167,8 @@ export class Runner {
     const worker = this._config.debug ? new InProcessWorker(this) : new OopWorker(this);
     worker.on('testBegin', params => {
       const { test } = this._testById.get(params.id);
+      test._skipped = params.skipped;
+      test._flaky = params.flaky;
       this._reporter.onTestBegin(test);
     });
     worker.on('testEnd', params => {

@@ -160,16 +160,14 @@ export class FixturePool {
         this.resolveParametersAndRun(fn, info.config, info).then(() => {
           info.result.status = 'passed';
           clearTimeout(timer);
+        }).catch(e => {
+          info.result.status = 'failed';
+          info.result.error = serializeError(e);
         }),
         timerPromise.then(() => {
           info.result.status = 'timedOut';
-          Promise.reject(new Error(`Timeout of ${timeout}ms exceeded`));
         })
       ]);
-    } catch (e) {
-      info.result.status = 'failed';
-      info.result.error = serializeError(e);
-      throw e;
     } finally {
       await this.teardownScope('test');
     }
