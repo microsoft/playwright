@@ -27,7 +27,7 @@ export class Test {
   fn: Function;
   results: TestResult[] = [];
 
-  _ordinal: number;
+  _id: string;
   _overriddenFn: Function;
   _startTime: number;
 
@@ -157,7 +157,7 @@ export class Suite {
     let ordinal = 0;
     this.findTest((test: Test) => {
       // All tests are identified with their ordinals.
-      test._ordinal = ordinal++;
+      test._id = `${ordinal++}@${this.file}::[${this._configurationString}]`;
     });
   }
 
