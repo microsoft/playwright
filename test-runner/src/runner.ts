@@ -43,7 +43,7 @@ export class Runner {
     this._suite = suite;
     for (const suite of this._suite.suites) {
       suite.findTest(test => {
-        this._testById.set(`${test._ordinal}@${suite.file}::[${suite._configurationString}]`, { test, result: test._appendResult() });
+        this._testById.set(test._id, { test, result: test._appendResult() });
       });
     }
 
@@ -58,12 +58,12 @@ export class Runner {
   _filesSortedByWorkerHash(): TestRunnerEntry[] {
     const result: TestRunnerEntry[] = [];
     for (const suite of this._suite.suites) {
-      const ordinals: number[] = [];
-      suite.findTest(test => ordinals.push(test._ordinal) && false);
-      if (!ordinals.length)
+      const ids: string[] = [];
+      suite.findTest(test => ids.push(test._id) && false);
+      if (!ids.length)
         continue;
       result.push({
-        ordinals,
+        ids,
         file: suite.file,
         configuration: suite.configuration,
         configurationString: suite._configurationString,
@@ -98,7 +98,7 @@ export class Runner {
     await Promise.all(jobs);
   }
 
-  async _runJob(worker, entry) {
+  async _runJob(worker: Worker, entry: TestRunnerEntry) {
     worker.run(entry);
     let doneCallback;
     const result = new Promise(f => doneCallback = f);
@@ -112,8 +112,16 @@ export class Runner {
       // When worker encounters error, we will restart it.
       this._restartWorker(worker);
 
-      // In case of fatal error, we are done with the entry.
-      if (params.fatalError) {
+      // In case of fatal error without test id, we are done with the entry.
+      if (params.fatalError && !params.failedTestId) {
+        // Report all the tests are failing with this error.
+        for (const id of entry.ids) {
+          const { test, result } = this._testById.get(id);
+          this._reporter.onTestBegin(test);
+          result.status = 'failed';
+          result.error = params.fatalError;
+          this._reporter.onTestEnd(test, result);
+        }
         doneCallback();
         return;
       }
@@ -123,11 +131,11 @@ export class Runner {
         const pair = this._testById.get(params.failedTestId);
         if (pair.test.results.length < this._config.retries + 1) {
           pair.result = pair.test._appendResult();
-          remaining.unshift(pair.test._ordinal);
+          remaining.unshift(pair.test._id);
         }
       }
       if (remaining.length)
-        this._queue.unshift({ ...entry, ordinals: remaining });
+        this._queue.unshift({ ...entry, ids: remaining });
 
       // This job is over, we just scheduled another one.
       doneCallback();

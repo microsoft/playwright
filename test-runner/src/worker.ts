@@ -29,13 +29,13 @@ global.console = new Console({
 });
 
 process.stdout.write = chunk => {
-  if (testRunner && !closed)
+  if (testRunner)
     testRunner.stdout(chunk);
   return true;
 };
 
 process.stderr.write = chunk => {
-  if (testRunner && !closed)
+  if (testRunner)
     testRunner.stderr(chunk);
   return true;
 };
@@ -48,12 +48,12 @@ let workerId: number;
 let testRunner: TestRunner;
 
 process.on('unhandledRejection', (reason, promise) => {
-  if (testRunner && !closed)
+  if (testRunner)
     testRunner.fatalError(reason);
 });
 
 process.on('uncaughtException', error => {
-  if (testRunner && !closed)
+  if (testRunner)
     testRunner.fatalError(error);
 });
 
@@ -73,8 +73,6 @@ process.on('message', async message => {
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();
     testRunner = null;
-    // Mocha runner adds these; if we don't remove them, we'll get a leak.
-    process.removeAllListeners('uncaughtException');
   }
 });
 

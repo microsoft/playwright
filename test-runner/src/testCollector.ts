@@ -57,7 +57,6 @@ export class TestCollector {
     const revertBabelRequire = spec(suite, file, this._config.timeout);
     require(file);
     revertBabelRequire();
-    suite._renumber();
 
     const workerGeneratorConfigurations = new Map();
 
@@ -104,6 +103,7 @@ export class TestCollector {
         clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '') + ' ' + (i ? ` #repeat-${i}#` : '');
         clone.configuration = configuration;
         clone._configurationString = configurationString + `#repeat-${i}#`;
+        clone._renumber();
       }
     }
   }
@@ -122,7 +122,6 @@ export class TestCollector {
           continue;
         const testCopy = test._clone();
         testCopy.only = test.only;
-        testCopy._ordinal = test._ordinal;
         copy._addTest(testCopy);
       }
     }

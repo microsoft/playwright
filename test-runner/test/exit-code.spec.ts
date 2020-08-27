@@ -93,6 +93,13 @@ it('should repeat each', async () => {
     expect(suite.tests.length).toBe(1);
 });
 
+it('should report suite errors', async () => {
+  const { exitCode, failed, output } = await runTest('suite-error.js');
+  expect(exitCode).toBe(1);
+  expect(failed).toBe(1);
+  expect(output).toContain('Suite error');
+});
+
 async function runTest(filePath: string, params: any = {}) {
   const outputDir = path.join(__dirname, 'test-results');
   const reportFile = path.join(outputDir, 'results.json');
