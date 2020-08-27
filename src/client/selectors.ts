@@ -14,26 +14,31 @@
  * limitations under the License.
  */
 
-import * as channels from '../protocol/channels';
-import { ChannelOwner } from './channelOwner';
-import { ElementHandle } from './elementHandle';
 import { evaluationScript } from './clientHelper';
+import type { BrowserContext } from './browserContext';
+import * as channels from '../protocol/channels';
 
-export class Selectors extends ChannelOwner<channels.SelectorsChannel, channels.SelectorsInitializer> {
-  static from(selectors: channels.SelectorsChannel): Selectors {
-    return (selectors as any)._object;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.SelectorsInitializer) {
-    super(parent, type, guid, initializer);
-  }
+export class Selectors {
+  private _contexts = new Set<BrowserContext>();
+  private _registrations: channels.BrowserContextRegisterSelectorEngineParams[] = [];
 
   async register(name: string, script: string | Function | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
     const source = await evaluationScript(script, undefined, false);
-    await this._channel.register({ ...options, name, source });
+    const params = { ...options, name, source };
+    for (const context of this._contexts)
+      await context._channel.registerSelectorEngine(params);
+    this._registrations.push(params);
   }
 
-  async _createSelector(name: string, handle: ElementHandle<Element>): Promise<string | undefined> {
-    return (await this._channel.createSelector({ name, handle: handle._elementChannel })).value;
+  _addContext(context: BrowserContext) {
+    this._contexts.add(context);
+    for (const params of this._registrations) {
+      // This should not fail except for connection closure, but just in case we catch.
+      context._channel.registerSelectorEngine(params).catch(e => {});
+    }
+  }
+
+  _removeContext(context: BrowserContext) {
+    this._contexts.delete(context);
   }
 }

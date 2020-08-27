@@ -111,6 +111,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     const logger = options.logger;
     return this._wrapApiCall('browserType.connect', async () => {
       const connection = new Connection();
+      // Inherit playwright selectors for connected browser.
+      connection._selectors = this._connection._selectors;
 
       const ws = new WebSocket(options.wsEndpoint, [], {
         perMessageDeflate: false,

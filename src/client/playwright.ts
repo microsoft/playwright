@@ -49,7 +49,8 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this.devices = {};
     for (const { name, descriptor } of initializer.deviceDescriptors)
       this.devices[name] = descriptor;
-    this.selectors = Selectors.from(initializer.selectors);
+    this.selectors = new Selectors();
     this.errors = { TimeoutError };
+    this._connection._selectors = this.selectors;
   }
 }

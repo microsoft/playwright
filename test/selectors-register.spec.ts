@@ -20,7 +20,7 @@ import './playwright.fixtures';
 import path from 'path';
 import utils from './utils';
 
-it('should work', async ({playwright, page}) => {
+it('should work', async ({playwright, browser}) => {
   const createTagSelector = () => ({
     create(root, target) {
       return target.nodeName;
@@ -32,16 +32,31 @@ it('should work', async ({playwright, page}) => {
       return Array.from(root.querySelectorAll(selector));
     }
   });
+  // Register one engine before creating context.
   await utils.registerEngine(playwright, 'tag', `(${createTagSelector.toString()})()`);
+
+  const context = await browser.newContext();
+  // Register another engine after creating context.
+  await utils.registerEngine(playwright, 'tag2', `(${createTagSelector.toString()})()`);
+
+  const page = await context.newPage();
   await page.setContent('<div><span></span></div><div></div>');
-  expect(await (playwright.selectors as any)._createSelector('tag', await page.$('div'))).toBe('DIV');
+
+  expect(await (await page.$('div') as any)._createSelectorForTest('tag')).toBe('DIV');
   expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
 
+  expect(await (await page.$('div') as any)._createSelectorForTest('tag2')).toBe('DIV');
+  expect(await page.$eval('tag2=DIV', e => e.nodeName)).toBe('DIV');
+  expect(await page.$eval('tag2=SPAN', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$$eval('tag2=DIV', es => es.length)).toBe(2);
+
   // Selector names are case-sensitive.
   const error = await page.$('tAG=DIV').catch(e => e);
   expect(error.message).toContain('Unknown engine "tAG" while parsing selector tAG=DIV');
+
+  await context.close();
 });
 
 it('should work with path', async ({playwright, page}) => {

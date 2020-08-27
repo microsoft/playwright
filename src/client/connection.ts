@@ -34,12 +34,12 @@ import { Electron, ElectronApplication } from './electron';
 import * as channels from '../protocol/channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
-import { Selectors } from './selectors';
 import { Stream } from './stream';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
+import { Selectors } from './selectors';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -54,6 +54,7 @@ export class Connection {
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
   private _rootObject: ChannelOwner;
+  _selectors?: Selectors;
 
   constructor() {
     this._rootObject = new Root(this);
@@ -154,9 +155,9 @@ export class Connection {
       case 'BrowserContext': {
         const browserName = (initializer as channels.BrowserContextInitializer).browserName;
         if (browserName === 'chromium')
-          result = new ChromiumBrowserContext(parent, type, guid, initializer);
+          result = new ChromiumBrowserContext(parent, type, guid, initializer, this._selectors!);
         else
-          result = new BrowserContext(parent, type, guid, initializer, browserName);
+          result = new BrowserContext(parent, type, guid, initializer, browserName, this._selectors!);
         break;
       }
       case 'BrowserType':
@@ -206,9 +207,6 @@ export class Connection {
         break;
       case 'Route':
         result = new Route(parent, type, guid, initializer);
-        break;
-      case 'Selectors':
-        result = new Selectors(parent, type, guid, initializer);
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);

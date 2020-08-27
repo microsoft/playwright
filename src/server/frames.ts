@@ -21,7 +21,6 @@ import { helper, RegisteredListener } from './helper';
 import * as js from './javascript';
 import * as network from './network';
 import { Page } from './page';
-import { selectors } from './selectors';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
 import { Progress, ProgressController } from './progress';
@@ -538,7 +537,7 @@ export class Frame extends EventEmitter {
   }
 
   async $(selector: string): Promise<dom.ElementHandle<Element> | null> {
-    return selectors._query(this, selector);
+    return this._page.selectors._query(this, selector);
   }
 
   async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<dom.ElementHandle<Element> | null> {
@@ -549,7 +548,7 @@ export class Frame extends EventEmitter {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = dom.waitForSelectorTask(info, state);
     return this._page._runAbortableTask(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
@@ -564,7 +563,7 @@ export class Frame extends EventEmitter {
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = dom.dispatchEventTask(info, type, eventInit || {});
     await this._page._runAbortableTask(async progress => {
       progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
@@ -584,14 +583,14 @@ export class Frame extends EventEmitter {
   }
 
   async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
-    const arrayHandle = await selectors._queryArray(this, selector);
+    const arrayHandle = await this._page.selectors._queryArray(this, selector);
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
   }
 
   async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    return selectors._queryAll(this, selector);
+    return this._page.selectors._queryAll(this, selector);
   }
 
   async content(): Promise<string> {
@@ -774,7 +773,7 @@ export class Frame extends EventEmitter {
   private async _retryWithSelectorIfNotConnected<R>(
     selector: string, options: types.TimeoutOptions,
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     return this._page._runAbortableTask(async progress => {
       while (progress.isRunning()) {
         progress.log(`waiting for selector "${selector}"`);
@@ -816,7 +815,7 @@ export class Frame extends EventEmitter {
   }
 
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = dom.textContentTask(info);
     return this._page._runAbortableTask(async progress => {
       progress.log(`  retrieving textContent from "${selector}"`);
@@ -825,7 +824,7 @@ export class Frame extends EventEmitter {
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = dom.innerTextTask(info);
     return this._page._runAbortableTask(async progress => {
       progress.log(`  retrieving innerText from "${selector}"`);
@@ -835,7 +834,7 @@ export class Frame extends EventEmitter {
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = dom.innerHTMLTask(info);
     return this._page._runAbortableTask(async progress => {
       progress.log(`  retrieving innerHTML from "${selector}"`);
@@ -844,7 +843,7 @@ export class Frame extends EventEmitter {
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = dom.getAttributeTask(info, name);
     return this._page._runAbortableTask(async progress => {
       progress.log(`  retrieving attribute "${name}" from "${selector}"`);

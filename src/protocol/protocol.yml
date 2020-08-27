@@ -143,28 +143,6 @@ Playwright:
               deviceScaleFactor: number
               isMobile: boolean
               hasTouch: boolean
-    selectors: Selectors
-
-
-
-Selectors:
-  type: interface
-
-  commands:
-
-    register:
-      parameters:
-        name: string
-        source: string
-        contentScript: boolean?
-
-    createSelector:
-      parameters:
-        name: string
-        handle: ElementHandle
-      returns:
-        value: string?
-
 
 
 BrowserType:
@@ -506,6 +484,12 @@ BrowserContext:
         page: Page
       returns:
         session: CDPSession
+
+    registerSelectorEngine:
+      parameters:
+        name: string
+        source: string
+        contentScript: boolean?
 
   events:
 
@@ -1605,6 +1589,12 @@ ElementHandle:
           - hidden
       returns:
         element: ElementHandle?
+
+    createSelectorForTest:
+      parameters:
+        name: string
+      returns:
+        value: string?
 
 
 Request:

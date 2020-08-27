@@ -96,20 +96,20 @@ it('query', async ({page}) => {
   expect(await page.$$eval(`text=lowo`, els => els.map(e => e.outerHTML).join(''))).toBe('<div>helloworld</div><span>helloworld</span>');
 });
 
-it('create', async ({playwright, page}) => {
+it('create', async ({page}) => {
   await page.setContent(`<div>yo</div><div>"ya</div><div>ye ye</div>`);
-  expect(await (playwright.selectors as any)._createSelector('text', await page.$('div'))).toBe('yo');
-  expect(await (playwright.selectors as any)._createSelector('text', await page.$('div:nth-child(2)'))).toBe('"\\"ya"');
-  expect(await (playwright.selectors as any)._createSelector('text', await page.$('div:nth-child(3)'))).toBe('"ye ye"');
+  expect(await (await page.$('div') as any)._createSelectorForTest('text')).toBe('yo');
+  expect(await (await page.$('div:nth-child(2)') as any)._createSelectorForTest('text')).toBe('"\\"ya"');
+  expect(await (await page.$('div:nth-child(3)') as any)._createSelectorForTest('text')).toBe('"ye ye"');
 
   await page.setContent(`<div>yo</div><div>yo<div>ya</div>hey</div>`);
-  expect(await (playwright.selectors as any)._createSelector('text', await page.$('div:nth-child(2)'))).toBe('hey');
+  expect(await (await page.$('div:nth-child(2)') as any)._createSelectorForTest('text')).toBe('hey');
 
   await page.setContent(`<div> yo <div></div>ya</div>`);
-  expect(await (playwright.selectors as any)._createSelector('text', await page.$('div'))).toBe('yo');
+  expect(await (await page.$('div') as any)._createSelectorForTest('text')).toBe('yo');
 
   await page.setContent(`<div> "yo <div></div>ya</div>`);
-  expect(await (playwright.selectors as any)._createSelector('text', await page.$('div'))).toBe('" \\"yo "');
+  expect(await (await page.$('div') as any)._createSelectorForTest('text')).toBe('" \\"yo "');
 });
 
 it('should be case sensitive if quotes are specified', async ({page}) => {

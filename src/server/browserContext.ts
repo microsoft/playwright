@@ -30,6 +30,7 @@ import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
 import { isDebugMode } from '../utils/utils';
 import { Snapshotter, SnapshotterDelegate } from './snapshotter';
+import { Selectors, sharedSelectors } from './selectors';
 
 export class Screencast {
   readonly page: Page;
@@ -68,6 +69,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _downloads = new Set<Download>();
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
+  private _selectors?: Selectors;
   _snapshotter?: Snapshotter;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
@@ -77,6 +79,14 @@ export abstract class BrowserContext extends EventEmitter {
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+  }
+
+  _createSelectors() {
+    this._selectors = new Selectors();
+  }
+
+  selectors() {
+    return this._selectors || sharedSelectors;
   }
 
   async _initialize() {

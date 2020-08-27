@@ -22,13 +22,14 @@ import { CDPSession } from './cdpSession';
 import { Events } from './events';
 import { Worker } from './worker';
 import { BrowserContext } from './browserContext';
+import { Selectors } from './selectors';
 
 export class ChromiumBrowserContext extends BrowserContext {
   _backgroundPages = new Set<Page>();
   _serviceWorkers = new Set<Worker>();
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
-    super(parent, type, guid, initializer, 'chromium');
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer, selectors: Selectors) {
+    super(parent, type, guid, initializer, 'chromium', selectors);
     this._channel.on('crBackgroundPage', ({ page }) => {
       const backgroundPage = Page.from(page);
       this._backgroundPages.add(backgroundPage);

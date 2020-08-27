@@ -227,3 +227,22 @@ it('coverage should be missing', test => {
   const {page} = await launchPersistent();
   expect(page.coverage).toBe(null);
 });
+
+it('should respect selectors', async ({playwright, launchPersistent}) => {
+  const {page} = await launchPersistent();
+
+  const defaultContextCSS = () => ({
+    create(root, target) {},
+    query(root, selector) {
+      return root.querySelector(selector);
+    },
+    queryAll(root: HTMLElement, selector: string) {
+      return Array.from(root.querySelectorAll(selector));
+    }
+  });
+  await utils.registerEngine(playwright, 'defaultContextCSS', defaultContextCSS);
+
+  await page.setContent(`<div>hello</div>`);
+  expect(await page.innerHTML('css=div')).toBe('hello');
+  expect(await page.innerHTML('defaultContextCSS=div')).toBe('hello');
+});

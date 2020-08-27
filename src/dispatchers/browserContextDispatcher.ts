@@ -127,4 +127,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };
   }
+
+  async registerSelectorEngine(params: channels.BrowserContextRegisterSelectorEngineParams): Promise<void> {
+    await this._object.selectors.register(params.name, params.source, params.contentScript);
+  }
 }

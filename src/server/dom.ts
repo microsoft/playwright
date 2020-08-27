@@ -21,7 +21,7 @@ import * as injectedScriptSource from '../generated/injectedScriptSource';
 import * as debugScriptSource from '../generated/debugScriptSource';
 import * as js from './javascript';
 import { Page } from './page';
-import { selectors, SelectorInfo } from './selectors';
+import { SelectorInfo } from './selectors';
 import * as types from './types';
 import { Progress } from './progress';
 import type DebugScript from './debug/injected/debugScript';
@@ -80,7 +80,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
   injectedScript(): Promise<js.JSHandle<InjectedScript>> {
     if (!this._injectedScriptPromise) {
       const custom: string[] = [];
-      for (const [name, { source }] of selectors._engines)
+      for (const [name, { source }] of this.frame._page.selectors._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
         new (${injectedScriptSource.source})([
@@ -580,15 +580,15 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
-    return selectors._query(this._context.frame, selector, this);
+    return this._page.selectors._query(this._context.frame, selector, this);
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
-    return selectors._queryAll(this._context.frame, selector, this);
+    return this._page.selectors._queryAll(this._context.frame, selector, this);
   }
 
   async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
-    const handle = await selectors._query(this._context.frame, selector, this);
+    const handle = await this._page.selectors._query(this._context.frame, selector, this);
     if (!handle)
       throw new Error(`Error: failed to find element matching selector "${selector}"`);
     const result = await handle._evaluateExpression(expression, isFunction, true, arg);
@@ -597,7 +597,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _$$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
-    const arrayHandle = await selectors._queryArray(this._context.frame, selector, this);
+    const arrayHandle = await this._page.selectors._queryArray(this._context.frame, selector, this);
     const result = await arrayHandle._evaluateExpression(expression, isFunction, true, arg);
     arrayHandle.dispose();
     return result;
@@ -655,7 +655,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const { state = 'visible' } = options;
     if (!['attached', 'detached', 'visible', 'hidden'].includes(state))
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
-    const info = selectors._parseSelector(selector);
+    const info = this._page.selectors._parseSelector(selector);
     const task = waitForSelectorTask(info, state, this);
     return this._page._runAbortableTask(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);

@@ -31,6 +31,7 @@ import { FileChooser } from './fileChooser';
 import { Progress, runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
+import { Selectors } from './selectors';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -138,6 +139,7 @@ export class Page extends EventEmitter {
   readonly coverage: any;
   private _requestInterceptor?: network.RouteHandler;
   _ownedContext: BrowserContext | undefined;
+  readonly selectors: Selectors;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -164,6 +166,7 @@ export class Page extends EventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
+    this.selectors = browserContext.selectors;
   }
 
   async _doSlowMo() {

@@ -175,13 +175,20 @@ describe('connect', suite => {
         return Array.from(root.querySelectorAll(selector));
       }
     });
-    await utils.registerEngine(playwright, 'mycss', mycss);
+    // Register one engine before connecting.
+    await utils.registerEngine(playwright, 'mycss1', mycss);
 
     const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    const context = await browser.newContext();
+
+    // Register another engine after creating context.
+    await utils.registerEngine(playwright, 'mycss2', mycss);
+
     const page = await browser.newPage();
     await page.setContent(`<div>hello</div>`);
     expect(await page.innerHTML('css=div')).toBe('hello');
-    expect(await page.innerHTML('mycss=div')).toBe('hello');
+    expect(await page.innerHTML('mycss1=div')).toBe('hello');
+    expect(await page.innerHTML('mycss2=div')).toBe('hello');
     await browser.close();
   });
 });

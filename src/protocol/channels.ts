@@ -104,36 +104,9 @@ export type PlaywrightInitializer = {
       hasTouch: boolean,
     },
   }[],
-  selectors: SelectorsChannel,
 };
 export interface PlaywrightChannel extends Channel {
 }
-
-// ----------- Selectors -----------
-export type SelectorsInitializer = {};
-export interface SelectorsChannel extends Channel {
-  register(params: SelectorsRegisterParams): Promise<SelectorsRegisterResult>;
-  createSelector(params: SelectorsCreateSelectorParams): Promise<SelectorsCreateSelectorResult>;
-}
-export type SelectorsRegisterParams = {
-  name: string,
-  source: string,
-  contentScript?: boolean,
-};
-export type SelectorsRegisterOptions = {
-  contentScript?: boolean,
-};
-export type SelectorsRegisterResult = void;
-export type SelectorsCreateSelectorParams = {
-  name: string,
-  handle: ElementHandleChannel,
-};
-export type SelectorsCreateSelectorOptions = {
-
-};
-export type SelectorsCreateSelectorResult = {
-  value?: string,
-};
 
 // ----------- BrowserType -----------
 export type BrowserTypeInitializer = {
@@ -454,6 +427,7 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
+  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams): Promise<BrowserContextRegisterSelectorEngineResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -618,6 +592,15 @@ export type BrowserContextCrNewCDPSessionOptions = {
 export type BrowserContextCrNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
+export type BrowserContextRegisterSelectorEngineParams = {
+  name: string,
+  source: string,
+  contentScript?: boolean,
+};
+export type BrowserContextRegisterSelectorEngineOptions = {
+  contentScript?: boolean,
+};
+export type BrowserContextRegisterSelectorEngineResult = void;
 
 // ----------- Page -----------
 export type PageInitializer = {
@@ -1625,6 +1608,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   uncheck(params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
   waitForElementState(params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
   waitForSelector(params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
+  createSelectorForTest(params: ElementHandleCreateSelectorForTestParams): Promise<ElementHandleCreateSelectorForTestResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -1935,6 +1919,15 @@ export type ElementHandleWaitForSelectorOptions = {
 };
 export type ElementHandleWaitForSelectorResult = {
   element?: ElementHandleChannel,
+};
+export type ElementHandleCreateSelectorForTestParams = {
+  name: string,
+};
+export type ElementHandleCreateSelectorForTestOptions = {
+
+};
+export type ElementHandleCreateSelectorForTestResult = {
+  value?: string,
 };
 
 // ----------- Request -----------

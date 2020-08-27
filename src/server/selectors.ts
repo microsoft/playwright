@@ -132,4 +132,4 @@ export class Selectors {
   }
 }
 
-export const selectors = new Selectors();
+export const sharedSelectors = new Selectors();

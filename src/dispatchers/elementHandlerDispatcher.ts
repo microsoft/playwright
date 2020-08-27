@@ -156,4 +156,8 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   async waitForSelector(params: channels.ElementHandleWaitForSelectorParams): Promise<channels.ElementHandleWaitForSelectorResult> {
     return { element: ElementHandleDispatcher.createNullable(this._scope, await this._elementHandle.waitForSelector(params.selector, params)) };
   }
+
+  async createSelectorForTest(params: channels.ElementHandleCreateSelectorForTestParams): Promise<channels.ElementHandleCreateSelectorForTestResult> {
+    return { value: await this._elementHandle._page.selectors._createSelector(params.name, this._elementHandle as ElementHandle<Element>) };
+  }
 }
