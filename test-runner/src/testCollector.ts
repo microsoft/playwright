@@ -19,7 +19,7 @@ import { fixturesForCallback } from './fixtures';
 import { Test, Suite, serializeConfiguration } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
-import { config } from 'process';
+
 
 export type Matrix = {
   [key: string]: string[]
