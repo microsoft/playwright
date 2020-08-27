@@ -45,10 +45,9 @@ it('should access error in fixture', async () => {
 });
 
 it('should access data in fixture', async () => {
-  const result = await runTest('test-data-visible-in-fixture.js');
-  expect(result.exitCode).toBe(1);
-  const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'results.json')).toString());
-  const testResult = data.suites[0].tests[0].results[0];
+  const { exitCode, report } = await runTest('test-data-visible-in-fixture.js');
+  expect(exitCode).toBe(1);
+  const testResult = report.suites[0].tests[0].results[0];
   expect(testResult.data).toEqual({ 'myname': 'myvalue' });
   expect(testResult.stdout).toEqual([{ text: 'console.log\n' }]);
   expect(testResult.stderr).toEqual([{ text: 'console.error\n' }]);
@@ -67,10 +66,9 @@ it('should handle worker fixture error', async () => {
 });
 
 it('should collect stdio', async () => {
-  const result = await runTest('stdio.js');
-  expect(result.exitCode).toBe(0);
-  const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'test-results', 'results.json')).toString());
-  const testResult = data.suites[0].tests[0].results[0];
+  const { exitCode, report } = await runTest('stdio.js');
+  expect(exitCode).toBe(0);
+  const testResult = report.suites[0].tests[0].results[0];
   const { stdout, stderr } = testResult;
   expect(stdout).toEqual([{ text: 'stdout text' }, { buffer: Buffer.from('stdout buffer').toString('base64') }]);
   expect(stderr).toEqual([{ text: 'stderr text' }, { buffer: Buffer.from('stderr buffer').toString('base64') }]);
@@ -87,8 +85,17 @@ it('should retry failures', async () => {
   expect(result.flaky).toBe(1);
 });
 
+it('should repeat each', async () => {
+  const { exitCode, report } = await runTest('one-success.js', { 'repeat-each': 3 });
+  expect(exitCode).toBe(0);
+  expect(report.suites.length).toBe(3);
+  for (const suite of report.suites)
+    expect(suite.tests.length).toBe(1);
+});
+
 async function runTest(filePath: string, params: any = {}) {
   const outputDir = path.join(__dirname, 'test-results');
+  const reportFile = path.join(outputDir, 'results.json');
   await removeFolderAsync(outputDir).catch(e => {});
 
   const { output, status } = spawnSync('node', [
@@ -100,17 +107,19 @@ async function runTest(filePath: string, params: any = {}) {
   ], {
     env: {
       ...process.env,
-      PWRUNNER_JSON_REPORT: path.join(__dirname, 'test-results', 'results.json'),
+      PWRUNNER_JSON_REPORT: reportFile,
     }
   });
   const passed = (/(\d+) passed/.exec(output.toString()) || [])[1];
   const failed = (/(\d+) failed/.exec(output.toString()) || [])[1];
   const flaky = (/(\d+) flaky/.exec(output.toString()) || [])[1];
+  const report = JSON.parse(fs.readFileSync(reportFile).toString());
   return {
     exitCode: status,
     output: output.toString(),
     passed: parseInt(passed, 10),
     failed: parseInt(failed || '0', 10),
-    flaky: parseInt(flaky || '0', 10)
+    flaky: parseInt(flaky || '0', 10),
+    report
   };
 }

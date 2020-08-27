@@ -24,6 +24,7 @@ export type RunnerConfig = {
   debug?: boolean;
   quiet?: boolean;
   grep?: string;
+  repeatEach: number;
   retries: number,
   trialRun?: boolean;
   updateSnapshots?: boolean;

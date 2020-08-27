@@ -19,6 +19,7 @@ import { fixturesForCallback } from './fixtures';
 import { Test, Suite, serializeConfiguration } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
+import { config } from 'process';
 
 export type Matrix = {
   [key: string]: string[]
@@ -93,14 +94,17 @@ export class TestCollector {
       }
     });
 
-    // Clone the suite as many times as there are worker hashes.
-    // Only include the tests that requested these generations.
-    for (const [hash, {configuration, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
-      const clone = this._cloneSuite(suite, tests);
-      this.suite._addSuite(clone);
-      clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '');
-      clone.configuration = configuration;
-      clone._configurationString = configurationString;
+    // Clone the suite as many times as we have repeat each.
+    for (let i = 0; i < this._config.repeatEach; ++i) {
+      // Clone the suite as many times as there are worker hashes.
+      // Only include the tests that requested these generations.
+      for (const [hash, {configuration, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
+        const clone = this._cloneSuite(suite, tests);
+        this.suite._addSuite(clone);
+        clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '') + ' ' + (i ? ` #repeat-${i}#` : '');
+        clone.configuration = configuration;
+        clone._configurationString = configurationString + `#repeat-${i}#`;
+      }
     }
   }
 

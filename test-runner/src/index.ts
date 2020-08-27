@@ -17,6 +17,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import rimraf from 'rimraf';
+import { promisify } from 'util';
 import './builtin.fixtures';
 import './expect';
 import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT, TestInfo } from './fixtures';
@@ -29,6 +31,8 @@ export { parameters, registerParameter } from './fixtures';
 export { Reporter } from './reporter';
 export { RunnerConfig } from './runnerConfig';
 export { Suite, Test } from './test';
+
+const removeFolderAsync = promisify(rimraf);
 
 declare global {
   interface WorkerState {
@@ -89,6 +93,7 @@ export async function run(config: RunnerConfig, files: string[], reporter: Repor
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
   const runner = new Runner(suite, { ...config, jobs }, reporter);
+  await removeFolderAsync(config.outputDir).catch(e => {});
   fs.mkdirSync(config.outputDir, { recursive: true });
   try {
     for (const f of beforeFunctions)
