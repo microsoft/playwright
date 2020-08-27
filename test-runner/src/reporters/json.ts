@@ -58,6 +58,7 @@ class JSONReporter extends BaseReporter {
 
   private _serializeTestResult(result: TestResult): any {
     return {
+      status: result.status,
       duration: result.duration,
       error: result.error,
       stdout: result.stdout.map(s => stdioEntry(s)),

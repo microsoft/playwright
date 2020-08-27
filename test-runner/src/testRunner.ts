@@ -170,12 +170,14 @@ export class TestRunner extends EventEmitter {
     const startTime = Date.now();
     try {
       const testInfo = { config: this._config, test, result };
-      await this._runHooks(test.suite, 'beforeEach', 'before', testInfo);
       if (!this._trialRun) {
+        await this._runHooks(test.suite, 'beforeEach', 'before', testInfo);
         const timeout = test.slow ? this._timeout * 3 : this._timeout;
         await fixturePool.runTestWithFixtures(test.fn, timeout, testInfo);
+        await this._runHooks(test.suite, 'afterEach', 'after', testInfo);
+      } else {
+        result.status = 'passed';
       }
-      await this._runHooks(test.suite, 'afterEach', 'after', testInfo);
       result.duration = Date.now() - startTime;
       this.emit('testEnd', { id, result });
     } catch (error) {
