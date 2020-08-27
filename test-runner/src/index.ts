@@ -64,6 +64,10 @@ export function registerWorkerFixture<T extends keyof(WorkerState & FixtureParam
 type RunResult = 'passed' | 'failed' | 'forbid-only' | 'no-tests';
 
 export async function run(config: RunnerConfig, files: string[], reporter: Reporter): Promise<RunResult> {
+  if (!config.trialRun) {
+    await removeFolderAsync(config.outputDir).catch(e => {});
+    fs.mkdirSync(config.outputDir, { recursive: true });
+  }
   const revertBabelRequire = installTransform();
   let hasSetup = false;
   try {
@@ -93,8 +97,6 @@ export async function run(config: RunnerConfig, files: string[], reporter: Repor
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
   const runner = new Runner(suite, { ...config, jobs }, reporter);
-  await removeFolderAsync(config.outputDir).catch(e => {});
-  fs.mkdirSync(config.outputDir, { recursive: true });
   try {
     for (const f of beforeFunctions)
       await f();
