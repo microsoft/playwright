@@ -106,7 +106,5 @@ export async function run(config: RunnerConfig, files: string[], reporter: Repor
     for (const f of afterFunctions)
       await f();
   }
-  return suite.findTest(test => {
-    return !!test.results.find(result => result.status === 'failed' || result.status === 'timedOut');
-  }) ? 'failed' : 'passed';
+  return suite.findTest(test => !test._ok()) ? 'failed' : 'passed';
 }

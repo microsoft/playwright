@@ -53,7 +53,7 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
   const suites = [suite];
   suite.file = file;
 
-  const it = specBuilder(['skip', 'fail', 'slow', 'only'], (specs, title, fn) => {
+  const it = specBuilder(['skip', 'fail', 'slow', 'only', 'flaky'], (specs, title, fn) => {
     const suite = suites[0];
     const test = new Test(title, fn);
     test.file = file;
@@ -67,6 +67,8 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
       test._skipped = true;
     if (!only && specs.fail && specs.fail[0])
       test._skipped = true;
+    if (specs.flaky && specs.flaky[0])
+      test._flaky = true;
     suite._addTest(test);
     return test;
   });
