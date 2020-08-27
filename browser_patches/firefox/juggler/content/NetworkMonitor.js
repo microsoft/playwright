@@ -33,7 +33,9 @@ class NetworkMonitor {
       const frame = this._frameTree.frameForDocShell(window.docShell);
       if (!frame)
         return;
-      this._requestDetails.set(httpChannel.channelId, {
+      const typeId = httpChannel.loadInfo ? httpChannel.loadInfo.internalContentPolicyType : 1;
+      const channelKey = httpChannel.channelId + ':' + typeId;
+      this._requestDetails.set(channelKey, {
         frameId: frame.id(),
       });
     } catch (e) {
@@ -41,8 +43,8 @@ class NetworkMonitor {
     }
   }
 
-  requestDetails(channelId) {
-    return this._requestDetails.get(channelId) || null;
+  requestDetails(channelKey) {
+    return this._requestDetails.get(channelKey) || null;
   }
 
   dispose() {

@@ -170,8 +170,8 @@ class PageAgent {
     this._dataTransfer = null;
   }
 
-  _requestDetails({channelId}) {
-    return this._networkMonitor.requestDetails(channelId);
+  _requestDetails({channelKey}) {
+    return this._networkMonitor.requestDetails(channelKey);
   }
 
   async _setEmulatedMedia({type, colorScheme}) {
