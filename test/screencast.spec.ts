@@ -258,7 +258,7 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN)).flaky(options.WEBKIT && LIN
   }
 });
 
-it.slow().fail(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+it.slow().fixme(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.
@@ -280,7 +280,7 @@ it.slow().fail(options.CHROMIUM)('should fire start/stop events when page create
   await context.close();
 });
 
-it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
+it.fixme(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.

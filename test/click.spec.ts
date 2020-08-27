@@ -322,7 +322,7 @@ it('should click the button inside an iframe', async({page, server}) => {
   expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it.fail(options.CHROMIUM || options.WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
+it.fixme(options.CHROMIUM || options.WEBKIT)('should click the button with fixed position inside an iframe', async({page, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
   // @see https://chromium-review.googlesource.com/c/chromium/src/+/1742784

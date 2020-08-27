@@ -149,14 +149,15 @@ class PytestReporter extends BaseReporter {
     }
 
     const status = [];
-    if (this.passed.length)
-      status.push(colors.green(`${this.passed.length} passed`));
+    if (this.asExpected.length)
+      status.push(colors.green(`${this.asExpected.length} as expected`));
     if (this.skipped.length)
       status.push(colors.yellow(`${this.skipped.length} skipped`));
-    if (this.failed.length)
-      status.push(colors.red(`${this.failed.length} failed`));
-    if (this.timedOut.length)
-      status.push(colors.red(`${this.timedOut.length} timed out`));
+    const timedOut = this.unexpected.filter(t => t._hasResultWithStatus('timedOut'));
+    if (this.unexpected.length - timedOut.length)
+      status.push(colors.red(`${this.unexpected.length - timedOut.length} unexpected failures`));
+    if (timedOut.length)
+      status.push(colors.red(`${timedOut.length} timed out`));
     status.push(colors.dim(`(${milliseconds(Date.now() - this.startTime)})`));
 
     for (let i = lines.length; i < this._visibleRows; ++i)

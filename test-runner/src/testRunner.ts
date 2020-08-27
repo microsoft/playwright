@@ -160,6 +160,7 @@ export class TestRunner extends EventEmitter {
     const result: TestResult = {
       duration: 0,
       status: 'passed',
+      expectedStatus: test._expectedStatus,
       stdout: [],
       stderr: [],
       data: {}
@@ -181,7 +182,7 @@ export class TestRunner extends EventEmitter {
         await fixturePool.runTestWithFixtures(test.fn, timeout, testInfo);
         await this._runHooks(test.suite, 'afterEach', 'after', testInfo);
       } else {
-        result.status = 'passed';
+        result.status = result.expectedStatus;
       }
     } catch (error) {
       // Error in the test fixture teardown.

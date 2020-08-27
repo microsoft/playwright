@@ -126,8 +126,11 @@ export class Runner {
         return;
       }
 
+      // We always restart worker on failures, even if they are expected.
+      // But we don't retry expected failures.
       const remaining = params.remaining;
-      if (this._config.retries) {
+      const { test } = this._testById.get(params.failedTestId);
+      if (this._config.retries && test._expectedStatus === 'passed') {
         const pair = this._testById.get(params.failedTestId);
         if (pair.test.results.length < this._config.retries + 1) {
           pair.result = pair.test._appendResult();
@@ -169,6 +172,7 @@ export class Runner {
       const { test } = this._testById.get(params.id);
       test._skipped = params.skipped;
       test._flaky = params.flaky;
+      test._expectedStatus = params.expectedStatus;
       this._reporter.onTestBegin(test);
     });
     worker.on('testEnd', params => {

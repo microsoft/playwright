@@ -39,7 +39,7 @@ it.fail(true)('should report that selector does not match anymore', async ({page
   expect(error.message).toContain('element does not match the selector anymore');
 });
 
-it.fail(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
+it.fixme(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));
@@ -81,7 +81,7 @@ it.fail(true)('should retarget when element is recycled during hit testing', asy
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it.fail(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
+it.fixme(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })] ));

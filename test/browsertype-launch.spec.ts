@@ -43,7 +43,7 @@ it.skip(options.FIREFOX)('should throw if page argument is passed', async({brows
   expect(waitError.message).toContain('can not specify page');
 });
 
-it.fail(true)('should reject if launched browser fails immediately', async({browserType, defaultBrowserOptions}) => {
+it.fixme(true)('should reject if launched browser fails immediately', async({browserType, defaultBrowserOptions}) => {
   // I'm getting ENCONRESET on this one.
   const options = Object.assign({}, defaultBrowserOptions, {executablePath: path.join(__dirname, 'assets', 'dummy_bad_browser_executable.js')});
   let waitError = null;

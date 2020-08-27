@@ -30,10 +30,9 @@ const stackUtils = new StackUtils();
 
 export class BaseReporter implements Reporter  {
   skipped: Test[] = [];
-  passed: Test[] = [];
+  asExpected: Test[] = [];
+  unexpected: Test[] = [];
   flaky: Test[] = [];
-  failed: Test[] = [];
-  timedOut: Test[] = [];
   duration = 0;
   startTime: number;
   config: RunnerConfig;
@@ -66,28 +65,24 @@ export class BaseReporter implements Reporter  {
   }
 
   onTestEnd(test: Test, result: TestResult) {
-    switch (result.status) {
-      case 'skipped': {
-        this.skipped.push(test);
-        return;
+    if (result.status === 'skipped') {
+      this.skipped.push(test);
+      return;
+    }
+
+    if (result.status === result.expectedStatus) {
+      if (test.results.length === 1) {
+        // as expected from the first attempt
+        this.asExpected.push(test);
+      } else {
+        // as expected after unexpected -> flaky.
+        this.flaky.push(test);
       }
-      case 'passed':
-        if (test.results.length === 1)
-          this.passed.push(test);
-        else
-          this.flaky.push(test);
-        return;
-      case 'failed':
-        // Fall through.
-      case 'timedOut': {
-        if (test.results.length === this.config.retries + 1) {
-          if (result.status === 'timedOut')
-            this.timedOut.push(test);
-          else
-            this.failed.push(test);
-        }
-        return;
-      }
+      return;
+    }
+    if (test.results.length === this.config.retries + 1) {
+      // We made as many retries as we could, still failing.
+      this.unexpected.push(test);
     }
   }
 
@@ -98,15 +93,16 @@ export class BaseReporter implements Reporter  {
   epilogue() {
     console.log('');
 
-    console.log(colors.green(`  ${this.passed.length} passed`) + colors.dim(` (${milliseconds(this.duration)})`));
+    console.log(colors.green(`  ${this.asExpected.length} as expected`) + colors.dim(` (${milliseconds(this.duration)})`));
 
     if (this.skipped.length)
       console.log(colors.yellow(`  ${this.skipped.length} skipped`));
 
-    if (this.failed.length) {
-      console.log(colors.red(`  ${this.failed.length} failed`));
+    const filteredUnexpected = this.unexpected.filter(t => !t._hasResultWithStatus('timedOut'));
+    if (filteredUnexpected.length) {
+      console.log(colors.red(`  ${filteredUnexpected.length} failed`));
       console.log('');
-      this._printFailures(this.failed);
+      this._printFailures(filteredUnexpected);
     }
 
     if (this.flaky.length) {
@@ -115,10 +111,11 @@ export class BaseReporter implements Reporter  {
       this._printFailures(this.flaky);
     }
 
-    if (this.timedOut.length) {
-      console.log(colors.red(`  ${this.timedOut.length} timed out`));
+    const timedOut = this.unexpected.filter(t => t._hasResultWithStatus('timedOut'));
+    if (timedOut.length) {
+      console.log(colors.red(`  ${timedOut.length} timed out`));
       console.log('');
-      this._printFailures(this.timedOut);
+      this._printFailures(timedOut);
     }
   }
 
@@ -131,7 +128,8 @@ export class BaseReporter implements Reporter  {
   formatFailure(test: Test, index?: number): string {
     const tokens: string[] = [];
     const relativePath = path.relative(process.cwd(), test.file);
-    const header = `  ${index ? index + ')' : ''} ${terminalLink(relativePath, `file://${os.hostname()}${test.file}`)} › ${test.title}`;
+    const passedUnexpectedlySuffix = test.results[0].status === 'passed' ? ' -- passed unexpectedly' : '';
+    const header = `  ${index ? index + ')' : ''} ${terminalLink(relativePath, `file://${os.hostname()}${test.file}`)} › ${test.title}${passedUnexpectedlySuffix}`;
     tokens.push(colors.bold(colors.red(header)));
     for (const result of test.results) {
       if (result.status === 'passed')
