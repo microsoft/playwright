@@ -38,6 +38,7 @@ program
     .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
     .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', String(Math.ceil(require('os').cpus().length / 2)))
     .option('--reporter <reporter>', 'Specify reporter to use, comma-separated, can be "dot", "list", "json"', 'dot')
+    .option('--repeat-each <repeat-each>', 'Specify how many times to run the tests', '1')
     .option('--retries <retries>', 'Specify retry count', '0')
     .option('--trial-run', 'Only collect the matching tests and report them as passing')
     .option('--quiet', 'Suppress stdio', false)
@@ -54,6 +55,7 @@ program
         grep: command.grep,
         jobs: parseInt(command.jobs, 10),
         outputDir: command.output,
+        repeatEach: parseInt(command.repeatEach, 10),
         retries: parseInt(command.retries, 10),
         snapshotDir: path.join(testDir, '__snapshots__'),
         testDir,
