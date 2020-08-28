@@ -10,7 +10,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 <!-- GEN:stop -->
 
 ## Support for all browsers
-* **Test on Chromium, Firefox and WebKit**. Playwright has full API coverage for all modern browsers, including Google Chrome and Microsoft Edge (with Chromium), Apple Safari (with WebKit) and Mozilla Firefox.
+* **Test on Chromium, Firefox and WebKit**. Playwright has full API coverage for all modern browsers, including Google Chrome and Microsoft Edge (with [Chromium](https://www.chromium.org/)), Apple Safari (with [WebKit](https://webkit.org/)) and Mozilla Firefox.
 
 * **Cross-platform WebKit testing**. With Playwright, test how your app behaves in Apple Safari with WebKit builds for Windows, Linux and macOS. Test locally and on CI.
 
@@ -28,13 +28,13 @@ Playwright enables fast, reliable and capable automation across all modern brows
 * **Resilient element selectors**. Playwright can rely on user-facing strings, like text content and accessibility labels to [select elements](selectors.md). These strings are more resilient than selectors tightly-coupled to the DOM structure.
 
 ## Powerful automation capabilities
-* **Multiple domains, pages and frames**. Playwright is an out-of-process automation driver that is not limited by the scope of in-page JavaScript execution.
+* **Multiple domains, pages and frames**. Playwright is an out-of-process automation driver that is not limited by the scope of in-page JavaScript execution and can automate scenarios with [multiple pages](multi-pages.md).
 
-* **Powerful network interception**. Playwright introduces context-wide network interception to stub and mock network requests.
+* **Powerful network control**. Playwright introduces context-wide [network interception](network.md) to stub and mock network requests.
 
-* **Modern web features**. Playwright supports web components through shadow-piercing selectors, geolocation, permissions, web workers and other modern web APIs. 
+* **Modern web features**. Playwright supports web components through [shadow-piercing selectors](selectors.md), [geolocation, permissions](emulation.md), web workers and other modern web APIs. 
 
-* **Capabilities to cover all scenarios**. Support for file downloads and uploads, native input events, hovers, dark mode.
+* **Capabilities to cover all scenarios**. Support for [file downloads](network.md) and [uploads](input.md), native [input events](input.md), and even [dark mode](emulation.md).
 
 ## Integrates with your workflow
 * **One-line installation**. Running `npm i playwright` auto-downloads browser dependencies for your team to be onboarded quickly.
