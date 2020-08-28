@@ -33,6 +33,8 @@ export const options = {
   HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
+  // Tracing is currently not implemented under wire.
+  TRACING: valueFromEnv('TRACING', false) && !process.env.PWWIRE,
 };
 
 declare global {
@@ -183,7 +185,7 @@ registerWorkerFixture('golden', async ({browserName}, test) => {
 registerFixture('context', async ({browser, toImpl}, runTest, info) => {
   const context = await browser.newContext();
   const { test, config } = info;
-  if (toImpl) {
+  if (options.TRACING) {
     const traceStorageDir = path.join(config.outputDir, 'trace-storage');
     const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');

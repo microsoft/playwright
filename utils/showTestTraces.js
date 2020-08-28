@@ -17,7 +17,7 @@
 const path = require('path');
 const fs = require('fs');
 const playwright = require('..');
-const { showTraceViewer } = require('../lib/client/traceViewer');
+const { showTraceViewer } = require('../lib/trace/traceViewer');
 
 const testResultsDir = process.argv[2] || path.join(__dirname, '..', 'test-results');
 const files = collectFiles(testResultsDir, '');
