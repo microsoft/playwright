@@ -14,7 +14,7 @@ assignees: ''
 - Browser: [e.g. All, Chromium, Firefox, WebKit]
 - Extra: [any specific details about your environment]
 
-<!-- Run the following command in your Playwright project to provide us the needed system information (pkg versions, os etc.) -->
+<!-- CLI to auto-capture this info -->
 <!-- npx envinfo --preset playwright -->
 
 **Code Snippet**
