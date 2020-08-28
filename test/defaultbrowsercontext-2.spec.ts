@@ -111,7 +111,7 @@ it.slow()('should restore state from userDataDir', async ({browserType, defaultB
   await removeUserDataDir(userDataDir2);
 });
 
-it.slow()('should restore cookies from userDataDir', async ({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
+it.slow().flaky(options.CHROMIUM && WIN)('should restore cookies from userDataDir', async ({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
   const userDataDir = await makeUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);
   const page = await browserContext.newPage();
