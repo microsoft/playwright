@@ -128,7 +128,7 @@ it('should(not) block third party cookies', async({browserType, defaultBrowserOp
   await browser.close();
 });
 
-it.fail(options.WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
+it.fixme(options.WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const context = await browser.newContext({ viewport: null });

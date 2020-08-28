@@ -35,12 +35,14 @@ class ListReporter extends BaseReporter {
   onTestEnd(test: Test, result: TestResult) {
     super.onTestEnd(test, result);
     let text = '';
-    switch (result.status) {
-      case 'skipped': text = colors.green('  - ') + colors.cyan(test.fullTitle()); break;
-      case 'passed': text = '\u001b[2K\u001b[0G' + colors.green('  ✓ ') + colors.gray(test.fullTitle()); break;
-      case 'failed':
-        // fall through
-      case 'timedOut': text = '\u001b[2K\u001b[0G' + colors.red(`  ${++this._failure}) ` + test.fullTitle()); break;
+    if (result.status === 'skipped') {
+      text = colors.green('  - ') + colors.cyan(test.fullTitle());
+    } else {
+      const statusMark = result.status === 'passed' ? colors.green('  ✓ ') : colors.red('  x ');
+      if (result.status === result.expectedStatus)
+        text = '\u001b[2K\u001b[0G' + statusMark + colors.gray(test.fullTitle());
+      else
+        text = '\u001b[2K\u001b[0G' + colors.red(`  ${++this._failure}) ` + test.fullTitle());
     }
     process.stdout.write(text + '\n');
   }

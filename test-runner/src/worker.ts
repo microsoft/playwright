@@ -49,12 +49,12 @@ let testRunner: TestRunner;
 
 process.on('unhandledRejection', (reason, promise) => {
   if (testRunner)
-    testRunner.fatalError(reason);
+    testRunner.unhandledError(reason);
 });
 
 process.on('uncaughtException', error => {
   if (testRunner)
-    testRunner.fatalError(error);
+    testRunner.unhandledError(error);
 });
 
 process.on('message', async message => {

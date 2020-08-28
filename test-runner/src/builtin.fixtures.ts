@@ -32,6 +32,7 @@ declare global {
 
   type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void> | void) => void) & {
     fail(condition: boolean): ItFunction<STATE>;
+    fixme(condition: boolean): ItFunction<STATE>;
     flaky(condition: boolean): ItFunction<STATE>;
     skip(condition: boolean): ItFunction<STATE>;
     slow(): ItFunction<STATE>;

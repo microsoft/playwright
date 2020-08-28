@@ -40,8 +40,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --retries=3 --reporter=dot,json && npm run coverage"
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "test-results/debug.log"
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: always()
@@ -67,8 +65,6 @@ jobs:
     - run: node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --retries=3 --reporter=dot,json
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "test-results/debug.log"
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -98,8 +94,6 @@ jobs:
       shell: bash
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "test-results/debug.log"
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -152,7 +146,6 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
-        DEBUG_FILE: "test-results/debug.log"
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
@@ -184,8 +177,6 @@ jobs:
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --retries=3 --reporter=dot,json"
       env:
         BROWSER: ${{ matrix.browser }}
-        DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
-        DEBUG_FILE: "test-results/debug.log"
         PWWIRE: true
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1

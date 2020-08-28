@@ -16,6 +16,8 @@
 
 export type Configuration = { name: string, value: string }[];
 
+type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
+
 export class Test {
   suite: Suite;
   title: string;
@@ -27,10 +29,13 @@ export class Test {
   results: TestResult[] = [];
 
   _id: string;
+  // Skipped & flaky are resolved based on options in worker only
+  // We will compute them there and send to the runner (front-end)
   _skipped = false;
   _flaky = false;
   _overriddenFn: Function;
   _startTime: number;
+  _expectedStatus: TestStatus = 'passed';
 
   constructor(title: string, fn: Function) {
     this.title = title;
@@ -48,7 +53,7 @@ export class Test {
   _appendResult(): TestResult {
     const result: TestResult = {
       duration: 0,
-      status: 'none',
+      expectedStatus: 'passed',
       stdout: [],
       stderr: [],
       data: {}
@@ -58,15 +63,19 @@ export class Test {
   }
 
   _ok(): boolean {
-    if (this._skipped)
+    if (this._skipped || this.suite._isSkipped())
       return true;
-    const hasFailedResults = !!this.results.find(r => r.status !== 'passed' && r.status !== 'skipped');
+    const hasFailedResults = !!this.results.find(r => r.status !== r.expectedStatus);
     if (!hasFailedResults)
       return true;
     if (!this._flaky)
       return false;
-    const hasPassedResults = !!this.results.find(r => r.status === 'passed');
+    const hasPassedResults = !!this.results.find(r => r.status === r.expectedStatus);
     return hasPassedResults;
+  }
+
+  _hasResultWithStatus(status: TestStatus): boolean {
+    return !!this.results.find(r => r.status === status);
   }
 
   _clone(): Test {
@@ -83,7 +92,8 @@ export class Test {
 
 export type TestResult = {
   duration: number;
-  status: 'none' | 'passed' | 'failed' | 'timedOut' | 'skipped';
+  status?: TestStatus;
+  expectedStatus: TestStatus;
   error?: any;
   stdout: (string | Buffer)[];
   stderr: (string | Buffer)[];
@@ -96,9 +106,12 @@ export class Suite {
   suites: Suite[] = [];
   tests: Test[] = [];
   only = false;
-  skipped = false;
   file: string;
   configuration: Configuration;
+
+  // Skipped & flaky are resolved based on options in worker only
+  // We will compute them there and send to the runner (front-end)
+  _skipped = false;
   _configurationString: string;
 
   _hooks: { type: string, fn: Function } [] = [];
@@ -124,7 +137,7 @@ export class Suite {
   }
 
   _isSkipped(): boolean {
-    return this.skipped || (this.parent && this.parent._isSkipped());
+    return this._skipped || (this.parent && this.parent._isSkipped());
   }
 
   _addTest(test: Test) {
@@ -163,7 +176,7 @@ export class Suite {
     const suite = new Suite(this.title);
     suite.only = this.only;
     suite.file = this.file;
-    suite.skipped = this.skipped;
+    suite._skipped = this._skipped;
     return suite;
   }
 

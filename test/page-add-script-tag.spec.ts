@@ -88,7 +88,7 @@ it('should work with content', async({page, server}) => {
   expect(await page.evaluate(() => window['__injected'])).toBe(35);
 });
 
-it.fail(options.FIREFOX)('should throw when added with content to the CSP page', async({page, server}) => {
+it('should throw when added with content to the CSP page', async({page, server}) => {
   // Firefox fires onload for blocked script before it issues the CSP console error.
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;

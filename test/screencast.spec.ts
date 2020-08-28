@@ -173,7 +173,7 @@ class VideoPlayer {
   }
 }
 
-it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -199,7 +199,7 @@ it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, vid
   expectAll(pixels, almostRed);
 });
 
-it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM).flaky(options.WEBKIT)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -233,7 +233,7 @@ it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, serv
 });
 
 // Accelerated compositing is disabled in WebKit on Windows.
-it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM || (options.WEBKIT && WIN)).flaky(options.WEBKIT && LINUX)('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -258,7 +258,7 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
   }
 });
 
-it.fail(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+it.slow().fixme(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.
@@ -280,7 +280,7 @@ it.fail(options.CHROMIUM)('should fire start/stop events when page created/close
   await context.close();
 });
 
-it.fail(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
+it.fixme(options.CHROMIUM)('should fire start event for popups', async({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
    return;
   // Use server side of the context. All the code below also uses server side APIs.

@@ -27,7 +27,7 @@ function dimensions() {
   };
 }
 
-it.fail(options.FIREFOX && WIN)('should click the document', async({page, server}) => {
+it.flaky(options.FIREFOX && WIN)('should click the document', async({page, server}) => {
   // Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
   await page.evaluate(() => {
     window["clickPromise"] = new Promise(resolve => {

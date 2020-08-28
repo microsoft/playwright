@@ -17,8 +17,6 @@
 
 import { options } from './playwright.fixtures';
 
-const CRASH_FAIL = (options.FIREFOX && WIN) || options.WIRE;
-// Firefox Win: it just doesn't crash sometimes.
 function crash(pageImpl, browserName) {
   if (browserName === 'chromium')
     pageImpl.mainFrame().goto('chrome://crash').catch(e => {});
@@ -28,13 +26,13 @@ function crash(pageImpl, browserName) {
     pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
-it.fail(CRASH_FAIL)('should emit crash event when page crashes', async({page, browserName, toImpl}) => {
+it.fail(options.WIRE)('should emit crash event when page crashes', async({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash(toImpl(page), browserName);
   await new Promise(f => page.on('crash', f));
 });
 
-it.fail(CRASH_FAIL)('should throw on any action after page crashes', async({page, browserName, toImpl}) => {
+it.fail(options.WIRE)('should throw on any action after page crashes', async({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash(toImpl(page), browserName);
   await page.waitForEvent('crash');
@@ -43,7 +41,7 @@ it.fail(CRASH_FAIL)('should throw on any action after page crashes', async({page
   expect(err.message).toContain('crash');
 });
 
-it.fail(CRASH_FAIL)('should cancel waitForEvent when page crashes', async({page, browserName, toImpl}) => {
+it.fail(options.WIRE)('should cancel waitForEvent when page crashes', async({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   const promise = page.waitForEvent('response').catch(e => e);
   crash(toImpl(page), browserName);
@@ -51,7 +49,7 @@ it.fail(CRASH_FAIL)('should cancel waitForEvent when page crashes', async({page,
   expect(error.message).toContain('Page crashed');
 });
 
-it.fail(CRASH_FAIL)('should cancel navigation when page crashes', async({page, browserName, toImpl, server}) => {
+it.fixme(options.WIRE)('should cancel navigation when page crashes', async({page, browserName, toImpl, server}) => {
   await page.setContent(`<div>This page should crash</div>`);
   server.setRoute('/one-style.css', () => {});
   const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
@@ -61,7 +59,7 @@ it.fail(CRASH_FAIL)('should cancel navigation when page crashes', async({page, b
   expect(error.message).toContain('Navigation failed because page crashed');
 });
 
-it.fail(CRASH_FAIL)('should be able to close context when page crashes', async({page, browserName, toImpl}) => {
+it.fixme(options.WIRE)('should be able to close context when page crashes', async({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash(toImpl(page), browserName);
   await page.waitForEvent('crash');

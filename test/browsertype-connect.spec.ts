@@ -81,7 +81,7 @@ it.skip(options.WIRE).slow()('disconnected event should be emitted when browser 
   expect(disconnected2).toBe(1);
 });
 
-it.skip(options.WIRE).fail(options.CHROMIUM && WIN).slow()('should handle exceptions during connect', async({browserType, remoteServer}) => {
+it.skip(options.WIRE).slow()('should handle exceptions during connect', async({browserType, remoteServer}) => {
   const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
   const error = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);
   expect(error.message).toContain('Dummy');
