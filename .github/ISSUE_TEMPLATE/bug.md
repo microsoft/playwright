@@ -14,6 +14,9 @@ assignees: ''
 - Browser: [e.g. All, Chromium, Firefox, WebKit]
 - Extra: [any specific details about your environment]
 
+<!-- Run the following command in your Playwright project to provide us the needed system information (pkg versions, os etc.) -->
+<!-- npx envinfo --preset playwright -->
+
 **Code Snippet**
 
 Help us help you! Put down a short code snippet that illustrates your bug and
@@ -24,7 +27,7 @@ const {chromium, webkit, firefox} = require('playwright');
 
 (async () => {
   const browser = await chromium.launch();
-  // ... 
+  // ...
 })();
 ```
 
