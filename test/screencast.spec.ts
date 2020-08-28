@@ -172,7 +172,10 @@ class VideoPlayer {
   }
 }
 
-describe.skip(options.WIRE).fixme(options.CHROMIUM)('screencast', () => {
+describe('screencast', suite => {
+  suite.skip(options.WIRE);
+  suite.fixme(options.CHROMIUM);
+}, () => {
   it('should capture static page', test => {
     test.fixme();
   }, async ({page, tmpDir, videoPlayer, toImpl}) => {

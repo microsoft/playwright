@@ -20,29 +20,26 @@ import { promisify } from 'util';
 import fs from 'fs';
 import rimraf from 'rimraf';
 import { registerFixture } from './fixtures';
-import { Test } from './test';
+import { Test, Suite } from './test';
 
-interface Describers<STATE> {
+interface DescribeFunction {
+  describe(name: string, inner: () => void): void;
+  describe(name: string, modifier: (suite: Suite) => any, inner: () => void): void;
+}
+
+interface ItFunction<STATE> {
   it(name: string, inner: (state: STATE) => Promise<void> | void): void;
   it(name: string, modifier: (test: Test) => any, inner: (state: STATE) => Promise<void> | void): void;
 }
 
 declare global {
-  type DescribeFunction = ((name: string, inner: () => void) => void) & {
-    fail(condition: boolean): DescribeFunction;
-    skip(condition: boolean): DescribeFunction;
-    fixme(condition: boolean): DescribeFunction;
-    flaky(condition: boolean): DescribeFunction;
-    slow(): DescribeFunction;
-    repeat(n: number): DescribeFunction;
-  };
+  const describe: DescribeFunction['describe'];
+  const fdescribe: DescribeFunction['describe'];
+  const xdescribe: DescribeFunction['describe'];
 
-  const describe: DescribeFunction;
-  const fdescribe: DescribeFunction;
-  const xdescribe: DescribeFunction;
-  const it: Describers<TestState & WorkerState & FixtureParameters>['it'];
-  const fit: Describers<TestState & WorkerState & FixtureParameters>['it'];
-  const xit: Describers<TestState & WorkerState & FixtureParameters>['it'];
+  const it: ItFunction<TestState & WorkerState & FixtureParameters>['it'];
+  const fit: ItFunction<TestState & WorkerState & FixtureParameters>['it'];
+  const xit: ItFunction<TestState & WorkerState & FixtureParameters>['it'];
 
   const beforeEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;
   const afterEach: (inner: (state: TestState & WorkerState & FixtureParameters) => Promise<void>) => void;

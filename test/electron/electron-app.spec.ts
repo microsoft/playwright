@@ -20,7 +20,9 @@ import './electron.fixture';
 import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
-describe.skip(!options.CHROMIUM)('electron app', () => {
+describe('electron app', suite => {
+  suite.skip(!options.CHROMIUM);
+}, () => {
   it('should fire close event', async ({ playwright }) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
     const application = await playwright.electron.launch(electronPath, {

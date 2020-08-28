@@ -44,7 +44,9 @@ async function checkPageSlowMo(toImpl, page, task) {
   `);
   await checkSlowMo(toImpl, page, task);
 }
-describe.skip(options.WIRE)('slowMo', () => {
+describe('slowMo', suite => {
+  suite.skip(options.WIRE);
+}, () => {
   it('Page SlowMo $$eval', async ({page, toImpl}) => {
     await checkPageSlowMo(toImpl, page, () => page.$$eval('button', () => void 0));
   });

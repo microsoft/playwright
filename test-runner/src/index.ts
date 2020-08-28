@@ -85,7 +85,7 @@ export async function run(config: RunnerConfig, files: string[], reporter: Repor
   const testCollector = new TestCollector(files, matrix, config);
   const suite = testCollector.suite;
   if (config.forbidOnly) {
-    const hasOnly = suite.findTest(t => t.only) || suite.eachSuite(s => s.only);
+    const hasOnly = suite.findTest(t => t._only) || suite.eachSuite(s => s._only);
     if (hasOnly)
       return 'forbid-only';
   }

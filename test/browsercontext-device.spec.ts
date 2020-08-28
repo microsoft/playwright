@@ -16,7 +16,9 @@
  */
 import { options } from './playwright.fixtures';
 
-describe.skip(options.FIREFOX)('device', () => {
+describe('device', suite => {
+  suite.skip(options.FIREFOX);
+}, () => {
   it('should work', async ({playwright, browser, server}) => {
     const iPhone = playwright.devices['iPhone 6'];
     const context = await browser.newContext({ ...iPhone });

@@ -32,7 +32,10 @@ it('should close the browser when the node process closes', test => {
   // so we don't check it here.
 });
 
-describe.skip(WIN || !options.HEADLESS).slow()('fixtures', () => {
+describe('fixtures', suite => {
+  suite.skip(WIN || !options.HEADLESS);
+  suite.slow();
+}, () => {
   // Cannot reliably send signals on Windows.
   it('should report browser close signal', async ({remoteServer}) => {
     const pid = await remoteServer.out('pid');

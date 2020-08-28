@@ -17,7 +17,9 @@
 import { options } from '../playwright.fixtures';
 import './electron.fixture';
 
-describe.skip(!options.CHROMIUM)('electron window', () => {
+describe('electron window', suite => {
+  suite.skip(!options.CHROMIUM);
+}, () => {
   it('should click the button', async ({window, server}) => {
     await window.goto(server.PREFIX + '/input/button.html');
     await window.click('button');

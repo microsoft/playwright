@@ -26,7 +26,10 @@ function crash(pageImpl, browserName) {
     pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
-describe.fixme(options.WIRE).flaky(options.FIREFOX && WIN)('', () => {
+describe('', suite => {
+  suite.fixme(options.WIRE);
+  suite.flaky(options.FIREFOX && WIN);
+}, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(toImpl(page), browserName);
