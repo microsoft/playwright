@@ -184,3 +184,35 @@ jobs:
       with:
         name: wire-${{ matrix.browser }}-linux-test-results
         path: test-results
+
+  tracing_linux:
+    name: "Tracing Linux"
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: mkdir -p coredumps
+    # Set core dump file name pattern
+    - run: sudo bash -c 'echo "$(pwd -P)/coredumps/core-pid_%p.dump" > /proc/sys/kernel/core_pattern'
+    # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
+    # Wrap `npm run` in a subshell to redirect STDERR to file.
+    # Enable core dumps in the subshell.
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000 --retries=3 --reporter=dot,json"
+      env:
+        BROWSER: ${{ matrix.browser }}
+        TRACING: true
+        PWRUNNER_JSON_REPORT: "test-results/report.json"
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: tracing-${{ matrix.browser }}-linux-test-results
+        path: test-results
