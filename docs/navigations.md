@@ -137,8 +137,15 @@ const [ popup ] = await Promise.all([
 await popup.waitForLoadState('load');
 ```
 
-### Advanced patterns
-When the page has a complex loading pattern, the custom waiting function is most reliable.
+#### API reference
+- [`page.click(selector[, options])`](./api.md#pageclickselector-options)
+- [`page.waitForLoadState([state[, options]])`](./api.md#pagewaitforloadstatestate-options)
+- [`page.waitForSelector(selector[, options])`](./api.md#pagewaitforselectorselector-options)
+- [`page.waitForNavigation([options])`](./api.md#pagewaitfornavigationoptions)
+- [`page.waitForFunction(pageFunction[, arg, options])`](./api.md#pagewaitforfunctionpagefunction-arg-options)
+
+## Advanced patterns
+For pages that have complicated loading patterns, [`page.waitForFunction`](./api.md#pagewaitforfunctionpagefunction-arg-options) is a powerful and extensible approach to define a custom wait criteria.
 
 ```js
 await page.goto('http://example.com');
@@ -148,8 +155,4 @@ await page.screenshot();
 ```
 
 #### API reference
-- [`page.click(selector[, options])`](./api.md#pageclickselector-options)
-- [`page.waitForLoadState([state[, options]])`](./api.md#pagewaitforloadstatestate-options)
-- [`page.waitForSelector(selector[, options])`](./api.md#pagewaitforselectorselector-options)
-- [`page.waitForNavigation([options])`](./api.md#pagewaitfornavigationoptions)
 - [`page.waitForFunction(pageFunction[, arg, options])`](./api.md#pagewaitforfunctionpagefunction-arg-options)
