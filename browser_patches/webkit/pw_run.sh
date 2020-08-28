@@ -18,19 +18,21 @@ function runOSX() {
 
 function runLinux() {
   # if script is run as-is
+  GIO_DIR="";
+  LD_PATH="";
+  BUNDLE_DIR="";
   DEPENDENCIES_FOLDER="DependenciesGTK";
   MINIBROWSER_FOLDER="minibrowser-gtk";
   BUILD_FOLDER="WebKitBuild/GTK";
-  GIO_DIR="";
   if [[ "$*" == *--headless* ]]; then
     DEPENDENCIES_FOLDER="DependenciesWPE";
     MINIBROWSER_FOLDER="minibrowser-wpe";
     BUILD_FOLDER="WebKitBuild/WPE";
   fi
+  # Setting extra environment variables like LD_LIBRARY_PATH or WEBKIT_INJECTED_BUNDLE_PATH
+  # is only needed when calling MiniBrowser from the build folder. The MiniBrowser from
+  # the zip bundle wrapper already sets itself the needed env variables.
   if [[ -d $SCRIPT_PATH/$MINIBROWSER_FOLDER ]]; then
-    LD_PATH="$SCRIPT_PATH/$MINIBROWSER_FOLDER"
-    GIO_DIR="$SCRIPT_PATH/$MINIBROWSER_FOLDER/gio/modules"
-    BUNDLE_DIR="$LD_PATH"
     MINIBROWSER="$SCRIPT_PATH/$MINIBROWSER_FOLDER/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/checkout/$BUILD_FOLDER ]]; then
     LD_PATH="$SCRIPT_PATH/checkout/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin"
@@ -38,9 +40,6 @@ function runLinux() {
     BUNDLE_DIR="$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/lib"
     MINIBROWSER="$SCRIPT_PATH/checkout/$BUILD_FOLDER/Release/bin/MiniBrowser"
   elif [[ -f $SCRIPT_PATH/MiniBrowser ]]; then
-    LD_PATH="$SCRIPT_PATH"
-    GIO_DIR="$SCRIPT_PATH/gio/modules"
-    BUNDLE_DIR="$SCRIPT_PATH"
     MINIBROWSER="$SCRIPT_PATH/MiniBrowser"
   elif [[ -d $SCRIPT_PATH/$BUILD_FOLDER ]]; then
     LD_PATH="$SCRIPT_PATH/$BUILD_FOLDER/$DEPENDENCIES_FOLDER/Root/lib:$SCRIPT_PATH/$BUILD_FOLDER/Release/bin"
@@ -52,11 +51,19 @@ function runLinux() {
     exit 1
   fi
 
-  if [[ -d "$GIO_DIR" ]]; then
+  if [[ -n "$GIO_DIR" ]]; then
     export GIO_EXTRA_MODULES="$GIO_DIR"
   fi
 
-  WEBKIT_FORCE_COMPLEX_TEXT="1" LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LD_PATH" WEBKIT_INJECTED_BUNDLE_PATH="$BUNDLE_DIR" "$MINIBROWSER" "$@"
+  if [[ -n "$LD_PATH" ]]; then
+    export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$LD_PATH"
+  fi
+
+  if [[ -n "$BUNDLE_DIR" ]]; then
+    export WEBKIT_INJECTED_BUNDLE_PATH="$BUNDLE_DIR"
+  fi
+
+  WEBKIT_FORCE_COMPLEX_TEXT="1" "$MINIBROWSER" "$@"
 }
 
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
