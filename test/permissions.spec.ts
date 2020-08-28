@@ -20,7 +20,9 @@ function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
 }
 
-describe.skip(options.WEBKIT)('permissions', () => {
+describe('permissions', suite => {
+  suite.skip(options.WEBKIT);
+}, () => {
   it('should be prompt by default', async ({page, server, context}) => {
     // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
     await page.goto(server.EMPTY_PAGE);

@@ -49,9 +49,9 @@ class JSONReporter extends BaseReporter {
     return {
       title: test.title,
       file: test.file,
-      only: test.only,
-      slow: test.slow,
-      timeout: test.timeout,
+      only: test.isOnly(),
+      slow: test.isSlow(),
+      timeout: test.timeout(),
       results: test.results.map(r => this._serializeTestResult(r))
     };
   }

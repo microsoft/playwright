@@ -22,7 +22,9 @@ async function({page}) {
   expect(page.coverage).toBe(null);
 });
 
-describe.skip(!options.CHROMIUM)('oopif', () => {
+describe('oopif', suite => {
+  suite.skip(!options.CHROMIUM);
+}, () => {
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();
     await page.goto(server.PREFIX + '/jscoverage/simple.html', { waitUntil: 'load' });

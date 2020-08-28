@@ -154,9 +154,9 @@ export class TestRunner extends EventEmitter {
     this._testId = id;
     // We only know resolved skipped/flaky value in the worker,
     // send it to the runner.
-    test._skipped = test._skipped || test.suite._isSkipped();
-    test._flaky = test._flaky || test.suite._isFlaky();
-    test._slow = test._slow || test.suite._isSlow();
+    test._skipped = test._isSkipped();
+    test._flaky = test._isFlaky();
+    test._slow = test._isSlow();
     this.emit('testBegin', {
       id,
       skipped: test._skipped,
@@ -184,10 +184,10 @@ export class TestRunner extends EventEmitter {
     try {
       const testInfo = { config: this._config, test, result };
       if (!this._trialRun) {
-        await this._runHooks(test.suite, 'beforeEach', 'before', testInfo);
-        const timeout = test._slow || test.suite._isSlow() ? this._timeout * 3 : this._timeout;
+        await this._runHooks(test.parent, 'beforeEach', 'before', testInfo);
+        const timeout = test._isSlow() ? this._timeout * 3 : this._timeout;
         await fixturePool.runTestWithFixtures(test.fn, timeout, testInfo);
-        await this._runHooks(test.suite, 'afterEach', 'after', testInfo);
+        await this._runHooks(test.parent, 'afterEach', 'after', testInfo);
       } else {
         result.status = result.expectedStatus;
       }

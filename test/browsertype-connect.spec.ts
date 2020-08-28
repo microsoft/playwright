@@ -19,7 +19,10 @@ import { options } from './playwright.fixtures';
 import utils from './utils';
 import './remoteServer.fixture';
 
-describe.skip(options.WIRE).slow()('connect', () => {
+describe('connect', suite => {
+  suite.skip(options.WIRE);
+  suite.slow();
+}, () => {
   it('should be able to reconnect to a browser', async ({browserType, remoteServer, server}) => {
     {
       const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });

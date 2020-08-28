@@ -173,7 +173,7 @@ class PytestReporter extends BaseReporter {
   }
 
   private _id(test: Test): string {
-    for (let suite = test.suite; suite; suite = suite.parent) {
+    for (let suite = test.parent; suite; suite = suite.parent) {
       if (this._suiteIds.has(suite))
         return this._suiteIds.get(suite);
     }

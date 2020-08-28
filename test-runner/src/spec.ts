@@ -63,30 +63,31 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
     if (metaFn)
       metaFn(test);
     test.file = file;
-    test.timeout = timeout;
+    test._timeout = timeout;
     const only = specs._only && specs._only[0];
     if (only)
-      test.only = true;
+      test._only = true;
     if (!only && specs._skip && specs._skip[0])
       test._skipped = true;
     suite._addTest(test);
     return test;
   });
 
-  const describe = specBuilder(['skip', 'fixme', 'flaky', 'only', 'slow'], (specs, title, fn) => {
+  const describe = specBuilder(['_skip', '_only'], (specs: any, title: string, metaFn: (suite: Suite) => void | Function, fn?: Function) => {
+    if (typeof fn !== 'function') {
+      fn = metaFn;
+      metaFn = null;
+    }
     const child = new Suite(title, suites[0]);
+    if (metaFn)
+      metaFn(child);
     suites[0]._addSuite(child);
     child.file = file;
-    child._slow = specs.slow && specs.slow[0];
-    const only = specs.only && specs.only[0];
+    const only = specs._only && specs._only[0];
     if (only)
-      child.only = true;
-    if (!only && specs.skip && specs.skip[0])
+      child._only = true;
+    if (!only && specs._skip && specs._skip[0])
       child._skipped = true;
-    if (!only && specs.fixme && specs.fixme[0])
-      child._skipped = true;
-    if (specs.flaky && specs.flaky[0])
-      child._flaky = true;
     suites.unshift(child);
     fn();
     suites.shift();
@@ -97,8 +98,8 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
   (global as any).beforeAll = fn => suite._addHook('beforeAll', fn);
   (global as any).afterAll = fn => suite._addHook('afterAll', fn);
   (global as any).describe = describe;
-  (global as any).fdescribe = describe.only(true);
-  (global as any).xdescribe = describe.skip(true);
+  (global as any).fdescribe = describe._only(true);
+  (global as any).xdescribe = describe._skip(true);
   (global as any).it = it;
   (global as any).fit = it._only(true);
   (global as any).xit = it._skip(true);

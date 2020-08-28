@@ -17,7 +17,9 @@
 
 import { options } from './playwright.fixtures';
 
-describe.skip(options.WIRE)('lauch server', () => {
+describe('lauch server', suite => {
+  suite.skip(options.WIRE);
+}, () => {
   it('should work', async ({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     expect(browserServer.wsEndpoint()).not.toBe(null);

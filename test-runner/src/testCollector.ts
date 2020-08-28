@@ -110,7 +110,6 @@ export class TestCollector {
 
   private _cloneSuite(suite: Suite, tests: Set<Test>) {
     const copy = suite._clone();
-    copy.only = suite.only;
     for (const entry of suite._entries) {
       if (entry instanceof Suite) {
         copy._addSuite(this._cloneSuite(entry, tests));
@@ -121,7 +120,6 @@ export class TestCollector {
         if (this._grep && !this._grep.test(test.fullTitle()))
           continue;
         const testCopy = test._clone();
-        testCopy.only = test.only;
         copy._addTest(testCopy);
       }
     }
@@ -129,8 +127,8 @@ export class TestCollector {
   }
 
   private _filterOnly(suite) {
-    const onlySuites = suite.suites.filter(child => this._filterOnly(child) || child.only);
-    const onlyTests = suite.tests.filter(test => test.only);
+    const onlySuites = suite.suites.filter((child: Suite) => this._filterOnly(child) || child._only);
+    const onlyTests = suite.tests.filter((test: Test) => test._only);
     if (onlySuites.length || onlyTests.length) {
       suite.suites = onlySuites;
       suite.tests = onlyTests;

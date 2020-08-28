@@ -34,7 +34,9 @@ registerFixture('outputFile', async ({tmpDir}, test) => {
     fs.unlinkSync(outputFile);
 });
 
-describe.skip(!options.CHROMIUM)('oopif', () => {
+describe('oopif', suite => {
+  suite.skip(!options.CHROMIUM);
+}, () => {
   it('should output a trace', async ({browser, page, server, outputFile}) => {
     await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputFile});
     await page.goto(server.PREFIX + '/grid.html');

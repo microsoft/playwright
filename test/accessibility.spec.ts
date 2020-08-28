@@ -202,9 +202,10 @@ it('rich text editable fields with role should have children', test => {
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-describe.skip(options.FIREFOX || options.WEBKIT)('contenteditable', () => {
-  // Firefox does not support contenteditable="plaintext-only".
-  // WebKit rich text accessibility is iffy
+describe('contenteditable', suite => {
+  suite.skip(options.FIREFOX, 'Firefox does not support contenteditable="plaintext-only"');
+  suite.skip(options.WEBKIT, 'WebKit rich text accessibility is iffy');
+}, () => {
   it('plain text field with role should not have children', async function({page}) {
     await page.setContent(`
       <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);

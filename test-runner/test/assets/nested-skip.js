@@ -15,7 +15,9 @@
  */
 require('../../');
 
-describe.skip(true)('skipped', () => {
+describe('skipped', suite => {
+  suite.skip(true);
+}, () => {
   it('succeeds',() => {
     expect(1 + 1).toBe(2);
   });  

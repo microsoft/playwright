@@ -26,7 +26,9 @@ registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, te
   await browser.close();
 });
 
-describe.skip(!options.CHROMIUM)('oopif', () => {
+describe('oopif', suite => {
+  suite.skip(!options.CHROMIUM);
+}, () => {
   it('should report oopif frames', async function({browser, page, server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(await countOOPIFs(browser)).toBe(1);

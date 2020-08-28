@@ -137,7 +137,7 @@ export class BaseReporter implements Reporter  {
         continue;
       if (result.status === 'timedOut') {
         tokens.push('');
-        tokens.push(indent(colors.red(`Timeout of ${test.timeout}ms exceeded.`), '    '));
+        tokens.push(indent(colors.red(`Timeout of ${test._timeout}ms exceeded.`), '    '));
       } else {
         const stack = result.error.stack;
         if (stack) {

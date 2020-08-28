@@ -23,7 +23,9 @@ import fs from 'fs';
 // Firefox headful produces a different image.
 const ffheadful = options.FIREFOX && !options.HEADLESS;
 
-describe.skip(ffheadful)('page screenshot', () => {
+describe('page screenshot', suite => {
+  suite.skip(ffheadful);
+}, () => {
   it('should work', async ({page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');

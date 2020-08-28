@@ -16,7 +16,9 @@
 import { options } from '../playwright.fixtures';
 import type { ChromiumBrowserContext } from '../..';
 
-describe.skip(!options.CHROMIUM)('chromium', () => {
+describe('chromium', suite => {
+  suite.skip(!options.CHROMIUM);
+}, () => {
   it('should create a worker from a service worker', async ({page, server, context}) => {
     const [worker] = await Promise.all([
       (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
