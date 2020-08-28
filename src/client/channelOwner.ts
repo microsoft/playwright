@@ -19,6 +19,7 @@ import * as channels from '../protocol/channels';
 import type { Connection } from './connection';
 import type { Logger } from './types';
 import { debugLogger } from '../utils/debugLogger';
+import { isDevMode } from '../utils/utils';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
@@ -99,10 +100,9 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       return result;
     } catch (e) {
       logApiCall(logger, `<= ${apiName} failed`);
-      // TODO: we could probably save "e.stack" in some log-heavy mode
-      // because it gives some insights into the server part.
+      const innerStack = (isDevMode() && e.stack) ? e.stack.substring(e.stack.indexOf(e.message) + e.message.length) : '';
       e.message = `${apiName}: ` + e.message;
-      e.stack = e.message + stack;
+      e.stack = e.message + innerStack + stack;
       throw e;
     }
   }
