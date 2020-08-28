@@ -17,6 +17,7 @@
 import debug from 'debug';
 import { RunnerConfig } from './runnerConfig';
 import { serializeError, Test, TestResult } from './test';
+import { raceAgainstTimeout } from './util';
 
 type Scope = 'test' | 'worker';
 
@@ -152,24 +153,32 @@ export class FixturePool {
     return fn(params);
   }
 
-  async runTestWithFixtures(fn: Function, timeout: number, info: TestInfo) {
-    let timer: NodeJS.Timer;
-    const timerPromise = new Promise(f => timer = setTimeout(f, timeout));
+  async runTestWithFixturesAndTimeout(fn: Function, timeout: number, info: TestInfo) {
+    const { timedOut } = await raceAgainstTimeout(this._runTestWithFixtures(fn, info), timeout);
+    // Do not overwrite test failure upon timeout in fixture.
+    if (timedOut && info.result.status === 'passed')
+      info.result.status = 'timedOut';
+  }
+
+  async _runTestWithFixtures(fn: Function, info: TestInfo) {
     try {
-      await Promise.race([
-        this.resolveParametersAndRun(fn, info.config, info).then(() => {
-          info.result.status = 'passed';
-          clearTimeout(timer);
-        }).catch(e => {
-          info.result.status = 'failed';
-          info.result.error = serializeError(e);
-        }),
-        timerPromise.then(() => {
-          info.result.status = 'timedOut';
-        })
-      ]);
-    } finally {
+      await this.resolveParametersAndRun(fn, info.config, info);
+      info.result.status = 'passed';
+    } catch (error) {
+      // Prefer original error to the fixture teardown error or timeout.
+      if (info.result.status === 'passed') {
+        info.result.status = 'failed';
+        info.result.error = serializeError(error);
+      }
+    }
+    try {
       await this.teardownScope('test');
+    } catch (error) {
+      // Prefer original error to the fixture teardown error or timeout.
+      if (info.result.status === 'passed') {
+        info.result.status = 'failed';
+        info.result.error = serializeError(error);
+      }
     }
   }
 }

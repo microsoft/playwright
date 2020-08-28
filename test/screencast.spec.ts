@@ -204,6 +204,7 @@ describe('screencast', suite => {
 
   it('should capture navigation', test => {
     test.flaky(options.WEBKIT);
+    test.flaky(options.FIREFOX);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
@@ -263,7 +264,8 @@ describe('screencast', suite => {
 
   it('should fire start/stop events when page created/closed', test => {
     test.slow();
-  }, async ({browser, tmpDir, server, toImpl}) => {
+    test.flaky(options.FIREFOX, 'Even slow is not slow enough');
+  }, async ({browser, tmpDir, toImpl}) => {
     // Use server side of the context. All the code below also uses server side APIs.
     const context = toImpl(await browser.newContext());
     await context._enableScreencast({width: 640, height: 480, dir: tmpDir});

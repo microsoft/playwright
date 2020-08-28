@@ -25,8 +25,10 @@ import { registerFixture as registerFixtureT, registerWorkerFixture as registerW
 import { Reporter } from './reporter';
 import { Runner } from './runner';
 import { RunnerConfig } from './runnerConfig';
+import { Suite } from './test';
 import { Matrix, TestCollector } from './testCollector';
 import { installTransform } from './transform';
+import { raceAgainstTimeout } from './util';
 export { parameters, registerParameter } from './fixtures';
 export { Reporter } from './reporter';
 export { RunnerConfig } from './runnerConfig';
@@ -93,7 +95,15 @@ export async function run(config: RunnerConfig, files: string[], reporter: Repor
   const total = suite.total();
   if (!total)
     return 'no-tests';
+  const { result, timedOut } = await raceAgainstTimeout(runTests(config, suite, reporter), config.globalTimeout);
+  if (timedOut) {
+    reporter.onTimeout(config.globalTimeout);
+    process.exit(1);
+  }
+  return result;
+}
 
+async function runTests(config: RunnerConfig, suite: Suite, reporter: Reporter) {
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
   const runner = new Runner(suite, { ...config, jobs }, reporter);

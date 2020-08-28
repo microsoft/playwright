@@ -103,8 +103,8 @@ export class Runnable {
     return this._slow || (this.parent && this.parent._isSlow());
   }
 
-  _isFlaky(): boolean {
-    return this._flaky || (this.parent && this.parent._isFlaky());
+  isFlaky(): boolean {
+    return this._flaky || (this.parent && this.parent.isFlaky());
   }
 
   titlePath(): string[] {
@@ -162,7 +162,7 @@ export class Test extends Runnable {
     const hasFailedResults = !!this.results.find(r => r.status !== r.expectedStatus);
     if (!hasFailedResults)
       return true;
-    if (!this._isFlaky())
+    if (!this.isFlaky())
       return false;
     const hasPassedResults = !!this.results.find(r => r.status === r.expectedStatus);
     return hasPassedResults;

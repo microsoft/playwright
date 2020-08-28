@@ -68,7 +68,9 @@ it('should support ignoreHTTPSErrors option', async ({httpsServer, launchPersist
   expect(response.ok()).toBe(true);
 });
 
-it('should support extraHTTPHeaders option', async ({server, launchPersistent}) => {
+it('should support extraHTTPHeaders option', test => {
+  test.flaky(options.FIREFOX && !options.HEADLESS && LINUX, 'Intermittent timeout on bots');
+}, async ({server, launchPersistent}) => {
   const {page} = await launchPersistent({extraHTTPHeaders: { foo: 'bar' }});
   const [request] = await Promise.all([
     server.waitForRequest('/empty.html'),
@@ -119,7 +121,7 @@ it('should restore state from userDataDir', test => {
 
 it('should restore cookies from userDataDir', test => {
   test.slow();
-  test.flaky(options.CHROMIUM && WIN);
+  test.flaky(options.CHROMIUM);
 }, async ({browserType, defaultBrowserOptions,  server, launchPersistent}) => {
   const userDataDir = await makeUserDataDir();
   const browserContext = await browserType.launchPersistentContext(userDataDir, defaultBrowserOptions);

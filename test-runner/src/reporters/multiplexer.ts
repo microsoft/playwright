@@ -50,6 +50,11 @@ export class Multiplexer implements Reporter {
       reporter.onTestEnd(test, result);
   }
 
+  onTimeout(timeout: number) {
+    for (const reporter of this._reporters)
+      reporter.onTimeout(timeout);
+  }
+
   onEnd() {
     for (const reporter of this._reporters)
       reporter.onEnd();

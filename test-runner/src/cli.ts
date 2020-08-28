@@ -36,6 +36,7 @@ program
     .version('Version ' + /** @type {any} */ (require)('../package.json').version)
     .option('--forbid-only', 'Fail if exclusive test(s) encountered', false)
     .option('-g, --grep <grep>', 'Only run tests matching this string or regexp', '.*')
+    .option('--global-timeout <timeout>', 'Specify maximum time this test suite can run (in milliseconds), default: 0 for unlimited', '0')
     .option('-j, --jobs <jobs>', 'Number of concurrent jobs for --parallel; use 1 to run in serial, default: (number of CPU cores / 2)', String(Math.ceil(require('os').cpus().length / 2)))
     .option('--reporter <reporter>', 'Specify reporter to use, comma-separated, can be "dot", "list", "json"', 'dot')
     .option('--repeat-each <repeat-each>', 'Specify how many times to run the tests', '1')
@@ -60,6 +61,7 @@ program
         snapshotDir: path.join(testDir, '__snapshots__'),
         testDir,
         timeout: parseInt(command.timeout, 10),
+        globalTimeout: parseInt(command.globalTimeout, 10),
         trialRun: command.trialRun,
         updateSnapshots: command.updateSnapshots
       };
