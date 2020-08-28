@@ -32,7 +32,7 @@ it.fail(options.WIRE)('should emit crash event when page crashes', async ({page,
   await new Promise(f => page.on('crash', f));
 });
 
-it.fail(options.WIRE)('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {
+it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash(toImpl(page), browserName);
   await page.waitForEvent('crash');
@@ -59,7 +59,7 @@ it.fixme(options.WIRE)('should cancel navigation when page crashes', async ({pag
   expect(error.message).toContain('Navigation failed because page crashed');
 });
 
-it.fixme(options.WIRE)('should be able to close context when page crashes', async ({page, browserName, toImpl}) => {
+it.fixme(options.WIRE).flaky(options.FIREFOX && WIN)('should be able to close context when page crashes', async ({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash(toImpl(page), browserName);
   await page.waitForEvent('crash');

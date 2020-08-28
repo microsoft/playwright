@@ -172,7 +172,7 @@ class VideoPlayer {
   }
 }
 
-it.fixme(options.CHROMIUM)('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM).flaky(options.FIREFOX && MAC)('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
