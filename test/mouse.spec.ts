@@ -27,7 +27,9 @@ function dimensions() {
   };
 }
 
-it.flaky(options.FIREFOX && WIN)('should click the document', async ({page, server}) => {
+it('should click the document', test => {
+  test.flaky(options.FIREFOX && WIN);
+}, async ({page, server}) => {
   // Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
@@ -164,7 +166,9 @@ it('should tween mouse movement', async ({page}) => {
   ]);
 });
 
-it.skip(options.FIREFOX)('should work with mobile viewports and cross process navigations', async ({browser, server}) => {
+it('should work with mobile viewports and cross process navigations', test => {
+  test.skip(options.FIREFOX);
+}, async ({browser, server}) => {
   // @see https://crbug.com/929806
   const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });
   const page = await context.newPage();

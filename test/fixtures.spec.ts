@@ -20,7 +20,9 @@ import './remoteServer.fixture';
 import { execSync } from 'child_process';
 import path from 'path';
 
-it.slow()('should close the browser when the node process closes', async ({remoteServer}) => {
+it('should close the browser when the node process closes', test => {
+  test.slow();
+}, async ({remoteServer}) => {
   if (WIN)
     execSync(`taskkill /pid ${remoteServer.child().pid} /T /F`);
   else
@@ -30,74 +32,76 @@ it.slow()('should close the browser when the node process closes', async ({remot
   // so we don't check it here.
 });
 
-// Cannot reliably send signals on Windows.
-it.skip(WIN || !options.HEADLESS).slow()('should report browser close signal', async ({remoteServer}) => {
-  const pid = await remoteServer.out('pid');
-  process.kill(-pid, 'SIGTERM');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGTERM');
-  process.kill(remoteServer.child().pid);
-  await remoteServer.childExitCode();
-});
+describe.skip(WIN || !options.HEADLESS).slow()('fixtures', () => {
+  // Cannot reliably send signals on Windows.
+  it('should report browser close signal', async ({remoteServer}) => {
+    const pid = await remoteServer.out('pid');
+    process.kill(-pid, 'SIGTERM');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGTERM');
+    process.kill(remoteServer.child().pid);
+    await remoteServer.childExitCode();
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should report browser close signal 2', async ({remoteServer}) => {
-  const pid = await remoteServer.out('pid');
-  process.kill(-pid, 'SIGKILL');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  process.kill(remoteServer.child().pid);
-  await remoteServer.childExitCode();
-});
+  it('should report browser close signal 2', async ({remoteServer}) => {
+    const pid = await remoteServer.out('pid');
+    process.kill(-pid, 'SIGKILL');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    process.kill(remoteServer.child().pid);
+    await remoteServer.childExitCode();
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should close the browser on SIGINT', async ({remoteServer}) => {
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  expect(await remoteServer.out('exitCode')).toBe('0');
-  expect(await remoteServer.out('signal')).toBe('null');
-  expect(await remoteServer.childExitCode()).toBe(130);
-});
+  it('should close the browser on SIGINT', async ({remoteServer}) => {
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    expect(await remoteServer.out('exitCode')).toBe('0');
+    expect(await remoteServer.out('signal')).toBe('null');
+    expect(await remoteServer.childExitCode()).toBe(130);
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should close the browser on SIGTERM', async ({remoteServer}) => {
-  process.kill(remoteServer.child().pid, 'SIGTERM');
-  expect(await remoteServer.out('exitCode')).toBe('0');
-  expect(await remoteServer.out('signal')).toBe('null');
-  expect(await remoteServer.childExitCode()).toBe(0);
-});
+  it('should close the browser on SIGTERM', async ({remoteServer}) => {
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    expect(await remoteServer.out('exitCode')).toBe('0');
+    expect(await remoteServer.out('signal')).toBe('null');
+    expect(await remoteServer.childExitCode()).toBe(0);
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should close the browser on SIGHUP', async ({remoteServer}) => {
-  process.kill(remoteServer.child().pid, 'SIGHUP');
-  expect(await remoteServer.out('exitCode')).toBe('0');
-  expect(await remoteServer.out('signal')).toBe('null');
-  expect(await remoteServer.childExitCode()).toBe(0);
-});
+  it('should close the browser on SIGHUP', async ({remoteServer}) => {
+    process.kill(remoteServer.child().pid, 'SIGHUP');
+    expect(await remoteServer.out('exitCode')).toBe('0');
+    expect(await remoteServer.out('signal')).toBe('null');
+    expect(await remoteServer.childExitCode()).toBe(0);
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should kill the browser on double SIGINT', async ({stallingRemoteServer}) => {
-  const remoteServer = stallingRemoteServer;
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  await remoteServer.out('stalled');
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  expect(await remoteServer.childExitCode()).toBe(130);
-});
+  it('should kill the browser on double SIGINT', async ({stallingRemoteServer}) => {
+    const remoteServer = stallingRemoteServer;
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    await remoteServer.out('stalled');
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    expect(await remoteServer.childExitCode()).toBe(130);
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should kill the browser on SIGINT + SIGTERM', async ({stallingRemoteServer}) => {
-  const remoteServer = stallingRemoteServer;
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  await remoteServer.out('stalled');
-  process.kill(remoteServer.child().pid, 'SIGTERM');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  expect(await remoteServer.childExitCode()).toBe(0);
-});
+  it('should kill the browser on SIGINT + SIGTERM', async ({stallingRemoteServer}) => {
+    const remoteServer = stallingRemoteServer;
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    await remoteServer.out('stalled');
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    expect(await remoteServer.childExitCode()).toBe(0);
+  });
 
-it.skip(WIN || !options.HEADLESS).slow()('should kill the browser on SIGTERM + SIGINT', async ({stallingRemoteServer}) => {
-  const remoteServer = stallingRemoteServer;
-  process.kill(remoteServer.child().pid, 'SIGTERM');
-  await remoteServer.out('stalled');
-  process.kill(remoteServer.child().pid, 'SIGINT');
-  expect(await remoteServer.out('exitCode')).toBe('null');
-  expect(await remoteServer.out('signal')).toBe('SIGKILL');
-  expect(await remoteServer.childExitCode()).toBe(130);
+  it('should kill the browser on SIGTERM + SIGINT', async ({stallingRemoteServer}) => {
+    const remoteServer = stallingRemoteServer;
+    process.kill(remoteServer.child().pid, 'SIGTERM');
+    await remoteServer.out('stalled');
+    process.kill(remoteServer.child().pid, 'SIGINT');
+    expect(await remoteServer.out('exitCode')).toBe('null');
+    expect(await remoteServer.out('signal')).toBe('SIGKILL');
+    expect(await remoteServer.childExitCode()).toBe(130);
+  });
 });
 
 it('caller file path', async ({}) => {

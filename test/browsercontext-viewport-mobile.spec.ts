@@ -17,113 +17,115 @@
 
 import { options } from './playwright.fixtures';
 
-it.skip(options.FIREFOX)('should support mobile emulation', async ({playwright, browser, server}) => {
-  const iPhone = playwright.devices['iPhone 6'];
-  const context = await browser.newContext({ ...iPhone });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/mobile.html');
-  expect(await page.evaluate(() => window.innerWidth)).toBe(375);
-  await page.setViewportSize({width: 400, height: 300});
-  expect(await page.evaluate(() => window.innerWidth)).toBe(400);
-  await context.close();
-});
-
-it.skip(options.FIREFOX)('should support touch emulation', async ({playwright, browser, server}) => {
-  const iPhone = playwright.devices['iPhone 6'];
-  const context = await browser.newContext({ ...iPhone });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/mobile.html');
-  expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
-  expect(await page.evaluate(dispatchTouch)).toBe('Received touch');
-  await context.close();
-
-  function dispatchTouch() {
-    let fulfill;
-    const promise = new Promise(x => fulfill = x);
-    window.ontouchstart = function(e) {
-      fulfill('Received touch');
-    };
-    window.dispatchEvent(new Event('touchstart'));
-
-    fulfill('Did not receive touch');
-
-    return promise;
-  }
-});
-
-it.skip(options.FIREFOX)('should be detectable by Modernizr', async ({playwright, browser, server}) => {
-  const iPhone = playwright.devices['iPhone 6'];
-  const context = await browser.newContext({ ...iPhone });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/detect-touch.html');
-  expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
-  await context.close();
-});
-
-it.skip(options.FIREFOX)('should detect touch when applying viewport with touches', async ({browser, server}) => {
-  const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
-  const page = await context.newPage();
-  await page.goto(server.EMPTY_PAGE);
-  await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
-  expect(await page.evaluate(() => window['Modernizr'].touchevents)).toBe(true);
-  await context.close();
-});
-
-it.skip(options.FIREFOX)('should support landscape emulation', async ({playwright, browser, server}) => {
-  const iPhone = playwright.devices['iPhone 6'];
-  const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
-  const context1 = await browser.newContext({ ...iPhone });
-  const page1 = await context1.newPage();
-  await page1.goto(server.PREFIX + '/mobile.html');
-  expect(await page1.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
-  const context2 = await browser.newContext({ ...iPhoneLandscape });
-  const page2 = await context2.newPage();
-  expect(await page2.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true);
-  await context1.close();
-  await context2.close();
-});
-
-it.skip(options.FIREFOX)('should support window.orientation emulation', async ({browser, server}) => {
-  const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/mobile.html');
-  expect(await page.evaluate(() => window.orientation)).toBe(0);
-  await page.setViewportSize({width: 400, height: 300});
-  expect(await page.evaluate(() => window.orientation)).toBe(90);
-  await context.close();
-});
-
-it.skip(options.FIREFOX)('should fire orientationchange event', async ({browser, server}) => {
-  const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/mobile.html');
-  await page.evaluate(() => {
-    let counter = 0;
-    window.addEventListener('orientationchange', () => console.log(++counter));
+describe.skip(options.FIREFOX)('mobile viewport', () => {
+  it('should support mobile emulation', async ({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
+    const context = await browser.newContext({ ...iPhone });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.innerWidth)).toBe(375);
+    await page.setViewportSize({width: 400, height: 300});
+    expect(await page.evaluate(() => window.innerWidth)).toBe(400);
+    await context.close();
   });
 
-  const event1 = page.waitForEvent('console');
-  await page.setViewportSize({width: 400, height: 300});
-  expect((await event1).text()).toBe('1');
+  it('should support touch emulation', async ({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
+    const context = await browser.newContext({ ...iPhone });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(true);
+    expect(await page.evaluate(dispatchTouch)).toBe('Received touch');
+    await context.close();
 
-  const event2 = page.waitForEvent('console');
-  await page.setViewportSize({width: 300, height: 400});
-  expect((await event2).text()).toBe('2');
-  await context.close();
-});
+    function dispatchTouch() {
+      let fulfill;
+      const promise = new Promise(x => fulfill = x);
+      window.ontouchstart = function(e) {
+        fulfill('Received touch');
+      };
+      window.dispatchEvent(new Event('touchstart'));
 
-it.skip(options.FIREFOX)('default mobile viewports to 980 width', async ({browser, server}) => {
-  const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/empty.html');
-  expect(await page.evaluate(() => window.innerWidth)).toBe(980);
-  await context.close();
-});
+      fulfill('Did not receive touch');
 
-it.skip(options.FIREFOX)('respect meta viewport tag', async ({browser, server}) => {
-  const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
-  const page = await context.newPage();
-  await page.goto(server.PREFIX + '/mobile.html');
-  expect(await page.evaluate(() => window.innerWidth)).toBe(320);
-  await context.close();
+      return promise;
+    }
+  });
+
+  it('should be detectable by Modernizr', async ({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
+    const context = await browser.newContext({ ...iPhone });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/detect-touch.html');
+    expect(await page.evaluate(() => document.body.textContent.trim())).toBe('YES');
+    await context.close();
+  });
+
+  it('should detect touch when applying viewport with touches', async ({browser, server}) => {
+    const context = await browser.newContext({ viewport: { width: 800, height: 600 }, hasTouch: true });
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await page.addScriptTag({url: server.PREFIX + '/modernizr.js'});
+    expect(await page.evaluate(() => window['Modernizr'].touchevents)).toBe(true);
+    await context.close();
+  });
+
+  it('should support landscape emulation', async ({playwright, browser, server}) => {
+    const iPhone = playwright.devices['iPhone 6'];
+    const iPhoneLandscape = playwright.devices['iPhone 6 landscape'];
+    const context1 = await browser.newContext({ ...iPhone });
+    const page1 = await context1.newPage();
+    await page1.goto(server.PREFIX + '/mobile.html');
+    expect(await page1.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(false);
+    const context2 = await browser.newContext({ ...iPhoneLandscape });
+    const page2 = await context2.newPage();
+    expect(await page2.evaluate(() => matchMedia('(orientation: landscape)').matches)).toBe(true);
+    await context1.close();
+    await context2.close();
+  });
+
+  it('should support window.orientation emulation', async ({browser, server}) => {
+    const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.orientation)).toBe(0);
+    await page.setViewportSize({width: 400, height: 300});
+    expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await context.close();
+  });
+
+  it('should fire orientationchange event', async ({browser, server}) => {
+    const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    await page.evaluate(() => {
+      let counter = 0;
+      window.addEventListener('orientationchange', () => console.log(++counter));
+    });
+
+    const event1 = page.waitForEvent('console');
+    await page.setViewportSize({width: 400, height: 300});
+    expect((await event1).text()).toBe('1');
+
+    const event2 = page.waitForEvent('console');
+    await page.setViewportSize({width: 300, height: 400});
+    expect((await event2).text()).toBe('2');
+    await context.close();
+  });
+
+  it('default mobile viewports to 980 width', async ({browser, server}) => {
+    const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/empty.html');
+    expect(await page.evaluate(() => window.innerWidth)).toBe(980);
+    await context.close();
+  });
+
+  it('respect meta viewport tag', async ({browser, server}) => {
+    const context = await browser.newContext({ viewport: {width: 320, height: 480 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.innerWidth)).toBe(320);
+    await context.close();
+  });
 });

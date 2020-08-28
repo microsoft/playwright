@@ -138,8 +138,9 @@ it('should not report text nodes inside controls', async function({page}) {
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-// WebKit rich text accessibility is iffy
-it.skip(options.WEBKIT)('rich text editable fields should have children', async function({page}) {
+it('rich text editable fields should have children', test => {
+  test.skip(options.WEBKIT, 'WebKit rich text accessibility is iffy');
+}, async function({page}) {
   await page.setContent(`
   <div contenteditable="true">
     Edit this image: <img src="fakeimage.png" alt="my fake image">
@@ -169,8 +170,10 @@ it.skip(options.WEBKIT)('rich text editable fields should have children', async 
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0]).toEqual(golden);
 });
-// WebKit rich text accessibility is iffy
-it.skip(options.WEBKIT)('rich text editable fields with role should have children', async function({page}) {
+
+it('rich text editable fields with role should have children', test => {
+  test.skip(options.WEBKIT, 'WebKit rich text accessibility is iffy');
+}, async function({page}) {
   await page.setContent(`
   <div contenteditable="true" role='textbox'>
     Edit this image: <img src="fakeimage.png" alt="my fake image">
@@ -199,36 +202,38 @@ it.skip(options.WEBKIT)('rich text editable fields with role should have childre
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it.skip(options.FIREFOX || options.WEBKIT)('plain text field with role should not have children', async function({page}) {
+describe.skip(options.FIREFOX || options.WEBKIT)('contenteditable', () => {
   // Firefox does not support contenteditable="plaintext-only".
   // WebKit rich text accessibility is iffy
-  await page.setContent(`
-    <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
-  const snapshot = await page.accessibility.snapshot();
-  expect(snapshot.children[0]).toEqual({
-    role: 'textbox',
-    name: '',
-    value: 'Edit this image:'
+  it('plain text field with role should not have children', async function({page}) {
+    await page.setContent(`
+      <div contenteditable="plaintext-only" role='textbox'>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
+    const snapshot = await page.accessibility.snapshot();
+    expect(snapshot.children[0]).toEqual({
+      role: 'textbox',
+      name: '',
+      value: 'Edit this image:'
+    });
   });
-});
 
-it.skip(options.FIREFOX || options.WEBKIT)('plain text field without role should not have content', async function({page}) {
-  await page.setContent(`
-  <div contenteditable="plaintext-only">Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
-  const snapshot = await page.accessibility.snapshot();
-  expect(snapshot.children[0]).toEqual({
-    role: 'generic',
-    name: ''
+  it('plain text field without role should not have content', async function({page}) {
+    await page.setContent(`
+    <div contenteditable="plaintext-only">Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
+    const snapshot = await page.accessibility.snapshot();
+    expect(snapshot.children[0]).toEqual({
+      role: 'generic',
+      name: ''
+    });
   });
-});
 
-it.skip(options.FIREFOX || options.WEBKIT)('plain text field with tabindex and without role should not have content', async function({page}) {
-  await page.setContent(`
-  <div contenteditable="plaintext-only" tabIndex=0>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
-  const snapshot = await page.accessibility.snapshot();
-  expect(snapshot.children[0]).toEqual({
-    role: 'generic',
-    name: ''
+  it('plain text field with tabindex and without role should not have content', async function({page}) {
+    await page.setContent(`
+    <div contenteditable="plaintext-only" tabIndex=0>Edit this image:<img src="fakeimage.png" alt="my fake image"></div>`);
+    const snapshot = await page.accessibility.snapshot();
+    expect(snapshot.children[0]).toEqual({
+      role: 'generic',
+      name: ''
+    });
   });
 });
 

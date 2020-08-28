@@ -138,7 +138,9 @@ it('should isolate send cookie header', async ({server, context, browser}) => {
   }
 });
 
-it.slow()('should isolate cookies between launches', async ({browserType, server, defaultBrowserOptions}) => {
+it('should isolate cookies between launches', test => {
+  test.slow();
+}, async ({browserType, server, defaultBrowserOptions}) => {
   const browser1 = await browserType.launch(defaultBrowserOptions);
   const context1 = await browser1.newContext();
   await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);

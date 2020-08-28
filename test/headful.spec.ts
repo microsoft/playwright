@@ -26,7 +26,11 @@ it('should have default url when launching browser', async ({browserType, defaul
   await browserContext.close();
 });
 
-it.fail(WIN && options.CHROMIUM).flaky(options.FIREFOX).slow()('headless should be able to read cookies written by headful', async ({browserType, defaultBrowserOptions, server}) => {
+it('headless should be able to read cookies written by headful', test => {
+  test.fail(WIN && options.CHROMIUM);
+  test.flaky(options.FIREFOX);
+  test.slow();
+}, async ({browserType, defaultBrowserOptions, server}) => {
   // see https://github.com/microsoft/playwright/issues/717
   const userDataDir = await makeUserDataDir();
   // Write a cookie in headful chrome
@@ -46,7 +50,9 @@ it.fail(WIN && options.CHROMIUM).flaky(options.FIREFOX).slow()('headless should 
   expect(cookie).toBe('foo=true');
 });
 
-it.slow()('should close browser with beforeunload page', async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
+it('should close browser with beforeunload page', test => {
+  test.slow();
+}, async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
   const browserContext = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, headless: false});
   const page = await browserContext.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');
@@ -128,7 +134,9 @@ it('should(not) block third party cookies', async ({browserType, defaultBrowserO
   await browser.close();
 });
 
-it.fixme(options.WEBKIT)('should not override viewport size when passed null', async function({browserType, defaultBrowserOptions, server}) {
+it('should not override viewport size when passed null', test => {
+  test.fixme(options.WEBKIT);
+}, async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const context = await browser.newContext({ viewport: null });

@@ -23,7 +23,6 @@ export class Test {
   title: string;
   file: string;
   only = false;
-  slow = false;
   timeout = 0;
   fn: Function;
   results: TestResult[] = [];
@@ -33,9 +32,11 @@ export class Test {
   // We will compute them there and send to the runner (front-end)
   _skipped = false;
   _flaky = false;
+  _slow = false;
+  _expectedStatus: TestStatus = 'passed';
+
   _overriddenFn: Function;
   _startTime: number;
-  _expectedStatus: TestStatus = 'passed';
 
   constructor(title: string, fn: Function) {
     this.title = title;
@@ -48,6 +49,56 @@ export class Test {
 
   fullTitle(): string {
     return this.titlePath().join(' ');
+  }
+
+  slow(): void;
+  slow(condition: boolean): void;
+  slow(description: string): void;
+  slow(condition: boolean, description: string): void;
+  slow(arg?: boolean | string, description?: string) {
+    const condition = typeof arg === 'boolean' ? arg : true;
+    if (condition)
+      this._slow = true;
+  }
+
+  skip(): void;
+  skip(condition: boolean): void;
+  skip(description: string): void;
+  skip(condition: boolean, description: string): void;
+  skip(arg?: boolean | string, description?: string) {
+    const condition = typeof arg === 'boolean' ? arg : true;
+    if (condition)
+      this._skipped = true;
+  }
+
+  fixme(): void;
+  fixme(condition: boolean): void;
+  fixme(description: string): void;
+  fixme(condition: boolean, description: string): void;
+  fixme(arg?: boolean | string, description?: string) {
+    const condition = typeof arg === 'boolean' ? arg : true;
+    if (condition)
+      this._skipped = true;
+  }
+
+  flaky(): void;
+  flaky(condition: boolean): void;
+  flaky(description: string): void;
+  flaky(condition: boolean, description: string): void;
+  flaky(arg?: boolean | string, description?: string) {
+    const condition = typeof arg === 'boolean' ? arg : true;
+    if (condition)
+      this._flaky = true;
+  }
+
+  fail(): void;
+  fail(condition: boolean): void;
+  fail(description: string): void;
+  fail(condition: boolean, description: string): void;
+  fail(arg?: boolean | string, description?: string) {
+    const condition = typeof arg === 'boolean' ? arg : true;
+    if (condition)
+      this._expectedStatus = 'failed';
   }
 
   _appendResult(): TestResult {
@@ -85,6 +136,7 @@ export class Test {
     test.file = this.file;
     test.timeout = this.timeout;
     test._flaky = this._flaky;
+    test._slow = this._slow;
     test._overriddenFn = this._overriddenFn;
     return test;
   }
@@ -107,6 +159,8 @@ export class Suite {
   tests: Test[] = [];
   only = false;
   file: string;
+  _flaky = false;
+  _slow = false;
   configuration: Configuration;
 
   // Skipped & flaky are resolved based on options in worker only
@@ -138,6 +192,14 @@ export class Suite {
 
   _isSkipped(): boolean {
     return this._skipped || (this.parent && this.parent._isSkipped());
+  }
+
+  _isSlow(): boolean {
+    return this._slow || (this.parent && this.parent._isSlow());
+  }
+
+  _isFlaky(): boolean {
+    return this._flaky || (this.parent && this.parent._isFlaky());
   }
 
   _addTest(test: Test) {
@@ -176,7 +238,9 @@ export class Suite {
     const suite = new Suite(this.title);
     suite.only = this.only;
     suite.file = this.file;
+    suite._flaky = this._flaky;
     suite._skipped = this._skipped;
+    suite._slow = this._slow;
     return suite;
   }
 

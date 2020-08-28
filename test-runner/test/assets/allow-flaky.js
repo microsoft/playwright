@@ -17,7 +17,9 @@
 const fs = require('fs');
 const path = require('path');
 
-it.flaky('flake', async ({}) => {
+it('flake', test => {
+	test.flaky();
+}, async ({}) => {
 	try {
 		fs.readFileSync(path.join(__dirname, '..', 'test-results', 'allow-flaky.txt'));
 	} catch (e) {

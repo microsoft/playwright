@@ -172,132 +172,132 @@ class VideoPlayer {
   }
 }
 
-it.fixme(options.CHROMIUM).flaky(options.FIREFOX && MAC)('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
-  if (!toImpl)
-    return;
-  const videoFile = path.join(tmpDir, 'v.webm');
-  await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-  // TODO: in WebKit figure out why video size is not reported correctly for
-  // static pictures.
-  if (options.HEADLESS && options.WEBKIT)
-    await page.setViewportSize({width: 1270, height: 950});
-  await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopScreencast();
-  expect(fs.existsSync(videoFile)).toBe(true);
+describe.skip(options.WIRE).fixme(options.CHROMIUM)('screencast', () => {
+  it('should capture static page', test => {
+    test.fixme();
+  }, async ({page, tmpDir, videoPlayer, toImpl}) => {
+    const videoFile = path.join(tmpDir, 'v.webm');
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    // TODO: in WebKit figure out why video size is not reported correctly for
+    // static pictures.
+    if (options.HEADLESS && options.WEBKIT)
+      await page.setViewportSize({width: 1270, height: 950});
+    await new Promise(r => setTimeout(r, 300));
+    await toImpl(page)._delegate.stopScreencast();
+    expect(fs.existsSync(videoFile)).toBe(true);
 
-  await videoPlayer.load(videoFile);
-  const duration = await videoPlayer.duration();
-  expect(duration).toBeGreaterThan(0);
+    await videoPlayer.load(videoFile);
+    const duration = await videoPlayer.duration();
+    expect(duration).toBeGreaterThan(0);
 
-  expect(await videoPlayer.videoWidth()).toBe(640);
-  expect(await videoPlayer.videoHeight()).toBe(480);
+    expect(await videoPlayer.videoWidth()).toBe(640);
+    expect(await videoPlayer.videoHeight()).toBe(480);
 
-  await videoPlayer.seekLastNonEmptyFrame();
-  const pixels = await videoPlayer.pixels();
-  expectAll(pixels, almostRed);
-});
-
-it.fixme(options.CHROMIUM).flaky(options.WEBKIT)('should capture navigation', async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-  if (!toImpl)
-    return;
-  const videoFile = path.join(tmpDir, 'v.webm');
-  await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-  // TODO: in WebKit figure out why video size is not reported correctly for
-  // static pictures.
-  if (options.HEADLESS && options.WEBKIT)
-    await page.setViewportSize({width: 1270, height: 950});
-  await new Promise(r => setTimeout(r, 300));
-  await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
-  await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopScreencast();
-  expect(fs.existsSync(videoFile)).toBe(true);
-
-  await videoPlayer.load(videoFile);
-  const duration = await videoPlayer.duration();
-  expect(duration).toBeGreaterThan(0);
-
-  {
-    await videoPlayer.seekFirstNonEmptyFrame();
-    const pixels = await videoPlayer.pixels();
-    expectAll(pixels, almostBlack);
-  }
-
-  {
     await videoPlayer.seekLastNonEmptyFrame();
     const pixels = await videoPlayer.pixels();
-    expectAll(pixels, almostGrey);
-  }
-});
-
-// Accelerated compositing is disabled in WebKit on Windows.
-it.fixme(options.CHROMIUM || (options.WEBKIT && WIN)).flaky(options.WEBKIT && LINUX)('should capture css transformation', async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-  if (!toImpl)
-    return;
-  const videoFile = path.join(tmpDir, 'v.webm');
-  await page.goto(server.PREFIX + '/rotate-z.html');
-  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-  // TODO: in WebKit figure out why video size is not reported correctly for
-  // static pictures.
-  if (options.HEADLESS && options.WEBKIT)
-    await page.setViewportSize({width: 1270, height: 950});
-  await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopScreencast();
-  expect(fs.existsSync(videoFile)).toBe(true);
-
-  await videoPlayer.load(videoFile);
-  const duration = await videoPlayer.duration();
-  expect(duration).toBeGreaterThan(0);
-
-  {
-    await videoPlayer.seekLastNonEmptyFrame();
-    const pixels = await videoPlayer.pixels({x: 95, y: 45});
     expectAll(pixels, almostRed);
-  }
-});
+  });
 
-it.slow().fixme(options.CHROMIUM)('should fire start/stop events when page created/closed', async ({browser, tmpDir, server, toImpl}) => {
-  if (!toImpl)
-    return;
-  // Use server side of the context. All the code below also uses server side APIs.
-  const context = toImpl(await browser.newContext());
-  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
-  expect(context._screencastOptions).toBeTruthy();
+  it('should capture navigation', test => {
+    test.flaky(options.WEBKIT);
+  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
+    const videoFile = path.join(tmpDir, 'v.webm');
+    await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    // TODO: in WebKit figure out why video size is not reported correctly for
+    // static pictures.
+    if (options.HEADLESS && options.WEBKIT)
+      await page.setViewportSize({width: 1270, height: 950});
+    await new Promise(r => setTimeout(r, 300));
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
+    await new Promise(r => setTimeout(r, 300));
+    await toImpl(page)._delegate.stopScreencast();
+    expect(fs.existsSync(videoFile)).toBe(true);
 
-  const [screencast, newPage] = await Promise.all([
-    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
-    context.newPage(),
-  ]);
-  expect(screencast.page === newPage).toBe(true);
+    await videoPlayer.load(videoFile);
+    const duration = await videoPlayer.duration();
+    expect(duration).toBeGreaterThan(0);
 
-  const [videoFile] = await Promise.all([
-    screencast.path(),
-    newPage.close(),
-  ]);
-  expect(path.dirname(videoFile)).toBe(tmpDir);
-  await context.close();
-});
+    {
+      await videoPlayer.seekFirstNonEmptyFrame();
+      const pixels = await videoPlayer.pixels();
+      expectAll(pixels, almostBlack);
+    }
 
-it.fixme(options.CHROMIUM)('should fire start event for popups', async ({browser, tmpDir, server, toImpl}) => {
-  if (!toImpl)
-    return;
-  // Use server side of the context. All the code below also uses server side APIs.
-  const context = toImpl(await browser.newContext());
-  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
-  expect(context._screencastOptions).toBeTruthy();
+    {
+      await videoPlayer.seekLastNonEmptyFrame();
+      const pixels = await videoPlayer.pixels();
+      expectAll(pixels, almostGrey);
+    }
+  });
 
-  const page = await context.newPage();
-  await page.mainFrame().goto(server.EMPTY_PAGE);
-  const [screencast, popup] = await Promise.all([
-    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
-    new Promise(resolve => context.on('page', resolve)) as Promise<any>,
-    page.mainFrame()._evaluateExpression(() => {
-      const win = window.open('about:blank');
-      win.close();
-    }, true)
-  ]);
-  expect(screencast.page === popup).toBe(true);
-  expect(path.dirname(await screencast.path())).toBe(tmpDir);
-  await context.close();
+  it('should capture css transformation', test => {
+    test.fixme(options.WEBKIT && WIN, 'Accelerated compositing is disabled in WebKit on Windows.');
+    test.flaky(options.WEBKIT && LINUX);
+  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
+    const videoFile = path.join(tmpDir, 'v.webm');
+    await page.goto(server.PREFIX + '/rotate-z.html');
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    // TODO: in WebKit figure out why video size is not reported correctly for
+    // static pictures.
+    if (options.HEADLESS && options.WEBKIT)
+      await page.setViewportSize({width: 1270, height: 950});
+    await new Promise(r => setTimeout(r, 300));
+    await toImpl(page)._delegate.stopScreencast();
+    expect(fs.existsSync(videoFile)).toBe(true);
+
+    await videoPlayer.load(videoFile);
+    const duration = await videoPlayer.duration();
+    expect(duration).toBeGreaterThan(0);
+
+    {
+      await videoPlayer.seekLastNonEmptyFrame();
+      const pixels = await videoPlayer.pixels({x: 95, y: 45});
+      expectAll(pixels, almostRed);
+    }
+  });
+
+  it('should fire start/stop events when page created/closed', test => {
+    test.slow();
+  }, async ({browser, tmpDir, server, toImpl}) => {
+    // Use server side of the context. All the code below also uses server side APIs.
+    const context = toImpl(await browser.newContext());
+    await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+    expect(context._screencastOptions).toBeTruthy();
+
+    const [screencast, newPage] = await Promise.all([
+      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      context.newPage(),
+    ]);
+    expect(screencast.page === newPage).toBe(true);
+
+    const [videoFile] = await Promise.all([
+      screencast.path(),
+      newPage.close(),
+    ]);
+    expect(path.dirname(videoFile)).toBe(tmpDir);
+    await context.close();
+  });
+
+  it('should fire start event for popups', async ({browser, tmpDir, server, toImpl}) => {
+    // Use server side of the context. All the code below also uses server side APIs.
+    const context = toImpl(await browser.newContext());
+    await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+    expect(context._screencastOptions).toBeTruthy();
+
+    const page = await context.newPage();
+    await page.mainFrame().goto(server.EMPTY_PAGE);
+    const [screencast, popup] = await Promise.all([
+      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      new Promise(resolve => context.on('page', resolve)) as Promise<any>,
+      page.mainFrame()._evaluateExpression(() => {
+        const win = window.open('about:blank');
+        win.close();
+      }, true)
+    ]);
+    expect(screencast.page === popup).toBe(true);
+    expect(path.dirname(await screencast.path())).toBe(tmpDir);
+    await context.close();
+  });
 });

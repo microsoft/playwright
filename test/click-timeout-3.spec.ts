@@ -17,7 +17,9 @@
 
 import { options } from './playwright.fixtures';
 
-it.skip(options.WIRE)('should fail when element jumps during hit testing', async ({page, server}) => {
+it('should fail when element jumps during hit testing', test => {
+  test.skip(options.WIRE);
+}, async ({page}) => {
   await page.setContent('<button>Click me</button>');
   let clicked = false;
   const handle = await page.$('button');

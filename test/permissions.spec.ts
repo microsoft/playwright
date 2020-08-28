@@ -98,7 +98,11 @@ describe.skip(options.WEBKIT)('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it.fail(options.WEBKIT).fail(options.CHROMIUM && !options.HEADLESS).flaky(options.FIREFOX && LINUX)('should trigger permission onchange', async ({page, server, context}) => {
+  it('should trigger permission onchange', test => {
+    test.fail(options.WEBKIT);
+    test.fail(options.CHROMIUM && !options.HEADLESS);
+    test.flaky(options.FIREFOX && LINUX);
+  }, async ({page, server, context}) => {
     // TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
     // - Win: https://ci.appveyor.com/project/aslushnikov/playwright/builds/32402536
@@ -140,8 +144,11 @@ describe.skip(options.WEBKIT)('permissions', () => {
     await otherContext.close();
   });
 
-  it.fail(options.WEBKIT || options.FIREFOX || (options.CHROMIUM && !options.HEADLESS))('should support clipboard read', async ({page, server, context, browser}) => {
-    // No such permissions (requires flag) in Firefox
+  it('should support clipboard read', test => {
+    test.fail(options.WEBKIT);
+    test.fail(options.FIREFOX, 'No such permissions (requires flag) in Firefox');
+    test.fail(options.CHROMIUM && !options.HEADLESS);
+  }, async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');
     let error;

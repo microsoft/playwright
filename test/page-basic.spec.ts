@@ -244,7 +244,9 @@ it('frame.press should work', async ({page, server}) => {
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it.fail(options.FIREFOX)('frame.focus should work multiple times', async ({ context, server }) => {
+it('frame.focus should work multiple times', test => {
+  test.fail(options.FIREFOX);
+}, async ({ context, server }) => {
   const page1 = await context.newPage();
   const page2 = await context.newPage();
   for (const page of [page1, page2]) {

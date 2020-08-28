@@ -63,8 +63,9 @@ it('should authenticate', async ({browserType, defaultBrowserOptions, server}) =
   await browser.close();
 });
 
-it.fail(options.CHROMIUM && !options.HEADLESS)('should exclude patterns', async ({browserType, defaultBrowserOptions, server}) => {
-  // Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.
+it('should exclude patterns', test => {
+  test.fail(options.CHROMIUM && !options.HEADLESS, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
+}, async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
   });

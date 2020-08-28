@@ -52,7 +52,9 @@ it('page.goBack should work with HistoryAPI', async ({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it.fail(options.WEBKIT && MAC)('page.goBack should work for file urls', async ({page, server, asset}) => {
+it('page.goBack should work for file urls', test => {
+  test.fail(options.WEBKIT && MAC);
+}, async ({page, server, asset}) => {
   // WebKit embedder fails to go back/forward to the file url.
   const url1 = url.pathToFileURL(asset('empty.html')).href;
   const url2 = server.EMPTY_PAGE;

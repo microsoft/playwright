@@ -20,7 +20,9 @@ declare const renderComponent;
 declare const e;
 declare const MyButton;
 
-it.fail(true)('should report that selector does not match anymore', async ({page, server}) => {
+it('should report that selector does not match anymore', test => {
+  test.fail(true);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })]));
@@ -39,7 +41,9 @@ it.fail(true)('should report that selector does not match anymore', async ({page
   expect(error.message).toContain('element does not match the selector anymore');
 });
 
-it.fixme(true)('should not retarget the handle when element is recycled', async ({page, server}) => {
+it('should not retarget the handle when element is recycled', test => {
+  test.fixme(true);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })]));
@@ -66,7 +70,9 @@ it('should timeout when click opens alert', async ({page, server}) => {
   await dialog.dismiss();
 });
 
-it.fixme(true)('should retarget when element is recycled during hit testing', async ({page, server}) => {
+it('should retarget when element is recycled during hit testing', test => {
+  test.fixme(true);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2' })]));
@@ -81,7 +87,9 @@ it.fixme(true)('should retarget when element is recycled during hit testing', as
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it.fixme(true)('should retarget when element is recycled before enabled check', async ({page, server}) => {
+it('should retarget when element is recycled before enabled check', test => {
+  test.fixme(true);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
   await page.evaluate(() => {
     renderComponent(e('div', {}, [e(MyButton, { name: 'button1' }), e(MyButton, { name: 'button2', disabled: true })]));

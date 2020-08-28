@@ -156,8 +156,9 @@ it('should fire page lifecycle events', async function({browser, server}) {
   await context.close();
 });
 
-it.fixme(options.WEBKIT)('should work with Shift-clicking', async ({browser, server}) => {
-  // WebKit: Shift+Click does not open a new window.
+it('should work with Shift-clicking', test => {
+  test.fixme(options.WEBKIT, 'WebKit: Shift+Click does not open a new window.');
+}, async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -170,9 +171,10 @@ it.fixme(options.WEBKIT)('should work with Shift-clicking', async ({browser, ser
   await context.close();
 });
 
-it.fixme(options.WEBKIT || options.FIREFOX)('should work with Ctrl-clicking', async ({browser, server}) => {
-  // Firefox: reports an opener in this case.
-  // WebKit: Ctrl+Click does not open a new tab.
+it('should work with Ctrl-clicking', test => {
+  test.fixme(options.WEBKIT, 'Ctrl+Click does not open a new tab.');
+  test.fixme(options.FIREFOX, 'Reports an opener in this case.');
+}, async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);

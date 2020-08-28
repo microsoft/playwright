@@ -474,9 +474,10 @@ it('should fail when canceled by another navigation', async ({page, server}) => 
   expect(error.message).toBeTruthy();
 });
 
-it.skip(true)('extraHttpHeaders should be pushed to provisional page', async ({page, server}) => {
-  // This test is flaky, because we cannot await page.setExtraHTTPHeaders.
+it('extraHttpHeaders should be pushed to provisional page', test => {
+  test.flaky('This test is flaky, because we cannot await page.setExtraHTTPHeaders.');
   // We need a way to test our implementation by more than just public api.
+}, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const pagePath = '/one-style.html';
   server.setRoute(pagePath, async (req, res) => {

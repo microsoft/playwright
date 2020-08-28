@@ -15,7 +15,7 @@
  */
 require('../../lib');
 
-it.fail(true)('fails',() => {
+it('fails', test => test.fail(), () => {
   expect(1 + 1).toBe(3);
 });
 
