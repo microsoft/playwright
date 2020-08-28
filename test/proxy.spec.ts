@@ -41,6 +41,20 @@ it('should use proxy', async ({browserType, defaultBrowserOptions, server}) => {
   await browser.close();
 });
 
+it('should work with IP:PORT notion', async ({browserType, defaultBrowserOptions, server}) => {
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
+    proxy: { server: `127.0.0.1:${server.PORT}` }
+  });
+  const page = await browser.newPage();
+  await page.goto('http://non-existent.com/target.html');
+  expect(await page.title()).toBe('Served by the proxy');
+  await browser.close();
+});
+
 it('should authenticate', async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];

@@ -279,13 +279,20 @@ export function verifyGeolocation(geolocation?: types.Geolocation) {
     throw new Error(`geolocation.accuracy: precondition 0 <= ACCURACY failed.`);
 }
 
-export function verifyProxySettings(proxy: types.ProxySettings): types.ProxySettings {
+export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxySettings {
   let { server, bypass } = proxy;
-  let url = new URL(server);
-  if (!['http:', 'https:', 'socks5:'].includes(url.protocol)) {
+  let url;
+  try {
+    // new URL('127.0.0.1:8080') throws
+    // new URL('localhost:8080') fails to parse host or protocol
+    // In both of these cases, we need to try re-parse URL with `http://` prefix.
+    url = new URL(server);
+    if (!url.host || !url.protocol)
+      url = new URL('http://' + server);
+  } catch (e) {
     url = new URL('http://' + server);
-    server = `${url.protocol}//${url.host}`;
   }
+  server = url.protocol + '//' + url.host;
   if (bypass)
     bypass = bypass.split(',').map(t => t.trim()).join(',');
   return { ...proxy, server, bypass };

@@ -18,7 +18,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as util from 'util';
-import { BrowserContext, verifyProxySettings, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import * as browserPaths from '../utils/browserPaths';
 import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess } from './browser';
@@ -88,7 +88,7 @@ export abstract class BrowserTypeBase implements BrowserType {
   }
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
-    options.proxy = options.proxy ? verifyProxySettings(options.proxy) : undefined;
+    options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
