@@ -85,10 +85,12 @@ $ docker run --rm -it playwright:localbuild /bin/bash
 
 Docker images are published automatically by Github Actions. We currently publish the following
 images:
-- `mcr.microsoft.com/playwright:dev` - tip-of-tree image version.
+- `mcr.microsoft.com/playwright:next` - tip-of-tree image version.
 - `mcr.microsoft.com/playwright:bionic` - last Playwright release docker image.
 - `mcr.microsoft.com/playwright:sha-XXXXXXX` - docker image for every commit that changed
   docker files or browsers, marked with a [short sha](https://git-scm.com/book/en/v2/Git-Tools-Revision-Selection#Short-SHA-1) (first 7 digits of the SHA commit).
+
+Status of push to MCR can be [verified here](https://mcrflow-status-ui.azurewebsites.net/) (internal link).
 
 ## Base images
 
