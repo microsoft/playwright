@@ -15,7 +15,7 @@
  */
 
 import { TimeoutError } from '../utils/errors';
-import { assert } from '../utils/utils';
+import { assert, monotonicTime } from '../utils/utils';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { debugLogger, LogName } from '../utils/debugLogger';
 
@@ -133,11 +133,6 @@ function formatLogRecording(log: string[]): string {
   const leftLength = (headerLength - header.length) / 2;
   const rightLength = headerLength - header.length - leftLength;
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
-}
-
-function monotonicTime(): number {
-  const [seconds, nanoseconds] = process.hrtime();
-  return seconds * 1000 + (nanoseconds / 1000000 | 0);
 }
 
 class AbortedError extends Error {}

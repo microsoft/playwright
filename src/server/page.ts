@@ -196,6 +196,8 @@ export class Page extends EventEmitter {
 
   async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
     return runAbortableTask(async progress => {
+      if (this._browserContext._snapshotter)
+        await this._browserContext._snapshotter._doSnapshot(progress, this, 'progress');
       return task(progress);
     }, timeout);
   }

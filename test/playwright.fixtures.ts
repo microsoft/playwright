@@ -180,13 +180,25 @@ registerWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-registerFixture('context', async ({browser}, test) => {
+registerFixture('context', async ({browser, toImpl}, runTest, info) => {
   const context = await browser.newContext();
-  await test(context);
+  const { test, config } = info;
+  if (toImpl) {
+    const traceStorageDir = path.join(config.outputDir, 'trace-storage');
+    const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
+    const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+    const traceFile = path.join(config.outputDir, relativePath, sanitizedTitle + '.trace');
+    const tracerFactory = require('../lib/trace/tracer').Tracer;
+    (context as any).__tracer = new tracerFactory(traceStorageDir, traceFile);
+    (context as any).__snapshotter = await toImpl(context)._initSnapshotter((context as any).__tracer);
+  }
+  await runTest(context);
   await context.close();
+  if ((context as any).__tracer)
+    await (context as any).__tracer.dispose();
 });
 
-registerFixture('page', async ({context}, runTest, info) => {
+registerFixture('page', async ({context, toImpl}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
   const { test, config, result } = info;
@@ -194,7 +206,9 @@ registerFixture('page', async ({context}, runTest, info) => {
     const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
-    await page.screenshot({ path: assetPath });
+    await page.screenshot({ timeout: 5000, path: assetPath });
+    if ((context as any).__snapshotter)
+      await (context as any).__snapshotter.captureSnapshot(toImpl(page), { timeout: 5000, label: 'Test Failed' });
   }
 });
 
