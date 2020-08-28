@@ -36,15 +36,18 @@ it('should throw if userDataDir option is passed', async ({browserType, defaultB
   expect(waitError.message).toContain('launchPersistentContext');
 });
 
-it.skip(options.FIREFOX)('should throw if page argument is passed', async ({browserType, defaultBrowserOptions}) => {
+it('should throw if page argument is passed', test => {
+  test.skip(options.FIREFOX);
+}, async ({browserType, defaultBrowserOptions}) => {
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
   await browserType.launch(options).catch(e => waitError = e);
   expect(waitError.message).toContain('can not specify page');
 });
 
-it.fixme(true)('should reject if launched browser fails immediately', async ({browserType, defaultBrowserOptions}) => {
-  // I'm getting ENCONRESET on this one.
+it('should reject if launched browser fails immediately', test => {
+  test.fixme(`I'm getting ENCONRESET on this one.`);
+}, async ({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions, {executablePath: path.join(__dirname, 'assets', 'dummy_bad_browser_executable.js')});
   let waitError = null;
   await browserType.launch(options).catch(e => waitError = e);
@@ -58,7 +61,9 @@ it('should reject if executable path is invalid', async ({browserType, defaultBr
   expect(waitError.message).toContain('Failed to launch');
 });
 
-it.skip(options.WIRE)('should handle timeout', async ({browserType, defaultBrowserOptions}) => {
+it('should handle timeout', test => {
+  test.skip(options.WIRE);
+}, async ({browserType, defaultBrowserOptions}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain(`browserType.launch: Timeout 5000ms exceeded.`);
@@ -66,21 +71,27 @@ it.skip(options.WIRE)('should handle timeout', async ({browserType, defaultBrows
   expect(error.message).toContain(`<launched> pid=`);
 });
 
-it.skip(options.WIRE)('should handle exception', async ({browserType, defaultBrowserOptions}) => {
+it('should handle exception', test => {
+  test.skip(options.WIRE);
+}, async ({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain('Dummy');
 });
 
-it.skip(options.WIRE)('should report launch log', async ({browserType, defaultBrowserOptions}) => {
+it('should report launch log', test => {
+  test.skip(options.WIRE);
+}, async ({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
   const error = await browserType.launch(options).catch(e => e);
   expect(error.message).toContain('<launching>');
 });
 
-it.slow()('should accept objects as options', async ({browserType, defaultBrowserOptions}) => {
+it('should accept objects as options', test => {
+  test.slow();
+}, async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch({ ...defaultBrowserOptions, process } as any);
   await browser.close();
 });

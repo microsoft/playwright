@@ -15,6 +15,6 @@
  */
 require('../../');
 
-it.fail(true)('succeeds',() => {
+it('succeeds', test => test.fail(), () => {
   expect(1 + 1).toBe(2);
 });

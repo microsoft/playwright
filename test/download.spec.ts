@@ -144,7 +144,9 @@ it('should create subdirectories when saving to non-existent user-specified path
   await page.close();
 });
 
-it.skip(options.WIRE)('should save when connected remotely', async ({tmpDir, server, browserType, remoteServer}) => {
+it('should save when connected remotely', test => {
+  test.skip(options.WIRE);
+}, async ({tmpDir, server, browserType, remoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -188,7 +190,9 @@ it('should error when saving after deletion', async ({tmpDir, browser, server}) 
   await page.close();
 });
 
-it.skip(options.WIRE)('should error when saving after deletion when connected remotely', async ({tmpDir, server, browserType, remoteServer}) => {
+it('should error when saving after deletion when connected remotely', test => {
+  test.skip(options.WIRE);
+}, async ({tmpDir, server, browserType, remoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -250,7 +254,9 @@ it(`should report download path within page.on('download', …) handler for Blob
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await page.close();
 });
-it.fixme(options.FIREFOX || options.WEBKIT)('should report alt-click downloads', async ({browser, server}) => {
+it('should report alt-click downloads', test => {
+  test.fixme(options.FIREFOX || options.WEBKIT);
+}, async ({browser, server}) => {
   // Firefox does not download on alt-click by default.
   // Our WebKit embedder does not download on alt-click, although Safari does.
   server.setRoute('/download', (req, res) => {
@@ -271,7 +277,9 @@ it.fixme(options.FIREFOX || options.WEBKIT)('should report alt-click downloads',
   await page.close();
 });
 
-it.fixme(options.CHROMIUM && !options.HEADLESS)('should report new window downloads', async ({browser, server}) => {
+it('should report new window downloads', test => {
+  test.fixme(options.CHROMIUM && !options.HEADLESS);
+}, async ({browser, server}) => {
   // TODO: - the test fails in headful Chromium as the popup page gets closed along
   // with the session before download completed event arrives.
   // - WebKit doesn't close the popup page

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { options } from './playwright.fixtures';
 
 async function giveItAChanceToResolve(page) {
   for (let i = 0; i < 5; i++)
@@ -114,7 +114,9 @@ it('should wait for disabled button', async ({page}) => {
   await promise;
 });
 
-it('should wait for stable position', async ({page, server}) => {
+it('should wait for stable position', test => {
+  test.fixme(options.FIREFOX && LINUX);
+}, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');
   await page.$eval('button', button => {

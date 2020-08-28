@@ -16,7 +16,9 @@
  */
 import { options } from './playwright.fixtures';
 
-it.fail(options.CHROMIUM && !options.HEADLESS)('should fail without credentials', async ({browser, server}) => {
+it('should fail without credentials', test => {
+  test.fail(options.CHROMIUM && !options.HEADLESS);
+}, async ({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -25,7 +27,9 @@ it.fail(options.CHROMIUM && !options.HEADLESS)('should fail without credentials'
   await context.close();
 });
 
-it.fail(options.CHROMIUM && !options.HEADLESS)('should work with setHTTPCredentials', async ({browser, server}) => {
+it('should work with setHTTPCredentials', test => {
+  test.fail(options.CHROMIUM && !options.HEADLESS);
+}, async ({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
   const page = await context.newPage();

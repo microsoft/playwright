@@ -74,7 +74,9 @@ it('should work with a path', async ({page, server}) => {
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
 
-it.skip(options.WEBKIT)('should include sourceURL when path is provided', async ({page, server}) => {
+it('should include sourceURL when path is provided', test => {
+  test.skip(options.WEBKIT);
+}, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
   const result = await page.evaluate(() => window['__injectedError'].stack);

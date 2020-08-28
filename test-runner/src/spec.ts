@@ -53,32 +53,31 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
   const suites = [suite];
   suite.file = file;
 
-  const it = specBuilder(['skip', 'fixme', 'fail', 'slow', 'only', 'flaky'], (specs, title, fn) => {
+  const it = specBuilder(['_skip', '_only'], (specs: any, title: string, metaFn: (test: Test) => void | Function, fn?: Function) => {
     const suite = suites[0];
+    if (typeof fn !== 'function') {
+      fn = metaFn;
+      metaFn = null;
+    }
     const test = new Test(title, fn);
+    if (metaFn)
+      metaFn(test);
     test.file = file;
-    test.slow = specs.slow && specs.slow[0];
     test.timeout = timeout;
-
-    const only = specs.only && specs.only[0];
+    const only = specs._only && specs._only[0];
     if (only)
       test.only = true;
-    if (!only && specs.skip && specs.skip[0])
+    if (!only && specs._skip && specs._skip[0])
       test._skipped = true;
-    if (!only && specs.fixme && specs.fixme[0])
-      test._skipped = true;
-    if (specs.fail && specs.fail[0])
-      test._expectedStatus = 'failed';
-    if (specs.flaky && specs.flaky[0])
-      test._flaky = true;
     suite._addTest(test);
     return test;
   });
 
-  const describe = specBuilder(['skip', 'fixme', 'only'], (specs, title, fn) => {
+  const describe = specBuilder(['skip', 'fixme', 'flaky', 'only', 'slow'], (specs, title, fn) => {
     const child = new Suite(title, suites[0]);
     suites[0]._addSuite(child);
     child.file = file;
+    child._slow = specs.slow && specs.slow[0];
     const only = specs.only && specs.only[0];
     if (only)
       child.only = true;
@@ -86,6 +85,8 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
       child._skipped = true;
     if (!only && specs.fixme && specs.fixme[0])
       child._skipped = true;
+    if (specs.flaky && specs.flaky[0])
+      child._flaky = true;
     suites.unshift(child);
     fn();
     suites.shift();
@@ -99,8 +100,8 @@ export function spec(suite: Suite, file: string, timeout: number): () => void {
   (global as any).fdescribe = describe.only(true);
   (global as any).xdescribe = describe.skip(true);
   (global as any).it = it;
-  (global as any).fit = it.only(true);
-  (global as any).xit = it.skip(true);
+  (global as any).fit = it._only(true);
+  (global as any).xit = it._skip(true);
 
   return installTransform();
 }

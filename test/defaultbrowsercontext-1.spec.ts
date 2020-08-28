@@ -170,8 +170,9 @@ it('should support offline option', async ({server, launchPersistent}) => {
   expect(error).toBeTruthy();
 });
 
-it.skip(true)('should support acceptDownloads option', async ({server, launchPersistent}) => {
-  // TODO: unskip once we support downloads in persistent context.
+it('should support acceptDownloads option', test => {
+  test.skip('Unskip once we support downloads in persistent context.');
+}, async ({server, launchPersistent}) => {
   const {page} = await launchPersistent({acceptDownloads: true});
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');

@@ -17,7 +17,9 @@
 import { options } from './playwright.fixtures';
 
 
-it.fail(options.FIREFOX && !options.HEADLESS)('should work', async ({ page, server }) => {
+it('should work', test => {
+  test.fail(options.FIREFOX && !options.HEADLESS);
+}, async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
   const elementHandle = await page.$('.box:nth-of-type(13)');
@@ -64,7 +66,9 @@ it('should work with SVG nodes', async ({ page, server }) => {
   expect(pwBoundingBox).toEqual(webBoundingBox);
 });
 
-it.skip(options.FIREFOX)('should work with page scale', async ({ browser, server }) => {
+it('should work with page scale', test => {
+  test.skip(options.FIREFOX);
+}, async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');

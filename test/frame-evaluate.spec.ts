@@ -42,7 +42,9 @@ function expectContexts(pageImpl, count) {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it.skip(options.WIRE)('should dispose context on navigation', async ({ page, server, toImpl }) => {
+it('should dispose context on navigation', test => {
+  test.skip(options.WIRE);
+}, async ({ page, server, toImpl }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
   expectContexts(toImpl(page), 4);
@@ -50,7 +52,9 @@ it.skip(options.WIRE)('should dispose context on navigation', async ({ page, ser
   expectContexts(toImpl(page), 2);
 });
 
-it.skip(options.WIRE)('should dispose context on cross-origin navigation', async ({ page, server, toImpl }) => {
+it('should dispose context on cross-origin navigation', test => {
+  test.skip(options.WIRE);
+}, async ({ page, server, toImpl }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
   expectContexts(toImpl(page), 4);
@@ -126,7 +130,9 @@ it('should be isolated between frames', async ({page, server}) => {
   expect(a2).toBe(2);
 });
 
-it.fail(options.CHROMIUM || options.FIREFOX)('should work in iframes that failed initial navigation', async ({page, server}) => {
+it('should work in iframes that failed initial navigation', test => {
+  test.fail(options.CHROMIUM || options.FIREFOX);
+}, async ({page}) => {
   // - Firefox does not report domcontentloaded for the iframe.
   // - Chromium and Firefox report empty url.
   // - Chromium does not report main/utility worlds for the iframe.
@@ -147,7 +153,9 @@ it.fail(options.CHROMIUM || options.FIREFOX)('should work in iframes that failed
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it.fixme(options.CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async ({page, server}) => {
+it('should work in iframes that interrupted initial javascript url navigation', test => {
+  test.fixme(options.CHROMIUM);
+}, async ({page, server}) => {
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {

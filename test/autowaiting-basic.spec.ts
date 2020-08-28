@@ -200,7 +200,9 @@ it('should work with goto following click', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 });
 
-it.skip(options.WIRE)('should report navigation in the log when clicking anchor', async ({page, server}) => {
+it('should report navigation in the log when clicking anchor', test => {
+  test.skip(options.WIRE);
+}, async ({page, server}) => {
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);
   const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));
   const error = await page.click('a', { timeout: 5000, __testHookAfterPointerAction } as any).catch(e => e);

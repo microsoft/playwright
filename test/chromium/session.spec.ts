@@ -16,105 +16,107 @@
 import { options } from '../playwright.fixtures';
 import type { ChromiumBrowserContext, ChromiumBrowser } from '../../types/types';
 
-it.skip(!options.CHROMIUM)('should work', async function({page}) {
-  const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
+describe.skip(!options.CHROMIUM)('session', () => {
+  it('should work', async function({page}) {
+    const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
 
-  await Promise.all([
-    client.send('Runtime.enable'),
-    client.send('Runtime.evaluate', { expression: 'window.foo = "bar"' })
-  ]);
-  const foo = await page.evaluate(() => window['foo']);
-  expect(foo).toBe('bar');
-});
+    await Promise.all([
+      client.send('Runtime.enable'),
+      client.send('Runtime.evaluate', { expression: 'window.foo = "bar"' })
+    ]);
+    const foo = await page.evaluate(() => window['foo']);
+    expect(foo).toBe('bar');
+  });
 
-it.skip(!options.CHROMIUM)('should send events', async function({page, server}) {
-  const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
-  await client.send('Network.enable');
-  const events = [];
-  client.on('Network.requestWillBeSent', event => events.push(event));
-  await page.goto(server.EMPTY_PAGE);
-  expect(events.length).toBe(1);
-});
+  it('should send events', async function({page, server}) {
+    const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
+    await client.send('Network.enable');
+    const events = [];
+    client.on('Network.requestWillBeSent', event => events.push(event));
+    await page.goto(server.EMPTY_PAGE);
+    expect(events.length).toBe(1);
+  });
 
-it.skip(!options.CHROMIUM)('should only accept a page', async function({page}) {
-  const error = await (page.context() as ChromiumBrowserContext).newCDPSession(page.context() as any).catch(e => e);
-  expect(error.message).toContain('page: expected Page');
-});
+  it('should only accept a page', async function({page}) {
+    const error = await (page.context() as ChromiumBrowserContext).newCDPSession(page.context() as any).catch(e => e);
+    expect(error.message).toContain('page: expected Page');
+  });
 
-it.skip(!options.CHROMIUM)('should enable and disable domains independently', async function({page}) {
-  const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
-  await client.send('Runtime.enable');
-  await client.send('Debugger.enable');
-  // JS coverage enables and then disables Debugger domain.
-  await page.coverage.startJSCoverage();
-  await page.coverage.stopJSCoverage();
-  page.on('console', console.log);
-  // generate a script in page and wait for the event.
-  await Promise.all([
-    new Promise(f => client.on('Debugger.scriptParsed', event => {
-      if (event.url === 'foo.js')
-        f();
-    })),
-    page.evaluate('//# sourceURL=foo.js')
-  ]);
-});
+  it('should enable and disable domains independently', async function({page}) {
+    const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
+    await client.send('Runtime.enable');
+    await client.send('Debugger.enable');
+    // JS coverage enables and then disables Debugger domain.
+    await page.coverage.startJSCoverage();
+    await page.coverage.stopJSCoverage();
+    page.on('console', console.log);
+    // generate a script in page and wait for the event.
+    await Promise.all([
+      new Promise(f => client.on('Debugger.scriptParsed', event => {
+        if (event.url === 'foo.js')
+          f();
+      })),
+      page.evaluate('//# sourceURL=foo.js')
+    ]);
+  });
 
-it.skip(!options.CHROMIUM)('should be able to detach session', async function({page}) {
-  const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
-  await client.send('Runtime.enable');
-  const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
-  expect(evalResponse.result.value).toBe(3);
-  await client.detach();
-  let error = null;
-  try {
-    await client.send('Runtime.evaluate', {expression: '3 + 1', returnByValue: true});
-  } catch (e) {
-    error = e;
-  }
-  expect(error.message).toContain('Target browser or context has been closed');
-});
+  it('should be able to detach session', async function({page}) {
+    const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
+    await client.send('Runtime.enable');
+    const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
+    expect(evalResponse.result.value).toBe(3);
+    await client.detach();
+    let error = null;
+    try {
+      await client.send('Runtime.evaluate', {expression: '3 + 1', returnByValue: true});
+    } catch (e) {
+      error = e;
+    }
+    expect(error.message).toContain('Target browser or context has been closed');
+  });
 
-it.skip(!options.CHROMIUM)('should throw nice errors', async function({page}) {
-  const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
-  const error = await theSourceOfTheProblems().catch(error => error);
-  expect(error.stack).toContain('theSourceOfTheProblems');
-  expect(error.message).toContain('ThisCommand.DoesNotExist');
+  it('should throw nice errors', async function({page}) {
+    const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
+    const error = await theSourceOfTheProblems().catch(error => error);
+    expect(error.stack).toContain('theSourceOfTheProblems');
+    expect(error.message).toContain('ThisCommand.DoesNotExist');
 
-  async function theSourceOfTheProblems() {
-    await client.send('ThisCommand.DoesNotExist' as any);
-  }
-});
+    async function theSourceOfTheProblems() {
+      await client.send('ThisCommand.DoesNotExist' as any);
+    }
+  });
 
-it.skip(!options.CHROMIUM)('should not break page.close()', async function({browser}) {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  const session = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
-  await session.detach();
-  await page.close();
-  await context.close();
-});
+  it('should not break page.close()', async function({browser}) {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const session = await (page.context() as ChromiumBrowserContext).newCDPSession(page);
+    await session.detach();
+    await page.close();
+    await context.close();
+  });
 
-it.skip(!options.CHROMIUM)('should detach when page closes', async function({browser}) {
-  const context = await browser.newContext() as ChromiumBrowserContext;
-  const page = await context.newPage();
-  const session = await context.newCDPSession(page);
-  await page.close();
-  let error;
-  await session.detach().catch(e => error = e);
-  expect(error).toBeTruthy();
-  await context.close();
-});
+  it('should detach when page closes', async function({browser}) {
+    const context = await browser.newContext() as ChromiumBrowserContext;
+    const page = await context.newPage();
+    const session = await context.newCDPSession(page);
+    await page.close();
+    let error;
+    await session.detach().catch(e => error = e);
+    expect(error).toBeTruthy();
+    await context.close();
+  });
 
-it.skip(!options.CHROMIUM)('should work', async function({browser}) {
-  const session = await (browser as ChromiumBrowser).newBrowserCDPSession();
+  it('should work', async function({browser}) {
+    const session = await (browser as ChromiumBrowser).newBrowserCDPSession();
 
-  const version = await session.send('Browser.getVersion');
-  expect(version.userAgent).toBeTruthy();
+    const version = await session.send('Browser.getVersion');
+    expect(version.userAgent).toBeTruthy();
 
-  let gotEvent = false;
-  session.on('Target.targetCreated', () => gotEvent = true);
-  await session.send('Target.setDiscoverTargets', { discover: true });
-  expect(gotEvent).toBe(true);
+    let gotEvent = false;
+    session.on('Target.targetCreated', () => gotEvent = true);
+    await session.send('Target.setDiscoverTargets', { discover: true });
+    expect(gotEvent).toBe(true);
 
-  await session.detach();
+    await session.detach();
+  });
 });

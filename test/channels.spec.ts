@@ -65,7 +65,9 @@ it('should scope context handles', async ({browserType, browser, server}) => {
   await expectScopeState(browser, GOLDEN_PRECONDITION);
 });
 
-it.skip(!options.CHROMIUM)('should scope CDPSession handles', async ({browserType, browser, server}) => {
+it('should scope CDPSession handles', test => {
+  test.skip(!options.CHROMIUM);
+}, async ({browserType, browser}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [

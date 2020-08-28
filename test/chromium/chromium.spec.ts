@@ -16,72 +16,74 @@
 import { options } from '../playwright.fixtures';
 import type { ChromiumBrowserContext } from '../..';
 
-it.skip(!options.CHROMIUM)('should create a worker from a service worker', async ({page, server, context}) => {
-  const [worker] = await Promise.all([
-    (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
-  ]);
-  expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
-});
-
-it.skip(!options.CHROMIUM)('serviceWorkers() should return current workers', async ({page, server, context}) => {
-  const [worker1] = await Promise.all([
-    (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
-  ]);
-  let workers = (context as ChromiumBrowserContext).serviceWorkers();
-  expect(workers.length).toBe(1);
-
-  const [worker2] = await Promise.all([
-    (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
-    page.goto(server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.html')
-  ]);
-  workers = (context as ChromiumBrowserContext).serviceWorkers();
-  expect(workers.length).toBe(2);
-  expect(workers).toContain(worker1);
-  expect(workers).toContain(worker2);
-});
-
-it.skip(!options.CHROMIUM)('should not create a worker from a shared worker', async ({page, server, context}) => {
-  await page.goto(server.EMPTY_PAGE);
-  let serviceWorkerCreated;
-  (context as ChromiumBrowserContext).once('serviceworker', () => serviceWorkerCreated = true);
-  await page.evaluate(() => {
-    new SharedWorker('data:text/javascript,console.log("hi")');
-  });
-  expect(serviceWorkerCreated).not.toBeTruthy();
-});
-
-it.skip(!options.CHROMIUM)('should close service worker together with the context', async ({browser, server}) => {
-  const context = await browser.newContext() as ChromiumBrowserContext;
-  const page = await context.newPage();
-  const [worker] = await Promise.all([
-    context.waitForEvent('serviceworker'),
-    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
-  ]);
-  const messages = [];
-  context.on('close', () => messages.push('context'));
-  worker.on('close', () => messages.push('worker'));
-  await context.close();
-  expect(messages.join('|')).toBe('worker|context');
-});
-
-it.skip(!options.CHROMIUM)('Page.route should work with intervention headers', async ({server, page}) => {
-  server.setRoute('/intervention', (req, res) => res.end(`
-    <script>
-      document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
-    </script>
-  `));
-  server.setRedirect('/intervention.js', '/redirect.js');
-  let serverRequest = null;
-  server.setRoute('/redirect.js', (req, res) => {
-    serverRequest = req;
-    res.end('console.log(1);');
+describe.skip(!options.CHROMIUM)('chromium', () => {
+  it('should create a worker from a service worker', async ({page, server, context}) => {
+    const [worker] = await Promise.all([
+      (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+    ]);
+    expect(await worker.evaluate(() => self.toString())).toBe('[object ServiceWorkerGlobalScope]');
   });
 
-  await page.route('*', route => route.continue());
-  await page.goto(server.PREFIX + '/intervention');
-  // Check for feature URL substring rather than https://www.chromestatus.com to
-  // make it work with Edgium.
-  expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
+  it('serviceWorkers() should return current workers', async ({page, server, context}) => {
+    const [worker1] = await Promise.all([
+      (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+    ]);
+    let workers = (context as ChromiumBrowserContext).serviceWorkers();
+    expect(workers.length).toBe(1);
+
+    const [worker2] = await Promise.all([
+      (context as ChromiumBrowserContext).waitForEvent('serviceworker'),
+      page.goto(server.CROSS_PROCESS_PREFIX + '/serviceworkers/empty/sw.html')
+    ]);
+    workers = (context as ChromiumBrowserContext).serviceWorkers();
+    expect(workers.length).toBe(2);
+    expect(workers).toContain(worker1);
+    expect(workers).toContain(worker2);
+  });
+
+  it('should not create a worker from a shared worker', async ({page, server, context}) => {
+    await page.goto(server.EMPTY_PAGE);
+    let serviceWorkerCreated;
+    (context as ChromiumBrowserContext).once('serviceworker', () => serviceWorkerCreated = true);
+    await page.evaluate(() => {
+      new SharedWorker('data:text/javascript,console.log("hi")');
+    });
+    expect(serviceWorkerCreated).not.toBeTruthy();
+  });
+
+  it('should close service worker together with the context', async ({browser, server}) => {
+    const context = await browser.newContext() as ChromiumBrowserContext;
+    const page = await context.newPage();
+    const [worker] = await Promise.all([
+      context.waitForEvent('serviceworker'),
+      page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+    ]);
+    const messages = [];
+    context.on('close', () => messages.push('context'));
+    worker.on('close', () => messages.push('worker'));
+    await context.close();
+    expect(messages.join('|')).toBe('worker|context');
+  });
+
+  it('Page.route should work with intervention headers', async ({server, page}) => {
+    server.setRoute('/intervention', (req, res) => res.end(`
+      <script>
+        document.write('<script src="${server.CROSS_PROCESS_PREFIX}/intervention.js">' + '</scr' + 'ipt>');
+      </script>
+    `));
+    server.setRedirect('/intervention.js', '/redirect.js');
+    let serverRequest = null;
+    server.setRoute('/redirect.js', (req, res) => {
+      serverRequest = req;
+      res.end('console.log(1);');
+    });
+
+    await page.route('*', route => route.continue());
+    await page.goto(server.PREFIX + '/intervention');
+    // Check for feature URL substring rather than https://www.chromestatus.com to
+    // make it work with Edgium.
+    expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
+  });
 });

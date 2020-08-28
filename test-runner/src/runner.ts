@@ -176,6 +176,7 @@ export class Runner {
       const { test } = this._testById.get(params.id);
       test._skipped = params.skipped;
       test._flaky = params.flaky;
+      test._slow = params.slow;
       test._expectedStatus = params.expectedStatus;
       this._reporter.onTestBegin(test);
     });

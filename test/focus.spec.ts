@@ -15,7 +15,9 @@
  */
 import { options } from './playwright.fixtures';
 
-it.skip(options.FIREFOX)('should work', async function({page}) {
+it('should work', test => {
+  test.skip(options.FIREFOX);
+}, async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
   await page.focus('#d1');
@@ -75,9 +77,10 @@ it('should traverse focus in all directions', async function({page}) {
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
 
-// Chromium and WebKit both have settings for tab traversing all links, but
-// it is only on by default in WebKit.
-it.skip(!MAC || !options.WEBKIT)('should traverse only form elements', async function({page}) {
+it('should traverse only form elements', test => {
+  test.skip(!MAC || !options.WEBKIT,
+      'Chromium and WebKit both have settings for tab traversing all links, but it is only on by default in WebKit.');
+}, async function({page}) {
   await page.setContent(`
     <input id="input-1">
     <button id="button">buttton</button>

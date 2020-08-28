@@ -17,31 +17,33 @@
 import { options } from '../playwright.fixtures';
 import './electron.fixture';
 
-it.skip(!options.CHROMIUM)('should click the button', async ({window, server}) => {
-  await window.goto(server.PREFIX + '/input/button.html');
-  await window.click('button');
-  expect(await window.evaluate('result')).toBe('Clicked');
-});
-
-it.skip(!options.CHROMIUM)('should check the box', async ({window}) => {
-  await window.setContent(`<input id='checkbox' type='checkbox'></input>`);
-  await window.check('input');
-  expect(await window.evaluate('checkbox.checked')).toBe(true);
-});
-
-it.skip(!options.CHROMIUM)('should not check the checked box', async ({window}) => {
-  await window.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
-  await window.check('input');
-  expect(await window.evaluate('checkbox.checked')).toBe(true);
-});
-
-it.skip(!options.CHROMIUM)('should type into a textarea', async ({window, server}) => {
-  await window.evaluate(() => {
-    const textarea = document.createElement('textarea');
-    document.body.appendChild(textarea);
-    textarea.focus();
+describe.skip(!options.CHROMIUM)('electron window', () => {
+  it('should click the button', async ({window, server}) => {
+    await window.goto(server.PREFIX + '/input/button.html');
+    await window.click('button');
+    expect(await window.evaluate('result')).toBe('Clicked');
   });
-  const text = 'Hello world. I am the text that was typed!';
-  await window.keyboard.type(text);
-  expect(await window.evaluate(() => document.querySelector('textarea').value)).toBe(text);
+
+  it('should check the box', async ({window}) => {
+    await window.setContent(`<input id='checkbox' type='checkbox'></input>`);
+    await window.check('input');
+    expect(await window.evaluate('checkbox.checked')).toBe(true);
+  });
+
+  it('should not check the checked box', async ({window}) => {
+    await window.setContent(`<input id='checkbox' type='checkbox' checked></input>`);
+    await window.check('input');
+    expect(await window.evaluate('checkbox.checked')).toBe(true);
+  });
+
+  it('should type into a textarea', async ({window, server}) => {
+    await window.evaluate(() => {
+      const textarea = document.createElement('textarea');
+      document.body.appendChild(textarea);
+      textarea.focus();
+    });
+    const text = 'Hello world. I am the text that was typed!';
+    await window.keyboard.type(text);
+    expect(await window.evaluate(() => document.querySelector('textarea').value)).toBe(text);
+  });
 });

@@ -26,42 +26,47 @@ function crash(pageImpl, browserName) {
     pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
-it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
-  await page.setContent(`<div>This page should crash</div>`);
-  crash(toImpl(page), browserName);
-  await new Promise(f => page.on('crash', f));
-});
+describe.fixme(options.WIRE).flaky(options.FIREFOX && WIN)('', () => {
+  it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(toImpl(page), browserName);
+    await new Promise(f => page.on('crash', f));
+  });
 
-it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {
-  await page.setContent(`<div>This page should crash</div>`);
-  crash(toImpl(page), browserName);
-  await page.waitForEvent('crash');
-  const err = await page.evaluate(() => {}).then(() => null, e => e);
-  expect(err).toBeTruthy();
-  expect(err.message).toContain('crash');
-});
+  it('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(toImpl(page), browserName);
+    await page.waitForEvent('crash');
+    const err = await page.evaluate(() => {}).then(() => null, e => e);
+    expect(err).toBeTruthy();
+    expect(err.message).toContain('crash');
+  });
 
-it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should cancel waitForEvent when page crashes', async ({page, browserName, toImpl}) => {
-  await page.setContent(`<div>This page should crash</div>`);
-  const promise = page.waitForEvent('response').catch(e => e);
-  crash(toImpl(page), browserName);
-  const error = await promise;
-  expect(error.message).toContain('Page crashed');
-});
+  it('should cancel waitForEvent when page crashes', async ({page, browserName, toImpl}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    const promise = page.waitForEvent('response').catch(e => e);
+    crash(toImpl(page), browserName);
+    const error = await promise;
+    expect(error.message).toContain('Page crashed');
+  });
 
-it.fixme(options.WIRE).flaky(options.FIREFOX && WIN)('should cancel navigation when page crashes', async ({page, browserName, toImpl, server}) => {
-  await page.setContent(`<div>This page should crash</div>`);
-  server.setRoute('/one-style.css', () => {});
-  const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
-  await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-  crash(toImpl(page), browserName);
-  const error = await promise;
-  expect(error.message).toContain('Navigation failed because page crashed');
-});
+  it('should cancel navigation when page crashes', async ({page, browserName, toImpl, server}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    server.setRoute('/one-style.css', () => {});
+    const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
+    await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
+    crash(toImpl(page), browserName);
+    const error = await promise;
+    expect(error.message).toContain('Navigation failed because page crashed');
+  });
 
-it.fixme(options.WIRE).flaky(options.FIREFOX && WIN)('should be able to close context when page crashes', async ({page, browserName, toImpl}) => {
-  await page.setContent(`<div>This page should crash</div>`);
-  crash(toImpl(page), browserName);
-  await page.waitForEvent('crash');
-  await page.context().close();
+  it('should be able to close context when page crashes', test => {
+    test.fixme(options.WIRE);
+    test.flaky(options.FIREFOX && WIN);
+  }, async ({page, browserName, toImpl}) => {
+    await page.setContent(`<div>This page should crash</div>`);
+    crash(toImpl(page), browserName);
+    await page.waitForEvent('crash');
+    await page.context().close();
+  });
 });

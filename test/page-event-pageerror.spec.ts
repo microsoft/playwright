@@ -31,7 +31,9 @@ it('should fire', async ({page, server}) => {
   expect(error.stack).toBe(stack);
 });
 
-it.fail(options.WEBKIT)('should contain sourceURL', async ({page, server}) => {
+it('should contain sourceURL', test => {
+  test.fail(options.WEBKIT);
+}, async ({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -55,7 +57,9 @@ it('should handle odd values', async ({page}) => {
   }
 });
 
-it.fail(options.FIREFOX)('should handle object', async ({page}) => {
+it('should handle object', test => {
+  test.fail(options.FIREFOX);
+}, async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -64,7 +68,9 @@ it.fail(options.FIREFOX)('should handle object', async ({page}) => {
   expect(error.message).toBe(options.CHROMIUM ? 'Object' : '[object Object]');
 });
 
-it.fail(options.FIREFOX)('should handle window', async ({page}) => {
+it('should handle window', test => {
+  test.fail(options.FIREFOX);
+}, async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
