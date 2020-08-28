@@ -21,24 +21,24 @@ import utils from './utils';
 import path from 'path';
 import url from 'url';
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async({page, server}) => {
+it('should work with file URL', async ({page, server}) => {
   const fileurl = url.pathToFileURL(path.join(__dirname, 'assets', 'frames', 'two-frames.html')).href;
   await page.goto(fileurl);
   expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());
   expect(page.frames().length).toBe(3);
 });
 
-it('should use http for no protocol', async({page, server}) => {
+it('should use http for no protocol', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE.substring('http://'.length));
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work cross-process', async({page, server}) => {
+it('should work cross-process', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 
@@ -55,7 +55,7 @@ it('should work cross-process', async({page, server}) => {
   expect(response.url()).toBe(url);
 });
 
-it('should capture iframe navigation request', async({page, server}) => {
+it('should capture iframe navigation request', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 
@@ -73,7 +73,7 @@ it('should capture iframe navigation request', async({page, server}) => {
   expect(requestFrame).toBe(page.frames()[1]);
 });
 
-it('should capture cross-process iframe navigation request', async({page, server}) => {
+it('should capture cross-process iframe navigation request', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
 
@@ -91,7 +91,7 @@ it('should capture cross-process iframe navigation request', async({page, server
   expect(requestFrame).toBe(page.frames()[1]);
 });
 
-it('should work with anchor navigation', async({page, server}) => {
+it('should work with anchor navigation', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
   await page.goto(server.EMPTY_PAGE + '#foo');
@@ -100,7 +100,7 @@ it('should work with anchor navigation', async({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#bar');
 });
 
-it('should work with redirects', async({page, server}) => {
+it('should work with redirects', async ({page, server}) => {
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   const response = await page.goto(server.PREFIX + '/redirect/1.html');
@@ -108,17 +108,17 @@ it('should work with redirects', async({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should navigate to about:blank', async({page, server}) => {
+it('should navigate to about:blank', async ({page, server}) => {
   const response = await page.goto('about:blank');
   expect(response).toBe(null);
 });
 
-it('should return response when page changes its URL after load', async({page, server}) => {
+it('should return response when page changes its URL after load', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/historyapi.html');
   expect(response.status()).toBe(200);
 });
 
-it('should work with subframes return 204', async({page, server}) => {
+it('should work with subframes return 204', async ({page, server}) => {
   server.setRoute('/frames/frame.html', (req, res) => {
     res.statusCode = 204;
     res.end();
@@ -126,7 +126,7 @@ it('should work with subframes return 204', async({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
 });
 
-it('should work with subframes return 204 with domcontentloaded', async({page, server}) => {
+it('should work with subframes return 204 with domcontentloaded', async ({page, server}) => {
   server.setRoute('/frames/frame.html', (req, res) => {
     res.statusCode = 204;
     res.end();
@@ -134,7 +134,7 @@ it('should work with subframes return 204 with domcontentloaded', async({page, s
   await page.goto(server.PREFIX + '/frames/one-frame.html', { waitUntil: 'domcontentloaded' });
 });
 
-it('should fail when server returns 204', async({page, server}) => {
+it('should fail when server returns 204', async ({page, server}) => {
   // Webkit just loads an empty page.
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 204;
@@ -151,12 +151,12 @@ it('should fail when server returns 204', async({page, server}) => {
     expect(error.message).toContain('NS_BINDING_ABORTED');
 });
 
-it('should navigate to empty page with domcontentloaded', async({page, server}) => {
+it('should navigate to empty page with domcontentloaded', async ({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE, {waitUntil: 'domcontentloaded'});
   expect(response.status()).toBe(200);
 });
 
-it('should work when page calls history API in beforeunload', async({page, server}) => {
+it('should work when page calls history API in beforeunload', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     window.addEventListener('beforeunload', () => history.replaceState(null, 'initial', window.location.href), false);
@@ -165,7 +165,7 @@ it('should work when page calls history API in beforeunload', async({page, serve
   expect(response.status()).toBe(200);
 });
 
-it('should fail when navigating to bad url', async({page}) => {
+it('should fail when navigating to bad url', async ({page}) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
   if (options.CHROMIUM || options.WEBKIT)
@@ -174,7 +174,7 @@ it('should fail when navigating to bad url', async({page}) => {
     expect(error.message).toContain('Invalid url');
 });
 
-it('should fail when navigating to bad SSL', async({page, httpsServer, browserName}) => {
+it('should fail when navigating to bad SSL', async ({page, httpsServer, browserName}) => {
   // Make sure that network events do not emit 'undefined'.
   // @see https://crbug.com/750469
   page.on('request', request => expect(request).toBeTruthy());
@@ -185,7 +185,7 @@ it('should fail when navigating to bad SSL', async({page, httpsServer, browserNa
   utils.expectSSLError(browserName, error.message);
 });
 
-it('should fail when navigating to bad SSL after redirects', async({page, server, httpsServer, browserName}) => {
+it('should fail when navigating to bad SSL after redirects', async ({page, server, httpsServer, browserName}) => {
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   let error = null;
@@ -193,23 +193,22 @@ it('should fail when navigating to bad SSL after redirects', async({page, server
   utils.expectSSLError(browserName, error.message);
 });
 
-it('should not crash when navigating to bad SSL after a cross origin navigation', async({page, server, httpsServer}) => {
+it('should not crash when navigating to bad SSL after a cross origin navigation', async ({page, server, httpsServer}) => {
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
   await page.goto(httpsServer.EMPTY_PAGE).catch(e => void 0);
 });
 
-it('should not throw if networkidle0 is passed as an option', async({page, server}) => {
-  let error = null;
+it('should not throw if networkidle0 is passed as an option', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0' as any});
 });
 
-it('should throw if networkidle2 is passed as an option', async({page, server}) => {
+it('should throw if networkidle2 is passed as an option', async ({page, server}) => {
   let error = null;
   await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2' as any}).catch(err => error = err);
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should fail when main resources failed to load', async({page}) => {
+it('should fail when main resources failed to load', async ({page}) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
   if (options.CHROMIUM)
@@ -222,7 +221,7 @@ it('should fail when main resources failed to load', async({page}) => {
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
 });
 
-it('should fail when exceeding maximum navigation timeout', async({page, server, playwright}) => {
+it('should fail when exceeding maximum navigation timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
@@ -232,7 +231,7 @@ it('should fail when exceeding maximum navigation timeout', async({page, server,
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding default maximum navigation timeout', async({page, server, playwright}) => {
+it('should fail when exceeding default maximum navigation timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
@@ -244,7 +243,7 @@ it('should fail when exceeding default maximum navigation timeout', async({page,
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding browser context navigation timeout', async({page, server, playwright}) => {
+it('should fail when exceeding browser context navigation timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
@@ -255,7 +254,7 @@ it('should fail when exceeding browser context navigation timeout', async({page,
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding default maximum timeout', async({page, server, playwright}) => {
+it('should fail when exceeding default maximum timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
@@ -267,7 +266,7 @@ it('should fail when exceeding default maximum timeout', async({page, server, pl
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding browser context timeout', async({page, server, playwright}) => {
+it('should fail when exceeding browser context timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
@@ -278,7 +277,7 @@ it('should fail when exceeding browser context timeout', async({page, server, pl
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should prioritize default navigation timeout over default timeout', async({page, server, playwright}) => {
+it('should prioritize default navigation timeout over default timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
@@ -290,7 +289,7 @@ it('should prioritize default navigation timeout over default timeout', async({p
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should disable timeout when its set to 0', async({page, server}) => {
+it('should disable timeout when its set to 0', async ({page, server}) => {
   let error = null;
   let loaded = false;
   page.once('load', () => loaded = true);
@@ -299,7 +298,7 @@ it('should disable timeout when its set to 0', async({page, server}) => {
   expect(loaded).toBe(true);
 });
 
-it('should fail when replaced by another navigation', async({page, server}) => {
+it('should fail when replaced by another navigation', async ({page, server}) => {
   let anotherPromise;
   server.setRoute('/empty.html', (req, res) => {
     anotherPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -315,23 +314,23 @@ it('should fail when replaced by another navigation', async({page, server}) => {
     expect(error.message).toContain('NS_BINDING_ABORTED');
 });
 
-it('should work when navigating to valid url', async({page, server}) => {
+it('should work when navigating to valid url', async ({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok()).toBe(true);
 });
 
-it('should work when navigating to data url', async({page, server}) => {
+it('should work when navigating to data url', async ({page, server}) => {
   const response = await page.goto('data:text/html,hello');
   expect(response).toBe(null);
 });
 
-it('should work when navigating to 404', async({page, server}) => {
+it('should work when navigating to 404', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/not-found');
   expect(response.ok()).toBe(false);
   expect(response.status()).toBe(404);
 });
 
-it('should return last response in redirect chain', async({page, server}) => {
+it('should return last response in redirect chain', async ({page, server}) => {
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/redirect/3.html');
   server.setRedirect('/redirect/3.html', server.EMPTY_PAGE);
@@ -340,7 +339,7 @@ it('should return last response in redirect chain', async({page, server}) => {
   expect(response.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should not leak listeners during navigation', async({page, server}) => {
+it('should not leak listeners during navigation', async ({page, server}) => {
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
@@ -350,7 +349,7 @@ it('should not leak listeners during navigation', async({page, server}) => {
   expect(warning).toBe(null);
 });
 
-it('should not leak listeners during bad navigation', async({page, server}) => {
+it('should not leak listeners during bad navigation', async ({page, server}) => {
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
@@ -360,7 +359,7 @@ it('should not leak listeners during bad navigation', async({page, server}) => {
   expect(warning).toBe(null);
 });
 
-it('should not leak listeners during navigation of 20 pages', async({page, context, server}) => {
+it('should not leak listeners during navigation of 20 pages', async ({page, context, server}) => {
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
@@ -371,7 +370,7 @@ it('should not leak listeners during navigation of 20 pages', async({page, conte
   expect(warning).toBe(null);
 });
 
-it('should not leak listeners during 20 waitForNavigation', async({page, context, server}) => {
+it('should not leak listeners during 20 waitForNavigation', async ({page, context, server}) => {
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
@@ -382,7 +381,7 @@ it('should not leak listeners during 20 waitForNavigation', async({page, context
   expect(warning).toBe(null);
 });
 
-it('should navigate to dataURL and not fire dataURL requests', async({page, server}) => {
+it('should navigate to dataURL and not fire dataURL requests', async ({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   const dataURL = 'data:text/html,<div>yo</div>';
@@ -391,7 +390,7 @@ it('should navigate to dataURL and not fire dataURL requests', async({page, serv
   expect(requests.length).toBe(0);
 });
 
-it('should navigate to URL with hash and fire requests without hash', async({page, server}) => {
+it('should navigate to URL with hash and fire requests without hash', async ({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   const response = await page.goto(server.EMPTY_PAGE + '#hash');
@@ -401,7 +400,7 @@ it('should navigate to URL with hash and fire requests without hash', async({pag
   expect(requests[0].url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with self requesting page', async({page, server}) => {
+it('should work with self requesting page', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/self-request.html');
   expect(response.status()).toBe(200);
   expect(response.url()).toContain('self-request.html');
@@ -418,13 +417,13 @@ it('should fail when navigating and show the url at the error message', async fu
   expect(error.message).toContain(url);
 });
 
-it('should be able to navigate to a page controlled by service worker', async({page, server}) => {
+it('should be able to navigate to a page controlled by service worker', async ({page, server}) => {
   await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
-  await page.evaluate(() => window["activationPromise"]);
+  await page.evaluate(() => window['activationPromise']);
   await page.goto(server.PREFIX + '/serviceworkers/fetch/sw.html');
 });
 
-it('should send referer', async({page, server}) => {
+it('should send referer', async ({page, server}) => {
   const [request1, request2] = await Promise.all([
     server.waitForRequest('/grid.html'),
     server.waitForRequest('/digits/1.png'),
@@ -438,7 +437,7 @@ it('should send referer', async({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/grid.html');
 });
 
-it('should reject referer option when setExtraHTTPHeaders provides referer', async({page, server}) => {
+it('should reject referer option when setExtraHTTPHeaders provides referer', async ({page, server}) => {
   await page.setExtraHTTPHeaders({ 'referer': 'http://microsoft.com/' });
   let error;
   await page.goto(server.PREFIX + '/grid.html', {
@@ -448,7 +447,7 @@ it('should reject referer option when setExtraHTTPHeaders provides referer', asy
   expect(error.message).toContain(server.PREFIX + '/grid.html');
 });
 
-it('should override referrer-policy', async({page, server}) => {
+it('should override referrer-policy', async ({page, server}) => {
   server.setRoute('/grid.html', (req, res) => {
     res.setHeader('Referrer-Policy', 'no-referrer');
     server.serveFile(req, res, '/grid.html');
@@ -466,7 +465,7 @@ it('should override referrer-policy', async({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/grid.html');
 });
 
-it('should fail when canceled by another navigation', async({page, server}) => {
+it('should fail when canceled by another navigation', async ({page, server}) => {
   server.setRoute('/one-style.html', (req, res) => {});
   const failed = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
   await server.waitForRequest('/one-style.html');
@@ -475,7 +474,7 @@ it('should fail when canceled by another navigation', async({page, server}) => {
   expect(error.message).toBeTruthy();
 });
 
-it.skip(true)('extraHttpHeaders should be pushed to provisional page', async({page, server}) => {
+it.skip(true)('extraHttpHeaders should be pushed to provisional page', async ({page, server}) => {
   // This test is flaky, because we cannot await page.setExtraHTTPHeaders.
   // We need a way to test our implementation by more than just public api.
   await page.goto(server.EMPTY_PAGE);
@@ -493,7 +492,7 @@ it.skip(true)('extraHttpHeaders should be pushed to provisional page', async({pa
   expect(cssReq.headers['foo']).toBe('bar');
 });
 
-it('should work with lazy loading iframes', async({page, server}) => {
+it('should work with lazy loading iframes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/lazy-frame.html');
   expect(page.frames().length).toBe(2);
 });

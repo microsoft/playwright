@@ -100,7 +100,7 @@ console.log(page.url());
 window.location.href = 'https://example.com';
 ```
 
-> Read more on [page navigation and loading](loading.md).
+> Read more on [page navigation and loading](navigations.md).
 
 A page can have one or more [Frame](api.md#class-frame) objects attached to
 it. Each page has a main frame and page-level interactions (like `click`) are

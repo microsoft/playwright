@@ -21,7 +21,6 @@ import { helper, RegisteredListener } from '../helper';
 import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
-import * as path from 'path';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
@@ -63,6 +62,7 @@ export class WKBrowser extends Browser {
       helper.addEventListener(this._browserSession, 'Playwright.downloadCreated', this._onDownloadCreated.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this)),
       helper.addEventListener(this._browserSession, 'Playwright.downloadFinished', this._onDownloadFinished.bind(this)),
+      helper.addEventListener(this._browserSession, 'Playwright.screencastFinished', this._onScreencastFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
   }
@@ -123,6 +123,10 @@ export class WKBrowser extends Browser {
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
     this._downloadFinished(payload.uuid, payload.error);
+  }
+
+  _onScreencastFinished(payload: Protocol.Playwright.screencastFinishedPayload) {
+    this._screencastFinished(payload.screencastId);
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
@@ -202,9 +206,8 @@ export class WKBrowserContext extends BrowserContext {
   readonly _evaluateOnNewDocumentSources: string[];
 
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
-    super(browser, options, !browserContextId);
+    super(browser, options, browserContextId);
     this._browser = browser;
-    this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaHeader();
   }
@@ -252,12 +255,6 @@ export class WKBrowserContext extends BrowserContext {
       throw result;
     if (result.isClosed())
       throw new Error('Page has been closed.');
-    if (result._browserContext._screencastOptions) {
-      const contextOptions = result._browserContext._screencastOptions;
-      const outputFile = path.join(contextOptions.dir, helper.guid() + '.webm');
-      const options = Object.assign({}, contextOptions, {outputFile});
-      await wkPage.startScreencast(options);
-    }
     return result;
   }
 

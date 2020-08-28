@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { SelectorsChannel, SelectorsInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { evaluationScript } from './clientHelper';
 
-export class Selectors extends ChannelOwner<SelectorsChannel, SelectorsInitializer> {
-  static from(selectors: SelectorsChannel): Selectors {
+export class Selectors extends ChannelOwner<channels.SelectorsChannel, channels.SelectorsInitializer> {
+  static from(selectors: channels.SelectorsChannel): Selectors {
     return (selectors as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: SelectorsInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.SelectorsInitializer) {
     super(parent, type, guid, initializer);
   }
 

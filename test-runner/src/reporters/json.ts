@@ -15,20 +15,25 @@
  */
 
 import { BaseReporter } from './base';
-import { Suite, Test } from '../test';
+import { Suite, Test, TestResult } from '../test';
+import * as fs from 'fs';
 
-export class JSONReporter extends BaseReporter {
+class JSONReporter extends BaseReporter {
   onEnd() {
     super.onEnd();
     const result = {
       config: this.config,
       suites: this.suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s)
     };
-    console.log(JSON.stringify(result, undefined, 2));
+    const report = JSON.stringify(result, undefined, 2);
+    if (process.env.PWRUNNER_JSON_REPORT)
+      fs.writeFileSync(process.env.PWRUNNER_JSON_REPORT, report);
+    else
+      console.log(report);
   }
 
   private _serializeSuite(suite: Suite): any {
-    if (!suite.eachTest(test => true))
+    if (!suite.findTest(test => true))
       return null;
     const suites = suite.suites.map(suite => this._serializeSuite(suite)).filter(s => s);
     return {
@@ -45,11 +50,28 @@ export class JSONReporter extends BaseReporter {
       title: test.title,
       file: test.file,
       only: test.only,
-      pending: test.pending,
       slow: test.slow,
-      duration: test.duration,
       timeout: test.timeout,
-      error: test.error
+      results: test.results.map(r => this._serializeTestResult(r))
+    };
+  }
+
+  private _serializeTestResult(result: TestResult): any {
+    return {
+      status: result.status,
+      duration: result.duration,
+      error: result.error,
+      stdout: result.stdout.map(s => stdioEntry(s)),
+      stderr: result.stderr.map(s => stdioEntry(s)),
+      data: result.data
     };
   }
 }
+
+function stdioEntry(s: string | Buffer): any {
+  if (typeof s === 'string')
+    return { text: s };
+  return { buffer: s.toString('base64') };
+}
+
+export default JSONReporter;

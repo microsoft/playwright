@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isUnderTest } from '../utils/utils';
+import { isDevMode } from '../utils/utils';
 
 export class ValidationError extends Error {}
 export type Validator = (arg: any, path: string) => any;
@@ -81,7 +81,7 @@ export const tObject = (s: { [key: string]: Validator }): Validator => {
       if (!Object.is(value, undefined))
         result[key] = value;
     }
-    if (isUnderTest()) {
+    if (isDevMode()) {
       for (const [key, value] of Object.entries(arg)) {
         if (key.startsWith('__testHook'))
           result[key] = value;

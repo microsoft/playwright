@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import './playwright.fixtures';
 import utils from './utils';
 
-it('should emulate type', async({page, server}) => {
+it('should emulate type', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
   await page.emulateMedia({ media: 'print' });
@@ -32,13 +32,13 @@ it('should emulate type', async({page, server}) => {
   expect(await page.evaluate(() => matchMedia('print').matches)).toBe(false);
 });
 
-it('should throw in case of bad type argument', async({page, server}) => {
+it('should throw in case of bad type argument', async ({page, server}) => {
   let error = null;
   await page.emulateMedia({ media: 'bad' as any}).catch(e => error = e);
   expect(error.message).toContain('media: expected one of (screen|print|null)');
 });
 
-it('should emulate scheme work', async({page, server}) => {
+it('should emulate scheme work', async ({page, server}) => {
   await page.emulateMedia({ colorScheme: 'light' });
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
@@ -47,7 +47,7 @@ it('should emulate scheme work', async({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(false);
 });
 
-it('should default to light', async({page, server}) => {
+it('should default to light', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(false);
 
@@ -60,13 +60,13 @@ it('should default to light', async({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches)).toBe(true);
 });
 
-it('should throw in case of bad argument', async({page, server}) => {
+it('should throw in case of bad argument', async ({page, server}) => {
   let error = null;
   await page.emulateMedia({ colorScheme: 'bad' as any}).catch(e => error = e);
   expect(error.message).toContain('colorScheme: expected one of (dark|light|no-preference|null)');
 });
 
-it('should work during navigation', async({page, server}) => {
+it('should work during navigation', async ({page, server}) => {
   await page.emulateMedia({ colorScheme: 'light' });
   const navigated = page.goto(server.EMPTY_PAGE);
   for (let i = 0; i < 9; i++) {
@@ -79,7 +79,7 @@ it('should work during navigation', async({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it('should work in popup', async({browser, server}) => {
+it('should work in popup', async ({browser, server}) => {
   {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await context.newPage();
@@ -105,7 +105,7 @@ it('should work in popup', async({browser, server}) => {
   }
 });
 
-it('should work in cross-process iframe', async({browser, server}) => {
+it('should work in cross-process iframe', async ({browser, server}) => {
   const page = await browser.newPage({ colorScheme: 'dark' });
   await page.goto(server.EMPTY_PAGE);
   await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
@@ -114,7 +114,7 @@ it('should work in cross-process iframe', async({browser, server}) => {
   await page.close();
 });
 
-it.fail(options.FIREFOX)('should change the actual colors in css', async({page}) => {
+it('should change the actual colors in css', async ({page}) => {
   await page.setContent(`
     <style>
       @media (prefers-color-scheme: dark) {
@@ -137,12 +137,12 @@ it.fail(options.FIREFOX)('should change the actual colors in css', async({page})
     return page.$eval('div', div => window.getComputedStyle(div).backgroundColor);
   }
 
-  await page.emulateMedia({ colorScheme: "light" });
+  await page.emulateMedia({ colorScheme: 'light' });
   expect(await getBackgroundColor()).toBe('rgb(255, 255, 255)');
 
-  await page.emulateMedia({ colorScheme: "dark" });
+  await page.emulateMedia({ colorScheme: 'dark' });
   expect(await getBackgroundColor()).toBe('rgb(0, 0, 0)');
 
-  await page.emulateMedia({ colorScheme: "light" });
+  await page.emulateMedia({ colorScheme: 'light' });
   expect(await getBackgroundColor()).toBe('rgb(255, 255, 255)');
-})
+});

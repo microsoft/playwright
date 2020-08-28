@@ -16,9 +16,10 @@
 
 import path from 'path';
 import { fixturesForCallback } from './fixtures';
-import { Test, Suite } from './test';
+import { Test, Suite, serializeConfiguration } from './test';
 import { spec } from './spec';
 import { RunnerConfig } from './runnerConfig';
+
 
 export type Matrix = {
   [key: string]: string[]
@@ -56,11 +57,10 @@ export class TestCollector {
     const revertBabelRequire = spec(suite, file, this._config.timeout);
     require(file);
     revertBabelRequire();
-    suite._renumber();
 
     const workerGeneratorConfigurations = new Map();
 
-    suite.eachTest((test: Test) => {
+    suite.findTest((test: Test) => {
       // Get all the fixtures that the test needs.
       const fixtures = fixturesForCallback(test.fn);
 
@@ -71,7 +71,7 @@ export class TestCollector {
         const values = this._matrix[name];
         if (!values)
           continue;
-        let state = generatorConfigurations.length ? generatorConfigurations.slice() : [[]];
+        const state = generatorConfigurations.length ? generatorConfigurations.slice() : [[]];
         generatorConfigurations.length = 0;
         for (const gen of state) {
           for (const value of values)
@@ -85,10 +85,7 @@ export class TestCollector {
 
       for (const configuration of generatorConfigurations) {
         // Serialize configuration as readable string, we will use it as a hash.
-        const tokens = [];
-        for (const { name, value } of configuration)
-          tokens.push(`${name}=${value}`);
-        const configurationString = tokens.join(', ');
+        const configurationString = serializeConfiguration(configuration);
         // Allocate worker for this configuration, add test into it.
         if (!workerGeneratorConfigurations.has(configurationString))
           workerGeneratorConfigurations.set(configurationString, { configuration, configurationString, tests: new Set() });
@@ -96,14 +93,18 @@ export class TestCollector {
       }
     });
 
-    // Clone the suite as many times as there are worker hashes.
-    // Only include the tests that requested these generations.
-    for (const [hash, {configuration, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
-      const clone = this._cloneSuite(suite, tests);
-      this.suite._addSuite(clone);
-      clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '');
-      clone.configuration = configuration;
-      clone._configurationString = configurationString;
+    // Clone the suite as many times as we have repeat each.
+    for (let i = 0; i < this._config.repeatEach; ++i) {
+      // Clone the suite as many times as there are worker hashes.
+      // Only include the tests that requested these generations.
+      for (const [hash, {configuration, configurationString, tests}] of workerGeneratorConfigurations.entries()) {
+        const clone = this._cloneSuite(suite, tests);
+        this.suite._addSuite(clone);
+        clone.title = path.basename(file) + (hash.length ? `::[${hash}]` : '') + ' ' + (i ? ` #repeat-${i}#` : '');
+        clone.configuration = configuration;
+        clone._configurationString = configurationString + `#repeat-${i}#`;
+        clone._renumber();
+      }
     }
   }
 
@@ -121,7 +122,6 @@ export class TestCollector {
           continue;
         const testCopy = test._clone();
         testCopy.only = test.only;
-        testCopy._ordinal = test._ordinal;
         copy._addTest(testCopy);
       }
     }

@@ -27,13 +27,14 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --timeout=30000"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && node test-runner/cli test/ --jobs=1 --forbid-only --retries=3 --timeout=30000 --reporter=dot,json"
       env:
         BROWSER: ${{ matrix.browser }}
         DEBUG: "pw:*,-pw:wrapped*,-pw:test*"
         DEBUG_FILE: "testrun.log"
         FFPATH: ${{ steps.build-browser.outputs.FFPATH }}
         WKPATH: ${{ steps.build-browser.outputs.WKPATH }}
+        PWRUNNER_JSON_REPORT: "test-results.json"
     - uses: actions/upload-artifact@v1
       if: failure()
       with:

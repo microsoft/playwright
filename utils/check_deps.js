@@ -37,6 +37,12 @@ async function checkDeps() {
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
   for (const error of errors)
     console.log(error);
+  if (errors.length) {
+    console.log(`--------------------------------------------------------`);
+    console.log(`Changing the project structure or adding new components?`);
+    console.log(`Update DEPS in //${path.relative(root, __filename)}.`);
+    console.log(`--------------------------------------------------------`);
+  }
   process.exit(errors.length ? 1 : 0);
 
   function visit(node, fileName) {
@@ -57,19 +63,15 @@ async function checkDeps() {
     if (fromDirectory === toDirectory)
       return true;
 
-    if (['src/rpc/server/', 'src/rpc/'].includes(fromDirectory))
-      return true;  // Temporary.
-
     while (!DEPS[from]) {
       if (from.endsWith('/'))
         from = from.substring(0, from.length - 1);
       if (from.lastIndexOf('/') === -1)
-        break;
+        throw new Error(`Cannot find DEPS for ${fromDirectory}`);
       from = from.substring(0, from.lastIndexOf('/') + 1);
     }
 
-    const deps = DEPS[from] || [`+${fromDirectory}`];
-    for (const dep of deps) {
+    for (const dep of DEPS[from]) {
       if (to === dep || toDirectory === dep)
         return true;
       if (dep.endsWith('**')) {
@@ -84,34 +86,35 @@ async function checkDeps() {
 
 const DEPS = {};
 
-// No deps for code shared between node and page.
-DEPS['src/server/common/'] = [];
-
 DEPS['src/protocol/'] = ['src/utils/'];
 DEPS['src/install/'] = ['src/utils/'];
 
 // Client depends on chromium protocol for types.
 DEPS['src/client/'] = ['src/utils/', 'src/protocol/', 'src/server/chromium/protocol.ts'];
 
+DEPS['src/dispatchers/'] = ['src/utils/', 'src/protocol/', 'src/server/**'];
+
+// Generic dependencies for server-side code.
 DEPS['src/server/'] = [
   'src/utils/',
-  'src/server/common/',
-  'src/server/injected/',
   'src/generated/',
-  // TODO: remove the server->debug dependency.
+  // Can depend on files directly in the server directory.
+  'src/server/',
+  // Can depend on any files in these subdirectories.
+  'src/server/common/**',
+  'src/server/injected/**',
   'src/server/debug/**',
 ];
 
-// Strict deps for injected code.
-// TODO: remove the injected->types dependency.
-DEPS['src/server/injected/'] = ['src/server/common/', 'src/server/types.ts'];
+// No dependencies for code shared between node and page.
+DEPS['src/server/common/'] = [];
+// Strict dependencies for injected code.
+DEPS['src/server/injected/'] = ['src/server/common/'];
 
-DEPS['src/server/debug/'] = [...DEPS['src/server/'], 'src/server/', 'src/server/debug/**'];
+// Electron uses chromium internally.
+DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
-DEPS['src/server/chromium/'] = [...DEPS['src/server/'], 'src/server/'];
-DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/', 'src/server/chromium/'];
-DEPS['src/server/firefox/'] = [...DEPS['src/server/'], 'src/server/'];
-DEPS['src/server/webkit/'] = [...DEPS['src/server/'], 'src/server/'];
 DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/'];
+DEPS['src/server.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 checkDeps();

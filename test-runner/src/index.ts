@@ -17,19 +17,22 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import rimraf from 'rimraf';
+import { promisify } from 'util';
 import './builtin.fixtures';
 import './expect';
-import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT } from './fixtures';
+import { registerFixture as registerFixtureT, registerWorkerFixture as registerWorkerFixtureT, TestInfo } from './fixtures';
 import { Reporter } from './reporter';
 import { Runner } from './runner';
 import { RunnerConfig } from './runnerConfig';
-import { Suite, Test } from './test';
 import { Matrix, TestCollector } from './testCollector';
 import { installTransform } from './transform';
 export { parameters, registerParameter } from './fixtures';
 export { Reporter } from './reporter';
 export { RunnerConfig } from './runnerConfig';
 export { Suite, Test } from './test';
+
+const removeFolderAsync = promisify(rimraf);
 
 declare global {
   interface WorkerState {
@@ -42,23 +45,29 @@ declare global {
   }
 }
 
-let beforeFunctions: Function[] = [];
-let afterFunctions: Function[] = [];
+const beforeFunctions: Function[] = [];
+const afterFunctions: Function[] = [];
 let matrix: Matrix = {};
 
 global['before'] = (fn: Function) => beforeFunctions.push(fn);
 global['after'] = (fn: Function) => afterFunctions.push(fn);
 global['matrix'] = (m: Matrix) => matrix = m;
 
-export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, config: RunnerConfig, test: Test) => Promise<void>) {
-  registerFixtureT<RunnerConfig>(name, fn);
-};
+export function registerFixture<T extends keyof TestState>(name: T, fn: (params: FixtureParameters & WorkerState & TestState, runTest: (arg: TestState[T]) => Promise<void>, info: TestInfo) => Promise<void>) {
+  registerFixtureT(name, fn);
+}
 
-export function registerWorkerFixture<T extends keyof (WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: RunnerConfig) => Promise<void>) {
-  registerWorkerFixtureT<RunnerConfig>(name, fn);
-};
+export function registerWorkerFixture<T extends keyof(WorkerState & FixtureParameters)>(name: T, fn: (params: FixtureParameters & WorkerState, runTest: (arg: (WorkerState & FixtureParameters)[T]) => Promise<void>, config: RunnerConfig) => Promise<void>) {
+  registerWorkerFixtureT(name, fn);
+}
 
-export function collectTests(config: RunnerConfig, files: string[]): Suite {
+type RunResult = 'passed' | 'failed' | 'forbid-only' | 'no-tests';
+
+export async function run(config: RunnerConfig, files: string[], reporter: Reporter): Promise<RunResult> {
+  if (!config.trialRun) {
+    await removeFolderAsync(config.outputDir).catch(e => {});
+    fs.mkdirSync(config.outputDir, { recursive: true });
+  }
   const revertBabelRequire = installTransform();
   let hasSetup = false;
   try {
@@ -74,14 +83,20 @@ export function collectTests(config: RunnerConfig, files: string[]): Suite {
   revertBabelRequire();
 
   const testCollector = new TestCollector(files, matrix, config);
-  return testCollector.suite;
-}
+  const suite = testCollector.suite;
+  if (config.forbidOnly) {
+    const hasOnly = suite.findTest(t => t.only) || suite.eachSuite(s => s.only);
+    if (hasOnly)
+      return 'forbid-only';
+  }
 
-export async function runTests(config: RunnerConfig, suite: Suite, reporter: Reporter) {
+  const total = suite.total();
+  if (!total)
+    return 'no-tests';
+
   // Trial run does not need many workers, use one.
   const jobs = (config.trialRun || config.debug) ? 1 : config.jobs;
   const runner = new Runner(suite, { ...config, jobs }, reporter);
-
   try {
     for (const f of beforeFunctions)
       await f();
@@ -91,4 +106,5 @@ export async function runTests(config: RunnerConfig, suite: Suite, reporter: Rep
     for (const f of afterFunctions)
       await f();
   }
+  return suite.findTest(test => !test._ok()) ? 'failed' : 'passed';
 }

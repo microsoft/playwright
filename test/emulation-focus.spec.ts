@@ -18,18 +18,18 @@
 import { options } from './playwright.fixtures';
 import utils from './utils';
 
-it('should think that it is focused by default', async({page}) => {
+it('should think that it is focused by default', async ({page}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should think that all pages are focused', async({page}) => {
+it('should think that all pages are focused', async ({page}) => {
   const page2 = await page.context().newPage();
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
   expect(await page2.evaluate('document.hasFocus()')).toBe(true);
   await page2.close();
 });
 
-it('should focus popups by default', async({page, server}) => {
+it('should focus popups by default', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -39,7 +39,7 @@ it('should focus popups by default', async({page, server}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
 });
 
-it('should provide target for keyboard events', async({page, server}) => {
+it('should provide target for keyboard events', async ({page, server}) => {
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -62,7 +62,7 @@ it('should provide target for keyboard events', async({page, server}) => {
   expect(results).toEqual([text, text2]);
 });
 
-it('should not affect mouse event target page', async({page, server}) => {
+it('should not affect mouse event target page', async ({page, server}) => {
   const page2 = await page.context().newPage();
   function clickCounter() {
     document.onclick = () => window['clickCount']  = (window['clickCount'] || 0) + 1;
@@ -81,10 +81,10 @@ it('should not affect mouse event target page', async({page, server}) => {
     page.evaluate('window.clickCount'),
     page2.evaluate('window.clickCount'),
   ]);
-  expect(counters ).toEqual([1,1]);
+  expect(counters).toEqual([1,1]);
 });
 
-it('should change document.activeElement', async({page, server}) => {
+it('should change document.activeElement', async ({page, server}) => {
   const page2 = await page.context().newPage();
   await Promise.all([
     page.goto(server.PREFIX + '/input/textarea.html'),
@@ -101,7 +101,7 @@ it('should change document.activeElement', async({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it.skip(options.FIREFOX && !options.HEADLESS)('should not affect screenshots', async({page, server, golden}) => {
+it.skip(options.FIREFOX && !options.HEADLESS)('should not affect screenshots', async ({page, server, golden}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();
   await Promise.all([
@@ -122,7 +122,7 @@ it.skip(options.FIREFOX && !options.HEADLESS)('should not affect screenshots', a
   expect(screenshots[1]).toMatchImage(golden('grid-cell-0.png'));
 });
 
-it('should change focused iframe', async({page, server}) => {
+it('should change focused iframe', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [frame1, frame2] = await Promise.all([
     utils.attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
@@ -131,7 +131,7 @@ it('should change focused iframe', async({page, server}) => {
   function logger() {
     self['_events'] = [];
     const element = document.querySelector('input');
-    element.onfocus = element.onblur = (e) => self['_events'].push(e.type);
+    element.onfocus = element.onblur = e => self['_events'].push(e.type);
   }
   await Promise.all([
     frame1.evaluate(logger),

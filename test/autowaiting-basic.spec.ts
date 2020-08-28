@@ -16,7 +16,7 @@
  */
 import { options } from './playwright.fixtures';
 
-it('should await navigation when clicking anchor', async({page, server}) => {
+it('should await navigation when clicking anchor', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html', async (req, res) => {
     messages.push('route');
@@ -33,7 +33,7 @@ it('should await navigation when clicking anchor', async({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await cross-process navigation when clicking anchor', async({page, server}) => {
+it('should await cross-process navigation when clicking anchor', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html', async (req, res) => {
     messages.push('route');
@@ -50,7 +50,7 @@ it('should await cross-process navigation when clicking anchor', async({page, se
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await form-get on click', async({page, server}) => {
+it('should await form-get on click', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html?foo=bar', async (req, res) => {
     messages.push('route');
@@ -71,7 +71,7 @@ it('should await form-get on click', async({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await form-post on click', async({page, server}) => {
+it('should await form-post on click', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html', async (req, res) => {
     messages.push('route');
@@ -92,7 +92,7 @@ it('should await form-post on click', async({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should await navigation when assigning location', async({page, server}) => {
+it('should await navigation when assigning location', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html', async (req, res) => {
     messages.push('route');
@@ -106,7 +106,7 @@ it('should await navigation when assigning location', async({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|evaluate');
 });
 
-it('should await navigation when assigning location twice', async({page, server}) => {
+it('should await navigation when assigning location twice', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html?cancel', async (req, res) => { res.end('done'); });
   server.setRoute('/empty.html?override', async (req, res) => { messages.push('routeoverride'); res.end('done'); });
@@ -118,7 +118,7 @@ it('should await navigation when assigning location twice', async({page, server}
   expect(messages.join('|')).toBe('routeoverride|evaluate');
 });
 
-it('should await navigation when evaluating reload', async({page, server}) => {
+it('should await navigation when evaluating reload', async ({page, server}) => {
   const messages = [];
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/empty.html', async (req, res) => {
@@ -134,7 +134,7 @@ it('should await navigation when evaluating reload', async({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|evaluate');
 });
 
-it('should await navigating specified target', async({page, server}) => {
+it('should await navigating specified target', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html', async (req, res) => {
     messages.push('route');
@@ -155,19 +155,19 @@ it('should await navigating specified target', async({page, server}) => {
   expect(messages.join('|')).toBe('route|navigated|click');
 });
 
-it('should work with noWaitAfter: true', async({page, server}) => {
+it('should work with noWaitAfter: true', async ({page, server}) => {
   server.setRoute('/empty.html', async () => {});
   await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.click('a', { noWaitAfter: true });
 });
 
-it('should work with dblclick noWaitAfter: true', async({page, server}) => {
+it('should work with dblclick noWaitAfter: true', async ({page, server}) => {
   server.setRoute('/empty.html', async () => {});
   await page.setContent(`<a href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.dblclick('a', { noWaitAfter: true });
 });
 
-it('should work with waitForLoadState(load)', async({page, server}) => {
+it('should work with waitForLoadState(load)', async ({page, server}) => {
   const messages = [];
   server.setRoute('/empty.html', async (req, res) => {
     messages.push('route');
@@ -183,7 +183,7 @@ it('should work with waitForLoadState(load)', async({page, server}) => {
   expect(messages.join('|')).toBe('route|domcontentloaded|clickload');
 });
 
-it('should work with goto following click', async({page, server}) => {
+it('should work with goto following click', async ({page, server}) => {
   server.setRoute('/login.html', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');
     res.end(`You are logged in`);
@@ -200,7 +200,7 @@ it('should work with goto following click', async({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 });
 
-it.skip(options.WIRE)('should report navigation in the log when clicking anchor', async({page, server}) => {
+it.skip(options.WIRE)('should report navigation in the log when clicking anchor', async ({page, server}) => {
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);
   const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));
   const error = await page.click('a', { timeout: 5000, __testHookAfterPointerAction } as any).catch(e => e);

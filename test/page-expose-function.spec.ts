@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-it('exposeBinding should work', async({browser}) => {
+it('exposeBinding should work', async ({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   let bindingSource;
@@ -35,7 +35,7 @@ it('exposeBinding should work', async({browser}) => {
   await context.close();
 });
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -45,7 +45,7 @@ it('should work', async({page, server}) => {
   expect(result).toBe(36);
 });
 
-it('should work with handles and complex objects', async({page, server}) => {
+it('should work with handles and complex objects', async ({page, server}) => {
   const fooHandle = await page.evaluateHandle(() => {
     window['fooValue'] = { bar: 2 };
     return window['fooValue'];
@@ -61,13 +61,13 @@ it('should work with handles and complex objects', async({page, server}) => {
   expect(equals).toBe(true);
 });
 
-it('should throw exception in page context', async({page, server}) => {
+it('should throw exception in page context', async ({page, server}) => {
   await page.exposeFunction('woof', function() {
     throw new Error('WOOF WOOF');
   });
-  const {message, stack} = await page.evaluate(async() => {
+  const {message, stack} = await page.evaluate(async () => {
     try {
-      await window["woof"]();
+      await window['woof']();
     } catch (e) {
       return {message: e.message, stack: e.stack};
     }
@@ -76,13 +76,13 @@ it('should throw exception in page context', async({page, server}) => {
   expect(stack).toContain(__filename);
 });
 
-it('should support throwing "null"', async({page, server}) => {
+it('should support throwing "null"', async ({page, server}) => {
   await page.exposeFunction('woof', function() {
     throw null;
   });
-  const thrown = await page.evaluate(async() => {
+  const thrown = await page.evaluate(async () => {
     try {
-      await window["woof"]();
+      await window['woof']();
     } catch (e) {
       return e;
     }
@@ -90,17 +90,17 @@ it('should support throwing "null"', async({page, server}) => {
   expect(thrown).toBe(null);
 });
 
-it('should be callable from-inside addInitScript', async({page, server}) => {
+it('should be callable from-inside addInitScript', async ({page, server}) => {
   let called = false;
   await page.exposeFunction('woof', function() {
     called = true;
   });
-  await page.addInitScript(() => window["woof"]());
+  await page.addInitScript(() => window['woof']());
   await page.reload();
   expect(called).toBe(true);
 });
 
-it('should survive navigation', async({page, server}) => {
+it('should survive navigation', async ({page, server}) => {
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
   });
@@ -112,7 +112,7 @@ it('should survive navigation', async({page, server}) => {
   expect(result).toBe(36);
 });
 
-it('should await returned promise', async({page, server}) => {
+it('should await returned promise', async ({page, server}) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -123,7 +123,7 @@ it('should await returned promise', async({page, server}) => {
   expect(result).toBe(15);
 });
 
-it('should work on frames', async({page, server}) => {
+it('should work on frames', async ({page, server}) => {
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
   });
@@ -136,7 +136,7 @@ it('should work on frames', async({page, server}) => {
   expect(result).toBe(15);
 });
 
-it('should work on frames before navigation', async({page, server}) => {
+it('should work on frames before navigation', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   await page.exposeFunction('compute', function(a, b) {
     return Promise.resolve(a * b);
@@ -149,7 +149,7 @@ it('should work on frames before navigation', async({page, server}) => {
   expect(result).toBe(15);
 });
 
-it('should work after cross origin navigation', async({page, server}) => {
+it('should work after cross origin navigation', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.exposeFunction('compute', function(a, b) {
     return a * b;
@@ -162,10 +162,10 @@ it('should work after cross origin navigation', async({page, server}) => {
   expect(result).toBe(36);
 });
 
-it('should work with complex objects', async({page, server}) => {
+it('should work with complex objects', async ({page, server}) => {
   await page.exposeFunction('complexObject', function(a, b) {
     return {x: a.x + b.x};
   });
-  const result = await page.evaluate(async() => window['complexObject']({x: 5}, {x: 2}));
+  const result = await page.evaluate(async () => window['complexObject']({x: 5}, {x: 2}));
   expect(result.x).toBe(7);
 });

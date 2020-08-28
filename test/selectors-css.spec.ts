@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-it('should work for open shadow roots', async({page, server}) => {
+it('should work for open shadow roots', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`css=span`, e => e.textContent)).toBe('Hello from root1');
   expect(await page.$eval(`css=[attr="value\\ space"]`, e => e.textContent)).toBe('Hello from root3 #2');
@@ -45,7 +45,7 @@ it('should work for open shadow roots', async({page, server}) => {
   expect(await root3.$(`css:light=[attr*="value"]`)).toBe(null);
 });
 
-it('should work with > combinator and spaces', async({page, server}) => {
+it('should work with > combinator and spaces', async ({page, server}) => {
   await page.setContent(`<div foo="bar" bar="baz"><span></span></div>`);
   expect(await page.$eval(`div[foo="bar"] > span`, e => e.outerHTML)).toBe(`<span></span>`);
   expect(await page.$eval(`div[foo="bar"]> span`, e => e.outerHTML)).toBe(`<span></span>`);
@@ -63,7 +63,7 @@ it('should work with > combinator and spaces', async({page, server}) => {
   expect(await page.$eval(`div[foo="bar"][bar="baz"]     >span`, e => e.outerHTML)).toBe(`<span></span>`);
 });
 
-it('should work with comma separated list', async({page, server}) => {
+it('should work with comma separated list', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span,section #root1`, els => els.length)).toBe(5);
   expect(await page.$$eval(`css=section #root1, div span`, els => els.length)).toBe(5);
@@ -76,7 +76,7 @@ it('should work with comma separated list', async({page, server}) => {
   expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"],span`, els => els.length)).toBe(4);
 });
 
-it('should keep dom order with comma separated list', async({page}) => {
+it('should keep dom order with comma separated list', async ({page}) => {
   await page.setContent(`<section><span><div><x></x><y></y></div></span></section>`);
   expect(await page.$$eval(`css=span,div`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
   expect(await page.$$eval(`css=div,span`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
@@ -87,7 +87,7 @@ it('should keep dom order with comma separated list', async({page}) => {
   expect(await page.$$eval(`css=section >> *css=div,span >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
 });
 
-it('should work with comma inside text', async({page}) => {
+it('should work with comma inside text', async ({page}) => {
   await page.setContent(`<span></span><div attr="hello,world!"></div>`);
   expect(await page.$eval(`css=div[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
   expect(await page.$eval(`css=[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
@@ -96,7 +96,7 @@ it('should work with comma inside text', async({page}) => {
   expect(await page.$eval(`css=div[attr="hello,world!"],span`, e => e.outerHTML)).toBe('<span></span>');
 });
 
-it('should work with attribute selectors', async({page}) => {
+it('should work with attribute selectors', async ({page}) => {
   await page.setContent(`<div attr="hello world" attr2="hello-''>>foo=bar[]" attr3="] span"><span></span></div>`);
   await page.evaluate(() => window['div'] = document.querySelector('div'));
   const selectors = [

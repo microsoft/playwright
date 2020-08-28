@@ -16,27 +16,27 @@
 
 import { initializeImageMatcher } from './expect';
 import { TestRunner, fixturePool } from './testRunner';
-import * as util from 'util';
+import { Console } from 'console';
 
 let closed = false;
 
 sendMessageToParent('ready');
 
-function chunkToParams(chunk) {
-  if (chunk instanceof Buffer)
-    return { buffer: chunk.toString('base64') };
-  if (typeof chunk !== 'string')
-    return util.inspect(chunk);
-  return chunk;
-}
+global.console = new Console({
+  stdout: process.stdout,
+  stderr: process.stderr,
+  colorMode: process.env.FORCE_COLOR === '1',
+});
 
 process.stdout.write = chunk => {
-  sendMessageToParent('stdout', chunkToParams(chunk));
+  if (testRunner)
+    testRunner.stdout(chunk);
   return true;
 };
 
 process.stderr.write = chunk => {
-  sendMessageToParent('stderr', chunkToParams(chunk));
+  if (testRunner)
+    testRunner.stderr(chunk);
   return true;
 };
 
@@ -46,6 +46,16 @@ process.on('SIGTERM',() => {});
 
 let workerId: number;
 let testRunner: TestRunner;
+
+process.on('unhandledRejection', (reason, promise) => {
+  if (testRunner)
+    testRunner.unhandledError(reason);
+});
+
+process.on('uncaughtException', error => {
+  if (testRunner)
+    testRunner.unhandledError(error);
+});
 
 process.on('message', async message => {
   if (message.method === 'init') {
@@ -59,12 +69,10 @@ process.on('message', async message => {
   }
   if (message.method === 'run') {
     testRunner = new TestRunner(message.params.entry, message.params.config, workerId);
-    for (const event of ['test', 'pending', 'pass', 'fail', 'done'])
+    for (const event of ['testBegin', 'testStdOut', 'testStdErr', 'testEnd', 'done'])
       testRunner.on(event, sendMessageToParent.bind(null, event));
     await testRunner.run();
     testRunner = null;
-    // Mocha runner adds these; if we don't remove them, we'll get a leak.
-    process.removeAllListeners('uncaughtException');
   }
 });
 
@@ -76,7 +84,7 @@ async function gracefullyCloseAndExit() {
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully close all browsers.
   if (testRunner)
-    await testRunner.stop();
+    testRunner.stop();
   await fixturePool.teardownScope('worker');
   process.exit(0);
 }

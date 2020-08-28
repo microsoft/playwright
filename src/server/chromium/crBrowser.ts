@@ -57,7 +57,7 @@ export class CRBrowser extends Browser {
       await session.send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: true, flatten: true });
       return browser;
     }
-    browser._defaultContext = new CRBrowserContext(browser, null, options.persistent);
+    browser._defaultContext = new CRBrowserContext(browser, undefined, options.persistent);
 
     const existingTargetAttachPromises: Promise<any>[] = [];
     // First page, background pages and their service workers in the persistent context
@@ -284,13 +284,11 @@ export class CRBrowserContext extends BrowserContext {
   };
 
   readonly _browser: CRBrowser;
-  readonly _browserContextId: string | null;
   readonly _evaluateOnNewDocumentSources: string[];
 
-  constructor(browser: CRBrowser, browserContextId: string | null, options: types.BrowserContextOptions) {
-    super(browser, options, !browserContextId);
+  constructor(browser: CRBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
+    super(browser, options, browserContextId);
     this._browser = browser;
-    this._browserContextId = browserContextId;
     this._evaluateOnNewDocumentSources = [];
     this._authenticateProxyViaCredentials();
   }
@@ -301,7 +299,7 @@ export class CRBrowserContext extends BrowserContext {
     if (this._browser._options.downloadsPath) {
       promises.push(this._browser._session.send('Browser.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allowAndName' : 'deny',
-        browserContextId: this._browserContextId || undefined,
+        browserContextId: this._browserContextId,
         downloadPath: this._browser._options.downloadsPath
       }));
     }
@@ -321,7 +319,7 @@ export class CRBrowserContext extends BrowserContext {
 
   async newPage(): Promise<Page> {
     assertBrowserContextIsNotOwned(this);
-    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId || undefined });
+    const { targetId } = await this._browser._session.send('Target.createTarget', { url: 'about:blank', browserContextId: this._browserContextId });
     const crPage = this._browser._crPages.get(targetId)!;
     const result = await crPage.pageOrError();
     if (result instanceof Page) {
@@ -333,7 +331,7 @@ export class CRBrowserContext extends BrowserContext {
   }
 
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
-    const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId || undefined });
+    const { cookies } = await this._browser._session.send('Storage.getCookies', { browserContextId: this._browserContextId });
     return network.filterCookies(cookies.map(c => {
       const copy: any = { sameSite: 'None', ...c };
       delete copy.size;
@@ -344,11 +342,11 @@ export class CRBrowserContext extends BrowserContext {
   }
 
   async addCookies(cookies: types.SetNetworkCookieParam[]) {
-    await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId || undefined });
+    await this._browser._session.send('Storage.setCookies', { cookies: network.rewriteCookies(cookies), browserContextId: this._browserContextId });
   }
 
   async clearCookies() {
-    await this._browser._session.send('Storage.clearCookies', { browserContextId: this._browserContextId || undefined });
+    await this._browser._session.send('Storage.clearCookies', { browserContextId: this._browserContextId });
   }
 
   async _doGrantPermissions(origin: string, permissions: string[]) {
@@ -376,11 +374,11 @@ export class CRBrowserContext extends BrowserContext {
         throw new Error('Unknown permission: ' + permission);
       return protocolPermission;
     });
-    await this._browser._session.send('Browser.grantPermissions', { origin: origin === '*' ? undefined : origin, browserContextId: this._browserContextId || undefined, permissions: filtered });
+    await this._browser._session.send('Browser.grantPermissions', { origin: origin === '*' ? undefined : origin, browserContextId: this._browserContextId, permissions: filtered });
   }
 
   async _doClearPermissions() {
-    await this._browser._session.send('Browser.resetPermissions', { browserContextId: this._browserContextId || undefined });
+    await this._browser._session.send('Browser.resetPermissions', { browserContextId: this._browserContextId });
   }
 
   async setGeolocation(geolocation?: types.Geolocation): Promise<void> {

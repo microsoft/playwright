@@ -17,7 +17,7 @@
 
 import { options } from './playwright.fixtures';
 
-it('should fire', async({page, server}) => {
+it('should fire', async ({page, server}) => {
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('alert');
     expect(dialog.defaultValue()).toBe('');
@@ -27,7 +27,7 @@ it('should fire', async({page, server}) => {
   await page.evaluate(() => alert('yo'));
 });
 
-it('should allow accepting prompts', async({page}) => {
+it('should allow accepting prompts', async ({page}) => {
   page.on('dialog', dialog => {
     expect(dialog.type()).toBe('prompt');
     expect(dialog.defaultValue()).toBe('yes.');
@@ -38,7 +38,7 @@ it('should allow accepting prompts', async({page}) => {
   expect(result).toBe('answer!');
 });
 
-it('should dismiss the prompt', async({page}) => {
+it('should dismiss the prompt', async ({page}) => {
   page.on('dialog', dialog => {
     dialog.dismiss();
   });
@@ -46,7 +46,7 @@ it('should dismiss the prompt', async({page}) => {
   expect(result).toBe(null);
 });
 
-it('should accept the confirm prompt', async({page}) => {
+it('should accept the confirm prompt', async ({page}) => {
   page.on('dialog', dialog => {
     dialog.accept();
   });
@@ -54,7 +54,7 @@ it('should accept the confirm prompt', async({page}) => {
   expect(result).toBe(true);
 });
 
-it('should dismiss the confirm prompt', async({page}) => {
+it('should dismiss the confirm prompt', async ({page}) => {
   page.on('dialog', dialog => {
     dialog.dismiss();
   });
@@ -62,7 +62,7 @@ it('should dismiss the confirm prompt', async({page}) => {
   expect(result).toBe(false);
 });
 
-it.fail(options.WEBKIT)('should be able to close context with open alert', async({browser}) => {
+it.fixme(options.WEBKIT && MAC)('should be able to close context with open alert', async ({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const alertPromise = page.waitForEvent('dialog');

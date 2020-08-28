@@ -169,10 +169,10 @@ it('should work right after a cross-origin navigation', async ({ page, server })
 
 it('should work from-inside an exposed function', async ({ page, server }) => {
   // Setup inpage callback, which calls Page.evaluate
-  await page.exposeFunction('callController', async function (a, b) {
+  await page.exposeFunction('callController', async function(a, b) {
     return await page.evaluate(({ a, b }) => a * b, { a, b });
   });
-  const result = await page.evaluate(async function () {
+  const result = await page.evaluate(async function() {
     return await window['callController'](9, 3);
   });
   expect(result).toBe(27);
@@ -180,7 +180,7 @@ it('should work from-inside an exposed function', async ({ page, server }) => {
 
 it('should reject promise with exception', async ({ page, server }) => {
   let error = null;
-  //@ts-ignore
+  // @ts-ignore
   await page.evaluate(() => not_existing_object.property).catch(e => error = e);
   expect(error).toBeTruthy();
   expect(error.message).toContain('not_existing_object');
@@ -253,21 +253,21 @@ it('should work with overwritten Promise', async ({ page, server }) => {
       finally(f) {
         return wrap(this._promise.finally(f));
       }
-    };
+    }
     const wrap = p => {
       const result = new Promise2(() => { });
       result._promise = p;
       return result;
     };
-    //@ts-ignore;
+    // @ts-ignore;
     window.Promise = Promise2;
-    window["__Promise2"] = Promise2;
+    window['__Promise2'] = Promise2;
   });
 
   // Sanity check.
   expect(await page.evaluate(() => {
     const p = Promise.all([Promise.race([]), new Promise(() => { }).then(() => { })]);
-    return p instanceof window["__Promise2"];
+    return p instanceof window['__Promise2'];
   })).toBe(true);
 
   // Now, the new promise should be awaitable.
@@ -279,27 +279,27 @@ it('should throw when passed more than one parameter', async ({ page, server }) 
     let error;
     await f().catch(e => error = e);
     expect('' + error).toContain('Too many arguments');
-  }
-  //@ts-ignore
+  };
+  // @ts-ignore
   await expectThrow(() => page.evaluate((a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => page.evaluateHandle((a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => page.$eval('sel', (a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => page.$$eval('sel', (a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => page.evaluate((a, b) => false, 1, 2));
   const frame = page.mainFrame();
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => frame.evaluateHandle((a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => frame.$eval('sel', (a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => frame.$$eval('sel', (a, b) => false, 1, 2));
-  //@ts-ignore
+  // @ts-ignore
   await expectThrow(() => frame.evaluate((a, b) => false, 1, 2));
 });
 
@@ -415,7 +415,7 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it.fail(options.WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
+it.fixme(options.WEBKIT)('should not throw an error when evaluation does a synchronous navigation and returns an object', async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -433,7 +433,7 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it.fail(options.WIRE)('should transfer 100Mb of data from page to node.js', async ({ page }) => {
+it('should transfer 100Mb of data from page to node.js', async ({ page }) => {
   // This is too slow with wire.
   const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
   expect(a.length).toBe(100 * 1024 * 1024);
@@ -453,7 +453,7 @@ it('should work even when JSON is set to null', async ({ page }) => {
   expect(result).toEqual({ abc: 123 });
 });
 
-it.fail(options.FIREFOX)('should await promise from popup', async ({ page, server }) => {
+it('should await promise from popup', async ({ page, server }) => {
   // Something is wrong about the way Firefox waits for the chained promise
   await page.goto(server.EMPTY_PAGE);
   const result = await page.evaluate(() => {
@@ -471,25 +471,25 @@ it('should work with new Function() and CSP', async ({ page, server }) => {
 
 it('should work with non-strict expressions', async ({ page, server }) => {
   expect(await page.evaluate(() => {
-    //@ts-ignore
+    // @ts-ignore
     y = 3.14;
-    //@ts-ignore
+    // @ts-ignore
     return y;
   })).toBe(3.14);
 });
 
 it('should respect use strict expression', async ({ page, server }) => {
   const error = await page.evaluate(() => {
-    "use strict";
-    //@ts-ignore
+    'use strict';
+    // @ts-ignore
     variableY = 3.14;
-    //@ts-ignore
+    // @ts-ignore
     return variableY;
   }).catch(e => e);
   expect(error.message).toContain('variableY');
 });
 
-it('should not leak utility script', async function ({ page, server }) {
+it('should not leak utility script', async function({ page, server }) {
   expect(await page.evaluate(() => this === window)).toBe(true);
 });
 

@@ -17,24 +17,24 @@ import { options } from '../playwright.fixtures';
 
 import path from 'path';
 import utils from '../utils';
-import { ChromiumBrowser, ChromiumBrowserContext } from '../..';
+import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 const { makeUserDataDir, removeUserDataDir } = utils;
 
-it.skip(options.WIRE || !options.CHROMIUM)('should throw with remote-debugging-pipe argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE || !options.CHROMIUM)('should throw with remote-debugging-pipe argument', async ({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
   const error = await browserType.launchServer(options).catch(e => e);
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it.skip(options.WIRE || !options.CHROMIUM)('should not throw with remote-debugging-port argument', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE || !options.CHROMIUM)('should not throw with remote-debugging-port argument', async ({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
   const browser = await browserType.launchServer(options);
   await browser.close();
 });
 
-it.skip(!options.CHROMIUM || options.WIRE || WIN)('should open devtools when "devtools: true" option is given', async({browserType, defaultBrowserOptions}) => {
+it.skip(!options.CHROMIUM || options.WIRE || WIN)('should open devtools when "devtools: true" option is given', async ({browserType, defaultBrowserOptions}) => {
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);
   const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
@@ -50,7 +50,7 @@ it.skip(!options.CHROMIUM || options.WIRE || WIN)('should open devtools when "de
   await browser.close();
 });
 
-it.skip(!options.CHROMIUM)('should return background pages', async({browserType, defaultBrowserOptions}) => {
+it.skip(!options.CHROMIUM)('should return background pages', async ({browserType, defaultBrowserOptions}) => {
   const userDataDir = await makeUserDataDir();
   const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
   const extensionOptions = {...defaultBrowserOptions,
@@ -62,9 +62,9 @@ it.skip(!options.CHROMIUM)('should return background pages', async({browserType,
   };
   const context = await browserType.launchPersistentContext(userDataDir, extensionOptions) as ChromiumBrowserContext;
   const backgroundPages = context.backgroundPages();
-  let backgroundPage = backgroundPages.length
-      ? backgroundPages[0]
-      : await context.waitForEvent('backgroundpage');
+  const backgroundPage = backgroundPages.length
+    ? backgroundPages[0]
+    : await context.waitForEvent('backgroundpage');
   expect(backgroundPage).toBeTruthy();
   expect(context.backgroundPages()).toContain(backgroundPage);
   expect(context.pages()).not.toContain(backgroundPage);
@@ -78,7 +78,7 @@ it.skip(!options.CHROMIUM)('should not create pages automatically', async ({brow
   const targets = [];
   browserSession.on('Target.targetCreated', async ({targetInfo}) => {
     if (targetInfo.type !== 'browser')
-        targets.push(targetInfo);
+      targets.push(targetInfo);
   });
   await browserSession.send('Target.setDiscoverTargets', { discover: true });
   await browser.newContext();

@@ -319,6 +319,7 @@ export type BrowserTypeLaunchPersistentContextResult = {
 // ----------- Browser -----------
 export type BrowserInitializer = {
   version: string,
+  name: string,
 };
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
@@ -426,7 +427,9 @@ export type BrowserCrStopTracingResult = {
 };
 
 // ----------- BrowserContext -----------
-export type BrowserContextInitializer = {};
+export type BrowserContextInitializer = {
+  browserName: string,
+};
 export interface BrowserContextChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
@@ -2104,6 +2107,7 @@ export type DownloadInitializer = {
 export interface DownloadChannel extends Channel {
   path(params?: DownloadPathParams): Promise<DownloadPathResult>;
   saveAs(params: DownloadSaveAsParams): Promise<DownloadSaveAsResult>;
+  saveAsStream(params?: DownloadSaveAsStreamParams): Promise<DownloadSaveAsStreamResult>;
   failure(params?: DownloadFailureParams): Promise<DownloadFailureResult>;
   stream(params?: DownloadStreamParams): Promise<DownloadStreamResult>;
   delete(params?: DownloadDeleteParams): Promise<DownloadDeleteResult>;
@@ -2120,6 +2124,11 @@ export type DownloadSaveAsOptions = {
 
 };
 export type DownloadSaveAsResult = void;
+export type DownloadSaveAsStreamParams = {};
+export type DownloadSaveAsStreamOptions = {};
+export type DownloadSaveAsStreamResult = {
+  stream: StreamChannel,
+};
 export type DownloadFailureParams = {};
 export type DownloadFailureOptions = {};
 export type DownloadFailureResult = {
@@ -2138,6 +2147,7 @@ export type DownloadDeleteResult = void;
 export type StreamInitializer = {};
 export interface StreamChannel extends Channel {
   read(params: StreamReadParams): Promise<StreamReadResult>;
+  close(params?: StreamCloseParams): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -2148,6 +2158,9 @@ export type StreamReadOptions = {
 export type StreamReadResult = {
   binary: Binary,
 };
+export type StreamCloseParams = {};
+export type StreamCloseOptions = {};
+export type StreamCloseResult = void;
 
 // ----------- CDPSession -----------
 export type CDPSessionInitializer = {};

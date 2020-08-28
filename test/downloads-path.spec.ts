@@ -23,7 +23,7 @@ import path from 'path';
 import fs from 'fs';
 import os from 'os';
 import {mkdtempAsync, removeFolderAsync} from './utils';
-import { Browser, BrowserContext } from '..';
+import type { Browser, BrowserContext } from '..';
 
 declare global {
   interface TestState {
@@ -54,12 +54,12 @@ registerFixture('persistentDownloadsContext', async ({server, browserType, defau
     res.end(`Hello world`);
   });
   const context = await browserType.launchPersistentContext(
-    userDataDir,
-    {
-      ...defaultBrowserOptions,
-      downloadsPath: tmpDir,
-      acceptDownloads: true
-    }
+      userDataDir,
+      {
+        ...defaultBrowserOptions,
+        downloadsPath: tmpDir,
+        acceptDownloads: true
+      }
   );
   const page = context.pages()[0];
   page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -68,7 +68,7 @@ registerFixture('persistentDownloadsContext', async ({server, browserType, defau
   await removeFolderAsync(userDataDir);
 });
 
-it('should keep downloadsPath folder', async({downloadsBrowser, tmpDir, server})  => {
+it('should keep downloadsPath folder', async ({downloadsBrowser, tmpDir, server})  => {
   const page = await downloadsBrowser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -83,7 +83,7 @@ it('should keep downloadsPath folder', async({downloadsBrowser, tmpDir, server})
   expect(fs.existsSync(tmpDir)).toBeTruthy();
 });
 
-it('should delete downloads when context closes', async({downloadsBrowser, server}) => {
+it('should delete downloads when context closes', async ({downloadsBrowser, server}) => {
   const page = await downloadsBrowser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -97,7 +97,7 @@ it('should delete downloads when context closes', async({downloadsBrowser, serve
 
 });
 
-it('should report downloads in downloadsPath folder', async({downloadsBrowser, tmpDir, server}) => {
+it('should report downloads in downloadsPath folder', async ({downloadsBrowser, tmpDir, server}) => {
   const page = await downloadsBrowser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -109,7 +109,7 @@ it('should report downloads in downloadsPath folder', async({downloadsBrowser, t
   await page.close();
 });
 
-it('should accept downloads', async({persistentDownloadsContext, tmpDir, server})  => {
+it('should accept downloads', async ({persistentDownloadsContext, tmpDir, server})  => {
   const page = persistentDownloadsContext.pages()[0];
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
@@ -121,7 +121,7 @@ it('should accept downloads', async({persistentDownloadsContext, tmpDir, server}
   expect(path.startsWith(tmpDir)).toBeTruthy();
 });
 
-it('should not delete downloads when the context closes', async({persistentDownloadsContext}) => {
+it('should not delete downloads when the context closes', async ({persistentDownloadsContext}) => {
   const page = persistentDownloadsContext.pages()[0];
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),

@@ -47,7 +47,7 @@ it.skip(!options.CHROMIUM)('shouldn\'t ignore eval() scripts if reportAnonymousS
   await page.coverage.startJSCoverage({reportAnonymousScripts: true});
   await page.goto(server.PREFIX + '/jscoverage/eval.html');
   const coverage = await page.coverage.stopJSCoverage();
-  expect(coverage.find(entry => entry.url.startsWith('debugger://'))).not.toBe(null);
+  expect(coverage.find(entry => entry.url === '').source).toBe('console.log("foo")');
   expect(coverage.length).toBe(2);
 });
 

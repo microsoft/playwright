@@ -969,7 +969,7 @@ index 3b8fa18bd7e8d95d7e8f95b442afc63e550ce63a..a72174146a85d0db01b11fda3a120712
  }
 diff --git a/Source/JavaScriptCore/inspector/protocol/Playwright.json b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f8e6fa932
+index 0000000000000000000000000000000000000000..ce69bc6a10b49460c73110e54b2936afe5dd4ebf
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Playwright.json
 @@ -0,0 +1,244 @@
@@ -1165,7 +1165,6 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +        {
 +            "name": "pageProxyDestroyed",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID" }
 +            ]
 +        },
@@ -1173,7 +1172,6 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +            "name": "provisionalLoadFailed",
 +            "description": "Fired when provisional load fails.",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "loaderId", "$ref": "Network.LoaderId", "description": "Identifier of the loader associated with the navigation." },
 +                { "name": "error", "type": "string", "description": "Localized error string." }
@@ -1183,7 +1181,6 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +          "name": "windowOpen",
 +          "description": "Fired when page opens a new window.",
 +          "parameters": [
-+              { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +              { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +              { "name": "url", "type": "string" },
 +              { "name": "windowFeatures", "type": "array", "items": { "type": "string" } }
@@ -1192,7 +1189,6 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +        {
 +            "name": "downloadCreated",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "pageProxyId", "$ref": "PageProxyID", "description": "Unique identifier of the page proxy." },
 +                { "name": "frameId", "$ref": "Network.FrameId", "description": "Unique identifier of the originating frame." },
 +                { "name": "uuid", "type": "string" },
@@ -1202,7 +1198,6 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +        {
 +            "name": "downloadFilenameSuggested",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "uuid", "type": "string" },
 +                { "name": "suggestedFilename", "type": "string" }
 +            ]
@@ -1210,35 +1205,50 @@ index 0000000000000000000000000000000000000000..dd4c318ec4b9b49ce937266ba899e54f
 +        {
 +            "name": "downloadFinished",
 +            "parameters": [
-+                { "name": "browserContextId", "$ref": "ContextID", "description": "Unique identifier of the context." },
 +                { "name": "uuid", "type": "string" },
 +                { "name": "error", "type": "string" }
++            ]
++        },
++        {
++            "name": "screencastFinished",
++            "parameters": [
++                { "name": "screencastId", "$ref": "Screencast.ScreencastId", "description": "Unique identifier of the screencast." }
 +            ]
 +        }
 +    ]
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Screencast.json b/Source/JavaScriptCore/inspector/protocol/Screencast.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..d0759ea0a9803c13e4f161b87179ba4890ac5c7b
+index 0000000000000000000000000000000000000000..a51b42b2a2b575927509e11dc7241ab6f203c104
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Screencast.json
-@@ -0,0 +1,21 @@
+@@ -0,0 +1,31 @@
 +{
 +    "domain": "Screencast",
 +    "availability": ["web"],
++    "types": [
++        {
++            "id": "ScreencastId",
++            "type": "string",
++            "description": "Unique identifier of the screencast."
++        }
++    ],
 +    "commands": [
 +        {
-+            "name": "startVideoRecording",
++            "name": "start",
 +            "description": "Starts recoring video to speified file.",
 +            "parameters": [
 +                { "name": "file", "type": "string", "description": "Output file location." },
 +                { "name": "width", "type": "integer" },
 +                { "name": "height", "type": "integer" },
 +                { "name": "scale", "type": "number", "optional": true }
++            ],
++            "returns": [
++                { "name": "screencastId", "$ref": "ScreencastId", "description": "Unique identifier of the screencast." }
 +            ]
 +        },
 +        {
-+            "name": "stopVideoRecording",
++            "name": "stop",
 +            "async": true,
 +            "description": "Stops recoding video. Returns after the file has been closed."
 +        }
@@ -8233,7 +8243,7 @@ index d7695088e7cfc4f638f157338754f9f157489749..a79bbb9bdc779e7ea2f6f859329dd6df
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
-index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b9917e7ac 100644
+index c5de4e7d0f59194f43a023b089e372c58cf8ee06..2de16cc22d0b6964cd05277922f272f13e2df805 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 +++ b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 @@ -42,8 +42,10 @@
@@ -8254,7 +8264,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
 +    , m_uuid(createCanonicalUUIDString())
  {
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadCreated(*m_dataStore, m_uuid, m_request, frameInfoData, originatingPage);
++      instrumentation->downloadCreated(m_uuid, m_request, frameInfoData, originatingPage);
  }
  
  DownloadProxy::~DownloadProxy()
@@ -8265,7 +8275,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
 -    
 +
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFilenameSuggested(*m_dataStore, m_uuid, suggestedFilename);
++      instrumentation->downloadFilenameSuggested(m_uuid, suggestedFilename);
 +
 +    if (m_processPool->networkProcess() && m_dataStore->allowDownloadForAutomation()) {
 +        SandboxExtension::Handle sandboxExtensionHandle;
@@ -8286,7 +8296,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
  
      m_processPool->downloadClient().didFinish(*this);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(*m_dataStore, m_uuid, String());
++      instrumentation->downloadFinished(m_uuid, String());
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8295,7 +8305,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
  
      m_processPool->downloadClient().didFail(*this, error);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(*m_dataStore, m_uuid, error.localizedDescription());
++      instrumentation->downloadFinished(m_uuid, error.localizedDescription());
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8310,7 +8320,7 @@ index c5de4e7d0f59194f43a023b089e372c58cf8ee06..c0f38eccf578c14d13cb3b42788f988b
  
      m_processPool->downloadClient().didCancel(*this);
 +    if (auto* instrumentation = m_dataStore->downloadInstrumentation())
-+      instrumentation->downloadFinished(*m_dataStore, m_uuid, "canceled"_s);
++      instrumentation->downloadFinished(m_uuid, "canceled"_s);
  
      // This can cause the DownloadProxy object to be deleted.
      m_downloadProxyMap.downloadFinished(*this);
@@ -8340,10 +8350,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d1a9d5650
+index 0000000000000000000000000000000000000000..d521ce66f75470a44f91163e1b5155f30c0894ee
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,157 @@
+@@ -0,0 +1,171 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8375,10 +8385,12 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +#include "PageClient.h"
 +#include "ScreencastEncoder.h"
 +#include "WebPageProxy.h"
++#include "WebsiteDataStore.h"
 +#include <JavaScriptCore/InspectorFrontendDispatchers.h>
 +#include <JavaScriptCore/InspectorFrontendRouter.h>
 +#include <WebCore/NotImplemented.h>
 +#include <wtf/RunLoop.h>
++#include <wtf/UUID.h>
 +
 +#if USE(CAIRO)
 +#include "DrawingAreaProxyCoordinatedGraphics.h"
@@ -8409,7 +8421,12 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +    if (!m_encoder)
 +        return;
 +
-+    m_encoder->finish([] { });
++    // The agent may be destroyed when the callback is invoked.
++    m_encoder->finish([sessionID = m_page.websiteDataStore().sessionID(), screencastID = WTFMove(m_currentScreencastID)] {
++        if (WebPageInspectorController::observer())
++            WebPageInspectorController::observer()->didFinishScreencast(sessionID, screencastID);
++    });
++
 +    m_encoder = nullptr;
 +}
 +
@@ -8421,7 +8438,7 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +}
 +#endif
 +
-+void InspectorScreencastAgent::startVideoRecording(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale)
++void InspectorScreencastAgent::start(Inspector::ErrorString& errorString, const String& file, int width, int height, const double* scale, String* screencastID)
 +{
 +    if (m_encoder) {
 +        errorString = "Already recording"_s;
@@ -8445,6 +8462,9 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +    if (!m_encoder)
 +        return;
 +
++    m_currentScreencastID = createCanonicalUUIDString();
++    *screencastID = m_currentScreencastID;
++
 +#if PLATFORM(MAC)
 +    m_encoder->setOffsetTop(m_page.pageClient().browserToolbarHeight());
 +#endif
@@ -8453,13 +8473,17 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +#endif
 +}
 +
-+void InspectorScreencastAgent::stopVideoRecording(Ref<StopVideoRecordingCallback>&& callback)
++void InspectorScreencastAgent::stop(Ref<StopCallback>&& callback)
 +{
 +    if (!m_encoder) {
 +        callback->sendFailure("Not recording"_s);
 +        return;
 +    }
-+    m_encoder->finish([protectRef = m_encoder.copyRef(), callback = WTFMove(callback)] {
++
++    // The agent may be destroyed when the callback is invoked.
++    m_encoder->finish([sessionID = m_page.websiteDataStore().sessionID(), screencastID = WTFMove(m_currentScreencastID), callback = WTFMove(callback)] {
++        if (WebPageInspectorController::observer())
++            WebPageInspectorController::observer()->didFinishScreencast(sessionID, screencastID);
 +        callback->sendSuccess();
 +    });
 +    m_encoder = nullptr;
@@ -8503,10 +8527,10 @@ index 0000000000000000000000000000000000000000..fc5918ef0056deb846f8bbf376a97b5d
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..1ff1e813de838a60f4ab030e31b248913260d3b4
+index 0000000000000000000000000000000000000000..31a922667462de1a1edc24a10f25c0640dc034e3
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.h
-@@ -0,0 +1,76 @@
+@@ -0,0 +1,77 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8567,8 +8591,8 @@ index 0000000000000000000000000000000000000000..1ff1e813de838a60f4ab030e31b24891
 +    void didPaint(cairo_surface_t*);
 +#endif
 +
-+    void startVideoRecording(Inspector::ErrorString&, const String& file, int width, int height, const double* scale) override;
-+    void stopVideoRecording(Ref<StopVideoRecordingCallback>&&) override;
++    void start(Inspector::ErrorString&, const String& file, int width, int height, const double* scale, String* screencastID) override;
++    void stop(Ref<StopCallback>&&) override;
 +
 +
 +private:
@@ -8580,12 +8604,13 @@ index 0000000000000000000000000000000000000000..1ff1e813de838a60f4ab030e31b24891
 +    Ref<Inspector::ScreencastBackendDispatcher> m_backendDispatcher;
 +    WebPageProxy& m_page;
 +    RefPtr<ScreencastEncoder> m_encoder;
++    String m_currentScreencastID;
 +};
 +
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..b33d5babec7709e003bc968434a8ba96486d5cea
+index 0000000000000000000000000000000000000000..53a5cb8dd3fad3a38168397d9ead79c289cf5e11
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 @@ -0,0 +1,380 @@
@@ -8960,7 +8985,7 @@ index 0000000000000000000000000000000000000000..b33d5babec7709e003bc968434a8ba96
 +    }
 +
 +    flushLastFrame();
-+    m_vpxCodec->finishAsync([callback = WTFMove(callback)] () mutable {
++    m_vpxCodec->finishAsync([protectRef = makeRef(*this), callback = WTFMove(callback)] () mutable {
 +        RunLoop::main().dispatch([callback = WTFMove(callback)] {
 +            callback();
 +        });
@@ -9302,7 +9327,7 @@ index a2239cec8e18850f35f7f88a9c4ebadc62bf4023..79f3ff84327dc075ec96983e04db4b10
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
-index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19301f1b35 100644
+index 1861cff806131196ea49b4f8aca6665beebbf6e8..76aae0165617d0540ffe5404d58bd341f568bc70 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.cpp
 @@ -26,12 +26,20 @@
@@ -9326,7 +9351,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  #include <JavaScriptCore/InspectorAgentBase.h>
  #include <JavaScriptCore/InspectorBackendDispatcher.h>
  #include <JavaScriptCore/InspectorBackendDispatchers.h>
-@@ -48,27 +56,104 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
+@@ -48,27 +56,108 @@ static String getTargetID(const ProvisionalPageProxy& provisionalPage)
      return WebPageInspectorTarget::toTargetID(provisionalPage.webPageID());
  }
  
@@ -9335,6 +9360,10 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
 +void WebPageInspectorController::setObserver(WebPageInspectorControllerObserver* observer)
 +{
 +    s_observer = observer;
++}
++
++WebPageInspectorControllerObserver* WebPageInspectorController::observer() {
++    return s_observer;
 +}
 +
  WebPageInspectorController::WebPageInspectorController(WebPageProxy& page)
@@ -9434,7 +9463,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  }
  
  bool WebPageInspectorController::hasLocalFrontend() const
-@@ -82,6 +167,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
+@@ -82,6 +171,17 @@ void WebPageInspectorController::connectFrontend(Inspector::FrontendChannel& fro
  
      bool connectingFirstFrontend = !m_frontendRouter->hasFrontends();
  
@@ -9452,7 +9481,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
      m_frontendRouter->connectFrontend(frontendChannel);
  
      if (connectingFirstFrontend)
-@@ -100,8 +196,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
+@@ -100,8 +200,10 @@ void WebPageInspectorController::disconnectFrontend(FrontendChannel& frontendCha
      m_frontendRouter->disconnectFrontend(frontendChannel);
  
      bool disconnectingLastFrontend = !m_frontendRouter->hasFrontends();
@@ -9464,7 +9493,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
-@@ -124,6 +222,8 @@ void WebPageInspectorController::disconnectAllFrontends()
+@@ -124,6 +226,8 @@ void WebPageInspectorController::disconnectAllFrontends()
      // Disconnect any remaining remote frontends.
      m_frontendRouter->disconnectAllFrontends();
  
@@ -9473,7 +9502,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
      m_page.didChangeInspectorFrontendCount(m_frontendRouter->frontendCount());
  
  #if ENABLE(REMOTE_INSPECTOR)
-@@ -150,6 +250,66 @@ void WebPageInspectorController::setIndicating(bool indicating)
+@@ -150,6 +254,66 @@ void WebPageInspectorController::setIndicating(bool indicating)
  }
  #endif
  
@@ -9540,7 +9569,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  void WebPageInspectorController::createInspectorTarget(const String& targetId, Inspector::InspectorTargetType type)
  {
      addTarget(InspectorTargetProxy::create(m_page, targetId, type));
-@@ -169,6 +329,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
+@@ -169,6 +333,33 @@ void WebPageInspectorController::sendMessageToInspectorFrontend(const String& ta
      m_targetAgent->sendMessageFromTargetToFrontend(targetId, message);
  }
  
@@ -9574,7 +9603,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  bool WebPageInspectorController::shouldPauseLoading(const ProvisionalPageProxy& provisionalPage) const
  {
      if (!m_frontendRouter->hasFrontends())
-@@ -188,7 +375,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
+@@ -188,7 +379,7 @@ void WebPageInspectorController::setContinueLoadingCallback(const ProvisionalPag
  
  void WebPageInspectorController::didCreateProvisionalPage(ProvisionalPageProxy& provisionalPage)
  {
@@ -9583,7 +9612,7 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
  }
  
  void WebPageInspectorController::willDestroyProvisionalPage(const ProvisionalPageProxy& provisionalPage)
-@@ -241,4 +428,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
+@@ -241,4 +432,20 @@ void WebPageInspectorController::addTarget(std::unique_ptr<InspectorTargetProxy>
      m_targets.set(target->identifier(), WTFMove(target));
  }
  
@@ -9605,10 +9634,10 @@ index 1861cff806131196ea49b4f8aca6665beebbf6e8..6017f0336eae1717a2a595e735cace19
 +
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
-index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2b3862d8f 100644
+index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..8b73efbba93362d8eebcc3a52158d8b0f6e4c59d 100644
 --- a/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
 +++ b/Source/WebKit/UIProcess/Inspector/WebPageInspectorController.h
-@@ -26,17 +26,31 @@
+@@ -26,17 +26,35 @@
  #pragma once
  
  #include "InspectorTargetProxy.h"
@@ -9637,10 +9666,14 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
 +class ResourceRequest;
 +enum class PolicyAction : uint8_t;
 +struct WindowFeatures;
++}
++
++namespace PAL {
++class SessionID;
  }
  
  namespace WebKit {
-@@ -44,6 +58,22 @@ namespace WebKit {
+@@ -44,6 +62,23 @@ namespace WebKit {
  class InspectorBrowserAgent;
  struct WebPageAgentContext;
  
@@ -9655,6 +9688,7 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
 +    virtual void willDestroyInspectorController(WebPageProxy&) = 0;
 +    virtual void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error) = 0;
 +    virtual void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&) = 0;
++    virtual void didFinishScreencast(const PAL::SessionID& sessionID, const String& screencastID) = 0;
 +
 +protected:
 +    virtual ~WebPageInspectorControllerObserver() = default;
@@ -9663,13 +9697,14 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
  class WebPageInspectorController {
      WTF_MAKE_NONCOPYABLE(WebPageInspectorController);
      WTF_MAKE_FAST_ALLOCATED;
-@@ -51,7 +81,19 @@ public:
+@@ -51,7 +86,20 @@ public:
      WebPageInspectorController(WebPageProxy&);
  
      void init();
 +    void didFinishAttachingToWebProcess();
 +
 +    static void setObserver(WebPageInspectorControllerObserver*);
++    static WebPageInspectorControllerObserver* observer();
 +
      void pageClosed();
 +    bool pageCrashed(ProcessTerminationReason);
@@ -9683,7 +9718,7 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
  
      bool hasLocalFrontend() const;
  
-@@ -64,11 +106,25 @@ public:
+@@ -64,11 +112,25 @@ public:
  #if ENABLE(REMOTE_INSPECTOR)
      void setIndicating(bool);
  #endif
@@ -9709,7 +9744,7 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
      bool shouldPauseLoading(const ProvisionalPageProxy&) const;
      void setContinueLoadingCallback(const ProvisionalPageProxy&, WTF::Function<void()>&&);
  
-@@ -84,6 +140,7 @@ private:
+@@ -84,6 +146,7 @@ private:
      void createLazyAgents();
  
      void addTarget(std::unique_ptr<InspectorTargetProxy>&&);
@@ -9717,7 +9752,7 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..0cdf93cfe090b9be742a9c670b3372d2
  
      Ref<Inspector::FrontendRouter> m_frontendRouter;
      Ref<Inspector::BackendDispatcher> m_backendDispatcher;
-@@ -92,11 +149,17 @@ private:
+@@ -92,11 +155,17 @@ private:
      WebPageProxy& m_page;
  
      Inspector::InspectorTargetAgent* m_targetAgent { nullptr };
@@ -9964,10 +9999,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1d96f649a
+index 0000000000000000000000000000000000000000..8e3989ef7f9947c685dcbe30d58561dab7f5ea5b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,850 @@
+@@ -0,0 +1,855 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10008,6 +10043,7 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +#include "WebAutomationSession.h"
 +#include "WebGeolocationManagerProxy.h"
 +#include "WebGeolocationPosition.h"
++#include "WebInspectorUtilities.h"
 +#include "WebPageInspectorController.h"
 +#include "WebPageInspectorTarget.h"
 +#include "WebPageProxy.h"
@@ -10292,6 +10328,9 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +    if (!m_isEnabled)
 +        return;
 +
++    if (isInspectorProcessPool(page.process().processPool()))
++        return;
++
 +    ASSERT(m_frontendChannel);
 +
 +    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
@@ -10319,12 +10358,13 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +    if (!m_isEnabled)
 +        return;
 +
++    if (isInspectorProcessPool(page.process().processPool()))
++        return;
++
 +    String browserContextID = toBrowserContextIDProtocolString(page.sessionID());
 +    BrowserContext* browserContext = getExistingBrowserContext(browserContextID);
 +    browserContext->pages.remove(&page);
-+    m_frontendDispatcher->pageProxyDestroyed(
-+        browserContextID,
-+        toPageProxyIDProtocolString(page));
++    m_frontendDispatcher->pageProxyDestroyed(toPageProxyIDProtocolString(page));
 +
 +    auto it = m_browserContextDeletions.find(browserContextID);
 +    if (it != m_browserContextDeletions.end()) {
@@ -10346,7 +10386,6 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +        return;
 +
 +    m_frontendDispatcher->provisionalLoadFailed(
-+        toBrowserContextIDProtocolString(page.sessionID()),
 +        toPageProxyIDProtocolString(page),
 +        String::number(navigationID), error);
 +}
@@ -10357,10 +10396,17 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +        return;
 +
 +    m_frontendDispatcher->windowOpen(
-+        toBrowserContextIDProtocolString(page.sessionID()),
 +        toPageProxyIDProtocolString(page),
 +        url.string(),
 +        getEnabledWindowFeatures(features));
++}
++
++void InspectorPlaywrightAgent::didFinishScreencast(const PAL::SessionID& sessionID, const String& screencastID)
++{
++    if (!m_isEnabled)
++        return;
++
++    m_frontendDispatcher->screencastFinished(screencastID);
 +}
 +
 +void InspectorPlaywrightAgent::enable(ErrorString&)
@@ -10759,34 +10805,29 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +    }
 +}
 +
-+void InspectorPlaywrightAgent::downloadCreated(const WebsiteDataStore& dataStore, const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
++void InspectorPlaywrightAgent::downloadCreated(const String& uuid, const WebCore::ResourceRequest& request, const FrameInfoData& frameInfoData, WebPageProxy* page)
 +{
 +    if (!m_isEnabled)
 +        return;
 +    String frameID = WebCore::InspectorPageAgent::makeFrameID(page->process().coreProcessIdentifier(), frameInfoData.frameID ? *frameInfoData.frameID : page->mainFrame()->frameID());
 +    m_frontendDispatcher->downloadCreated(
-+        toBrowserContextIDProtocolString(dataStore.sessionID()),
 +        toPageProxyIDProtocolString(*page),
 +        frameID,
 +        uuid, request.url().string());
 +}
 +
-+void InspectorPlaywrightAgent::downloadFilenameSuggested(const WebsiteDataStore& dataStore, const String& uuid, const String& suggestedFilename)
++void InspectorPlaywrightAgent::downloadFilenameSuggested(const String& uuid, const String& suggestedFilename)
 +{
 +    if (!m_isEnabled)
 +        return;
-+    m_frontendDispatcher->downloadFilenameSuggested(
-+        toBrowserContextIDProtocolString(dataStore.sessionID()),
-+        uuid, suggestedFilename);
++    m_frontendDispatcher->downloadFilenameSuggested(uuid, suggestedFilename);
 +}
 +
-+void InspectorPlaywrightAgent::downloadFinished(const WebsiteDataStore& dataStore, const String& uuid, const String& error)
++void InspectorPlaywrightAgent::downloadFinished(const String& uuid, const String& error)
 +{
 +    if (!m_isEnabled)
 +        return;
-+    m_frontendDispatcher->downloadFinished(
-+        toBrowserContextIDProtocolString(dataStore.sessionID()),
-+        uuid, error);
++    m_frontendDispatcher->downloadFinished(uuid, error);
 +}
 +
 +BrowserContext* InspectorPlaywrightAgent::getExistingBrowserContext(const String& browserContextID)
@@ -10802,7 +10843,6 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +
 +BrowserContext* InspectorPlaywrightAgent::lookupBrowserContext(ErrorString& errorString, const String* browserContextID)
 +{
-+    // XXX
 +    if (!browserContextID) {
 +        if (!m_defaultContext)
 +            errorString = "Browser started with no default context"_s;
@@ -10820,10 +10860,10 @@ index 0000000000000000000000000000000000000000..f04fb719428349b23164648fc402c8a1
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..65768f26cb5e3c44197b9226a07d67364cb9f1fc
+index 0000000000000000000000000000000000000000..5e1606320cf6d0f5a14a53c9d61f979081a0270b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,121 @@
+@@ -0,0 +1,122 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10901,6 +10941,7 @@ index 0000000000000000000000000000000000000000..65768f26cb5e3c44197b9226a07d6736
 +    void willDestroyInspectorController(WebPageProxy&) override;
 +    void didFailProvisionalLoad(WebPageProxy&, uint64_t navigationID, const String& error) override;
 +    void willCreateNewPage(WebPageProxy&, const WebCore::WindowFeatures&, const URL&) override;
++    void didFinishScreencast(const PAL::SessionID& sessionID, const String& screencastID) override;
 +
 +    // PlaywrightDispatcherHandler
 +    void enable(Inspector::ErrorString&) override;
@@ -10921,9 +10962,9 @@ index 0000000000000000000000000000000000000000..65768f26cb5e3c44197b9226a07d6736
 +    void setDownloadBehavior(Inspector::ErrorString&, const String* behavior, const String* downloadPath, const String* browserContextID) override;
 +
 +    // DownloadInstrumentation
-+    void downloadCreated(const WebsiteDataStore&, const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
-+    void downloadFilenameSuggested(const WebsiteDataStore&, const String& uuid, const String& suggestedFilename) override;
-+    void downloadFinished(const WebsiteDataStore&, const String& uuid, const String& error) override;
++    void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) override;
++    void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) override;
++    void downloadFinished(const String& uuid, const String& error) override;
 +
 +    BrowserContext* getExistingBrowserContext(const String& browserContextID);
 +    BrowserContext* lookupBrowserContext(Inspector::ErrorString&, const String* browserContextID);
@@ -12536,7 +12577,7 @@ index 4888723e0bda57838c28879dccf27e1e3b414f22..ea4b2ba7c509b24368ad9cd219830ce1
  void WebsiteDataStore::forwardAppBoundDomainsToITPIfInitialized(CompletionHandler<void()>&& completionHandler)
  {
 diff --git a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
-index 4ec13e16fe482d26a2eafa3123e3233a737cb12b..0ab6e29755a572153312e61034348e7085564ab8 100644
+index 4ec13e16fe482d26a2eafa3123e3233a737cb12b..217fb521507e4ad98e0a08440eb909283d7b3243 100644
 --- a/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 +++ b/Source/WebKit/UIProcess/WebsiteData/WebsiteDataStore.h
 @@ -83,6 +83,7 @@ class WebResourceLoadStatisticsStore;
@@ -12555,9 +12596,9 @@ index 4ec13e16fe482d26a2eafa3123e3233a737cb12b..0ab6e29755a572153312e61034348e70
 +
 +class DownloadInstrumentation {
 +public:
-+    virtual void downloadCreated(const WebsiteDataStore&, const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
-+    virtual void downloadFilenameSuggested(const WebsiteDataStore&, const String& uuid, const String& suggestedFilename) = 0;
-+    virtual void downloadFinished(const WebsiteDataStore&, const String& uuid, const String& error) = 0;
++    virtual void downloadCreated(const String& uuid, const WebCore::ResourceRequest&, const FrameInfoData& frameInfoData, WebPageProxy* page) = 0;
++    virtual void downloadFilenameSuggested(const String& uuid, const String& suggestedFilename) = 0;
++    virtual void downloadFinished(const String& uuid, const String& error) = 0;
 +    virtual ~DownloadInstrumentation() = default;
 +};
 +

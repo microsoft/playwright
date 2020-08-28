@@ -27,10 +27,10 @@ function dimensions() {
   };
 }
 
-it.fail(options.FIREFOX && WIN)('should click the document', async({page, server}) => {
+it.flaky(options.FIREFOX && WIN)('should click the document', async ({page, server}) => {
   // Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
   await page.evaluate(() => {
-    window["clickPromise"] = new Promise(resolve => {
+    window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {
         resolve({
           type: event.type,
@@ -44,7 +44,7 @@ it.fail(options.FIREFOX && WIN)('should click the document', async({page, server
     });
   });
   await page.mouse.click(50, 60);
-  const event = await page.evaluate(() => window["clickPromise"]);
+  const event = await page.evaluate(() => window['clickPromise']);
   expect(event.type).toBe('click');
   expect(event.detail).toBe(1);
   expect(event.clientX).toBe(50);
@@ -53,10 +53,10 @@ it.fail(options.FIREFOX && WIN)('should click the document', async({page, server
   expect(event.button).toBe(0);
 });
 
-it('should dblclick the div', async({page, server}) => {
+it('should dblclick the div', async ({page, server}) => {
   await page.setContent(`<div style='width: 100px; height: 100px;'>Click me</div>`);
   await page.evaluate(() => {
-    window["dblclickPromise"] = new Promise(resolve => {
+    window['dblclickPromise'] = new Promise(resolve => {
       document.querySelector('div').addEventListener('dblclick', event => {
         resolve({
           type: event.type,
@@ -70,7 +70,7 @@ it('should dblclick the div', async({page, server}) => {
     });
   });
   await page.mouse.dblclick(50, 60);
-  const event = await page.evaluate(() => window["dblclickPromise"]);
+  const event = await page.evaluate(() => window['dblclickPromise']);
   expect(event.type).toBe('dblclick');
   expect(event.detail).toBe(2);
   expect(event.clientX).toBe(50);
@@ -79,7 +79,7 @@ it('should dblclick the div', async({page, server}) => {
   expect(event.button).toBe(0);
 });
 
-it('should select the text with mouse', async({page, server}) => {
+it('should select the text with mouse', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');
   const text = 'This is the text that we are going to try to select. Let\'s see how it goes.';
@@ -98,7 +98,7 @@ it('should select the text with mouse', async({page, server}) => {
   })).toBe(text);
 });
 
-it('should trigger hover state', async({page, server}) => {
+it('should trigger hover state', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.hover('#button-6');
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
@@ -108,23 +108,23 @@ it('should trigger hover state', async({page, server}) => {
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-91');
 });
 
-it('should trigger hover state on disabled button', async({page, server}) => {
+it('should trigger hover state on disabled button', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.$eval('#button-6', (button: HTMLButtonElement) => button.disabled = true);
   await page.hover('#button-6', { timeout: 5000 });
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should trigger hover state with removed window.Node', async({page, server}) => {
+it('should trigger hover state with removed window.Node', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.evaluate(() => delete window.Node);
   await page.hover('#button-6');
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should set modifier keys on click', async({page, server}) => {
+it('should set modifier keys on click', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
-  await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window["lastEvent"] = e, true));
+  await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window['lastEvent'] = e, true));
   const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};
   // In Firefox, the Meta modifier only exists on Mac
   if (options.FIREFOX && !MAC)
@@ -132,26 +132,26 @@ it('should set modifier keys on click', async({page, server}) => {
   for (const modifier in modifiers) {
     await page.keyboard.down(modifier);
     await page.click('#button-3');
-    if (!(await page.evaluate(mod => window["lastEvent"][mod], modifiers[modifier])))
+    if (!(await page.evaluate(mod => window['lastEvent'][mod], modifiers[modifier])))
       throw new Error(modifiers[modifier] + ' should be true');
     await page.keyboard.up(modifier);
   }
   await page.click('#button-3');
   for (const modifier in modifiers) {
-    if ((await page.evaluate(mod => window["lastEvent"][mod], modifiers[modifier])))
+    if ((await page.evaluate(mod => window['lastEvent'][mod], modifiers[modifier])))
       throw new Error(modifiers[modifier] + ' should be false');
   }
 });
 
-it('should tween mouse movement', async({page}) => {
+it('should tween mouse movement', async ({page}) => {
   // The test becomes flaky on WebKit without next line.
   if (options.WEBKIT)
     await page.evaluate(() => new Promise(requestAnimationFrame));
   await page.mouse.move(100, 100);
   await page.evaluate(() => {
-    window["result"] = [];
+    window['result'] = [];
     document.addEventListener('mousemove', event => {
-      window["result"].push([event.clientX, event.clientY]);
+      window['result'].push([event.clientX, event.clientY]);
     });
   });
   await page.mouse.move(200, 300, {steps: 5});
@@ -164,7 +164,7 @@ it('should tween mouse movement', async({page}) => {
   ]);
 });
 
-it.skip(options.FIREFOX)('should work with mobile viewports and cross process navigations', async({browser, server}) => {
+it.skip(options.FIREFOX)('should work with mobile viewports and cross process navigations', async ({browser, server}) => {
   // @see https://crbug.com/929806
   const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });
   const page = await context.newPage();
@@ -172,7 +172,7 @@ it.skip(options.FIREFOX)('should work with mobile viewports and cross process na
   await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
   await page.evaluate(() => {
     document.addEventListener('click', event => {
-      window["result"] = {x: event.clientX, y: event.clientY};
+      window['result'] = {x: event.clientX, y: event.clientY};
     });
   });
 
@@ -183,12 +183,12 @@ it.skip(options.FIREFOX)('should work with mobile viewports and cross process na
 });
 
 xdescribe('Drag and Drop', function() {
-  it('should work', async({server, page}) => {
+  it('should work', async ({server, page}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');
     await page.mouse.down();
     await page.hover('#target');
     await page.mouse.up();
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-  })
+  });
 });

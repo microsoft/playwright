@@ -22,10 +22,10 @@ it('should have different execution contexts', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   expect(page.frames().length).toBe(2);
-  await page.frames()[0].evaluate(() => window["FOO"] = 'foo');
-  await page.frames()[1].evaluate(() => window["FOO"] = 'bar');
-  expect(await page.frames()[0].evaluate(() => window["FOO"])).toBe('foo');
-  expect(await page.frames()[1].evaluate(() => window["FOO"])).toBe('bar');
+  await page.frames()[0].evaluate(() => window['FOO'] = 'foo');
+  await page.frames()[1].evaluate(() => window['FOO'] = 'bar');
+  expect(await page.frames()[0].evaluate(() => window['FOO'])).toBe('foo');
+  expect(await page.frames()[1].evaluate(() => window['FOO'])).toBe('bar');
 });
 
 it('should have correct execution contexts', async ({ page, server }) => {
@@ -99,7 +99,7 @@ it('should not allow cross-frame element handles when frames do not script each 
   expect(error.message).toContain('Unable to adopt element handle from a different document');
 });
 
-it('should throw for detached frames', async({page, server}) => {
+it('should throw for detached frames', async ({page, server}) => {
   const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await utils.detachFrame(page, 'frame1');
   let error = null;
@@ -107,7 +107,7 @@ it('should throw for detached frames', async({page, server}) => {
   expect(error.message).toContain('Execution Context is not available in detached frame');
 });
 
-it('should be isolated between frames', async({page, server}) => {
+it('should be isolated between frames', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   expect(page.frames().length).toBe(2);
@@ -115,8 +115,8 @@ it('should be isolated between frames', async({page, server}) => {
   expect(frame1 !== frame2).toBeTruthy();
 
   await Promise.all([
-    frame1.evaluate(() => window["a"] = 1),
-    frame2.evaluate(() => window["a"] = 2)
+    frame1.evaluate(() => window['a'] = 1),
+    frame2.evaluate(() => window['a'] = 2)
   ]);
   const [a1, a2] = await Promise.all([
     frame1.evaluate(() => window['a']),
@@ -126,7 +126,7 @@ it('should be isolated between frames', async({page, server}) => {
   expect(a2).toBe(2);
 });
 
-it.fail(options.CHROMIUM || options.FIREFOX)('should work in iframes that failed initial navigation', async({page, server}) => {
+it.fail(options.CHROMIUM || options.FIREFOX)('should work in iframes that failed initial navigation', async ({page, server}) => {
   // - Firefox does not report domcontentloaded for the iframe.
   // - Chromium and Firefox report empty url.
   // - Chromium does not report main/utility worlds for the iframe.
@@ -147,7 +147,7 @@ it.fail(options.CHROMIUM || options.FIREFOX)('should work in iframes that failed
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it.fail(options.CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async({page, server}) => {
+it.fixme(options.CHROMIUM)('should work in iframes that interrupted initial javascript url navigation', async ({page, server}) => {
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
@@ -164,7 +164,7 @@ it.fail(options.CHROMIUM)('should work in iframes that interrupted initial javas
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it('evaluateHandle should work', async({page, server}) => {
+it('evaluateHandle should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const mainFrame = page.mainFrame();
   const windowHandle = await mainFrame.evaluateHandle(() => window);

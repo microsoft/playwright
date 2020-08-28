@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-import { BrowserNewContextOptions, BrowserTypeLaunchOptions } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 
 type LoggerSeverity = 'verbose' | 'info' | 'warning' | 'error';
-export interface LoggerSink {
+export interface Logger {
   isEnabled(name: string, severity: LoggerSeverity): boolean;
   log(name: string, severity: LoggerSeverity, message: string | Error, args: any[], hints: { color?: string }): void;
 }
-// This is a workaround for the documentation generation.
-export interface Logger extends LoggerSink {}
 
 export type Size = { width: number, height: number };
 export type Point = { x: number, y: number };
@@ -42,21 +40,21 @@ export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
 
-export type BrowserContextOptions = Omit<BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders'> & {
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders'> & {
   viewport?: Size | null,
   extraHTTPHeaders?: Headers,
-  logger?: LoggerSink,
+  logger?: Logger,
 };
 
 type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[],
   env?: Env,
-  logger?: LoggerSink,
+  logger?: Logger,
 };
 type FirefoxUserPrefs = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },
 };
-type LaunchOptionsBase = Omit<BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
+type LaunchOptionsBase = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
 export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
 export type LaunchPersistentContextOptions = LaunchOptionsBase & BrowserContextOptions;
 
@@ -64,7 +62,7 @@ export type ConnectOptions = {
   wsEndpoint: string,
   slowMo?: number,
   timeout?: number,
-  logger?: LoggerSink,
+  logger?: Logger,
 };
 export type LaunchServerOptions = {
   executablePath?: string,
@@ -86,5 +84,5 @@ export type LaunchServerOptions = {
   downloadsPath?: string,
   chromiumSandbox?: boolean,
   port?: number,
-  logger?: LoggerSink,
+  logger?: Logger,
 } & FirefoxUserPrefs;

@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Screencast, BrowserContext } from '../browserContext';
 import * as frames from '../frames';
 import { helper, RegisteredListener } from '../helper';
 import * as dom from '../dom';
@@ -25,6 +24,7 @@ import { WKExecutionContext } from './wkExecutionContext';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKWorkers } from './wkWorkers';
 import { Page, PageDelegate, PageBinding } from '../page';
+import * as path from 'path';
 import { Protocol } from './protocol';
 import * as dialog from '../dialog';
 import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
@@ -113,6 +113,12 @@ export class WKPage implements PageDelegate {
     if (this._browserContext._permissions.size) {
       for (const [key, value] of this._browserContext._permissions)
         this._grantPermissions(key, value);
+    }
+    if (this._browserContext._screencastOptions) {
+      const contextOptions = this._browserContext._screencastOptions;
+      const outputFile = path.join(contextOptions.dir, helper.guid() + '.webm');
+      const options = Object.assign({}, contextOptions, {outputFile});
+      promises.push(this.startScreencast(options));
     }
     await Promise.all(promises);
   }
@@ -711,13 +717,13 @@ export class WKPage implements PageDelegate {
       throw new Error('Already recording');
     this._recordingVideoFile = options.outputFile;
     try {
-      await this._pageProxySession.send('Screencast.startVideoRecording', {
+      const {screencastId} = await this._pageProxySession.send('Screencast.start', {
         file: options.outputFile,
         width: options.width,
         height: options.height,
         scale: options.scale,
-      });
-      this._browserContext.emit(BrowserContext.Events.ScreencastStarted, new Screencast(options.outputFile, this._initializedPage!));
+      }) as any;
+      this._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
     } catch (e) {
       this._recordingVideoFile = null;
       throw e;
@@ -727,10 +733,8 @@ export class WKPage implements PageDelegate {
   async stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
       throw new Error('No video recording in progress');
-    const fileName = this._recordingVideoFile;
     this._recordingVideoFile = null;
-    await this._pageProxySession.send('Screencast.stopVideoRecording');
-    this._browserContext.emit(BrowserContext.Events.ScreencastStopped, new Screencast(fileName, this._initializedPage!));
+    await this._pageProxySession.send('Screencast.stop');
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {

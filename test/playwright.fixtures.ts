@@ -18,23 +18,22 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import childProcess from 'child_process';
-import { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
+import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
-import { setUnderTest } from '../lib/utils/utils';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';
-import {mkdtempAsync, removeFolderAsync} from './utils';
+import { mkdtempAsync, removeFolderAsync } from './utils';
 
 export const options = {
   CHROMIUM: parameters.browserName === 'chromium',
   FIREFOX: parameters.browserName === 'firefox',
   WEBKIT: parameters.browserName === 'webkit',
-  HEADLESS : !!valueFromEnv('HEADLESS', true),
+  HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
-}
+};
 
 declare global {
   interface WorkerState {
@@ -53,6 +52,7 @@ declare global {
     page: Page;
     httpsServer: TestServer;
     browserServer: BrowserServer;
+    launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
   }
   interface FixtureParameters {
     browserName: string;
@@ -89,17 +89,17 @@ registerWorkerFixture('httpService', async ({}, test) => {
   ]);
 });
 
-const getExecutablePath = (browserName) => {
+const getExecutablePath = browserName => {
   if (browserName === 'chromium' && process.env.CRPATH)
     return process.env.CRPATH;
   if (browserName === 'firefox' && process.env.FFPATH)
     return process.env.FFPATH;
   if (browserName === 'webkit' && process.env.WKPATH)
     return process.env.WKPATH;
-}
+};
 
-registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
-  let executablePath = getExecutablePath(browserName);
+registerWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
+  const executablePath = getExecutablePath(browserName);
 
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -111,13 +111,11 @@ registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
   });
 });
 
-registerWorkerFixture('playwright', async({browserName}, test) => {
-  setUnderTest(); // Note: we must call setUnderTest before requiring Playwright
-
+registerWorkerFixture('playwright', async ({browserName}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     const connection = new Connection();
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'rpc', 'server'), [], {
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'server.js'), [], {
       stdio: 'pipe',
       detached: true,
     });
@@ -137,7 +135,7 @@ registerWorkerFixture('playwright', async({browserName}, test) => {
     spawnedProcess.stderr.destroy();
     await teardownCoverage();
   } else {
-    await test(require('../index'))
+    await test(require('../index'));
     await teardownCoverage();
   }
 
@@ -188,15 +186,30 @@ registerFixture('context', async ({browser}, test) => {
   await context.close();
 });
 
-registerFixture('page', async ({context}, runTest, config, test) => {
+registerFixture('page', async ({context}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
-  if (test.error) {
+  const { test, config, result } = info;
+  if (result.status === 'failed' || result.status === 'timedOut') {
     const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
     await page.screenshot({ path: assetPath });
   }
+});
+
+registerFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, browserType}, test) => {
+  let context;
+  async function launchPersistent(options) {
+    if (context)
+      throw new Error('can only launch one persitent context');
+    context = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, ...options});
+    const page = context.pages()[0];
+    return {context, page};
+  }
+  await test(launchPersistent);
+  if (context)
+    await context.close();
 });
 
 registerFixture('server', async ({httpService}, test) => {

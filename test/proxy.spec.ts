@@ -107,7 +107,7 @@ it.fail(options.CHROMIUM && !options.HEADLESS)('should exclude patterns', async 
 it('should use socks proxy', async ({ browserType, defaultBrowserOptions }) => {
   const server = socks.createServer((info, accept, deny) => {
     let socket;
-    if (socket = accept(true)) {
+    if ((socket = accept(true))) {
       // Catch and ignore ECONNRESET errors.
       socket.on('error', () => {});
       const body = '<html><title>Served by the SOCKS proxy</title></html>';

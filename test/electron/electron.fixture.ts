@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { options } from '../playwright.fixtures';
+import '../playwright.fixtures';
 import { registerFixture } from '../../test-runner';
-import {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
+import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
@@ -29,7 +29,7 @@ declare global {
 }
 
 declare module '../../index' {
-  const electron: ElectronLauncher
+  const electron: ElectronLauncher;
 }
 
 registerFixture('application', async ({playwright}, test) => {

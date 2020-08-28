@@ -16,7 +16,7 @@
 
 const { Playwright } = require('./lib/server/playwright');
 const { Electron } = require('./lib/server/electron/electron');
-const { setupInProcess } = require('./lib/rpc/inprocess');
+const { setupInProcess } = require('./lib/inprocess');
 
 const playwright = new Playwright(__dirname, require('./browsers.json')['browsers']);
 playwright.electron = new Electron();

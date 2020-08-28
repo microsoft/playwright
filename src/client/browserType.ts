@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserTypeChannel, BrowserTypeInitializer, BrowserTypeLaunchParams, BrowserTypeLaunchPersistentContextParams } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
@@ -40,15 +40,15 @@ export interface BrowserServer {
   kill(): Promise<void>;
 }
 
-export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeInitializer> {
+export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> {
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
 
-  static from(browserType: BrowserTypeChannel): BrowserType {
+  static from(browserType: channels.BrowserTypeChannel): BrowserType {
     return (browserType as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserTypeInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserTypeInitializer) {
     super(parent, type, guid, initializer);
   }
 
@@ -66,7 +66,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._wrapApiCall('browserType.launch', async () => {
       assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-      const launchOptions: BrowserTypeLaunchParams = {
+      const launchOptions: channels.BrowserTypeLaunchParams = {
         ...options,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
         ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
@@ -90,7 +90,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
       if (options.extraHTTPHeaders)
         validateHeaders(options.extraHTTPHeaders);
-      const persistentOptions: BrowserTypeLaunchPersistentContextParams = {
+      const persistentOptions: channels.BrowserTypeLaunchPersistentContextParams = {
         ...options,
         viewport: options.viewport === null ? undefined : options.viewport,
         noDefaultViewport: options.viewport === null,
@@ -146,6 +146,7 @@ export class BrowserType extends ChannelOwner<BrowserTypeChannel, BrowserTypeIni
         ws.addEventListener('open', async () => {
           const browser = (await connection.waitForObjectWithKnownName('connectedBrowser')) as Browser;
           browser._logger = logger;
+          browser._isRemote = true;
           const closeListener = () => {
             // Emulate all pages, contexts and the browser closing upon disconnect.
             for (const context of browser.contexts()) {

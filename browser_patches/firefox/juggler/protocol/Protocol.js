@@ -216,6 +216,9 @@ const Browser = {
       canceled: t.Optional(t.Boolean),
       error: t.Optional(t.String),
     },
+    'screencastFinished': {
+      screencastId: t.String,
+    },
   },
 
   methods: {
@@ -650,11 +653,8 @@ const Page = {
       message: t.String,
     },
     'screencastStarted': {
-      uid: t.String,
+      screencastId: t.String,
       file: t.String,
-    },
-    'screencastStopped': {
-      uid: t.String,
     },
   },
 

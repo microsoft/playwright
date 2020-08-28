@@ -16,17 +16,17 @@
 
 import * as util from 'util';
 import { JSHandle } from './jsHandle';
-import { ConsoleMessageChannel, ConsoleMessageInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
-type ConsoleMessageLocation = ConsoleMessageInitializer['location'];
+type ConsoleMessageLocation = channels.ConsoleMessageInitializer['location'];
 
-export class ConsoleMessage extends ChannelOwner<ConsoleMessageChannel, ConsoleMessageInitializer> {
-  static from(message: ConsoleMessageChannel): ConsoleMessage {
+export class ConsoleMessage extends ChannelOwner<channels.ConsoleMessageChannel, channels.ConsoleMessageInitializer> {
+  static from(message: channels.ConsoleMessageChannel): ConsoleMessage {
     return (message as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ConsoleMessageInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ConsoleMessageInitializer) {
     super(parent, type, guid, initializer);
   }
 

@@ -18,7 +18,7 @@
 import * as frames from './frame';
 import { Page, BindingCall } from './page';
 import * as network from './network';
-import { BrowserContextChannel, BrowserContextInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { deprecate, evaluationScript, urlMatches } from './clientHelper';
 import { Browser } from './browser';
@@ -26,9 +26,9 @@ import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions } from './types';
-import { isUnderTest, headersObjectToArray } from '../utils/utils';
+import { isDevMode, headersObjectToArray } from '../utils/utils';
 
-export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserContextInitializer> {
+export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | undefined;
@@ -39,15 +39,15 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
 
-  static from(context: BrowserContextChannel): BrowserContext {
+  static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
   }
 
-  static fromNullable(context: BrowserContextChannel | null): BrowserContext | null {
+  static fromNullable(context: channels.BrowserContextChannel | null): BrowserContext | null {
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: BrowserContextInitializer, browserName: string) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer, browserName: string) {
     super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;
@@ -158,7 +158,7 @@ export class BrowserContext extends ChannelOwner<BrowserContextChannel, BrowserC
   }
 
   async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
-    if (!isUnderTest())
+    if (!isDevMode())
       deprecate(`context.setHTTPCredentials`, `warning: method |context.setHTTPCredentials()| is deprecated. Instead of changing credentials, create another browser context with new credentials.`);
     return this._wrapApiCall('browserContext.setHTTPCredentials', async () => {
       await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });

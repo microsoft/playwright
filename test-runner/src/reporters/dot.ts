@@ -16,30 +16,24 @@
 
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
-import { Test } from '../test';
+import { Test, TestResult } from '../test';
 
-export class DotReporter extends BaseReporter {  
-  onPending(test: Test) {
-    super.onPending(test);
-    process.stdout.write(colors.yellow('∘'))
+class DotReporter extends BaseReporter {
+  onTestEnd(test: Test, result: TestResult) {
+    super.onTestEnd(test, result);
+    switch (result.status) {
+      case 'skipped': process.stdout.write(colors.yellow('∘')); break;
+      case 'passed': process.stdout.write(result.status === result.expectedStatus ? colors.green('·') : colors.red('P')); break;
+      case 'failed': process.stdout.write(result.status === result.expectedStatus ? colors.green('f') : colors.red('F')); break;
+      case 'timedOut': process.stdout.write(colors.red('T')); break;
+    }
   }
-  
-  onPass(test: Test) {
-    super.onPass(test);
-    process.stdout.write(colors.green('\u00B7'));
-  }
-  
-  onFail(test: Test) {
-    super.onFail(test);
-    if (test.duration >= test.timeout)
-      process.stdout.write(colors.red('T'));
-    else
-      process.stdout.write(colors.red('F'));
-  } 
- 
+
   onEnd() {
     super.onEnd();
     process.stdout.write('\n');
     this.epilogue();
   }
 }
+
+export default DotReporter;

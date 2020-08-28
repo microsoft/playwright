@@ -15,7 +15,7 @@
  */
 
 import * as types from './types';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, Screencast } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
@@ -47,6 +47,7 @@ export abstract class Browser extends EventEmitter {
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
+  private readonly _idToScreencast = new Map<string, Screencast>();
 
   constructor(options: BrowserOptions) {
     super();
@@ -83,6 +84,18 @@ export abstract class Browser extends EventEmitter {
       return;
     download._reportFinished(error);
     this._downloads.delete(uuid);
+  }
+
+  _screencastStarted(screencastId: string, file: string, page: Page) {
+    const screencast = new Screencast(file, page);
+    this._idToScreencast.set(screencastId, screencast);
+    page._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
+  }
+
+  _screencastFinished(screencastId: string) {
+    const screencast = this._idToScreencast.get(screencastId);
+    this._idToScreencast.delete(screencastId);
+    screencast!._finishCallback();
   }
 
   _didClose() {

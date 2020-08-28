@@ -17,9 +17,9 @@
 import colors from 'colors/safe';
 import { BaseReporter } from './base';
 import { RunnerConfig } from '../runnerConfig';
-import { Suite, Test } from '../test';
+import { Suite, Test, TestResult } from '../test';
 
-export class ListReporter extends BaseReporter {
+class ListReporter extends BaseReporter {
   _failure = 0;
 
   onBegin(config: RunnerConfig, suite: Suite) {
@@ -27,30 +27,25 @@ export class ListReporter extends BaseReporter {
     console.log();
   }
 
-  onTest(test: Test) {
-    super.onTest(test);
+  onTestBegin(test: Test) {
+    super.onTestBegin(test);
     process.stdout.write('    ' + colors.gray(test.fullTitle() + ': '));
   }
 
-  onPending(test: Test) {
-    super.onPending(test);
-    process.stdout.write(colors.green('  - ') + colors.cyan(test.fullTitle()));
-    process.stdout.write('\n');
-}
-
-  onPass(test: Test) {
-    super.onPass(test);
-    process.stdout.write('\u001b[2K\u001b[0G');
-    process.stdout.write(colors.green('  ✓ ') + colors.gray(test.fullTitle()));
-    process.stdout.write('\n');
-}
-
-  onFail(test: Test) {
-    super.onFail(test);
-    process.stdout.write('\u001b[2K\u001b[0G');
-    process.stdout.write(colors.red(`  ${++this._failure}) ` + test.fullTitle()));
-    process.stdout.write('\n');
-}
+  onTestEnd(test: Test, result: TestResult) {
+    super.onTestEnd(test, result);
+    let text = '';
+    if (result.status === 'skipped') {
+      text = colors.green('  - ') + colors.cyan(test.fullTitle());
+    } else {
+      const statusMark = result.status === 'passed' ? colors.green('  ✓ ') : colors.red('  x ');
+      if (result.status === result.expectedStatus)
+        text = '\u001b[2K\u001b[0G' + statusMark + colors.gray(test.fullTitle());
+      else
+        text = '\u001b[2K\u001b[0G' + colors.red(`  ${++this._failure}) ` + test.fullTitle());
+    }
+    process.stdout.write(text + '\n');
+  }
 
   onEnd() {
     super.onEnd();
@@ -58,3 +53,5 @@ export class ListReporter extends BaseReporter {
     this.epilogue();
   }
 }
+
+export default ListReporter;

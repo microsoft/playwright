@@ -15,13 +15,13 @@
  * limitations under the License.
  */
 import { options } from './playwright.fixtures';
-import { ChromiumBrowser } from '..';
+import type { ChromiumBrowser } from '..';
 
-it('should work', async({browser}) => {
+it('should work', async ({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();
 });
 
-it('should scope context handles', async({browserType, browser, server}) => {
+it('should scope context handles', async ({browserType, browser, server}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -65,7 +65,7 @@ it('should scope context handles', async({browserType, browser, server}) => {
   await expectScopeState(browser, GOLDEN_PRECONDITION);
 });
 
-it.skip(!options.CHROMIUM)('should scope CDPSession handles', async({browserType, browser, server}) => {
+it.skip(!options.CHROMIUM)('should scope CDPSession handles', async ({browserType, browser, server}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -102,7 +102,7 @@ it.skip(!options.CHROMIUM)('should scope CDPSession handles', async({browserType
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should scope browser handles', async({browserType, defaultBrowserOptions}) => {
+it('should scope browser handles', async ({browserType, defaultBrowserOptions}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [

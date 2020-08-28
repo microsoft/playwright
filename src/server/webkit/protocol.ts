@@ -6744,20 +6744,12 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       openerId?: PageProxyID;
     }
     export type pageProxyDestroyedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       pageProxyId: PageProxyID;
     }
     /**
      * Fired when provisional load fails.
      */
     export type provisionalLoadFailedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       /**
        * Unique identifier of the page proxy.
        */
@@ -6776,10 +6768,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
      */
     export type windowOpenPayload = {
       /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
-      /**
        * Unique identifier of the page proxy.
        */
       pageProxyId: PageProxyID;
@@ -6787,10 +6775,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       windowFeatures: string[];
     }
     export type downloadCreatedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       /**
        * Unique identifier of the page proxy.
        */
@@ -6803,20 +6787,18 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       url: string;
     }
     export type downloadFilenameSuggestedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       uuid: string;
       suggestedFilename: string;
     }
     export type downloadFinishedPayload = {
-      /**
-       * Unique identifier of the context.
-       */
-      browserContextId: ContextID;
       uuid: string;
       error: string;
+    }
+    export type screencastFinishedPayload = {
+      /**
+       * Unique identifier of the screencast.
+       */
+      screencastId: Screencast.ScreencastId;
     }
     
     export type enableParameters = {
@@ -7835,12 +7817,16 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
   }
   
   export module Screencast {
+    /**
+     * Unique identifier of the screencast.
+     */
+    export type ScreencastId = string;
     
     
     /**
      * Starts recoring video to speified file.
      */
-    export type startVideoRecordingParameters = {
+    export type startParameters = {
       /**
        * Output file location.
        */
@@ -7849,14 +7835,18 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
       height: number;
       scale?: number;
     }
-    export type startVideoRecordingReturnValue = {
+    export type startReturnValue = {
+      /**
+       * Unique identifier of the screencast.
+       */
+      screencastId: ScreencastId;
     }
     /**
      * Stops recoding video. Returns after the file has been closed.
      */
-    export type stopVideoRecordingParameters = {
+    export type stopParameters = {
     }
-    export type stopVideoRecordingReturnValue = {
+    export type stopReturnValue = {
     }
   }
   
@@ -8411,6 +8401,7 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Playwright.downloadCreated": Playwright.downloadCreatedPayload;
     "Playwright.downloadFilenameSuggested": Playwright.downloadFilenameSuggestedPayload;
     "Playwright.downloadFinished": Playwright.downloadFinishedPayload;
+    "Playwright.screencastFinished": Playwright.screencastFinishedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
     "ScriptProfiler.trackingStart": ScriptProfiler.trackingStartPayload;
     "ScriptProfiler.trackingUpdate": ScriptProfiler.trackingUpdatePayload;
@@ -8689,8 +8680,8 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerParameters;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerParameters;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksParameters;
-    "Screencast.startVideoRecording": Screencast.startVideoRecordingParameters;
-    "Screencast.stopVideoRecording": Screencast.stopVideoRecordingParameters;
+    "Screencast.start": Screencast.startParameters;
+    "Screencast.stop": Screencast.stopParameters;
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingParameters;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingParameters;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoParameters;
@@ -8972,8 +8963,8 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerReturnValue;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerReturnValue;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksReturnValue;
-    "Screencast.startVideoRecording": Screencast.startVideoRecordingReturnValue;
-    "Screencast.stopVideoRecording": Screencast.stopVideoRecordingReturnValue;
+    "Screencast.start": Screencast.startReturnValue;
+    "Screencast.stop": Screencast.stopReturnValue;
     "ScriptProfiler.startTracking": ScriptProfiler.startTrackingReturnValue;
     "ScriptProfiler.stopTracking": ScriptProfiler.stopTrackingReturnValue;
     "ServiceWorker.getInitializationInfo": ServiceWorker.getInitializationInfoReturnValue;

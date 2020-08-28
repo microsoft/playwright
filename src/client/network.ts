@@ -15,7 +15,7 @@
  */
 
 import { URLSearchParams } from 'url';
-import { RequestChannel, ResponseChannel, RouteChannel, RequestInitializer, ResponseInitializer, RouteInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Frame } from './frame';
 import { Headers } from './types';
@@ -47,22 +47,22 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
+export class Request extends ChannelOwner<channels.RequestChannel, channels.RequestInitializer> {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
   private _headers: Headers;
   private _postData: Buffer | null;
 
-  static from(request: RequestChannel): Request {
+  static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
   }
 
-  static fromNullable(request: RequestChannel | undefined): Request | null {
+  static fromNullable(request: channels.RequestChannel | undefined): Request | null {
     return request ? Request.from(request) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: RequestInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RequestInitializer) {
     super(parent, type, guid, initializer);
     this._redirectedFrom = Request.fromNullable(initializer.redirectedFrom);
     if (this._redirectedFrom)
@@ -148,12 +148,12 @@ export class Request extends ChannelOwner<RequestChannel, RequestInitializer> {
   }
 }
 
-export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
-  static from(route: RouteChannel): Route {
+export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> {
+  static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: RouteInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RouteInitializer) {
     super(parent, type, guid, initializer);
   }
 
@@ -214,18 +214,18 @@ export class Route extends ChannelOwner<RouteChannel, RouteInitializer> {
 
 export type RouteHandler = (route: Route, request: Request) => void;
 
-export class Response extends ChannelOwner<ResponseChannel, ResponseInitializer> {
+export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> {
   private _headers: Headers;
 
-  static from(response: ResponseChannel): Response {
+  static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
   }
 
-  static fromNullable(response: ResponseChannel | undefined): Response | null {
+  static fromNullable(response: channels.ResponseChannel | undefined): Response | null {
     return response ? Response.from(response) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: ResponseInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
     super(parent, type, guid, initializer);
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
   }

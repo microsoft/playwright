@@ -14,18 +14,25 @@
  * limitations under the License.
  */
 
-import { DownloadChannel, DownloadInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { Readable } from 'stream';
 import { Stream } from './stream';
+import { Browser } from './browser';
+import { BrowserContext } from './browserContext';
+import * as fs from 'fs';
+import { mkdirIfNeeded } from '../utils/utils';
 
-export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer> {
-  static from(download: DownloadChannel): Download {
+export class Download extends ChannelOwner<channels.DownloadChannel, channels.DownloadInitializer> {
+  private _browser: Browser | undefined;
+
+  static from(download: channels.DownloadChannel): Download {
     return (download as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: DownloadInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.DownloadInitializer) {
     super(parent, type, guid, initializer);
+    this._browser = (parent as BrowserContext)._browser;
   }
 
   url(): string {
@@ -37,12 +44,26 @@ export class Download extends ChannelOwner<DownloadChannel, DownloadInitializer>
   }
 
   async path(): Promise<string | null> {
+    if (this._browser && this._browser._isRemote)
+      throw new Error(`Path is not available when using browserType.connect(). Use download.saveAs() to save a local copy.`);
     return (await this._channel.path()).value || null;
   }
 
   async saveAs(path: string): Promise<void> {
     return this._wrapApiCall('download.saveAs', async () => {
-      await this._channel.saveAs({ path });
+      if (!this._browser || !this._browser._isRemote) {
+        await this._channel.saveAs({ path });
+        return;
+      }
+
+      const result = await this._channel.saveAsStream();
+      const stream = Stream.from(result.stream);
+      await mkdirIfNeeded(path);
+      await new Promise((resolve, reject) => {
+        stream.stream().pipe(fs.createWriteStream(path))
+            .on('finish' as any, resolve)
+            .on('error' as any, reject);
+      });
     });
   }
 

@@ -52,9 +52,9 @@ it('should traverse focus', async function({page}) {
   await page.$eval('#i2', i2 => (i2 as HTMLInputElement).addEventListener('focus', window['focusEvent']));
 
   await page.focus('#i1');
-  await page.keyboard.type("First");
-  await page.keyboard.press("Tab");
-  await page.keyboard.type("Last");
+  await page.keyboard.type('First');
+  await page.keyboard.press('Tab');
+  await page.keyboard.type('Last');
 
   expect(focused).toBe(true);
   expect(await page.$eval('#i1', e => (e as HTMLInputElement).value)).toBe('First');
@@ -75,7 +75,7 @@ it('should traverse focus in all directions', async function({page}) {
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
 
-// Chromium and WebKit both have settings for tab traversing all links, but 
+// Chromium and WebKit both have settings for tab traversing all links, but
 // it is only on by default in WebKit.
 it.skip(!MAC || !options.WEBKIT)('should traverse only form elements', async function({page}) {
   await page.setContent(`

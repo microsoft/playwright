@@ -16,21 +16,26 @@
 
 export type Configuration = { name: string, value: string }[];
 
+type TestStatus = 'passed' | 'failed' | 'timedOut' | 'skipped';
+
 export class Test {
   suite: Suite;
   title: string;
   file: string;
   only = false;
-  pending = false;
   slow = false;
-  duration = 0;
   timeout = 0;
   fn: Function;
-  error: any;
+  results: TestResult[] = [];
 
-  _ordinal: number;
+  _id: string;
+  // Skipped & flaky are resolved based on options in worker only
+  // We will compute them there and send to the runner (front-end)
+  _skipped = false;
+  _flaky = false;
   _overriddenFn: Function;
   _startTime: number;
+  _expectedStatus: TestStatus = 'passed';
 
   constructor(title: string, fn: Function) {
     this.title = title;
@@ -45,16 +50,54 @@ export class Test {
     return this.titlePath().join(' ');
   }
 
+  _appendResult(): TestResult {
+    const result: TestResult = {
+      duration: 0,
+      expectedStatus: 'passed',
+      stdout: [],
+      stderr: [],
+      data: {}
+    };
+    this.results.push(result);
+    return result;
+  }
+
+  _ok(): boolean {
+    if (this._skipped || this.suite._isSkipped())
+      return true;
+    const hasFailedResults = !!this.results.find(r => r.status !== r.expectedStatus);
+    if (!hasFailedResults)
+      return true;
+    if (!this._flaky)
+      return false;
+    const hasPassedResults = !!this.results.find(r => r.status === r.expectedStatus);
+    return hasPassedResults;
+  }
+
+  _hasResultWithStatus(status: TestStatus): boolean {
+    return !!this.results.find(r => r.status === status);
+  }
+
   _clone(): Test {
     const test = new Test(this.title, this.fn);
     test.suite = this.suite;
     test.only = this.only;
     test.file = this.file;
-    test.pending = this.pending;
     test.timeout = this.timeout;
+    test._flaky = this._flaky;
     test._overriddenFn = this._overriddenFn;
     return test;
   }
+}
+
+export type TestResult = {
+  duration: number;
+  status?: TestStatus;
+  expectedStatus: TestStatus;
+  error?: any;
+  stdout: (string | Buffer)[];
+  stderr: (string | Buffer)[];
+  data: any;
 }
 
 export class Suite {
@@ -63,9 +106,12 @@ export class Suite {
   suites: Suite[] = [];
   tests: Test[] = [];
   only = false;
-  pending = false;
   file: string;
   configuration: Configuration;
+
+  // Skipped & flaky are resolved based on options in worker only
+  // We will compute them there and send to the runner (front-end)
+  _skipped = false;
   _configurationString: string;
 
   _hooks: { type: string, fn: Function } [] = [];
@@ -84,14 +130,14 @@ export class Suite {
 
   total(): number {
     let count = 0;
-    this.eachTest(fn => {
+    this.findTest(fn => {
       ++count;
     });
     return count;
   }
 
-  _isPending(): boolean {
-    return this.pending || (this.parent && this.parent._isPending());
+  _isSkipped(): boolean {
+    return this._skipped || (this.parent && this.parent._isSkipped());
   }
 
   _addTest(test: Test) {
@@ -114,9 +160,9 @@ export class Suite {
     return false;
   }
 
-  eachTest(fn: (test: Test) => boolean | void): boolean {
+  findTest(fn: (test: Test) => boolean | void): boolean {
     for (const suite of this.suites) {
-      if (suite.eachTest(fn))
+      if (suite.findTest(fn))
         return true;
     }
     for (const test of this.tests) {
@@ -130,15 +176,15 @@ export class Suite {
     const suite = new Suite(this.title);
     suite.only = this.only;
     suite.file = this.file;
-    suite.pending = this.pending;
+    suite._skipped = this._skipped;
     return suite;
   }
 
   _renumber() {
     let ordinal = 0;
-    this.eachTest((test: Test) => {
+    this.findTest((test: Test) => {
       // All tests are identified with their ordinals.
-      test._ordinal = ordinal++;
+      test._id = `${ordinal++}@${this.file}::[${this._configurationString}]`;
     });
   }
 
@@ -148,12 +194,43 @@ export class Suite {
 
   _hasTestsToRun(): boolean {
     let found = false;
-    this.eachTest(test => {
-      if (!test.pending) {
+    this.findTest(test => {
+      if (!test._skipped) {
         found = true;
         return true;
       }
     });
     return found;
   }
+}
+
+export function serializeConfiguration(configuration: Configuration): string {
+  const tokens = [];
+  for (const { name, value } of configuration)
+    tokens.push(`${name}=${value}`);
+  return tokens.join(', ');
+}
+
+export function serializeError(error: Error | any): any {
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      stack: error.stack
+    };
+  }
+  return trimCycles(error);
+}
+
+function trimCycles(obj: any): any {
+  const cache = new Set();
+  return JSON.parse(
+      JSON.stringify(obj, function(key, value) {
+        if (typeof value === 'object' && value !== null) {
+          if (cache.has(value))
+            return '' + value;
+          cache.add(value);
+        }
+        return value;
+      })
+  );
 }

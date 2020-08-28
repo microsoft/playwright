@@ -20,13 +20,13 @@ import { attachFrame } from './utils';
 async function checkSlowMo(toImpl, page, task) {
   let didSlowMo = false;
   const orig = toImpl(page)._doSlowMo;
-  toImpl(page)._doSlowMo = async function (...args) {
+  toImpl(page)._doSlowMo = async function(...args) {
     if (didSlowMo)
       throw new Error('already did slowmo');
     await new Promise(x => setTimeout(x, 100));
     didSlowMo = true;
-    return orig.call(this, ...args)
-  }
+    return orig.call(this, ...args);
+  };
   await task();
   expect(!!didSlowMo).toBe(true);
 }
@@ -41,7 +41,7 @@ async function checkPageSlowMo(toImpl, page, task) {
       <option>foo</option>
     </select>
     <input type="file" class="file">
-  `)
+  `);
   await checkSlowMo(toImpl, page, task);
 }
 
@@ -120,62 +120,62 @@ async function checkFrameSlowMo(toImpl, page, server, task) {
       <option>foo</option>
     </select>
     <input type="file" class="file">
-  `)
+  `);
   await checkSlowMo(toImpl, page, task.bind(null, frame));
 }
 
-it.skip(options.WIRE)('Frame SlowMo $$eval', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo $$eval', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.$$eval('button', () => void 0));
 });
-it.skip(options.WIRE)('Frame SlowMo $eval', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo $eval', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.$eval('button', () => void 0));
 });
-it.skip(options.WIRE)('Frame SlowMo check', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo check', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.check('.check'));
 });
-it.skip(options.WIRE)('Frame SlowMo click', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo click', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.click('button'));
 });
-it.skip(options.WIRE)('Frame SlowMo dblclick', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo dblclick', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.dblclick('button'));
 });
-it.skip(options.WIRE)('Frame SlowMo dispatchEvent', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo dispatchEvent', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.dispatchEvent('button', 'click'));
 });
-it.skip(options.WIRE)('Frame SlowMo evaluate', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo evaluate', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.evaluate(() => void 0));
 });
-it.skip(options.WIRE)('Frame SlowMo evaluateHandle', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo evaluateHandle', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.evaluateHandle(() => window));
 });
-it.skip(options.WIRE)('Frame SlowMo fill', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo fill', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.fill('.fill', 'foo'));
 });
-it.skip(options.WIRE)('Frame SlowMo focus', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo focus', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.focus('button'));
 });
-it.skip(options.WIRE)('Frame SlowMo goto', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo goto', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.goto('about:blank'));
 });
-it.skip(options.WIRE)('Frame SlowMo hover', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo hover', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.hover('button'));
 });
-it.skip(options.WIRE)('Frame SlowMo press', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo press', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.press('button', 'Enter'));
 });
-it.skip(options.WIRE)('Frame SlowMo setContent', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo setContent', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.setContent('hello world'));
 });
-it.skip(options.WIRE)('Frame SlowMo selectOption', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo selectOption', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.selectOption('select', 'foo'));
 });
-it.skip(options.WIRE)('Frame SlowMo setInputFiles', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo setInputFiles', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.setInputFiles('.file', []));
 });
-it.skip(options.WIRE)('Frame SlowMo type', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo type', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.type('.fill', 'a'));
 });
-it.skip(options.WIRE)('Frame SlowMo uncheck', async({page, server, toImpl}) => {
+it.skip(options.WIRE)('Frame SlowMo uncheck', async ({page, server, toImpl}) => {
   await checkFrameSlowMo(toImpl, page, server, frame => frame.uncheck('.uncheck'));
 });
 
@@ -189,7 +189,7 @@ async function checkElementSlowMo(toImpl, page, selector, task) {
       <option>foo</option>
     </select>
     <input type="file" class="file">
-  `)
+  `);
   const element = await page.$(selector);
   await checkSlowMo(toImpl, page, task.bind(null, element));
 }
@@ -236,7 +236,7 @@ it.skip(options.WIRE)('ElementHandle SlowMo setInputFiles', async ({page, toImpl
   await checkElementSlowMo(toImpl, page, '.file', element => element.setInputFiles([]));
 });
 it.skip(options.WIRE)('ElementHandle SlowMo type', async ({page, toImpl}) => {
-  await checkElementSlowMo(toImpl, page, '.fill', element => element.type( 'a'));
+  await checkElementSlowMo(toImpl, page, '.fill', element => element.type('a'));
 });
 it.skip(options.WIRE)('ElementHandle SlowMo uncheck', async ({page, toImpl}) => {
   await checkElementSlowMo(toImpl, page, '.uncheck', element => element.uncheck());

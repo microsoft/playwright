@@ -44,10 +44,16 @@ class BrowserHandler {
 
     this._eventListeners = [
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
-      helper.on(this._targetRegistry, TargetRegistry.Events.TargetWillBeDestroyed, this._onTargetWillBeDestroyed.bind(this)),
+      helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadCreated, this._onDownloadCreated.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadFinished, this._onDownloadFinished.bind(this)),
     ];
+
+    const onScreencastStopped = (subject, topic, data) => {
+      this._session.emitEvent('Browser.screencastFinished', {screencastId: '' + data});
+    };
+    Services.obs.addObserver(onScreencastStopped, 'juggler-screencast-stopped');
+    this._eventListeners.push(() => Services.obs.removeObserver(onScreencastStopped, 'juggler-screencast-stopped'));
   }
 
   async createBrowserContext({removeOnDetach}) {
@@ -65,11 +71,11 @@ class BrowserHandler {
     this._createdBrowserContextIds.delete(browserContextId);
   }
 
-  async dispose() {
+  dispose() {
     helper.removeListeners(this._eventListeners);
     for (const [target, session] of this._attachedSessions) {
       target.disconnectSession(session);
-      await this._dispatcher.destroySession(session);
+      this._dispatcher.destroySession(session);
     }
     this._attachedSessions.clear();
     for (const browserContextId of this._createdBrowserContextIds) {
@@ -101,16 +107,12 @@ class BrowserHandler {
     sessions.push(session);
   }
 
-  _onTargetWillBeDestroyed({target, pendingActivity}) {
-    pendingActivity.push(this._detachFromTarget(target));
-  }
-
-  async _detachFromTarget(target) {
+  _onTargetDestroyed(target) {
     const session = this._attachedSessions.get(target);
     if (!session)
       return;
     this._attachedSessions.delete(target);
-    await this._dispatcher.destroySession(session);
+    this._dispatcher.destroySession(session);
     this._session.emitEvent('Browser.detachedFromTarget', {
       sessionId: session.sessionId(),
       targetId: target.id(),

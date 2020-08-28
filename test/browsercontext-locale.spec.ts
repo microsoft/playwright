@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { options } from './playwright.fixtures';
+import './playwright.fixtures';
 
-it('should affect accept-language header', async({browser, server}) => {
+it('should affect accept-language header', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   const [request] = await Promise.all([
@@ -27,14 +27,14 @@ it('should affect accept-language header', async({browser, server}) => {
   await context.close();
 });
 
-it('should affect navigator.language', async({browser, server}) => {
+it('should affect navigator.language', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   expect(await page.evaluate(() => navigator.language)).toBe('fr-CH');
   await context.close();
 });
 
-it('should format number', async({browser, server}) => {
+it('should format number', async ({browser, server}) => {
   {
     const context = await browser.newContext({ locale: 'en-US' });
     const page = await context.newPage();
@@ -51,7 +51,7 @@ it('should format number', async({browser, server}) => {
   }
 });
 
-it('should format date', async({browser, server}) => {
+it('should format date', async ({browser, server}) => {
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Los_Angeles' });
     const page = await context.newPage();
@@ -70,7 +70,7 @@ it('should format date', async({browser, server}) => {
   }
 });
 
-it('should format number in popups', async({browser, server}) => {
+it('should format number in popups', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -85,7 +85,7 @@ it('should format number in popups', async({browser, server}) => {
   await context.close();
 });
 
-it('should affect navigator.language in popups', async({browser, server}) => {
+it('should affect navigator.language in popups', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'fr-CH' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -99,7 +99,7 @@ it('should affect navigator.language in popups', async({browser, server}) => {
   await context.close();
 });
 
-it('should work for multiple pages sharing same process', async({browser, server}) => {
+it('should work for multiple pages sharing same process', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -114,11 +114,11 @@ it('should work for multiple pages sharing same process', async({browser, server
   await context.close();
 });
 
-it('should be isolated between contexts', async({browser, server}) => {
+it('should be isolated between contexts', async ({browser, server}) => {
   const context1 = await browser.newContext({ locale: 'en-US' });
   const promises = [];
   // By default firefox limits number of child web processes to 8.
-  for (let i = 0; i< 8; i++)
+  for (let i = 0; i < 8; i++)
     promises.push(context1.newPage());
   await Promise.all(promises);
 
@@ -137,7 +137,7 @@ it('should be isolated between contexts', async({browser, server}) => {
   ]);
 });
 
-it.fail(options.FIREFOX)('should not change default locale in another context', async({browser, server}) => {
+it('should not change default locale in another context', async ({browser, server}) => {
   async function getContextLocale(context) {
     const page = await context.newPage();
     return await page.evaluate(() => (new Intl.NumberFormat()).resolvedOptions().locale);

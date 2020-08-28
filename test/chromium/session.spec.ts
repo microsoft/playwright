@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import { options } from '../playwright.fixtures';
-import { ChromiumBrowserContext, ChromiumBrowser } from "../../types/types";
+import type { ChromiumBrowserContext, ChromiumBrowser } from '../../types/types';
 
 it.skip(!options.CHROMIUM)('should work', async function({page}) {
   const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);

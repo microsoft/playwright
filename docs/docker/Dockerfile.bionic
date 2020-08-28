@@ -62,7 +62,12 @@ RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb
 
-# 9. Run everything after as non-privileged user.
+# 9. Install git & yarn. These are very helpful in a docker image.
+
+RUN apt-get update && apt-get install -y --no-install-recommends git && \
+    npm install -g yarn
+
+# 10. Run everything after as non-privileged user.
 USER pwuser
 
 # === BAKE BROWSERS INTO IMAGE ===

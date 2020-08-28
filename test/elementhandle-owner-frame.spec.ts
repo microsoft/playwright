@@ -17,6 +17,7 @@
 
 import './playwright.fixtures';
 import utils from './utils';
+import { options } from './playwright.fixtures';
 
 it('should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -34,7 +35,7 @@ it('should work for cross-process iframes', async ({ page, server }) => {
   expect(await elementHandle.ownerFrame()).toBe(frame);
 });
 
-it('should work for document', async ({ page, server }) => {
+it.flaky(WIN && options.WEBKIT)('should work for document', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
@@ -77,7 +78,7 @@ it('should work for adopted elements', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window["__popup"] = window.open(url), server.EMPTY_PAGE),
+    page.evaluate(url => window['__popup'] = window.open(url), server.EMPTY_PAGE),
   ]);
   const divHandle = await page.evaluateHandle(() => {
     const div = document.createElement('div');
@@ -88,7 +89,7 @@ it('should work for adopted elements', async ({ page, server }) => {
   await popup.waitForLoadState('domcontentloaded');
   await page.evaluate(() => {
     const div = document.querySelector('div');
-    window["__popup"].document.body.appendChild(div);
+    window['__popup'].document.body.appendChild(div);
   });
   expect(await divHandle.ownerFrame()).toBe(popup.mainFrame());
 });

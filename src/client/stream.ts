@@ -15,15 +15,15 @@
  */
 
 import { Readable } from 'stream';
-import { StreamChannel, StreamInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 
-export class Stream extends ChannelOwner<StreamChannel, StreamInitializer> {
-  static from(Stream: StreamChannel): Stream {
+export class Stream extends ChannelOwner<channels.StreamChannel, channels.StreamInitializer> {
+  static from(Stream: channels.StreamChannel): Stream {
     return (Stream as any)._object;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: StreamInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.StreamInitializer) {
     super(parent, type, guid, initializer);
   }
 
@@ -33,9 +33,9 @@ export class Stream extends ChannelOwner<StreamChannel, StreamInitializer> {
 }
 
 class StreamImpl extends Readable {
-  private _channel: StreamChannel;
+  private _channel: channels.StreamChannel;
 
-  constructor(channel: StreamChannel) {
+  constructor(channel: channels.StreamChannel) {
     super();
     this._channel = channel;
   }
@@ -46,5 +46,11 @@ class StreamImpl extends Readable {
       this.push(Buffer.from(result.binary, 'base64'));
     else
       this.push(null);
+  }
+
+  _destroy(error: Error | null, callback: (error: Error | null) => void): void {
+    // Stream might be destroyed after the connection was closed.
+    this._channel.close().catch(e => null);
+    super._destroy(error, callback);
   }
 }

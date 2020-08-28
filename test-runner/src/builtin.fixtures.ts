@@ -16,10 +16,10 @@
 
 import os from 'os';
 import path from 'path';
-import {promisify} from 'util';
+import { promisify } from 'util';
 import fs from 'fs';
 import rimraf from 'rimraf';
-import {registerFixture} from './fixtures';
+import { registerFixture } from './fixtures';
 
 
 declare global {
@@ -30,8 +30,10 @@ declare global {
     repeat(n: number): DescribeFunction;
   };
 
-  type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void>) => void) & {
+  type ItFunction<STATE> = ((name: string, inner: (state: STATE) => Promise<void> | void) => void) & {
     fail(condition: boolean): ItFunction<STATE>;
+    fixme(condition: boolean): ItFunction<STATE>;
+    flaky(condition: boolean): ItFunction<STATE>;
     skip(condition: boolean): ItFunction<STATE>;
     slow(): ItFunction<STATE>;
     repeat(n: number): ItFunction<STATE>;

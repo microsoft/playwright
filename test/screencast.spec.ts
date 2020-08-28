@@ -16,7 +16,7 @@
 
 import { options } from './playwright.fixtures';
 import { registerFixture } from '../test-runner';
-import { Page } from '..';
+import type { Page } from '..';
 
 import fs from 'fs';
 import path from 'path';
@@ -71,17 +71,17 @@ function almostGrey(r, g, b, alpha) {
 }
 
 function expectAll(pixels, rgbaPredicate) {
-  const checkPixel = (i) => {
+  const checkPixel = i => {
     const r = pixels[i];
     const g = pixels[i + 1];
     const b = pixels[i + 2];
     const alpha = pixels[i + 3];
     rgbaPredicate(r, g, b, alpha);
-  }
+  };
   try {
-    for (var i = 0, n = pixels.length; i < n; i += 4)
+    for (let i = 0, n = pixels.length; i < n; i += 4)
       checkPixel(i);
-  } catch(e) {
+  } catch (e) {
     // Log pixel values on failure.
     e.message += `\n\nActual pixels=[${pixels}]`;
     throw e;
@@ -96,7 +96,7 @@ class VideoPlayer {
 
   async load(videoFile) {
     await this._page.goto(url.pathToFileURL(videoFile).href);
-    await this._page.$eval('video', (v:HTMLVideoElement) => {
+    await this._page.$eval('video', (v: HTMLVideoElement) => {
       return new Promise(fulfil => {
         // In case video playback autostarts.
         v.pause();
@@ -104,7 +104,7 @@ class VideoPlayer {
         v.play();
       });
     });
-    await this._page.$eval('video', (v:HTMLVideoElement) => {
+    await this._page.$eval('video', (v: HTMLVideoElement) => {
       v.pause();
       const result = new Promise(f => v.onseeked = f);
       v.currentTime = v.duration;
@@ -113,19 +113,19 @@ class VideoPlayer {
   }
 
   async duration() {
-    return await this._page.$eval('video', (v:HTMLVideoElement) => v.duration);
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.duration);
   }
 
   async videoWidth() {
-    return await this._page.$eval('video', (v:HTMLVideoElement) => v.videoWidth);
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.videoWidth);
   }
 
   async videoHeight() {
-    return await this._page.$eval('video', (v:HTMLVideoElement) => v.videoHeight);
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.videoHeight);
   }
 
   async seek(timestamp) {
-    await this._page.$eval('video', (v:HTMLVideoElement, timestamp) => {
+    await this._page.$eval('video', (v: HTMLVideoElement, timestamp) => {
       v.pause();
       const result = new Promise(f => v.onseeked = f);
       v.currentTime = timestamp;
@@ -157,10 +157,10 @@ class VideoPlayer {
   }
 
   async pixels(point = {x: 0, y: 0}) {
-    const pixels = await this._page.$eval('video', (video:HTMLVideoElement, point) => {
-      let canvas = document.createElement("canvas");
+    const pixels = await this._page.$eval('video', (video: HTMLVideoElement, point) => {
+      const canvas = document.createElement('canvas');
       if (!video.videoWidth || !video.videoHeight)
-        throw new Error("Video element is empty");
+        throw new Error('Video element is empty');
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
@@ -172,7 +172,7 @@ class VideoPlayer {
   }
 }
 
-it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM).flaky(options.FIREFOX && MAC)('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -198,7 +198,7 @@ it.fail(options.CHROMIUM)('should capture static page', async({page, tmpDir, vid
   expectAll(pixels, almostRed);
 });
 
-it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM).flaky(options.WEBKIT)('should capture navigation', async ({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -232,7 +232,7 @@ it.fail(options.CHROMIUM)('should capture navigation', async({page, tmpDir, serv
 });
 
 // Accelerated compositing is disabled in WebKit on Windows.
-it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transformation', async({page, tmpDir, server, videoPlayer, toImpl}) => {
+it.fixme(options.CHROMIUM || (options.WEBKIT && WIN)).flaky(options.WEBKIT && LINUX)('should capture css transformation', async ({page, tmpDir, server, videoPlayer, toImpl}) => {
   if (!toImpl)
     return;
   const videoFile = path.join(tmpDir, 'v.webm');
@@ -257,25 +257,47 @@ it.fail(options.CHROMIUM || (options.WEBKIT && WIN))('should capture css transfo
   }
 });
 
-it.fail(options.CHROMIUM)('should fire start/stop events when page created/closed', async({browser, tmpDir, server, toImpl}) => {
+it.slow().fixme(options.CHROMIUM)('should fire start/stop events when page created/closed', async ({browser, tmpDir, server, toImpl}) => {
   if (!toImpl)
-   return;
+    return;
   // Use server side of the context. All the code below also uses server side APIs.
   const context = toImpl(await browser.newContext());
   await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
   expect(context._screencastOptions).toBeTruthy();
 
-  const [startEvent, newPage] = await Promise.all([
+  const [screencast, newPage] = await Promise.all([
     new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
     context.newPage(),
   ]);
-  expect(startEvent.page === newPage).toBe(true);
-  expect(startEvent.path).toBeTruthy();
+  expect(screencast.page === newPage).toBe(true);
 
-  const [stopEvent] = await Promise.all([
-    new Promise(resolve => context.on('screencaststopped', resolve)) as Promise<any>,
+  const [videoFile] = await Promise.all([
+    screencast.path(),
     newPage.close(),
   ]);
-  expect(stopEvent.page === newPage).toBe(true);
+  expect(path.dirname(videoFile)).toBe(tmpDir);
+  await context.close();
+});
+
+it.fixme(options.CHROMIUM)('should fire start event for popups', async ({browser, tmpDir, server, toImpl}) => {
+  if (!toImpl)
+    return;
+  // Use server side of the context. All the code below also uses server side APIs.
+  const context = toImpl(await browser.newContext());
+  await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+  expect(context._screencastOptions).toBeTruthy();
+
+  const page = await context.newPage();
+  await page.mainFrame().goto(server.EMPTY_PAGE);
+  const [screencast, popup] = await Promise.all([
+    new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    new Promise(resolve => context.on('page', resolve)) as Promise<any>,
+    page.mainFrame()._evaluateExpression(() => {
+      const win = window.open('about:blank');
+      win.close();
+    }, true)
+  ]);
+  expect(screencast.page === popup).toBe(true);
+  expect(path.dirname(await screencast.path())).toBe(tmpDir);
   await context.close();
 });

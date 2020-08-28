@@ -19,7 +19,7 @@ import './playwright.fixtures';
 import fs from 'fs';
 import path from 'path';
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('foo', 'bar');
     res.setHeader('BaZ', 'bAz');
@@ -32,19 +32,19 @@ it('should work', async({page, server}) => {
 });
 
 
-it('should return text', async({page, server}) => {
+it('should return text', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should return uncompressed text', async({page, server}) => {
+it('should return uncompressed text', async ({page, server}) => {
   server.enableGzip('/simple.json');
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(response.headers()['content-encoding']).toBe('gzip');
   expect(await response.text()).toBe('{"foo": "bar"}\n');
 });
 
-it('should throw when requesting body of redirected response', async({page, server}) => {
+it('should throw when requesting body of redirected response', async ({page, server}) => {
   server.setRedirect('/foo.html', '/empty.html');
   const response = await page.goto(server.PREFIX + '/foo.html');
   const redirectedFrom = response.request().redirectedFrom();
@@ -56,7 +56,7 @@ it('should throw when requesting body of redirected response', async({page, serv
   expect(error.message).toContain('Response body is unavailable for redirect responses');
 });
 
-it('should wait until response completes', async({page, server}) => {
+it('should wait until response completes', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   // Setup server to trap request.
   let serverResponse = null;
@@ -90,19 +90,19 @@ it('should wait until response completes', async({page, server}) => {
   expect(await responseText).toBe('hello world!');
 });
 
-it('should return json', async({page, server}) => {
+it('should return json', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/simple.json');
   expect(await response.json()).toEqual({foo: 'bar'});
 });
 
-it('should return body', async({page, server}) => {
+it('should return body', async ({page, server}) => {
   const response = await page.goto(server.PREFIX + '/pptr.png');
   const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
   const responseBuffer = await response.body();
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return body with compression', async({page, server}) => {
+it('should return body with compression', async ({page, server}) => {
   server.enableGzip('/pptr.png');
   const response = await page.goto(server.PREFIX + '/pptr.png');
   const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
@@ -110,7 +110,7 @@ it('should return body with compression', async({page, server}) => {
   expect(responseBuffer.equals(imageBuffer)).toBe(true);
 });
 
-it('should return status text', async({page, server}) => {
+it('should return status text', async ({page, server}) => {
   server.setRoute('/cool', (req, res) => {
     res.writeHead(200, 'cool!');
     res.end();

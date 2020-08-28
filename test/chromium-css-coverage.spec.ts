@@ -73,20 +73,20 @@ it.skip(!options.CHROMIUM)('should work with complicated usecases', async functi
   delete coverage[0].text;
   delete coverage[0].url;
   expect(coverage).toEqual(
-    [
-      {
-        "ranges": [
-          {
-            "start": 149,
-            "end": 297
-          },
-          {
-            "start": 327,
-            "end": 433
-          }
-        ]
-      }
-    ]
+      [
+        {
+          'ranges': [
+            {
+              'start': 149,
+              'end': 297
+            },
+            {
+              'start': 327,
+              'end': 433
+            }
+          ]
+        }
+      ]
   );
 });
 

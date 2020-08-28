@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { PlaywrightChannel, PlaywrightInitializer } from '../protocol/channels';
+import * as channels from '../protocol/channels';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { Selectors } from './selectors';
@@ -31,7 +31,7 @@ type DeviceDescriptor = {
 };
 type Devices = { [name: string]: DeviceDescriptor };
 
-export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitializer> {
+export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channels.PlaywrightInitializer> {
   readonly chromium: BrowserType;
   readonly firefox: BrowserType;
   readonly webkit: BrowserType;
@@ -39,7 +39,7 @@ export class Playwright extends ChannelOwner<PlaywrightChannel, PlaywrightInitia
   readonly selectors: Selectors;
   readonly errors: { TimeoutError: typeof TimeoutError };
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: PlaywrightInitializer) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PlaywrightInitializer) {
     super(parent, type, guid, initializer);
     this.chromium = BrowserType.from(initializer.chromium);
     this.firefox = BrowserType.from(initializer.firefox);

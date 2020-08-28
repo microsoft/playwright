@@ -15,6 +15,7 @@
  */
 
 export type RunnerConfig = {
+  forbidOnly?: boolean;
   jobs: number;
   outputDir: string;
   snapshotDir: string;
@@ -23,6 +24,8 @@ export type RunnerConfig = {
   debug?: boolean;
   quiet?: boolean;
   grep?: string;
+  repeatEach: number;
+  retries: number,
   trialRun?: boolean;
   updateSnapshots?: boolean;
 };
