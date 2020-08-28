@@ -22,7 +22,6 @@ import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
 import { DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
-import { BrowserTypeDispatcher } from './dispatchers/browserTypeDispatcher';
 import { BrowserDispatcher } from './dispatchers/browserDispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
 import { BrowserNewContextParams, BrowserContextChannel } from './protocol/channels';
@@ -106,8 +105,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       connection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
     socket.on('error', () => {});
-    const browserType = new BrowserTypeDispatcher(connection.rootDispatcher(), this._browserType);
-    const browser = new ConnectedBrowser(browserType._scope, this._browser);
+    const browser = new ConnectedBrowser(connection.rootDispatcher(), this._browser);
     socket.on('close', () => {
       // Avoid sending any more messages over closed socket.
       connection.onmessage = () => {};
