@@ -26,7 +26,7 @@ function crash(pageImpl, browserName) {
     pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
-it.fail(options.WIRE)('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
+it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   crash(toImpl(page), browserName);
   await new Promise(f => page.on('crash', f));
@@ -41,7 +41,7 @@ it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should throw on any action 
   expect(err.message).toContain('crash');
 });
 
-it.fail(options.WIRE)('should cancel waitForEvent when page crashes', async ({page, browserName, toImpl}) => {
+it.fail(options.WIRE).flaky(options.FIREFOX && WIN)('should cancel waitForEvent when page crashes', async ({page, browserName, toImpl}) => {
   await page.setContent(`<div>This page should crash</div>`);
   const promise = page.waitForEvent('response').catch(e => e);
   crash(toImpl(page), browserName);
@@ -49,7 +49,7 @@ it.fail(options.WIRE)('should cancel waitForEvent when page crashes', async ({pa
   expect(error.message).toContain('Page crashed');
 });
 
-it.fixme(options.WIRE)('should cancel navigation when page crashes', async ({page, browserName, toImpl, server}) => {
+it.fixme(options.WIRE).flaky(options.FIREFOX && WIN)('should cancel navigation when page crashes', async ({page, browserName, toImpl, server}) => {
   await page.setContent(`<div>This page should crash</div>`);
   server.setRoute('/one-style.css', () => {});
   const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
