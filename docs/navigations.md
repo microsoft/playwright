@@ -6,6 +6,7 @@ Playwright can navigate to URLs and handle navigations caused by page interactio
 - [Navigation lifecycle](#navigation-lifecycle)
 - [Scenarios initiated by browser UI](#scenarios-initiated-by-browser-ui)
 - [Scenarios initiated by page interaction](#scenarios-initiated-by-page-interaction)
+- [Advanced patterns](#advanced-patterns)
 <!-- GEN:stop -->
 
 ## Navigation lifecycle
