@@ -300,6 +300,7 @@ Browser:
 
   initializer:
     version: string
+    name: string
 
   commands:
 
@@ -379,6 +380,9 @@ Browser:
 
 BrowserContext:
   type: interface
+
+  initializer:
+    browserName: string
 
   commands:
 

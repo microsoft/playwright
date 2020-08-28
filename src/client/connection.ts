@@ -132,33 +132,26 @@ export class Connection {
       case 'BindingCall':
         result = new BindingCall(parent, type, guid, initializer);
         break;
-      case 'Browser':
-        if ((parent as BrowserType).name() === 'chromium')
+      case 'Browser': {
+        const browserName = (initializer as channels.BrowserInitializer).name;
+        if (browserName === 'chromium')
           result = new ChromiumBrowser(parent, type, guid, initializer);
-        else if ((parent as BrowserType).name() === 'webkit')
+        else if (browserName === 'webkit')
           result = new WebKitBrowser(parent, type, guid, initializer);
-        else if ((parent as BrowserType).name() === 'firefox')
+        else if (browserName === 'firefox')
           result = new FirefoxBrowser(parent, type, guid, initializer);
         else
           result = new Browser(parent, type, guid, initializer);
         break;
-      case 'BrowserContext':
-        let browserName = '';
-        if (parent instanceof ElectronApplication) {
-          // Launching electron produces ElectronApplication parent for BrowserContext.
-          browserName = 'electron';
-        } else if (parent instanceof Browser) {
-          // Launching a browser produces Browser parent for BrowserContext.
-          browserName = parent._browserType.name();
-        } else {
-          // Launching persistent context produces BrowserType parent for BrowserContext.
-          browserName = (parent as BrowserType).name();
-        }
+      }
+      case 'BrowserContext': {
+        const browserName = (initializer as channels.BrowserContextInitializer).browserName;
         if (browserName === 'chromium')
           result = new ChromiumBrowserContext(parent, type, guid, initializer);
         else
           result = new BrowserContext(parent, type, guid, initializer, browserName);
         break;
+      }
       case 'BrowserType':
         result = new BrowserType(parent, type, guid, initializer);
         break;

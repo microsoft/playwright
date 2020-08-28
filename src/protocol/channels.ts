@@ -319,6 +319,7 @@ export type BrowserTypeLaunchPersistentContextResult = {
 // ----------- Browser -----------
 export type BrowserInitializer = {
   version: string,
+  name: string,
 };
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
@@ -426,7 +427,9 @@ export type BrowserCrStopTracingResult = {
 };
 
 // ----------- BrowserContext -----------
-export type BrowserContextInitializer = {};
+export type BrowserContextInitializer = {
+  browserName: string,
+};
 export interface BrowserContextChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;

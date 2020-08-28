@@ -19,7 +19,6 @@ import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
-import { BrowserType } from './browserType';
 import { BrowserContextOptions } from './types';
 import { validateHeaders } from './network';
 import { headersObjectToArray } from '../utils/utils';
@@ -29,7 +28,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   private _isConnected = true;
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
-  readonly _browserType: BrowserType;
   _isRemote = false;
 
   static from(browser: channels.BrowserChannel): Browser {
@@ -42,7 +40,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
     super(parent, type, guid, initializer);
-    this._browserType = parent as BrowserType;
     this._channel.on('close', () => this._didClose());
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));
   }
