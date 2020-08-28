@@ -214,7 +214,7 @@ it.skip(ffheadful)('should work for translateZ', async ({page, server, golden}) 
   expect(screenshot).toMatchImage(golden('screenshot-translateZ.png'));
 });
 
-it.fixme(options.FIREFOX).flaky(options.WEBKIT && LINUX)('should work for webgl', async ({page, server, golden}) => {
+it.fixme(options.FIREFOX || options.WEBKIT && LINUX)('should work for webgl', async ({page, server, golden}) => {
   await page.setViewportSize({width: 640, height: 480});
   await page.goto(server.PREFIX + '/screenshots/webgl.html');
   const screenshot = await page.screenshot();
