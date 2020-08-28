@@ -26,7 +26,7 @@ it('should have default url when launching browser', async ({browserType, defaul
   await browserContext.close();
 });
 
-it.fail(WIN && options.CHROMIUM).slow()('headless should be able to read cookies written by headful', async ({browserType, defaultBrowserOptions, server}) => {
+it.fail(WIN && options.CHROMIUM).flaky(options.FIREFOX).slow()('headless should be able to read cookies written by headful', async ({browserType, defaultBrowserOptions, server}) => {
   // see https://github.com/microsoft/playwright/issues/717
   const userDataDir = await makeUserDataDir();
   // Write a cookie in headful chrome
