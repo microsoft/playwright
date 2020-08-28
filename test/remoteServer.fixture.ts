@@ -33,7 +33,7 @@ class RemoteServer {
   _output: Map<any, any>;
   _outputCallback: Map<any, any>;
   _browserType: BrowserType<Browser>;
-  _child: import("child_process").ChildProcess;
+  _child: import('child_process').ChildProcess;
   _exitPromise: Promise<unknown>;
   _exitAndDisconnectPromise: Promise<any>;
   _browser: Browser;
@@ -60,7 +60,7 @@ class RemoteServer {
       ...extraOptions,
     };
     this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)]);
-    this._child.on('error', (...args) => console.log("ERROR", ...args));
+    this._child.on('error', (...args) => console.log('ERROR', ...args));
     this._exitPromise = new Promise(resolve => this._child.on('exit', (exitCode, signal) => {
       this._didExit = true;
       resolve(exitCode);
@@ -72,7 +72,7 @@ class RemoteServer {
       // Uncomment to debug.
       // console.log(data.toString());
       let match;
-      while (match = outputString.match(/\(([^()]+)=>([^()]+)\)/)) {
+      while ((match = outputString.match(/\(([^()]+)=>([^()]+)\)/))) {
         const key = match[1];
         const value = match[2];
         this._addOutput(key, value);

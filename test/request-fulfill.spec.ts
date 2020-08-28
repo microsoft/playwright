@@ -20,7 +20,7 @@ import fs from 'fs';
 import path from 'path';
 
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   await page.route('**/*', route => {
     route.fulfill({
       status: 201,
@@ -37,7 +37,7 @@ it('should work', async({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should work with status code 422', async({page, server}) => {
+it('should work with status code 422', async ({page, server}) => {
   await page.route('**/*', route => {
     route.fulfill({
       status: 422,
@@ -50,7 +50,7 @@ it('should work with status code 422', async({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it.skip(options.FIREFOX && !options.HEADLESS)('should allow mocking binary responses', async({page, server, golden}) => {
+it.skip(options.FIREFOX && !options.HEADLESS)('should allow mocking binary responses', async ({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
@@ -69,7 +69,7 @@ it.skip(options.FIREFOX && !options.HEADLESS)('should allow mocking binary respo
   expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
 });
 
-it.skip(options.FIREFOX && !options.HEADLESS)('should allow mocking svg with charset', async({page, server, golden}) => {
+it.skip(options.FIREFOX && !options.HEADLESS)('should allow mocking svg with charset', async ({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     route.fulfill({
@@ -87,7 +87,7 @@ it.skip(options.FIREFOX && !options.HEADLESS)('should allow mocking svg with cha
   expect(await img.screenshot()).toMatchImage(golden('mock-svg.png'));
 });
 
-it('should work with file path', async({page, server, golden}) => {
+it('should work with file path', async ({page, server, golden}) => {
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
   await page.evaluate(PREFIX => {
     const img = document.createElement('img');
@@ -99,7 +99,7 @@ it('should work with file path', async({page, server, golden}) => {
   expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
 });
 
-it('should stringify intercepted request response headers', async({page, server}) => {
+it('should stringify intercepted request response headers', async ({page, server}) => {
   await page.route('**/*', route => {
     route.fulfill({
       status: 200,
@@ -116,11 +116,11 @@ it('should stringify intercepted request response headers', async({page, server}
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should not modify the headers sent to the server', async({page, server}) => {
+it('should not modify the headers sent to the server', async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   const interceptedRequests = [];
 
-  //this is just to enable request interception, which disables caching in chromium
+  // this is just to enable request interception, which disables caching in chromium
   await page.route(server.PREFIX + '/unused', () => {});
 
   server.setRoute('/something', (request, response) => {
@@ -135,9 +135,7 @@ it('should not modify the headers sent to the server', async({page, server}) => 
   }, server.CROSS_PROCESS_PREFIX + '/something');
   expect(text).toBe('done');
 
-  let playwrightRequest;
   await page.route(server.CROSS_PROCESS_PREFIX + '/something', (route, request) => {
-    playwrightRequest = request;
     route.continue({
       headers: {
         ...request.headers()
@@ -155,7 +153,7 @@ it('should not modify the headers sent to the server', async({page, server}) => 
   expect(interceptedRequests[1].headers).toEqual(interceptedRequests[0].headers);
 });
 
-it('should include the origin header', async({page, server}) => {
+it('should include the origin header', async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let interceptedRequest;
   await page.route(server.CROSS_PROCESS_PREFIX + '/something', (route, request) => {

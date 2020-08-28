@@ -28,7 +28,7 @@ it('should inherit user agent from browser context', async function({browser, se
     page.click('a'),
   ]);
   await popup.waitForLoadState('domcontentloaded');
-  const userAgent = await popup.evaluate(() => window["initialUserAgent"]);
+  const userAgent = await popup.evaluate(() => window['initialUserAgent']);
   const request = await requestPromise;
   await context.close();
   expect(userAgent).toBe('hey');
@@ -60,7 +60,7 @@ it('should inherit extra headers from browser context', async function({browser,
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   const requestPromise = server.waitForRequest('/dummy.html');
-  await page.evaluate(url => window["_popup"] = window.open(url), server.PREFIX + '/dummy.html');
+  await page.evaluate(url => window['_popup'] = window.open(url), server.PREFIX + '/dummy.html');
   const request = await requestPromise;
   await context.close();
   expect(request.headers['foo']).toBe('bar');
@@ -88,7 +88,7 @@ it('should inherit http credentials from browser context', async function({brows
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window["_popup"] = window.open(url), server.PREFIX + '/title.html'),
+    page.evaluate(url => window['_popup'] = window.open(url), server.PREFIX + '/title.html'),
   ]);
   await popup.waitForLoadState('domcontentloaded');
   expect(await popup.title()).toBe('Woof-Woof');
@@ -156,7 +156,7 @@ it('should respect routes from browser context', async function({browser, server
   });
   await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window["__popup"] = window.open(url), server.EMPTY_PAGE),
+    page.evaluate(url => window['__popup'] = window.open(url), server.EMPTY_PAGE),
   ]);
   expect(intercepted).toBe(true);
   await context.close();

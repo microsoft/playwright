@@ -18,10 +18,10 @@
 import { options } from './playwright.fixtures';
 import path from 'path';
 
-it('should throw an error if no options are provided', async({page, server}) => {
+it('should throw an error if no options are provided', async ({page, server}) => {
   let error = null;
   try {
-    //@ts-ignore
+    // @ts-ignore
     await page.addScriptTag('/injectedfile.js');
   } catch (e) {
     error = e;
@@ -29,34 +29,34 @@ it('should throw an error if no options are provided', async({page, server}) => 
   expect(error.message).toContain('Provide an object with a `url`, `path` or `content` property');
 });
 
-it('should work with a url', async({page, server}) => {
+it('should work with a url', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const scriptHandle = await page.addScriptTag({ url: '/injectedfile.js' });
   expect(scriptHandle.asElement()).not.toBeNull();
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
 
-it('should work with a url and type=module', async({page, server}) => {
+it('should work with a url and type=module', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ url: '/es6/es6import.js', type: 'module' });
   expect(await page.evaluate(() => window['__es6injected'])).toBe(42);
 });
 
-it('should work with a path and type=module', async({page, server}) => {
+it('should work with a path and type=module', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ path: path.join(__dirname, 'assets/es6/es6pathimport.js'), type: 'module' });
   await page.waitForFunction('window.__es6injected');
   expect(await page.evaluate(() => window['__es6injected'])).toBe(42);
 });
 
-it('should work with a content and type=module', async({page, server}) => {
+it('should work with a content and type=module', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ content: `import num from '/es6/es6module.js';window.__es6injected = num;`, type: 'module' });
   await page.waitForFunction('window.__es6injected');
   expect(await page.evaluate(() => window['__es6injected'])).toBe(42);
 });
 
-it('should throw an error if loading from url fail', async({page, server}) => {
+it('should throw an error if loading from url fail', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   let error = null;
   try {
@@ -67,28 +67,28 @@ it('should throw an error if loading from url fail', async({page, server}) => {
   expect(error).not.toBe(null);
 });
 
-it('should work with a path', async({page, server}) => {
+it('should work with a path', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const scriptHandle = await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
   expect(scriptHandle.asElement()).not.toBeNull();
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
 
-it.skip(options.WEBKIT)('should include sourceURL when path is provided', async({page, server}) => {
+it.skip(options.WEBKIT)('should include sourceURL when path is provided', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });
   const result = await page.evaluate(() => window['__injectedError'].stack);
   expect(result).toContain(path.join('assets', 'injectedfile.js'));
 });
 
-it('should work with content', async({page, server}) => {
+it('should work with content', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const scriptHandle = await page.addScriptTag({ content: 'window["__injected"] = 35;' });
   expect(scriptHandle.asElement()).not.toBeNull();
   expect(await page.evaluate(() => window['__injected'])).toBe(35);
 });
 
-it('should throw when added with content to the CSP page', async({page, server}) => {
+it('should throw when added with content to the CSP page', async ({page, server}) => {
   // Firefox fires onload for blocked script before it issues the CSP console error.
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;
@@ -96,14 +96,14 @@ it('should throw when added with content to the CSP page', async({page, server})
   expect(error).toBeTruthy();
 });
 
-it('should throw when added with URL to the CSP page', async({page, server}) => {
+it('should throw when added with URL to the CSP page', async ({page, server}) => {
   await page.goto(server.PREFIX + '/csp.html');
   let error = null;
   await page.addScriptTag({ url: server.CROSS_PROCESS_PREFIX + '/injectedfile.js' }).catch(e => error = e);
   expect(error).toBeTruthy();
 });
 
-it('should throw a nice error when the request fails', async({page, server}) => {
+it('should throw a nice error when the request fails', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const url = server.PREFIX + '/this_does_not_exist.js';
   const error = await page.addScriptTag({url}).catch(e => e);

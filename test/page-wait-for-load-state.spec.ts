@@ -18,7 +18,7 @@
 import { options } from './playwright.fixtures';
 import type { Route } from '..';
 
-it('should pick up ongoing navigation', async({page, server}) => {
+it('should pick up ongoing navigation', async ({page, server}) => {
   let response = null;
   server.setRoute('/one-style.css', (req, res) => response = res);
   await Promise.all([
@@ -31,36 +31,36 @@ it('should pick up ongoing navigation', async({page, server}) => {
   await waitPromise;
 });
 
-it('should respect timeout', async({page, server}) => {
+it('should respect timeout', async ({page, server}) => {
   server.setRoute('/one-style.css', (req, res) => void 0);
   await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
   const error = await page.waitForLoadState('load', { timeout: 1 }).catch(e => e);
   expect(error.message).toContain('page.waitForLoadState: Timeout 1ms exceeded.');
 });
 
-it('should resolve immediately if loaded', async({page, server}) => {
+it('should resolve immediately if loaded', async ({page, server}) => {
   await page.goto(server.PREFIX + '/one-style.html');
   await page.waitForLoadState();
 });
 
-it('should throw for bad state', async({page, server}) => {
+it('should throw for bad state', async ({page, server}) => {
   await page.goto(server.PREFIX + '/one-style.html');
   const error = await page.waitForLoadState('bad' as any).catch(e => e);
   expect(error.message).toContain(`state: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should resolve immediately if load state matches', async({page, server}) => {
+it('should resolve immediately if load state matches', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/one-style.css', (req, res) => void 0);
   await page.goto(server.PREFIX + '/one-style.html', {waitUntil: 'domcontentloaded'});
   await page.waitForLoadState('domcontentloaded');
 });
 
-it('should work with pages that have loaded before being connected to', async({page, context, server}) => {
+it('should work with pages that have loaded before being connected to', async ({page, context, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(() => window["_popup"] = window.open(document.location.href)),
+    page.evaluate(() => window['_popup'] = window.open(document.location.href)),
   ]);
   // The url is about:blank in FF.
   // expect(popup.url()).toBe(server.EMPTY_PAGE);
@@ -68,7 +68,7 @@ it('should work with pages that have loaded before being connected to', async({p
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should wait for load state of empty url popup', async({browser, page}) => {
+it('should wait for load state of empty url popup', async ({browser, page}) => {
   const [popup, readyState] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -81,7 +81,7 @@ it('should wait for load state of empty url popup', async({browser, page}) => {
   expect(await popup.evaluate(() => document.readyState)).toBe(options.FIREFOX ? 'uninitialized' : 'complete');
 });
 
-it('should wait for load state of about:blank popup ', async({browser, page}) => {
+it('should wait for load state of about:blank popup ', async ({browser, page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank') && 1),
@@ -90,7 +90,7 @@ it('should wait for load state of about:blank popup ', async({browser, page}) =>
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of about:blank popup with noopener ', async({browser, page}) => {
+it('should wait for load state of about:blank popup with noopener ', async ({browser, page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window.open('about:blank', null, 'noopener') && 1),
@@ -99,7 +99,7 @@ it('should wait for load state of about:blank popup with noopener ', async({brow
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of popup with network url ', async({browser, page, server}) => {
+it('should wait for load state of popup with network url ', async ({browser, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -109,7 +109,7 @@ it('should wait for load state of popup with network url ', async({browser, page
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of popup with network url and noopener ', async({browser, page, server}) => {
+it('should wait for load state of popup with network url and noopener ', async ({browser, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -119,7 +119,7 @@ it('should wait for load state of popup with network url and noopener ', async({
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should work with clicking target=_blank', async({browser, page, server}) => {
+it('should work with clicking target=_blank', async ({browser, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -130,7 +130,7 @@ it('should work with clicking target=_blank', async({browser, page, server}) => 
   expect(await popup.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should wait for load state of newPage', async({browser, context, page, server}) => {
+it('should wait for load state of newPage', async ({browser, context, page, server}) => {
   const [newPage] = await Promise.all([
     context.waitForEvent('page'),
     context.newPage(),
@@ -139,7 +139,7 @@ it('should wait for load state of newPage', async({browser, context, page, serve
   expect(await newPage.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should resolve after popup load', async({browser, server}) => {
+it('should resolve after popup load', async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -149,7 +149,7 @@ it('should resolve after popup load', async({browser, server}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     server.waitForRequest('/one-style.css'),
-    page.evaluate(url => window["popup"] = window.open(url), server.PREFIX + '/one-style.html'),
+    page.evaluate(url => window['popup'] = window.open(url), server.PREFIX + '/one-style.html'),
   ]);
   let resolved = false;
   const loadSatePromise = popup.waitForLoadState().then(() => resolved = true);
@@ -164,7 +164,7 @@ it('should resolve after popup load', async({browser, server}) => {
   await context.close();
 });
 
-it('should work for frame', async({page, server}) => {
+it('should work for frame', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   const frame = page.frames()[1];
 

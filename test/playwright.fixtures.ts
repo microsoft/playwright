@@ -30,10 +30,10 @@ export const options = {
   CHROMIUM: parameters.browserName === 'chromium',
   FIREFOX: parameters.browserName === 'firefox',
   WEBKIT: parameters.browserName === 'webkit',
-  HEADLESS : !!valueFromEnv('HEADLESS', true),
+  HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
-}
+};
 
 declare global {
   interface WorkerState {
@@ -89,17 +89,17 @@ registerWorkerFixture('httpService', async ({}, test) => {
   ]);
 });
 
-const getExecutablePath = (browserName) => {
+const getExecutablePath = browserName => {
   if (browserName === 'chromium' && process.env.CRPATH)
     return process.env.CRPATH;
   if (browserName === 'firefox' && process.env.FFPATH)
     return process.env.FFPATH;
   if (browserName === 'webkit' && process.env.WKPATH)
     return process.env.WKPATH;
-}
+};
 
-registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
-  let executablePath = getExecutablePath(browserName);
+registerWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
+  const executablePath = getExecutablePath(browserName);
 
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -111,7 +111,7 @@ registerWorkerFixture('defaultBrowserOptions', async({browserName}, test) => {
   });
 });
 
-registerWorkerFixture('playwright', async({browserName}, test) => {
+registerWorkerFixture('playwright', async ({browserName}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     const connection = new Connection();
@@ -135,7 +135,7 @@ registerWorkerFixture('playwright', async({browserName}, test) => {
     spawnedProcess.stderr.destroy();
     await teardownCoverage();
   } else {
-    await test(require('../index'))
+    await test(require('../index'));
     await teardownCoverage();
   }
 

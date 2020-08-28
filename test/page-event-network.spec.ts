@@ -17,7 +17,7 @@
 
 import { options } from './playwright.fixtures';
 
-it('Page.Events.Request', async({page, server}) => {
+it('Page.Events.Request', async ({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -30,7 +30,7 @@ it('Page.Events.Request', async({page, server}) => {
   expect(requests[0].frame().url()).toBe(server.EMPTY_PAGE);
 });
 
-it('Page.Events.Response', async({page, server}) => {
+it('Page.Events.Response', async ({page, server}) => {
   const responses = [];
   page.on('response', response => responses.push(response));
   await page.goto(server.EMPTY_PAGE);
@@ -41,7 +41,7 @@ it('Page.Events.Response', async({page, server}) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed', async({page, server}) => {
+it('Page.Events.RequestFailed', async ({page, server}) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -68,7 +68,7 @@ it('Page.Events.RequestFailed', async({page, server}) => {
   expect(failedRequests[0].frame()).toBeTruthy();
 });
 
-it('Page.Events.RequestFinished', async({page, server}) => {
+it('Page.Events.RequestFinished', async ({page, server}) => {
   const [response] = await Promise.all([
     page.goto(server.EMPTY_PAGE),
     page.waitForEvent('requestfinished')
@@ -81,17 +81,17 @@ it('Page.Events.RequestFinished', async({page, server}) => {
   expect(request.failure()).toBe(null);
 });
 
-it('should fire events in proper order', async({page, server}) => {
+it('should fire events in proper order', async ({page, server}) => {
   const events = [];
   page.on('request', request => events.push('request'));
   page.on('response', response => events.push('response'));
   const response = await page.goto(server.EMPTY_PAGE);
   expect(await response.finished()).toBe(null);
-  events.push('requestfinished')
+  events.push('requestfinished');
   expect(events).toEqual(['request', 'response', 'requestfinished']);
 });
 
-it('should support redirects', async({page, server}) => {
+it('should support redirects', async ({page, server}) => {
   const events = [];
   page.on('request', request => events.push(`${request.method()} ${request.url()}`));
   page.on('response', response => events.push(`${response.status()} ${response.url()}`));

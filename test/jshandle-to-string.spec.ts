@@ -17,26 +17,26 @@
 
 import { options } from './playwright.fixtures';
 
-it('should work for primitives', async({page}) => {
+it('should work for primitives', async ({page}) => {
   const numberHandle = await page.evaluateHandle(() => 2);
   expect(numberHandle.toString()).toBe('JSHandle@2');
   const stringHandle = await page.evaluateHandle(() => 'a');
   expect(stringHandle.toString()).toBe('JSHandle@a');
 });
 
-it('should work for complicated objects', async({page}) => {
+it('should work for complicated objects', async ({page}) => {
   const aHandle = await page.evaluateHandle(() => window);
   expect(aHandle.toString()).toBe('JSHandle@object');
 });
 
-it('should work for promises', async({page}) => {
+it('should work for promises', async ({page}) => {
   // wrap the promise in an object, otherwise we will await.
   const wrapperHandle = await page.evaluateHandle(() => ({b: Promise.resolve(123)}));
   const bHandle = await wrapperHandle.getProperty('b');
   expect(bHandle.toString()).toBe('JSHandle@promise');
 });
 
-it('should work with different subtypes', async({page}) => {
+it('should work with different subtypes', async ({page}) => {
   expect((await page.evaluateHandle('(function(){})')).toString()).toBe('JSHandle@function');
   expect((await page.evaluateHandle('12')).toString()).toBe('JSHandle@12');
   expect((await page.evaluateHandle('true')).toString()).toBe('JSHandle@true');

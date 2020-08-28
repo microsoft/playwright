@@ -16,7 +16,7 @@
 
 import './playwright.fixtures';
 
-it('should log', async({browserType, defaultBrowserOptions}) => {
+it('should log', async ({browserType, defaultBrowserOptions}) => {
   const log = [];
   const browser = await browserType.launch({...defaultBrowserOptions, logger: {
     log: (name, severity, message) => log.push({name, severity, message}),
@@ -30,7 +30,7 @@ it('should log', async({browserType, defaultBrowserOptions}) => {
   expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
 });
 
-it('should log context-level', async({browserType, defaultBrowserOptions}) => {
+it('should log context-level', async ({browserType, defaultBrowserOptions}) => {
   const log = [];
   const browser = await browserType.launch(defaultBrowserOptions);
   const context = await browser.newContext({

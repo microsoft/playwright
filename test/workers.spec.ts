@@ -138,7 +138,7 @@ it('should report network activity on worker creation', async function({page, se
   expect(response.ok()).toBe(true);
 });
 
-it('should format number using context locale', async({browser, server}) => {
+it('should format number using context locale', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);

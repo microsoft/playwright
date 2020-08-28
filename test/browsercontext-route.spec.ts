@@ -16,7 +16,7 @@
  */
 import './playwright.fixtures';
 
-it('should intercept', async({browser, server}) => {
+it('should intercept', async ({browser, server}) => {
   const context = await browser.newContext();
   let intercepted = false;
   await context.route('**/empty.html', route => {
@@ -39,7 +39,7 @@ it('should intercept', async({browser, server}) => {
   await context.close();
 });
 
-it('should unroute', async({browser, server}) => {
+it('should unroute', async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
 
@@ -77,7 +77,7 @@ it('should unroute', async({browser, server}) => {
   await context.close();
 });
 
-it('should yield to page.route', async({browser, server}) => {
+it('should yield to page.route', async ({browser, server}) => {
   const context = await browser.newContext();
   await context.route('**/empty.html', route => {
     route.fulfill({ status: 200, body: 'context' });
@@ -92,7 +92,7 @@ it('should yield to page.route', async({browser, server}) => {
   await context.close();
 });
 
-it('should fall back to context.route', async({browser, server}) => {
+it('should fall back to context.route', async ({browser, server}) => {
   const context = await browser.newContext();
   await context.route('**/empty.html', route => {
     route.fulfill({ status: 200, body: 'context' });

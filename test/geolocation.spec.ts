@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-it('should work', async({page, server, context}) => {
+it('should work', async ({page, server, context}) => {
   await context.grantPermissions(['geolocation']);
   await page.goto(server.EMPTY_PAGE);
   await context.setGeolocation({longitude: 10, latitude: 10});
@@ -30,7 +30,7 @@ it('should work', async({page, server, context}) => {
   });
 });
 
-it('should throw when invalid longitude', async({context}) => {
+it('should throw when invalid longitude', async ({context}) => {
   let error = null;
   try {
     await context.setGeolocation({longitude: 200, latitude: 10});
@@ -40,7 +40,7 @@ it('should throw when invalid longitude', async({context}) => {
   expect(error.message).toContain('geolocation.longitude: precondition -180 <= LONGITUDE <= 180 failed.');
 });
 
-it('should isolate contexts', async({page, server, context, browser}) => {
+it('should isolate contexts', async ({page, server, context, browser}) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation({longitude: 10, latitude: 10});
   await page.goto(server.EMPTY_PAGE);
@@ -71,7 +71,7 @@ it('should isolate contexts', async({page, server, context, browser}) => {
   await context2.close();
 });
 
-it('should throw with missing latitude', async({context}) => {
+it('should throw with missing latitude', async ({context}) => {
   let error = null;
   try {
     await context.setGeolocation({longitude: 10} as any);
@@ -81,7 +81,7 @@ it('should throw with missing latitude', async({context}) => {
   expect(error.message).toContain('geolocation.latitude: expected number, got undefined');
 });
 
-it('should not modify passed default options object', async({browser}) => {
+it('should not modify passed default options object', async ({browser}) => {
   const geolocation = { longitude: 10, latitude: 10 };
   const options = { geolocation };
   const context = await browser.newContext(options);
@@ -90,7 +90,7 @@ it('should not modify passed default options object', async({browser}) => {
   await context.close();
 });
 
-it('should throw with missing longitude in default options', async({browser}) => {
+it('should throw with missing longitude in default options', async ({browser}) => {
   let error = null;
   try {
     const context = await browser.newContext({ geolocation: {latitude: 10} as any });
@@ -101,7 +101,7 @@ it('should throw with missing longitude in default options', async({browser}) =>
   expect(error.message).toContain('geolocation.longitude: expected number, got undefined');
 });
 
-it('should use context options', async({browser, server}) => {
+it('should use context options', async ({browser, server}) => {
   const options = { geolocation: { longitude: 10, latitude: 10 }, permissions: ['geolocation'] };
   const context = await browser.newContext(options);
   const page = await context.newPage();
@@ -117,7 +117,7 @@ it('should use context options', async({browser, server}) => {
   await context.close();
 });
 
-it('watchPosition should be notified', async({page, server, context}) => {
+it('watchPosition should be notified', async ({page, server, context}) => {
   await context.grantPermissions(['geolocation']);
   await page.goto(server.EMPTY_PAGE);
   const messages = [];
@@ -143,12 +143,12 @@ it('watchPosition should be notified', async({page, server, context}) => {
   expect(allMessages).toContain('lat=40 lng=50');
 });
 
-it('should use context options for popup', async({page, context, server}) => {
+it('should use context options for popup', async ({page, context, server}) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation({ longitude: 10, latitude: 10 });
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window["_popup"] = window.open(url), server.PREFIX + '/geolocation.html'),
+    page.evaluate(url => window['_popup'] = window.open(url), server.PREFIX + '/geolocation.html'),
   ]);
   await popup.waitForLoadState();
   const geolocation = await popup.evaluate(() => window['geolocationPromise']);

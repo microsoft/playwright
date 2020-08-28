@@ -18,14 +18,14 @@
 import './playwright.fixtures';
 import utils from './utils';
 
-it('should fire for navigation requests', async({page, server}) => {
+it('should fire for navigation requests', async ({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
   expect(requests.length).toBe(1);
 });
 
-it('should fire for iframes', async({page, server}) => {
+it('should fire for iframes', async ({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -33,7 +33,7 @@ it('should fire for iframes', async({page, server}) => {
   expect(requests.length).toBe(2);
 });
 
-it('should fire for fetches', async({page, server}) => {
+it('should fire for fetches', async ({page, server}) => {
   const requests = [];
   page.on('request', request => requests.push(request));
   await page.goto(server.EMPTY_PAGE);
@@ -41,11 +41,11 @@ it('should fire for fetches', async({page, server}) => {
   expect(requests.length).toBe(2);
 });
 
-it('should report requests and responses handled by service worker', async({page, server}) => {
+it('should report requests and responses handled by service worker', async ({page, server}) => {
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
-  await page.evaluate(() => window["activationPromise"]);
+  await page.evaluate(() => window['activationPromise']);
   const [swResponse, request] = await Promise.all([
-    page.evaluate(() => window["fetchDummy"]('foo')),
+    page.evaluate(() => window['fetchDummy']('foo')),
     page.waitForEvent('request'),
   ]);
   expect(swResponse).toBe('responseFromServiceWorker:foo');

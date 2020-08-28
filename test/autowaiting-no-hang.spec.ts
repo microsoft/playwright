@@ -16,33 +16,33 @@
  */
 import './playwright.fixtures';
 
-it('clicking on links which do not commit navigation', async({page, server, httpsServer}) => {
+it('clicking on links which do not commit navigation', async ({page, server, httpsServer}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
   await page.click('a');
 });
 
-it('calling window.stop async', async({page, server}) => {
+it('calling window.stop async', async ({page, server}) => {
   server.setRoute('/empty.html', async (req, res) => {});
-  await page.evaluate((url) => {
-      window.location.href = url;
-      setTimeout(() => window.stop(), 100);
-    }, server.EMPTY_PAGE);
+  await page.evaluate(url => {
+    window.location.href = url;
+    setTimeout(() => window.stop(), 100);
+  }, server.EMPTY_PAGE);
 });
 
-it('calling window.stop sync', async({page, server}) => {
-  await page.evaluate((url) => {
-      window.location.href = url;
-      window.stop();
-    }, server.EMPTY_PAGE);
+it('calling window.stop sync', async ({page, server}) => {
+  await page.evaluate(url => {
+    window.location.href = url;
+    window.stop();
+  }, server.EMPTY_PAGE);
 });
 
-it('assigning location to about:blank', async({page, server}) => {
+it('assigning location to about:blank', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(`window.location.href = "about:blank";`);
 });
 
-it('assigning location to about:blank after non-about:blank', async({page, server}) => {
+it('assigning location to about:blank after non-about:blank', async ({page, server}) => {
   server.setRoute('/empty.html', async (req, res) => {});
   await page.evaluate(`
       window.location.href = "${server.EMPTY_PAGE}";

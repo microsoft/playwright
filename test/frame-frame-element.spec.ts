@@ -19,10 +19,10 @@ import './playwright.fixtures';
 
 import utils from './utils';
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-  const frame2 = await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
+  await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
   const frame3 = await utils.attachFrame(page, 'frame3', server.EMPTY_PAGE);
   const frame1handle1 = await page.$('#frame1');
   const frame1handle2 = await frame1.frameElement();
@@ -33,7 +33,7 @@ it('should work', async({page, server}) => {
   expect(await frame1handle1.evaluate((a, b) => a === b, frame3handle1)).toBe(false);
 });
 
-it('should work with contentFrame', async({page, server}) => {
+it('should work with contentFrame', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const frame = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const handle = await frame.frameElement();
@@ -41,7 +41,7 @@ it('should work with contentFrame', async({page, server}) => {
   expect(contentFrame).toBe(frame);
 });
 
-it('should throw when detached', async({page, server}) => {
+it('should throw when detached', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.$eval('#frame1', e => e.remove());

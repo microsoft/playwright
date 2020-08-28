@@ -19,12 +19,12 @@ import './playwright.fixtures';
 import path from 'path';
 import utils from './utils';
 
-it('should require top-level Errors', async({}) => {
+it('should require top-level Errors', async ({}) => {
   const Errors = require(path.join(utils.projectRoot(), '/lib/utils/errors.js'));
   expect(String(Errors.TimeoutError)).toContain('TimeoutError');
 });
 
-it('should require top-level DeviceDescriptors', async({playwright}) => {
+it('should require top-level DeviceDescriptors', async ({playwright}) => {
   const Devices = require(path.join(utils.projectRoot(), '/lib/server/deviceDescriptors.js')).DeviceDescriptors;
   expect(Devices['iPhone 6']).toBeTruthy();
   expect(Devices['iPhone 6']).toEqual(playwright.devices['iPhone 6']);

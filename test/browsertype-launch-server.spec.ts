@@ -17,13 +17,13 @@
 
 import { options } from './playwright.fixtures';
 
-it.skip(options.WIRE)('should work', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should work', async ({browserType, defaultBrowserOptions}) => {
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   expect(browserServer.wsEndpoint()).not.toBe(null);
   await browserServer.close();
 });
 
-it.skip(options.WIRE)('should fire "close" event during kill', async({browserType, defaultBrowserOptions}) => {
+it.skip(options.WIRE)('should fire "close" event during kill', async ({browserType, defaultBrowserOptions}) => {
   const order = [];
   const browserServer = await browserType.launchServer(defaultBrowserOptions);
   const closedPromise = new Promise(f => browserServer.on('close', () => {

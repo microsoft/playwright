@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options } from '../playwright.fixtures';
+import '../playwright.fixtures';
 import { registerFixture } from '../../test-runner';
 import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
@@ -29,7 +29,7 @@ declare global {
 }
 
 declare module '../../index' {
-  const electron: ElectronLauncher
+  const electron: ElectronLauncher;
 }
 
 registerFixture('application', async ({playwright}, test) => {

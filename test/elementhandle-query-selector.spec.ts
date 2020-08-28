@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-it('should query existing element', async({page, server}) => {
+it('should query existing element', async ({page, server}) => {
   await page.goto(server.PREFIX + '/playground.html');
   await page.setContent('<html><body><div class="second"><div class="inner">A</div></div></body></html>');
   const html = await page.$('html');
@@ -27,18 +27,18 @@ it('should query existing element', async({page, server}) => {
   expect(content).toBe('A');
 });
 
-it('should return null for non-existing element', async({page, server}) => {
+it('should return null for non-existing element', async ({page, server}) => {
   await page.setContent('<html><body><div class="second"><div class="inner">B</div></div></body></html>');
   const html = await page.$('html');
   const second = await html.$('.third');
   expect(second).toBe(null);
 });
 
-it('should work for adopted elements', async({page,server}) => {
+it('should work for adopted elements', async ({page,server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window["__popup"] = window.open(url), server.EMPTY_PAGE),
+    page.evaluate(url => window['__popup'] = window.open(url), server.EMPTY_PAGE),
   ]);
   const divHandle = await page.evaluateHandle(() => {
     const div = document.createElement('div');
@@ -54,13 +54,13 @@ it('should work for adopted elements', async({page,server}) => {
   await popup.waitForLoadState('domcontentloaded');
   await page.evaluate(() => {
     const div = document.querySelector('div');
-    window["__popup"].document.body.appendChild(div);
+    window['__popup'].document.body.appendChild(div);
   });
   expect(await divHandle.$('span')).toBeTruthy();
   expect(await divHandle.$eval('span', e => e.textContent)).toBe('hello');
 });
 
-it('should query existing elements', async({page, server}) => {
+it('should query existing elements', async ({page, server}) => {
   await page.setContent('<html><body><div>A</div><br/><div>B</div></body></html>');
   const html = await page.$('html');
   const elements = await html.$$('div');
@@ -69,7 +69,7 @@ it('should query existing elements', async({page, server}) => {
   expect(await Promise.all(promises)).toEqual(['A', 'B']);
 });
 
-it('should return empty array for non-existing elements', async({page, server}) => {
+it('should return empty array for non-existing elements', async ({page, server}) => {
   await page.setContent('<html><body><span>A</span><br/><span>B</span></body></html>');
   const html = await page.$('html');
   const elements = await html.$$('div');
@@ -77,7 +77,7 @@ it('should return empty array for non-existing elements', async({page, server}) 
 });
 
 
-it('xpath should query existing element', async({page, server}) => {
+it('xpath should query existing element', async ({page, server}) => {
   await page.goto(server.PREFIX + '/playground.html');
   await page.setContent('<html><body><div class="second"><div class="inner">A</div></div></body></html>');
   const html = await page.$('html');
@@ -87,7 +87,7 @@ it('xpath should query existing element', async({page, server}) => {
   expect(content).toBe('A');
 });
 
-it('xpath should return null for non-existing element', async({page, server}) => {
+it('xpath should return null for non-existing element', async ({page, server}) => {
   await page.setContent('<html><body><div class="second"><div class="inner">B</div></div></body></html>');
   const html = await page.$('html');
   const second = await html.$$(`xpath=/div[contains(@class, 'third')]`);

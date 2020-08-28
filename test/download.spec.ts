@@ -35,7 +35,7 @@ beforeEach(async ({server}) => {
   });
 });
 
-it('should report downloads with acceptDownloads: false', async({page, server}) => {
+it('should report downloads with acceptDownloads: false', async ({page, server}) => {
   await page.setContent(`<a href="${server.PREFIX}/downloadWithFilename">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
@@ -49,7 +49,7 @@ it('should report downloads with acceptDownloads: false', async({page, server}) 
   expect(error.message).toContain('acceptDownloads: true');
 });
 
-it('should report downloads with acceptDownloads: true', async({browser, server}) => {
+it('should report downloads with acceptDownloads: true', async ({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -62,28 +62,28 @@ it('should report downloads with acceptDownloads: true', async({browser, server}
   await page.close();
 });
 
-it('should save to user-specified path', async({tmpDir, browser, server}) => {
+it('should save to user-specified path', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   await download.saveAs(userPath);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it('should save to user-specified path without updating original path', async({tmpDir, browser, server}) => {
+it('should save to user-specified path without updating original path', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   await download.saveAs(userPath);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
@@ -94,33 +94,33 @@ it('should save to user-specified path without updating original path', async({t
   await page.close();
 });
 
-it('should save to two different paths with multiple saveAs calls', async({tmpDir, browser, server}) => {
+it('should save to two different paths with multiple saveAs calls', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   await download.saveAs(userPath);
   expect(fs.existsSync(userPath)).toBeTruthy();
   expect(fs.readFileSync(userPath).toString()).toBe('Hello world');
 
-  const anotherUserPath = path.join(tmpDir, "download (2).txt");
+  const anotherUserPath = path.join(tmpDir, 'download (2).txt');
   await download.saveAs(anotherUserPath);
   expect(fs.existsSync(anotherUserPath)).toBeTruthy();
   expect(fs.readFileSync(anotherUserPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it('should save to overwritten filepath', async({tmpDir, browser, server}) => {
+it('should save to overwritten filepath', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   await download.saveAs(userPath);
   expect((await util.promisify(fs.readdir)(tmpDir)).length).toBe(1);
   await download.saveAs(userPath);
@@ -130,21 +130,21 @@ it('should save to overwritten filepath', async({tmpDir, browser, server}) => {
   await page.close();
 });
 
-it('should create subdirectories when saving to non-existent user-specified path', async({tmpDir, browser, server}) => {
+it('should create subdirectories when saving to non-existent user-specified path', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const nestedPath = path.join(tmpDir, "these", "are", "directories", "download.txt");
-  await download.saveAs(nestedPath)
+  const nestedPath = path.join(tmpDir, 'these', 'are', 'directories', 'download.txt');
+  await download.saveAs(nestedPath);
   expect(fs.existsSync(nestedPath)).toBeTruthy();
   expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
   await page.close();
 });
 
-it.skip(options.WIRE)('should save when connected remotely', async({tmpDir, server, browserType, remoteServer}) => {
+it.skip(options.WIRE)('should save when connected remotely', async ({tmpDir, server, browserType, remoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -152,7 +152,7 @@ it.skip(options.WIRE)('should save when connected remotely', async({tmpDir, serv
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const nestedPath = path.join(tmpDir, "these", "are", "directories", "download.txt");
+  const nestedPath = path.join(tmpDir, 'these', 'are', 'directories', 'download.txt');
   await download.saveAs(nestedPath);
   expect(fs.existsSync(nestedPath)).toBeTruthy();
   expect(fs.readFileSync(nestedPath).toString()).toBe('Hello world');
@@ -161,34 +161,34 @@ it.skip(options.WIRE)('should save when connected remotely', async({tmpDir, serv
   await browser.close();
 });
 
-it('should error when saving with downloads disabled', async({tmpDir, browser, server}) => {
+it('should error when saving with downloads disabled', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: false });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   const { message } = await download.saveAs(userPath).catch(e => e);
   expect(message).toContain('Pass { acceptDownloads: true } when you are creating your browser context');
   await page.close();
 });
 
-it('should error when saving after deletion', async({tmpDir, browser, server}) => {
+it('should error when saving after deletion', async ({tmpDir, browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   await download.delete();
   const { message } = await download.saveAs(userPath).catch(e => e);
   expect(message).toContain('Download already deleted. Save before deleting.');
   await page.close();
 });
 
-it.skip(options.WIRE)('should error when saving after deletion when connected remotely', async({tmpDir, server, browserType, remoteServer}) => {
+it.skip(options.WIRE)('should error when saving after deletion when connected remotely', async ({tmpDir, server, browserType, remoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
@@ -196,14 +196,14 @@ it.skip(options.WIRE)('should error when saving after deletion when connected re
     page.waitForEvent('download'),
     page.click('a')
   ]);
-  const userPath = path.join(tmpDir, "download.txt");
+  const userPath = path.join(tmpDir, 'download.txt');
   await download.delete();
   const { message } = await download.saveAs(userPath).catch(e => e);
   expect(message).toContain('Download already deleted. Save before deleting.');
   await browser.close();
 });
 
-it('should report non-navigation downloads', async({browser, server}) => {
+it('should report non-navigation downloads', async ({browser, server}) => {
   // Mac WebKit embedder does not download in this case, although Safari does.
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -224,9 +224,9 @@ it('should report non-navigation downloads', async({browser, server}) => {
   await page.close();
 });
 
-it(`should report download path within page.on('download', …) handler for Files`, async({browser, server}) => {
+it(`should report download path within page.on('download', …) handler for Files`, async ({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
-  const onDownloadPath = new Promise<string>((res) => {
+  const onDownloadPath = new Promise<string>(res => {
     page.on('download', dl => {
       dl.path().then(res);
     });
@@ -236,10 +236,10 @@ it(`should report download path within page.on('download', …) handler for File
   const path = await onDownloadPath;
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await page.close();
-})
-it(`should report download path within page.on('download', …) handler for Blobs`, async({browser, server}) => {
+});
+it(`should report download path within page.on('download', …) handler for Blobs`, async ({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
-  const onDownloadPath = new Promise<string>((res) => {
+  const onDownloadPath = new Promise<string>(res => {
     page.on('download', dl => {
       dl.path().then(res);
     });
@@ -249,8 +249,8 @@ it(`should report download path within page.on('download', …) handler for Blob
   const path = await onDownloadPath;
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await page.close();
-})
-it.fixme(options.FIREFOX || options.WEBKIT)('should report alt-click downloads', async({browser, server}) => {
+});
+it.fixme(options.FIREFOX || options.WEBKIT)('should report alt-click downloads', async ({browser, server}) => {
   // Firefox does not download on alt-click by default.
   // Our WebKit embedder does not download on alt-click, although Safari does.
   server.setRoute('/download', (req, res) => {
@@ -271,7 +271,7 @@ it.fixme(options.FIREFOX || options.WEBKIT)('should report alt-click downloads',
   await page.close();
 });
 
-it.fixme(options.CHROMIUM && !options.HEADLESS)('should report new window downloads', async({browser, server}) => {
+it.fixme(options.CHROMIUM && !options.HEADLESS)('should report new window downloads', async ({browser, server}) => {
   // TODO: - the test fails in headful Chromium as the popup page gets closed along
   // with the session before download completed event arrives.
   // - WebKit doesn't close the popup page
@@ -286,7 +286,7 @@ it.fixme(options.CHROMIUM && !options.HEADLESS)('should report new window downlo
   await page.close();
 });
 
-it('should delete file', async({browser, server}) => {
+it('should delete file', async ({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -300,7 +300,7 @@ it('should delete file', async({browser, server}) => {
   await page.close();
 });
 
-it('should expose stream', async({browser, server}) => {
+it('should expose stream', async ({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -315,7 +315,7 @@ it('should expose stream', async({browser, server}) => {
   await page.close();
 });
 
-it('should delete downloads on context destruction', async({browser, server}) => {
+it('should delete downloads on context destruction', async ({browser, server}) => {
   const page = await browser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download1 ] = await Promise.all([

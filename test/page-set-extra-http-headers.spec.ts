@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   await page.setExtraHTTPHeaders({
     foo: 'bar',
     baz: undefined,
@@ -30,7 +30,7 @@ it('should work', async({page, server}) => {
   expect(request.headers['baz']).toBe(undefined);
 });
 
-it('should work with redirects', async({page, server}) => {
+it('should work with redirects', async ({page, server}) => {
   server.setRedirect('/foo.html', '/empty.html');
   await page.setExtraHTTPHeaders({
     foo: 'bar'
@@ -42,7 +42,7 @@ it('should work with redirects', async({page, server}) => {
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should work with extra headers from browser context', async({browser, server}) => {
+it('should work with extra headers from browser context', async ({browser, server}) => {
   const context = await browser.newContext();
   await context.setExtraHTTPHeaders({
     'foo': 'bar',
@@ -56,7 +56,7 @@ it('should work with extra headers from browser context', async({browser, server
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should override extra headers from browser context', async({browser, server}) => {
+it('should override extra headers from browser context', async ({browser, server}) => {
   const context = await browser.newContext({
     extraHTTPHeaders: { 'fOo': 'bAr', 'baR': 'foO' },
   });
@@ -73,7 +73,7 @@ it('should override extra headers from browser context', async({browser, server}
   expect(request.headers['bar']).toBe('foO');
 });
 
-it('should throw for non-string header values', async({browser, page}) => {
+it('should throw for non-string header values', async ({browser, page}) => {
   const error1 = await page.setExtraHTTPHeaders({ 'foo': 1 as any }).catch(e => e);
   expect(error1.message).toContain('Expected value of header "foo" to be String, but "number" is found.');
   const error2 = await page.context().setExtraHTTPHeaders({ 'foo': true as any }).catch(e => e);

@@ -65,7 +65,7 @@ it.skip(!options.CHROMIUM)('should handle remote -> local -> remote transitions'
   expect(await countOOPIFs(browser)).toBe(1);
 });
 
-it.fixme(options.CHROMIUM).skip(!options.CHROMIUM)('should get the proper viewport', async({browser, page, server}) => {
+it.fixme(options.CHROMIUM).skip(!options.CHROMIUM)('should get the proper viewport', async ({browser, page, server}) => {
   expect(page.viewportSize()).toEqual({width: 1280, height: 720});
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
@@ -84,7 +84,7 @@ it.fixme(options.CHROMIUM).skip(!options.CHROMIUM)('should get the proper viewpo
   expect(await oopif.evaluate(() => 'ontouchstart' in window)).toBe(false);
 });
 
-it.skip(!options.CHROMIUM)('should expose function', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should expose function', async ({browser, page, server}) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -96,7 +96,7 @@ it.skip(!options.CHROMIUM)('should expose function', async({browser, page, serve
   expect(result).toBe(36);
 });
 
-it.skip(!options.CHROMIUM)('should emulate media', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should emulate media', async ({browser, page, server}) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -106,7 +106,7 @@ it.skip(!options.CHROMIUM)('should emulate media', async({browser, page, server}
   expect(await oopif.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it.skip(!options.CHROMIUM)('should emulate offline', async({browser, page, context, server}) => {
+it.skip(!options.CHROMIUM)('should emulate offline', async ({browser, page, context, server}) => {
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
   expect(await countOOPIFs(browser)).toBe(1);
@@ -116,8 +116,8 @@ it.skip(!options.CHROMIUM)('should emulate offline', async({browser, page, conte
   expect(await oopif.evaluate(() => navigator.onLine)).toBe(false);
 });
 
-it.skip(!options.CHROMIUM)('should support context options', async({browser, server, playwright}) => {
-  const iPhone = playwright.devices['iPhone 6']
+it.skip(!options.CHROMIUM)('should support context options', async ({browser, server, playwright}) => {
+  const iPhone = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ ...iPhone, timezoneId: 'America/Jamaica', locale: 'fr-CH', userAgent: 'UA' });
   const page = await context.newPage();
 
@@ -138,7 +138,7 @@ it.skip(!options.CHROMIUM)('should support context options', async({browser, ser
   await context.close();
 });
 
-it.skip(!options.CHROMIUM)('should respect route', async({browser, page, server}) => {
+it.skip(!options.CHROMIUM)('should respect route', async ({browser, page, server}) => {
   let intercepted = false;
   await page.route('**/digits/0.png', route => {
     intercepted = true;
@@ -150,7 +150,7 @@ it.skip(!options.CHROMIUM)('should respect route', async({browser, page, server}
   expect(intercepted).toBe(true);
 });
 
-it.skip(!options.CHROMIUM)('should take screenshot', async({browser, page, server, golden}) => {
+it.skip(!options.CHROMIUM)('should take screenshot', async ({browser, page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/dynamic-oopif.html');
   expect(page.frames().length).toBe(2);
@@ -233,7 +233,7 @@ it.skip(!options.CHROMIUM)('should click a button when it overlays oopif', async
   expect(await page.evaluate(() => window['BUTTON_CLICKED'])).toBe(true);
 });
 
-it.skip(!options.CHROMIUM)('should report google.com frame with headful', async({browserType, defaultBrowserOptions, server}) => {
+it.skip(!options.CHROMIUM)('should report google.com frame with headful', async ({browserType, defaultBrowserOptions, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/2548
   // https://google.com is isolated by default in Chromium embedder.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false});
@@ -303,7 +303,7 @@ async function countOOPIFs(browser) {
   const oopifs = [];
   browserSession.on('Target.targetCreated', async ({targetInfo}) => {
     if (targetInfo.type === 'iframe')
-       oopifs.push(targetInfo);
+      oopifs.push(targetInfo);
   });
   await browserSession.send('Target.setDiscoverTargets', { discover: true });
   await browserSession.detach();

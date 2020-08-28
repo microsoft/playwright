@@ -18,7 +18,7 @@
 import { options } from './playwright.fixtures';
 import url from 'url';
 
-it('page.goBack should work', async({page, server}) => {
+it('page.goBack should work', async ({page, server}) => {
   expect(await page.goBack()).toBe(null);
 
   await page.goto(server.EMPTY_PAGE);
@@ -36,7 +36,7 @@ it('page.goBack should work', async({page, server}) => {
   expect(response).toBe(null);
 });
 
-it('page.goBack should work with HistoryAPI', async({page, server}) => {
+it('page.goBack should work with HistoryAPI', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     history.pushState({}, '', '/first.html');
@@ -77,14 +77,14 @@ it.fail(options.WEBKIT && MAC)('page.goBack should work for file urls', async ({
   await page.screenshot();
 });
 
-it('page.reload should work', async({page, server}) => {
+it('page.reload should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await page.evaluate(() => window["_foo"] = 10);
+  await page.evaluate(() => window['_foo'] = 10);
   await page.reload();
-  expect(await page.evaluate(() => window["_foo"])).toBe(undefined);
+  expect(await page.evaluate(() => window['_foo'])).toBe(undefined);
 });
 
-it('page.reload should work with data url', async({page, server}) => {
+it('page.reload should work with data url', async ({page, server}) => {
   await page.goto('data:text/html,hello');
   expect(await page.content()).toContain('hello');
   expect(await page.reload()).toBe(null);

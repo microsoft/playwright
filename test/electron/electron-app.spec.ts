@@ -70,10 +70,10 @@ it.skip(!options.CHROMIUM)('should create multiple windows', async ({ applicatio
   };
 
   const page1 = await createPage(1);
-  const page2 = await createPage(2);
-  const page3 = await createPage(3);
+  await createPage(2);
+  await createPage(3);
   await page1.close();
-  const page4 = await createPage(4);
+  await createPage(4);
   const titles = [];
   for (const window of application.windows())
     titles.push(await window.title());
@@ -86,7 +86,7 @@ it.skip(!options.CHROMIUM)('should route network', async ({ application }) => {
       status: 200,
       contentType: 'text/html',
       body: '<title>Hello World</title>',
-    })
+    });
   });
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('https://localhost:1000/empty.html');
@@ -94,14 +94,13 @@ it.skip(!options.CHROMIUM)('should route network', async ({ application }) => {
 });
 
 it.skip(!options.CHROMIUM)('should support init script', async ({ application }) => {
-  await application.context().addInitScript('window.magic = 42;')
+  await application.context().addInitScript('window.magic = 42;');
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('data:text/html,<script>window.copy = magic</script>');
   expect(await page.evaluate(() => window['copy'])).toBe(42);
 });
 
 it.skip(!options.CHROMIUM)('should expose function', async ({ application }) => {
-  const t = Date.now();
   await application.context().exposeFunction('add', (a, b) => a + b);
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await page.goto('data:text/html,<script>window["result"] = add(20, 22);</script>');

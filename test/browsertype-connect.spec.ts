@@ -19,7 +19,7 @@ import { options } from './playwright.fixtures';
 import utils from './utils';
 import './remoteServer.fixture';
 
-it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async({browserType, remoteServer, server}) => {
+it.skip(options.WIRE).slow()('should be able to reconnect to a browser', async ({browserType, remoteServer, server}) => {
   {
     const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
     const browserContext = await browser.newContext();
@@ -81,8 +81,8 @@ it.skip(options.WIRE).slow()('disconnected event should be emitted when browser 
   expect(disconnected2).toBe(1);
 });
 
-it.skip(options.WIRE).slow()('should handle exceptions during connect', async({browserType, remoteServer}) => {
-  const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy') };
+it.skip(options.WIRE).slow()('should handle exceptions during connect', async ({browserType, remoteServer}) => {
+  const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy'); };
   const error = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);
   expect(error.message).toContain('Dummy');
 });
@@ -94,7 +94,7 @@ it.skip(options.WIRE).slow()('should set the browser connected state', async ({b
   expect(remote.isConnected()).toBe(false);
 });
 
-it.skip(options.WIRE).slow()('should throw when used after isConnected returns false', async({browserType, remoteServer}) => {
+it.skip(options.WIRE).slow()('should throw when used after isConnected returns false', async ({browserType, remoteServer}) => {
   const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await remote.newPage();
   await Promise.all([
@@ -106,7 +106,7 @@ it.skip(options.WIRE).slow()('should throw when used after isConnected returns f
   expect(error.message).toContain('has been closed');
 });
 
-it.skip(options.WIRE).slow()('should reject navigation when browser closes', async({browserType, remoteServer, server}) => {
+it.skip(options.WIRE).slow()('should reject navigation when browser closes', async ({browserType, remoteServer, server}) => {
   server.setRoute('/one-style.css', () => {});
   const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await remote.newPage();
@@ -117,7 +117,7 @@ it.skip(options.WIRE).slow()('should reject navigation when browser closes', asy
   expect(error.message).toContain('Navigation failed because page was closed!');
 });
 
-it.skip(options.WIRE).slow()('should reject waitForSelector when browser closes', async({browserType, remoteServer, server}) => {
+it.skip(options.WIRE).slow()('should reject waitForSelector when browser closes', async ({browserType, remoteServer, server}) => {
   server.setRoute('/empty.html', () => {});
   const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await remote.newPage();
@@ -131,7 +131,7 @@ it.skip(options.WIRE).slow()('should reject waitForSelector when browser closes'
   expect(error.message).toContain('Protocol error');
 });
 
-it.skip(options.WIRE).slow()('should emit close events on pages and contexts', async({browserType, remoteServer}) => {
+it.skip(options.WIRE).slow()('should emit close events on pages and contexts', async ({browserType, remoteServer}) => {
   const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const context = await remote.newContext();
   const page = await context.newPage();
@@ -144,7 +144,7 @@ it.skip(options.WIRE).slow()('should emit close events on pages and contexts', a
   expect(pageClosed).toBeTruthy();
 });
 
-it.skip(options.WIRE).slow()('should terminate network waiters', async({browserType, remoteServer, server}) => {
+it.skip(options.WIRE).slow()('should terminate network waiters', async ({browserType, remoteServer, server}) => {
   const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const newPage = await remote.newPage();
   const results = await Promise.all([
@@ -159,7 +159,7 @@ it.skip(options.WIRE).slow()('should terminate network waiters', async({browserT
   }
 });
 
-it.skip(options.WIRE).fail(true).slow()('should respect selectors', async({ playwright, browserType, remoteServer }) => {
+it.skip(options.WIRE).fail(true).slow()('should respect selectors', async ({ playwright, browserType, remoteServer }) => {
   const mycss = () => ({
     create(root, target) {},
     query(root, selector) {

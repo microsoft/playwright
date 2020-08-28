@@ -17,7 +17,7 @@
 
 import { options } from './playwright.fixtures';
 
-it('should fire', async({page, server}) => {
+it('should fire', async ({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),
@@ -31,7 +31,7 @@ it('should fire', async({page, server}) => {
   expect(error.stack).toBe(stack);
 });
 
-it.fail(options.WEBKIT)('should contain sourceURL', async({page, server}) => {
+it.fail(options.WEBKIT)('should contain sourceURL', async ({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
     page.goto(server.PREFIX + '/error.html'),

@@ -84,14 +84,14 @@ it('should isolate localStorage and cookies', async function({browser, server}) 
   expect(browser.contexts().length).toBe(0);
 });
 
-it('should propagate default viewport to the page', async({ browser }) => {
+it('should propagate default viewport to the page', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
   const page = await context.newPage();
   await utils.verifyViewport(page, 456, 789);
   await context.close();
 });
 
-it('should make a copy of default viewport', async({ browser }) => {
+it('should make a copy of default viewport', async ({ browser }) => {
   const viewport = { width: 456, height: 789 };
   const context = await browser.newContext({ viewport });
   viewport.width = 567;
@@ -100,37 +100,37 @@ it('should make a copy of default viewport', async({ browser }) => {
   await context.close();
 });
 
-it('should respect deviceScaleFactor', async({ browser }) => {
+it('should respect deviceScaleFactor', async ({ browser }) => {
   const context = await browser.newContext({ deviceScaleFactor: 3 });
   const page = await context.newPage();
   expect(await page.evaluate('window.devicePixelRatio')).toBe(3);
   await context.close();
 });
 
-it('should not allow deviceScaleFactor with null viewport', async({ browser }) => {
+it('should not allow deviceScaleFactor with null viewport', async ({ browser }) => {
   const error = await browser.newContext({ viewport: null, deviceScaleFactor: 1 }).catch(e => e);
   expect(error.message).toContain('"deviceScaleFactor" option is not supported with null "viewport"');
 });
 
-it('should not allow isMobile with null viewport', async({ browser }) => {
+it('should not allow isMobile with null viewport', async ({ browser }) => {
   const error = await browser.newContext({ viewport: null, isMobile: true }).catch(e => e);
   expect(error.message).toContain('"isMobile" option is not supported with null "viewport"');
 });
 
-it('close() should work for empty context', async({ browser }) => {
+it('close() should work for empty context', async ({ browser }) => {
   const context = await browser.newContext();
   await context.close();
 });
 
-it('close() should abort waitForEvent', async({ browser }) => {
+it('close() should abort waitForEvent', async ({ browser }) => {
   const context = await browser.newContext();
   const promise = context.waitForEvent('page').catch(e => e);
   await context.close();
-  let error = await promise;
+  const error = await promise;
   expect(error.message).toContain('Context closed');
 });
 
-it('close() should be callable twice', async({browser}) => {
+it('close() should be callable twice', async ({browser}) => {
   const context = await browser.newContext();
   await Promise.all([
     context.close(),
@@ -139,7 +139,7 @@ it('close() should be callable twice', async({browser}) => {
   await context.close();
 });
 
-it('should not report frameless pages on error', async({browser, server}) => {
+it('should not report frameless pages on error', async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   server.setRoute('/empty.html', (req, res) => {
@@ -157,7 +157,7 @@ it('should not report frameless pages on error', async({browser, server}) => {
   }
 });
 
-it('should return all of the pages', async({browser, server}) => {
+it('should return all of the pages', async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   const second = await context.newPage();
@@ -177,7 +177,7 @@ it('should close all belonging pages once closing context', async function({brow
   expect(context.pages().length).toBe(0);
 });
 
-it('should disable javascript', async({browser}) => {
+it('should disable javascript', async ({browser}) => {
   {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
@@ -200,14 +200,14 @@ it('should disable javascript', async({browser}) => {
   }
 });
 
-it('should be able to navigate after disabling javascript', async({browser, server}) => {
+it('should be able to navigate after disabling javascript', async ({browser, server}) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await context.close();
 });
 
-it('should work with offline option', async({browser, server}) => {
+it('should work with offline option', async ({browser, server}) => {
   const context = await browser.newContext({offline: true});
   const page = await context.newPage();
   let error = null;
@@ -219,7 +219,7 @@ it('should work with offline option', async({browser, server}) => {
   await context.close();
 });
 
-it('should emulate navigator.onLine', async({browser, server}) => {
+it('should emulate navigator.onLine', async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   expect(await page.evaluate(() => window.navigator.onLine)).toBe(true);
