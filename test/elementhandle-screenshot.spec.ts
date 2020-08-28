@@ -24,7 +24,7 @@ import fs from 'fs';
 // Firefox headful produces a different image.
 const ffheadful = options.FIREFOX && !options.HEADLESS;
 
-it.skip(ffheadful)('should work', async({page, server, golden}) => {
+it.skip(ffheadful)('should work', async ({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/grid.html');
   await page.evaluate(() => window.scrollBy(50, 100));
@@ -33,7 +33,7 @@ it.skip(ffheadful)('should work', async({page, server, golden}) => {
   expect(screenshot).toMatchImage(golden('screenshot-element-bounding-box.png'));
 });
 
-it.skip(ffheadful)('should take into account padding and border', async({page, golden}) => {
+it.skip(ffheadful)('should take into account padding and border', async ({page, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.setContent(`
     <div style="height: 14px">oooo</div>
@@ -51,7 +51,7 @@ it.skip(ffheadful)('should take into account padding and border', async({page, g
   expect(screenshot).toMatchImage(golden('screenshot-element-padding-border.png'));
 });
 
-it.skip(ffheadful)('should capture full element when larger than viewport in parallel', async({page, golden}) => {
+it.skip(ffheadful)('should capture full element when larger than viewport in parallel', async ({page, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
 
   await page.setContent(`
@@ -79,7 +79,7 @@ it.skip(ffheadful)('should capture full element when larger than viewport in par
   await utils.verifyViewport(page, 500, 500);
 });
 
-it.skip(ffheadful)('should capture full element when larger than viewport', async({page, golden}) => {
+it.skip(ffheadful)('should capture full element when larger than viewport', async ({page, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
 
   await page.setContent(`
@@ -106,7 +106,7 @@ it.skip(ffheadful)('should capture full element when larger than viewport', asyn
   await utils.verifyViewport(page, 500, 500);
 });
 
-it.skip(ffheadful)('should scroll element into view', async({page, golden}) => {
+it.skip(ffheadful)('should scroll element into view', async ({page, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.setContent(`
     <div style="height: 14px">oooo</div>
@@ -130,7 +130,7 @@ it.skip(ffheadful)('should scroll element into view', async({page, golden}) => {
   expect(screenshot).toMatchImage(golden('screenshot-element-scrolled-into-view.png'));
 });
 
-it.skip(ffheadful)('should scroll 15000px into view', async({page, golden}) => {
+it.skip(ffheadful)('should scroll 15000px into view', async ({page, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.setContent(`
     <div style="height: 14px">oooo</div>
@@ -154,7 +154,7 @@ it.skip(ffheadful)('should scroll 15000px into view', async({page, golden}) => {
   expect(screenshot).toMatchImage(golden('screenshot-element-scrolled-into-view.png'));
 });
 
-it.skip(ffheadful)('should work with a rotated element', async({page, golden}) => {
+it.skip(ffheadful)('should work with a rotated element', async ({page, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.setContent(`<div style="position:absolute;
                                     top: 100px;
@@ -168,7 +168,7 @@ it.skip(ffheadful)('should work with a rotated element', async({page, golden}) =
   expect(screenshot).toMatchImage(golden('screenshot-element-rotate.png'));
 });
 
-it.skip(ffheadful)('should fail to screenshot a detached element', async({page, server}) => {
+it.skip(ffheadful)('should fail to screenshot a detached element', async ({page, server}) => {
   await page.setContent('<h1>remove this</h1>');
   const elementHandle = await page.$('h1');
   await page.evaluate(element => element.remove(), elementHandle);
@@ -176,7 +176,7 @@ it.skip(ffheadful)('should fail to screenshot a detached element', async({page, 
   expect(screenshotError.message).toContain('Element is not attached to the DOM');
 });
 
-it.skip(ffheadful)('should timeout waiting for visible', async({page, server}) => {
+it.skip(ffheadful)('should timeout waiting for visible', async ({page, server}) => {
   await page.setContent('<div style="width: 50px; height: 0"></div>');
   const div = await page.$('div');
   const error = await div.screenshot({ timeout: 3000 }).catch(e => e);
@@ -184,7 +184,7 @@ it.skip(ffheadful)('should timeout waiting for visible', async({page, server}) =
   expect(error.message).toContain('element is not visible');
 });
 
-it.skip(ffheadful)('should wait for visible', async({page, server, golden}) => {
+it.skip(ffheadful)('should wait for visible', async ({page, server, golden}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/grid.html');
   await page.evaluate(() => window.scrollBy(50, 100));
@@ -203,14 +203,14 @@ it.skip(ffheadful)('should wait for visible', async({page, server, golden}) => {
   expect(screenshot).toMatchImage(golden('screenshot-element-bounding-box.png'));
 });
 
-it.skip(ffheadful)('should work for an element with fractional dimensions', async({page, golden}) => {
+it.skip(ffheadful)('should work for an element with fractional dimensions', async ({page, golden}) => {
   await page.setContent('<div style="width:48.51px;height:19.8px;border:1px solid black;"></div>');
   const elementHandle = await page.$('div');
   const screenshot = await elementHandle.screenshot();
   expect(screenshot).toMatchImage(golden('screenshot-element-fractional.png'));
 });
 
-it.skip(options.FIREFOX)('should work with a mobile viewport', async({browser, server, golden}) => {
+it.skip(options.FIREFOX)('should work with a mobile viewport', async ({browser, server, golden}) => {
   const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -221,7 +221,7 @@ it.skip(options.FIREFOX)('should work with a mobile viewport', async({browser, s
   await context.close();
 });
 
-it.skip(options.FIREFOX)('should work with device scale factor', async({browser, server, golden}) => {
+it.skip(options.FIREFOX)('should work with device scale factor', async ({browser, server, golden}) => {
   const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -232,14 +232,14 @@ it.skip(options.FIREFOX)('should work with device scale factor', async({browser,
   await context.close();
 });
 
-it.skip(ffheadful)('should work for an element with an offset', async({page, golden}) => {
+it.skip(ffheadful)('should work for an element with an offset', async ({page, golden}) => {
   await page.setContent('<div style="position:absolute; top: 10.3px; left: 20.4px;width:50.3px;height:20.2px;border:1px solid black;"></div>');
   const elementHandle = await page.$('div');
   const screenshot = await elementHandle.screenshot();
   expect(screenshot).toMatchImage(golden('screenshot-element-fractional-offset.png'));
 });
 
-it.skip(ffheadful)('should take screenshots when default viewport is null', async({server, browser}) => {
+it.skip(ffheadful)('should take screenshots when default viewport is null', async ({server, browser}) => {
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();
   await page.setContent(`<div style='height: 10000px; background: red'></div>`);
@@ -258,7 +258,7 @@ it.skip(ffheadful)('should take screenshots when default viewport is null', asyn
   await context.close();
 });
 
-it.skip(ffheadful)('should take fullPage screenshots when default viewport is null', async({server, browser}) => {
+it.skip(ffheadful)('should take fullPage screenshots when default viewport is null', async ({server, browser}) => {
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -274,7 +274,7 @@ it.skip(ffheadful)('should take fullPage screenshots when default viewport is nu
   await context.close();
 });
 
-it.skip(ffheadful)('should restore default viewport after fullPage screenshot', async({ browser }) => {
+it.skip(ffheadful)('should restore default viewport after fullPage screenshot', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
   const page = await context.newPage();
   await utils.verifyViewport(page, 456, 789);
@@ -284,18 +284,18 @@ it.skip(ffheadful)('should restore default viewport after fullPage screenshot', 
   await context.close();
 });
 
-it.skip(ffheadful || options.WIRE)('should restore viewport after page screenshot and exception', async({ browser, server }) => {
+it.skip(ffheadful || options.WIRE)('should restore viewport after page screenshot and exception', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
-  const __testHookBeforeScreenshot = () => { throw new Error('oh my') };
+  const __testHookBeforeScreenshot = () => { throw new Error('oh my'); };
   const error = await page.screenshot({ fullPage: true, __testHookBeforeScreenshot } as any).catch(e => e);
   expect(error.message).toContain('oh my');
   await utils.verifyViewport(page, 350, 360);
   await context.close();
 });
 
-it.skip(ffheadful || options.WIRE)('should restore viewport after page screenshot and timeout', async({ browser, server }) => {
+it.skip(ffheadful || options.WIRE)('should restore viewport after page screenshot and timeout', async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/grid.html');
@@ -309,7 +309,7 @@ it.skip(ffheadful || options.WIRE)('should restore viewport after page screensho
   await context.close();
 });
 
-it.skip(ffheadful)('should take element screenshot when default viewport is null and restore back', async({server, browser}) => {
+it.skip(ffheadful)('should take element screenshot when default viewport is null and restore back', async ({server, browser}) => {
   const context = await browser.newContext({viewport: null});
   const page = await context.newPage();
   await page.setContent(`
@@ -339,12 +339,12 @@ it.skip(ffheadful)('should take element screenshot when default viewport is null
   await context.close();
 });
 
-it.skip(ffheadful || options.WIRE)('should restore viewport after element screenshot and exception', async({server, browser}) => {
+it.skip(ffheadful || options.WIRE)('should restore viewport after element screenshot and exception', async ({server, browser}) => {
   const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
   const page = await context.newPage();
   await page.setContent(`<div style="width:600px;height:600px;"></div>`);
   const elementHandle = await page.$('div');
-  const __testHookBeforeScreenshot = () => { throw new Error('oh my') };
+  const __testHookBeforeScreenshot = () => { throw new Error('oh my'); };
   const error = await elementHandle.screenshot({ __testHookBeforeScreenshot } as any).catch(e => e);
   expect(error.message).toContain('oh my');
   await utils.verifyViewport(page, 350, 360);
@@ -363,7 +363,7 @@ it.skip(ffheadful).flaky(options.WEBKIT && !options.HEADLESS && LINUX)('should w
   expect(screenshot).toMatchImage(golden('screenshot-element-bounding-box.png'));
 });
 
-it.skip(ffheadful)('should take screenshot of disabled button', async({page}) => {
+it.skip(ffheadful)('should take screenshot of disabled button', async ({page}) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.setContent(`<button disabled>Click me</button>`);
   const button = await page.$('button');
@@ -371,7 +371,7 @@ it.skip(ffheadful)('should take screenshot of disabled button', async({page}) =>
   expect(screenshot).toBeInstanceOf(Buffer);
 });
 
-it.skip(ffheadful)('path option should create subdirectories', async({page, server, golden, tmpDir}) => {
+it.skip(ffheadful)('path option should create subdirectories', async ({page, server, golden, tmpDir}) => {
   await page.setViewportSize({width: 500, height: 500});
   await page.goto(server.PREFIX + '/grid.html');
   await page.evaluate(() => window.scrollBy(50, 100));

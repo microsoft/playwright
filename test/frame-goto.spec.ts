@@ -19,7 +19,7 @@ import './playwright.fixtures';
 
 import utils from './utils';
 
-it('should navigate subframes', async({page, server}) => {
+it('should navigate subframes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames()[0].url()).toContain('/frames/one-frame.html');
   expect(page.frames()[1].url()).toContain('/frames/frame.html');
@@ -29,7 +29,7 @@ it('should navigate subframes', async({page, server}) => {
   expect(response.frame()).toBe(page.frames()[1]);
 });
 
-it('should reject when frame detaches', async({page, server}) => {
+it('should reject when frame detaches', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
 
   server.setRoute('/empty.html', () => {});
@@ -41,7 +41,7 @@ it('should reject when frame detaches', async({page, server}) => {
   expect(error.message).toContain('frame was detached');
 });
 
-it('should continue after client redirect', async({page, server}) => {
+it('should continue after client redirect', async ({page, server}) => {
   server.setRoute('/frames/script.js', () => {});
   const url = server.PREFIX + '/frames/child-redirect.html';
   const error = await page.goto(url, { timeout: 5000, waitUntil: 'networkidle' }).catch(e => e);
@@ -49,7 +49,7 @@ it('should continue after client redirect', async({page, server}) => {
   expect(error.message).toContain(`navigating to "${url}", waiting until "networkidle"`);
 });
 
-it('should return matching responses', async({page, server}) => {
+it('should return matching responses', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   // Attach three frames.
   const frames = [

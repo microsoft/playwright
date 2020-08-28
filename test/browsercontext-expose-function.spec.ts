@@ -16,7 +16,7 @@
  */
 import './playwright.fixtures';
 
-it('expose binding should work', async({browser}) => {
+it('expose binding should work', async ({browser}) => {
   const context = await browser.newContext();
   let bindingSource;
   await context.exposeBinding('add', (source, a, b) => {
@@ -32,7 +32,7 @@ it('expose binding should work', async({browser}) => {
   await context.close();
 });
 
-it('should work', async({browser, server}) => {
+it('should work', async ({browser, server}) => {
   const context = await browser.newContext();
   await context.exposeFunction('add', (a, b) => a + b);
   const page = await context.newPage();
@@ -47,7 +47,7 @@ it('should work', async({browser, server}) => {
   await context.close();
 });
 
-it('should throw for duplicate registrations', async({browser, server}) => {
+it('should throw for duplicate registrations', async ({browser, server}) => {
   const context = await browser.newContext();
   await context.exposeFunction('foo', () => {});
   await context.exposeFunction('bar', () => {});
@@ -62,7 +62,7 @@ it('should throw for duplicate registrations', async({browser, server}) => {
   await context.close();
 });
 
-it('should be callable from-inside addInitScript', async({browser, server}) => {
+it('should be callable from-inside addInitScript', async ({browser, server}) => {
   const context = await browser.newContext();
   let args = [];
   await context.exposeFunction('woof', function(arg) {

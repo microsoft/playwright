@@ -78,7 +78,7 @@ it('should work for adopted elements', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(url => window["__popup"] = window.open(url), server.EMPTY_PAGE),
+    page.evaluate(url => window['__popup'] = window.open(url), server.EMPTY_PAGE),
   ]);
   const divHandle = await page.evaluateHandle(() => {
     const div = document.createElement('div');
@@ -89,7 +89,7 @@ it('should work for adopted elements', async ({ page, server }) => {
   await popup.waitForLoadState('domcontentloaded');
   await page.evaluate(() => {
     const div = document.querySelector('div');
-    window["__popup"].document.body.appendChild(div);
+    window['__popup'].document.body.appendChild(div);
   });
   expect(await divHandle.ownerFrame()).toBe(popup.mainFrame());
 });

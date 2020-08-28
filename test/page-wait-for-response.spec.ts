@@ -17,7 +17,7 @@
 
 import './playwright.fixtures';
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/digits/2.png'),
@@ -30,20 +30,20 @@ it('should work', async({page, server}) => {
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
 
-it('should respect timeout', async({page, playwright}) => {
+it('should respect timeout', async ({page, playwright}) => {
   let error = null;
   await page.waitForEvent('response', { predicate: () => false, timeout: 1 }).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should respect default timeout', async({page, playwright}) => {
+it('should respect default timeout', async ({page, playwright}) => {
   let error = null;
   page.setDefaultTimeout(1);
   await page.waitForEvent('response', () => false).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should work with predicate', async({page, server}) => {
+it('should work with predicate', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForEvent('request', response => response.url() === server.PREFIX + '/digits/2.png'),
@@ -56,7 +56,7 @@ it('should work with predicate', async({page, server}) => {
   expect(response.url()).toBe(server.PREFIX + '/digits/2.png');
 });
 
-it('should work with no timeout', async({page, server}) => {
+it('should work with no timeout', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
     page.waitForResponse(server.PREFIX + '/digits/2.png', { timeout: 0 }),

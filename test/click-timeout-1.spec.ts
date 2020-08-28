@@ -17,7 +17,7 @@
 
 import { options } from './playwright.fixtures';
 
-it.skip(options.WIRE)('should avoid side effects after timeout', async({page, server}) => {
+it.skip(options.WIRE)('should avoid side effects after timeout', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))} as any).catch(e => e);
   await page.waitForTimeout(5000);  // Give it some time to click after the test hook is done waiting.
@@ -25,7 +25,7 @@ it.skip(options.WIRE)('should avoid side effects after timeout', async({page, se
   expect(error.message).toContain('page.click: Timeout 2000ms exceeded.');
 });
 
-it('should timeout waiting for button to be enabled', async({page, server}) => {
+it('should timeout waiting for button to be enabled', async ({page, server}) => {
   await page.setContent('<button onclick="javascript:window.__CLICKED=true;" disabled><span>Click target</span></button>');
   const error = await page.click('text=Click target', { timeout: 3000 }).catch(e => e);
   expect(await page.evaluate('window.__CLICKED')).toBe(undefined);

@@ -18,7 +18,7 @@
 import './playwright.fixtures';
 import util from 'util';
 
-it('should work', async({page, server}) => {
+it('should work', async ({page, server}) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
@@ -32,24 +32,24 @@ it('should work', async({page, server}) => {
   expect(await message.args()[2].jsonValue()).toEqual({foo: 'bar'});
 });
 
-it('should emit same log twice', async({page, server}) => {
+it('should emit same log twice', async ({page, server}) => {
   const messages = [];
   page.on('console', m => messages.push(m.text()));
-  await page.evaluate(() => { for (let i = 0; i < 2; ++i ) console.log('hello'); } );
+  await page.evaluate(() => { for (let i = 0; i < 2; ++i) console.log('hello'); });
   expect(messages).toEqual(['hello', 'hello']);
 });
 
-it('should use text() for inspection', async({page}) => {
+it('should use text() for inspection', async ({page}) => {
   let text;
   const inspect = value => {
     text = util.inspect(value);
-  }
+  };
   page.on('console', inspect);
   await page.evaluate(() => console.log('Hello world'));
   expect(text).toEqual('Hello world');
 });
 
-it('should work for different console API calls', async({page, server}) => {
+it('should work for different console API calls', async ({page, server}) => {
   const messages = [];
   page.on('console', msg => messages.push(msg));
   // All console events will be reported before `page.evaluate` is finished.
@@ -76,7 +76,7 @@ it('should work for different console API calls', async({page, server}) => {
   ]);
 });
 
-it('should not fail for window object', async({page, server}) => {
+it('should not fail for window object', async ({page, server}) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
@@ -86,7 +86,7 @@ it('should not fail for window object', async({page, server}) => {
   expect(message.text()).toBe('JSHandle@object');
 });
 
-it('should trigger correct Log', async({page, server}) => {
+it('should trigger correct Log', async ({page, server}) => {
   await page.goto('about:blank');
   const [message] = await Promise.all([
     page.waitForEvent('console'),
@@ -96,10 +96,10 @@ it('should trigger correct Log', async({page, server}) => {
   expect(message.type()).toEqual('error');
 });
 
-it('should have location for console API calls', async({page, server}) => {
+it('should have location for console API calls', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [message] = await Promise.all([
-    page.waitForEvent('console', m => m.text() === 'yellow' ),
+    page.waitForEvent('console', m => m.text() === 'yellow'),
     page.goto(server.PREFIX + '/consolelog.html'),
   ]);
   expect(message.type()).toBe('log');
@@ -112,15 +112,15 @@ it('should have location for console API calls', async({page, server}) => {
   });
 });
 
-it('should not throw when there are console messages in detached iframes', async({page, server}) => {
+it('should not throw when there are console messages in detached iframes', async ({page, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/3865
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
-    page.evaluate(async() => {
+    page.evaluate(async () => {
       // 1. Create a popup that Playwright is not connected to.
       const win = window.open('');
-      window["_popup"] = win;
+      window['_popup'] = win;
       if (window.document.readyState !== 'complete')
         await new Promise(f => window.addEventListener('load', f));
       // 2. In this popup, create an iframe that console.logs a message.

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { options } from './playwright.fixtures';
+import './playwright.fixtures';
 
 it('should work', async ({ browser }) => {
   const func = () => new Date(1479579154987).toString();
@@ -44,17 +44,17 @@ it('should work', async ({ browser }) => {
   }
 });
 
-it('should throw for invalid timezone IDs when creating pages', async({browser}) => {
+it('should throw for invalid timezone IDs when creating pages', async ({browser}) => {
   for (const timezoneId of ['Foo/Bar', 'Baz/Qux']) {
     let error = null;
     const context = await browser.newContext({ timezoneId });
-    const page = await context.newPage().catch(e => error = e);
+    await context.newPage().catch(e => error = e);
     expect(error.message).toContain(`Invalid timezone ID: ${timezoneId}`);
     await context.close();
   }
 });
 
-it('should work for multiple pages sharing same process', async({browser, server}) => {
+it('should work for multiple pages sharing same process', async ({browser, server}) => {
   const context = await browser.newContext({ timezoneId: 'Europe/Moscow' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -69,7 +69,7 @@ it('should work for multiple pages sharing same process', async({browser, server
   await context.close();
 });
 
-it('should not change default timezone in another context', async({browser, server}) => {
+it('should not change default timezone in another context', async ({browser, server}) => {
   async function getContextTimezone(context) {
     const page = await context.newPage();
     return await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone);

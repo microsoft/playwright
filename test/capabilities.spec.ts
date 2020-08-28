@@ -22,8 +22,8 @@ it.fail(options.WEBKIT && WIN)('Web Assembly should work', async function({page,
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
 });
 
-it('WebSocket should work', async({page, server}) => {
-  const value = await page.evaluate((port) => {
+it('WebSocket should work', async ({page, server}) => {
+  const value = await page.evaluate(port => {
     let cb;
     const result = new Promise(f => cb = f);
     const ws = new WebSocket('ws://localhost:' + port + '/ws');
@@ -34,7 +34,7 @@ it('WebSocket should work', async({page, server}) => {
   expect(value).toBe('incoming');
 });
 
-it('should respect CSP', async({page, server}) => {
+it('should respect CSP', async ({page, server}) => {
   server.setRoute('/empty.html', async (req, res) => {
     res.setHeader('Content-Security-Policy', `script-src 'unsafe-inline';`);
     res.end(`
@@ -48,7 +48,7 @@ it('should respect CSP', async({page, server}) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it.fixme(options.WEBKIT && (WIN || LINUX))('should play video', async({page, asset}) => {
+it.fixme(options.WEBKIT && (WIN || LINUX))('should play video', async ({page, asset}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
   // Also the test is very flaky on Linux WebKit.

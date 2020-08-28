@@ -16,7 +16,7 @@
  */
 import { options } from './playwright.fixtures';
 
-it('should work', async({context, page, server}) => {
+it('should work', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: server.EMPTY_PAGE,
@@ -26,7 +26,7 @@ it('should work', async({context, page, server}) => {
   expect(await page.evaluate(() => document.cookie)).toEqual('password=123456');
 });
 
-it('should roundtrip cookie', async({context, page, server}) => {
+it('should roundtrip cookie', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   // @see https://en.wikipedia.org/wiki/Year_2038_problem
   const date = +(new Date('1/1/2038'));
@@ -43,7 +43,7 @@ it('should roundtrip cookie', async({context, page, server}) => {
   expect(await context.cookies()).toEqual(cookies);
 });
 
-it('should send cookie header', async({server, context}) => {
+it('should send cookie header', async ({server, context}) => {
   let cookie = '';
   server.setRoute('/empty.html', (req, res) => {
     cookie = req.headers.cookie;
@@ -55,7 +55,7 @@ it('should send cookie header', async({server, context}) => {
   expect(cookie).toBe('cookie=value');
 });
 
-it('should isolate cookies in browser contexts', async({context, server, browser}) => {
+it('should isolate cookies in browser contexts', async ({context, server, browser}) => {
   const anotherContext = await browser.newContext();
   await context.addCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page1value'}]);
   await anotherContext.addCookies([{url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page2value'}]);
@@ -71,7 +71,7 @@ it('should isolate cookies in browser contexts', async({context, server, browser
   await anotherContext.close();
 });
 
-it('should isolate session cookies', async({context, server, browser}) => {
+it('should isolate session cookies', async ({context, server, browser}) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', 'session=value');
     res.end();
@@ -97,7 +97,7 @@ it('should isolate session cookies', async({context, server, browser}) => {
   }
 });
 
-it('should isolate persistent cookies', async({context, server, browser}) => {
+it('should isolate persistent cookies', async ({context, server, browser}) => {
   server.setRoute('/setcookie.html', (req, res) => {
     res.setHeader('Set-Cookie', 'persistent=persistent-value; max-age=3600');
     res.end();
@@ -117,7 +117,7 @@ it('should isolate persistent cookies', async({context, server, browser}) => {
   await context2.close();
 });
 
-it('should isolate send cookie header', async({server, context, browser}) => {
+it('should isolate send cookie header', async ({server, context, browser}) => {
   let cookie = '';
   server.setRoute('/empty.html', (req, res) => {
     cookie = req.headers.cookie || '';
@@ -138,7 +138,7 @@ it('should isolate send cookie header', async({server, context, browser}) => {
   }
 });
 
-it.slow()('should isolate cookies between launches', async({browserType, server, defaultBrowserOptions}) => {
+it.slow()('should isolate cookies between launches', async ({browserType, server, defaultBrowserOptions}) => {
   const browser1 = await browserType.launch(defaultBrowserOptions);
   const context1 = await browser1.newContext();
   await context1.addCookies([{url: server.EMPTY_PAGE, name: 'cookie-in-context-1', value: 'value', expires: Date.now() / 1000 + 10000}]);
@@ -151,7 +151,7 @@ it.slow()('should isolate cookies between launches', async({browserType, server,
   await browser2.close();
 });
 
-it('should set multiple cookies', async({context, page, server}) => {
+it('should set multiple cookies', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: server.EMPTY_PAGE,
@@ -171,7 +171,7 @@ it('should set multiple cookies', async({context, page, server}) => {
   ]);
 });
 
-it('should have |expires| set to |-1| for session cookies', async({context, server}) => {
+it('should have |expires| set to |-1| for session cookies', async ({context, server}) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'expires',
@@ -181,7 +181,7 @@ it('should have |expires| set to |-1| for session cookies', async({context, serv
   expect(cookies[0].expires).toBe(-1);
 });
 
-it('should set cookie with reasonable defaults', async({context, server}) => {
+it('should set cookie with reasonable defaults', async ({context, server}) => {
   await context.addCookies([{
     url: server.EMPTY_PAGE,
     name: 'defaults',
@@ -200,7 +200,7 @@ it('should set cookie with reasonable defaults', async({context, server}) => {
   }]);
 });
 
-it('should set a cookie with a path', async({context, page, server}) => {
+it('should set a cookie with a path', async ({context, page, server}) => {
   await page.goto(server.PREFIX + '/grid.html');
   await context.addCookies([{
     domain: 'localhost',
@@ -229,8 +229,8 @@ it('should not set a cookie with blank page URL', async function({context, serve
   let error = null;
   try {
     await context.addCookies([
-        {url: server.EMPTY_PAGE, name: 'example-cookie', value: 'best'},
-        {url: 'about:blank', name: 'example-cookie-blank', value: 'best'}
+      {url: server.EMPTY_PAGE, name: 'example-cookie', value: 'best'},
+      {url: 'about:blank', name: 'example-cookie-blank', value: 'best'}
     ]);
   } catch (e) {
     error = e;
@@ -250,7 +250,7 @@ it('should not set a cookie on a data URL page', async function({context}) {
   expect(error.message).toContain('Data URL page can not have cookie "example-cookie"');
 });
 
-it('should default to setting secure cookie for HTTPS websites', async({context, page, server}) => {
+it('should default to setting secure cookie for HTTPS websites', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const SECURE_URL = 'https://example.com';
   await context.addCookies([{
@@ -262,7 +262,7 @@ it('should default to setting secure cookie for HTTPS websites', async({context,
   expect(cookie.secure).toBe(true);
 });
 
-it('should be able to set unsecure cookie for HTTP website', async({context, page, server}) => {
+it('should be able to set unsecure cookie for HTTP website', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const HTTP_URL = 'http://example.com';
   await context.addCookies([{
@@ -274,7 +274,7 @@ it('should be able to set unsecure cookie for HTTP website', async({context, pag
   expect(cookie.secure).toBe(false);
 });
 
-it('should set a cookie on a different domain', async({context, page, server}) => {
+it('should set a cookie on a different domain', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([{
     url: 'https://www.example.com',
@@ -294,7 +294,7 @@ it('should set a cookie on a different domain', async({context, page, server}) =
   }]);
 });
 
-it('should set cookies for a frame', async({context, page, server}) => {
+it('should set cookies for a frame', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await context.addCookies([
     {url: server.PREFIX, name: 'frame-cookie', value: 'value'}
@@ -312,7 +312,7 @@ it('should set cookies for a frame', async({context, page, server}) => {
   expect(await page.frames()[1].evaluate('document.cookie')).toBe('frame-cookie=value');
 });
 
-it('should(not) block third party cookies', async({context, page, server}) => {
+it('should(not) block third party cookies', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -330,14 +330,14 @@ it('should(not) block third party cookies', async({context, page, server}) => {
   if (allowsThirdParty) {
     expect(cookies).toEqual([
       {
-        "domain": "127.0.0.1",
-        "expires": -1,
-        "httpOnly": false,
-        "name": "username",
-        "path": "/",
-        "sameSite": "None",
-        "secure": false,
-        "value": "John Doe"
+        'domain': '127.0.0.1',
+        'expires': -1,
+        'httpOnly': false,
+        'name': 'username',
+        'path': '/',
+        'sameSite': 'None',
+        'secure': false,
+        'value': 'John Doe'
       }
     ]);
   } else {

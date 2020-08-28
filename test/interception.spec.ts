@@ -20,7 +20,7 @@ import './playwright.fixtures';
 import { globToRegex } from '../lib/client/clientHelper';
 import vm from 'vm';
 
-it('should work with navigation', async({page, server}) => {
+it('should work with navigation', async ({page, server}) => {
   const requests = new Map();
   await page.route('**/*', route => {
     requests.set(route.request().url().split('/').pop(), route.request());
@@ -34,7 +34,7 @@ it('should work with navigation', async({page, server}) => {
   expect(requests.get('style.css').isNavigationRequest()).toBe(false);
 });
 
-it('should work with ignoreHTTPSErrors', async({browser, httpsServer}) => {
+it('should work with ignoreHTTPSErrors', async ({browser, httpsServer}) => {
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
 
@@ -44,12 +44,12 @@ it('should work with ignoreHTTPSErrors', async({browser, httpsServer}) => {
   await context.close();
 });
 
-it('should intercept after a service worker', async({browser, page, server, context}) => {
+it('should intercept after a service worker', async ({browser, page, server, context}) => {
   await page.goto(server.PREFIX + '/serviceworkers/fetchdummy/sw.html');
-  await page.evaluate(() => window["activationPromise"]);
+  await page.evaluate(() => window['activationPromise']);
 
   // Sanity check.
-  const swResponse = await page.evaluate(() => window["fetchDummy"]('foo'));
+  const swResponse = await page.evaluate(() => window['fetchDummy']('foo'));
   expect(swResponse).toBe('responseFromServiceWorker:foo');
 
   await page.route('**/foo', route => {
@@ -63,15 +63,15 @@ it('should intercept after a service worker', async({browser, page, server, cont
   });
 
   // Page route is applied after service worker fetch event.
-  const swResponse2 = await page.evaluate(() => window["fetchDummy"]('foo'));
+  const swResponse2 = await page.evaluate(() => window['fetchDummy']('foo'));
   expect(swResponse2).toBe('responseFromServiceWorker:foo');
 
   // Page route is not applied to service worker initiated fetch.
-  const nonInterceptedResponse = await page.evaluate(() => window["fetchDummy"]('passthrough'));
+  const nonInterceptedResponse = await page.evaluate(() => window['fetchDummy']('passthrough'));
   expect(nonInterceptedResponse).toBe('FAILURE: Not Found');
 });
 
-it('should work with glob', async() => {
+it('should work with glob', async () => {
   expect(globToRegex('**/*.js').test('https://localhost:8080/foo.js')).toBeTruthy();
   expect(globToRegex('**/*.css').test('https://localhost:8080/foo.js')).toBeFalsy();
   expect(globToRegex('*.js').test('https://localhost:8080/foo.js')).toBeFalsy();
@@ -88,7 +88,7 @@ it('should work with glob', async() => {
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
 });
 
-it('should work with regular expression passed from a different context', async({page, server}) => {
+it('should work with regular expression passed from a different context', async ({page, server}) => {
   const ctx = vm.createContext();
   const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
   let intercepted = false;
