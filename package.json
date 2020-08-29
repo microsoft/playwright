@@ -9,19 +9,19 @@
     "node": ">=10.15.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium node test-runner/cli test/",
-    "ftest": "cross-env BROWSER=firefox node test-runner/cli test/",
-    "wtest": "cross-env BROWSER=webkit node test-runner/cli test/",
-    "test": "node test-runner/cli test/",
+    "ctest": "cross-env BROWSER=chromium test-runner test/",
+    "ftest": "cross-env BROWSER=firefox test-runner test/",
+    "wtest": "cross-env BROWSER=webkit test-runner test/",
+    "test": "test-runner test/",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts . || eslint --ext js,ts .",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
-    "test-infra": "node test-runner/cli utils/doclint/check_public_api/test/test.js && node test-runner/cli utils/doclint/preprocessor/test.js && npm run test-testrunner",
+    "test-infra": "test-runner utils/doclint/check_public_api/test/test.js && test-runner utils/doclint/preprocessor/test.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && npm run generate-channels && npm run test-types && npm run test-infra",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
-    "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run build-testrunner && npm run generate-types",
+    "build": "node utils/runWebpack.js --mode='development' && tsc -p . && npm run generate-types",
     "watch": "node utils/watch.js",
     "test-types": "npm run generate-types && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && npm run typecheck-tests",
     "generate-types": "node utils/generate_types/",
@@ -30,9 +30,7 @@
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/checkCoverage.js",
     "check-deps": "node utils/check_deps.js",
-    "show-trace": "node utils/showTestTraces.js",
-    "build-testrunner": "tsc -p test-runner",
-    "test-testrunner": "node test-runner/cli test-runner/test"
+    "show-trace": "node utils/showTestTraces.js"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -55,6 +53,7 @@
     "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-typescript": "^7.10.4",
+    "@playwright/test-runner": "^0.2.0",
     "@types/babel__core": "^7.1.9",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",

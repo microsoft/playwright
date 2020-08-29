@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { registerFixture } from '../test-runner';
+import { registerFixture } from '@playwright/test-runner';
 
 declare global {
   interface TestState {

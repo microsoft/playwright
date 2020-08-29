@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { registerFixture } from '../test-runner/lib';
+import { registerFixture } from '@playwright/test-runner';
 
 import path from 'path';
 import { spawn } from 'child_process';

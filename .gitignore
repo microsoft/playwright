@@ -1,6 +1,5 @@
 /node_modules/
 /test-results/
-/test-runner/test/test-results/
 /test/coverage-report
 /test/test-user-data-dir*
 .local-browsers/

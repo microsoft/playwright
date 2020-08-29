@@ -23,7 +23,7 @@ import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-import { parameters, registerFixture, registerWorkerFixture } from '../test-runner';
+import { parameters, registerFixture, registerWorkerFixture } from '@playwright/test-runner';
 import { mkdtempAsync, removeFolderAsync } from './utils';
 
 export const options = {
