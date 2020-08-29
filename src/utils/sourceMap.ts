@@ -28,23 +28,19 @@ let sourceUrlCounter = 0;
 const playwrightSourceUrlPrefix = '__playwright_evaluation_script__';
 const sourceUrlRegex = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
 
-export function isPlaywrightSourceUrl(s: string): boolean {
-  return s.startsWith(playwrightSourceUrlPrefix);
-}
-
 export function ensureSourceUrl(expression: string): string {
   return sourceUrlRegex.test(expression) ? expression : expression + generateSourceUrl();
 }
 
 export async function generateSourceMapUrl(functionText: string, generatedText: string): Promise<string> {
   if (!isDebugMode())
-    return generateSourceUrl();
+    return '';
   const sourceMapUrl = await innerGenerateSourceMapUrl(functionText, generatedText);
   return sourceMapUrl || generateSourceUrl();
 }
 
 export function generateSourceUrl(): string {
-  return `\n//# sourceURL=${playwrightSourceUrlPrefix}${sourceUrlCounter++}\n`;
+  return isDebugMode() ? `\n//# sourceURL=${playwrightSourceUrlPrefix}${sourceUrlCounter++}\n` : '';
 }
 
 async function innerGenerateSourceMapUrl(functionText: string, generatedText: string): Promise<string | undefined> {

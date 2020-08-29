@@ -102,9 +102,6 @@ class JSCoverage {
   }
 
   async _onScriptParsed(event: Protocol.Debugger.scriptParsedPayload) {
-    // Ignore playwright-injected scripts
-    if (sourceMap.isPlaywrightSourceUrl(event.url))
-      return;
     this._scriptIds.add(event.scriptId);
     // Ignore other anonymous scripts unless the reportAnonymousScripts option is true.
     if (!event.url && !this._reportAnonymousScripts)
