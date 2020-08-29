@@ -189,6 +189,12 @@ playwright.chromium.launch().then(async browser => {
 
   const inputElement = (await page.$('input[type=submit]'))!;
   await inputElement.click();
+
+  await inputElement.setInputFiles([{
+    name: 'yo',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('yo')
+  }])
 });
 
 // Example with launch options
