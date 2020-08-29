@@ -102,21 +102,7 @@ class VideoPlayer {
       this._server.serveFile(req, response, videoFile);
     });
 
-    await this._page.goto(this._server.PREFIX + servertPath);
-    await this._page.$eval('video', (v: HTMLVideoElement) => {
-      return new Promise(fulfil => {
-        // In case video playback autostarts.
-        v.pause();
-        v.onplaying = fulfil;
-        v.play();
-      });
-    });
-    await this._page.$eval('video', (v: HTMLVideoElement) => {
-      v.pause();
-      const result = new Promise(f => v.onseeked = f);
-      v.currentTime = v.duration;
-      return result;
-    });
+    await this._page.goto(this._server.PREFIX + '/player.html');
   }
 
   async duration() {
@@ -131,36 +117,31 @@ class VideoPlayer {
     return await this._page.$eval('video', (v: HTMLVideoElement) => v.videoHeight);
   }
 
-  async seek(timestamp) {
-    await this._page.$eval('video', (v: HTMLVideoElement, timestamp) => {
-      v.pause();
-      const result = new Promise(f => v.onseeked = f);
-      v.currentTime = timestamp;
-      return result;
-    }, timestamp);
-  }
-
   async seekFirstNonEmptyFrame() {
-    let time = 0;
-    for (let i = 0; i < 10; i++) {
-      await this.seek(time);
+    await this._page.evaluate(async () => await (window as any).playToTheEnd());
+    while (true) {
+      await this._page.evaluate(async () => await (window as any).playOneFrame());
+      const ended = await this._page.$eval('video', (video: HTMLVideoElement) => video.ended);
+      if (ended)
+        throw new Error('All frames are empty');
       const pixels = await this.pixels();
       if (!pixels.every(p => p === 255))
         return;
-      time += 0.1;
     }
   }
 
-  async seekLastNonEmptyFrame() {
-    const duration = await this.duration();
-    let time = duration - 0.01;
-    for (let i = 0; i < 10; i++) {
-      await this.seek(time);
-      const pixels = await this.pixels();
-      if (!pixels.every(p => p === 0))
-        return;
-      time -= 0.1;
-    }
+  async countFrames() {
+    return await this._page.evaluate(async () => await (window as any).countFrames());
+  }
+  async currentTime() {
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.currentTime);
+  }
+  async playOneFrame() {
+    return await this._page.evaluate(async () => await (window as any).playOneFrame());
+  }
+
+  async seekLastFrame() {
+    return await this._page.evaluate(async () => await (window as any).seekLastFrame());
   }
 
   async pixels(point = {x: 0, y: 0}) {
@@ -179,38 +160,35 @@ class VideoPlayer {
   }
 }
 
-it('should capture static page', test => {
-  test.skip(options.WIRE);
-}, async ({page, tmpDir, videoPlayer, toImpl}) => {
-  const videoFile = path.join(tmpDir, 'v.webm');
-  await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-  // TODO: in WebKit figure out why video size is not reported correctly for
-  // static pictures.
-  if (options.HEADLESS && options.WEBKIT)
-    await page.setViewportSize({width: 1270, height: 950});
-  await new Promise(r => setTimeout(r, 300));
-  await toImpl(page)._delegate.stopScreencast();
-  expect(fs.existsSync(videoFile)).toBe(true);
-
-  await videoPlayer.load(videoFile);
-  const duration = await videoPlayer.duration();
-  expect(duration).toBeGreaterThan(0);
-
-  expect(await videoPlayer.videoWidth()).toBe(640);
-  expect(await videoPlayer.videoHeight()).toBe(480);
-
-  await videoPlayer.seekLastNonEmptyFrame();
-  const pixels = await videoPlayer.pixels();
-  expectAll(pixels, almostRed);
-});
-
 describe('screencast', suite => {
-  suite.skip(options.WIRE || options.CHROMIUM);
+  suite.skip(options.WIRE);
 }, () => {
+  it('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
+    const videoFile = path.join(tmpDir, 'v.webm');
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    // TODO: in WebKit figure out why video size is not reported correctly for
+    // static pictures.
+    if (options.HEADLESS && options.WEBKIT)
+      await page.setViewportSize({width: 1270, height: 950});
+    await new Promise(r => setTimeout(r, 300));
+    await toImpl(page)._delegate.stopScreencast();
+    expect(fs.existsSync(videoFile)).toBe(true);
+
+    await videoPlayer.load(videoFile);
+    const duration = await videoPlayer.duration();
+    expect(duration).toBeGreaterThan(0);
+
+    expect(await videoPlayer.videoWidth()).toBe(640);
+    expect(await videoPlayer.videoHeight()).toBe(480);
+
+    await videoPlayer.seekLastFrame();
+    const pixels = await videoPlayer.pixels();
+    expectAll(pixels, almostRed);
+  });
+
   it('should capture navigation', test => {
     test.flaky(options.WEBKIT);
-    test.flaky(options.FIREFOX);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
@@ -236,12 +214,16 @@ describe('screencast', suite => {
     }
 
     {
-      await videoPlayer.seekLastNonEmptyFrame();
+      await videoPlayer.seekLastFrame();
       const pixels = await videoPlayer.pixels();
       expectAll(pixels, almostGrey);
     }
   });
+});
 
+describe('screencast', suite => {
+  suite.skip(options.WIRE || options.CHROMIUM);
+}, () => {
   it('should capture css transformation', test => {
     test.fixme(options.WEBKIT && WIN, 'Accelerated compositing is disabled in WebKit on Windows.');
     test.flaky(options.WEBKIT && LINUX);
@@ -262,7 +244,7 @@ describe('screencast', suite => {
     expect(duration).toBeGreaterThan(0);
 
     {
-      await videoPlayer.seekLastNonEmptyFrame();
+      await videoPlayer.seekLastFrame();
       const pixels = await videoPlayer.pixels({x: 95, y: 45});
       expectAll(pixels, almostRed);
     }
