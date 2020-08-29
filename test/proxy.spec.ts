@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { parameters } from '../test-runner';
+import { parameters } from '@playwright/test-runner';
 import { options } from './playwright.fixtures';
 
 import socks from 'socksv5';

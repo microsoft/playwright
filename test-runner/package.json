@@ -1,8 +1,0 @@
-{
-  "name": "test-runner",
-  "version": "0.0.7",
-  "bin": {
-    "test-runner": "./cli.js"
-  },
-  "main": "./lib/index.js"
-}

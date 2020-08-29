@@ -15,7 +15,7 @@
  */
 
 import '../playwright.fixtures';
-import { registerFixture } from '../../test-runner';
+import { registerFixture } from '@playwright/test-runner';
 import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
 

@@ -15,7 +15,7 @@
  */
 
 import './test-runner-helper';
-import { registerFixture } from '../test-runner';
+import { registerFixture } from '@playwright/test-runner';
 
 registerFixture('helperFixture', async ({}, test) => {
   await test('helperFixture - overridden');
