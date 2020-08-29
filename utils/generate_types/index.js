@@ -149,7 +149,7 @@ function createEventDescriptions(classDesc) {
   for (const [eventName, value] of classDesc.events) {
     const type = stringifyComplexType(value && value.type, '', classDesc.name, eventName, 'payload');
     const argName = argNameForType(type);
-    const params = argName ? `${argName} : ${type}` : '';
+    const params = argName ? `${argName}: ${type}` : '';
     descriptions.push({
       type,
       params,
@@ -244,10 +244,10 @@ function stringifyComplexType(type, indent, ...namespace) {
     const shouldExport = exported[name];
     objectDefinitions.push({name, properties: type.properties});
     if (shouldExport) {
-      typeString = typeString.replace('Object', name);
+      typeString = typeString.replace(/Object/g, name);
     } else {
       const objType = stringifyObjectType(type.properties, name, indent);
-      typeString = typeString.replace('Object', objType);
+      typeString = typeString.replace(/Object/g, objType);
     }
   }
   return typeString;
@@ -344,9 +344,12 @@ function stringifySimpleType(parsedType) {
       const arg = args;
       args = args.next;
       arg.next = null;
-      stringArgs.push(stringifySimpleType(arg));
+      stringArgs.push({
+        type: stringifySimpleType(arg),
+        name: arg.name.toLowerCase()
+      });
     }
-    out = `((${stringArgs.map((type, index) => `arg${index} : ${type}`).join(', ')}) => ${stringifySimpleType(parsedType.retType)})`;
+    out = `((${stringArgs.map(({name, type}) => `${name}: ${type}`).join(', ')}) => ${stringifySimpleType(parsedType.retType)})`;
   } else if (parsedType.name === 'function') {
     out = 'Function';
   }
