@@ -31,6 +31,7 @@ it('should scope context handles', async ({browserType, browser, server}) => {
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
+      { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
     ]
   };
@@ -55,6 +56,7 @@ it('should scope context handles', async ({browserType, browser, server}) => {
         ] },
       ] },
       { _guid: 'Playwright', objects: [] },
+      { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
     ]
   });
@@ -75,6 +77,7 @@ it('should scope CDPSession handles', test => {
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
+      { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
     ]
   };
@@ -92,6 +95,7 @@ it('should scope CDPSession handles', test => {
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
+      { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
     ]
   });
@@ -110,6 +114,7 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
+      { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
     ]
   };
@@ -129,6 +134,7 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
+      { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
     ]
   });

@@ -20,13 +20,15 @@ import * as ws from 'ws';
 import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
-import { DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
+import { Dispatcher, DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
 import { BrowserDispatcher } from './dispatchers/browserDispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
-import { BrowserNewContextParams, BrowserContextChannel } from './protocol/channels';
+import * as channels from './protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';
 import { envObjectToArray } from './client/clientHelper';
 import { createGuid } from './utils/utils';
+import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
+import { Selectors } from './server/selectors';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserTypeBase;
@@ -105,7 +107,10 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       connection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
     socket.on('error', () => {});
-    const browser = new ConnectedBrowser(connection.rootDispatcher(), this._browser);
+    const selectors = new Selectors();
+    const scope = connection.rootDispatcher();
+    const browser = new ConnectedBrowser(scope, this._browser, selectors);
+    new RemoteBrowserDispatcher(scope, browser, selectors);
     socket.on('close', () => {
       // Avoid sending any more messages over closed socket.
       connection.onmessage = () => {};
@@ -115,17 +120,30 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 }
 
+class RemoteBrowserDispatcher extends Dispatcher<{}, channels.RemoteBrowserInitializer> implements channels.PlaywrightChannel {
+  constructor(scope: DispatcherScope, browser: ConnectedBrowser, selectors: Selectors) {
+    super(scope, {}, 'RemoteBrowser', {
+      selectors: new SelectorsDispatcher(scope, selectors),
+      browser,
+    }, false, 'remoteBrowser');
+  }
+}
+
 class ConnectedBrowser extends BrowserDispatcher {
   private _contexts: BrowserContextDispatcher[] = [];
+  private _selectors: Selectors;
   _closed = false;
 
-  constructor(scope: DispatcherScope, browser: Browser) {
-    super(scope, browser, 'connectedBrowser');
+  constructor(scope: DispatcherScope, browser: Browser, selectors: Selectors) {
+    super(scope, browser);
+    this._selectors = selectors;
   }
 
-  async newContext(params: BrowserNewContextParams): Promise<{ context: BrowserContextChannel }> {
+  async newContext(params: channels.BrowserNewContextParams): Promise<{ context: channels.BrowserContextChannel }> {
     const result = await super.newContext(params);
-    this._contexts.push(result.context as BrowserContextDispatcher);
+    const dispatcher = result.context as BrowserContextDispatcher;
+    dispatcher._object._setSelectors(this._selectors);
+    this._contexts.push(dispatcher);
     return result;
   }
 

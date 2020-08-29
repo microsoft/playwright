@@ -22,7 +22,7 @@ import { debugLogger } from '../utils/debugLogger';
 import { isDevMode } from '../utils/utils';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
-  readonly _connection: Connection;
+  private _connection: Connection;
   private _parent: ChannelOwner | undefined;
   private _objects = new Map<string, ChannelOwner>();
 

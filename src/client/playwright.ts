@@ -17,7 +17,7 @@
 import * as channels from '../protocol/channels';
 import { BrowserType } from './browserType';
 import { ChannelOwner } from './channelOwner';
-import { Selectors } from './selectors';
+import { Selectors, SelectorsOwner, sharedSelectors } from './selectors';
 import { Electron } from './electron';
 import { TimeoutError } from '../utils/errors';
 import { Size } from './types';
@@ -49,8 +49,8 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel, channel
     this.devices = {};
     for (const { name, descriptor } of initializer.deviceDescriptors)
       this.devices[name] = descriptor;
-    this.selectors = new Selectors();
+    this.selectors = sharedSelectors;
     this.errors = { TimeoutError };
-    this._connection._selectors = this.selectors;
+    this.selectors._addChannel(SelectorsOwner.from(initializer.selectors));
   }
 }

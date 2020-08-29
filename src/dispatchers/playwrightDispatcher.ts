@@ -21,6 +21,7 @@ import { Dispatcher, DispatcherScope } from './dispatcher';
 import { Electron } from '../server/electron/electron';
 import { ElectronDispatcher } from './electronDispatcher';
 import { DeviceDescriptors } from '../server/deviceDescriptors';
+import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
@@ -33,6 +34,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       electron: electron ? new ElectronDispatcher(scope, electron) : undefined,
       deviceDescriptors,
+      selectors: new SelectorsDispatcher(scope, playwright.selectors),
     }, false, 'Playwright');
   }
 }

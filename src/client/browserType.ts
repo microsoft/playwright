@@ -28,6 +28,7 @@ import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
 import { validateHeaders } from './network';
 import { assert, makeWaitForNextTask, headersObjectToArray } from '../utils/utils';
+import { SelectorsOwner, sharedSelectors } from './selectors';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
@@ -111,8 +112,6 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     const logger = options.logger;
     return this._wrapApiCall('browserType.connect', async () => {
       const connection = new Connection();
-      // Inherit playwright selectors for connected browser.
-      connection._selectors = this._connection._selectors;
 
       const ws = new WebSocket(options.wsEndpoint, [], {
         perMessageDeflate: false,
@@ -146,7 +145,13 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           }
         }
         ws.addEventListener('open', async () => {
-          const browser = (await connection.waitForObjectWithKnownName('connectedBrowser')) as Browser;
+          const remoteBrowser = await connection.waitForObjectWithKnownName('remoteBrowser') as RemoteBrowser;
+
+          // Inherit shared selectors for connected browser.
+          const selectorsOwner = SelectorsOwner.from(remoteBrowser._initializer.selectors);
+          sharedSelectors._addChannel(selectorsOwner);
+
+          const browser = Browser.from(remoteBrowser._initializer.browser);
           browser._logger = logger;
           browser._isRemote = true;
           const closeListener = () => {
@@ -160,6 +165,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           };
           ws.addEventListener('close', closeListener);
           browser.on(Events.Browser.Disconnected, () => {
+            sharedSelectors._removeChannel(selectorsOwner);
             ws.removeEventListener('close', closeListener);
             ws.close();
           });
@@ -172,4 +178,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       });
     }, logger);
   }
+}
+
+export class RemoteBrowser extends ChannelOwner<channels.RemoteBrowserChannel, channels.RemoteBrowserInitializer> {
 }

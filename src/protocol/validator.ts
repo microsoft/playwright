@@ -91,6 +91,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     value: tOptional(tType('SerializedValue')),
   });
+  scheme.SelectorsRegisterParams = tObject({
+    name: tString,
+    source: tString,
+    contentScript: tOptional(tBoolean),
+  });
   scheme.BrowserTypeLaunchParams = tObject({
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
@@ -279,11 +284,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
-  });
-  scheme.BrowserContextRegisterSelectorEngineParams = tObject({
-    name: tString,
-    source: tString,
-    contentScript: tOptional(tBoolean),
   });
   scheme.PageSetDefaultNavigationTimeoutNoReplyParams = tObject({
     timeout: tNumber,

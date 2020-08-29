@@ -163,9 +163,7 @@ describe('connect', suite => {
     }
   });
 
-  it('should respect selectors', test => {
-    test.fail(true);
-  }, async ({ playwright, browserType, remoteServer }) => {
+  it('should respect selectors', async ({ playwright, browserType, remoteServer }) => {
     const mycss = () => ({
       create(root, target) {},
       query(root, selector) {
@@ -178,17 +176,30 @@ describe('connect', suite => {
     // Register one engine before connecting.
     await utils.registerEngine(playwright, 'mycss1', mycss);
 
-    const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-    const context = await browser.newContext();
+    const browser1 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    const context1 = await browser1.newContext();
 
     // Register another engine after creating context.
     await utils.registerEngine(playwright, 'mycss2', mycss);
 
-    const page = await browser.newPage();
-    await page.setContent(`<div>hello</div>`);
-    expect(await page.innerHTML('css=div')).toBe('hello');
-    expect(await page.innerHTML('mycss1=div')).toBe('hello');
-    expect(await page.innerHTML('mycss2=div')).toBe('hello');
-    await browser.close();
+    const page1 = await context1.newPage();
+    await page1.setContent(`<div>hello</div>`);
+    expect(await page1.innerHTML('css=div')).toBe('hello');
+    expect(await page1.innerHTML('mycss1=div')).toBe('hello');
+    expect(await page1.innerHTML('mycss2=div')).toBe('hello');
+
+    const browser2 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+
+    // Register third engine after second connect.
+    await utils.registerEngine(playwright, 'mycss3', mycss);
+
+    const page2 = await browser2.newPage();
+    await page2.setContent(`<div>hello</div>`);
+    expect(await page2.innerHTML('css=div')).toBe('hello');
+    expect(await page2.innerHTML('mycss1=div')).toBe('hello');
+    expect(await page2.innerHTML('mycss2=div')).toBe('hello');
+    expect(await page2.innerHTML('mycss3=div')).toBe('hello');
+
+    await browser1.close();
   });
 });

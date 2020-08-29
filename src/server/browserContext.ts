@@ -30,7 +30,7 @@ import { Progress } from './progress';
 import { DebugController } from './debug/debugController';
 import { isDebugMode } from '../utils/utils';
 import { Snapshotter, SnapshotterDelegate } from './snapshotter';
-import { Selectors, sharedSelectors } from './selectors';
+import { Selectors, serverSelectors } from './selectors';
 
 export class Screencast {
   readonly page: Page;
@@ -81,12 +81,12 @@ export abstract class BrowserContext extends EventEmitter {
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
-  _createSelectors() {
-    this._selectors = new Selectors();
+  _setSelectors(selectors: Selectors) {
+    this._selectors = selectors;
   }
 
   selectors() {
-    return this._selectors || sharedSelectors;
+    return this._selectors || serverSelectors;
   }
 
   async _initialize() {

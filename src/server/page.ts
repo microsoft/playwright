@@ -166,7 +166,7 @@ export class Page extends EventEmitter {
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
-    this.selectors = browserContext.selectors;
+    this.selectors = browserContext.selectors();
   }
 
   async _doSlowMo() {

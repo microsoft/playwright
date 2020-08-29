@@ -16,7 +16,7 @@
 
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
-import { BrowserType } from './browserType';
+import { BrowserType, RemoteBrowser } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
@@ -39,7 +39,7 @@ import { createScheme, Validator, ValidationError } from '../protocol/validator'
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
-import { Selectors } from './selectors';
+import { SelectorsOwner } from './selectors';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -54,7 +54,6 @@ export class Connection {
   private _lastId = 0;
   private _callbacks = new Map<number, { resolve: (a: any) => void, reject: (a: Error) => void }>();
   private _rootObject: ChannelOwner;
-  _selectors?: Selectors;
 
   constructor() {
     this._rootObject = new Root(this);
@@ -155,9 +154,9 @@ export class Connection {
       case 'BrowserContext': {
         const browserName = (initializer as channels.BrowserContextInitializer).browserName;
         if (browserName === 'chromium')
-          result = new ChromiumBrowserContext(parent, type, guid, initializer, this._selectors!);
+          result = new ChromiumBrowserContext(parent, type, guid, initializer);
         else
-          result = new BrowserContext(parent, type, guid, initializer, browserName, this._selectors!);
+          result = new BrowserContext(parent, type, guid, initializer, browserName);
         break;
       }
       case 'BrowserType':
@@ -196,17 +195,23 @@ export class Connection {
       case 'Playwright':
         result = new Playwright(parent, type, guid, initializer);
         break;
+      case 'RemoteBrowser':
+        result = new RemoteBrowser(parent, type, guid, initializer);
+        break;
       case 'Request':
         result = new Request(parent, type, guid, initializer);
-        break;
-      case 'Stream':
-        result = new Stream(parent, type, guid, initializer);
         break;
       case 'Response':
         result = new Response(parent, type, guid, initializer);
         break;
       case 'Route':
         result = new Route(parent, type, guid, initializer);
+        break;
+      case 'Stream':
+        result = new Stream(parent, type, guid, initializer);
+        break;
+      case 'Selectors':
+        result = new SelectorsOwner(parent, type, guid, initializer);
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);

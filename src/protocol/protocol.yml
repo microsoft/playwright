@@ -143,6 +143,27 @@ Playwright:
               deviceScaleFactor: number
               isMobile: boolean
               hasTouch: boolean
+    selectors: Selectors
+
+
+RemoteBrowser:
+  type: interface
+
+  initializer:
+    browser: Browser
+    selectors: Selectors
+
+
+Selectors:
+  type: interface
+
+  commands:
+
+    register:
+      parameters:
+        name: string
+        source: string
+        contentScript: boolean?
 
 
 BrowserType:
@@ -484,12 +505,6 @@ BrowserContext:
         page: Page
       returns:
         session: CDPSession
-
-    registerSelectorEngine:
-      parameters:
-        name: string
-        source: string
-        contentScript: boolean?
 
   events:
 

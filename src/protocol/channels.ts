@@ -104,9 +104,33 @@ export type PlaywrightInitializer = {
       hasTouch: boolean,
     },
   }[],
+  selectors: SelectorsChannel,
 };
 export interface PlaywrightChannel extends Channel {
 }
+
+// ----------- RemoteBrowser -----------
+export type RemoteBrowserInitializer = {
+  browser: BrowserChannel,
+  selectors: SelectorsChannel,
+};
+export interface RemoteBrowserChannel extends Channel {
+}
+
+// ----------- Selectors -----------
+export type SelectorsInitializer = {};
+export interface SelectorsChannel extends Channel {
+  register(params: SelectorsRegisterParams): Promise<SelectorsRegisterResult>;
+}
+export type SelectorsRegisterParams = {
+  name: string,
+  source: string,
+  contentScript?: boolean,
+};
+export type SelectorsRegisterOptions = {
+  contentScript?: boolean,
+};
+export type SelectorsRegisterResult = void;
 
 // ----------- BrowserType -----------
 export type BrowserTypeInitializer = {
@@ -427,7 +451,6 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
-  registerSelectorEngine(params: BrowserContextRegisterSelectorEngineParams): Promise<BrowserContextRegisterSelectorEngineResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -592,15 +615,6 @@ export type BrowserContextCrNewCDPSessionOptions = {
 export type BrowserContextCrNewCDPSessionResult = {
   session: CDPSessionChannel,
 };
-export type BrowserContextRegisterSelectorEngineParams = {
-  name: string,
-  source: string,
-  contentScript?: boolean,
-};
-export type BrowserContextRegisterSelectorEngineOptions = {
-  contentScript?: boolean,
-};
-export type BrowserContextRegisterSelectorEngineResult = void;
 
 // ----------- Page -----------
 export type PageInitializer = {
