@@ -78,11 +78,14 @@ export class TestRunner extends EventEmitter {
 
   unhandledError(error: Error | any) {
     if (this._testResult) {
+      this._testResult.status = 'failed';
       this._testResult.error = serializeError(error);
+      this._failedTestId = this._testId;
       this.emit('testEnd', {
         id: this._testId,
         result: this._testResult
       });
+      this._testResult = null;
     } else if (!this._loaded) {
       // No current test - fatal error.
       this._fatalError = serializeError(error);
@@ -197,7 +200,10 @@ export class TestRunner extends EventEmitter {
       result.error = serializeError(error);
     }
     result.duration = Date.now() - startTime;
-    this.emit('testEnd', { id, result });
+    if (this._testResult) {
+      // We could have reported end due to an unhandled exception.
+      this.emit('testEnd', { id, result });
+    }
     if (result.status !== 'passed')
       this._failedTestId = this._testId;
     this._testResult = null;

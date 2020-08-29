@@ -162,6 +162,15 @@ it('should respect nested skip', async () => {
   expect(skipped).toBe(1);
 });
 
+it('should retry unhandled rejection', async () => {
+  const result = await runTest('unhandled-rejection.js', { retries: 2 });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.output.split('\n')[0]).toBe(colors.red('F').repeat(3));
+  expect(result.output).toContain('Unhandled rejection');
+});
+
 async function runTest(filePath: string, params: any = {}) {
   const outputDir = path.join(__dirname, 'test-results');
   const reportFile = path.join(outputDir, 'results.json');
