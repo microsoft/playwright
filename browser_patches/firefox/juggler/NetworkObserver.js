@@ -492,7 +492,7 @@ class NetworkRequest {
       navigationId: this.navigationId,
       cause: causeTypeToString(causeType),
       internalCause: causeTypeToString(internalCauseType),
-    }, this.httpChannel.channelId);
+    }, this.httpChannel.channelId + ':' + internalCauseType);
   }
 
   _sendOnResponse(fromCache) {

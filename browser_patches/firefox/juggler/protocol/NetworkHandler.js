@@ -114,13 +114,13 @@ class NetworkHandler {
       this._httpActivity.delete(activity._id);
   }
 
-  async _onRequest(eventDetails, channelId) {
+  async _onRequest(eventDetails, channelKey) {
     let pendingRequestCallback;
     let pendingRequestPromise = new Promise(x => pendingRequestCallback = x);
     this._pendingRequstWillBeSentEvents.add(pendingRequestPromise);
     let details = null;
     try {
-      details = await this._contentPage.send('requestDetails', {channelId});
+      details = await this._contentPage.send('requestDetails', {channelKey});
     } catch (e) {
       pendingRequestCallback();
       this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
