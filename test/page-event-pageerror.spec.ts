@@ -58,7 +58,7 @@ it('should handle odd values', async ({page}) => {
 });
 
 it('should handle object', test => {
-  test.fail(options.FIREFOX);
+  test.fixme(options.FIREFOX);
 }, async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
@@ -69,7 +69,7 @@ it('should handle object', test => {
 });
 
 it('should handle window', test => {
-  test.fail(options.FIREFOX);
+  test.fixme(options.FIREFOX);
 }, async ({page}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([

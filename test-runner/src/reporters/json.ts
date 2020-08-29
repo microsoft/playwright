@@ -19,6 +19,11 @@ import { Suite, Test, TestResult } from '../test';
 import * as fs from 'fs';
 
 class JSONReporter extends BaseReporter {
+  onTimeout(timeout) {
+    super.onTimeout(timeout);
+    this.onEnd();
+  }
+
   onEnd() {
     super.onEnd();
     const result = {

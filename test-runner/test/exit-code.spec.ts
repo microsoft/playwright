@@ -62,10 +62,18 @@ it('should access data in fixture', async () => {
   expect(testResult.stderr).toEqual([{ text: 'console.error\n' }]);
 });
 
+it('should handle fixture timeout', async () => {
+  const { exitCode, output, failed, timedOut } = await runTest('fixture-timeout.js', { timeout: 500 });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Timeout of 500ms');
+  expect(failed).toBe(1);
+  expect(timedOut).toBe(1);
+});
+
 it('should handle worker fixture timeout', async () => {
-  const result = await runTest('worker-fixture-timeout.js', { timeout: 1000 });
+  const result = await runTest('worker-fixture-timeout.js', { timeout: 500 });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Timeout of 1000ms');
+  expect(result.output).toContain('Timeout of 500ms');
 });
 
 it('should handle worker fixture error', async () => {
@@ -169,6 +177,12 @@ it('should retry unhandled rejection', async () => {
   expect(result.failed).toBe(1);
   expect(result.output.split('\n')[0]).toBe(colors.red('F').repeat(3));
   expect(result.output).toContain('Unhandled rejection');
+});
+
+it('should respect global timeout', async () => {
+  const { exitCode, output } = await runTest('one-timeout.js', { 'timeout': 100000, 'global-timeout': 500 });
+  expect(exitCode).toBe(1);
+  expect(output).toContain('Timed out waiting 0.5s for the entire test run');
 });
 
 async function runTest(filePath: string, params: any = {}) {

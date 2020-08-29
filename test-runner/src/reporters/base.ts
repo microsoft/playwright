@@ -32,11 +32,13 @@ export class BaseReporter implements Reporter  {
   skipped: Test[] = [];
   asExpected: Test[] = [];
   unexpected = new Set<Test>();
-  flaky: Test[] = [];
+  expectedFlaky: Test[] = [];
+  unexpectedFlaky: Test[] = [];
   duration = 0;
   startTime: number;
   config: RunnerConfig;
   suite: Suite;
+  timeout: number;
 
   constructor() {
     process.on('SIGINT', async () => {
@@ -76,7 +78,10 @@ export class BaseReporter implements Reporter  {
         this.asExpected.push(test);
       } else {
         // as expected after unexpected -> flaky.
-        this.flaky.push(test);
+        if (test.isFlaky())
+          this.expectedFlaky.push(test);
+        else
+          this.unexpectedFlaky.push(test);
       }
       return;
     }
@@ -84,6 +89,10 @@ export class BaseReporter implements Reporter  {
       // We made as many retries as we could, still failing.
       this.unexpected.add(test);
     }
+  }
+
+  onTimeout(timeout: number) {
+    this.timeout = timeout;
   }
 
   onEnd() {
@@ -105,10 +114,13 @@ export class BaseReporter implements Reporter  {
       this._printFailures(filteredUnexpected);
     }
 
-    if (this.flaky.length) {
-      console.log(colors.red(`  ${this.flaky.length} flaky`));
-      console.log('');
-      this._printFailures(this.flaky);
+    const allFlaky = this.expectedFlaky.length + this.unexpectedFlaky.length;
+    if (allFlaky) {
+      console.log(colors.red(`  ${allFlaky} flaky`));
+      if (this.unexpectedFlaky.length) {
+        console.log('');
+        this._printFailures(this.unexpectedFlaky);
+      }
     }
 
     const timedOut = [...this.unexpected].filter(t => t._hasResultWithStatus('timedOut'));
@@ -118,6 +130,10 @@ export class BaseReporter implements Reporter  {
       this._printFailures(timedOut);
     }
     console.log('');
+    if (this.timeout) {
+      console.log(colors.red(`  Timed out waiting ${this.timeout / 1000}s for the entire test run`));
+      console.log('');
+    }
   }
 
   private _printFailures(failures: Test[]) {

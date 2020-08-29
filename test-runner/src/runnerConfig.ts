@@ -15,17 +15,18 @@
  */
 
 export type RunnerConfig = {
+  debug?: boolean;
   forbidOnly?: boolean;
+  globalTimeout: number;
+  grep?: string;
   jobs: number;
   outputDir: string;
+  quiet?: boolean;
+  repeatEach: number;
+  retries: number,
   snapshotDir: string;
   testDir: string;
   timeout: number;
-  debug?: boolean;
-  quiet?: boolean;
-  grep?: string;
-  repeatEach: number;
-  retries: number,
   trialRun?: boolean;
   updateSnapshots?: boolean;
 };

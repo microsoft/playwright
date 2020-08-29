@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-import { RunnerConfig } from './runnerConfig';
-import { Suite, Test, TestResult } from './test';
+const { registerFixture } = require('../../');
 
-export interface Reporter {
-  onBegin(config: RunnerConfig, suite: Suite): void;
-  onTestBegin(test: Test): void;
-  onTestStdOut(test: Test, chunk: string | Buffer): void;
-  onTestStdErr(test: Test, chunk: string | Buffer): void;
-  onTestEnd(test: Test, result: TestResult): void;
-  onTimeout(timeout: number): void;
-  onEnd(): void;
-}
+registerFixture('timeout', async ({}, runTest) => {
+	await runTest();
+	await new Promise(f => setTimeout(f, 100000));
+});
+
+it('fixture timeout', async({timeout}) => {	
+	expect(1).toBe(1);
+});
+
+it('failing fixture timeout', async({timeout}) => {	
+	expect(1).toBe(2);
+});

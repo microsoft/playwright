@@ -149,7 +149,7 @@ describe('permissions', suite => {
   it('should support clipboard read', test => {
     test.fail(options.WEBKIT);
     test.fail(options.FIREFOX, 'No such permissions (requires flag) in Firefox');
-    test.fail(options.CHROMIUM && !options.HEADLESS);
+    test.fixme(options.CHROMIUM && !options.HEADLESS);
   }, async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

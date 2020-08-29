@@ -29,6 +29,11 @@ class DotReporter extends BaseReporter {
     }
   }
 
+  onTimeout(timeout) {
+    super.onTimeout(timeout);
+    this.onEnd();
+  }
+
   onEnd() {
     super.onEnd();
     process.stdout.write('\n');
