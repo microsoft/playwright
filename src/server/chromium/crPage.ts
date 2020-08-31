@@ -775,7 +775,7 @@ class FrameSession {
     try {
       await this._client.send('Page.stopScreencast');
     } finally {
-      const recorder = this._videoRecorder;
+      const recorder = this._videoRecorder!;
       const screencastId = this._screencastId!;
       this._videoRecorder = null;
       this._screencastId = null;
