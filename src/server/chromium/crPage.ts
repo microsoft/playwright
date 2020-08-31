@@ -744,7 +744,7 @@ class FrameSession {
     const buffer = Buffer.from(payload.data, 'base64');
     this._videoRecorder.writeFrame(buffer, payload.metadata.timestamp!);
     // The target may be closed before receiving the ack.
-    this._client.send('Page.screencastFrameAck', {sessionId: payload.sessionId}).catch(()=>{});
+    this._client.send('Page.screencastFrameAck', {sessionId: payload.sessionId}).catch(() => {});
   }
 
   async _startScreencast(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
