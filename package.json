@@ -37,6 +37,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.0.20",
     "debug": "^4.1.1",
     "extract-zip": "^2.0.1",
     "https-proxy-agent": "^5.0.0",

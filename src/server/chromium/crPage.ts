@@ -37,6 +37,7 @@ import { ConsoleMessage } from '../console';
 import * as sourceMap from '../../utils/sourceMap';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject } from '../../utils/utils';
+import { VideoRecorder } from './videoRecorder';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -209,11 +210,11 @@ export class CRPage implements PageDelegate {
   }
 
   async startScreencast(options: types.PageScreencastOptions): Promise<void> {
-    throw new Error('Not implemented');
+    await this._mainFrameSession._startScreencast(options);
   }
 
   async stopScreencast(): Promise<void> {
-    throw new Error('Not implemented');
+    await this._mainFrameSession._stopScreencast();
   }
 
   async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
@@ -324,6 +325,7 @@ class FrameSession {
   // Marks the oopif session that remote -> local transition has happened in the parent.
   // See Target.detachedFromTarget handler for details.
   private _swappedIn = false;
+  private _videoRecorder: VideoRecorder | null = null;
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -358,6 +360,7 @@ class FrameSession {
       helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
       helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
       helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
+      helper.addEventListener(this._client, 'Page.screencastFrame', event => this._onScreencastFrame(event)),
       helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
       helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
       helper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
@@ -722,6 +725,34 @@ class FrameSession {
       this._crPage._browserContext._browser._downloadFinished(payload.guid, '');
     if (payload.state === 'canceled')
       this._crPage._browserContext._browser._downloadFinished(payload.guid, 'canceled');
+  }
+
+  _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
+    if (!this._videoRecorder)
+      return;
+    const buffer = Buffer.from(payload.data, 'base64');
+    this._videoRecorder.writeFrame(buffer, payload.metadata.timestamp!);
+    this._client.send('Page.screencastFrameAck', {sessionId: payload.sessionId});
+  }
+
+  async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
+    assert(!this._videoRecorder, 'Already started');
+    this._videoRecorder = await VideoRecorder.launch(options);
+    await this._client.send('Page.startScreencast', {
+      format: 'jpeg',
+      quality: 90,
+      maxWidth: options.width,
+      maxHeight: options.height,
+    });
+  }
+
+  async _stopScreencast(): Promise<void> {
+    if (!this._videoRecorder)
+      return;
+    const recorder = this._videoRecorder;
+    this._videoRecorder = null;
+    await this._client.send('Page.stopScreencast');
+    await recorder.stop();
   }
 
   async _updateExtraHTTPHeaders(): Promise<void> {

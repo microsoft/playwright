@@ -228,20 +228,22 @@ class TestServer {
     if (handler) {
       handler.call(null, request, response);
     } else {
-      const pathName = url.parse(request.url).path;
-      this.serveFile(request, response, pathName);
+      this.serveFile(request, response);
     }
   }
 
   /**
    * @param {!http.IncomingMessage} request
    * @param {!http.ServerResponse} response
-   * @param {string} pathName
+   * @param {string|undefined} filePath
    */
-  serveFile(request, response, pathName) {
-    if (pathName === '/')
-      pathName = '/index.html';
-    const filePath = path.join(this._dirPath, pathName.substring(1));
+  serveFile(request, response, filePath) {
+    let pathName = url.parse(request.url).path;
+    if (!filePath) {
+      if (pathName === '/')
+        pathName = '/index.html';
+      filePath = path.join(this._dirPath, pathName.substring(1));
+    }
 
     if (this._cachedPathPrefix !== null && filePath.startsWith(this._cachedPathPrefix)) {
       if (request.headers['if-modified-since']) {
