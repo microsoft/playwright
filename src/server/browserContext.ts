@@ -53,7 +53,6 @@ export abstract class BrowserContext extends EventEmitter {
     Close: 'close',
     Page: 'page',
     ScreencastStarted: 'screencaststarted',
-    ScreencastStopped: 'screencaststopped',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
