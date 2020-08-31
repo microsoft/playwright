@@ -458,7 +458,6 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source));
-    // if (._browserContext._options._screencas) {
     if (this._crPage._browserContext._screencastOptions) {
       const contextOptions = this._crPage._browserContext._screencastOptions;
       const screencastId = createGuid();
