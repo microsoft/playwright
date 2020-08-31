@@ -161,9 +161,13 @@ class VideoPlayer {
 }
 
 describe('screencast', suite => {
+  suite.slow();
   suite.skip(options.WIRE);
 }, () => {
-  it('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
+  it('should capture static page', test => {
+    test.flaky(options.CHROMIUM && LINUX && !options.HEADLESS);
+    test.flaky(options.WEBKIT && LINUX);
+  }, async ({page, tmpDir, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
@@ -188,6 +192,8 @@ describe('screencast', suite => {
   });
 
   it('should capture navigation', test => {
+    test.flaky(options.CHROMIUM && MAC);
+    test.flaky(options.FIREFOX && LINUX && !options.HEADLESS);
     test.flaky(options.WEBKIT);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
@@ -222,6 +228,7 @@ describe('screencast', suite => {
 });
 
 describe('screencast', suite => {
+  suite.slow();
   suite.skip(options.WIRE || options.CHROMIUM);
 }, () => {
   it('should capture css transformation', test => {
@@ -251,7 +258,6 @@ describe('screencast', suite => {
   });
 
   it('should fire start/stop events when page created/closed', test => {
-    test.slow();
     test.flaky(options.FIREFOX, 'Even slow is not slow enough');
   }, async ({browser, tmpDir, toImpl}) => {
     // Use server side of the context. All the code below also uses server side APIs.
