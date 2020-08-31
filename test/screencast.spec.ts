@@ -194,6 +194,7 @@ describe('screencast', suite => {
   it('should capture navigation', test => {
     test.flaky(options.CHROMIUM && MAC);
     test.flaky(options.FIREFOX && LINUX && !options.HEADLESS);
+    test.flaky(options.FIREFOX && WIN);
     test.flaky(options.WEBKIT);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
@@ -225,24 +226,26 @@ describe('screencast', suite => {
       expectAll(pixels, almostGrey);
     }
   });
-});
 
-describe('screencast', suite => {
-  suite.slow();
-  suite.skip(options.WIRE || options.CHROMIUM);
-}, () => {
   it('should capture css transformation', test => {
     test.fixme(options.WEBKIT && WIN, 'Accelerated compositing is disabled in WebKit on Windows.');
     test.flaky(options.WEBKIT && LINUX);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
+    // Chromium automatically fits all frames to fit specified size. To avoid
+    // unwanted transformations we set view port size equal to the screencast
+    // size.
+    // TODO: support explicit 'scale' parameter in CDP.
+    if (options.CHROMIUM)
+      await page.setViewportSize({width: 640, height: 480});
     await page.goto(server.PREFIX + '/rotate-z.html');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
     // TODO: in WebKit figure out why video size is not reported correctly for
     // static pictures.
     if (options.HEADLESS && options.WEBKIT)
       await page.setViewportSize({width: 1270, height: 950});
-    await new Promise(r => setTimeout(r, 300));
+    // 300 is not enough for Chromium headful.
+    await new Promise(r => setTimeout(r, 500));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
 
@@ -257,12 +260,12 @@ describe('screencast', suite => {
     }
   });
 
-  it('should fire start/stop events when page created/closed', test => {
+  it('should sutomatically start/finish when new page is created/closed', test => {
     test.flaky(options.FIREFOX, 'Even slow is not slow enough');
   }, async ({browser, tmpDir, toImpl}) => {
     // Use server side of the context. All the code below also uses server side APIs.
     const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
+    await context._enableScreencast({width: 320, height: 240, dir: tmpDir});
     expect(context._screencastOptions).toBeTruthy();
 
     const [screencast, newPage] = await Promise.all([
@@ -277,6 +280,25 @@ describe('screencast', suite => {
     ]);
     expect(path.dirname(videoFile)).toBe(tmpDir);
     await context.close();
+  });
+
+  it('should finish when contex closes', async ({browser, tmpDir, toImpl}) => {
+    // Use server side of the context. All the code below also uses server side APIs.
+    const context = toImpl(await browser.newContext());
+    await context._enableScreencast({width: 320, height: 240, dir: tmpDir});
+    expect(context._screencastOptions).toBeTruthy();
+
+    const [screencast, newPage] = await Promise.all([
+      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      context.newPage(),
+    ]);
+    expect(screencast.page === newPage).toBe(true);
+
+    const [videoFile] = await Promise.all([
+      screencast.path(),
+      context.close(),
+    ]);
+    expect(path.dirname(videoFile)).toBe(tmpDir);
   });
 
   it('should fire start event for popups', async ({browser, tmpDir, server, toImpl}) => {
