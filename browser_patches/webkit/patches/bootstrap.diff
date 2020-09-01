@@ -15256,7 +15256,7 @@ index 8a9c9e8d5bc6c283bf766efdf8cdc5e6aff546fb..deeb070d3248b3e10bc02ba9c77a7d83
  SET_AND_EXPOSE_TO_BUILD(USE_OPENGL_ES ON)
  SET_AND_EXPOSE_TO_BUILD(HAVE_OPENGL_ES_3 ON)
 diff --git a/Tools/MiniBrowser/gtk/BrowserTab.c b/Tools/MiniBrowser/gtk/BrowserTab.c
-index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..630a6e395298bd9c03c1b131f984b0a8444d2051 100644
+index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..2e0e3929907d4760eb681c743984d4c83273880d 100644
 --- a/Tools/MiniBrowser/gtk/BrowserTab.c
 +++ b/Tools/MiniBrowser/gtk/BrowserTab.c
 @@ -160,6 +160,11 @@ static void loadChanged(WebKitWebView *webView, WebKitLoadEvent loadEvent, Brows
@@ -15279,6 +15279,16 @@ index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..630a6e395298bd9c03c1b131f984b0a8
      g_signal_connect(tab->webView, "load-failed-with-tls-errors", G_CALLBACK(loadFailedWithTLSerrors), tab);
      g_signal_connect(tab->webView, "permission-request", G_CALLBACK(decidePermissionRequest), tab);
      g_signal_connect(tab->webView, "run-color-chooser", G_CALLBACK(runColorChooserCallback), tab);
+@@ -668,6 +674,9 @@ static char *getInternalURI(const char *uri)
+     if (g_str_has_prefix(uri, "about:") && !g_str_equal(uri, "about:blank"))
+         return g_strconcat(BROWSER_ABOUT_SCHEME, uri + strlen ("about"), NULL);
+ 
++    if (!g_str_has_prefix(uri, "http://") && !g_str_has_prefix(uri, "https://") && !g_str_has_prefix(uri, "file://"))
++        return g_strconcat("http://", uri, NULL);
++
+     return g_strdup(uri);
+ }
+ 
 diff --git a/Tools/MiniBrowser/gtk/BrowserWindow.c b/Tools/MiniBrowser/gtk/BrowserWindow.c
 index 26bf3be8dbe6869a827a291e72b1ef2a22e07a1e..ab9c0ae73404a8a51de645c169cfa5aaa140437e 100644
 --- a/Tools/MiniBrowser/gtk/BrowserWindow.c
