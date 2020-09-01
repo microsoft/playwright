@@ -8,6 +8,7 @@ on:
     paths:
       - docs/docker/**
       - browsers.json
+      - .github/workflows/publish_canary_docker.yml
 
 jobs:
   publish-canary-docker:
