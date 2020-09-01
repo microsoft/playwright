@@ -193,8 +193,7 @@ describe('screencast', suite => {
 
   it('should capture navigation', test => {
     test.flaky(options.CHROMIUM && MAC);
-    test.flaky(options.FIREFOX && LINUX && !options.HEADLESS);
-    test.flaky(options.FIREFOX && WIN);
+    test.flaky(options.FIREFOX);
     test.flaky(options.WEBKIT);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
