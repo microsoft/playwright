@@ -16,20 +16,23 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
+    - uses: azure/docker-login@v1
+      with:
+        login-server: playwright.azurecr.io
+        username: playwright
+        password: ${{ secrets.DOCKER_PASSWORD }}
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - name: login & publish to docker
+    - name: docker: build & publish
       run: |
-        # login to docker
-        docker login --username playwright --password ${{ secrets.DOCKER_PASSWORD }} playwright.azurecr.io
         # build docker image
         ./docs/docker/build.sh
         # tag image accordingly
         docker tag playwright:localbuild public/playwright:next
-        docker tag playwright:localbuild public/playwright:sha-$(git rev-parse HEAD)
+        docker tag playwright:localbuild public/playwright:sha-${{ github.sha }}
         docker rmi playwright:localbuild
         # push image to registry
         docker push public/playwright:next
