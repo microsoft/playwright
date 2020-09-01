@@ -62,9 +62,9 @@ RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb
 
-# 9. Install git & yarn. These are very helpful in a docker image.
+# 9. Install git, yarn & ssh. These are very helpful in a docker image.
 
-RUN apt-get update && apt-get install -y --no-install-recommends git && \
+RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
     npm install -g yarn
 
 # 10. Run everything after as non-privileged user.
