@@ -67,7 +67,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends git && \
     npm install -g yarn
 
-# 10. Run everything after as non-privileged user.
+# 10. Enable passwordless sudo for pwuser
+RUN apt-get update && apt-get install -y --no-install-recommends sudo && \
+    echo "pwuser ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
+
+# 11. Run everything after as non-privileged user.
 USER pwuser
 
 # === BAKE BROWSERS INTO IMAGE ===
