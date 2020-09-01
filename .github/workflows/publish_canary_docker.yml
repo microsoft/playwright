@@ -26,7 +26,7 @@ jobs:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - name: docker: build & publish
+    - name: docker - build & publish
       run: |
         # build docker image
         ./docs/docker/build.sh
