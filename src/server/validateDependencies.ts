@@ -35,7 +35,7 @@ export async function validateHostRequirements(browserPath: string, browser: Bro
 
 const DL_OPEN_LIBRARIES = {
   chromium: [],
-  webkit: ['libGLESv2.so.2'],
+  webkit: ['libGLESv2.so.2', 'libx264.so'],
   firefox: [],
 };
 
@@ -123,6 +123,7 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
     libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04;
   else if (ubuntuVersion === '20.04')
     libraryToPackageNameMapping = LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04;
+  libraryToPackageNameMapping = Object.assign({}, libraryToPackageNameMapping, MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU);
   if (libraryToPackageNameMapping) {
     // Translate missing dependencies to package names to install with apt.
     for (const missingDep of missingDeps) {
@@ -415,4 +416,12 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
   'libxslt.so.1': 'libxslt1.1',
   'libXt.so.6': 'libxt6',
   'libXtst.so.6': 'libxtst6',
+};
+
+const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
+  // libgstlibav.so (the only actual library provided by gstreamer1.0-libav) is not
+  // in the ldconfig cache, so we detect the actual library required for playing h.264
+  // and if it's missing recommend installing missing gstreamer lib.
+  // gstreamer1.0-libav -> libavcodec57 -> libx264-152
+  'libx264.so': 'gstreamer1.0-libav'
 };
