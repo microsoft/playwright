@@ -62,8 +62,7 @@ RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb
 
-# 9. Install git, yarn & ssh. These are very helpful in a docker image.
-
+# 9. Feature-parity with node.js base images.
 RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
     npm install -g yarn
 
