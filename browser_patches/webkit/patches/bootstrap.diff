@@ -8610,10 +8610,10 @@ index 0000000000000000000000000000000000000000..31a922667462de1a1edc24a10f25c064
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..53a5cb8dd3fad3a38168397d9ead79c289cf5e11
+index 0000000000000000000000000000000000000000..6cc90fc6576eeba03d9c6438b79ce4ca2af19db7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,380 @@
+@@ -0,0 +1,387 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8645,6 +8645,7 @@ index 0000000000000000000000000000000000000000..53a5cb8dd3fad3a38168397d9ead79c2
 +#include "ScreencastEncoder.h"
 +
 +#include "WebMFileWriter.h"
++#include <algorithm>
 +#include <libyuv.h>
 +#include <vpx/vp8.h>
 +#include <vpx/vp8cx.h>
@@ -8956,6 +8957,12 @@ index 0000000000000000000000000000000000000000..53a5cb8dd3fad3a38168397d9ead79c2
 +        cairo_matrix_t transform;
 +        if (m_scale) {
 +            cairo_matrix_init_scale(&transform, *m_scale, *m_scale);
++            cairo_transform(cr.get(), &transform);
++        } else if (size.width() > m_size.width() || size.height() > m_size.height()) {
++            // If no scale is specified shrink to fit the frame.
++            double scale = std::min(static_cast<double>(m_size.width()) / size.width(),
++                                    static_cast<double>(m_size.height()) / size.height());
++            cairo_matrix_init_scale(&transform, scale, scale);
 +            cairo_transform(cr.get(), &transform);
 +        }
 +
@@ -9772,10 +9779,10 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..8b73efbba93362d8eebcc3a52158d8b0
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..76df8f6952c586fe2e0e10d620e8770a03b08ab0
+index 0000000000000000000000000000000000000000..9b1e182c9f41a132df8c18b3655d52627b9d7686
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,57 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9804,6 +9811,7 @@ index 0000000000000000000000000000000000000000..76df8f6952c586fe2e0e10d620e8770a
 +#include "config.h"
 +#include "ScreencastEncoder.h"
 +
++#include <algorithm>
 +#include <CoreGraphics/CoreGraphics.h>
 +#include <wtf/RetainPtr.h>
 +
@@ -9816,15 +9824,18 @@ index 0000000000000000000000000000000000000000..76df8f6952c586fe2e0e10d620e8770a
 +    size_t bytesPerRow = bytesPerPixel * width;
 +    RetainPtr<CGColorSpaceRef> colorSpace = adoptCF(CGColorSpaceCreateDeviceRGB());
 +    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(argb_data, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little));
++    double imageWidth = CGImageGetWidth(image);
++    double imageHeight = CGImageGetHeight(image);
++    double ratio = 1;
 +    if (scale) {
-+        CGContextScaleCTM(context.get(), *scale, *scale);
-+        // Ensure that top-left cornder stays in place.
-+        CGContextTranslateCTM(context.get(), 0, ((1 - *scale) / *scale) * height);
++        ratio = *scale;
++    } else if (imageWidth > width || imageHeight > height) {
++        ratio = std::min(width / imageWidth, height / imageHeight);
 +    }
-+    size_t imageWidth = CGImageGetWidth(image);
-+    size_t imageHeight = CGImageGetHeight(image);
++    imageWidth *= ratio;
++    imageHeight *= ratio;
 +    // TODO: exclude controls from original screenshot
-+    CGFloat pageHeight = static_cast<CGFloat>(imageHeight) - offsetTop;
++    CGFloat pageHeight = static_cast<CGFloat>(imageHeight) - offsetTop * ratio;
 +    CGContextDrawImage(context.get(), CGRectMake(0, height - pageHeight, imageWidth, imageHeight), image);
 +}
 +
