@@ -86,7 +86,9 @@ export class Connection {
     const { id, guid, method, params, result, error } = message as any;
     if (id) {
       debugLogger.log('channel:response', message);
-      const callback = this._callbacks.get(id)!;
+      const callback = this._callbacks.get(id);
+      if (!callback)
+        throw new Error(`Cannot find command to respond: ${id}`);
       this._callbacks.delete(id);
       if (error)
         callback.reject(parseError(error));
@@ -101,10 +103,15 @@ export class Connection {
       return;
     }
     if (method === '__dispose__') {
-      this._objects.get(guid)!._dispose();
+      const object = this._objects.get(guid);
+      if (!object)
+        throw new Error(`Cannot find object to dispose: ${guid}`);
+      object._dispose();
       return;
     }
-    const object = this._objects.get(guid)!;
+    const object = this._objects.get(guid);
+    if (!object)
+      throw new Error(`Cannot find object to call "${method}": ${guid}`);
     object._channel.emit(method, this._replaceGuidsWithChannels(params));
   }
 
