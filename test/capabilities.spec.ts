@@ -50,7 +50,7 @@ it('should respect CSP', async ({page, server}) => {
   expect(await page.evaluate(() => window['testStatus'])).toBe('SUCCESS');
 });
 
-it('should play video', test => {
+fit('should play video', test => {
   test.fixme(options.WEBKIT && WIN);
 }, async ({page, asset}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
