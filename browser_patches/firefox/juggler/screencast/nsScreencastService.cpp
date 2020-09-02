@@ -148,10 +148,16 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
   if (scale)
     maybeScale = Some(scale);
 
+  gfx::IntMargin margin;
+  // On GTK the bottom of the client rect is below the bounds and
+  // client size is actually equal to the size of the bounds so
+  // we don't need an adjustment.
+#ifndef MOZ_WIDGET_GTK
   auto bounds = widget->GetScreenBounds().ToUnknownRect();
   auto clientBounds = widget->GetClientBounds().ToUnknownRect();
   // Crop the image to exclude frame (if any).
-  gfx::IntMargin margin = bounds - clientBounds;
+  margin = bounds - clientBounds;
+#endif
   // Crop the image to exclude controls.
   margin.top += offsetTop;
 
