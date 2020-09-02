@@ -168,6 +168,8 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean): Snap
           continue;
         if (name === 'checked' || name === 'disabled' || name === 'checked')
           continue;
+        if (nodeName === 'LINK' && name === 'integrity')
+          continue;
         if (name === 'src' && (nodeName === 'IFRAME' || nodeName === 'FRAME')) {
           // TODO: handle srcdoc?
           let protocol = win.location.protocol;
