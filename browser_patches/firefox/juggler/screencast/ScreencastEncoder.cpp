@@ -122,23 +122,24 @@ public:
         }
 
         auto src = m_frameBuffer->GetI420();
-
-        const int y_stride = image->stride[0];
-        MOZ_ASSERT(image->stride[1] == image->stride[2]);
+        const int y_stride = image->stride[VPX_PLANE_Y];
+        MOZ_ASSERT(image->stride[VPX_PLANE_U] == image->stride[VPX_PLANE_V]);
         const int uv_stride = image->stride[1];
-        uint8_t* y_data = image->planes[0];
-        uint8_t* u_data = image->planes[1];
-        uint8_t* v_data = image->planes[2];
+        uint8_t* y_data = image->planes[VPX_PLANE_Y];
+        uint8_t* u_data = image->planes[VPX_PLANE_U];
+        uint8_t* v_data = image->planes[VPX_PLANE_V];
 
-        if (m_scale) {
-          int src_width = src->width() - m_margin.LeftRight();
-          double dst_width = src_width * m_scale.value();
+        double src_width = src->width() - m_margin.LeftRight();
+        double src_height = src->height() - m_margin.top;
+
+        if (m_scale || (src_width > image->w || src_height > image->h)) {
+          double scale = m_scale ? m_scale.value() : std::min(image->w / src_width, image->h / src_height);
+          double dst_width = src_width * scale;
           if (dst_width > image->w) {
             src_width *= image->w / dst_width;
             dst_width = image->w;
           }
-          int src_height = src->height() - m_margin.TopBottom();
-          double dst_height = src_height * m_scale.value();
+          double dst_height = src_height * scale;
           if (dst_height > image->h) {
             src_height *= image->h / dst_height;
             dst_height = image->h;
@@ -153,8 +154,8 @@ public:
                             dst_width, dst_height,
                             libyuv::kFilterBilinear);
         } else {
-          int width = std::min<int>(image->w, src->width() - m_margin.LeftRight());
-          int height = std::min<int>(image->h, src->height() - m_margin.TopBottom());
+          int width = std::min<int>(image->w, src_width);
+          int height = std::min<int>(image->h, src_height);
 
           libyuv::I420Copy(src->DataY() + m_margin.top * src->StrideY() + m_margin.left, src->StrideY(),
                            src->DataU() + (m_margin.top * src->StrideU() + m_margin.left) / 2, src->StrideU(),
