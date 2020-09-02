@@ -25,6 +25,7 @@ declare global {
   interface TestState {
     application: ElectronApplication;
     window: ElectronPage;
+    electronLaunchArgs: string[]
   }
 }
 
@@ -32,10 +33,16 @@ declare module '../../index' {
   const electron: ElectronLauncher;
 }
 
-registerFixture('application', async ({playwright}, test) => {
+registerFixture('electronLaunchArgs', async ({}, test) => {
+  await test([
+    ...(process.env.PW_DISABLE_ELECTRON_SANDBOX ? ['--no-sandbox'] : [])
+  ]);
+});
+
+registerFixture('application', async ({ playwright, electronLaunchArgs}, test) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
   const application = await playwright.electron.launch(electronPath, {
-    args: [path.join(__dirname, 'testApp.js')],
+    args: [path.join(__dirname, 'testApp.js'), ...electronLaunchArgs],
   });
   await test(application);
   await application.close();

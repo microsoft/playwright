@@ -83,7 +83,7 @@ $ docker run --rm -it playwright:localbuild /bin/bash
 
 ### Push
 
-Docker images are published automatically by Github Actions. We currently publish the following
+Docker images are published automatically by GitHub Actions. We currently publish the following
 images:
 - `mcr.microsoft.com/playwright:next` - tip-of-tree image version.
 - `mcr.microsoft.com/playwright:bionic` - last Playwright release docker image.

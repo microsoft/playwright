@@ -91,17 +91,14 @@ registerWorkerFixture('httpService', async ({}, test) => {
   ]);
 });
 
-const getExecutablePath = browserName => {
-  if (browserName === 'chromium' && process.env.CRPATH)
-    return process.env.CRPATH;
-  if (browserName === 'firefox' && process.env.FFPATH)
-    return process.env.FFPATH;
-  if (browserName === 'webkit' && process.env.WKPATH)
-    return process.env.WKPATH;
-};
-
 registerWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
-  const executablePath = getExecutablePath(browserName);
+  let executablePath = undefined;
+  if (browserName === 'chromium' && process.env.CRPATH)
+    executablePath = process.env.CRPATH;
+  if (browserName === 'firefox' && process.env.FFPATH)
+    executablePath = process.env.FFPATH;
+  if (browserName === 'webkit' && process.env.WKPATH)
+    executablePath = process.env.WKPATH;
 
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);

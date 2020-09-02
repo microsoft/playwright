@@ -23,10 +23,10 @@ const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 describe('electron app', suite => {
   suite.skip(!options.CHROMIUM);
 }, () => {
-  it('should fire close event', async ({ playwright }) => {
+  it('should fire close event', async ({ playwright, electronLaunchArgs }) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
     const application = await playwright.electron.launch(electronPath, {
-      args: [path.join(__dirname, 'testApp.js')],
+      args: [path.join(__dirname, 'testApp.js'), ...electronLaunchArgs],
     });
     const events = [];
     application.on('close', () => events.push('application'));
