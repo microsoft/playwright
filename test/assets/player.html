@@ -41,8 +41,11 @@ async function countFrames() {
   return count;
 }
 
-async function seekLastFrame() {
-  const frameCount = await countFrames();
+async function seekLastFrame(isWPE) {
+  let frameCount = await countFrames();
+  // TODO: figure out why playing last frame in WPE resets the picture.
+  if (isWPE && frameCount > 1)
+    --frameCount;
   await playNFrames(frameCount);
   return frameCount;
 }
