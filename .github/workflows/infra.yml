@@ -19,12 +19,7 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
-    - name: install required packages
-      run: |
-        sudo apt-get update
-        sudo apt-get install libgbm-dev
-        sudo apt-get install xvfb
-        sudo apt-get install ffmpeg
+    - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
     - run: npm run lint
