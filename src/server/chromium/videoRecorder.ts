@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 import { launchProcess } from '../processLauncher';
 import { ChildProcess } from 'child_process';
 import { Progress, runAbortableTask } from '../progress';
@@ -55,6 +54,8 @@ export class VideoRecorder {
     const args = `-f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
+    // Use ffmpeg provided by the host system.
+    const ffmpegPath = process.platform === 'linux' ? 'ffmpeg' : require('@ffmpeg-installer/ffmpeg').path;
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: ffmpegPath,
       args,

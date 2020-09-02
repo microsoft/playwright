@@ -24,6 +24,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install libgbm-dev
         sudo apt-get install xvfb
+        sudo apt-get install ffmpeg
     - run: npm ci
     - run: npm run build
     - run: npm run lint
