@@ -21,10 +21,12 @@ import type { Page } from '..';
 import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
+import { mkdirIfNeeded } from '../lib/utils/utils';
 
 declare global {
   interface TestState {
     videoPlayer: VideoPlayer;
+    videoFile: string;
   }
 }
 
@@ -43,6 +45,14 @@ registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
     await chromium.close();
   else
     await page.close();
+});
+
+registerFixture('videoFile', async ({browserType}, runTest, info) => {
+  const { test, config } = info;
+  const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+  const videoFile = path.join(config.outputDir, 'video', `${sanitizedTitle}-${browserType.name()}_v.webm`);
+  await mkdirIfNeeded(videoFile);
+  await runTest(videoFile);
 });
 
 function almostRed(r, g, b, alpha) {
@@ -168,23 +178,32 @@ describe('screencast', suite => {
   it('should capture static page', test => {
     test.flaky(options.CHROMIUM && LINUX && !options.HEADLESS);
     test.flaky(options.WEBKIT && LINUX);
-  }, async ({page, tmpDir, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+  }, async ({page, tmpDir, videoFile, videoPlayer, toImpl}) => {
+    const start = Date.now();
+    console.log('___ started should capture static page ' + (Date.now() - start) / 1000);
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+    console.log('started screencast ' + (Date.now() - start) / 1000);
     await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
+    console.log('stopped screencast ' + (Date.now() - start) / 1000);
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
+    console.log('loaded video ' + (Date.now() - start) / 1000);
     const duration = await videoPlayer.duration();
     expect(duration).toBeGreaterThan(0);
+    console.log('got duration ' + (Date.now() - start) / 1000);
 
     expect(await videoPlayer.videoWidth()).toBe(320);
+    console.log('got videoWidth ' + (Date.now() - start) / 1000);
     expect(await videoPlayer.videoHeight()).toBe(240);
+    console.log('got videoHeight ' + (Date.now() - start) / 1000);
 
     await videoPlayer.seekLastFrame();
+    console.log('sought last frame ' + (Date.now() - start) / 1000);
     const pixels = await videoPlayer.pixels();
+    console.log('got pixels ' + (Date.now() - start) / 1000);
     expectAll(pixels, almostRed);
   });
 
@@ -193,53 +212,72 @@ describe('screencast', suite => {
     test.flaky(options.FIREFOX);
     test.flaky(options.WEBKIT);
     test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
-  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+  }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
+    const start = Date.now();
+    console.log('___ started should capture navigation ' + (Date.now() - start) / 1000);
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
+    console.log('navigated to first page ' + (Date.now() - start) / 1000);
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+    console.log('started screencast ' + (Date.now() - start) / 1000);
     await new Promise(r => setTimeout(r, 1000));
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
+    console.log('navigated to second page ' + (Date.now() - start) / 1000);
     await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
+    console.log('stopped screencast ' + (Date.now() - start) / 1000);
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
+    console.log('loaded video ' + (Date.now() - start) / 1000);
     const duration = await videoPlayer.duration();
+    console.log('got duration ' + (Date.now() - start) / 1000);
     expect(duration).toBeGreaterThan(0);
 
     {
       await videoPlayer.seekFirstNonEmptyFrame();
+      console.log('after seekFirstNonEmptyFrame ' + (Date.now() - start) / 1000);
       const pixels = await videoPlayer.pixels();
+      console.log('got pixles ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostBlack);
     }
 
     {
       await videoPlayer.seekLastFrame();
+      console.log('after seekLastFrame ' + (Date.now() - start) / 1000);
       const pixels = await videoPlayer.pixels();
+      console.log('got pixles ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostGrey);
     }
   });
 
   it('should capture css transformation', test => {
-    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
-    test.fail(options.WEBKIT && WIN, 'Does not work on WebKit Windows');
-  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+  }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
+    const start = Date.now();
+    console.log('___ started should capture css transformation ' + (Date.now() - start) / 1000);
     // Set viewport equal to screencast frame size to avoid scaling.
     await page.setViewportSize({width: 320, height: 240});
     await page.goto(server.PREFIX + '/rotate-z.html');
+    console.log('navigated to first page ' + (Date.now() - start) / 1000);
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+    console.log('started screencast ' + (Date.now() - start) / 1000);
+    // TODO: in WebKit figure out why video size is not reported correctly for
+    // static pictures.
     await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
+    console.log('stopped screencast ' + (Date.now() - start) / 1000);
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
+    console.log('loaded video ' + (Date.now() - start) / 1000);
     const duration = await videoPlayer.duration();
+    console.log('got duration ' + (Date.now() - start) / 1000);
     expect(duration).toBeGreaterThan(0);
 
     {
       await videoPlayer.seekLastFrame();
+      console.log('after seekLastFrame ' + (Date.now() - start) / 1000);
       const pixels = await videoPlayer.pixels({x: 95, y: 45});
+      console.log('got pixles ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostRed);
     }
   });
@@ -314,43 +352,56 @@ describe('screencast', suite => {
 
   it('should scale frames down to the requested size ', test => {
     test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
-  }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
+  }, async ({page, videoPlayer, videoFile, tmpDir, server, toImpl}) => {
+    const start = Date.now();
     await page.setViewportSize({width: 640, height: 480});
-    const videoFile = path.join(tmpDir, 'v.webm');
+    console.log('___ should scale frames down to the requested size ' + (Date.now() - start) / 1000);
     await page.goto(server.PREFIX + '/checkerboard.html');
     // Set size to 1/2 of the viewport.
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+    console.log('started screencast ' + (Date.now() - start) / 1000);
     // Update the picture to ensure enough frames are generated.
     await page.$eval('.container', container => {
       container.firstElementChild.classList.remove('red');
     });
     await new Promise(r => setTimeout(r, 300));
+    console.log('after remove red ' + (Date.now() - start) / 1000);
     await page.$eval('.container', container => {
       container.firstElementChild.classList.add('red');
     });
+    console.log('after add red ' + (Date.now() - start) / 1000);
     await new Promise(r => setTimeout(r, 1000));
+    console.log('after wait ' + (Date.now() - start) / 1000);
     await toImpl(page)._delegate.stopScreencast();
+    console.log('after stopScreencast ' + (Date.now() - start) / 1000);
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
+    console.log('after load ' + (Date.now() - start) / 1000);
     const duration = await videoPlayer.duration();
+    console.log('after duration ' + (Date.now() - start) / 1000);
     expect(duration).toBeGreaterThan(0);
 
     await videoPlayer.seekLastFrame();
+    console.log('after seekLastFrame ' + (Date.now() - start) / 1000);
     {
       const pixels = await videoPlayer.pixels({x: 0, y: 0});
+      console.log('1 after pixels ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostRed);
     }
     {
       const pixels = await videoPlayer.pixels({x: 300, y: 0});
+      console.log('2 after pixels ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostGrey);
     }
     {
       const pixels = await videoPlayer.pixels({x: 0, y: 200});
+      console.log('3 after pixels ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostGrey);
     }
     {
       const pixels = await videoPlayer.pixels({x: 300, y: 200});
+      console.log('4 after pixels ' + (Date.now() - start) / 1000);
       expectAll(pixels, almostRed);
     }
   });
