@@ -24,7 +24,8 @@ jobs:
 
   publish-docker-release:
     name: "publish to DockerHub"
-    runs-on: ubuntu-18.04
+    # We use `docker push --all-tags` to push all tags which is a newly addition to docker
+    runs-on: ubuntu-20.04
     if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
