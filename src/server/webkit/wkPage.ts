@@ -721,7 +721,6 @@ export class WKPage implements PageDelegate {
         file: options.outputFile,
         width: options.width,
         height: options.height,
-        scale: options.scale,
       }) as any;
       this._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
     } catch (e) {
