@@ -19,9 +19,26 @@ const fs = require('fs');
 const playwright = require('..');
 const { showTraceViewer } = require('../lib/trace/traceViewer');
 
-const testResultsDir = process.argv[2] || path.join(__dirname, '..', 'test-results');
-const files = collectFiles(testResultsDir, '');
-const traceStorageDir = path.join(testResultsDir, 'trace-storage');
+if (process.argv.includes('--help')) {
+  console.log(`Usage:`);
+  console.log(`  - npm run show-trace`);
+  console.log(`      Show traces from the last test run.`);
+  console.log(`  - npm run show-trace <test-results-directory>`);
+  console.log(`      Show traces from the downloaded test results.`);
+  console.log(`  - npm run show-trace <trace-file> <trace-storage-directory>`);
+  console.log(`      Show single trace file from the manual run.`);
+  process.exit(0);
+}
+
+let traceStorageDir, files;
+if (process.argv[3]) {
+  files = [process.argv[2]];
+  traceStorageDir = process.argv[3];
+} else {
+  const testResultsDir = process.argv[2] || path.join(__dirname, '..', 'test-results');
+  files = collectFiles(testResultsDir, '');
+  traceStorageDir = path.join(testResultsDir, 'trace-storage');
+}
 console.log(`Found ${files.length} trace files`);
 showTraceViewer(playwright, traceStorageDir, files);
 
