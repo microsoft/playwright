@@ -27,14 +27,10 @@ jobs:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - name: docker - build & publish
+    - run: ./docs/docker/build.sh
+    - name: tag & publish
       run: |
-        # build docker image
-        ./docs/docker/build.sh
-        # tag image accordingly
         docker tag playwright:localbuild playwright.azurecr.io/public/playwright:next
         docker tag playwright:localbuild playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
-        docker rmi playwright:localbuild
-        # push image to registry
-        docker push playwright.azurecr.io/public/playwright:next
+        docker push --all-tags playwright.azurecr.io/public/playwright
 
