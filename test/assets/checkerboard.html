@@ -1,0 +1,43 @@
+<html>
+<script>
+function changeBackground() {
+  const color = location.hash.substr(1);
+  document.body.style.backgroundColor = color;
+}
+</script>
+<style>
+body {
+  margin: 0;
+}
+
+.container {
+  display: grid;
+  background-color: rgb(0, 0, 0);
+  grid-template-columns: auto auto;
+  width: 100%;
+  height: 100%;
+}
+
+.cell {
+  border: none;
+  font-size: 30px;
+  text-align: center;
+}
+
+.cell.grey {
+  background-color: rgb(100, 100, 100);
+}
+
+.cell.red {
+  background-color: rgb(255, 0, 0);
+}
+</style>
+<body>
+<div class="container">
+  <div class="cell red"></div>
+  <div class="cell grey"></div>
+  <div class="cell grey"></div>
+  <div class="cell red"></div>
+</div>
+</body>
+</html>

@@ -141,7 +141,8 @@ class VideoPlayer {
   }
 
   async seekLastFrame() {
-    return await this._page.evaluate(async () => await (window as any).seekLastFrame());
+    const isWPE = LINUX && options.WEBKIT && options.HEADLESS;
+    return await this._page.evaluate(async x => await (window as any).seekLastFrame(x), isWPE);
   }
 
   async pixels(point = {x: 0, y: 0}) {
@@ -311,5 +312,48 @@ describe('screencast', suite => {
     expect(screencast.page === popup).toBe(true);
     expect(path.dirname(await screencast.path())).toBe(tmpDir);
     await context.close();
+  });
+
+  it('should scale frames down to the requested size ', test => {
+    test.fixme(options.CHROMIUM && options.HEADLESS, 'Window is not resized when changing viewport');
+  }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
+    // Set size to 1/2 of the viewport.
+    await page.setViewportSize({width: 640, height: 480});
+    const videoFile = path.join(tmpDir, 'v.webm');
+    await page.goto(server.PREFIX + '/checkerboard.html');
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+    // Update the picture to ensure enough frames are generated.
+    await page.$eval('.container', container => {
+      container.firstElementChild.classList.remove('red');
+    });
+    await new Promise(r => setTimeout(r, 300));
+    await page.$eval('.container', container => {
+      container.firstElementChild.classList.add('red');
+    });
+    await new Promise(r => setTimeout(r, 300));
+    await toImpl(page)._delegate.stopScreencast();
+    expect(fs.existsSync(videoFile)).toBe(true);
+
+    await videoPlayer.load(videoFile);
+    const duration = await videoPlayer.duration();
+    expect(duration).toBeGreaterThan(0);
+
+    await videoPlayer.seekLastFrame();
+    {
+      const pixels = await videoPlayer.pixels({x: 0, y: 0});
+      expectAll(pixels, almostRed);
+    }
+    {
+      const pixels = await videoPlayer.pixels({x: 300, y: 0});
+      expectAll(pixels, almostGrey);
+    }
+    {
+      const pixels = await videoPlayer.pixels({x: 0, y: 200});
+      expectAll(pixels, almostGrey);
+    }
+    {
+      const pixels = await videoPlayer.pixels({x: 300, y: 200});
+      expectAll(pixels, almostRed);
+    }
   });
 });
