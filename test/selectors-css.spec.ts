@@ -119,3 +119,9 @@ it('should work with attribute selectors', async ({page}) => {
   expect(await page.$eval(`[attr*=hello] >> span`, e => e.parentNode === window['div'])).toBe(true);
   expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === window['div'])).toBe(true);
 });
+
+it('should not match root after >>', async ({page, server}) => {
+  await page.setContent('<section><div>test</div></section>');
+  const element = await page.$('css=section >> css=section');
+  expect(element).toBe(null);
+});

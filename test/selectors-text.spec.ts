@@ -204,3 +204,11 @@ it('should waitForSelector with distributed elements', async ({page, server}) =>
   const handle = await promise;
   expect(await handle.textContent()).toBe('Hello from light');
 });
+
+it('should match root after >>', async ({page, server}) => {
+  await page.setContent('<section>test</section>');
+  const element = await page.$('css=section >> text=test');
+  expect(element).toBeTruthy();
+  const element2 = await page.$('text=test >> text=test');
+  expect(element2).toBeTruthy();
+});
