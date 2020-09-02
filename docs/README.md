@@ -23,7 +23,6 @@ Playwright is a library to automate [Chromium](https://www.chromium.org/Home), [
     - [First script](./intro.md#first-script)
     - [Core concepts](./core-concepts.md)
     - [Debugging](./debug.md)
-    - [Getting help](./getting-help.md)
 1. Guides
     - [Selectors](./selectors.md)
     - [Input](./input.md)
@@ -45,3 +44,7 @@ Playwright is a library to automate [Chromium](https://www.chromium.org/Home), [
     - [Actionability](./actionability.md)
     - [Advanced installation](./installation.md)
     - [Extensibility](./extensibility.md)
+1. Get help
+    - [Slack community](https://join.slack.com/t/playwright/shared_invite/enQtOTEyMTUxMzgxMjIwLThjMDUxZmIyNTRiMTJjNjIyMzdmZDA3MTQxZWUwZTFjZjQwNGYxZGM5MzRmNzZlMWI5ZWUyOTkzMjE5Njg1NDg)
+    - [Stack Overflow](https://stackoverflow.com/tags/playwright)
+    - [GitHub](https://github.com/microsoft/playwright/issues)
