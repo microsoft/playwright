@@ -318,9 +318,7 @@ describe('screencast', suite => {
     await context.close();
   });
 
-  it('should scale frames down to the requested size ', test => {
-    test.fixme(options.CHROMIUM && options.HEADLESS, 'Window is not resized when changing viewport');
-  }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
+  it('should scale frames down to the requested size ', async ({page, videoPlayer, tmpDir, server, toImpl}) => {
     await page.setViewportSize({width: 640, height: 480});
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/checkerboard.html');
