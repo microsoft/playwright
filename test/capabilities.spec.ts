@@ -51,7 +51,7 @@ it('should respect CSP', async ({page, server}) => {
 });
 
 it('should play video', test => {
-  test.fixme(options.WEBKIT && (WIN || LINUX));
+  test.fixme(options.WEBKIT && WIN);
 }, async ({page, asset}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
