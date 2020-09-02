@@ -304,6 +304,7 @@ describe('screencast', suite => {
       new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
     ]);
     await page.mainFrame().goto(server.EMPTY_PAGE);
+
     const [screencast, popup] = await Promise.all([
       new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
       new Promise(resolve => context.on('page', resolve)) as Promise<any>,
