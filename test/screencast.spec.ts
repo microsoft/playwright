@@ -231,18 +231,10 @@ describe('screencast', suite => {
     test.flaky(options.WEBKIT && LINUX);
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
-    // Chromium automatically fits all frames to fit specified size. To avoid
-    // unwanted transformations we set view port size equal to the screencast
-    // size.
-    // TODO: support explicit 'scale' parameter in CDP.
-    if (options.CHROMIUM)
-      await page.setViewportSize({width: 640, height: 480});
+    // Set viewport equal to screencast frame size to avoid scaling.
+    await page.setViewportSize({width: 640, height: 480});
     await page.goto(server.PREFIX + '/rotate-z.html');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-    // TODO: in WebKit figure out why video size is not reported correctly for
-    // static pictures.
-    if (options.HEADLESS && options.WEBKIT)
-      await page.setViewportSize({width: 1270, height: 950});
     // 300 is not enough for Chromium headful.
     await new Promise(r => setTimeout(r, 500));
     await toImpl(page)._delegate.stopScreencast();

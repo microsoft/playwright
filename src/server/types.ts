@@ -55,7 +55,6 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
 export type ScreencastOptions = {
   width: number,
   height: number,
-  scale?: number,
 };
 
 export type PageScreencastOptions = ScreencastOptions & {

@@ -358,7 +358,6 @@ export class FFPage implements PageDelegate {
       file: options.outputFile,
       width: options.width,
       height: options.height,
-      scale: options.scale,
     });
   }
 
