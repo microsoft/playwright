@@ -319,8 +319,7 @@ describe('screencast', suite => {
   }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
     // Set size to 1/2 of the viewport.
     await page.setViewportSize({width: 640, height: 480});
-    // const videoFile = path.join(tmpDir, 'v.webm');
-    const videoFile = '/home/yurys/playwright/v.webm';
+    const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/checkerboard.html');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     // Update the picture to ensure enough frames are generated.
