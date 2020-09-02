@@ -68,8 +68,7 @@ Suggested configuration
 1. Using `--ipc=host` is also recommended when using Chromium—without it Chromium can run out of memory
    and crash. Learn more about this option in [Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc).
 1. Seeing other weird errors when launching Chromium? Try running your container
-   with `docker run --cap-add=SYS_ADMIN` when developing locally. Since the Dockerfile
-   adds a `pwuser` user as a non-privileged user, it may not have all the necessary privileges.
+   with `docker run --cap-add=SYS_ADMIN` when developing locally.
 1. [dumb-init](https://github.com/Yelp/dumb-init) is worth checking out if you're
    experiencing a lot of zombies Chromium processes sticking around. There's special
    treatment for processes with PID=1, which makes it hard to terminate Chromium
@@ -113,7 +112,7 @@ dist: bionic
 addons:
   apt:
     packages:
-    # These are required to run webkit	
+    # These are required to run webkit
     - libwoff1
     - libopus0
     - libwebp6
@@ -234,7 +233,7 @@ execute and download the browser binaries on every run.
 
 Most CI providers cache the [npm-cache](https://docs.npmjs.com/cli-commands/cache.html)
 directory (located at `$HOME/.npm`). If your CI pipelines caches the `node_modules`
-directory and you run `npm install` (instead of `npm ci`), the default configuration 
+directory and you run `npm install` (instead of `npm ci`), the default configuration
 **will not work**. This is because the `npm install` step will find the Playwright NPM
 package on disk and not execute the `postinstall` step.
 

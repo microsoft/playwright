@@ -53,31 +53,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg
 
-# 7. Add user so we don't need --no-sandbox in Chromium
-RUN groupadd -r pwuser && useradd -r -g pwuser -G audio,video pwuser \
-    && mkdir -p /home/pwuser/Downloads \
-    && chown -R pwuser:pwuser /home/pwuser
-
-# 8. (Optional) Install XVFB if there's a need to run browsers in headful mode
+# 7. (Optional) Install XVFB if there's a need to run browsers in headful mode
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb
 
-# 9. Feature-parity with node.js base images.
+# 8. Feature-parity with node.js base images.
 RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
     npm install -g yarn
-
-# 10. Run everything after as non-privileged user.
-USER pwuser
 
 # === BAKE BROWSERS INTO IMAGE ===
 
 # 1. Add tip-of-tree Playwright package to install its browsers.
 #    The package should be built beforehand from tip-of-tree Playwright.
-COPY --chown=pwuser ./playwright.tar.gz /home/pwuser/playwright.tar.gz
+COPY ./playwright.tar.gz /tmp/playwright.tar.gz
 
 # 2. Install playwright and then delete the installation.
-#    Browsers will remain downloaded in `/home/pwuser/.cache/ms-playwright`.
-RUN mkdir /home/pwuser/tmp && cd /home/pwuser/tmp && npm init -y && \
-    npm i ../playwright.tar.gz && \
-    cd ../ && rm -rf tmp && rm /home/pwuser/playwright.tar.gz
-
+#    Browsers will remain downloaded in `/root/.cache/ms-playwright`.
+RUN mkdir /tmp/pw && cd /tmp/pw && npm init -y && \
+    npm i /tmp/playwright.tar.gz && \
+    rm -rf /tmp/pw && rm /tmp/playwright.tar.gz
