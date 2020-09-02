@@ -32,9 +32,9 @@ jobs:
         # build docker image
         ./docs/docker/build.sh
         # tag image accordingly
-        docker tag playwright:localbuild public/playwright:next
-        docker tag playwright:localbuild public/playwright:sha-${{ github.sha }}
+        docker tag playwright:localbuild playwright.azurecr.io/public/playwright:next
+        docker tag playwright:localbuild playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
         docker rmi playwright:localbuild
         # push image to registry
-        docker push public/playwright:next
+        docker push playwright.azurecr.io/public/playwright:next
 
