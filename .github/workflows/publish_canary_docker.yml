@@ -32,7 +32,6 @@ jobs:
     - run: ./docs/docker/build.sh
     - name: tag & publish
       run: |
-        docker tag playwright:localbuild playwright.azurecr.io/public/playwright:next
-        docker tag playwright:localbuild playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
-        docker push --all-tags playwright.azurecr.io/public/playwright
+        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:next
+        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
 
