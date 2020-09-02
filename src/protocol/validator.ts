@@ -96,10 +96,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     source: tString,
     contentScript: tOptional(tBoolean),
   });
-  scheme.SelectorsCreateSelectorParams = tObject({
-    name: tString,
-    handle: tChannel('ElementHandle'),
-  });
   scheme.BrowserTypeLaunchParams = tObject({
     executablePath: tOptional(tString),
     args: tOptional(tArray(tString)),
@@ -766,6 +762,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
+  });
+  scheme.ElementHandleCreateSelectorForTestParams = tObject({
+    name: tString,
   });
   scheme.RequestResponseParams = tOptional(tObject({}));
   scheme.RouteAbortParams = tObject({

@@ -109,11 +109,18 @@ export type PlaywrightInitializer = {
 export interface PlaywrightChannel extends Channel {
 }
 
+// ----------- RemoteBrowser -----------
+export type RemoteBrowserInitializer = {
+  browser: BrowserChannel,
+  selectors: SelectorsChannel,
+};
+export interface RemoteBrowserChannel extends Channel {
+}
+
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
 export interface SelectorsChannel extends Channel {
   register(params: SelectorsRegisterParams): Promise<SelectorsRegisterResult>;
-  createSelector(params: SelectorsCreateSelectorParams): Promise<SelectorsCreateSelectorResult>;
 }
 export type SelectorsRegisterParams = {
   name: string,
@@ -124,16 +131,6 @@ export type SelectorsRegisterOptions = {
   contentScript?: boolean,
 };
 export type SelectorsRegisterResult = void;
-export type SelectorsCreateSelectorParams = {
-  name: string,
-  handle: ElementHandleChannel,
-};
-export type SelectorsCreateSelectorOptions = {
-
-};
-export type SelectorsCreateSelectorResult = {
-  value?: string,
-};
 
 // ----------- BrowserType -----------
 export type BrowserTypeInitializer = {
@@ -1625,6 +1622,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   uncheck(params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
   waitForElementState(params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
   waitForSelector(params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
+  createSelectorForTest(params: ElementHandleCreateSelectorForTestParams): Promise<ElementHandleCreateSelectorForTestResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -1935,6 +1933,15 @@ export type ElementHandleWaitForSelectorOptions = {
 };
 export type ElementHandleWaitForSelectorResult = {
   element?: ElementHandleChannel,
+};
+export type ElementHandleCreateSelectorForTestParams = {
+  name: string,
+};
+export type ElementHandleCreateSelectorForTestOptions = {
+
+};
+export type ElementHandleCreateSelectorForTestResult = {
+  value?: string,
 };
 
 // ----------- Request -----------

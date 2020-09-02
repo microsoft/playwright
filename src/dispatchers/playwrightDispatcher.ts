@@ -18,10 +18,10 @@ import { Playwright } from '../server/playwright';
 import * as channels from '../protocol/channels';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { SelectorsDispatcher } from './selectorsDispatcher';
 import { Electron } from '../server/electron/electron';
 import { ElectronDispatcher } from './electronDispatcher';
 import { DeviceDescriptors } from '../server/deviceDescriptors';
+import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {

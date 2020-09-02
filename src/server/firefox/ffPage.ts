@@ -30,7 +30,6 @@ import { FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
-import { selectors } from '../selectors';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { Screencast } from '../browserContext';
 
@@ -489,7 +488,7 @@ export class FFPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const handles = await selectors._queryAll(parent, 'iframe', undefined, true /* allowUtilityContext */);
+    const handles = await this._page.selectors._queryAll(parent, 'iframe', undefined, true /* allowUtilityContext */);
     const items = await Promise.all(handles.map(async handle => {
       const frame = await handle.contentFrame().catch(e => null);
       return { handle, frame };

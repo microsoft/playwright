@@ -233,6 +233,10 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
       return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
     });
   }
+
+  async _createSelectorForTest(name: string): Promise<string | undefined> {
+    return (await this._elementChannel.createSelectorForTest({ name })).value;
+  }
 }
 
 export function convertSelectOptionValues(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {

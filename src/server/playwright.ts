@@ -17,11 +17,11 @@
 import { Chromium } from './chromium/chromium';
 import { WebKit } from './webkit/webkit';
 import { Firefox } from './firefox/firefox';
-import { selectors } from './selectors';
 import * as browserPaths from '../utils/browserPaths';
+import { serverSelectors } from './selectors';
 
 export class Playwright {
-  readonly selectors = selectors;
+  readonly selectors = serverSelectors;
   readonly chromium: Chromium;
   readonly firefox: Firefox;
   readonly webkit: WebKit;

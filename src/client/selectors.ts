@@ -14,26 +14,39 @@
  * limitations under the License.
  */
 
+import { evaluationScript } from './clientHelper';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { ElementHandle } from './elementHandle';
-import { evaluationScript } from './clientHelper';
 
-export class Selectors extends ChannelOwner<channels.SelectorsChannel, channels.SelectorsInitializer> {
-  static from(selectors: channels.SelectorsChannel): Selectors {
-    return (selectors as any)._object;
-  }
-
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.SelectorsInitializer) {
-    super(parent, type, guid, initializer);
-  }
+export class Selectors {
+  private _channels = new Set<SelectorsOwner>();
+  private _registrations: channels.SelectorsRegisterParams[] = [];
 
   async register(name: string, script: string | Function | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
     const source = await evaluationScript(script, undefined, false);
-    await this._channel.register({ ...options, name, source });
+    const params = { ...options, name, source };
+    for (const channel of this._channels)
+      await channel._channel.register(params);
+    this._registrations.push(params);
   }
 
-  async _createSelector(name: string, handle: ElementHandle<Element>): Promise<string | undefined> {
-    return (await this._channel.createSelector({ name, handle: handle._elementChannel })).value;
+  _addChannel(channel: SelectorsOwner) {
+    this._channels.add(channel);
+    for (const params of this._registrations) {
+      // This should not fail except for connection closure, but just in case we catch.
+      channel._channel.register(params).catch(e => {});
+    }
+  }
+
+  _removeChannel(channel: SelectorsOwner) {
+    this._channels.delete(channel);
   }
 }
+
+export class SelectorsOwner extends ChannelOwner<channels.SelectorsChannel, channels.SelectorsInitializer> {
+  static from(browser: channels.SelectorsChannel): SelectorsOwner {
+    return (browser as any)._object;
+  }
+}
+
+export const sharedSelectors = new Selectors();

@@ -16,7 +16,7 @@
 
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
-import { BrowserType } from './browserType';
+import { BrowserType, RemoteBrowser } from './browserType';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
@@ -34,12 +34,12 @@ import { Electron, ElectronApplication } from './electron';
 import * as channels from '../protocol/channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
-import { Selectors } from './selectors';
 import { Stream } from './stream';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
+import { SelectorsOwner } from './selectors';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -195,11 +195,11 @@ export class Connection {
       case 'Playwright':
         result = new Playwright(parent, type, guid, initializer);
         break;
+      case 'RemoteBrowser':
+        result = new RemoteBrowser(parent, type, guid, initializer);
+        break;
       case 'Request':
         result = new Request(parent, type, guid, initializer);
-        break;
-      case 'Stream':
-        result = new Stream(parent, type, guid, initializer);
         break;
       case 'Response':
         result = new Response(parent, type, guid, initializer);
@@ -207,8 +207,11 @@ export class Connection {
       case 'Route':
         result = new Route(parent, type, guid, initializer);
         break;
+      case 'Stream':
+        result = new Stream(parent, type, guid, initializer);
+        break;
       case 'Selectors':
-        result = new Selectors(parent, type, guid, initializer);
+        result = new SelectorsOwner(parent, type, guid, initializer);
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);

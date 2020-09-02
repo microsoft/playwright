@@ -33,7 +33,6 @@ import * as accessibility from '../accessibility';
 import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKBrowserContext } from './wkBrowser';
-import { selectors } from '../selectors';
 import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { JSHandle } from '../javascript';
@@ -853,7 +852,7 @@ export class WKPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const handles = await selectors._queryAll(parent, 'iframe', undefined, true /* allowUtilityContext */);
+    const handles = await this._page.selectors._queryAll(parent, 'iframe', undefined, true /* allowUtilityContext */);
     const items = await Promise.all(handles.map(async handle => {
       const frame = await handle.contentFrame().catch(e => null);
       return { handle, frame };

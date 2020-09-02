@@ -17,8 +17,6 @@
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import * as channels from '../protocol/channels';
 import { Selectors } from '../server/selectors';
-import { ElementHandleDispatcher } from './elementHandlerDispatcher';
-import * as dom from '../server/dom';
 
 export class SelectorsDispatcher extends Dispatcher<Selectors, channels.SelectorsInitializer> implements channels.SelectorsChannel {
   constructor(scope: DispatcherScope, selectors: Selectors) {
@@ -27,9 +25,5 @@ export class SelectorsDispatcher extends Dispatcher<Selectors, channels.Selector
 
   async register(params: channels.SelectorsRegisterParams): Promise<void> {
     await this._object.register(params.name, params.source, params.contentScript);
-  }
-
-  async createSelector(params: channels.SelectorsCreateSelectorParams): Promise<channels.SelectorsCreateSelectorResult> {
-    return { value: await this._object._createSelector(params.name, (params.handle as ElementHandleDispatcher)._object as dom.ElementHandle<Element>) };
   }
 }

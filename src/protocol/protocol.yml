@@ -146,6 +146,13 @@ Playwright:
     selectors: Selectors
 
 
+RemoteBrowser:
+  type: interface
+
+  initializer:
+    browser: Browser
+    selectors: Selectors
+
 
 Selectors:
   type: interface
@@ -157,14 +164,6 @@ Selectors:
         name: string
         source: string
         contentScript: boolean?
-
-    createSelector:
-      parameters:
-        name: string
-        handle: ElementHandle
-      returns:
-        value: string?
-
 
 
 BrowserType:
@@ -1605,6 +1604,12 @@ ElementHandle:
           - hidden
       returns:
         element: ElementHandle?
+
+    createSelectorForTest:
+      parameters:
+        name: string
+      returns:
+        value: string?
 
 
 Request:

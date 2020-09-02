@@ -23,8 +23,8 @@ import { CRBrowser } from '../server/chromium/crBrowser';
 import { PageDispatcher } from './pageDispatcher';
 
 export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
-  constructor(scope: DispatcherScope, browser: Browser, guid?: string) {
-    super(scope, browser, 'Browser', { version: browser.version(), name: browser._options.name }, true, guid);
+  constructor(scope: DispatcherScope, browser: Browser) {
+    super(scope, browser, 'Browser', { version: browser.version(), name: browser._options.name }, true);
     browser.on(Browser.Events.Disconnected, () => this._didClose());
   }
 
