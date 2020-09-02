@@ -30,18 +30,18 @@ declare global {
 }
 
 registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
-  let firefox;
+  let chromium;
   if (options.WEBKIT && !LINUX) {
-    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch Firefox.
-    firefox = await playwright.firefox.launch();
-    context = await firefox.newContext();
+    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch chromium.
+    chromium = await playwright.chromium.launch();
+    context = await chromium.newContext();
   }
 
   const page = await context.newPage();
   const player = new VideoPlayer(page, server);
   await test(player);
-  if (firefox)
-    await firefox.close();
+  if (chromium)
+    await chromium.close();
   else
     await page.close();
 });
@@ -171,12 +171,13 @@ describe('screencast', suite => {
   }, async ({page, tmpDir, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+
     // TODO: in WebKit figure out why video size is not reported correctly for
     // static pictures.
     if (options.HEADLESS && options.WEBKIT)
       await page.setViewportSize({width: 1270, height: 950});
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
 
@@ -184,8 +185,8 @@ describe('screencast', suite => {
     const duration = await videoPlayer.duration();
     expect(duration).toBeGreaterThan(0);
 
-    expect(await videoPlayer.videoWidth()).toBe(640);
-    expect(await videoPlayer.videoHeight()).toBe(480);
+    expect(await videoPlayer.videoWidth()).toBe(320);
+    expect(await videoPlayer.videoHeight()).toBe(240);
 
     await videoPlayer.seekLastFrame();
     const pixels = await videoPlayer.pixels();
@@ -199,14 +200,14 @@ describe('screencast', suite => {
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     // TODO: in WebKit figure out why video size is not reported correctly for
     // static pictures.
     if (options.HEADLESS && options.WEBKIT)
       await page.setViewportSize({width: 1270, height: 950});
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 1000));
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
 
@@ -233,11 +234,10 @@ describe('screencast', suite => {
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     // Set viewport equal to screencast frame size to avoid scaling.
-    await page.setViewportSize({width: 640, height: 480});
+    await page.setViewportSize({width: 320, height: 240});
     await page.goto(server.PREFIX + '/rotate-z.html');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 640, height: 480});
-    // 300 is not enough for Chromium headful.
-    await new Promise(r => setTimeout(r, 500));
+    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+    await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
 
@@ -299,8 +299,12 @@ describe('screencast', suite => {
     await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
     expect(context._screencastOptions).toBeTruthy();
 
-    const page = await context.newPage();
+    const [page] = await Promise.all([
+      context.newPage(),
+      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    ]);
     await page.mainFrame().goto(server.EMPTY_PAGE);
+
     const [screencast, popup] = await Promise.all([
       new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
       new Promise(resolve => context.on('page', resolve)) as Promise<any>,
@@ -317,10 +321,10 @@ describe('screencast', suite => {
   it('should scale frames down to the requested size ', test => {
     test.fixme(options.CHROMIUM && options.HEADLESS, 'Window is not resized when changing viewport');
   }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
-    // Set size to 1/2 of the viewport.
     await page.setViewportSize({width: 640, height: 480});
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/checkerboard.html');
+    // Set size to 1/2 of the viewport.
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     // Update the picture to ensure enough frames are generated.
     await page.$eval('.container', container => {
@@ -330,7 +334,7 @@ describe('screencast', suite => {
     await page.$eval('.container', container => {
       container.firstElementChild.classList.add('red');
     });
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
 
