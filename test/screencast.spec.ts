@@ -173,11 +173,6 @@ describe('screencast', suite => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
-
-    // TODO: in WebKit figure out why video size is not reported correctly for
-    // static pictures.
-    if (options.HEADLESS && options.WEBKIT)
-      await page.setViewportSize({width: 1270, height: 950});
     await new Promise(r => setTimeout(r, 1000));
     await toImpl(page)._delegate.stopScreencast();
     expect(fs.existsSync(videoFile)).toBe(true);
@@ -202,10 +197,6 @@ describe('screencast', suite => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
-    // TODO: in WebKit figure out why video size is not reported correctly for
-    // static pictures.
-    if (options.HEADLESS && options.WEBKIT)
-      await page.setViewportSize({width: 1270, height: 950});
     await new Promise(r => setTimeout(r, 1000));
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
     await new Promise(r => setTimeout(r, 1000));
