@@ -10010,10 +10010,10 @@ index 0000000000000000000000000000000000000000..f356c613945fd263889bc74166bef2b2
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..8e3989ef7f9947c685dcbe30d58561dab7f5ea5b
+index 0000000000000000000000000000000000000000..1af880600f7a0b4034ea88be0ace8b8408870970
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,855 @@
+@@ -0,0 +1,854 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -10499,7 +10499,6 @@ index 0000000000000000000000000000000000000000..8e3989ef7f9947c685dcbe30d58561da
 +        if (!callback->isActive())
 +            return;
 +
-+        m_browserContexts.clear();
 +        if (m_client == nullptr) {
 +            callback->sendFailure("no platform delegate to close browser");
 +        } else {
