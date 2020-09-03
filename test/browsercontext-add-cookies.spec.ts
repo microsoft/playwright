@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, options } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
 
 it('should work', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);

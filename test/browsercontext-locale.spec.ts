@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should affect accept-language header', async ({browser, server}) => {
   const context = await browser.newContext({ locale: 'fr-CH' });

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should clear cookies', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);

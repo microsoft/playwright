@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './playwright.fixtures';
 import utils from './utils';
 import path from 'path';
 import fs from 'fs';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, registerFixture } from '@playwright/test-runner';
+import { it, expect, registerFixture } from '@playwright/test-runner';
 import './playwright.fixtures';
 
 import path from 'path';

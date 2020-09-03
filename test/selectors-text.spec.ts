@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, options } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
 
 it('query', async ({page}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);

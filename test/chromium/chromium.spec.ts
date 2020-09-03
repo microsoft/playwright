@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, describe, options } from '../playwright.fixtures';
+import { it, expect, describe, options } from '../playwright.fixtures';
 import type { ChromiumBrowserContext } from '../..';
 
 describe('chromium', suite => {

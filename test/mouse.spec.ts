@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, xdescribe, options } from './playwright.fixtures';
+import { it, expect, xdescribe, options } from './playwright.fixtures';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
