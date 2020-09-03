@@ -50,7 +50,8 @@ registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
 registerFixture('videoFile', async ({browserType}, runTest, info) => {
   const { test, config } = info;
   const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
-  const videoFile = path.join(config.outputDir, 'video', `${sanitizedTitle}-${browserType.name()}_v.webm`);
+  const headless = options.HEADLESS ? 'headless-' : '';
+  const videoFile = path.join(config.outputDir, 'video', `${headless}${sanitizedTitle}-${browserType.name()}_v.webm`);
   await mkdirIfNeeded(videoFile);
   await runTest(videoFile);
 });
