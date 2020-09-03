@@ -159,7 +159,6 @@ if (!args.some(arg => arg === '--no-cleanup')) {
 
   // 6. Bake commit SHA into the package
   const commitSHA = spawnSync('git', ['rev-parse', 'HEAD'], {cwd: __dirname, encoding: 'utf8'});
-  console.log(commitSHA.stdout.trim());
   await writeToPackage('commitinfo', commitSHA.stdout.trim());
 
   // 7. Run npm pack

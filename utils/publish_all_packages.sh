@@ -75,11 +75,16 @@ else
   exit 1
 fi
 
-PLAYWRIGHT_TGZ="$(node ./packages/build_package.js playwright ./playwright.tgz)"
-PLAYWRIGHT_CORE_TGZ="$(node ./packages/build_package.js playwright-core ./playwright-core.tgz)"
-PLAYWRIGHT_WEBKIT_TGZ="$(node ./packages/build_package.js playwright-webkit ./playwright-webkit.tgz)"
-PLAYWRIGHT_FIREFOX_TGZ="$(node ./packages/build_package.js playwright-firefox ./playwright-firefox.tgz)"
-PLAYWRIGHT_CHROMIUM_TGZ="$(node ./packages/build_package.js playwright-chromium ./playwright-chromium.tgz)"
+PLAYWRIGHT_TGZ="$PWD/playwright.tgz"
+PLAYWRIGHT_CORE_TGZ="$PWD/playwright-core.tgz"
+PLAYWRIGHT_WEBKIT_TGZ="$PWD/playwright-webkit.tgz"
+PLAYWRIGHT_FIREFOX_TGZ="$PWD/playwright-firefox.tgz"
+PLAYWRIGHT_CHROMIUM_TGZ="$PWD/playwright-chromium.tgz"
+node ./packages/build_package.js playwright "${PLAYWRIGHT_TGZ}"
+node ./packages/build_package.js playwright-core "${PLAYWRIGHT_CORE_TGZ}"
+node ./packages/build_package.js playwright-webkit "${PLAYWRIGHT_WEBKIT_TGZ}"
+node ./packages/build_package.js playwright-firefox "${PLAYWRIGHT_FIREFOX_TGZ}"
+node ./packages/build_package.js playwright-chromium "${PLAYWRIGHT_CHROMIUM_TGZ}"
 
 npm publish ${PLAYWRIGHT_TGZ}           --tag="${NPM_PUBLISH_TAG}"
 npm publish ${PLAYWRIGHT_CORE_TGZ}      --tag="${NPM_PUBLISH_TAG}"
