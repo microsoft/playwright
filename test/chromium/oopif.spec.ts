@@ -15,7 +15,7 @@
  */
 
 import { options } from '../playwright.fixtures';
-import { it, describe, registerWorkerFixture } from '@playwright/test-runner';
+import { it, expect, describe, registerWorkerFixture } from '@playwright/test-runner';
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch({

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './playwright.fixtures';
 
 function crash(pageImpl, browserName) {
   if (browserName === 'chromium')

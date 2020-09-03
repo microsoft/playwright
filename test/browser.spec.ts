@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, options } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
 
 it('should create new page', async function({browser}) {
   const page1 = await browser.newPage();

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './playwright.fixtures';
 import './remoteServer.fixture';
 
 import { execSync } from 'child_process';

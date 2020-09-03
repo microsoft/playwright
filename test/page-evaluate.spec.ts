@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, options } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
 
 it('should work', async ({ page, server }) => {
   const result = await page.evaluate(() => 7 * 3);

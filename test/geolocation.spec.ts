@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should work', async ({page, server, context}) => {
   await context.grantPermissions(['geolocation']);

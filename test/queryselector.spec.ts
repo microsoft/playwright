@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should throw for non-string selector', async ({page}) => {
   const error = await page.$(null).catch(e => e);

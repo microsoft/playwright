@@ -15,7 +15,7 @@
  */
 
 import { options } from './playwright.fixtures';
-import { it, beforeEach } from '@playwright/test-runner';
+import { it, expect, beforeEach } from '@playwright/test-runner';
 import './remoteServer.fixture';
 
 import fs from 'fs';

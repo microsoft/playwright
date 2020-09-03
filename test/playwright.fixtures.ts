@@ -25,7 +25,7 @@ import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '@playwright/test-runner';
 import { mkdtempAsync, removeFolderAsync } from './utils';
-export { it, fit, xit, describe, fdescribe, xdescribe } from '@playwright/test-runner';
+export { it, fit, xit, describe, fdescribe, xdescribe, expect } from '@playwright/test-runner';
 
 export const options = {
   CHROMIUM: parameters.browserName === 'chromium',

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should query existing element', async ({page, server}) => {
   await page.goto(server.PREFIX + '/playground.html');
