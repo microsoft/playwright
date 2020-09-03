@@ -163,6 +163,7 @@ class VideoPlayer {
 
 describe('screencast', suite => {
   suite.slow();
+  suite.flaky();
   suite.skip(options.WIRE);
 }, () => {
   it('should capture static page', test => {
