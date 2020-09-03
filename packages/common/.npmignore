@@ -33,3 +33,5 @@ lib/server/injected/
 !protocol.yml
 # Include browser descriptors.
 !browsers.json
+# Include commit info
+!commitinfo

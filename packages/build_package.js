@@ -157,7 +157,12 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     browser.download = package.browsers.includes(browser.name);
   await writeToPackage('browsers.json', JSON.stringify(browsersJSON, null, 2));
 
-  // 6. Run npm pack
+  // 6. Bake commit SHA into the package
+  const commitSHA = spawnSync('git', ['rev-parse', 'HEAD'], {cwd: __dirname, encoding: 'utf8'});
+  console.log(commitSHA.stdout.trim());
+  await writeToPackage('commitinfo', commitSHA.stdout.trim());
+
+  // 7. Run npm pack
   const shell = os.platform() === 'win32';
   const {stdout, stderr, status} = spawnSync('npm', ['pack'], {cwd: packagePath, encoding: 'utf8', shell});
   if (status !== 0) {
