@@ -87,7 +87,7 @@ export abstract class Browser extends EventEmitter {
   }
 
   _screencastStarted(screencastId: string, file: string, page: Page) {
-    const screencast = new Screencast(file, page);
+    const screencast = new Screencast(screencastId, file, page);
     this._idToScreencast.set(screencastId, screencast);
     page._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
   }

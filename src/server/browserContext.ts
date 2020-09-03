@@ -32,10 +32,12 @@ import { instrumentingAgents } from './instrumentation';
 
 export class Screencast {
   readonly page: Page;
-  private readonly _path: string;
+  readonly _screencastId: string;
+  readonly _path: string;
   _finishCallback: () => void = () => {};
   private readonly _finishedPromise: Promise<void>;
-  constructor(path: string, page: Page) {
+  constructor(screencastId: string, path: string, page: Page) {
+    this._screencastId = screencastId;
     this._path = path;
     this.page = page;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);

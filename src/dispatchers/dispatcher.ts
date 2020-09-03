@@ -117,7 +117,7 @@ export class DispatcherConnection {
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
 
-  async sendMessageToClient(guid: string, method: string, params: any, disallowDispatchers?: boolean): Promise<any> {
+  sendMessageToClient(guid: string, method: string, params: any, disallowDispatchers?: boolean) {
     const allowDispatchers = !disallowDispatchers;
     this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params, allowDispatchers) });
   }

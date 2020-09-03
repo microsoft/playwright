@@ -25,8 +25,31 @@ import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
-import { URLMatch, Headers, WaitForEventOptions } from './types';
+import { URLMatch, Headers, WaitForEventOptions, ContextScreencastOptions } from './types';
 import { isDevMode, headersObjectToArray } from '../utils/utils';
+
+export class _Screencast {
+  private readonly _page: Page;
+  private readonly _path: string;
+  _finishCallback: () => void = () => {};
+  private readonly _finishedPromise: Promise<void>;
+  constructor(path: string, page: Page) {
+    this._path = path;
+    this._page = page;
+    this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
+  }
+
+  page(): Page {
+    return this._page;
+  }
+
+  async path(): Promise<string | null> {
+    await this._finishedPromise;
+    return this._path;
+  }
+}
+
+type _ScreencastCallback = (screencast: _Screencast) => void;
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
@@ -38,6 +61,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _ownerPage: Page | undefined;
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
+  private _screencastCallback: _ScreencastCallback | null = null;
+  private _idToScreencast = new Map<string, _Screencast>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -57,6 +82,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._channel.on('_screencastStarted', params => this._onScreencastStarted(params));
+    this._channel.on('_screencastFinished', params => this._onScreencastFinished(params));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -215,6 +242,36 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     const result = await waiter.waitForEvent(this, event, predicate as any);
     waiter.dispose();
     return result;
+  }
+
+  async _enableScreencast(options: ContextScreencastOptions, callback: _ScreencastCallback) {
+    if (this._screencastCallback)
+      throw new Error('Already enabled');
+    await this._channel._enableScreencast(options);
+    this._screencastCallback = callback;
+  }
+
+  async _disableScreencast() {
+    if (!this._screencastCallback)
+      throw new Error('Not enabled');
+    await this._channel._disableScreencast();
+    this._screencastCallback = null;
+  }
+
+  private _onScreencastStarted(params: channels.BrowserContext_screencastStartedEvent): void {
+    if (!this._screencastCallback)
+      return;
+    const screencast = new _Screencast(params.path, Page.from(params.page));
+    this._idToScreencast.set(params.screencastId, screencast);
+    this._screencastCallback(screencast);
+  }
+
+  private _onScreencastFinished(params: channels.BrowserContext_screencastFinishedEvent): void {
+    const screencast = this._idToScreencast.get(params.screencastId);
+    if (!screencast)
+      return;
+    this._idToScreencast.delete(params.screencastId);
+    screencast._finishCallback();
   }
 
   async _onClose() {

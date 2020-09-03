@@ -721,7 +721,10 @@ export class WKPage implements PageDelegate {
         width: options.width,
         height: options.height,
       }) as any;
-      this._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
+      this.pageOrError().then(pageOrError => {
+        if (pageOrError instanceof Page)
+          this._browserContext._browser._screencastStarted(screencastId, options.outputFile, pageOrError);
+      });
     } catch (e) {
       this._recordingVideoFile = null;
       throw e;

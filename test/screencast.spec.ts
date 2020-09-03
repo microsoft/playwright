@@ -21,6 +21,7 @@ import type { Page } from '..';
 import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
+import { _Screencast } from '..';
 
 
 declare global {
@@ -244,19 +245,20 @@ describe('screencast', suite => {
     }
   });
 
-  it('should sutomatically start/finish when new page is created/closed', test => {
+  it('should automatically start/finish when new page is created/closed', test => {
     test.flaky(options.FIREFOX, 'Even slow is not slow enough');
-  }, async ({browser, tmpDir, toImpl}) => {
-    // Use server side of the context. All the code below also uses server side APIs.
-    const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 320, height: 240, dir: tmpDir});
-    expect(context._screencastOptions).toBeTruthy();
+  }, async ({browser, tmpDir}) => {
+    const context = await browser.newContext();
+    let screencastCallback;
+    await context._enableScreencast({width: 320, height: 240, dir: tmpDir}, s => {
+      screencastCallback(s);
+    });
 
     const [screencast, newPage] = await Promise.all([
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      new Promise<_Screencast>(r => screencastCallback = r),
       context.newPage(),
     ]);
-    expect(screencast.page === newPage).toBe(true);
+    expect(screencast.page() === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
       screencast.path(),
@@ -266,17 +268,18 @@ describe('screencast', suite => {
     await context.close();
   });
 
-  it('should finish when contex closes', async ({browser, tmpDir, toImpl}) => {
-    // Use server side of the context. All the code below also uses server side APIs.
-    const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 320, height: 240, dir: tmpDir});
-    expect(context._screencastOptions).toBeTruthy();
+  it('should finish when contex closes', async ({browser, tmpDir}) => {
+    const context = await browser.newContext();
+    let screencastCallback;
+    await context._enableScreencast({width: 320, height: 240, dir: tmpDir}, s => {
+      screencastCallback(s);
+    });
 
     const [screencast, newPage] = await Promise.all([
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      new Promise<_Screencast>(r => screencastCallback = r),
       context.newPage(),
     ]);
-    expect(screencast.page === newPage).toBe(true);
+    expect(screencast.page() === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
       screencast.path(),
@@ -285,27 +288,28 @@ describe('screencast', suite => {
     expect(path.dirname(videoFile)).toBe(tmpDir);
   });
 
-  it('should fire start event for popups', async ({browser, tmpDir, server, toImpl}) => {
-    // Use server side of the context. All the code below also uses server side APIs.
-    const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
-    expect(context._screencastOptions).toBeTruthy();
+  it('should fire start event for popups', async ({browser, tmpDir, server}) => {
+    const context = await browser.newContext();
+    let screencastCallback;
+    await context._enableScreencast({width: 320, height: 240, dir: tmpDir}, s => {
+      screencastCallback(s);
+    });
 
     const [page] = await Promise.all([
       context.newPage(),
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      new Promise<_Screencast>(r => screencastCallback = r),
     ]);
     await page.mainFrame().goto(server.EMPTY_PAGE);
 
     const [screencast, popup] = await Promise.all([
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
-      new Promise(resolve => context.on('page', resolve)) as Promise<any>,
-      page.mainFrame()._evaluateExpression(() => {
+      new Promise<_Screencast>(r => screencastCallback = r),
+      new Promise<Page>(resolve => context.on('page', resolve)),
+      page.evaluate(() => {
         const win = window.open('about:blank');
         win.close();
       }, true)
     ]);
-    expect(screencast.page === popup).toBe(true);
+    expect(screencast.page() === popup).toBe(true);
     expect(path.dirname(await screencast.path())).toBe(tmpDir);
     await context.close();
   });

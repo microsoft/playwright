@@ -282,6 +282,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextSetOfflineParams = tObject({
     offline: tBoolean,
   });
+  scheme.BrowserContext_enableScreencastParams = tObject({
+    width: tNumber,
+    height: tNumber,
+    dir: tString,
+  });
+  scheme.BrowserContext_disableScreencastParams = tOptional(tObject({}));
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });

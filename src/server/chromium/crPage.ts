@@ -764,7 +764,10 @@ class FrameSession {
       this._screencastState = 'started';
       this._videoRecorder = videoRecorder;
       this._screencastId = screencastId;
-      this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
+      this._crPage.pageOrError().then(pageOrError => {
+        if (pageOrError instanceof Page)
+          this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile, pageOrError);
+      });
     } catch (e) {
       videoRecorder.stop().catch(() => {});
       throw e;

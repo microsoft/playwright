@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../server/browserContext';
+import { BrowserContext, Screencast } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import * as channels from '../protocol/channels';
@@ -35,6 +35,17 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
+    });
+
+    context.on(BrowserContext.Events.ScreencastStarted, (screencast: Screencast) => {
+      this._dispatchEvent('_screencastStarted', {
+        screencastId: screencast._screencastId,
+        path: screencast._path,
+        page: lookupDispatcher<PageDispatcher>(screencast.page),
+      });
+      screencast.path().then(() => {
+        this._dispatchEvent('_screencastFinished', { screencastId: screencast._screencastId });
+      });
     });
 
     if (context._browser._options.name === 'chromium') {
@@ -119,6 +130,14 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async close(): Promise<void> {
     await this._context.close();
+  }
+
+  async _enableScreencast(params:  channels.BrowserContext_enableScreencastParams) {
+    await this._context._enableScreencast(params);
+  }
+
+  async _disableScreencast() {
+    await this._context._disableScreencast();
   }
 
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {

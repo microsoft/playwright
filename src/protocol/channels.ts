@@ -435,6 +435,8 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
+  on(event: '_screencastStarted', callback: (params: BrowserContext_screencastStartedEvent) => void): this;
+  on(event: '_screencastFinished', callback: (params: BrowserContext_screencastFinishedEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
@@ -451,6 +453,8 @@ export interface BrowserContextChannel extends Channel {
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
+  _enableScreencast(params: BrowserContext_enableScreencastParams): Promise<BrowserContext_enableScreencastResult>;
+  _disableScreencast(params?: BrowserContext_disableScreencastParams): Promise<BrowserContext_disableScreencastResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -469,6 +473,14 @@ export type BrowserContextCrBackgroundPageEvent = {
 };
 export type BrowserContextCrServiceWorkerEvent = {
   worker: WorkerChannel,
+};
+export type BrowserContext_screencastStartedEvent = {
+  screencastId: string,
+  page: PageChannel,
+  path: string,
+};
+export type BrowserContext_screencastFinishedEvent = {
+  screencastId: string,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: {
@@ -607,6 +619,18 @@ export type BrowserContextSetOfflineOptions = {
 
 };
 export type BrowserContextSetOfflineResult = void;
+export type BrowserContext_enableScreencastParams = {
+  width: number,
+  height: number,
+  dir: string,
+};
+export type BrowserContext_enableScreencastOptions = {
+
+};
+export type BrowserContext_enableScreencastResult = void;
+export type BrowserContext_disableScreencastParams = {};
+export type BrowserContext_disableScreencastOptions = {};
+export type BrowserContext_disableScreencastResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };

@@ -506,6 +506,14 @@ BrowserContext:
       parameters:
         offline: boolean
 
+    _enableScreencast:
+      parameters:
+        width: number
+        height: number
+        dir: string
+
+    _disableScreencast:
+
     crNewCDPSession:
       parameters:
         page: Page
@@ -537,7 +545,15 @@ BrowserContext:
       parameters:
         worker: Worker
 
+    _screencastStarted:
+      parameters:
+        screencastId: string
+        page: Page
+        path: string
 
+    _screencastFinished:
+      parameters:
+        screencastId: string
 
 Page:
   type: interface
