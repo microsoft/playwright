@@ -102,6 +102,7 @@ export type PlaywrightInitializer = {
       deviceScaleFactor: number,
       isMobile: boolean,
       hasTouch: boolean,
+      defaultBrowserType: 'chromium' | 'firefox' | 'webkit',
     },
   }[],
   selectors: SelectorsChannel,
