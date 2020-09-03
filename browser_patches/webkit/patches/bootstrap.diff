@@ -8350,10 +8350,10 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
      // The timeout we use when waiting for a DidUpdateGeometry message.
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..d521ce66f75470a44f91163e1b5155f30c0894ee
+index 0000000000000000000000000000000000000000..1b87dad9771aaff2c77fcaa8f03982f461177cbd
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,171 @@
+@@ -0,0 +1,174 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8382,6 +8382,7 @@ index 0000000000000000000000000000000000000000..d521ce66f75470a44f91163e1b5155f3
 +#include "config.h"
 +#include "InspectorScreencastAgent.h"
 +
++#include "GenericCallback.h"
 +#include "PageClient.h"
 +#include "ScreencastEncoder.h"
 +#include "WebPageProxy.h"
@@ -8471,6 +8472,8 @@ index 0000000000000000000000000000000000000000..d521ce66f75470a44f91163e1b5155f3
 +#if !PLATFORM(WPE)
 +    scheduleFrameEncoding();
 +#endif
++    // Force at least one frame on WPE.
++    m_page.forceRepaint(VoidCallback::create([] (CallbackBase::Error) { }));
 +}
 +
 +void InspectorScreencastAgent::stop(Ref<StopCallback>&& callback)
