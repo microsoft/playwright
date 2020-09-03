@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 import utils from './utils';
 
 async function giveItAChanceToClick(page) {

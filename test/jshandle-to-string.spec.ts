@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 it('should work for primitives', async ({page}) => {
   const numberHandle = await page.evaluateHandle(() => 2);

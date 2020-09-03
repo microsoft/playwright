@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 it('should select textarea', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');

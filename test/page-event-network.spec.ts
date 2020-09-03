@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 it('Page.Events.Request', async ({page, server}) => {
   const requests = [];

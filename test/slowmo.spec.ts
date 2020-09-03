@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, describe, options } from './playwright.fixtures';
 import { attachFrame } from './utils';
 
 async function checkSlowMo(toImpl, page, task) {

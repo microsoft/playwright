@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { options } from './playwright.fixtures';
+
+import { it, options } from './playwright.fixtures';
 
 it('should inherit user agent from browser context', async function({browser, server}) {
   const context = await browser.newContext({

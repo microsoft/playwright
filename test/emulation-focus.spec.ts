@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 import utils from './utils';
 
 it('should think that it is focused by default', async ({page}) => {

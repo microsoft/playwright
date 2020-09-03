@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options } from '../playwright.fixtures';
+import { it, describe, options } from '../playwright.fixtures';
 import './electron.fixture';
 
 describe('electron window', suite => {

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 import utils from './utils';
 
 const addElement = tag => document.body.appendChild(document.createElement(tag));

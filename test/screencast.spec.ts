@@ -15,7 +15,7 @@
  */
 
 import { options } from './playwright.fixtures';
-import { registerFixture } from '@playwright/test-runner';
+import { it, describe, registerFixture } from '@playwright/test-runner';
 import type { Page } from '..';
 
 import fs from 'fs';

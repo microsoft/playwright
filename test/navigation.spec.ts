@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should work with _blank target', async ({page, server}) => {
   server.setRoute('/empty.html', (req, res) => {

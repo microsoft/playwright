@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 

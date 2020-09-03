@@ -15,7 +15,7 @@
  */
 
 import { options } from '../playwright.fixtures';
-import { registerFixture } from '@playwright/test-runner';
+import { it, describe, registerFixture } from '@playwright/test-runner';
 
 import fs from 'fs';
 import path from 'path';
@@ -23,25 +23,25 @@ import type { ChromiumBrowser } from '../..';
 
 declare global {
   interface TestState {
-    outputFile: string;
+    outputTraceFile: string;
   }
 }
 
-registerFixture('outputFile', async ({tmpDir}, test) => {
-  const outputFile = path.join(tmpDir, `trace.json`);
-  await test(outputFile);
-  if (fs.existsSync(outputFile))
-    fs.unlinkSync(outputFile);
+registerFixture('outputTraceFile', async ({tmpDir}, test) => {
+  const outputTraceFile = path.join(tmpDir, `trace.json`);
+  await test(outputTraceFile);
+  if (fs.existsSync(outputTraceFile))
+    fs.unlinkSync(outputTraceFile);
 });
 
 describe('oopif', suite => {
   suite.skip(!options.CHROMIUM);
 }, () => {
-  it('should output a trace', async ({browser, page, server, outputFile}) => {
-    await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputFile});
+  it('should output a trace', async ({browser, page, server, outputTraceFile}) => {
+    await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputTraceFile});
     await page.goto(server.PREFIX + '/grid.html');
     await (browser as ChromiumBrowser).stopTracing();
-    expect(fs.existsSync(outputFile)).toBe(true);
+    expect(fs.existsSync(outputTraceFile)).toBe(true);
   });
 
   it('should create directories as needed', async ({browser, page, server, tmpDir}) => {
@@ -52,29 +52,29 @@ describe('oopif', suite => {
     expect(fs.existsSync(filePath)).toBe(true);
   });
 
-  it('should run with custom categories if provided', async ({browser, page, outputFile}) => {
-    await (browser as ChromiumBrowser).startTracing(page, {path: outputFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
+  it('should run with custom categories if provided', async ({browser, page, outputTraceFile}) => {
+    await (browser as ChromiumBrowser).startTracing(page, {path: outputTraceFile, categories: ['disabled-by-default-v8.cpu_profiler.hires']});
     await (browser as ChromiumBrowser).stopTracing();
 
-    const traceJson = JSON.parse(fs.readFileSync(outputFile).toString());
+    const traceJson = JSON.parse(fs.readFileSync(outputTraceFile).toString());
     expect(traceJson.metadata['trace-config']).toContain('disabled-by-default-v8.cpu_profiler.hires');
   });
 
-  it('should throw if tracing on two pages', async ({browser, page, outputFile}) => {
-    await (browser as ChromiumBrowser).startTracing(page, {path: outputFile});
+  it('should throw if tracing on two pages', async ({browser, page, outputTraceFile}) => {
+    await (browser as ChromiumBrowser).startTracing(page, {path: outputTraceFile});
     const newPage = await browser.newPage();
     let error = null;
-    await (browser as ChromiumBrowser).startTracing(newPage, {path: outputFile}).catch(e => error = e);
+    await (browser as ChromiumBrowser).startTracing(newPage, {path: outputTraceFile}).catch(e => error = e);
     await newPage.close();
     expect(error).toBeTruthy();
     await (browser as ChromiumBrowser).stopTracing();
   });
 
-  it('should return a buffer', async ({browser, page, server, outputFile}) => {
-    await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputFile});
+  it('should return a buffer', async ({browser, page, server, outputTraceFile}) => {
+    await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputTraceFile});
     await page.goto(server.PREFIX + '/grid.html');
     const trace = await (browser as ChromiumBrowser).stopTracing();
-    const buf = fs.readFileSync(outputFile);
+    const buf = fs.readFileSync(outputTraceFile);
     expect(trace.toString()).toEqual(buf.toString());
   });
 

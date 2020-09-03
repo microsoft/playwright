@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should log', async ({browserType, defaultBrowserOptions}) => {
   const log = [];

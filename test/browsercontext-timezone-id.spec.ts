@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should work', async ({ browser }) => {
   const func = () => new Date(1479579154987).toString();
