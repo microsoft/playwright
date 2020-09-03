@@ -192,6 +192,7 @@ describe('screencast', suite => {
   }, async ({page, tmpDir, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     console.log('___ started should capture static page ' + (Date.now() - start) / 1000);
+    console.log('    videoFile = ' + videoFile);
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     console.log('started screencast ' + (Date.now() - start) / 1000);
@@ -226,6 +227,7 @@ describe('screencast', suite => {
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     console.log('___ started should capture navigation ' + (Date.now() - start) / 1000);
+    console.log('    videoFile = ' + videoFile);
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
     console.log('navigated to first page ' + (Date.now() - start) / 1000);
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
@@ -265,6 +267,7 @@ describe('screencast', suite => {
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     console.log('___ started should capture css transformation ' + (Date.now() - start) / 1000);
+    console.log('    videoFile = ' + videoFile);
     // Set viewport equal to screencast frame size to avoid scaling.
     await page.setViewportSize({width: 320, height: 240});
     await page.goto(server.PREFIX + '/rotate-z.html');
@@ -367,6 +370,7 @@ describe('screencast', suite => {
     const start = Date.now();
     await page.setViewportSize({width: 640, height: 480});
     console.log('___ should scale frames down to the requested size ' + (Date.now() - start) / 1000);
+    console.log('    videoFile = ' + videoFile);
     await page.goto(server.PREFIX + '/checkerboard.html');
     // Set size to 1/2 of the viewport.
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
