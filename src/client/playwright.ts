@@ -27,7 +27,8 @@ type DeviceDescriptor = {
   viewport: Size,
   deviceScaleFactor: number,
   isMobile: boolean,
-  hasTouch: boolean
+  hasTouch: boolean,
+  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
 };
 type Devices = { [name: string]: DeviceDescriptor };
 

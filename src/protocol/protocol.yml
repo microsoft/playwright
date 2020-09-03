@@ -143,6 +143,12 @@ Playwright:
               deviceScaleFactor: number
               isMobile: boolean
               hasTouch: boolean
+              defaultBrowserType:
+                type: enum
+                literals:
+                - chromium
+                - firefox
+                - webkit
     selectors: Selectors
 
 

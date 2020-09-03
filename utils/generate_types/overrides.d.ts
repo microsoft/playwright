@@ -184,6 +184,7 @@ type DeviceDescriptor = {
   deviceScaleFactor: number;
   isMobile: boolean;
   hasTouch: boolean;
+  defaultBrowserType: 'chromium' | 'firefox' | 'webkit';
 };
 
 export namespace errors {

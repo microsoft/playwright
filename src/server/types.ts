@@ -101,7 +101,8 @@ export type DeviceDescriptor = {
   viewport: Size,
   deviceScaleFactor: number,
   isMobile: boolean,
-  hasTouch: boolean
+  hasTouch: boolean,
+  defaultBrowserType: 'chromium' | 'firefox' | 'webkit'
 };
 export type Devices = { [name: string]: DeviceDescriptor };
 

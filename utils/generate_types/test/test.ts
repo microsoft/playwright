@@ -728,6 +728,7 @@ playwright.chromium.launch().then(async browser => {
       deviceScaleFactor: 1,
       hasTouch: false,
       isMobile: true,
+      defaultBrowserType: 'chromium'
     };
     const iPhone = playwright.devices['iPhone 11'];
     const assertion: AssertType<string, typeof iPhone.userAgent> = true;
