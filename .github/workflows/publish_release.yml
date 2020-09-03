@@ -29,19 +29,23 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     steps:
     - uses: actions/checkout@v2
+    - uses: azure/docker-login@v1
+      with:
+        login-server: playwright.azurecr.io
+        username: playwright
+        password: ${{ secrets.DOCKER_PASSWORD }}
+    - uses: microsoft/playwright-github-action@v1
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - run: ./docs/docker/build.sh --prepare-context
-    - uses: docker/build-push-action@v1
-      with:
-        username: playwright
-        password: ${{ secrets.DOCKER_PASSWORD }}
-        registry: playwright.azurecr.io
-        repository: public/playwright
-        path: docs/docker/
-        dockerfile: docs/docker/Dockerfile.bionic
-        tags: bionic,latest
-        tag_with_ref: true
+    - run: ./docs/docker/build.sh
+    - name: tag & publish
+      run: |
+        # GITHUB_REF has a form of `refs/tags/v1.3.0`.
+        # TAG_NAME would be `v1.3.0`
+        TAG_NAME=${GITHUB_REF#refs/tags/}
+        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:latest
+        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:bionic
+        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:${TAG_NAME}
