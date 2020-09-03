@@ -153,10 +153,8 @@ export class Electron  {
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
-        if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1) {
-          console.warn('WARNING: Playwright is being run under "root" user - disabling Electron sandbox! Run under regular user to get rid of this warning.');
+        if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
           electronArguments.push('--no-sandbox');
-        }
       }
 
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({

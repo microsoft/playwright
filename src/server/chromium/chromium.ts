@@ -89,10 +89,8 @@ export class Chromium extends BrowserTypeBase {
     if (browserArguments.indexOf('--no-sandbox') !== -1)
       return browserArguments;
     const runningAsRoot = process.geteuid && process.geteuid() === 0;
-    if (runningAsRoot) {
-      console.warn('WARNING: Playwright is being run under "root" user - disabling Chromium sandbox! Run under regular user to get rid of this warning.');
+    if (runningAsRoot)
       return ['--no-sandbox', ...browserArguments];
-    }
     return browserArguments;
   }
 
