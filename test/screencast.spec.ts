@@ -47,11 +47,21 @@ registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
     await page.close();
 });
 
+function browserName() {
+  if (options.CHROMIUM)
+    return 'cr';
+  if (options.WEBKIT)
+    return 'wk';
+  if (options.FIREFOX)
+    return 'ff';
+  return '??';
+}
+
 registerFixture('videoFile', async ({browserType}, runTest, info) => {
   const { test, config } = info;
   const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
   const headless = options.HEADLESS ? 'headless-' : '';
-  const videoFile = path.join(config.outputDir, 'video', `${headless}${sanitizedTitle}-${browserType.name()}_v.webm`);
+  const videoFile = path.join(config.outputDir, 'video', `${headless}${sanitizedTitle}-${browserType.name()}-${browserName()}_v.webm`);
   await mkdirIfNeeded(videoFile);
   await runTest(videoFile);
 });
