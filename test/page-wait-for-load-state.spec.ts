@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 import type { Route } from '..';
 
 it('should pick up ongoing navigation', async ({page, server}) => {

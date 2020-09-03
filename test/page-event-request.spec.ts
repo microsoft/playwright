@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 import utils from './utils';
 
 it('should fire for navigation requests', async ({page, server}) => {

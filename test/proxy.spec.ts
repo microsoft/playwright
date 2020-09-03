@@ -15,7 +15,7 @@
  */
 
 import { parameters } from '@playwright/test-runner';
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 import socks from 'socksv5';
 

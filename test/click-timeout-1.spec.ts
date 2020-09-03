@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 it('should avoid side effects after timeout', test => {
   test.skip(options.WIRE);

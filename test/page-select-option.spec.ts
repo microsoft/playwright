@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should select single option', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/select.html');

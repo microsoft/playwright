@@ -54,7 +54,7 @@
     "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-typescript": "^7.10.4",
-    "@playwright/test-runner": "^0.2.5",
+    "@playwright/test-runner": "^0.2.8",
     "@types/babel__core": "^7.1.9",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",

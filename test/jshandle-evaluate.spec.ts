@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should work with function', async ({page}) => {
   const windowHandle = await page.evaluateHandle(() => {

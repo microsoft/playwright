@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { options } from '../playwright.fixtures';
+import { it, options } from '../playwright.fixtures';
 
 import path from 'path';
 import utils from '../utils';

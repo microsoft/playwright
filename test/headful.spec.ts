@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 import utils from './utils';
 const { makeUserDataDir, removeUserDataDir } = utils;

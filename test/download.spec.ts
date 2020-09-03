@@ -15,12 +15,12 @@
  */
 
 import { options } from './playwright.fixtures';
+import { it, beforeEach } from '@playwright/test-runner';
 import './remoteServer.fixture';
 
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
-
 
 beforeEach(async ({server}) => {
   server.setRoute('/download', (req, res) => {

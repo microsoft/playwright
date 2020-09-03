@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { options } from './playwright.fixtures';
+
+import { it, describe, options } from './playwright.fixtures';
 
 it('should be missing', test => {
   test.skip(options.CHROMIUM);

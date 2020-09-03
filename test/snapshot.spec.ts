@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
+import { it, options } from './playwright.fixtures';
 
 it('should not throw', test => {
   test.skip(!options.TRACING);

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should hover', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');

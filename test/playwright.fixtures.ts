@@ -25,6 +25,7 @@ import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
 import { parameters, registerFixture, registerWorkerFixture } from '@playwright/test-runner';
 import { mkdtempAsync, removeFolderAsync } from './utils';
+export { it, fit, xit, describe, fdescribe, xdescribe } from '@playwright/test-runner';
 
 export const options = {
   CHROMIUM: parameters.browserName === 'chromium',
@@ -43,6 +44,7 @@ declare global {
     defaultBrowserOptions: LaunchOptions;
     golden: (path: string) => string;
     playwright: typeof import('../index');
+    browserName: string;
     browserType: BrowserType<Browser>;
     browser: Browser;
     httpService: {server: TestServer, httpsServer: TestServer}
@@ -55,9 +57,6 @@ declare global {
     httpsServer: TestServer;
     browserServer: BrowserServer;
     launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
-  }
-  interface FixtureParameters {
-    browserName: string;
   }
 }
 

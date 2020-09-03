@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 import type { ConsoleMessage } from '..';
 
 it('Page.workers', async function({page, server}) {

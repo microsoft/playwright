@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import './playwright.fixtures';
+import { it } from './playwright.fixtures';
 
 it('should intercept', async ({browser, server}) => {
   const context = await browser.newContext();
