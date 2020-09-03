@@ -109,9 +109,7 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
-      { _guid: 'BrowserType', objects: [
-        { _guid: 'Browser', objects: [] }
-      ] },
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -127,11 +125,13 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
     _guid: '',
     objects: [
       { _guid: 'BrowserType', objects: [
-        { _guid: 'Browser', objects: [
-          { _guid: 'BrowserContext', objects: [] }
-        ] },
-        { _guid: 'Browser', objects: [] },
-      ] },
+        {
+          _guid: 'Browser', objects: [
+            { _guid: 'BrowserContext', objects: [] }
+          ]
+        },
+      ]
+      },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
