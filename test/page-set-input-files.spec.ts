@@ -115,6 +115,15 @@ it('should work when file input is not attached to DOM', async ({page, server}) 
   expect(chooser).toBeTruthy();
 });
 
+it('should work with CSP', async ({page, server}) => {
+  server.setCSP('/empty.html', 'default-src "none"');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<input type=file>`);
+  await page.setInputFiles('input', path.join(__dirname, '/assets/file-to-upload.txt'));
+  expect(await page.$eval('input', input => input.files.length)).toBe(1);
+  expect(await page.$eval('input', input => input.files[0].name)).toBe('file-to-upload.txt');
+});
+
 it('should respect timeout', async ({page, playwright}) => {
   let error = null;
   await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);

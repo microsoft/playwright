@@ -452,7 +452,7 @@ export class InjectedScript {
     throw new Error('Not a checkbox');
   }
 
-  async setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
+  setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
     if (node.nodeType !== Node.ELEMENT_NODE)
       return 'Node is not of type HTMLElement';
     const element: Element | undefined = node as Element;
@@ -463,10 +463,10 @@ export class InjectedScript {
     if (type !== 'file')
       return 'Not an input[type=file] element';
 
-    const files = await Promise.all(payloads.map(async file => {
-      const result = await fetch(`data:${file.mimeType};base64,${file.buffer}`);
-      return new File([await result.blob()], file.name, {type: file.mimeType});
-    }));
+    const files = payloads.map(file => {
+      const bytes = Uint8Array.from(atob(file.buffer), c => c.charCodeAt(0));
+      return new File([bytes], file.name, { type: file.mimeType });
+    });
     const dt = new DataTransfer();
     for (const file of files)
       dt.items.add(file);
