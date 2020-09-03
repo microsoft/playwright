@@ -827,15 +827,17 @@ class FrameSession {
       }),
     ];
     if (this._windowId) {
-      // TODO: popup windows have their own insets.
-      let insets = { width: 24, height: 88 };
-      if (process.platform === 'win32')
-        insets = { width: 16, height: 88 };
-      else if (process.platform === 'linux')
-        insets = { width: 8, height: 85 };
-      else if (process.platform === 'darwin')
-        insets = { width: 2, height: 80 };
-
+      let insets = { width: 0, height: 0 };
+      if (this._crPage._browserContext._browser._options.headful) {
+        // TODO: popup windows have their own insets.
+        insets = { width: 24, height: 88 };
+        if (process.platform === 'win32')
+          insets = { width: 16, height: 88 };
+        else if (process.platform === 'linux')
+          insets = { width: 8, height: 85 };
+        else if (process.platform === 'darwin')
+          insets = { width: 2, height: 80 };
+      }
       promises.push(this._client.send('Browser.setWindowBounds', {
         windowId: this._windowId,
         bounds: { width: viewportSize.width + insets.width, height: viewportSize.height + insets.height }
