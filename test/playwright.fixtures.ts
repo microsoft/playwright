@@ -161,7 +161,7 @@ registerWorkerFixture('browserType', async ({playwright, browserName}, test) => 
 });
 
 registerWorkerFixture('browserName', async ({}, test) => {
-  await test('chromium');
+  throw new Error(`Parameter 'browserName' is not specified`);
 });
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
