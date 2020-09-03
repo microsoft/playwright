@@ -15,6 +15,7 @@
  */
 
 import * as path from 'path';
+import * as os from 'os';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
@@ -149,6 +150,15 @@ export class Electron  {
     return runAbortableTask(async progress => {
       let app: ElectronApplication | undefined = undefined;
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
+
+      if (os.platform() === 'linux') {
+        const runningAsRoot = process.geteuid && process.geteuid() === 0;
+        if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1) {
+          console.warn('WARNING: Playwright is being run under "root" user - disabling Electron sandbox! Run under regular user to get rid of this warning.');
+          electronArguments.push('--no-sandbox');
+        }
+      }
+
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         executablePath,
         args: electronArguments,
