@@ -27,10 +27,8 @@ import { Download } from './download';
 import { Browser } from './browser';
 import { EventEmitter } from 'events';
 import { Progress } from './progress';
-import { DebugController } from './debug/debugController';
-import { isDebugMode } from '../utils/utils';
-import { Snapshotter, SnapshotterDelegate } from './snapshotter';
 import { Selectors, serverSelectors } from './selectors';
+import { instrumentingAgents } from './instrumentation';
 
 export class Screencast {
   readonly page: Page;
@@ -70,7 +68,6 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
-  _snapshotter?: Snapshotter;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -90,14 +87,8 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _initialize() {
-    if (isDebugMode())
-      new DebugController(this);
-  }
-
-  // Used by test runner.
-  async _initSnapshotter(delegate: SnapshotterDelegate): Promise<Snapshotter> {
-    this._snapshotter = new Snapshotter(this, delegate);
-    return this._snapshotter;
+    for (const agent of instrumentingAgents)
+      await agent.onContextCreated(this);
   }
 
   _browserClosed() {
@@ -250,8 +241,8 @@ export abstract class BrowserContext extends EventEmitter {
       this._closedStatus = 'closing';
       await this._doClose();
       await Promise.all([...this._downloads].map(d => d.delete()));
-      if (this._snapshotter)
-        this._snapshotter._dispose();
+      for (const agent of instrumentingAgents)
+        await agent.onContextDestroyed(this);
       this._didCloseInternal();
     }
     await this._closePromise;

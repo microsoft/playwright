@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ParsedSelector, parseSelector } from '../../common/selectorParser';
-import type InjectedScript from '../../injected/injectedScript';
+import { ParsedSelector, parseSelector } from '../../server/common/selectorParser';
+import type InjectedScript from '../../server/injected/injectedScript';
 import { html } from './html';
 
 export class ConsoleAPI {

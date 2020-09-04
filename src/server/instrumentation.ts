@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { ConsoleAPI } from './consoleApi';
-import type InjectedScript from '../../injected/injectedScript';
+import { BrowserContext } from './browserContext';
+import { Page } from './page';
+import { Progress } from './progress';
 
-export default class DebugScript {
-  consoleAPI: ConsoleAPI | undefined;
-
-  initialize(injectedScript: InjectedScript, options: { console?: boolean }) {
-    if (options.console)
-      this.consoleAPI = new ConsoleAPI(injectedScript);
-  }
+export interface InstrumentingAgent {
+  onContextCreated(context: BrowserContext): Promise<void>;
+  onContextDestroyed(context: BrowserContext): Promise<void>;
+  onBeforePageAction(page: Page, progress: Progress): Promise<void>;
 }
+
+export const instrumentingAgents = new Set<InstrumentingAgent>();

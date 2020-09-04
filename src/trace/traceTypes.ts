@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import type * as snapshotter from '../server/snapshotter';
-
 export type ContextCreatedTraceEvent = {
   type: 'context-created',
   browserName: string,
@@ -46,6 +44,3 @@ export type SnapshotTraceEvent = {
   label: string,
   sha1: string,
 };
-
-export type FrameSnapshot = snapshotter.FrameSnapshot;
-export type PageSnapshot = snapshotter.PageSnapshot;

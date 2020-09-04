@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
-import { it, options } from './playwright.fixtures';
+import { ConsoleAPI } from './consoleApi';
+import type InjectedScript from '../../server/injected/injectedScript';
 
-it('should not throw', test => {
-  test.skip(!options.TRACING);
-}, async ({page, server, playwright, toImpl}) => {
-  await page.goto(server.PREFIX + '/snapshot/snapshot-with-css.html');
-  await (playwright as any).__tracer.captureSnapshot(toImpl(page), { timeout: 5000, label: 'snapshot' });
-});
+export default class DebugScript {
+  consoleAPI: ConsoleAPI | undefined;
+
+  initialize(injectedScript: InjectedScript, options: { console?: boolean }) {
+    if (options.console)
+      this.consoleAPI = new ConsoleAPI(injectedScript);
+  }
+}
