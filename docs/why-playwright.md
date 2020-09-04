@@ -17,7 +17,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Test for mobile**. Use [device emulation](emulation.md) to test your responsive web apps in mobile web browsers.
 
-* **Headless and headful**. Playwright supports headless (without browser UI) and headful (with browser UI) modes for all browsers and all platforms. Headful is great for debugging, and headless is faster.
+* **Headless and headful**. Playwright supports headless (without browser UI) and headful (with browser UI) modes for all browsers and all platforms. Headful is great for debugging, and headless is faster and suited for CI/cloud executions.
 
 ## Fast and reliable execution
 * **Auto-wait APIs**. Playwright interactions [auto-wait for elements](actionability.md) to be ready. This improves reliability and simplifies test authoring.
@@ -52,6 +52,6 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Legacy Edge and IE11 support**. Playwright does not support legacy Microsoft Edge or IE11 ([deprecation notice](https://techcommunity.microsoft.com/t5/microsoft-365-blog/microsoft-365-apps-say-farewell-to-internet-explorer-11-and/ba-p/1591666)). The new Microsoft Edge (on Chromium) is supported.
 
-* **Java language bindings**: The Playwright API cannot be used in Java or Ruby today. This is a temporary limitation as Playwright is built to support non-JavaScript language bindings.
+* **Java language bindings**: The Playwright API cannot be used in Java or Ruby today. This is a temporary limitation as Playwright is built to support bindings for any language.
 
-* **Test on real mobile devices**: Playwright runs against desktop browsers and supports mobile emulation. If you are interested in this, please [upvote this issue](https://github.com/microsoft/playwright/issues/1122).
+* **Test on real mobile devices**: Playwright uses desktop browsers to emulate mobile devices. If you are interested in running on real mobile devices, please [upvote this issue](https://github.com/microsoft/playwright/issues/1122).
