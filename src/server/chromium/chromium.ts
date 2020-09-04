@@ -24,6 +24,7 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserTypeBase } from '../browserType';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
 import type { BrowserDescriptor } from '../../utils/browserPaths';
+import { browserDirectory, browsersPath, ffmpegPath} from '../../utils/browserPaths';
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions } from '../browser';
 import * as types from '../types';
@@ -32,6 +33,7 @@ import { isDebugMode, getFromENV } from '../../utils/utils';
 export class Chromium extends BrowserTypeBase {
   private _devtools: CRDevTools | undefined;
   private _debugPort: number | undefined;
+  private _ffmpegPath: string;
 
   constructor(packagePath: string, browser: BrowserDescriptor) {
     const debugPortStr = getFromENV('PLAYWRIGHT_CHROMIUM_DEBUG_PORT');
@@ -43,6 +45,8 @@ export class Chromium extends BrowserTypeBase {
 
     super(packagePath, browser, debugPort ? { webSocketRegex: /^DevTools listening on (ws:\/\/.*)$/, stream: 'stderr' } : null);
     this._debugPort = debugPort;
+    const browserDir = browserDirectory(browsersPath(packagePath), browser);
+    this._ffmpegPath = ffmpegPath(browserDir, browser);
     if (isDebugMode())
       this._devtools = this._createDevTools();
   }
@@ -57,7 +61,7 @@ export class Chromium extends BrowserTypeBase {
       devtools = this._createDevTools();
       await (options as any).__testHookForDevTools(devtools);
     }
-    return CRBrowser.connect(transport, options, devtools);
+    return CRBrowser.connect(transport, options, this._ffmpegPath, devtools);
   }
 
   _rewriteStartupError(error: Error): Error {

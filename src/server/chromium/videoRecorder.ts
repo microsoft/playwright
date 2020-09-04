@@ -30,20 +30,22 @@ export class VideoRecorder {
   private _lastFrameBuffer: Buffer | null = null;
   private _lastWriteTimestamp: number = 0;
   private readonly _progress: Progress;
+  private readonly _ffmpegPath: string;
 
-  static async launch(options: types.PageScreencastOptions): Promise<VideoRecorder> {
+  static async launch(ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
     return await runAbortableTask(async progress => {
-      const recorder = new VideoRecorder(progress);
+      const recorder = new VideoRecorder(ffmpegPath, progress);
       await recorder._launch(options);
       return recorder;
     }, 0, 'browser');
   }
 
-  private constructor(progress: Progress) {
+  private constructor(ffmpegPath: string, progress: Progress) {
     this._progress = progress;
+    this._ffmpegPath = ffmpegPath;
     this._lastWritePromise = Promise.resolve();
   }
 
@@ -54,10 +56,8 @@ export class VideoRecorder {
     const args = `-loglevel error -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
-    // Use ffmpeg provided by the host system.
-    const ffmpegPath = process.platform === 'linux' ? 'ffmpeg' : require('@ffmpeg-installer/ffmpeg').path;
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: ffmpegPath,
+      executablePath: this._ffmpegPath,
       args,
       pipeStdin: true,
       progress,
