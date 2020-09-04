@@ -243,7 +243,7 @@ describe('screencast', suite => {
     }
   });
 
-  it.only('should automatically start/finish when new page is created/closed', test => {
+  it('should automatically start/finish when new page is created/closed', test => {
     test.flaky(options.FIREFOX, 'Even slow is not slow enough');
   }, async ({browserType, tmpDir}) => {
     const browser = await browserType.launch({_videosPath: tmpDir});
@@ -263,50 +263,47 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should finish when contex closes', async ({browser, tmpDir}) => {
-    const context = await browser.newContext();
-    let screencastCallback;
-    await context._enableScreencast({width: 320, height: 240, dir: tmpDir}, s => {
-      screencastCallback(s);
-    });
+  it('should finish when contex closes', async ({browserType, tmpDir}) => {
+    const browser = await browserType.launch({_videosPath: tmpDir});
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
-    const [screencast, newPage] = await Promise.all([
-      new Promise<_Screencast>(r => screencastCallback = r),
+    const [video, newPage] = await Promise.all([
+      new Promise<any>(r => context.on('_videostarted', r)),
       context.newPage(),
     ]);
-    expect(screencast.page() === newPage).toBe(true);
+    expect(video.page() === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
-      screencast.path(),
+      video.path(),
       context.close(),
     ]);
     expect(path.dirname(videoFile)).toBe(tmpDir);
+
+    await browser.close();
   });
 
-  it('should fire start event for popups', async ({browser, tmpDir, server}) => {
-    const context = await browser.newContext();
-    let screencastCallback;
-    await context._enableScreencast({width: 320, height: 240, dir: tmpDir}, s => {
-      screencastCallback(s);
-    });
+  it('should fire start event for popups', async ({browserType, tmpDir, server}) => {
+    const browser = await browserType.launch({_videosPath: tmpDir});
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
     const [page] = await Promise.all([
       context.newPage(),
-      new Promise<_Screencast>(r => screencastCallback = r),
+      new Promise(r => context.on('_videostarted', r)),
     ]);
-    await page.mainFrame().goto(server.EMPTY_PAGE);
-
-    const [screencast, popup] = await Promise.all([
-      new Promise<_Screencast>(r => screencastCallback = r),
+    await page.goto(server.EMPTY_PAGE);
+    const [video, popup] = await Promise.all([
+      new Promise<any>(r => context.on('_videostarted', r)),
       new Promise<Page>(resolve => context.on('page', resolve)),
-      page.evaluate(() => {
-        const win = window.open('about:blank');
-        win.close();
-      }, true)
+      page.evaluate(() => { window.open('about:blank'); })
     ]);
-    expect(screencast.page() === popup).toBe(true);
-    expect(path.dirname(await screencast.path())).toBe(tmpDir);
-    await context.close();
+    expect(video.page() === popup).toBe(true);
+    const [videoFile] = await Promise.all([
+      video.path(),
+      popup.close()
+    ]);
+    expect(path.dirname(videoFile)).toBe(tmpDir);
+
+    await browser.close();
   });
 
   it('should scale frames down to the requested size ', async ({page, videoPlayer, tmpDir, server, toImpl}) => {

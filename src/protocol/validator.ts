@@ -805,6 +805,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     promptText: tOptional(tString),
   });
   scheme.DialogDismissParams = tOptional(tObject({}));
+  scheme.VideoPathParams = tOptional(tObject({}));
   scheme.DownloadPathParams = tOptional(tObject({}));
   scheme.DownloadSaveAsParams = tObject({
     path: tString,

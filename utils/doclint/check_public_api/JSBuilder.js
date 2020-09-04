@@ -237,7 +237,7 @@ function checkSources(sources) {
     for (const [name, member] of symbol.members || []) {
       if (className === 'Error')
         continue;
-      if (name.startsWith('_') && name !== '_enableScreencast' && name !== '_disableScreencast')
+      if (name.startsWith('_'))
         continue;
       if (member.valueDeclaration && ts.getCombinedModifierFlags(member.valueDeclaration) & ts.ModifierFlags.Private)
         continue;

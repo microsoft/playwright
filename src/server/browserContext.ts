@@ -43,7 +43,7 @@ export class Screencast {
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
 
-  async path(): Promise<string | null> {
+  async path(): Promise<string> {
     await this._finishedPromise;
     return this._path;
   }

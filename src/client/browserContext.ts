@@ -27,27 +27,7 @@ import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions } from './types';
 import { isDevMode, headersObjectToArray } from '../utils/utils';
-
-export class Video {
-  private readonly _page: Page;
-  private readonly _path: string;
-  _finishCallback: () => void = () => {};
-  private readonly _finishedPromise: Promise<void>;
-  constructor(path: string, page: Page) {
-    this._path = path;
-    this._page = page;
-    this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
-  }
-
-  page(): Page {
-    return this._page;
-  }
-
-  async path(): Promise<string | null> {
-    await this._finishedPromise;
-    return this._path;
-  }
-}
+import { Video } from './video';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
@@ -80,7 +60,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
     this._channel.on('_screencastStarted', params => this._onScreencastStarted(params));
-    this._channel.on('_screencastFinished', params => this._onScreencastFinished(params));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -242,17 +221,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   private _onScreencastStarted(params: channels.BrowserContext_screencastStartedEvent): void {
-    const screencast = new Video(params.path, Page.from(params.page));
-    this._idToScreencast.set(params.screencastId, screencast);
-    this.emit(Events.BrowserContext._VideoStarted, screencast);
-  }
-
-  private _onScreencastFinished(params: channels.BrowserContext_screencastFinishedEvent): void {
-    const screencast = this._idToScreencast.get(params.screencastId);
-    if (!screencast)
-      return;
-    this._idToScreencast.delete(params.screencastId);
-    screencast._finishCallback();
+    this.emit(Events.BrowserContext._VideoStarted, Video.from(params.video));
   }
 
   async _onClose() {

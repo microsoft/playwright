@@ -21,6 +21,7 @@ import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { VideoDispatcher } from './videoDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -38,14 +39,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
 
     context.on(BrowserContext.Events.ScreencastStarted, (screencast: Screencast) => {
-      this._dispatchEvent('_screencastStarted', {
-        screencastId: screencast._screencastId,
-        path: screencast._path,
-        page: lookupDispatcher<PageDispatcher>(screencast.page),
-      });
-      screencast.path().then(() => {
-        this._dispatchEvent('_screencastFinished', { screencastId: screencast._screencastId });
-      });
+      this._dispatchEvent('_screencastStarted', { video: new VideoDispatcher(this._scope, screencast) });
     });
 
     if (context._browser._options.name === 'chromium') {

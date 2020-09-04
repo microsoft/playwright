@@ -31,7 +31,7 @@ import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { Screencast } from '../browserContext';
+import { BrowserContext, Screencast } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -258,9 +258,10 @@ export class FFPage implements PageDelegate {
   }
 
   _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
+    const screencast = this._browserContext._browser._screencastStarted(event.screencastId, event.file, this._page);
     this.pageOrError().then(pageOrError => {
       if (pageOrError instanceof Page)
-        this._browserContext._browser._screencastStarted(event.screencastId, event.file, pageOrError);
+        pageOrError._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
     });
   }
 

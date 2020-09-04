@@ -37,6 +37,7 @@ import * as jpeg from 'jpeg-js';
 import * as png from 'pngjs';
 import { JSHandle } from '../javascript';
 import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils/utils';
+import { BrowserContext } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -721,9 +722,10 @@ export class WKPage implements PageDelegate {
         width: options.width,
         height: options.height,
       }) as any;
+      const screencast = this._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
       this.pageOrError().then(pageOrError => {
         if (pageOrError instanceof Page)
-          this._browserContext._browser._screencastStarted(screencastId, options.outputFile, pageOrError);
+          pageOrError._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
       });
     } catch (e) {
       this._recordingVideoFile = null;

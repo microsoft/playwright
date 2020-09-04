@@ -546,9 +546,7 @@ BrowserContext:
 
     _screencastStarted:
       parameters:
-        screencastId: string
-        page: Page
-        path: string
+        video: Video
 
     _screencastFinished:
       parameters:
@@ -1783,6 +1781,20 @@ Dialog:
         promptText: string?
 
     dismiss:
+
+
+
+Video:
+  type: interface
+
+  initializer:
+    page: Page
+
+  commands:
+
+    path:
+      returns:
+        value: string
 
 
 

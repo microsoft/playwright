@@ -39,6 +39,7 @@ import * as sourceMap from '../../utils/sourceMap';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject, createGuid } from '../../utils/utils';
 import { VideoRecorder } from './videoRecorder';
+import { BrowserContext } from '../browserContext';
 
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
@@ -764,9 +765,10 @@ class FrameSession {
       this._screencastState = 'started';
       this._videoRecorder = videoRecorder;
       this._screencastId = screencastId;
+      const screencast = this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._crPage._page);
       this._crPage.pageOrError().then(pageOrError => {
         if (pageOrError instanceof Page)
-          this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile, pageOrError);
+          pageOrError._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
       });
     } catch (e) {
       videoRecorder.stop().catch(() => {});

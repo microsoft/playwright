@@ -485,9 +485,7 @@ export type BrowserContextCrServiceWorkerEvent = {
   worker: WorkerChannel,
 };
 export type BrowserContext_screencastStartedEvent = {
-  screencastId: string,
-  page: PageChannel,
-  path: string,
+  video: VideoChannel,
 };
 export type BrowserContext_screencastFinishedEvent = {
   screencastId: string,
@@ -2128,6 +2126,19 @@ export type DialogAcceptResult = void;
 export type DialogDismissParams = {};
 export type DialogDismissOptions = {};
 export type DialogDismissResult = void;
+
+// ----------- Video -----------
+export type VideoInitializer = {
+  page: PageChannel,
+};
+export interface VideoChannel extends Channel {
+  path(params?: VideoPathParams): Promise<VideoPathResult>;
+}
+export type VideoPathParams = {};
+export type VideoPathOptions = {};
+export type VideoPathResult = {
+  value: string,
+};
 
 // ----------- Download -----------
 export type DownloadInitializer = {
