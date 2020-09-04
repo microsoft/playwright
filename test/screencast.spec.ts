@@ -146,6 +146,18 @@ class VideoPlayer {
   async currentTime() {
     return await this._page.$eval('video', (v: HTMLVideoElement) => v.currentTime);
   }
+  async buffered() {
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.buffered.length);
+  }
+  async seekable() {
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.seekable.length);
+  }
+  async readyState() {
+    return await this._page.$eval('video', (v: HTMLVideoElement) => v.readyState);
+  }
+  async isDataLoaded() {
+    return await this._page.evaluate(() => (window as any).isDataLoaded());
+  }
   async playOneFrame() {
     return await this._page.evaluate(async () => await (window as any).playOneFrame());
   }
@@ -253,37 +265,58 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture css transformation', test => {
+  it.only('should capture css transformation', test => {
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
-    console.log('___ started should capture css transformation ' + (Date.now() - start) / 1000);
-    console.log('    videoFile = ' + videoFile);
-    // Set viewport equal to screencast frame size to avoid scaling.
-    await page.setViewportSize({width: 320, height: 240});
-    await page.goto(server.PREFIX + '/rotate-z.html');
-    console.log('navigated to first page ' + (Date.now() - start) / 1000);
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
-    console.log('started screencast ' + (Date.now() - start) / 1000);
-    // TODO: in WebKit figure out why video size is not reported correctly for
-    // static pictures.
-    await new Promise(r => setTimeout(r, 1000));
-    await toImpl(page)._delegate.stopScreencast();
-    console.log('stopped screencast ' + (Date.now() - start) / 1000);
-    expect(fs.existsSync(videoFile)).toBe(true);
+    async function ttt() {
+      videoFile = '/home/yurys/Downloads/webkit-ubuntu-18.04-test-results/video/headless-should_capture_css_transformation-webkit-0_v.webm';
+      console.log((start % 1000) + ' ___ started should capture css transformation ' + (Date.now() - start) / 1000);
+      console.log((start % 1000) + '     videoFile = ' + videoFile);
+      // Set viewport equal to screencast frame size to avoid scaling.
+      // await page.setViewportSize({width: 320, height: 240});
+      // await page.goto(server.PREFIX + '/rotate-z.html');
+      // console.log((start % 1000) + ' navigated to first page ' + (Date.now() - start) / 1000);
+      // await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+      // console.log((start % 1000) + ' started screencast ' + (Date.now() - start) / 1000);
+      // // TODO: in WebKit figure out why video size is not reported correctly for
+      // // static pictures.
+      // await new Promise(r => setTimeout(r, 1000));
+      // await toImpl(page)._delegate.stopScreencast();
+      console.log((start % 1000) + ' stopped screencast ' + (Date.now() - start) / 1000);
+      expect(fs.existsSync(videoFile)).toBe(true);
 
-    await videoPlayer.load(videoFile);
-    console.log('loaded video ' + (Date.now() - start) / 1000);
-    const duration = await videoPlayer.duration();
-    console.log('got duration ' + (Date.now() - start) / 1000);
-    expect(duration).toBeGreaterThan(0);
+      await videoPlayer.load(videoFile);
+      console.log((start % 1000) + ' loaded video ' + (Date.now() - start) / 1000);
+      const duration = await videoPlayer.duration();
+      console.log((start % 1000) + ' duration => ' + duration);
+      console.log((start % 1000) + ' after duration ' + (Date.now() - start) / 1000);
+      expect(duration).toBeGreaterThan(0);
+      console.log((start % 1000) + ' currentTime => ' + await videoPlayer.currentTime());
+      console.log((start % 1000) + ' readyState => ' + await videoPlayer.readyState());
+      console.log((start % 1000) + ' buffered => ' + await videoPlayer.buffered());
+      console.log((start % 1000) + ' countFrames => ' + await videoPlayer.countFrames());
+      console.log((start % 1000) + ' currentTime => ' + await videoPlayer.currentTime());
+      console.log((start % 1000) + ' seekable => ' + await videoPlayer.seekable());
+      console.log((start % 1000) + ' after countFrames ' + (Date.now() - start) / 1000);
 
-    {
-      await videoPlayer.seekLastFrame();
-      console.log('after seekLastFrame ' + (Date.now() - start) / 1000);
-      const pixels = await videoPlayer.pixels({x: 95, y: 45});
-      console.log('got pixles ' + (Date.now() - start) / 1000);
-      expectAll(pixels, almostRed);
+      {
+        await videoPlayer.seekLastFrame();
+        console.log((start % 1000) + ' after seekLastFrame ' + (Date.now() - start) / 1000);
+        const pixels = await videoPlayer.pixels({x: 95, y: 45});
+        console.log((start % 1000) + ' got pixles ' + (Date.now() - start) / 1000);
+        expectAll(pixels, almostRed);
+      }
     }
+    const r = await Promise.race([
+      new Promise(r => setTimeout(r, 25000)).then(() => 'timeout'),
+      ttt(),
+    ]).catch(e => {
+      console.log((start % 1000) + '  ' + e);
+      console.log((start % 1000) + ' ======= started should capture css transformation EXCEPTION ' + (Date.now() - start) / 1000);
+      throw e;
+    });
+    if (r === 'timeout')
+      console.log((start % 1000) + ' ======= started should capture css transformation TIMED OUT ' + (Date.now() - start) / 1000);
   });
 
   it('should automatically start/finish when new page is created/closed', test => {
