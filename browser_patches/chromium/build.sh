@@ -12,7 +12,7 @@ cd output
 BUILD_NUMBER=$(head -1 ../BUILD_NUMBER)
 # Support BUILD_NUMBER in the form of <CRREV>.<GENERATION>
 # This will allow us to bump generation to produce new builds.
-CRREV="${BUILD_NUMBER%.*}
+CRREV="${BUILD_NUMBER%.*}"
 
 CHROMIUM_URL=""
 CHROMIUM_FOLDER_NAME=""
