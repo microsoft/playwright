@@ -6,7 +6,7 @@
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
   "engines": {
-    "node": ">=10.15.0"
+    "node": ">=10.17.0"
   },
   "scripts": {
     "ctest": "cross-env BROWSER=chromium test-runner test/",
