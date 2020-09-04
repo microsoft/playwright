@@ -78,7 +78,7 @@ export function ffmpegPath(browserPath: string, browser: BrowserDescriptor): str
   if (os.platform() === 'linux')
     return 'ffmpeg';
   if (os.platform() === 'win32')
-    return path.join(browserPath, 'chrome-linux', 'ffmpeg');
+    return path.join(browserPath, 'chrome-win', 'ffmpeg.exe');
   if (os.platform() === 'darwin')
     return path.join(browserPath, 'chrome-mac', 'ffmpeg');
   return '';
