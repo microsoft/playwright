@@ -476,7 +476,7 @@ static BOOL areEssentiallyEqual(double a, double b)
         title = url.lastPathComponent ?: url._web_userVisibleString;
     }
 
-    self.window.title = [NSString stringWithFormat:@"%@%@ [%d]%@", _isPrivateBrowsingWindow ? @"🙈 " : @"", title, _webView._webProcessIdentifier, @""];
+    self.window.title = title;
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
