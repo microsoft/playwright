@@ -129,7 +129,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
 }
 
 function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
-  const revision = parseInt(browser.revision, 10);
+  const revision = parseFloat(browser.revision);
   const serverHost = getDownloadHost(browser.name, revision);
   const urlTemplate = getDownloadUrl(browser.name, revision, platform);
   assert(urlTemplate, `ERROR: Playwright does not support ${browser.name} on ${platform}`);
