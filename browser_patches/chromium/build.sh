@@ -5,11 +5,10 @@ set +x
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
-source "./UPSTREAM_CONFIG.sh"
-
 mkdir -p output
 cd output
 
+BUILD_NUMBER=$(head -1 ../BUILD_NUMBER)
 FOLDER_NAME=""
 ZIP_NAME=""
 FILES_TO_REMOVE=()
@@ -33,7 +32,7 @@ else
   exit 1
 fi
 
-URL="https://storage.googleapis.com/chromium-browser-snapshots/${FOLDER_NAME}/${UPSTREAM_CHROMIUM_REVISION}/${ZIP_NAME}"
+URL="https://storage.googleapis.com/chromium-browser-snapshots/${FOLDER_NAME}/${BUILD_NUMBER}/${ZIP_NAME}"
 curl --output upstream.zip "${URL}"
 
 unzip upstream.zip
