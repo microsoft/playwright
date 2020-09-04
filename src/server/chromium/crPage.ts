@@ -56,6 +56,7 @@ export class CRPage implements PageDelegate {
   readonly _browserContext: CRBrowserContext;
   private readonly _pagePromise: Promise<Page | Error>;
   _initializedPage: Page | null = null;
+  readonly _ffmpegPath: string;
 
   // Holds window features for the next popup being opened via window.open,
   // until the popup target arrives. This could be racy if two oopifs
@@ -64,9 +65,10 @@ export class CRPage implements PageDelegate {
   // of new popup targets.
   readonly _nextWindowOpenPopupFeatures: string[][] = [];
 
-  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean) {
+  constructor(client: CRSession, targetId: string, browserContext: CRBrowserContext, opener: CRPage | null, hasUIWindow: boolean, ffmpegPath: string) {
     this._targetId = targetId;
     this._opener = opener;
+    this._ffmpegPath = ffmpegPath;
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac);
     this.rawMouse = new RawMouseImpl(client);
     this._pdf = new CRPDF(client);
@@ -750,7 +752,7 @@ class FrameSession {
   async _startScreencast(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
     if (this._screencastState !== 'stopped')
       throw new Error('Already started');
-    const videoRecorder = await VideoRecorder.launch(options);
+    const videoRecorder = await VideoRecorder.launch(this._crPage._ffmpegPath, options);
     this._screencastState = 'starting';
     try {
       await this._client.send('Page.startScreencast', {

@@ -44,10 +44,11 @@ export class CRBrowser extends Browser {
   private _tracingRecording = false;
   private _tracingPath: string | null = '';
   private _tracingClient: CRSession | undefined;
+  private _ffmpegPath: string;
 
-  static async connect(transport: ConnectionTransport, options: BrowserOptions, devtools?: CRDevTools): Promise<CRBrowser> {
+  static async connect(transport: ConnectionTransport, options: BrowserOptions, ffmpegPath: string, devtools?: CRDevTools): Promise<CRBrowser> {
     const connection = new CRConnection(transport);
-    const browser = new CRBrowser(connection, options);
+    const browser = new CRBrowser(connection, options, ffmpegPath);
     browser._devtools = devtools;
     const session = connection.rootSession;
     const version = await session.send('Browser.getVersion');
@@ -88,9 +89,10 @@ export class CRBrowser extends Browser {
     return browser;
   }
 
-  constructor(connection: CRConnection, options: BrowserOptions) {
+  constructor(connection: CRConnection, options: BrowserOptions, ffmpegPath: string) {
     super(options);
     this._connection = connection;
+    this._ffmpegPath = ffmpegPath;
     this._session = this._connection.rootSession;
     this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
     this._session.on('Target.attachedToTarget', this._onAttachedToTarget.bind(this));
@@ -146,7 +148,7 @@ export class CRBrowser extends Browser {
     assert(!this._serviceWorkers.has(targetInfo.targetId), 'Duplicate target ' + targetInfo.targetId);
 
     if (targetInfo.type === 'background_page') {
-      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false);
+      const backgroundPage = new CRPage(session, targetInfo.targetId, context, null, false, this._ffmpegPath);
       this._backgroundPages.set(targetInfo.targetId, backgroundPage);
       backgroundPage.pageOrError().then(() => {
         context!.emit(CRBrowserContext.CREvents.BackgroundPage, backgroundPage._page);
@@ -156,7 +158,7 @@ export class CRBrowser extends Browser {
 
     if (targetInfo.type === 'page') {
       const opener = targetInfo.openerId ? this._crPages.get(targetInfo.openerId) || null : null;
-      const crPage = new CRPage(session, targetInfo.targetId, context, opener, true);
+      const crPage = new CRPage(session, targetInfo.targetId, context, opener, true, this._ffmpegPath);
       this._crPages.set(targetInfo.targetId, crPage);
       crPage.pageOrError().then(pageOrError => {
         const page = crPage._page;
