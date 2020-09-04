@@ -91,6 +91,7 @@ export type LaunchServerOptions = {
     password?: string
   },
   downloadsPath?: string,
+  _videosPath?: string,
   chromiumSandbox?: boolean,
   port?: number,
   logger?: Logger,

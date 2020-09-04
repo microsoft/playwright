@@ -164,6 +164,7 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
+  _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -190,6 +191,7 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -220,6 +222,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     password?: string,
   },
   downloadsPath?: string,
+  _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
@@ -276,6 +279,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
@@ -363,6 +367,10 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
+  _recordVideos?: {
+    width: number,
+    height: number,
+  },
 };
 export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
@@ -396,6 +404,10 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
+  _recordVideos?: {
+    width: number,
+    height: number,
+  },
 };
 export type BrowserNewContextResult = {
   context: BrowserContextChannel,
@@ -453,8 +465,6 @@ export interface BrowserContextChannel extends Channel {
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
-  _enableScreencast(params: BrowserContext_enableScreencastParams): Promise<BrowserContext_enableScreencastResult>;
-  _disableScreencast(params?: BrowserContext_disableScreencastParams): Promise<BrowserContext_disableScreencastResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -619,18 +629,6 @@ export type BrowserContextSetOfflineOptions = {
 
 };
 export type BrowserContextSetOfflineResult = void;
-export type BrowserContext_enableScreencastParams = {
-  width: number,
-  height: number,
-  dir: string,
-};
-export type BrowserContext_enableScreencastOptions = {
-
-};
-export type BrowserContext_enableScreencastResult = void;
-export type BrowserContext_disableScreencastParams = {};
-export type BrowserContext_disableScreencastOptions = {};
-export type BrowserContext_disableScreencastResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };

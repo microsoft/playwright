@@ -23,6 +23,7 @@ export const Events = {
   BrowserContext: {
     Close: 'close',
     Page: 'page',
+    _VideoStarted: '_videostarted',
   },
 
   BrowserServer: {

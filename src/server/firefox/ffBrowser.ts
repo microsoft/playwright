@@ -26,6 +26,7 @@ import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
+import { throws } from 'assert';
 
 export class FFBrowser extends Browser {
   _connection: FFConnection;
@@ -222,6 +223,14 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setOffline(this._options.offline));
     if (this._options.colorScheme)
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
+    if (this._options._recordVideos) {
+      await this._browser._connection.send('Browser.setScreencastOptions', {
+        ...this._options._recordVideos,
+        dir: this._browser._options._videosPath!,
+        browserContextId: this._browserContextId
+      });
+    }
+
     await Promise.all(promises);
   }
 
@@ -324,11 +333,6 @@ export class FFBrowserContext extends BrowserContext {
 
   async _doUpdateRequestInterception(): Promise<void> {
     await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
-  }
-
-  async _enableScreencast(options: types.ContextScreencastOptions): Promise<void> {
-    await super._enableScreencast(options);
-    await this._browser._connection.send('Browser.setScreencastOptions', Object.assign({}, options, { browserContextId: this._browserContextId}));
   }
 
   async _doClose() {

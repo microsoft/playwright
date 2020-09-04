@@ -460,10 +460,10 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source));
-    if (this._crPage._browserContext._screencastOptions) {
-      const contextOptions = this._crPage._browserContext._screencastOptions;
+    if (this._crPage._browserContext._options._recordVideos) {
+      const contextOptions = this._crPage._browserContext._options._recordVideos;
       const screencastId = createGuid();
-      const outputFile = path.join(contextOptions.dir, screencastId + '.webm');
+      const outputFile = path.join(this._crPage._browserContext._browser._options._videosPath!, screencastId + '.webm');
       const options = Object.assign({}, contextOptions, {outputFile});
       promises.push(this._startScreencast(screencastId, options));
     }

@@ -212,6 +212,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        _videosPath: string?
         firefoxUserPrefs: json?
         chromiumSandbox: boolean?
         slowMo: number?
@@ -250,6 +251,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        _videosPath: string?
         chromiumSandbox: boolean?
         slowMo: number?
         noDefaultViewport: boolean?
@@ -357,6 +359,11 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
+        _recordVideos:
+          type: object?
+          properties:
+            width: number
+            height: number
       returns:
         context: BrowserContext
 
@@ -505,14 +512,6 @@ BrowserContext:
     setOffline:
       parameters:
         offline: boolean
-
-    _enableScreencast:
-      parameters:
-        width: number
-        height: number
-        dir: string
-
-    _disableScreencast:
 
     crNewCDPSession:
       parameters:

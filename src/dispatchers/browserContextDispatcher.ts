@@ -132,14 +132,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close();
   }
 
-  async _enableScreencast(params:  channels.BrowserContext_enableScreencastParams) {
-    await this._context._enableScreencast(params);
-  }
-
-  async _disableScreencast() {
-    await this._context._disableScreencast();
-  }
-
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
     if (this._object._browser._options.name !== 'chromium')
       throw new Error(`CDP session is only available in Chromium`);

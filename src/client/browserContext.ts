@@ -61,7 +61,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _ownerPage: Page | undefined;
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
-  private _screencastCallback: _ScreencastCallback | null = null;
   private _idToScreencast = new Map<string, _Screencast>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -244,26 +243,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     return result;
   }
 
-  async _enableScreencast(options: ContextScreencastOptions, callback: _ScreencastCallback) {
-    if (this._screencastCallback)
-      throw new Error('Already enabled');
-    await this._channel._enableScreencast(options);
-    this._screencastCallback = callback;
-  }
-
-  async _disableScreencast() {
-    if (!this._screencastCallback)
-      throw new Error('Not enabled');
-    await this._channel._disableScreencast();
-    this._screencastCallback = null;
-  }
-
   private _onScreencastStarted(params: channels.BrowserContext_screencastStartedEvent): void {
-    if (!this._screencastCallback)
-      return;
     const screencast = new _Screencast(params.path, Page.from(params.page));
     this._idToScreencast.set(params.screencastId, screencast);
-    this._screencastCallback(screencast);
+    this.emit(Events.BrowserContext._VideoStarted, screencast);
   }
 
   private _onScreencastFinished(params: channels.BrowserContext_screencastFinishedEvent): void {

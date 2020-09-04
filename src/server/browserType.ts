@@ -41,6 +41,7 @@ const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
+const VIDEOS_FOLDER = path.join(os.tmpdir(), 'playwright_videos-');
 
 type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
 
@@ -89,7 +90,7 @@ export abstract class BrowserTypeBase implements BrowserType {
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
-    const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
+    const { browserProcess, downloadsPath, _videosPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
@@ -98,6 +99,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       persistent,
       headful: !options.headless,
       downloadsPath,
+      _videosPath,
       browserProcess,
       proxy: options.proxy,
     };
@@ -109,7 +111,7 @@ export abstract class BrowserTypeBase implements BrowserType {
     return browser;
   }
 
-  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, downloadsPath: string, transport: ConnectionTransport }> {
+  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, downloadsPath: string, _videosPath: string, transport: ConnectionTransport }> {
     const {
       ignoreDefaultArgs,
       ignoreAllDefaultArgs,
@@ -123,14 +125,19 @@ export abstract class BrowserTypeBase implements BrowserType {
     const env = options.env ? envArrayToObject(options.env) : process.env;
 
     const tempDirectories = [];
-    let downloadsPath: string;
-    if (options.downloadsPath) {
-      downloadsPath = options.downloadsPath;
-      await mkdirAsync(options.downloadsPath, { recursive: true });
-    } else {
-      downloadsPath = await mkdtempAsync(DOWNLOADS_FOLDER);
-      tempDirectories.push(downloadsPath);
-    }
+    const ensurePath = async (tmpPrefix: string, pathFromOptions?: string) => {
+      let dir;
+      if (pathFromOptions) {
+        dir = pathFromOptions;
+        await mkdirAsync(pathFromOptions, { recursive: true });
+      } else {
+        dir = await mkdtempAsync(tmpPrefix);
+        tempDirectories.push(dir);
+      }
+      return dir;
+    };
+    const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
+    const _videosPath = await ensurePath(VIDEOS_FOLDER, options._videosPath);
 
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
@@ -204,7 +211,7 @@ export abstract class BrowserTypeBase implements BrowserType {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
       transport = new PipeTransport(stdio[3], stdio[4]);
     }
-    return { browserProcess, downloadsPath, transport };
+    return { browserProcess, downloadsPath, _videosPath, transport };
   }
 
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];

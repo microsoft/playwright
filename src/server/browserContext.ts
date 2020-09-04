@@ -59,7 +59,6 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
-  _screencastOptions: types.ContextScreencastOptions | null = null;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -75,6 +74,7 @@ export abstract class BrowserContext extends EventEmitter {
     super();
     this._browser = browser;
     this._options = options;
+    console.log('server Created context: ' + options._recordVideos);
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
@@ -174,15 +174,6 @@ export abstract class BrowserContext extends EventEmitter {
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
-  async _enableScreencast(options: types.ContextScreencastOptions) {
-    this._screencastOptions = options;
-    fs.mkdirSync(path.dirname(options.dir), {recursive: true});
-  }
-
-  _disableScreencast() {
-    this._screencastOptions = null;
   }
 
   async _loadDefaultContext(progress: Progress) {
