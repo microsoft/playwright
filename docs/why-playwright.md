@@ -7,6 +7,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 - [Fast and reliable execution](#fast-and-reliable-execution)
 - [Powerful automation capabilities](#powerful-automation-capabilities)
 - [Integrates with your workflow](#integrates-with-your-workflow)
+- [Limitations](#limitations)
 <!-- GEN:stop -->
 
 ## Support for all browsers
@@ -16,7 +17,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Test for mobile**. Use [device emulation](emulation.md) to test your responsive web apps in mobile web browsers.
 
-* **Headless and headful**. Headless and headful automation is supported across all browsers and on all platforms.
+* **Headless and headful**. Playwright supports headless (without browser UI) and headful (with browser UI) modes for all browsers and all platforms. Headful is great for debugging, and headless is faster and suited for CI/cloud executions.
 
 ## Fast and reliable execution
 * **Auto-wait APIs**. Playwright interactions [auto-wait for elements](actionability.md) to be ready. This improves reliability and simplifies test authoring.
@@ -41,8 +42,16 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **TypeScript support**. Playwright ships with built-in types for auto-completion and other benefits.
 
-* **Debugging tools**. Playwright integrates with the [editor debugger](debug.md) to 
+* **Debugging tools**. Playwright works with the [editor debugger and browser developer tools](debug.md) to pause execution and inspect the web page.
 
 * **Language bindings**. Playwright is also available in [Python](https://github.com/microsoft/playwright-python) and [C#](https://github.com/hardkoded/playwright-sharp).
 
 * **Deploy tests to CI**. First-party [Docker image](docker/README.md) and [GitHub Actions](https://github.com/microsoft/playwright-github-action) to deploy tests to [your preferred CI/CD provider](ci.md).
+
+## Limitations
+
+* **Legacy Edge and IE11 support**. Playwright does not support legacy Microsoft Edge or IE11 ([deprecation notice](https://techcommunity.microsoft.com/t5/microsoft-365-blog/microsoft-365-apps-say-farewell-to-internet-explorer-11-and/ba-p/1591666)). The new Microsoft Edge (on Chromium) is supported.
+
+* **Java language bindings**: The Playwright API cannot be used in Java or Ruby today. This is a temporary limitation as Playwright is built to support bindings for any language.
+
+* **Test on real mobile devices**: Playwright uses desktop browsers to emulate mobile devices. If you are interested in running on real mobile devices, please [upvote this issue](https://github.com/microsoft/playwright/issues/1122).
