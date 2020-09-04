@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from './browserContext';
-import { Page } from './page';
-import * as network from './network';
-import { helper, RegisteredListener } from './helper';
-import { Progress, runAbortableTask } from './progress';
+import { BrowserContext } from '../server/browserContext';
+import { Page } from '../server/page';
+import * as network from '../server/network';
+import { helper, RegisteredListener } from '../server/helper';
+import { Progress } from '../server/progress';
 import { debugLogger } from '../utils/debugLogger';
-import { Frame } from './frames';
-import * as js from './javascript';
-import * as types from './types';
+import { Frame } from '../server/frames';
+import * as js from '../server/javascript';
 import { SnapshotData, takeSnapshotInFrame } from './snapshotterInjected';
 import { assert, calculateSha1, createGuid } from '../utils/utils';
 
@@ -53,11 +52,9 @@ export type PageSnapshot = {
 };
 
 export interface SnapshotterDelegate {
-  onContextCreated(context: BrowserContext): void;
-  onContextDestroyed(context: BrowserContext): void;
-  onBlob(context: BrowserContext, blob: SnapshotterBlob): void;
-  onResource(context: BrowserContext, resource: SanpshotterResource): void;
-  onSnapshot(context: BrowserContext, snapshot: PageSnapshot): void;
+  onBlob(blob: SnapshotterBlob): void;
+  onResource(resource: SanpshotterResource): void;
+  onSnapshot(snapshot: PageSnapshot): void;
 }
 
 export class Snapshotter {
@@ -71,25 +68,17 @@ export class Snapshotter {
     this._eventListeners = [
       helper.addEventListener(this._context, BrowserContext.Events.Page, this._onPage.bind(this)),
     ];
-    this._delegate.onContextCreated(this._context);
   }
 
-  async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    return runAbortableTask(async progress => {
-      await this._doSnapshot(progress, page, options.label || 'snapshot');
-    }, page._timeoutSettings.timeout(options));
-  }
-
-  _dispose() {
+  dispose() {
     helper.removeEventListeners(this._eventListeners);
-    this._delegate.onContextDestroyed(this._context);
   }
 
-  async _doSnapshot(progress: Progress, page: Page, label: string): Promise<void> {
+  async takeSnapshot(progress: Progress, page: Page, label: string): Promise<void> {
     assert(page.context() === this._context);
     const snapshot = await this._snapshotPage(progress, page, label);
     if (snapshot)
-      this._delegate.onSnapshot(this._context, snapshot);
+      this._delegate.onSnapshot(snapshot);
   }
 
   private _onPage(page: Page) {
@@ -124,9 +113,9 @@ export class Snapshotter {
       responseHeaders: response.headers(),
       sha1,
     };
-    this._delegate.onResource(this._context, resource);
+    this._delegate.onResource(resource);
     if (body)
-      this._delegate.onBlob(this._context, { sha1, buffer: body });
+      this._delegate.onBlob({ sha1, buffer: body });
   }
 
   private async _snapshotPage(progress: Progress, page: Page, label: string): Promise<PageSnapshot | null> {
@@ -214,7 +203,7 @@ export class Snapshotter {
       for (const { url, content } of data.resourceOverrides) {
         const buffer = Buffer.from(content);
         const sha1 = calculateSha1(buffer);
-        this._delegate.onBlob(this._context, { sha1, buffer });
+        this._delegate.onBlob({ sha1, buffer });
         snapshot.resourceOverrides.push({ url, sha1 });
       }
 

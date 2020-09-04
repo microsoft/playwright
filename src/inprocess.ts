@@ -21,8 +21,12 @@ import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { isDevMode } from './utils/utils';
+import { instrumentingAgents } from './server/instrumentation';
+import { DebugController } from './debug/debugController';
 
 export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
+  instrumentingAgents.add(new DebugController());
+
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();
 

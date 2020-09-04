@@ -18,13 +18,11 @@ import * as frames from './frames';
 import { assert } from '../utils/utils';
 import type { InjectedScript, InjectedScriptPoll } from './injected/injectedScript';
 import * as injectedScriptSource from '../generated/injectedScriptSource';
-import * as debugScriptSource from '../generated/debugScriptSource';
 import * as js from './javascript';
 import { Page } from './page';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
 import { Progress } from './progress';
-import type DebugScript from './debug/injected/debugScript';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 
 export class FrameExecutionContext extends js.ExecutionContext {
@@ -90,18 +88,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
       this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
     return this._injectedScriptPromise;
-  }
-
-  createDebugScript(options: { console?: boolean }): Promise<js.JSHandle<DebugScript> | undefined> {
-    if (!this._debugScriptPromise) {
-      const source = `new (${debugScriptSource.source})()`;
-      this._debugScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId)).then(async debugScript => {
-        const injectedScript = await this.injectedScript();
-        await debugScript.evaluate((debugScript: DebugScript, { injectedScript, options }) => debugScript.initialize(injectedScript, options), { injectedScript, options });
-        return debugScript;
-      }).catch(e => undefined);
-    }
-    return this._debugScriptPromise;
   }
 
   async doSlowMo() {

@@ -15,59 +15,96 @@
  */
 
 import type { BrowserContext } from '../server/browserContext';
-import type { PageSnapshot, SanpshotterResource, SnapshotterBlob, SnapshotterDelegate } from '../server/snapshotter';
+import type { PageSnapshot, SanpshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, SnapshotTraceEvent } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
+import { InstrumentingAgent, instrumentingAgents } from '../server/instrumentation';
+import { Page } from '../server/page';
+import { Progress, runAbortableTask } from '../server/progress';
+import { Snapshotter } from './snapshotter';
+import * as types from '../server/types';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const fsAccessAsync = util.promisify(fs.access.bind(fs));
 
-export class Tracer implements SnapshotterDelegate {
-  private _contextIds = new Map<BrowserContext, string>();
+export class Tracer implements InstrumentingAgent {
+  private _contextTracers = new Map<BrowserContext, ContextTracer>();
+
+  constructor() {
+    instrumentingAgents.add(this);
+  }
+
+  dispose() {
+    instrumentingAgents.delete(this);
+  }
+
+  traceContext(context: BrowserContext, traceStorageDir: string, traceFile: string) {
+    const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
+    this._contextTracers.set(context, contextTracer);
+  }
+
+  async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
+    return runAbortableTask(async progress => {
+      const contextTracer = this._contextTracers.get(page.context());
+      if (contextTracer)
+        await contextTracer._snapshotter.takeSnapshot(progress, page, options.label || 'snapshot');
+    }, page._timeoutSettings.timeout(options));
+  }
+
+  async onContextCreated(context: BrowserContext): Promise<void> {
+  }
+
+  async onContextDestroyed(context: BrowserContext): Promise<void> {
+    const contextTracer = this._contextTracers.get(context);
+    if (contextTracer) {
+      await contextTracer.dispose();
+      this._contextTracers.delete(context);
+    }
+  }
+
+  async onBeforePageAction(page: Page, progress: Progress): Promise<void> {
+    const contextTracer = this._contextTracers.get(page.context());
+    if (contextTracer)
+      await contextTracer._snapshotter.takeSnapshot(progress, page, 'progress');
+  }
+}
+
+class ContextTracer implements SnapshotterDelegate {
+  private _contextId: string;
   private _traceStoragePromise: Promise<string>;
   private _appendEventChain: Promise<string>;
   private _writeArtifactChain: Promise<void>;
+  readonly _snapshotter: Snapshotter;
 
-  constructor(traceStorageDir: string, traceFile: string) {
+  constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
+    this._contextId = 'context@' + createGuid();
     this._traceStoragePromise = mkdirIfNeeded(path.join(traceStorageDir, 'sha1')).then(() => traceStorageDir);
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
     this._writeArtifactChain = Promise.resolve();
-  }
-
-  onContextCreated(context: BrowserContext): void {
-    const contextId = 'context@' + createGuid();
-    this._contextIds.set(context, contextId);
     const event: ContextCreatedTraceEvent = {
       type: 'context-created',
       browserName: context._browser._options.name,
-      contextId,
+      contextId: this._contextId,
       isMobile: !!context._options.isMobile,
       deviceScaleFactor: context._options.deviceScaleFactor || 1,
       viewportSize: context._options.viewport || undefined,
     };
     this._appendTraceEvent(event);
+    this._snapshotter = new Snapshotter(context, this);
   }
 
-  onContextDestroyed(context: BrowserContext): void {
-    const event: ContextDestroyedTraceEvent = {
-      type: 'context-destroyed',
-      contextId: this._contextIds.get(context)!,
-    };
-    this._appendTraceEvent(event);
-  }
-
-  onBlob(context: BrowserContext, blob: SnapshotterBlob): void {
+  onBlob(blob: SnapshotterBlob): void {
     this._writeArtifact(blob.sha1, blob.buffer);
   }
 
-  onResource(context: BrowserContext, resource: SanpshotterResource): void {
+  onResource(resource: SanpshotterResource): void {
     const event: NetworkResourceTraceEvent = {
       type: 'resource',
-      contextId: this._contextIds.get(context)!,
+      contextId: this._contextId,
       frameId: resource.frameId,
       url: resource.url,
       contentType: resource.contentType,
@@ -77,12 +114,12 @@ export class Tracer implements SnapshotterDelegate {
     this._appendTraceEvent(event);
   }
 
-  onSnapshot(context: BrowserContext, snapshot: PageSnapshot): void {
+  onSnapshot(snapshot: PageSnapshot): void {
     const buffer = Buffer.from(JSON.stringify(snapshot));
     const sha1 = calculateSha1(buffer);
     const event: SnapshotTraceEvent = {
       type: 'snapshot',
-      contextId: this._contextIds.get(context)!,
+      contextId: this._contextId,
       label: snapshot.label,
       sha1,
     };
@@ -91,6 +128,13 @@ export class Tracer implements SnapshotterDelegate {
   }
 
   async dispose() {
+    this._snapshotter.dispose();
+    const event: ContextDestroyedTraceEvent = {
+      type: 'context-destroyed',
+      contextId: this._contextId,
+    };
+    this._appendTraceEvent(event);
+
     // Ensure all writes are finished.
     await this._appendEventChain;
     await this._writeArtifactChain;

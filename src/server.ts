@@ -20,6 +20,10 @@ import { Playwright } from './server/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Electron } from './server/electron/electron';
 import { gracefullyCloseAll } from './server/processLauncher';
+import { instrumentingAgents } from './server/instrumentation';
+import { DebugController } from './debug/debugController';
+
+instrumentingAgents.add(new DebugController());
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);

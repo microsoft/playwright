@@ -17,7 +17,8 @@
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import { NetworkResourceTraceEvent, SnapshotTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent, FrameSnapshot, PageSnapshot } from './traceTypes';
+import type { NetworkResourceTraceEvent, SnapshotTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent } from './traceTypes';
+import type { FrameSnapshot, PageSnapshot } from './snapshotter';
 import type { Browser, BrowserContext, Frame, Page, Route } from '../client/api';
 import type { Playwright } from '../client/playwright';
 
