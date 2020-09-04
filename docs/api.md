@@ -27,7 +27,6 @@
 - [class: BrowserServer](#class-browserserver)
 - [class: BrowserType](#class-browsertype)
 - [class: Logger](#class-logger)
-- [class: _Screencast](#class-screencast)
 - [class: ChromiumBrowser](#class-chromiumbrowser)
 - [class: ChromiumBrowserContext](#class-chromiumbrowsercontext)
 - [class: ChromiumCoverage](#class-chromiumcoverage)
@@ -304,6 +303,7 @@ await context.close();
 ```
 
 <!-- GEN:toc -->
+- [event: '_videostarted'](#event-videostarted)
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
@@ -4338,41 +4338,6 @@ Determines whether sink is interested in the logger with the given name and seve
 - `hints` <[Object]> optional formatting hints
   - `color` <[string]> preferred logger color
 
-### class: _Screencast
-
-A [_Screencast] instance is passed to the callback of [`browserContext._enableScreencast`](#browsercontextenablescreencastoptions-callback).
-
-An example of listening to screencasts on a context:
-```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'webkit'.
-
-(async () => {
-  const browser = await webkit.launch();
-  const context = await browser.newContext();
-  await context._enableScreencast({width: 640, height: 480, dir: '/tmp/video'}, async screencast => {
-    console.log('Starting screencast: ' + screencast.page().url());
-    const path = await screencast.path();
-    console.log('Written screencast to ' + path);
-  });
-
-  const page = await context.newPage();
-  await page.goto('https://example.com');
-  await browser.close();
-})();
-```
-
-<!-- GEN:toc -->
-- [_screencast.page()](#screencastpage)
-- [_screencast.path()](#screencastpath)
-<!-- GEN:stop -->
-
-#### _screencast.page()
-- returns: <[Page]> page object for which the screencast is recorded.
-
-#### _screencast.path()
-- returns: <[Promise]<[string]>]> path to the .webm video file containing the screencast. It will
-resolve after screncast stopped and has been fully written to the file.
-
 ### class: ChromiumBrowser
 
 * extends: [Browser]
@@ -4436,10 +4401,9 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [chromiumBrowserContext.serviceWorkers()](#chromiumbrowsercontextserviceworkers)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
+- [event: '_videostarted'](#event-videostarted)
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
-- [browserContext._disableScreencast()](#browsercontextdisablescreencast)
-- [browserContext._enableScreencast(options, callback)](#browsercontextenablescreencastoptions-callback)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg)
 - [browserContext.clearCookies()](#browsercontextclearcookies)

@@ -21,9 +21,6 @@ import type { Page } from '..';
 import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
-import { _Screencast } from '..';
-import { tmpdir } from 'os';
-
 
 declare global {
   interface TestState {
@@ -249,10 +246,8 @@ describe('screencast', suite => {
   it.only('should automatically start/finish when new page is created/closed', test => {
     test.flaky(options.FIREFOX, 'Even slow is not slow enough');
   }, async ({browserType, tmpDir}) => {
-    console.log('will launch');
     const browser = await browserType.launch({_videosPath: tmpDir});
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
-    console.log('did create context');
     const [screencast, newPage] = await Promise.all([
       new Promise<any>(r => context.on('_videostarted', r)),
       context.newPage(),
@@ -265,6 +260,7 @@ describe('screencast', suite => {
     ]);
     expect(path.dirname(videoFile)).toBe(tmpDir);
     await context.close();
+    await browser.close();
   });
 
   it('should finish when contex closes', async ({browser, tmpDir}) => {

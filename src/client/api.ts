@@ -34,8 +34,6 @@ export { Page } from './page';
 export { Selectors } from './selectors';
 export { Worker } from './worker';
 
-export { _Screencast } from './browserContext';
-
 export { ChromiumBrowser } from './chromiumBrowser';
 export { ChromiumBrowserContext } from './chromiumBrowserContext';
 export { ChromiumCoverage } from './chromiumCoverage';

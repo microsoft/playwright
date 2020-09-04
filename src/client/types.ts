@@ -46,15 +46,6 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   logger?: Logger,
 };
 
-export type ScreencastOptions = {
-  width: number,
-  height: number,
-};
-
-export type ContextScreencastOptions = ScreencastOptions & {
-  dir: string,
-};
-
 type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[],
   env?: Env,

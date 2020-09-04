@@ -74,7 +74,6 @@ export abstract class BrowserContext extends EventEmitter {
     super();
     this._browser = browser;
     this._options = options;
-    console.log('server Created context: ' + options._recordVideos);
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);

@@ -425,16 +425,8 @@ function mergeDocumentation(mdDoc, jsDoc) {
  */
 function mergeClasses(mdClass, jsClass) {
   mdClass.templates = jsClass.templates;
-  for (const member of mdClass.membersArray) {
-    try {
-
-      member.templates = jsClass.members.get(member.name).templates;
-    } catch (e) {
-      console.log(mdClass.name);
-      console.log(member.name);
-      throw e;
-    }
-  }
+  for (const member of mdClass.membersArray)
+    member.templates = jsClass.members.get(member.name).templates;
   return mdClass;
 }
 

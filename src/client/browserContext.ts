@@ -25,10 +25,10 @@ import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
-import { URLMatch, Headers, WaitForEventOptions, ContextScreencastOptions } from './types';
+import { URLMatch, Headers, WaitForEventOptions } from './types';
 import { isDevMode, headersObjectToArray } from '../utils/utils';
 
-export class _Screencast {
+export class Video {
   private readonly _page: Page;
   private readonly _path: string;
   _finishCallback: () => void = () => {};
@@ -49,8 +49,6 @@ export class _Screencast {
   }
 }
 
-type _ScreencastCallback = (screencast: _Screencast) => void;
-
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
@@ -61,7 +59,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _ownerPage: Page | undefined;
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
-  private _idToScreencast = new Map<string, _Screencast>();
+  private _idToScreencast = new Map<string, Video>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -244,7 +242,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   private _onScreencastStarted(params: channels.BrowserContext_screencastStartedEvent): void {
-    const screencast = new _Screencast(params.path, Page.from(params.page));
+    const screencast = new Video(params.path, Page.from(params.page));
     this._idToScreencast.set(params.screencastId, screencast);
     this.emit(Events.BrowserContext._VideoStarted, screencast);
   }
