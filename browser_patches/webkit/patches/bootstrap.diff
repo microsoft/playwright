@@ -8121,7 +8121,7 @@ index 5ca77af82344641ffa0f701d3e62c9b5cf7119a8..4f2ab97dbf5a77f321465dcbcab0efda
  {
      NSWindow *window = [m_view window];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 61e3f6050d7f819a479cf511625320e3f6204ee9..aa81411bd998ecddb2742f899c177e40352a518c 100644
+index 61e3f6050d7f819a479cf511625320e3f6204ee9..f63ed864e85b17c8db2159d8da2b6b0d20b59f43 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 @@ -32,13 +32,16 @@
@@ -8178,23 +8178,36 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..aa81411bd998ecddb2742f899c177e40
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
  {
      m_hasReceivedFirstUpdate = true;
-@@ -238,6 +257,31 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
+@@ -238,6 +257,44 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
      updateAcceleratedCompositingMode(layerTreeContext);
  }
  
++#if PLATFORM(WIN)
++void DrawingAreaProxyCoordinatedGraphics::didChangeAcceleratedCompositingMode(bool enabled)
++{
++    m_isInAcceleratedCompositingMode = enabled;
++}
++#endif
++
 +#if !PLATFORM(WPE)
 +void DrawingAreaProxyCoordinatedGraphics::captureFrame()
 +{
-+    cairo_surface_t* surface = nullptr;
++    RefPtr<cairo_surface_t> surface;
++#if PLATFORM(WIN)
++    if (m_isInAcceleratedCompositingMode) {
++        HWndDC dc(m_webPageProxy.viewWidget());
++        surface = adoptRef(cairo_win32_surface_create(dc));
++#else
 +    if (isInAcceleratedCompositingMode()) {
-+#if PLATFORM(GTK)
++#  if PLATFORM(GTK)
 +        AcceleratedBackingStore* backingStore = webkitWebViewBaseGetAcceleratedBackingStore(WEBKIT_WEB_VIEW_BASE(m_webPageProxy.viewWidget()));
 +        if (!backingStore)
 +            return;
 +
 +        surface = backingStore->surface();
-+#else
++#  else
 +        fprintf(stderr, "captureFrame() is not supported in accelerated compositing mode on this platform.\n");
++#  endif
 +#endif
 +    } else if (m_backingStore) {
 +        surface = m_backingStore->surface();
@@ -8203,7 +8216,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..aa81411bd998ecddb2742f899c177e40
 +    if (!surface)
 +        return;
 +
-+    m_webPageProxy.inspectorController().didPaint(surface);
++    m_webPageProxy.inspectorController().didPaint(surface.get());
 +}
 +#endif
 +
@@ -8211,7 +8224,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..aa81411bd998ecddb2742f899c177e40
  void DrawingAreaProxyCoordinatedGraphics::incorporateUpdate(const UpdateInfo& updateInfo)
  {
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
-index d7695088e7cfc4f638f157338754f9f157489749..a79bbb9bdc779e7ea2f6f859329dd6df6908e194 100644
+index d7695088e7cfc4f638f157338754f9f157489749..f99c2b7c2a2b5fa666aa7db96a124717eee0e922 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.h
 @@ -30,6 +30,7 @@
@@ -8233,7 +8246,17 @@ index d7695088e7cfc4f638f157338754f9f157489749..a79bbb9bdc779e7ea2f6f859329dd6df
  
  private:
      // DrawingAreaProxy
-@@ -126,6 +131,8 @@ private:
+@@ -63,6 +68,9 @@ private:
+     void enterAcceleratedCompositingMode(uint64_t backingStoreStateID, const LayerTreeContext&) override;
+     void exitAcceleratedCompositingMode(uint64_t backingStoreStateID, const UpdateInfo&) override;
+     void updateAcceleratedCompositingMode(uint64_t backingStoreStateID, const LayerTreeContext&) override;
++#if PLATFORM(WIN)
++    void didChangeAcceleratedCompositingMode(bool enabled) override;
++#endif
+ 
+ #if !PLATFORM(WPE)
+     void incorporateUpdate(const UpdateInfo&);
+@@ -126,12 +134,18 @@ private:
      // For a new Drawing Area don't draw anything until the WebProcess has sent over the first content.
      bool m_hasReceivedFirstUpdate { false };
  
@@ -8242,6 +8265,16 @@ index d7695088e7cfc4f638f157338754f9f157489749..a79bbb9bdc779e7ea2f6f859329dd6df
  #if !PLATFORM(WPE)
      bool m_isBackingStoreDiscardable { true };
      std::unique_ptr<BackingStore> m_backingStore;
+     RunLoop::Timer<DrawingAreaProxyCoordinatedGraphics> m_discardBackingStoreTimer;
+ #endif
+     std::unique_ptr<DrawingMonitor> m_drawingMonitor;
++
++#if PLATFORM(WIN)
++    bool m_isInAcceleratedCompositingMode { false };
++#endif
+ };
+ 
+ } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp b/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
 index c5de4e7d0f59194f43a023b089e372c58cf8ee06..2de16cc22d0b6964cd05277922f272f13e2df805 100644
 --- a/Source/WebKit/UIProcess/Downloads/DownloadProxy.cpp
@@ -8337,7 +8370,7 @@ index b19499a662b48e10e876b403c168dbde9bf9f3ec..2a0384a1936471f27727a6c06905704a
  
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.h b/Source/WebKit/UIProcess/DrawingAreaProxy.h
-index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2875eefe9 100644
+index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..2c9d8122919bed0b6d7e6f600e5b0c0f9732d1ff 100644
 --- a/Source/WebKit/UIProcess/DrawingAreaProxy.h
 +++ b/Source/WebKit/UIProcess/DrawingAreaProxy.h
 @@ -75,6 +75,7 @@ public:
@@ -8348,6 +8381,28 @@ index 59cdfdafab1d85ea3a5aecb3cd2293e6dfb1eb8d..52fe7990b1c18b964ee3cfa9f324e3c2
  
  #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
      // The timeout we use when waiting for a DidUpdateGeometry message.
+@@ -160,6 +161,9 @@ private:
+     virtual void update(uint64_t /* backingStoreStateID */, const UpdateInfo&) { }
+     virtual void didUpdateBackingStoreState(uint64_t /* backingStoreStateID */, const UpdateInfo&, const LayerTreeContext&) { }
+     virtual void exitAcceleratedCompositingMode(uint64_t /* backingStoreStateID */, const UpdateInfo&) { }
++#endif
++#if PLATFORM(WIN)
++    virtual void didChangeAcceleratedCompositingMode(bool) { }
+ #endif
+     bool m_startedReceivingMessages { false };
+ };
+diff --git a/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in b/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
+index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c507d9318 100644
+--- a/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
++++ b/Source/WebKit/UIProcess/DrawingAreaProxy.messages.in
+@@ -36,4 +36,7 @@ messages -> DrawingAreaProxy NotRefCounted {
+     DidUpdateBackingStoreState(uint64_t backingStoreStateID, WebKit::UpdateInfo updateInfo, WebKit::LayerTreeContext context)
+     ExitAcceleratedCompositingMode(uint64_t backingStoreStateID, WebKit::UpdateInfo updateInfo)
+ #endif
++#if PLATFORM(WIN)
++    DidChangeAcceleratedCompositingMode(bool enabled)
++#endif
+ }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..1b87dad9771aaff2c77fcaa8f03982f461177cbd
@@ -14678,7 +14733,7 @@ index 00be1e2d4dd2129fd6469bcdfb9bb6c167de0b92..9b2bb3b18113897b373b4d87b5a8cd24
  
  void WebFrameLoaderClient::didRestoreFromBackForwardCache()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-index 5abd86a534ba5f66d88094d407f3f4facf8a5521..e166b477538720974ca2fc4eeda81230228aff36 100644
+index 5abd86a534ba5f66d88094d407f3f4facf8a5521..492f53b90833d7b260e9f16ed77afb7e5cf27448 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 @@ -37,6 +37,7 @@
@@ -14714,6 +14769,30 @@ index 5abd86a534ba5f66d88094d407f3f4facf8a5521..e166b477538720974ca2fc4eeda81230
      settings.setForceCompositingMode(store.getBoolValueForKey(WebPreferencesKey::forceCompositingModeKey()));
      // Fixed position elements need to be composited and create stacking contexts
      // in order to be scrolled by the ScrollingCoordinator.
+@@ -615,6 +627,11 @@ void DrawingAreaCoordinatedGraphics::enterAcceleratedCompositingMode(GraphicsLay
+     m_scrollOffset = IntSize();
+     m_displayTimer.stop();
+     m_isWaitingForDidUpdate = false;
++// Playwright begin
++#if PLATFORM(WIN)
++    didChangeAcceleratedCompositingMode(true);
++#endif
++// Playwright end
+ }
+ 
+ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
+@@ -664,6 +681,11 @@ void DrawingAreaCoordinatedGraphics::exitAcceleratedCompositingMode()
+         // UI process, we still need to let it know about the new contents, so send an Update message.
+         send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
+     }
++// Playwright begin
++#if PLATFORM(WIN)
++    didChangeAcceleratedCompositingMode(false);
++#endif
++// Playwright end
+ }
+ 
+ void DrawingAreaCoordinatedGraphics::scheduleDisplay()
 diff --git a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp b/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 index 8685e23d0d468601c459954775fe6f565b0ce7ac..f9d49292837bf390b81eadeaebe2d4d599bc236c 100644
 --- a/Source/WebKit/WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
@@ -14748,7 +14827,7 @@ index 87b864636e3b863425a6259f0e52864bbc9f5148..c12a369a3b9500ac84ac8d45033eb0f7
  #include <GLES2/gl2.h>
  #include <WebCore/Document.h>
 diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp b/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
-index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..c0c5eb38af8e48f21f7f334db2c42378a232cdff 100644
+index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..eda4008b60b4f28958e246ae9aea773b4407769e 100644
 --- a/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.cpp
 @@ -27,6 +27,7 @@
@@ -14759,6 +14838,34 @@ index 97429e9769d2accf3d99949e2f6ca8a4e8acece9..c0c5eb38af8e48f21f7f334db2c42378
  #include "WebPage.h"
  #include "WebPageCreationParameters.h"
  #include "WebProcess.h"
+@@ -89,6 +90,13 @@ RefPtr<WebCore::DisplayRefreshMonitor> DrawingArea::createDisplayRefreshMonitor(
+ }
+ #endif
+ 
++#if PLATFORM(WIN)
++void DrawingArea::didChangeAcceleratedCompositingMode(bool enabled)
++{
++    send(Messages::DrawingAreaProxy::DidChangeAcceleratedCompositingMode(enabled));
++}
++#endif
++
+ void DrawingArea::removeMessageReceiverIfNeeded()
+ {
+     if (m_hasRemovedMessageReceiver)
+diff --git a/Source/WebKit/WebProcess/WebPage/DrawingArea.h b/Source/WebKit/WebProcess/WebPage/DrawingArea.h
+index ce7758d0b9468d9b7f6f845b4deaf5671274fecd..83d9f92f2eb245ba73c7a31375d6885df122f031 100644
+--- a/Source/WebKit/WebProcess/WebPage/DrawingArea.h
++++ b/Source/WebKit/WebProcess/WebPage/DrawingArea.h
+@@ -144,6 +144,9 @@ public:
+     virtual void didChangeViewportAttributes(WebCore::ViewportAttributes&&) = 0;
+     virtual void deviceOrPageScaleFactorChanged() = 0;
+ #endif
++#if PLATFORM(WIN)
++    void didChangeAcceleratedCompositingMode(bool enabled);
++#endif
+ 
+     virtual void adoptLayersFromDrawingArea(DrawingArea&) { }
+     virtual void adoptDisplayRefreshMonitorsFromDrawingArea(DrawingArea&) { }
 diff --git a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp b/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
 index b2d54a627b94583bda3518c4e7c3364481b605a4..d407e32b6a7b8b27925c49391e86d42c9b3dfa8b 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebDocumentLoader.cpp
@@ -15205,7 +15312,7 @@ index 4785d5a01d86462d8a897f90ce233df650af0cf4..a804a5df69b817e901a7d7408d43de41
      WEBKIT_OPTION_DEFAULT_PORT_VALUE(ENABLE_NETSCAPE_PLUGIN_API PRIVATE OFF)
  else ()
 diff --git a/Source/cmake/OptionsWinCairo.cmake b/Source/cmake/OptionsWinCairo.cmake
-index 8a9c9e8d5bc6c283bf766efdf8cdc5e6aff546fb..deeb070d3248b3e10bc02ba9c77a7d83c5140e60 100644
+index 8a9c9e8d5bc6c283bf766efdf8cdc5e6aff546fb..29fb661996f2e280fc80cfa4940567896819e53c 100644
 --- a/Source/cmake/OptionsWinCairo.cmake
 +++ b/Source/cmake/OptionsWinCairo.cmake
 @@ -27,15 +27,36 @@ if (OpenJPEG_FOUND)
@@ -15248,15 +15355,6 @@ index 8a9c9e8d5bc6c283bf766efdf8cdc5e6aff546fb..deeb070d3248b3e10bc02ba9c77a7d83
  # TODO: Add a check for HAVE_RSA_PSS for support of CryptoAlgorithmRSA_PSS
  # https://bugs.webkit.org/show_bug.cgi?id=206635
  
-@@ -44,7 +65,7 @@ set(USE_ANGLE_EGL ON)
- SET_AND_EXPOSE_TO_BUILD(USE_CAIRO ON)
- SET_AND_EXPOSE_TO_BUILD(USE_CF ON)
- SET_AND_EXPOSE_TO_BUILD(USE_CURL ON)
--SET_AND_EXPOSE_TO_BUILD(USE_GRAPHICS_LAYER_TEXTURE_MAPPER ON)
-+SET_AND_EXPOSE_TO_BUILD(USE_GRAPHICS_LAYER_TEXTURE_MAPPER OFF)
- SET_AND_EXPOSE_TO_BUILD(USE_EGL ON)
- SET_AND_EXPOSE_TO_BUILD(USE_OPENGL_ES ON)
- SET_AND_EXPOSE_TO_BUILD(HAVE_OPENGL_ES_3 ON)
 diff --git a/Tools/MiniBrowser/gtk/BrowserTab.c b/Tools/MiniBrowser/gtk/BrowserTab.c
 index 3845eabba3e964f9e11bb0ffcb8726fd4ea96fc4..2e0e3929907d4760eb681c743984d4c83273880d 100644
 --- a/Tools/MiniBrowser/gtk/BrowserTab.c
