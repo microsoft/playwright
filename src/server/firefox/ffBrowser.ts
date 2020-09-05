@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
+import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { helper, RegisteredListener } from '../helper';
-import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
 import { ConnectionTransport } from '../transport';
@@ -164,7 +164,7 @@ export class FFBrowser extends Browser {
   }
 
   _onScreencastFinished(payload: Protocol.Browser.screencastFinishedPayload) {
-    this._screencastFinished(payload.screencastId);
+    this._videoFinished(payload.screencastId);
   }
 }
 
@@ -222,6 +222,14 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setOffline(this._options.offline));
     if (this._options.colorScheme)
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
+    if (this._options._recordVideos) {
+      await this._browser._connection.send('Browser.setScreencastOptions', {
+        ...this._options._recordVideos,
+        dir: this._browser._options._videosPath!,
+        browserContextId: this._browserContextId
+      });
+    }
+
     await Promise.all(promises);
   }
 
@@ -324,11 +332,6 @@ export class FFBrowserContext extends BrowserContext {
 
   async _doUpdateRequestInterception(): Promise<void> {
     await this._browser._connection.send('Browser.setRequestInterception', { browserContextId: this._browserContextId, enabled: !!this._requestInterceptor });
-  }
-
-  async _enableScreencast(options: types.ContextScreencastOptions): Promise<void> {
-    await super._enableScreencast(options);
-    await this._browser._connection.send('Browser.setScreencastOptions', Object.assign({}, options, { browserContextId: this._browserContextId}));
   }
 
   async _doClose() {

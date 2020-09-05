@@ -48,7 +48,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const base = new EventEmitter();
     this._channel = new Proxy(base, {
       get: (obj: any, prop) => {
-        if (String(prop).startsWith('_'))
+        if (String(prop).startsWith('_') && String(prop) !== '_enableScreencast' && String(prop) !== '_disableScreencast')
           return obj[prop];
         if (prop === 'then')
           return obj.then;

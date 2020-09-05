@@ -15,33 +15,29 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import { helper } from './helper';
-import * as network from './network';
-import * as path from 'path';
-import { Page, PageBinding } from './page';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import * as frames from './frames';
-import * as types from './types';
-import { Download } from './download';
-import { Browser } from './browser';
 import { EventEmitter } from 'events';
+import { TimeoutSettings } from '../utils/timeoutSettings';
+import { Browser } from './browser';
+import { Download } from './download';
+import * as frames from './frames';
+import { helper } from './helper';
+import { instrumentingAgents } from './instrumentation';
+import * as network from './network';
+import { Page, PageBinding } from './page';
 import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
-import { instrumentingAgents } from './instrumentation';
+import * as types from './types';
 
-export class Screencast {
-  readonly page: Page;
+export class Video {
   private readonly _path: string;
   _finishCallback: () => void = () => {};
   private readonly _finishedPromise: Promise<void>;
-  constructor(path: string, page: Page) {
+  constructor(path: string) {
     this._path = path;
-    this.page = page;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
 
-  async path(): Promise<string | null> {
+  async path(): Promise<string> {
     await this._finishedPromise;
     return this._path;
   }
@@ -51,13 +47,11 @@ export abstract class BrowserContext extends EventEmitter {
   static Events = {
     Close: 'close',
     Page: 'page',
-    ScreencastStarted: 'screencaststarted',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
-  _screencastOptions: types.ContextScreencastOptions | null = null;
   _requestInterceptor?: network.RouteHandler;
   private _isPersistentContext: boolean;
   private _closedStatus: 'open' | 'closing' | 'closed' = 'open';
@@ -172,15 +166,6 @@ export abstract class BrowserContext extends EventEmitter {
 
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
-  }
-
-  async _enableScreencast(options: types.ContextScreencastOptions) {
-    this._screencastOptions = options;
-    fs.mkdirSync(path.dirname(options.dir), {recursive: true});
-  }
-
-  _disableScreencast() {
-    this._screencastOptions = null;
   }
 
   async _loadDefaultContext(progress: Progress) {

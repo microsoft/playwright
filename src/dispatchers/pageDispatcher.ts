@@ -30,6 +30,7 @@ import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
+import { VideoDispatcher } from './videoDispatcher';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
@@ -48,7 +49,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     page.on(Page.Events.Crash, () => this._dispatchEvent('crash'));
     page.on(Page.Events.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
-    page.on(Page.Events.Download, dialog => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, dialog) }));
+    page.on(Page.Events.Download, download => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, download) }));
     this._page.on(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()
@@ -65,6 +66,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     }));
     page.on(Page.Events.RequestFinished, request => this._dispatchEvent('requestFinished', { request: RequestDispatcher.from(scope, request) }));
     page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
+    page.on(Page.Events.VideoStarted, screencast => this._dispatchEvent('videoStarted', { video: new VideoDispatcher(this._scope, screencast) }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 

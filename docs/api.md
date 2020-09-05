@@ -220,6 +220,9 @@ Indicates that the browser is connected.
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
+  - `_recordVideos` <[Object]> **experimental** Enables automatic video recording for new pages. The video will have frames with the provided dimensions. Actual picture of the page will be scaled down if necessary to fit specified size.
+    - `width` <[number]> Video frame width.
+    - `height` <[number]> Video frame height.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -262,6 +265,9 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
+  - `_recordVideos` <[Object]> **experimental** Enables automatic video recording for the new page. The video will have frames with the provided dimensions. Actual picture of the page will be scaled down if necessary to fit specified size.
+    - `width` <[number]> Video frame width.
+    - `height` <[number]> Video frame height.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -684,6 +690,7 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
+- [event: '_videostarted'](#event-videostarted)
 - [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'crash'](#event-crash)
@@ -769,6 +776,12 @@ page.removeListener('request', logRequest);
 - [page.waitForTimeout(timeout)](#pagewaitfortimeouttimeout)
 - [page.workers()](#pageworkers)
 <!-- GEN:stop -->
+
+#### event: '_videostarted'
+- <[Object]> Video object.
+
+**experimental**
+Emitted when video recording has started for this page. The event will fire only if [`_recordVideos`](#browsernewcontextoptions) option is configured on the parent context.
 
 #### event: 'close'
 
@@ -4157,6 +4170,7 @@ This methods attaches Playwright to an existing browser instance.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
+  - `_videosPath` <[string]> **experimental** If specified, recorded videos are saved into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -4231,6 +4245,10 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `username` <[string]>
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `_videosPath` <[string]> **experimental** If specified, recorded videos are saved into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
+  - `_recordVideos` <[Object]> **experimental** Enables automatic video recording for the new page. The video will have frames with the provided dimensions. Actual picture of the page will be scaled down if necessary to fit specified size.
+    - `width` <[number]> Video frame width.
+    - `height` <[number]> Video frame height.
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.
@@ -4248,6 +4266,7 @@ Launches browser that uses persistent storage located at `userDataDir` and retur
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
+  - `_videosPath` <[string]> **experimental** If specified, recorded videos are saved into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.

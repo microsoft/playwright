@@ -40,6 +40,7 @@ import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
+import { Video } from './video';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -206,6 +207,9 @@ export class Connection {
         break;
       case 'Route':
         result = new Route(parent, type, guid, initializer);
+        break;
+      case 'Video':
+        result = new Video(parent, type, guid, initializer);
         break;
       case 'Stream':
         result = new Stream(parent, type, guid, initializer);

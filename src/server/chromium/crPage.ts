@@ -460,10 +460,10 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source));
-    if (this._crPage._browserContext._screencastOptions) {
-      const contextOptions = this._crPage._browserContext._screencastOptions;
+    if (this._crPage._browserContext._options._recordVideos) {
+      const contextOptions = this._crPage._browserContext._options._recordVideos;
       const screencastId = createGuid();
-      const outputFile = path.join(contextOptions.dir, screencastId + '.webm');
+      const outputFile = path.join(this._crPage._browserContext._browser._options._videosPath!, screencastId + '.webm');
       const options = Object.assign({}, contextOptions, {outputFile});
       promises.push(this._startScreencast(screencastId, options));
     }
@@ -764,7 +764,11 @@ class FrameSession {
       this._screencastState = 'started';
       this._videoRecorder = videoRecorder;
       this._screencastId = screencastId;
-      this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
+      const video = this._crPage._browserContext._browser._videoStarted(screencastId, options.outputFile);
+      this._crPage.pageOrError().then(pageOrError => {
+        if (pageOrError instanceof Page)
+          pageOrError.emit(Page.Events.VideoStarted, video);
+      }).catch(() => {});
     } catch (e) {
       videoRecorder.stop().catch(() => {});
       throw e;
@@ -783,7 +787,7 @@ class FrameSession {
       this._screencastId = null;
       this._screencastState = 'stopped';
       await recorder.stop().catch(() => {});
-      this._crPage._browserContext._browser._screencastFinished(screencastId);
+      this._crPage._browserContext._browser._videoFinished(screencastId);
     }
   }
 

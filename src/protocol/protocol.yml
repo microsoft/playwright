@@ -212,6 +212,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        _videosPath: string?
         firefoxUserPrefs: json?
         chromiumSandbox: boolean?
         slowMo: number?
@@ -250,6 +251,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        _videosPath: string?
         chromiumSandbox: boolean?
         slowMo: number?
         noDefaultViewport: boolean?
@@ -357,6 +359,11 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
+        _recordVideos:
+          type: object?
+          properties:
+            width: number
+            height: number
       returns:
         context: BrowserContext
 
@@ -891,6 +898,10 @@ Page:
       parameters:
         route: Route
         request: Request
+
+    videoStarted:
+      parameters:
+        video: Video
 
     worker:
       parameters:
@@ -1768,6 +1779,17 @@ Dialog:
         promptText: string?
 
     dismiss:
+
+
+
+Video:
+  type: interface
+
+  commands:
+
+    path:
+      returns:
+        value: string
 
 
 

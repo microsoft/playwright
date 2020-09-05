@@ -15,7 +15,7 @@
  */
 
 import * as types from './types';
-import { BrowserContext, Screencast } from './browserContext';
+import { BrowserContext, Video } from './browserContext';
 import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Download } from './download';
@@ -32,6 +32,7 @@ export interface BrowserProcess {
 export type BrowserOptions = types.UIOptions & {
   name: string,
   downloadsPath?: string,
+  _videosPath?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
@@ -47,7 +48,7 @@ export abstract class Browser extends EventEmitter {
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
-  private readonly _idToScreencast = new Map<string, Screencast>();
+  private readonly _idToVideo = new Map<string, Video>();
 
   constructor(options: BrowserOptions) {
     super();
@@ -86,16 +87,16 @@ export abstract class Browser extends EventEmitter {
     this._downloads.delete(uuid);
   }
 
-  _screencastStarted(screencastId: string, file: string, page: Page) {
-    const screencast = new Screencast(file, page);
-    this._idToScreencast.set(screencastId, screencast);
-    page._browserContext.emit(BrowserContext.Events.ScreencastStarted, screencast);
+  _videoStarted(videoId: string, file: string): Video {
+    const video = new Video(file);
+    this._idToVideo.set(videoId, video);
+    return video;
   }
 
-  _screencastFinished(screencastId: string) {
-    const screencast = this._idToScreencast.get(screencastId);
-    this._idToScreencast.delete(screencastId);
-    screencast!._finishCallback();
+  _videoFinished(videoId: string) {
+    const video = this._idToVideo.get(videoId);
+    this._idToVideo.delete(videoId);
+    video!._finishCallback();
   }
 
   _didClose() {

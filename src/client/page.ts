@@ -42,6 +42,7 @@ import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
+import { Video } from './video';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -122,6 +123,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
+    this._channel.on('videoStarted', params => this._onVideoStarted(params));
 
     if (this._browserContext._browserName === 'chromium') {
       this.coverage = new ChromiumCoverage(this._channel);
@@ -173,6 +175,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._workers.add(worker);
     worker._page = this;
     this.emit(Events.Page.Worker, worker);
+  }
+
+  private _onVideoStarted(params: channels.PageVideoStartedEvent): void {
+    this.emit(Events.Page._VideoStarted, Video.from(params.video));
   }
 
   _onClose() {

@@ -22,7 +22,6 @@ import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
 
-
 declare global {
   interface TestState {
     videoPlayer: VideoPlayer;
@@ -244,19 +243,15 @@ describe('screencast', suite => {
     }
   });
 
-  it('should sutomatically start/finish when new page is created/closed', test => {
+  it('should automatically start/finish when new page is created/closed', test => {
     test.flaky(options.FIREFOX, 'Even slow is not slow enough');
-  }, async ({browser, tmpDir, toImpl}) => {
-    // Use server side of the context. All the code below also uses server side APIs.
-    const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 320, height: 240, dir: tmpDir});
-    expect(context._screencastOptions).toBeTruthy();
-
+  }, async ({browserType, tmpDir}) => {
+    const browser = await browserType.launch({_videosPath: tmpDir});
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
     const [screencast, newPage] = await Promise.all([
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
       context.newPage(),
     ]);
-    expect(screencast.page === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
       screencast.path(),
@@ -264,50 +259,48 @@ describe('screencast', suite => {
     ]);
     expect(path.dirname(videoFile)).toBe(tmpDir);
     await context.close();
+    await browser.close();
   });
 
-  it('should finish when contex closes', async ({browser, tmpDir, toImpl}) => {
-    // Use server side of the context. All the code below also uses server side APIs.
-    const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 320, height: 240, dir: tmpDir});
-    expect(context._screencastOptions).toBeTruthy();
+  it('should finish when contex closes', async ({browserType, tmpDir}) => {
+    const browser = await browserType.launch({_videosPath: tmpDir});
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
-    const [screencast, newPage] = await Promise.all([
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+    const [video] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
       context.newPage(),
     ]);
-    expect(screencast.page === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
-      screencast.path(),
+      video.path(),
       context.close(),
     ]);
     expect(path.dirname(videoFile)).toBe(tmpDir);
+
+    await browser.close();
   });
 
-  it('should fire start event for popups', async ({browser, tmpDir, server, toImpl}) => {
-    // Use server side of the context. All the code below also uses server side APIs.
-    const context = toImpl(await browser.newContext());
-    await context._enableScreencast({width: 640, height: 480, dir: tmpDir});
-    expect(context._screencastOptions).toBeTruthy();
+  it('should fire start event for popups', async ({browserType, tmpDir, server}) => {
+    const browser = await browserType.launch({_videosPath: tmpDir});
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
     const [page] = await Promise.all([
       context.newPage(),
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
     ]);
-    await page.mainFrame().goto(server.EMPTY_PAGE);
+    await page.goto(server.EMPTY_PAGE);
+    const [video, popup] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
+      new Promise<Page>(resolve => context.on('page', resolve)),
+      page.evaluate(() => { window.open('about:blank'); })
+    ]);
+    const [videoFile] = await Promise.all([
+      video.path(),
+      popup.close()
+    ]);
+    expect(path.dirname(videoFile)).toBe(tmpDir);
 
-    const [screencast, popup] = await Promise.all([
-      new Promise(resolve => context.on('screencaststarted', resolve)) as Promise<any>,
-      new Promise(resolve => context.on('page', resolve)) as Promise<any>,
-      page.mainFrame()._evaluateExpression(() => {
-        const win = window.open('about:blank');
-        win.close();
-      }, true)
-    ]);
-    expect(screencast.page === popup).toBe(true);
-    expect(path.dirname(await screencast.path())).toBe(tmpDir);
-    await context.close();
+    await browser.close();
   });
 
   it('should scale frames down to the requested size ', async ({page, videoPlayer, tmpDir, server, toImpl}) => {

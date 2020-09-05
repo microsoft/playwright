@@ -50,6 +50,7 @@ export const Events = {
     Load: 'load',
     Popup: 'popup',
     Worker: 'worker',
+    _VideoStarted: '_videostarted',
   },
 
   Worker: {

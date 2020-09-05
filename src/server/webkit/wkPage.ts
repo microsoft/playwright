@@ -15,28 +15,28 @@
  * limitations under the License.
  */
 
+import * as jpeg from 'jpeg-js';
+import * as path from 'path';
+import * as png from 'pngjs';
+import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils/utils';
+import * as accessibility from '../accessibility';
+import * as dialog from '../dialog';
+import * as dom from '../dom';
 import * as frames from '../frames';
 import { helper, RegisteredListener } from '../helper';
-import * as dom from '../dom';
+import { JSHandle } from '../javascript';
 import * as network from '../network';
+import { Page, PageBinding, PageDelegate } from '../page';
+import * as types from '../types';
+import { Protocol } from './protocol';
+import { getAccessibilityTree } from './wkAccessibility';
+import { WKBrowserContext } from './wkBrowser';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
+import { RawKeyboardImpl, RawMouseImpl } from './wkInput';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
-import { WKWorkers } from './wkWorkers';
-import { Page, PageDelegate, PageBinding } from '../page';
-import * as path from 'path';
-import { Protocol } from './protocol';
-import * as dialog from '../dialog';
-import { RawMouseImpl, RawKeyboardImpl } from './wkInput';
-import * as types from '../types';
-import * as accessibility from '../accessibility';
-import { getAccessibilityTree } from './wkAccessibility';
 import { WKProvisionalPage } from './wkProvisionalPage';
-import { WKBrowserContext } from './wkBrowser';
-import * as jpeg from 'jpeg-js';
-import * as png from 'pngjs';
-import { JSHandle } from '../javascript';
-import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils/utils';
+import { WKWorkers } from './wkWorkers';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
@@ -113,9 +113,9 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         this._grantPermissions(key, value);
     }
-    if (this._browserContext._screencastOptions) {
-      const contextOptions = this._browserContext._screencastOptions;
-      const outputFile = path.join(contextOptions.dir, createGuid() + '.webm');
+    if (this._browserContext._options._recordVideos) {
+      const contextOptions = this._browserContext._options._recordVideos;
+      const outputFile = path.join(this._browserContext._browser._options._videosPath!, createGuid() + '.webm');
       const options = Object.assign({}, contextOptions, {outputFile});
       promises.push(this.startScreencast(options));
     }
@@ -721,7 +721,11 @@ export class WKPage implements PageDelegate {
         width: options.width,
         height: options.height,
       }) as any;
-      this._browserContext._browser._screencastStarted(screencastId, options.outputFile, this._page);
+      const video = this._browserContext._browser._videoStarted(screencastId, options.outputFile);
+      this.pageOrError().then(pageOrError => {
+        if (pageOrError instanceof Page)
+          pageOrError.emit(Page.Events.VideoStarted, video);
+      }).catch(() => {});
     } catch (e) {
       this._recordingVideoFile = null;
       throw e;

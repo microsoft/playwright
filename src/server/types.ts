@@ -52,17 +52,10 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
-export type ScreencastOptions = {
+export type PageScreencastOptions = {
   width: number,
   height: number,
-};
-
-export type PageScreencastOptions = ScreencastOptions & {
   outputFile: string,
-};
-
-export type ContextScreencastOptions = ScreencastOptions & {
-  dir: string,
 };
 
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
@@ -245,6 +238,10 @@ export type BrowserContextOptions = {
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
   acceptDownloads?: boolean,
+  _recordVideos?: {
+    width: number,
+    height: number
+  }
 };
 
 export type EnvArray = { name: string, value: string }[];
@@ -263,6 +260,7 @@ type LaunchOptionsBase = {
   devtools?: boolean,
   proxy?: ProxySettings,
   downloadsPath?: string,
+  _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
 };
