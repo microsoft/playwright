@@ -192,6 +192,7 @@ describe('screencast', suite => {
     test.flaky(options.CHROMIUM && MAC);
     test.flaky(options.FIREFOX);
     test.flaky(options.WEBKIT);
+    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
@@ -220,8 +221,7 @@ describe('screencast', suite => {
   });
 
   it('should capture css transformation', test => {
-    test.fixme(options.WEBKIT && WIN, 'Accelerated compositing is disabled in WebKit on Windows.');
-    test.flaky(options.WEBKIT && LINUX);
+    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -303,7 +303,9 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should scale frames down to the requested size ', async ({page, videoPlayer, tmpDir, server, toImpl}) => {
+  it('should scale frames down to the requested size ', test => {
+    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
+  }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
     await page.setViewportSize({width: 640, height: 480});
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/checkerboard.html');
