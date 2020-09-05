@@ -61,6 +61,26 @@ it('should work with handles and complex objects', async ({page, server}) => {
   expect(equals).toBe(true);
 });
 
+
+it.only('should work with elements from page', async ({page, server}) => {
+  await page.exposeFunction('element', element => {
+    return [{ id: element.id }];
+  });
+
+  const equals = await page.evaluate(async () => {
+    const div = document.createElement('div');
+    div.innerText = 'test';
+    div.id = 'test';
+    document.body.appendChild(div);
+
+    const value = await window['element'](div);
+    const [{ id }] = value;
+    return id === div.id;
+  });
+
+  expect(equals).toBe(true);
+});
+
 it('should throw exception in page context', async ({page, server}) => {
   await page.exposeFunction('woof', function() {
     throw new Error('WOOF WOOF');
