@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
+import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import { helper, RegisteredListener } from '../helper';
-import { assert } from '../../utils/utils';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
 import { ConnectionTransport } from '../transport';
@@ -26,7 +26,6 @@ import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
 import { FFPage } from './ffPage';
 import { Protocol } from './protocol';
-import { throws } from 'assert';
 
 export class FFBrowser extends Browser {
   _connection: FFConnection;

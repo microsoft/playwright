@@ -544,14 +544,6 @@ BrowserContext:
       parameters:
         worker: Worker
 
-    _screencastStarted:
-      parameters:
-        video: Video
-
-    _screencastFinished:
-      parameters:
-        screencastId: string
-
 Page:
   type: interface
 
@@ -904,6 +896,10 @@ Page:
       parameters:
         route: Route
         request: Request
+
+    videoStarted:
+      parameters:
+        video: Video
 
     worker:
       parameters:
@@ -1786,9 +1782,6 @@ Dialog:
 
 Video:
   type: interface
-
-  initializer:
-    page: Page
 
   commands:
 

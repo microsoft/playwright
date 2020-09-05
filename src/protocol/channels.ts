@@ -447,8 +447,6 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
-  on(event: '_screencastStarted', callback: (params: BrowserContext_screencastStartedEvent) => void): this;
-  on(event: '_screencastFinished', callback: (params: BrowserContext_screencastFinishedEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
@@ -483,12 +481,6 @@ export type BrowserContextCrBackgroundPageEvent = {
 };
 export type BrowserContextCrServiceWorkerEvent = {
   worker: WorkerChannel,
-};
-export type BrowserContext_screencastStartedEvent = {
-  video: VideoChannel,
-};
-export type BrowserContext_screencastFinishedEvent = {
-  screencastId: string,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: {
@@ -665,6 +657,7 @@ export interface PageChannel extends Channel {
   on(event: 'requestFinished', callback: (params: PageRequestFinishedEvent) => void): this;
   on(event: 'response', callback: (params: PageResponseEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
+  on(event: 'videoStarted', callback: (params: PageVideoStartedEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams): Promise<PageSetDefaultTimeoutNoReplyResult>;
@@ -746,6 +739,9 @@ export type PageResponseEvent = {
 export type PageRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
+};
+export type PageVideoStartedEvent = {
+  video: VideoChannel,
 };
 export type PageWorkerEvent = {
   worker: WorkerChannel,
@@ -2128,9 +2124,7 @@ export type DialogDismissOptions = {};
 export type DialogDismissResult = void;
 
 // ----------- Video -----------
-export type VideoInitializer = {
-  page: PageChannel,
-};
+export type VideoInitializer = {};
 export interface VideoChannel extends Channel {
   path(params?: VideoPathParams): Promise<VideoPathResult>;
 }

@@ -15,31 +15,30 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
+import { EventEmitter } from 'events';
+import { TimeoutSettings } from '../utils/timeoutSettings';
+import { isDebugMode } from '../utils/utils';
+import { Browser } from './browser';
+import { DebugController } from './debug/debugController';
+import { Download } from './download';
+import * as frames from './frames';
 import { helper } from './helper';
 import * as network from './network';
-import * as path from 'path';
 import { Page, PageBinding } from './page';
-import { TimeoutSettings } from '../utils/timeoutSettings';
-import * as frames from './frames';
-import * as types from './types';
-import { Download } from './download';
-import { Browser } from './browser';
-import { EventEmitter } from 'events';
 import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import { instrumentingAgents } from './instrumentation';
+import { Snapshotter, SnapshotterDelegate } from './snapshotter';
+import * as types from './types';
 
 export class Screencast {
-  readonly page: Page;
   readonly _screencastId: string;
   readonly _path: string;
   _finishCallback: () => void = () => {};
   private readonly _finishedPromise: Promise<void>;
-  constructor(screencastId: string, path: string, page: Page) {
+  constructor(screencastId: string, path: string) {
     this._screencastId = screencastId;
     this._path = path;
-    this.page = page;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
 
@@ -53,7 +52,6 @@ export abstract class BrowserContext extends EventEmitter {
   static Events = {
     Close: 'close',
     Page: 'page',
-    ScreencastStarted: 'screencaststarted',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();

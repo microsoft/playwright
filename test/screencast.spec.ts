@@ -249,10 +249,9 @@ describe('screencast', suite => {
     const browser = await browserType.launch({_videosPath: tmpDir});
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
     const [screencast, newPage] = await Promise.all([
-      new Promise<any>(r => context.on('_videostarted', r)),
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
       context.newPage(),
     ]);
-    expect(screencast.page() === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
       screencast.path(),
@@ -267,11 +266,10 @@ describe('screencast', suite => {
     const browser = await browserType.launch({_videosPath: tmpDir});
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
-    const [video, newPage] = await Promise.all([
-      new Promise<any>(r => context.on('_videostarted', r)),
+    const [video] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
       context.newPage(),
     ]);
-    expect(video.page() === newPage).toBe(true);
 
     const [videoFile] = await Promise.all([
       video.path(),
@@ -288,15 +286,14 @@ describe('screencast', suite => {
 
     const [page] = await Promise.all([
       context.newPage(),
-      new Promise(r => context.on('_videostarted', r)),
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
     ]);
     await page.goto(server.EMPTY_PAGE);
     const [video, popup] = await Promise.all([
-      new Promise<any>(r => context.on('_videostarted', r)),
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
       new Promise<Page>(resolve => context.on('page', resolve)),
       page.evaluate(() => { window.open('about:blank'); })
     ]);
-    expect(video.page() === popup).toBe(true);
     const [videoFile] = await Promise.all([
       video.path(),
       popup.close()

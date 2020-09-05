@@ -23,7 +23,6 @@ export const Events = {
   BrowserContext: {
     Close: 'close',
     Page: 'page',
-    _VideoStarted: '_videostarted',
   },
 
   BrowserServer: {
@@ -51,6 +50,7 @@ export const Events = {
     Load: 'load',
     Popup: 'popup',
     Worker: 'worker',
+    _VideoStarted: '_videostarted',
   },
 
   Worker: {

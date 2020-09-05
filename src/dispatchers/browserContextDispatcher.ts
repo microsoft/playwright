@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { BrowserContext, Screencast } from '../server/browserContext';
+import { BrowserContext } from '../server/browserContext';
 import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { PageDispatcher, BindingCallDispatcher, WorkerDispatcher } from './pageDispatcher';
 import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { VideoDispatcher } from './videoDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -36,10 +35,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     context.on(BrowserContext.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();
-    });
-
-    context.on(BrowserContext.Events.ScreencastStarted, (screencast: Screencast) => {
-      this._dispatchEvent('_screencastStarted', { video: new VideoDispatcher(this._scope, screencast) });
     });
 
     if (context._browser._options.name === 'chromium') {

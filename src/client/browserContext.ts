@@ -59,7 +59,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
-    this._channel.on('_screencastStarted', params => this._onScreencastStarted(params));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -218,10 +217,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     const result = await waiter.waitForEvent(this, event, predicate as any);
     waiter.dispose();
     return result;
-  }
-
-  private _onScreencastStarted(params: channels.BrowserContext_screencastStartedEvent): void {
-    this.emit(Events.BrowserContext._VideoStarted, Video.from(params.video));
   }
 
   async _onClose() {

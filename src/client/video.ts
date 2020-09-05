@@ -18,7 +18,6 @@ import * as channels from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { Page } from './page';
 
 export class Video extends ChannelOwner<channels.VideoChannel, channels.VideoInitializer> {
   private _browser: Browser | undefined;
@@ -30,10 +29,6 @@ export class Video extends ChannelOwner<channels.VideoChannel, channels.VideoIni
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.VideoInitializer) {
     super(parent, type, guid, initializer);
     this._browser = (parent as BrowserContext)._browser;
-  }
-
-  page(): Page {
-    return Page.from(this._initializer.page);
   }
 
   async path(): Promise<string> {

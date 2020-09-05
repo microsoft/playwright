@@ -303,7 +303,6 @@ await context.close();
 ```
 
 <!-- GEN:toc -->
-- [event: '_videostarted'](#event-videostarted)
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
@@ -327,13 +326,6 @@ await context.close();
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
-
-#### event: '_videostarted'
-- <[Object]> Video object.
-
-**experimental**
-Emitted every time a new page is created and screencast is started for it. The events will
-fire only if [`_recordVideos`](#browsernewcontextoptions) options is configured on the context.
 
 #### event: 'close'
 
@@ -698,6 +690,7 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
+- [event: '_videostarted'](#event-videostarted)
 - [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'crash'](#event-crash)
@@ -783,6 +776,12 @@ page.removeListener('request', logRequest);
 - [page.waitForTimeout(timeout)](#pagewaitfortimeouttimeout)
 - [page.workers()](#pageworkers)
 <!-- GEN:stop -->
+
+#### event: '_videostarted'
+- <[Object]> Video object.
+
+**experimental**
+Emitted when video recording has started for this page. The event will fire only if [`_recordVideos`](#browsernewcontextoptions) option is configured on the parent context.
 
 #### event: 'close'
 
@@ -4401,7 +4400,6 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [chromiumBrowserContext.serviceWorkers()](#chromiumbrowsercontextserviceworkers)
 <!-- GEN:stop -->
 <!-- GEN:toc-extends-BrowserContext -->
-- [event: '_videostarted'](#event-videostarted)
 - [event: 'close'](#event-close)
 - [event: 'page'](#event-page)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)

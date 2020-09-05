@@ -114,6 +114,7 @@ export class Page extends EventEmitter {
     Load: 'load',
     Popup: 'popup',
     Worker: 'worker',
+    ScreencastStarted: 'screencaststarted',
   };
 
   private _closedState: 'open' | 'closing' | 'closed' = 'open';

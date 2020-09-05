@@ -15,15 +15,12 @@
  */
 
 import * as channels from '../protocol/channels';
-import { Dispatcher, DispatcherScope, lookupDispatcher } from './dispatcher';
 import { Screencast } from '../server/browserContext';
-import { PageDispatcher } from './pageDispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
 
 export class VideoDispatcher extends Dispatcher<Screencast, channels.VideoInitializer> implements channels.VideoChannel {
   constructor(scope: DispatcherScope, screencast: Screencast) {
-    super(scope, screencast, 'Video', {
-      page: lookupDispatcher<PageDispatcher>(screencast.page),
-    });
+    super(scope, screencast, 'Video', {});
   }
 
   async path(): Promise<channels.VideoPathResult> {

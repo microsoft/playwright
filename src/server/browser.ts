@@ -87,8 +87,8 @@ export abstract class Browser extends EventEmitter {
     this._downloads.delete(uuid);
   }
 
-  _screencastStarted(screencastId: string, file: string, page: Page): Screencast {
-    const screencast = new Screencast(screencastId, file, page);
+  _screencastStarted(screencastId: string, file: string): Screencast {
+    const screencast = new Screencast(screencastId, file);
     this._idToScreencast.set(screencastId, screencast);
     return screencast;
   }
