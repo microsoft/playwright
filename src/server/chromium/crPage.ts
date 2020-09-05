@@ -766,7 +766,6 @@ class FrameSession {
       this._screencastId = screencastId;
       const screencast = this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile);
       this._crPage.pageOrError().then(pageOrError => {
-        //     await new Promise(makeWaitForNextTask());
         if (pageOrError instanceof Page)
           pageOrError.emit(Page.Events.ScreencastStarted, screencast);
       });

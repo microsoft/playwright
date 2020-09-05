@@ -27,7 +27,6 @@ import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions } from './types';
 import { isDevMode, headersObjectToArray } from '../utils/utils';
-import { Video } from './video';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
@@ -39,7 +38,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _ownerPage: Page | undefined;
   private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
-  private _idToScreencast = new Map<string, Video>();
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
