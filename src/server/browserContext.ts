@@ -17,18 +17,15 @@
 
 import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { isDebugMode } from '../utils/utils';
 import { Browser } from './browser';
-import { DebugController } from './debug/debugController';
 import { Download } from './download';
 import * as frames from './frames';
 import { helper } from './helper';
+import { instrumentingAgents } from './instrumentation';
 import * as network from './network';
 import { Page, PageBinding } from './page';
 import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
-import { instrumentingAgents } from './instrumentation';
-import { Snapshotter, SnapshotterDelegate } from './snapshotter';
 import * as types from './types';
 
 export class Screencast {
