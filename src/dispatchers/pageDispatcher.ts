@@ -66,7 +66,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     }));
     page.on(Page.Events.RequestFinished, request => this._dispatchEvent('requestFinished', { request: RequestDispatcher.from(scope, request) }));
     page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
-    page.on(Page.Events.ScreencastStarted, screencast => this._dispatchEvent('videoStarted', { video: new VideoDispatcher(this._scope, screencast) }));
+    page.on(Page.Events.VideoStarted, screencast => this._dispatchEvent('videoStarted', { video: new VideoDispatcher(this._scope, screencast) }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 

@@ -164,7 +164,7 @@ export class FFBrowser extends Browser {
   }
 
   _onScreencastFinished(payload: Protocol.Browser.screencastFinishedPayload) {
-    this._screencastFinished(payload.screencastId);
+    this._videoFinished(payload.screencastId);
   }
 }
 

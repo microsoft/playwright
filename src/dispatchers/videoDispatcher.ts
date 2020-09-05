@@ -15,11 +15,11 @@
  */
 
 import * as channels from '../protocol/channels';
-import { Screencast } from '../server/browserContext';
+import { Video } from '../server/browserContext';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 
-export class VideoDispatcher extends Dispatcher<Screencast, channels.VideoInitializer> implements channels.VideoChannel {
-  constructor(scope: DispatcherScope, screencast: Screencast) {
+export class VideoDispatcher extends Dispatcher<Video, channels.VideoInitializer> implements channels.VideoChannel {
+  constructor(scope: DispatcherScope, screencast: Video) {
     super(scope, screencast, 'Video', {});
   }
 

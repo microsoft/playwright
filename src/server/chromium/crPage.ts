@@ -764,11 +764,11 @@ class FrameSession {
       this._screencastState = 'started';
       this._videoRecorder = videoRecorder;
       this._screencastId = screencastId;
-      const screencast = this._crPage._browserContext._browser._screencastStarted(screencastId, options.outputFile);
+      const video = this._crPage._browserContext._browser._videoStarted(screencastId, options.outputFile);
       this._crPage.pageOrError().then(pageOrError => {
         if (pageOrError instanceof Page)
-          pageOrError.emit(Page.Events.ScreencastStarted, screencast);
-      });
+          pageOrError.emit(Page.Events.VideoStarted, video);
+      }).catch(() => {});
     } catch (e) {
       videoRecorder.stop().catch(() => {});
       throw e;
@@ -787,7 +787,7 @@ class FrameSession {
       this._screencastId = null;
       this._screencastState = 'stopped';
       await recorder.stop().catch(() => {});
-      this._crPage._browserContext._browser._screencastFinished(screencastId);
+      this._crPage._browserContext._browser._videoFinished(screencastId);
     }
   }
 

@@ -31,7 +31,7 @@ import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { Screencast } from '../browserContext';
+import { Video } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -50,7 +50,7 @@ export class FFPage implements PageDelegate {
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
-  private readonly _idToScreencast = new Map<string, Screencast>();
+  private readonly _idToScreencast = new Map<string, Video>();
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -258,11 +258,11 @@ export class FFPage implements PageDelegate {
   }
 
   _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
-    const screencast = this._browserContext._browser._screencastStarted(event.screencastId, event.file);
+    const video = this._browserContext._browser._videoStarted(event.screencastId, event.file);
     this.pageOrError().then(pageOrError => {
       if (pageOrError instanceof Page)
-        pageOrError.emit(Page.Events.ScreencastStarted, screencast);
-    });
+        pageOrError.emit(Page.Events.VideoStarted, video);
+    }).catch(() => {});
   }
 
   async exposeBinding(binding: PageBinding) {

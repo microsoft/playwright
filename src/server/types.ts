@@ -52,12 +52,9 @@ export type ScreenshotOptions = ElementScreenshotOptions & {
   clip?: Rect,
 };
 
-export type ScreencastOptions = {
+export type PageScreencastOptions = {
   width: number,
   height: number,
-};
-
-export type PageScreencastOptions = ScreencastOptions & {
   outputFile: string,
 };
 

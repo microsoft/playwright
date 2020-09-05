@@ -28,13 +28,11 @@ import { Progress } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 
-export class Screencast {
-  readonly _screencastId: string;
-  readonly _path: string;
+export class Video {
+  private readonly _path: string;
   _finishCallback: () => void = () => {};
   private readonly _finishedPromise: Promise<void>;
-  constructor(screencastId: string, path: string) {
-    this._screencastId = screencastId;
+  constructor(path: string) {
     this._path = path;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
