@@ -237,6 +237,16 @@ it('page.press should work', async ({page, server}) => {
   expect(await page.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
+it('page.press should work for Enter', test => {
+  test.fail(options.CHROMIUM && MAC, 'page.press() does not emit keypress event on Enter');
+}, async ({page, server}) => {
+  await page.setContent(`<input onkeypress="console.log('press')"></input>`);
+  const messages = [];
+  page.on('console', message => messages.push(message));
+  await page.press('input', 'Enter');
+  expect(messages[0].text()).toBe('press');
+});
+
 it('frame.press should work', async ({page, server}) => {
   await page.setContent(`<iframe name=inner src="${server.PREFIX}/input/textarea.html"></iframe>`);
   const frame = page.frame('inner');
