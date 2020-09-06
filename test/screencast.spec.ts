@@ -222,6 +222,7 @@ describe('screencast', suite => {
 
   it('should capture css transformation', test => {
     test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
+    test.fail(options.WEBKIT && WIN, 'Does not work on WebKit Windows');
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     // Set viewport equal to screencast frame size to avoid scaling.
