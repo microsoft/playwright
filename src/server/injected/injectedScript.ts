@@ -18,6 +18,7 @@ import { createAttributeEngine } from './attributeSelectorEngine';
 import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
+import { createHasTextSelector } from './hasTextSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
@@ -51,6 +52,7 @@ export class InjectedScript {
     this.engines.set('xpath:light', XPathEngine);
     this.engines.set('text', createTextSelector(true));
     this.engines.set('text:light', createTextSelector(false));
+    this.engines.set('has-text', createHasTextSelector());
     this.engines.set('id', createAttributeEngine('id', true));
     this.engines.set('id:light', createAttributeEngine('id', false));
     this.engines.set('data-testid', createAttributeEngine('data-testid', true));

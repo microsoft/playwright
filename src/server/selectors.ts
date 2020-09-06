@@ -36,6 +36,7 @@ export class Selectors {
       'css', 'css:light',
       'xpath', 'xpath:light',
       'text', 'text:light',
+      'has-text',
       'id', 'id:light',
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',

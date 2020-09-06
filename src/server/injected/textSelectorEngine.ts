@@ -48,7 +48,7 @@ export function createTextSelector(shadow: boolean): SelectorEngine {
   return engine;
 }
 
-function unescape(s: string): string {
+export function unescape(s: string): string {
   if (!s.includes('\\'))
     return s;
   const r: string[] = [];
