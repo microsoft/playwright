@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-const { setDevMode } = require('./lib/utils/utils');
-setDevMode(); // Note: we must call setDevMode before initializing.
+const { setUnderTest } = require('./lib/utils/utils');
+setUnderTest(); // Note: we must call setUnderTest before initializing.
 
 const { Playwright } = require('./lib/server/playwright');
 const { Electron } = require('./lib/server/electron/electron');
