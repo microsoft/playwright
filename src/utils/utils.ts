@@ -62,7 +62,7 @@ export function assert(value: any, message?: string): asserts value {
 }
 
 export function debugAssert(value: any, message?: string): asserts value {
-  if (isDevMode() && !value)
+  if (isUnderTest() && !value)
     throw new Error(message);
 }
 
@@ -87,12 +87,12 @@ export function isDebugMode(): boolean {
   return isInDebugMode;
 }
 
-let _isDevMode = false;
-export function setDevMode() {
-  _isDevMode = true;
+let _isUnderTest = false;
+export function setUnderTest() {
+  _isUnderTest = true;
 }
-export function isDevMode(): boolean {
-  return _isDevMode;
+export function isUnderTest(): boolean {
+  return _isUnderTest;
 }
 
 export function getFromENV(name: string) {
