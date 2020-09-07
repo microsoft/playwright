@@ -178,4 +178,8 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   async title(): Promise<channels.FrameTitleResult> {
     return { value: await this._frame.title() };
   }
+
+  async extendInjectedScript(params: channels.FrameExtendInjectedScriptParams): Promise<channels.FrameExtendInjectedScriptResult> {
+    return { handle: createHandle(this._scope, await this._frame.extendInjectedScript(params.source, parseArgument(params.arg))) };
+  }
 }
