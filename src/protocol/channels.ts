@@ -1111,6 +1111,7 @@ export interface FrameChannel extends Channel {
   uncheck(params: FrameUncheckParams): Promise<FrameUncheckResult>;
   waitForFunction(params: FrameWaitForFunctionParams): Promise<FrameWaitForFunctionResult>;
   waitForSelector(params: FrameWaitForSelectorParams): Promise<FrameWaitForSelectorResult>;
+  extendInjectedScript(params: FrameExtendInjectedScriptParams): Promise<FrameExtendInjectedScriptResult>;
 }
 export type FrameLoadstateEvent = {
   add?: 'load' | 'domcontentloaded' | 'networkidle',
@@ -1509,6 +1510,16 @@ export type FrameWaitForSelectorOptions = {
 };
 export type FrameWaitForSelectorResult = {
   element?: ElementHandleChannel,
+};
+export type FrameExtendInjectedScriptParams = {
+  source: string,
+  arg: SerializedArgument,
+};
+export type FrameExtendInjectedScriptOptions = {
+
+};
+export type FrameExtendInjectedScriptResult = {
+  handle: JSHandleChannel,
 };
 
 // ----------- Worker -----------

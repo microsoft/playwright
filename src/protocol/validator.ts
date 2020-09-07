@@ -604,6 +604,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });
+  scheme.FrameExtendInjectedScriptParams = tObject({
+    source: tString,
+    arg: tType('SerializedArgument'),
+  });
   scheme.WorkerEvaluateExpressionParams = tObject({
     expression: tString,
     isFunction: tBoolean,

@@ -20,6 +20,8 @@ import type InjectedScript from '../../server/injected/injectedScript';
 export default class DebugScript {
   consoleAPI: ConsoleAPI | undefined;
   constructor(injectedScript: InjectedScript) {
+    if ((window as any).playwright)
+      return;
     this.consoleAPI = new ConsoleAPI(injectedScript);
   }
 }

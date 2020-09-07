@@ -90,13 +90,6 @@ export class FrameExecutionContext extends js.ExecutionContext {
     return this._injectedScriptPromise;
   }
 
-  async extendInjectedScript(source: string, params?: any) {
-    const injectedScriptHandle = await this.injectedScript();
-    return injectedScriptHandle.evaluate((injectedScript, {source, params}) => {
-      return injectedScript.extend(source, params);
-    }, { source, params });
-  }
-
   async doSlowMo() {
     return this.frame._page._doSlowMo();
   }

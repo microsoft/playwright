@@ -22,16 +22,10 @@ import { Progress } from '../server/progress';
 import { isDebugMode } from '../utils/utils';
 import * as debugScriptSource from '../generated/debugScriptSource';
 
-const debugScriptSymbol = Symbol('debugScript');
-
 export class DebugController implements InstrumentingAgent {
   private async ensureInstalledInFrame(frame: frames.Frame) {
     try {
-      const mainContext = await frame._mainContext();
-      if ((mainContext as any)[debugScriptSymbol])
-        return;
-      (mainContext as any)[debugScriptSymbol] = true;
-      await mainContext.extendInjectedScript(debugScriptSource.source);
+      await frame.extendInjectedScript(debugScriptSource.source);
     } catch (e) {
     }
   }

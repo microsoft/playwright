@@ -975,6 +975,14 @@ export class Frame extends EventEmitter {
       clearTimeout(this._networkIdleTimer);
     this._networkIdleTimer = undefined;
   }
+
+  async extendInjectedScript(source: string, arg?: any): Promise<js.JSHandle> {
+    const mainContext = await this._mainContext();
+    const injectedScriptHandle = await mainContext.injectedScript();
+    return injectedScriptHandle.evaluateHandle((injectedScript, {source, arg}) => {
+      return injectedScript.extend(source, arg);
+    }, { source, arg });
+  }
 }
 
 class RerunnableTask {
