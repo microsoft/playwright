@@ -19,7 +19,7 @@ import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector } from '../common/selectorParser';
+import { ParsedSelector, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
@@ -61,6 +61,10 @@ export class InjectedScript {
     this.engines.set('data-test:light', createAttributeEngine('data-test', false));
     for (const {name, engine} of customEngines)
       this.engines.set(name, engine);
+  }
+
+  parseSelector(selector: string): ParsedSelector {
+    return parseSelector(selector);
   }
 
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
@@ -106,6 +110,11 @@ export class InjectedScript {
       return candidates;
     const partial = { parts: partsToCheckOne };
     return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+  }
+
+  extend(source: string, params: any): any {
+    const constrFunction = global.eval(source);
+    return new constrFunction(this, params);
   }
 
   isVisible(element: Element): boolean {

@@ -16,10 +16,8 @@
 
 import { BrowserContext } from '../server/browserContext';
 import * as frames from '../server/frames';
-import * as js from '../server/javascript';
 import { Page } from '../server/page';
 import { InstrumentingAgent } from '../server/instrumentation';
-import type DebugScript from './injected/debugScript';
 import { Progress } from '../server/progress';
 import { isDebugMode } from '../utils/utils';
 import * as debugScriptSource from '../generated/debugScriptSource';
@@ -33,12 +31,7 @@ export class DebugController implements InstrumentingAgent {
       if ((mainContext as any)[debugScriptSymbol])
         return;
       (mainContext as any)[debugScriptSymbol] = true;
-      const objectId = await mainContext._delegate.rawEvaluate(`new (${debugScriptSource.source})()`);
-      const debugScript = new js.JSHandle(mainContext, 'object', objectId) as js.JSHandle<DebugScript>;
-      const injectedScript = await mainContext.injectedScript();
-      await debugScript.evaluate((debugScript, injectedScript) => {
-        debugScript.initialize(injectedScript, { console: true });
-      }, injectedScript);
+      await mainContext.extendInjectedScript(debugScriptSource.source);
     } catch (e) {
     }
   }
