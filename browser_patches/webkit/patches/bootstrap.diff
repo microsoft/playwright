@@ -9837,10 +9837,10 @@ index f9c26832d3e91e8d747c5c1e0f0d76c34f4c3096..8b73efbba93362d8eebcc3a52158d8b0
  } // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
 new file mode 100644
-index 0000000000000000000000000000000000000000..9b1e182c9f41a132df8c18b3655d52627b9d7686
+index 0000000000000000000000000000000000000000..0700f3624b34ab536f4101a12ba5fbd9a81e9a58
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/mac/ScreencastEncoderMac.mm
-@@ -0,0 +1,57 @@
+@@ -0,0 +1,58 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -9884,16 +9884,17 @@ index 0000000000000000000000000000000000000000..9b1e182c9f41a132df8c18b3655d5262
 +    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(argb_data, width, height, bitsPerComponent, bytesPerRow, colorSpace.get(), kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little));
 +    double imageWidth = CGImageGetWidth(image);
 +    double imageHeight = CGImageGetHeight(image);
++    // TODO: exclude controls from original screenshot
++    double pageHeight = imageHeight - offsetTop;
 +    double ratio = 1;
 +    if (scale) {
 +        ratio = *scale;
-+    } else if (imageWidth > width || imageHeight > height) {
-+        ratio = std::min(width / imageWidth, height / imageHeight);
++    } else if (imageWidth > width || pageHeight > height) {
++        ratio = std::min(width / imageWidth, height / pageHeight);
 +    }
 +    imageWidth *= ratio;
 +    imageHeight *= ratio;
-+    // TODO: exclude controls from original screenshot
-+    CGFloat pageHeight = static_cast<CGFloat>(imageHeight) - offsetTop * ratio;
++    pageHeight *= ratio;
 +    CGContextDrawImage(context.get(), CGRectMake(0, height - pageHeight, imageWidth, imageHeight), image);
 +}
 +
