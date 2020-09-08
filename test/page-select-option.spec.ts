@@ -175,7 +175,8 @@ it('should throw if passed wrong types', async ({page, server}) => {
 
   error = null;
   try {
-    await page.selectOption('select', 12 as any);
+    // @ts-expect-error cannot select numbers
+    await page.selectOption('select', 12);
   } catch (e) {
     error = e;
   }
@@ -183,7 +184,8 @@ it('should throw if passed wrong types', async ({page, server}) => {
 
   error = null;
   try {
-    await page.selectOption('select', { value: 12 } as any);
+    // @ts-expect-error cannot select numbers
+    await page.selectOption('select', { value: 12 });
   } catch (e) {
     error = e;
   }
@@ -191,7 +193,8 @@ it('should throw if passed wrong types', async ({page, server}) => {
 
   error = null;
   try {
-    await page.selectOption('select', { label: 12 } as any);
+    // @ts-expect-error cannot select numbers
+    await page.selectOption('select', { label: 12 });
   } catch (e) {
     error = e;
   }
@@ -199,7 +202,8 @@ it('should throw if passed wrong types', async ({page, server}) => {
 
   error = null;
   try {
-    await page.selectOption('select', { index: '12' } as any);
+    // @ts-expect-error cannot select string indices
+    await page.selectOption('select', { index: '12' });
   } catch (e) {
     error = e;
   }

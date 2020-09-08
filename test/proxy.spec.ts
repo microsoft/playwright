@@ -22,7 +22,8 @@ import socks from 'socksv5';
 it('should throw for bad server value', async ({browserType, defaultBrowserOptions}) => {
   const error = await browserType.launch({
     ...defaultBrowserOptions,
-    proxy: { server: 123 as any }
+    // @ts-expect-error server must be a string
+    proxy: { server: 123 }
   }).catch(e => e);
   expect(error.message).toContain('proxy.server: expected string, got number');
 });

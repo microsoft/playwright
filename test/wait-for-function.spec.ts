@@ -68,7 +68,8 @@ it('should avoid side effects after timeout', async ({page}) => {
 });
 
 it('should throw on polling:mutation', async ({page}) => {
-  const error = await page.waitForFunction(() => true, {}, {polling: 'mutation' as any}).catch(e => e);
+  // @ts-expect-error mutation is not a valid polling strategy
+  const error = await page.waitForFunction(() => true, {}, {polling: 'mutation'}).catch(e => e);
   expect(error.message).toContain('Unknown polling option: mutation');
 });
 
@@ -113,7 +114,8 @@ it('should work with strict CSP policy', async ({page, server}) => {
 it('should throw on bad polling value', async ({page}) => {
   let error = null;
   try {
-    await page.waitForFunction(() => !!document.body, {}, {polling: 'unknown' as any});
+    // @ts-expect-error 'unknown' is not a valid polling strategy
+    await page.waitForFunction(() => !!document.body, {}, {polling: 'unknown'});
   } catch (e) {
     error = e;
   }

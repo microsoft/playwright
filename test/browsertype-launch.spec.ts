@@ -92,7 +92,8 @@ it('should report launch log', test => {
 it('should accept objects as options', test => {
   test.slow();
 }, async ({browserType, defaultBrowserOptions}) => {
-  const browser = await browserType.launch({ ...defaultBrowserOptions, process } as any);
+  // @ts-expect-error process is not a real option.
+  const browser = await browserType.launch({ ...defaultBrowserOptions, process });
   await browser.close();
 });
 
