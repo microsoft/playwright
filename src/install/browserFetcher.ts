@@ -59,13 +59,13 @@ function getDownloadHost(browserName: BrowserName, revision: number): string {
 function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
     return new Map<BrowserPlatform, string>([
-        ['ubuntu18.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
-        ['ubuntu20.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
-        ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['mac10.14', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
-        ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
+      ['ubuntu18.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+      ['ubuntu20.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
+      ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
+      ['mac10.14', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
+      ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
+      ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
+      ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
     ]).get(platform);
   }
 
