@@ -9,7 +9,7 @@
 
 ## Building `PrintDeps.exe`
 
-`<TK>`
+See instructions at [`//browser_patches/tools/PrintDepsWindows/README.md`](../browser_patches/tools/PrintDepsWindows/README.md)
 
 ## Building `ffmpeg-mac`
 
@@ -67,7 +67,7 @@ opus sdl shtool texi2html theora wget x264 x265 xvid nasm
 ~/ffmpeg$ make && make install
 ```
 
-## `ffmpeg-win64.exe`
+## Building `ffmpeg-win64.exe`
 
 > FFMPEG: [`n4.3.1`](https://github.com/FFmpeg/FFmpeg/releases/tag/n4.3.1)
 > libvpx: [`d1a7897`](https://github.com/webmproject/libvpx/commit/d1a78971ebcfd728c9c73b0cfbee69f470d4dc72)
