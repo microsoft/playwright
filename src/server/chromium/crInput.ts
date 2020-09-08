@@ -53,6 +53,8 @@ export class RawKeyboardImpl implements input.RawKeyboard {
     let commands = macEditingCommands[shortcut] || [];
     if (isString(commands))
       commands = [commands];
+    // Commands that insert text are not supported
+    commands = commands.filter(x => !x.startsWith('insert'));
     // remove the trailing : to match the Chromium command names.
     return commands.map(c => c.substring(0, c.length - 1));
   }
