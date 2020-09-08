@@ -8121,7 +8121,7 @@ index 5ca77af82344641ffa0f701d3e62c9b5cf7119a8..4f2ab97dbf5a77f321465dcbcab0efda
  {
      NSWindow *window = [m_view window];
 diff --git a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-index 61e3f6050d7f819a479cf511625320e3f6204ee9..f63ed864e85b17c8db2159d8da2b6b0d20b59f43 100644
+index 61e3f6050d7f819a479cf511625320e3f6204ee9..58ad051d39fde5955fc68bdfa889600ed2059fb0 100644
 --- a/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 +++ b/Source/WebKit/UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 @@ -32,13 +32,16 @@
@@ -8178,7 +8178,7 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..f63ed864e85b17c8db2159d8da2b6b0d
  void DrawingAreaProxyCoordinatedGraphics::waitForBackingStoreUpdateOnNextPaint()
  {
      m_hasReceivedFirstUpdate = true;
-@@ -238,6 +257,44 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
+@@ -238,6 +257,45 @@ void DrawingAreaProxyCoordinatedGraphics::updateAcceleratedCompositingMode(uint6
      updateAcceleratedCompositingMode(layerTreeContext);
  }
  
@@ -8194,8 +8194,9 @@ index 61e3f6050d7f819a479cf511625320e3f6204ee9..f63ed864e85b17c8db2159d8da2b6b0d
 +{
 +    RefPtr<cairo_surface_t> surface;
 +#if PLATFORM(WIN)
++    HWndDC dc;
 +    if (m_isInAcceleratedCompositingMode) {
-+        HWndDC dc(m_webPageProxy.viewWidget());
++        dc.setHWnd(m_webPageProxy.viewWidget());
 +        surface = adoptRef(cairo_win32_surface_create(dc));
 +#else
 +    if (isInAcceleratedCompositingMode()) {
