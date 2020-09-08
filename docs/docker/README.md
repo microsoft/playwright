@@ -1,13 +1,13 @@
 # Running Playwright in Docker
 
-[Dockerfile.bionic](Dockerfile.bionic) is a playwright-ready image of playwright.
-This image includes all the dependencies needed to run browsers in a Docker
-container, including browsers.
+[Dockerfile.bionic](Dockerfile.bionic) can be used to run Playwright scripts in Docker environments. This image includes all the dependencies needed to run browsers in a Docker container, including browsers.
 
 <!-- GEN:toc -->
 - [Usage](#usage)
   * [Pull the image](#pull-the-image)
   * [Run the image](#run-the-image)
+    - [End-to-end tests](#end-to-end-tests)
+    - [Crawling and scraping](#crawling-and-scraping)
   * [Using on CI](#using-on-ci)
 - [Image tags](#image-tags)
 - [Development](#development)
@@ -31,8 +31,22 @@ $ docker pull mcr.microsoft.com/playwright:bionic
 
 ### Run the image
 
+By default, the Docker image will use the `root` user to run the browsers. This will disable the Chromium sandbox which is not available with root. If you run trusted code (e.g. End-to-end tests) and want to avoid the hassle of managing separate user then the root user may be fine. For web scraping or crawling, we recommend to create a separate user inside the Docker container and use the seccomp profile.
+
+#### End-to-end tests
+
+On trusted websites, you can avoid creating a separate user and use root for it since you trust the code which will run on the browsers.
+
 ```
-$ docker container run -it --rm --ipc=host --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
+docker run -it --rm --ipc=host mcr.microsoft.com/playwright:bionic /bin/bash
+```
+
+#### Crawling and scraping
+
+On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
+
+```
+$ docker run -it --rm --ipc=host --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
 ```
 
 [`seccomp_profile.json`](seccomp_profile.json) is needed to run Chromium with sandbox. This is
@@ -56,6 +70,8 @@ a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b0
 ```
 
 > **NOTE**: Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
+
+Since the seccomp profile is now in use, you have to create a separate user with `adduser pwuser` which you use to run your browsers with Playwright.
 
 ### Using on CI
 
