@@ -55,7 +55,7 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
       const browsersToDownload = await readBrowsersToDownload(linkTarget);
       for (const browser of browsersToDownload) {
         const usedBrowserPath = browserPaths.browserDirectory(browsersPath, browser);
-        const browserRevision = parseFloat(browser.revision);
+        const browserRevision = parseInt(browser.revision, 10);
         // Old browser installations don't have marker file.
         const shouldHaveMarkerFile = (browser.name === 'chromium' && browserRevision >= 786218) ||
             (browser.name === 'firefox' && browserRevision >= 1128) ||
