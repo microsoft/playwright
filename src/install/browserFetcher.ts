@@ -42,11 +42,9 @@ const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => f
 
 export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
-const CHROMIUM_MOVE_TO_AZURE_CDN_REVISION = 792639;
-
 function getDownloadHost(browserName: BrowserName, revision: number): string {
   // Only old chromium revisions are downloaded from gbucket.
-  const defaultDownloadHost = browserName === 'chromium' && revision < CHROMIUM_MOVE_TO_AZURE_CDN_REVISION ?  'https://storage.googleapis.com' : 'https://playwright.azureedge.net';
+  const defaultDownloadHost = browserName === 'chromium' ? 'https://storage.googleapis.com' : 'https://playwright.azureedge.net';
 
   const envDownloadHost: { [key: string]: string } = {
     chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
@@ -60,8 +58,7 @@ function getDownloadHost(browserName: BrowserName, revision: number): string {
 
 function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
-    return revision < CHROMIUM_MOVE_TO_AZURE_CDN_REVISION ?
-      new Map<BrowserPlatform, string>([
+    return new Map<BrowserPlatform, string>([
         ['ubuntu18.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
         ['ubuntu20.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
         ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
@@ -69,16 +66,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
         ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
         ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
-      ]).get(platform) :
-      new Map<BrowserPlatform, string>([
-        ['ubuntu18.04', '%s/builds/chromium/%s/chromium-linux.zip'],
-        ['ubuntu20.04', '%s/builds/chromium/%s/chromium-linux.zip'],
-        ['mac10.13', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac10.14', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
-        ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
-      ]).get(platform);
+    ]).get(platform);
   }
 
   if (browserName === 'firefox') {
@@ -129,7 +117,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
 }
 
 function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPlatform): string {
-  const revision = parseFloat(browser.revision);
+  const revision = parseInt(browser.revision, 10);
   const serverHost = getDownloadHost(browser.name, revision);
   const urlTemplate = getDownloadUrl(browser.name, revision, platform);
   assert(urlTemplate, `ERROR: Playwright does not support ${browser.name} on ${platform}`);

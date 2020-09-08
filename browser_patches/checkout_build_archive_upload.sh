@@ -36,31 +36,7 @@ BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
-if [[ "$BUILD_FLAVOR" == "chromium-linux-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--linux"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-linux.zip"
-elif [[ "$BUILD_FLAVOR" == "chromium-mac-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--mac"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-mac.zip"
-elif [[ "$BUILD_FLAVOR" == "chromium-win32-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--win32"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-win32.zip"
-elif [[ "$BUILD_FLAVOR" == "chromium-win64-mirror-to-cdn" ]]; then
-  BROWSER_NAME="chromium"
-  EXTRA_BUILD_ARGS="--win64"
-  EXPECTED_HOST_OS="Ubuntu"
-  EXPECTED_HOST_OS_VERSION="18.04"
-  BUILD_BLOB_NAME="chromium-win64.zip"
-elif [[ "$BUILD_FLAVOR" == "firefox-ubuntu-18.04" ]]; then
+if [[ "$BUILD_FLAVOR" == "firefox-ubuntu-18.04" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
