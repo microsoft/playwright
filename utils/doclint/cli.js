@@ -44,10 +44,11 @@ async function run() {
   // Documentation checks.
   {
     const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
+    const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
     const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
     const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
     const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
-    const mdSources = [readme, api, contributing, ...docs];
+    const mdSources = [readme, binReadme, api, contributing, ...docs];
 
     const preprocessor = require('./preprocessor');
     const browserVersions = await getBrowserVersions();
