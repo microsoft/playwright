@@ -72,18 +72,6 @@ export function windowsExeAndDllDirectories(browserPath: string, browser: Browse
   return [];
 }
 
-export function ffmpegPath(browserPath: string, browser: BrowserDescriptor): string {
-  if (browser.name !== 'chromium')
-    return '';
-  if (os.platform() === 'linux')
-    return 'ffmpeg';
-  if (os.platform() === 'win32')
-    return path.join(browserPath, 'chrome-win', 'ffmpeg.exe');
-  if (os.platform() === 'darwin')
-    return path.join(browserPath, 'chrome-mac', 'ffmpeg');
-  return '';
-}
-
 export function executablePath(browserPath: string, browser: BrowserDescriptor): string | undefined {
   let tokens: string[] | undefined;
   if (browser.name === 'chromium') {

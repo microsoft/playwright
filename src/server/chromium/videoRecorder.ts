@@ -18,6 +18,8 @@ import { launchProcess } from '../processLauncher';
 import { ChildProcess } from 'child_process';
 import { Progress, runAbortableTask } from '../progress';
 import * as types from '../types';
+import * as path from 'path';
+import * as os from 'os';
 import { assert } from '../../utils/utils';
 
 const fps = 25;
@@ -30,22 +32,20 @@ export class VideoRecorder {
   private _lastFrameBuffer: Buffer | null = null;
   private _lastWriteTimestamp: number = 0;
   private readonly _progress: Progress;
-  private readonly _ffmpegPath: string;
 
-  static async launch(ffmpegPath: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
+  static async launch(options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
     return await runAbortableTask(async progress => {
-      const recorder = new VideoRecorder(ffmpegPath, progress);
+      const recorder = new VideoRecorder(progress);
       await recorder._launch(options);
       return recorder;
     }, 0, 'browser');
   }
 
-  private constructor(ffmpegPath: string, progress: Progress) {
+  private constructor(progress: Progress) {
     this._progress = progress;
-    this._ffmpegPath = ffmpegPath;
     this._lastWritePromise = Promise.resolve();
   }
 
@@ -56,8 +56,15 @@ export class VideoRecorder {
     const args = `-loglevel error -f image2pipe -c:v mjpeg -i - -y -an -r ${fps} -c:v vp8 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
     args.push(options.outputFile);
     const progress = this._progress;
+
+    let ffmpegPath = 'ffmpeg';
+    const binPath = path.join(__dirname, '../../../bin/');
+    if (os.platform() === 'win32')
+      ffmpegPath = path.join(binPath, os.arch() === 'x64' ? 'ffmpeg-win64.exe' : 'ffmpeg-win32.exe');
+    else if (os.platform() === 'darwin')
+      ffmpegPath = path.join(binPath, 'ffmpeg-mac');
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: this._ffmpegPath,
+      executablePath: ffmpegPath,
       args,
       pipeStdin: true,
       progress,
