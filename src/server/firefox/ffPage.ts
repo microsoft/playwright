@@ -258,11 +258,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
-    const video = this._browserContext._browser._videoStarted(event.screencastId, event.file);
-    this.pageOrError().then(pageOrError => {
-      if (pageOrError instanceof Page)
-        pageOrError.emit(Page.Events.VideoStarted, video);
-    }).catch(() => {});
+    this._browserContext._browser._videoStarted(event.screencastId, event.file, this.pageOrError());
   }
 
   async exposeBinding(binding: PageBinding) {
