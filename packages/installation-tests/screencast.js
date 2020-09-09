@@ -41,17 +41,19 @@ const fs = require('fs');
       });
       const page = await context.newPage();
       const video = await page.waitForEvent('_videostarted');
+      // Wait fo 1 second to actually record something.
+      await new Promise(x => setTimeout(x, 1000));
       const [videoFile] = await Promise.all([
         video.path(),
         context.close(),
       ]);
       await browser.close();
       if (!fs.existsSync(videoFile)) {
-        console.error(`Package "${requireName}", browser "${browserType}" should have created screencast!`);
+        console.error(`ERROR: Package "${requireName}", browser "${browserType}" should have created screencast!`);
         process.exit(1);
       }
     } catch (err) {
-      console.error(`Should be able to launch ${browserType} from ${requireName}`);
+      console.error(`ERROR: Should be able to launch ${browserType} from ${requireName}`);
       console.error(err);
       process.exit(1);
     }
