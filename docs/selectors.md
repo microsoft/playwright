@@ -1,20 +1,37 @@
-# Selector engines
+# Element selectors
 
-Playwright supports multiple selector engines used to query elements in the web page.
-
-Selector can be used to obtain `ElementHandle` (see [page.$()](api.md#pageselector) for example) or shortcut element operations to avoid intermediate handle (see [page.click()](api.md#pageclickselector-options) for example).
+Selectors query elements on the web page for interactions, like [page.click](api.md#pageclickselector-options), and to obtain `ElementHandle` through [page.$](api.md#pageselector). Built-in selectors auto-pierce [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) roots.
 
 <!-- GEN:toc-top-level -->
-- [Selector syntax](#selector-syntax)
+- [Syntax](#syntax)
+- [Best practices](#best-practices)
 - [Examples](#examples)
-- [Built-in selector engines](#built-in-selector-engines)
+- [Selector engines](#selector-engines)
 <!-- GEN:stop -->
 
-## Selector syntax
+## Syntax
+Selectors are defined by selector engine name and selector body, `engine=body`. 
 
-Selector is a string that consists of one or more clauses separated by `>>` token, e.g. `clause1 >> clause2 >> clause3`.  When multiple clauses are present, next one is queried relative to the previous one's result.
+* `engine` refers to one of the [supported engines](#selector-engines)
+  * Built-in selector engines: [css], [text], [xpath] and [id selectors][id]
+  * Learn more about [custom selector engines](./extensibility.md)
+* `body` refers to the query string for the respective engine
+  * For `text`, body is the text content
+  * For `css`, body is a [css selector](https://developer.mozilla.org/en/docs/Web/CSS/CSS_Selectors)
 
-Each clause contains a selector engine name and selector body, e.g. `engine=body`. Here `engine` is one of the supported engines (e.g. `css` or a custom one). Selector `body` follows the format of the particular engine, e.g. for `css` engine it should be a [css selector](https://developer.mozilla.org/en/docs/Web/CSS/CSS_Selectors). Body format is assumed to ignore leading and trailing white spaces, so that extra whitespace can be added for readability. If selector engine needs to include `>>` in the body, it should be escaped inside a string to not be confused with clause separator, e.g. `text="some >> text"`.
+Body format is assumed to ignore leading and trailing white spaces, so that extra whitespace can be added for readability.
+
+### Short-forms
+For convenience, common selectors have short-forms:
+- Selector starting with `//` or `..` is assumed to be `xpath=selector`
+  - Example: `page.click('//html')` is converted to `page.click('xpath=//html')`.
+- Selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`
+  - Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.
+- Otherwise, selector is assumed to be `css=selector`
+  - Example: `page.click('div')` is converted to `page.click('css=div')`.
+
+### Combining selectors
+Selectors defined as `engine=body` can be combined with the `>>` token, e.g. `clause1 >> clause2 >> clause3`. When multiple clauses are present, next one is queried relative to the previous one's result.
 
 For example,
 ```
@@ -28,12 +45,61 @@ document
   .querySelector('span[attr=value]')
 ```
 
-Selector engine name can be prefixed with `*` to capture element that matches the particular clause instead of the last one. For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
+If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with clause separator, e.g. `text="some >> text"`.
 
-For convenience, selectors in the wrong format are heuristically converted to the right format:
-- Selector starting with `//` or `..` is assumed to be `xpath=selector`. Example: `page.click('//html')` is converted to `page.click('xpath=//html')`.
-- Selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`. Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.
-- Otherwise, selector is assumed to be `css=selector`. Example: `page.click('div')` is converted to `page.click('css=div')`.
+### Intermediate matches
+Selector clauses can be prefixed with `*` to capture element that matches a particular clause instead of the last one. For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
+
+## Best practices
+The choice of selectors determines the resiliency of automation scripts. To reduce the maintenance burden, we recommend prioritizing user-facing attributes and explicit contracts.
+
+### Prioritize user-facing attributes
+Attributes like text content, input placeholder, accessibility roles and labels are user-facing attributes that change rarely. These attributes are not impacted by DOM structure changes.
+
+The following examples use the built-in [text] and [css] selector engines.
+
+```js
+// queries "Login" text selector
+await page.click('text="Login"');
+await page.click('"Login"'); // short-form
+
+// queries "Search GitHub" placeholder attribute
+await page.fill('css=[placeholder="Search GitHub"]');
+await page.fill('[placeholder="Search GitHub"]'); // short-form
+
+// queries "Close" accessibility label
+await page.click('css=[aria-label="Close"]');
+await page.click('[aria-label="Close"]'); // short-form
+
+// combine role and text queries
+await page.click('css=nav >> text=Login');
+```
+
+### Define explicit contract
+
+When user-facing attributes change frequently, it is recommended to use explicit test ids, like `data-test-id`. These `data-*` attributes are supported by the [css] and [id selectors][id].
+
+```html
+<button data-test-id="directions">Itinéraire</button>
+```
+
+```js
+// queries data-test-id attribute with css
+await page.click('css=[data-test-id=directions]');
+await page.click('[data-test-id=directions]'); // short-form
+
+// queries data-test-id with id
+await page.click('data-test-id=directions');
+```
+
+### Avoid selectors tied to implementation
+[xpath] and [css] can be tied to the DOM structure or implementation. These selectors can break when the DOM structure changes.
+
+```js
+// avoid long css or xpath chains
+await page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input');
+await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input');
+```
 
 ## Examples
 
@@ -63,8 +129,7 @@ const handle = await page.$('"foo"');
 const handle = await divHandle.$('css=span');
 ```
 
-## Built-in selector engines
-
+## Selector engines
 ### css and css:light
 
 `css` is a default engine - any malformed selector not starting with `//` nor starting and ending with a quote is assumed to be a css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`.
@@ -128,3 +193,8 @@ Malformed selector starting and ending with a quote (either `"` or `'`) is assum
 ### id, data-testid, data-test-id, data-test and their :light counterparts
 
 Attribute engines are selecting based on the corresponding attribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.
+
+[css]: #css-and-csslight
+[text]: #text-and-textlight
+[xpath]: #xpath
+[id]: #id-data-testid-data-test-id-data-test-and-their-light-counterparts
