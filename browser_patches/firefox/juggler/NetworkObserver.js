@@ -157,7 +157,7 @@ class NetworkRequest {
 
     httpChannel.QueryInterface(Ci.nsITraceableChannel);
     this._originalListener = httpChannel.setNewListener(this);
-    if (redirectedFrom && this._originalListener === redirectedFrom) {
+    if (redirectedFrom) {
       // Listener is inherited for regular redirects, so we'd like to avoid
       // calling into previous NetworkRequest.
       this._originalListener = redirectedFrom._originalListener;
@@ -506,10 +506,20 @@ class NetworkRequest {
       return;
 
     this.httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
+
     const headers = [];
-    this.httpChannel.visitResponseHeaders({
-      visitHeader: (name, value) => headers.push({name, value}),
-    });
+    let status = 0;
+    let statusText = '';
+    try {
+      status = this.httpChannel.responseStatus;
+      statusText = this.httpChannel.responseStatusText;
+      this.httpChannel.visitResponseHeaders({
+        visitHeader: (name, value) => headers.push({name, value}),
+      });
+    } catch (e) {
+      // Response headers, status and/or statusText are not available
+      // when redirect did not actually hit the network.
+    }
 
     let remoteIPAddress = undefined;
     let remotePort = undefined;
@@ -527,8 +537,8 @@ class NetworkRequest {
       headers,
       remoteIPAddress,
       remotePort,
-      status: this.httpChannel.responseStatus,
-      statusText: this.httpChannel.responseStatusText,
+      status,
+      statusText,
     });
   }
 
