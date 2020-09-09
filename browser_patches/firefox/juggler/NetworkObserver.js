@@ -131,12 +131,22 @@ class NetworkRequest {
     this.requestId = httpChannel.channelId + '';
     this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
 
+    const internalCauseType = this.httpChannel.loadInfo ? this.httpChannel.loadInfo.internalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
+    this.channelKey = this.httpChannel.channelId + ':' + internalCauseType;
+
     this._redirectedIndex = 0;
-    if (redirectedFrom) {
+    const ignoredRedirect = redirectedFrom && !redirectedFrom._sentOnResponse;
+    if (ignoredRedirect) {
+      // We just ignore redirect that did not hit the network before being redirected.
+      // This happens, for example, for automatic http->https redirects.
+      this.navigationId = redirectedFrom.navigationId;
+      this.channelKey = redirectedFrom.channelKey;
+    } else if (redirectedFrom) {
       this.redirectedFromId = redirectedFrom.requestId;
       this._redirectedIndex = redirectedFrom._redirectedIndex + 1;
       this.requestId = this.requestId + '-redirect' + this._redirectedIndex;
       this.navigationId = redirectedFrom.navigationId;
+      this.channelKey = redirectedFrom.channelKey;
       // Finish previous request now. Since we inherit the listener, we could in theory
       // use onStopRequest, but that will only happen after the last redirect has finished.
       redirectedFrom._sendOnRequestFinished();
@@ -157,7 +167,7 @@ class NetworkRequest {
 
     httpChannel.QueryInterface(Ci.nsITraceableChannel);
     this._originalListener = httpChannel.setNewListener(this);
-    if (redirectedFrom && this._originalListener === redirectedFrom) {
+    if (redirectedFrom) {
       // Listener is inherited for regular redirects, so we'd like to avoid
       // calling into previous NetworkRequest.
       this._originalListener = redirectedFrom._originalListener;
@@ -492,7 +502,7 @@ class NetworkRequest {
       navigationId: this.navigationId,
       cause: causeTypeToString(causeType),
       internalCause: causeTypeToString(internalCauseType),
-    }, this.httpChannel.channelId + ':' + internalCauseType);
+    }, this.channelKey);
   }
 
   _sendOnResponse(fromCache) {
@@ -506,10 +516,20 @@ class NetworkRequest {
       return;
 
     this.httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
+
     const headers = [];
-    this.httpChannel.visitResponseHeaders({
-      visitHeader: (name, value) => headers.push({name, value}),
-    });
+    let status = 0;
+    let statusText = '';
+    try {
+      status = this.httpChannel.responseStatus;
+      statusText = this.httpChannel.responseStatusText;
+      this.httpChannel.visitResponseHeaders({
+        visitHeader: (name, value) => headers.push({name, value}),
+      });
+    } catch (e) {
+      // Response headers, status and/or statusText are not available
+      // when redirect did not actually hit the network.
+    }
 
     let remoteIPAddress = undefined;
     let remotePort = undefined;
@@ -527,8 +547,8 @@ class NetworkRequest {
       headers,
       remoteIPAddress,
       remotePort,
-      status: this.httpChannel.responseStatus,
-      statusText: this.httpChannel.responseStatusText,
+      status,
+      statusText,
     });
   }
 
