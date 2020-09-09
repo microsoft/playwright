@@ -16,20 +16,16 @@
 
 import { ParsedSelector, parseSelector } from '../../server/common/selectorParser';
 import type InjectedScript from '../../server/injected/injectedScript';
-import { html } from './html';
 
 export class ConsoleAPI {
   private _injectedScript: InjectedScript;
-  private _highlightContainer: Element;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-    this._highlightContainer = html`<div style="position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; z-index: 10000;"></div>`;
     (window as any).playwright = {
       $: (selector: string) => this._querySelector(selector),
       $$: (selector: string) => this._querySelectorAll(selector),
       inspect: (selector: string) => this._inspect(selector),
-      clear: () => this._clearHighlight()
     };
   }
 
@@ -40,36 +36,12 @@ export class ConsoleAPI {
     }
   }
 
-  private _highlightElements(elements: Element[] = [], target?: Element) {
-    const scrollLeft = document.scrollingElement ? document.scrollingElement.scrollLeft : 0;
-    const scrollTop = document.scrollingElement ? document.scrollingElement.scrollTop : 0;
-    this._highlightContainer.textContent = '';
-    for (const element of elements) {
-      const rect = element.getBoundingClientRect();
-      const highlight = html`<div style="position: absolute; pointer-events: none; border-radius: 3px"></div>`;
-      highlight.style.left = (rect.left + scrollLeft) + 'px';
-      highlight.style.top = (rect.top + scrollTop) + 'px';
-      highlight.style.height = rect.height + 'px';
-      highlight.style.width = rect.width + 'px';
-      if (element === target) {
-        highlight.style.background = 'hsla(30, 97%, 37%, 0.3)';
-        highlight.style.border = '3px solid hsla(30, 97%, 37%, 0.6)';
-      } else {
-        highlight.style.background = 'hsla(120, 100%, 37%, 0.3)';
-        highlight.style.border = '3px solid hsla(120, 100%, 37%, 0.8)';
-      }
-      this._highlightContainer.appendChild(highlight);
-    }
-    document.body.appendChild(this._highlightContainer);
-  }
-
   _querySelector(selector: string): (Element | undefined) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
     const parsed = parseSelector(selector);
     this._checkSelector(parsed);
     const elements = this._injectedScript.querySelectorAll(parsed, document);
-    this._highlightElements(elements, elements[0]);
     return elements[0];
   }
 
@@ -79,7 +51,6 @@ export class ConsoleAPI {
     const parsed = parseSelector(selector);
     this._checkSelector(parsed);
     const elements = this._injectedScript.querySelectorAll(parsed, document);
-    this._highlightElements(elements);
     return elements;
   }
 
@@ -88,11 +59,6 @@ export class ConsoleAPI {
       return;
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
-    this._highlightElements();
     (window as any).inspect(this._querySelector(selector));
-  }
-
-  _clearHighlight() {
-    this._highlightContainer.remove();
   }
 }
