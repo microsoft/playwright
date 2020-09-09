@@ -49,7 +49,8 @@ describe('lauch server', suite => {
   it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);
     const [result] = await Promise.all([
-      new Promise(f => (browserServer as any).on('close', (exitCode, signal) => f({ exitCode, signal }))),
+      // @ts-expect-error The signal parameter is not documented.
+      new Promise(f => browserServer.on('close', (exitCode, signal) => f({ exitCode, signal }))),
       browserServer.close(),
     ]);
     expect(result['exitCode']).toBe(0);

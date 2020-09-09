@@ -74,10 +74,12 @@ it('should override extra headers from browser context', async ({browser, server
 });
 
 it('should throw for non-string header values', async ({browser, page}) => {
-  const error1 = await page.setExtraHTTPHeaders({ 'foo': 1 as any }).catch(e => e);
+  // @ts-expect-error headers must be strings
+  const error1 = await page.setExtraHTTPHeaders({ 'foo': 1 }).catch(e => e);
   expect(error1.message).toContain('Expected value of header "foo" to be String, but "number" is found.');
-  const error2 = await page.context().setExtraHTTPHeaders({ 'foo': true as any }).catch(e => e);
+  // @ts-expect-error headers must be strings
+  const error2 = await page.context().setExtraHTTPHeaders({ 'foo': true }).catch(e => e);
   expect(error2.message).toContain('Expected value of header "foo" to be String, but "boolean" is found.');
-  const error3 = await browser.newContext({ extraHTTPHeaders: { 'foo': null as any } }).catch(e => e);
+  const error3 = await browser.newContext({ extraHTTPHeaders: { 'foo': null } }).catch(e => e);
   expect(error3.message).toContain('Expected value of header "foo" to be String, but "object" is found.');
 });

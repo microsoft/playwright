@@ -74,7 +74,8 @@ it('should isolate contexts', async ({page, server, context, browser}) => {
 it('should throw with missing latitude', async ({context}) => {
   let error = null;
   try {
-    await context.setGeolocation({longitude: 10} as any);
+    // @ts-expect-error setGeolocation must have latitude
+    await context.setGeolocation({longitude: 10});
   } catch (e) {
     error = e;
   }
@@ -93,7 +94,8 @@ it('should not modify passed default options object', async ({browser}) => {
 it('should throw with missing longitude in default options', async ({browser}) => {
   let error = null;
   try {
-    const context = await browser.newContext({ geolocation: {latitude: 10} as any });
+    // @ts-expect-error geolocation must have longitude
+    const context = await browser.newContext({ geolocation: {latitude: 10} });
     await context.close();
   } catch (e) {
     error = e;

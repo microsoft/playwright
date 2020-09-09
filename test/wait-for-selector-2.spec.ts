@@ -146,25 +146,29 @@ it('should have correct stack trace for timeout', async ({page, server}) => {
 
 it('should throw for unknown state option', async ({page, server}) => {
   await page.setContent('<section>test</section>');
-  const error = await page.waitForSelector('section', { state: 'foo' as any}).catch(e => e);
+  // @ts-expect-error state is not an option of waitForSelector
+  const error = await page.waitForSelector('section', { state: 'foo'}).catch(e => e);
   expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
 });
 
 it('should throw for visibility option', async ({page, server}) => {
   await page.setContent('<section>test</section>');
-  const error = await page.waitForSelector('section', { visibility: 'hidden' } as any).catch(e => e);
+  // @ts-expect-error visibility is not an option of waitForSelector
+  const error = await page.waitForSelector('section', { visibility: 'hidden' }).catch(e => e);
   expect(error.message).toContain('options.visibility is not supported, did you mean options.state?');
 });
 
 it('should throw for true state option', async ({page, server}) => {
   await page.setContent('<section>test</section>');
-  const error = await page.waitForSelector('section', { state: true as any }).catch(e => e);
+  // @ts-expect-error state is not an option of waitForSelector
+  const error = await page.waitForSelector('section', { state: true }).catch(e => e);
   expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
 });
 
 it('should throw for false state option', async ({page, server}) => {
   await page.setContent('<section>test</section>');
-  const error = await page.waitForSelector('section', { state: false as any }).catch(e => e);
+  // @ts-expect-error state is not an option of waitForSelector
+  const error = await page.waitForSelector('section', { state: false }).catch(e => e);
   expect(error.message).toContain('state: expected one of (attached|detached|visible|hidden)');
 });
 

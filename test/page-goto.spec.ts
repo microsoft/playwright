@@ -199,12 +199,14 @@ it('should not crash when navigating to bad SSL after a cross origin navigation'
 });
 
 it('should not throw if networkidle0 is passed as an option', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0' as any});
+  // @ts-expect-error networkidle0 is undocumented
+  await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle0'});
 });
 
 it('should throw if networkidle2 is passed as an option', async ({page, server}) => {
   let error = null;
-  await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2' as any}).catch(err => error = err);
+  // @ts-expect-error networkidle2 is not allowed
+  await page.goto(server.EMPTY_PAGE, {waitUntil: 'networkidle2'}).catch(err => error = err);
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
 });
 

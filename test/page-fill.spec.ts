@@ -138,7 +138,8 @@ it('should throw when element is not an <input>, <textarea> or [contenteditable]
 it('should throw if passed a non-string value', async ({page, server}) => {
   let error = null;
   await page.goto(server.PREFIX + '/input/textarea.html');
-  await page.fill('textarea', 123 as any).catch(e => error = e);
+  // @ts-expect-error fill only accepts string values
+  await page.fill('textarea', 123).catch(e => error = e);
   expect(error.message).toContain('value: expected string, got number');
 });
 

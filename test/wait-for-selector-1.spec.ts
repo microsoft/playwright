@@ -28,14 +28,16 @@ const addElement = tag => document.body.appendChild(document.createElement(tag))
 it('should throw on waitFor', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   let error;
-  await page.waitForSelector('*', { waitFor: 'attached' } as any).catch(e => error = e);
+  // @ts-expect-error waitFor is undocumented
+  await page.waitForSelector('*', { waitFor: 'attached' }).catch(e => error = e);
   expect(error.message).toContain('options.waitFor is not supported, did you mean options.state?');
 });
 
 it('should tolerate waitFor=visible', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   let error = false;
-  await page.waitForSelector('*', { waitFor: 'visible' } as any).catch(() => error = true);
+  // @ts-expect-error waitFor is undocumented
+  await page.waitForSelector('*', { waitFor: 'visible' }).catch(() => error = true);
   expect(error).toBe(false);
 });
 
