@@ -45,6 +45,7 @@ async function run() {
   {
     const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
     const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
+    const ffmpegReadme = await Source.readFile(path.join(PROJECT_DIR, 'third_party', 'ffmpeg', 'README.md'));
     const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
     const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
     const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
