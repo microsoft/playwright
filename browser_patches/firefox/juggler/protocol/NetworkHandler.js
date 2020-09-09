@@ -23,7 +23,6 @@ class NetworkHandler {
     this._requestInterception = false;
     this._eventListeners = [];
     this._pendingRequstWillBeSentEvents = new Set();
-    this._requestIdToFrameId = new Map();
   }
 
   async enable() {
@@ -126,9 +125,7 @@ class NetworkHandler {
       this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
       return;
     }
-    // Inherit frameId for redirects when details are not available.
-    const frameId = details ? details.frameId : (eventDetails.redirectedFrom ? this._requestIdToFrameId.get(eventDetails.redirectedFrom) : undefined);
-    this._requestIdToFrameId.set(eventDetails.requestId, frameId);
+    const frameId = details ? details.frameId : undefined;
     const activity = this._ensureHTTPActivity(eventDetails.requestId);
     activity.request = {
       frameId,

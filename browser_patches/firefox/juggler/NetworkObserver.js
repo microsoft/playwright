@@ -131,12 +131,22 @@ class NetworkRequest {
     this.requestId = httpChannel.channelId + '';
     this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
 
+    const internalCauseType = this.httpChannel.loadInfo ? this.httpChannel.loadInfo.internalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
+    this.channelKey = this.httpChannel.channelId + ':' + internalCauseType;
+
     this._redirectedIndex = 0;
-    if (redirectedFrom) {
+    const ignoredRedirect = redirectedFrom && !redirectedFrom._sentOnResponse;
+    if (ignoredRedirect) {
+      // We just ignore redirect that did not hit the network before being redirected.
+      // This happens, for example, for automatic http->https redirects.
+      this.navigationId = redirectedFrom.navigationId;
+      this.channelKey = redirectedFrom.channelKey;
+    } else if (redirectedFrom) {
       this.redirectedFromId = redirectedFrom.requestId;
       this._redirectedIndex = redirectedFrom._redirectedIndex + 1;
       this.requestId = this.requestId + '-redirect' + this._redirectedIndex;
       this.navigationId = redirectedFrom.navigationId;
+      this.channelKey = redirectedFrom.channelKey;
       // Finish previous request now. Since we inherit the listener, we could in theory
       // use onStopRequest, but that will only happen after the last redirect has finished.
       redirectedFrom._sendOnRequestFinished();
@@ -492,7 +502,7 @@ class NetworkRequest {
       navigationId: this.navigationId,
       cause: causeTypeToString(causeType),
       internalCause: causeTypeToString(internalCauseType),
-    }, this.httpChannel.channelId + ':' + internalCauseType);
+    }, this.channelKey);
   }
 
   _sendOnResponse(fromCache) {
