@@ -13,6 +13,8 @@
 lib/server/injected/
 # Include all binaries that we ship with the package.
 !bin/*
+# Include FFMPEG
+!third_party/ffmpeg/*
 # Include generated types and entrypoint.
 !types/*
 !index.d.ts

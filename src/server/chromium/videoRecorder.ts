@@ -58,7 +58,7 @@ export class VideoRecorder {
     const progress = this._progress;
 
     let ffmpegPath = 'ffmpeg';
-    const binPath = path.join(__dirname, '../../../bin/');
+    const binPath = path.join(__dirname, '../../../third_party/ffmpeg/');
     if (os.platform() === 'win32')
       ffmpegPath = path.join(binPath, os.arch() === 'x64' ? 'ffmpeg-win64.exe' : 'ffmpeg-win32.exe');
     else if (os.platform() === 'darwin')

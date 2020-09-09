@@ -29,13 +29,14 @@ const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
 const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE'];
+const FFMPEG_FILES = ['third_party/ffmpeg'];
 
 const PACKAGES = {
   'playwright': {
     description: 'A high-level API to automate web browsers',
     browsers: ['chromium', 'firefox', 'webkit'],
     // We copy README.md additionally for Playwright so that it looks nice on NPM.
-    files: [...PLAYWRIGHT_CORE_FILES, 'README.md'],
+    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'README.md'],
   },
   'playwright-core': {
     description: 'A high-level API to automate web browsers',
@@ -55,13 +56,13 @@ const PACKAGES = {
   'playwright-chromium': {
     description: 'A high-level API to automate Chromium',
     browsers: ['chromium'],
-    files: PLAYWRIGHT_CORE_FILES,
+    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES],
   },
   'playwright-electron': {
     version: '0.4.0', // Manually manage playwright-electron version.
     description: 'A high-level API to automate Electron',
     browsers: [],
-    files: [...PLAYWRIGHT_CORE_FILES, 'electron-types.d.ts'],
+    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'electron-types.d.ts'],
   },
 };
 
@@ -184,6 +185,11 @@ async function writeToPackage(fileName, content) {
 
 async function copyToPackage(fromPath, toPath) {
   console.error(`- copying: //${path.relative(ROOT_PATH, fromPath)} -> //${path.relative(ROOT_PATH, toPath)}`);
+  try {
+    fs.mkdirSync(path.dirname(toPath), { recursive: true });
+  } catch (e) {
+    // the folder might exist already
+  }
   await cpAsync(fromPath, toPath);
 }
 
