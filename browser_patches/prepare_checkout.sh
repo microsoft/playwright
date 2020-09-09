@@ -34,7 +34,10 @@ BUILD_NUMBER=""
 WEBKIT_EXTRA_FOLDER_PATH=""
 FIREFOX_EXTRA_FOLDER_PATH=""
 if [[ ("$1" == "chromium") || ("$1" == "chromium/") || ("$1" == "cr") ]]; then
-  echo "FYI: chromium checkout is not supported."
+  echo "FYI: chromium checkout is not supported. Use '//browser_patches/chromium/build.sh' instead"
+  exit 0
+elif [[ ("$1" == "ffmpeg") || ("$1" == "ffmpeg/") ]]; then
+  echo "FYI: ffmpeg checkout is not supported. Use '//browser_patches/ffmpeg/build.sh' instead"
   exit 0
 elif [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";

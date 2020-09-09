@@ -64,3 +64,9 @@ touch "$IS_FIRST_RUN_FILE"
 
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-ubuntu-20.04 >/tmp/$(basename $0)--webkit.log || true
+
+git pull origin master
+../checkout_build_archive_upload.sh ffmpeg-cross-compile-win32 >/tmp/$(basename $0)--ffmpeg-cross-compile-win32.log || true
+
+git pull origin master
+../checkout_build_archive_upload.sh ffmpeg-cross-compile-win64 >/tmp/$(basename $0)--ffmpeg-cross-compile-win64.log || true
