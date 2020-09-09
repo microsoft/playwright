@@ -34,7 +34,7 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Modern web features**. Playwright supports web components through [shadow-piercing selectors](selectors.md), [geolocation, permissions](emulation.md), web workers and other modern web APIs. 
 
-* **Capabilities to cover all scenarios**. Support for [file downloads](network.md) and [uploads](input.md), native [input events](input.md), and even [dark mode](emulation.md).
+* **Capabilities to cover all scenarios**. Support for [file downloads](network.md) and [uploads](input.md), out-of-process iframes, native [input events](input.md), and even [dark mode](emulation.md).
 
 ## Integrates with your workflow
 * **One-line installation**. Running `npm i playwright` auto-downloads browser dependencies for your team to be onboarded quickly.
@@ -43,6 +43,6 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Debugging tools**. Playwright integrates with the [editor debugger](debug.md) to 
 
-* **Language bindings**. Playwright is also available in [Python](https://github.com/microsoft/playwright-python) and [C#](https://github.com/hardkoded/playwright-sharp).
+* **Language bindings**. Playwright is also available in [Python](https://github.com/microsoft/playwright-python) and [C#](https://github.com/hardkoded/playwright-sharp). Learn about [supported languages](./languages.md).
 
 * **Deploy tests to CI**. First-party [Docker image](docker/README.md) and [GitHub Actions](https://github.com/microsoft/playwright-github-action) to deploy tests to [your preferred CI/CD provider](ci.md).

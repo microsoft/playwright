@@ -23,6 +23,7 @@ Playwright is a library to automate [Chromium](https://www.chromium.org/Home), [
     - [First script](./intro.md#first-script)
     - [Core concepts](./core-concepts.md)
     - [Debugging](./debug.md)
+    - [Supported languages](./languages.md)
 1. Guides
     - [Selectors](./selectors.md)
     - [Input](./input.md)
