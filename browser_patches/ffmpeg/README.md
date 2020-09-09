@@ -22,7 +22,7 @@ Prerequisites:
 Building:
 
 ```
-~/playwright$ ./third_party/ffmpeg/build-mac.sh
+~/playwright$ ./browser_patches/ffmpeg/build.sh --mac
 ```
 
 ## Building `ffmpeg-win*`
@@ -38,6 +38,7 @@ Prerequisites:
 Building:
 
 ```
-~/playwright$ ./third_party/ffmpeg/build-win.sh --all
+~/playwright$ ./browser_patches/ffmpeg/build.sh --cross-compile-win32
+~/playwright$ ./browser_patches/ffmpeg/build.sh --cross-compile-win64
 ```
 
