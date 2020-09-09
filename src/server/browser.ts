@@ -21,6 +21,7 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
+import { makeWaitForNextTask } from '../utils/utils';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -87,10 +88,14 @@ export abstract class Browser extends EventEmitter {
     this._downloads.delete(uuid);
   }
 
-  _videoStarted(videoId: string, file: string): Video {
+  _videoStarted(videoId: string, file: string, pageOrError: Promise<Page | Error>) {
     const video = new Video(file);
     this._idToVideo.set(videoId, video);
-    return video;
+    pageOrError.then(pageOrError => {
+      // Emit the event in another task to ensure that newPage response is handled before.
+      if (pageOrError instanceof Page)
+        makeWaitForNextTask()(() => pageOrError.emit(Page.Events.VideoStarted, video));
+    });
   }
 
   _videoFinished(videoId: string) {

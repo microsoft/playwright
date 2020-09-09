@@ -281,6 +281,14 @@ describe('screencast', suite => {
     await browser.close();
   });
 
+  it('should fire striclty after context.newPage', async ({browser, tmpDir}) => {
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const page = await context.newPage();
+    // Should not hang.
+    await page.waitForEvent('_videostarted');
+    await context.close();
+  });
+
   it('should fire start event for popups', async ({browserType, tmpDir, server}) => {
     const browser = await browserType.launch({_videosPath: tmpDir});
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
