@@ -29,6 +29,7 @@ NODE_VERSION="$(node --version)"
 
 function copy_test_scripts {
   cp "${SCRIPTS_PATH}/sanity.js" .
+  cp "${SCRIPTS_PATH}/screencast.js" .
   cp "${SCRIPTS_PATH}/esm.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright.mjs" .
   cp "${SCRIPTS_PATH}/esm-playwright-chromium.mjs" .
@@ -39,6 +40,7 @@ function copy_test_scripts {
 }
 
 function run_tests {
+  test_screencast
   test_typescript_types
   test_skip_browser_download
   test_playwright_global_installation_subsequent_installs
@@ -50,6 +52,22 @@ function run_tests {
   test_playwright_global_installation_cross_package
   test_playwright_electron_should_work
   test_electron_types
+}
+
+function test_screencast {
+  initialize_test "${FUNCNAME[0]}"
+  copy_test_scripts
+
+  local BROWSERS="$(pwd -P)/browsers"
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_TGZ}
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_FIREFOX_TGZ}
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_WEBKIT_TGZ}
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npm install ${PLAYWRIGHT_CHROMIUM_TGZ}
+
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node screencast.js playwright
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node screencast.js playwright-chromium
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node screencast.js playwright-webkit
+  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node screencast.js playwright-firefox
 }
 
 function test_typescript_types {
