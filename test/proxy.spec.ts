@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { parameters } from '@playwright/test-runner';
 import { it, expect, options } from './playwright.fixtures';
 
 import socks from 'socksv5';
@@ -122,7 +121,7 @@ it('should exclude patterns', test => {
 
 it('should use socks proxy', test => {
   test.flaky(MAC && options.WEBKIT, 'Intermittent page.goto: The network connection was lost error on bots');
-}, async ({ browserType, defaultBrowserOptions }) => {
+}, async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
   const server = socks.createServer((info, accept, deny) => {
     let socket;
     if ((socket = accept(true))) {
@@ -139,7 +138,7 @@ it('should use socks proxy', test => {
       ].join('\r\n'));
     }
   });
-  const socksPort = 9107 + parameters.parallelIndex * 2;
+  const socksPort = 9107 + parallelIndex * 2;
   server.listen(socksPort, 'localhost');
   server.useAuth(socks.auth.None());
 

@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { options } from './playwright.fixtures';
 import utils from './utils';
-import './remoteServer.fixture';
+import { serverFixtures } from './remoteServer.fixture';
+const { it, expect, describe } = serverFixtures;
 
 describe('connect', suite => {
   suite.skip(options.WIRE);

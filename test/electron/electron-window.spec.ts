@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from '../playwright.fixtures';
-import './electron.fixture';
+import { options } from '../playwright.fixtures';
+import { electronFixtures } from './electron.fixture';
+const { it, expect, describe } = electronFixtures;
 
 describe('electron window', suite => {
   suite.skip(!options.CHROMIUM);

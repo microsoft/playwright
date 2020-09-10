@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from '../playwright.fixtures';
-import './electron.fixture';
+import { options } from '../playwright.fixtures';
+import { electronFixtures } from './electron.fixture';
+const { it, expect, describe } = electronFixtures;
 
 import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
