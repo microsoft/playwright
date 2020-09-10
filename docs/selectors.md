@@ -1,6 +1,6 @@
 # Element selectors
 
-Selectors query elements on the web page for interactions, like [page.click](api.md#pageclickselector-options), and to obtain `ElementHandle` through [page.$](api.md#pageselector). Built-in selectors auto-pierce [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM) roots.
+Selectors query elements on the web page for interactions, like [page.click](api.md#pageclickselector-options), and to obtain `ElementHandle` through [page.$](api.md#pageselector). Built-in selectors auto-pierce [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM).
 
 <!-- GEN:toc-top-level -->
 - [Syntax](#syntax)
@@ -30,8 +30,8 @@ For convenience, common selectors have short-forms:
 - Otherwise, selector is assumed to be `css=selector`
   - Example: `page.click('div')` is converted to `page.click('css=div')`.
 
-### Combining selectors
-Selectors defined as `engine=body` can be combined with the `>>` token, e.g. `clause1 >> clause2 >> clause3`. When multiple clauses are present, next one is queried relative to the previous one's result.
+### Chaining selectors
+Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, next one is queried relative to the previous one's result.
 
 For example,
 ```
@@ -45,10 +45,12 @@ document
   .querySelector('span[attr=value]')
 ```
 
-If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with clause separator, e.g. `text="some >> text"`.
+If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
 
 ### Intermediate matches
-Selector clauses can be prefixed with `*` to capture element that matches a particular clause instead of the last one. For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
+By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.
+
+For example, `css=article >> text=Hello` captures the element with the text `Hello`, and `*css=article >> text=Hello` (note the `*`) captures the `article` element that contains some element with the text `Hello`.
 
 ## Best practices
 The choice of selectors determines the resiliency of automation scripts. To reduce the maintenance burden, we recommend prioritizing user-facing attributes and explicit contracts.
