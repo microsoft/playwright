@@ -255,7 +255,7 @@ describe('screencast', suite => {
     }
   });
 
-  it.only('should capture css transformation', test => {
+  it('should capture css transformation', test => {
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     async function ttt() {
