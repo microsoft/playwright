@@ -140,7 +140,7 @@ class PageHandler {
       // On Mac the window may not yet be visible when TargetCreated and its
       // NSWindow.windowNumber may be -1, so we wait until the window is known
       // to be initialized and visible.
-      await this._pageTarget._pageWindowReady;
+      await this._pageTarget.windowReady();
       await this.startVideoRecording(Object.assign({file}, options));
     }
   }

@@ -196,11 +196,6 @@ class TargetRegistry {
       const browserContext = this._userContextIdToBrowserContext.get(userContextId);
       if (browserContext && browserContext.defaultViewportSize)
         setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
-
-      const linkedBrowser = tab.linkedBrowser;
-      const target = this._browserToTarget.get(linkedBrowser);
-      if (target)
-          target._pageWindowReadyCallback();
     };
 
     const onTabCloseListener = event => {
@@ -325,7 +320,6 @@ class TargetRegistry {
     });
     if (browserContext && browserContext.defaultViewportSize)
       setViewportSizeForBrowser(browserContext.defaultViewportSize, browser, window);
-    target._pageWindowReadyCallback();
     browser.focus();
     if (browserContext.settings.timezoneId) {
       if (await target.hasFailedToOverrideTimezone())
@@ -382,7 +376,10 @@ class PageTarget {
     browserContext._firstPageCallback();
     this._registry._browserToTarget.set(this._linkedBrowser, this);
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
-    this._pageWindowReady = new Promise(r => this._pageWindowReadyCallback = r);
+  }
+
+  async windowReady() {
+    await waitForWindowReady(this._window);
   }
 
   linkedBrowser() {
