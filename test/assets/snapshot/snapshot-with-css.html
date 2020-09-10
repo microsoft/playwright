@@ -7,11 +7,14 @@
   }
 </style>
 <div>hello, world!</div>
+<textarea>Before edit</textarea>
 <div class=root></div>
 <script>
   let shadow;
 
   window.addEventListener('DOMContentLoaded', () => {
+    document.querySelector('textarea').value = 'After edit';
+
     const root = document.querySelector('.root');
     shadow = root.attachShadow({ mode: 'open' });
 

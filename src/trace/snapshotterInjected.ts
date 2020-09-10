@@ -194,9 +194,9 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean): Snap
         builder.push(escapeAttribute(value));
         builder.push('"');
       }
-      if (nodeName === 'INPUT' || nodeName === 'TEXTAREA') {
+      if (nodeName === 'INPUT') {
         builder.push(' value="');
-        builder.push(escapeAttribute((element as HTMLInputElement | HTMLTextAreaElement).value));
+        builder.push(escapeAttribute((element as HTMLInputElement).value));
         builder.push('"');
       }
       if ((element as any).checked)
@@ -237,8 +237,12 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean): Snap
       }
       builder.push('>');
     }
-    for (let child = node.firstChild; child; child = child.nextSibling)
-      visit(child, builder);
+    if (nodeName === 'TEXTAREA') {
+      builder.push(escapeText((node as HTMLTextAreaElement).value));
+    } else {
+      for (let child = node.firstChild; child; child = child.nextSibling)
+        visit(child, builder);
+    }
     if (node.nodeName === 'BODY' && chunks.size) {
       builder.push('<script>');
       const shadowChunks = Array.from(chunks).map(([chunkId, html]) => {
