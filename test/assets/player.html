@@ -22,30 +22,31 @@ async function playNFrames(n) {
     await playOneFrame();
 }
 
+let _frameCount = -1;
 async function countFrames() {
-  const video = document.querySelector('video');
+  if (_frameCount === -1) {
+    const video = document.querySelector('video');
 
-  if (!video.duration)
-    return 0;
+    if (!video.duration)
+      return 0;
 
-  if (video.currentTime)
-    await playToTheEnd();
+    if (video.currentTime)
+      await playToTheEnd();
 
-  let count = 0;
-  while (true) {
-    ++count;
-    await playOneFrame();
-    if (video.ended)
-      break;
+    let count = 0;
+    while (true) {
+      ++count;
+      await playOneFrame();
+      if (video.ended)
+        break;
+    }
+    _frameCount = count;
   }
-  return count;
+  return _frameCount;
 }
 
-async function seekLastFrame(isWPE) {
+async function seekLastFrame() {
   let frameCount = await countFrames();
-  // TODO: figure out why playing last frame in WPE resets the picture.
-  if (isWPE && frameCount > 1)
-    --frameCount;
   await playNFrames(frameCount);
   return frameCount;
 }
