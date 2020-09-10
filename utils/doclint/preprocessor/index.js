@@ -90,7 +90,7 @@ function getTOCEntriesForText(text) {
   for (const {line, offset} of titles) {
     const [, nesting, name] = line.match(titleRegex);
     const delinkifiedName = name.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1');
-    const id = delinkifiedName.trim().toLowerCase().replace(/\s/g, '-').replace(/[^-0-9a-zа-яё]/ig, '');
+    const id = delinkifiedName.trim().toLowerCase().replace(/\s/g, '-').replace(/[^-_0-9a-zа-яё]/ig, '');
     let dedupId = id;
     let counter = 0;
     while (ids.has(dedupId))
