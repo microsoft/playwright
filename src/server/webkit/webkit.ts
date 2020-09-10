@@ -19,13 +19,13 @@ import { WKBrowser } from '../webkit/wkBrowser';
 import { Env } from '../processLauncher';
 import * as path from 'path';
 import { kBrowserCloseMessageId } from './wkConnection';
-import { BrowserTypeBase } from '../browserType';
+import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../../utils/browserPaths';
 import * as types from '../types';
 
-export class WebKit extends BrowserTypeBase {
+export class WebKit extends BrowserType {
   constructor(packagePath: string, browser: BrowserDescriptor) {
     super(packagePath, browser, null /* use pipe not websocket */);
   }

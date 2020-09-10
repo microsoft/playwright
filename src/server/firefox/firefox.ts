@@ -20,14 +20,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { FFBrowser } from './ffBrowser';
 import { kBrowserCloseMessageId } from './ffConnection';
-import { BrowserTypeBase } from '../browserType';
+import { BrowserType } from '../browserType';
 import { Env } from '../processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import { BrowserDescriptor } from '../../utils/browserPaths';
 import * as types from '../types';
 
-export class Firefox extends BrowserTypeBase {
+export class Firefox extends BrowserType {
   constructor(packagePath: string, browser: BrowserDescriptor) {
     const webSocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
     super(packagePath, browser, { webSocketRegex, stream: 'stdout' });

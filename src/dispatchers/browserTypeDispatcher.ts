@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-import { BrowserTypeBase, BrowserType } from '../server/browserType';
+import { BrowserType } from '../server/browserType';
 import { BrowserDispatcher } from './browserDispatcher';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
 export class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer> implements channels.BrowserTypeChannel {
-  constructor(scope: DispatcherScope, browserType: BrowserTypeBase) {
+  constructor(scope: DispatcherScope, browserType: BrowserType) {
     super(scope, browserType, 'BrowserType', {
       executablePath: browserType.executablePath(),
       name: browserType.name()
