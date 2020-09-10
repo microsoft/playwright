@@ -182,7 +182,9 @@ describe('screencast', suite => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture navigation', async ({page, tmpDir, server, videoPlayer, toImpl}) => {
+  it('should capture navigation', test => {
+    test.flaky();
+  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
