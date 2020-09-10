@@ -15,7 +15,7 @@ configurations for common CI providers.
   * [Bitbucket Pipelines](#bitbucket-pipelines)
   * [GitLab CI](#gitlab-ci)
 - [Caching browsers](#caching-browsers)
-    - [Exception: `node_modules` are cached](#exception-nodemodules-are-cached)
+    - [Exception: `node_modules` are cached](#exception-node_modules-are-cached)
     - [Directories to cache](#directories-to-cache)
 - [Debugging browser launches](#debugging-browser-launches)
 - [Running headful](#running-headful)
@@ -102,7 +102,7 @@ Suggested configuration
    Chromium in non-headless mode (e.g. to test Chrome Extensions)
 1. If your project does not have `package-lock.json`, Travis would be auto-caching
    `node_modules` directory. If you run `npm install` (instead of `npm ci`), it is
-   possible that the browser binaries are not downloaded. Fix this with [these steps](#exception-nodemodules-are-cached) outlined below.
+   possible that the browser binaries are not downloaded. Fix this with [these steps](#exception-node_modules-are-cached) outlined below.
 
 To sum up, your `.travis.yml` might look like this:
 

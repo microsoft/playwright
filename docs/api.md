@@ -690,7 +690,7 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
-- [event: '_videostarted'](#event-videostarted)
+- [event: '_videostarted'](#event-_videostarted)
 - [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'crash'](#event-crash)
