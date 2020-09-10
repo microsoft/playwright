@@ -16,7 +16,7 @@
 
 import { launchProcess } from '../processLauncher';
 import { ChildProcess } from 'child_process';
-import { Progress, runAbortableTask } from '../progress';
+import { Progress, ProgressController } from '../progress';
 import * as types from '../types';
 import * as path from 'path';
 import * as os from 'os';
@@ -37,11 +37,13 @@ export class VideoRecorder {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
-    return await runAbortableTask(async progress => {
+    const controller = new ProgressController(0);
+    controller.setLogName('browser');
+    return await controller.run(async progress => {
       const recorder = new VideoRecorder(progress);
       await recorder._launch(options);
       return recorder;
-    }, 0, 'browser');
+    });
   }
 
   private constructor(progress: Progress) {

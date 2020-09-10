@@ -24,18 +24,11 @@ import { ConnectionTransport, WebSocketTransport } from './transport';
 import { BrowserOptions, Browser, BrowserProcess } from './browser';
 import { launchProcess, Env, waitForLine, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
-import { Progress, runAbortableTask } from './progress';
+import { Progress, ProgressController } from './progress';
 import * as types from './types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
 import { assert, isDebugMode } from '../utils/utils';
-
-export interface BrowserType {
-  executablePath(): string;
-  name(): string;
-  launch(options?: types.LaunchOptions): Promise<Browser>;
-  launchPersistentContext(userDataDir: string, options?: types.LaunchPersistentOptions): Promise<BrowserContext>;
-}
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -45,7 +38,7 @@ const VIDEOS_FOLDER = path.join(os.tmpdir(), 'playwright_videos-');
 
 type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
 
-export abstract class BrowserTypeBase implements BrowserType {
+export abstract class BrowserType {
   private _name: string;
   private _executablePath: string | undefined;
   private _webSocketNotPipe: WebSocketNotPipe | null;
@@ -75,7 +68,9 @@ export abstract class BrowserTypeBase implements BrowserType {
     assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, undefined), TimeoutSettings.timeout(options), 'browser').catch(e => { throw this._rewriteStartupError(e); });
+    const controller = new ProgressController(TimeoutSettings.timeout(options));
+    controller.setLogName('browser');
+    const browser = await controller.run(progress => this._innerLaunch(progress, options, undefined).catch(e => { throw this._rewriteStartupError(e); }));
     return browser;
   }
 
@@ -84,7 +79,9 @@ export abstract class BrowserTypeBase implements BrowserType {
     options = validateLaunchOptions(options);
     const persistent: types.BrowserContextOptions = options;
     validateBrowserContextOptions(persistent);
-    const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, persistent, userDataDir), TimeoutSettings.timeout(options), 'browser').catch(e => { throw this._rewriteStartupError(e); });
+    const controller = new ProgressController(TimeoutSettings.timeout(options));
+    controller.setLogName('browser');
+    const browser = await controller.run(progress => this._innerLaunch(progress, options, persistent, userDataDir).catch(e => { throw this._rewriteStartupError(e); }));
     return browser._defaultContext!;
   }
 

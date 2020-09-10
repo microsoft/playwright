@@ -28,8 +28,8 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, logName: LogName = 'api'): Promise<T> {
-  const controller = new ProgressController(timeout, logName);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
+  const controller = new ProgressController(timeout);
   return controller.run(task);
 }
 
@@ -47,20 +47,23 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _logName: LogName;
+  private _logName: LogName = 'api';
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number;
   private _timeout: number;
   private _logRecordring: string[] = [];
 
-  constructor(timeout: number, logName: LogName = 'api') {
-    this._logName = logName;
+  constructor(timeout: number) {
     this._timeout = timeout;
     this._deadline = timeout ? monotonicTime() + timeout : 0;
 
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
     this._abortedPromise = new Promise(resolve => this._aborted = resolve);
+  }
+
+  setLogName(logName: LogName) {
+    this._logName = logName;
   }
 
   async run<T>(task: (progress: Progress) => Promise<T>): Promise<T> {

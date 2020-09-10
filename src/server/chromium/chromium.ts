@@ -21,7 +21,7 @@ import { CRBrowser } from './crBrowser';
 import { Env } from '../processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { BrowserTypeBase } from '../browserType';
+import { BrowserType } from '../browserType';
 import { ConnectionTransport, ProtocolRequest } from '../transport';
 import type { BrowserDescriptor } from '../../utils/browserPaths';
 import { CRDevTools } from './crDevTools';
@@ -29,7 +29,7 @@ import { BrowserOptions } from '../browser';
 import * as types from '../types';
 import { isDebugMode, getFromENV } from '../../utils/utils';
 
-export class Chromium extends BrowserTypeBase {
+export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
   private _debugPort: number | undefined;
 

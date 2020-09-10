@@ -27,7 +27,7 @@ import * as types from '../types';
 import { launchProcess, waitForLine, envArrayToObject } from '../processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { runAbortableTask, ProgressController } from '../progress';
+import { ProgressController } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { BrowserProcess } from '../browser';
@@ -147,7 +147,9 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    return runAbortableTask(async progress => {
+    const controller = new ProgressController(TimeoutSettings.timeout(options));
+    controller.setLogName('browser');
+    return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
       const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
 
@@ -188,6 +190,6 @@ export class Electron  {
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;
-    }, TimeoutSettings.timeout(options), 'browser');
+    });
   }
 }

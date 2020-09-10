@@ -15,7 +15,7 @@
  */
 
 import { LaunchServerOptions } from './client/types';
-import { BrowserTypeBase } from './server/browserType';
+import { BrowserType } from './server/browserType';
 import * as ws from 'ws';
 import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
@@ -31,9 +31,9 @@ import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
-  private _browserType: BrowserTypeBase;
+  private _browserType: BrowserType;
 
-  constructor(browserType: BrowserTypeBase) {
+  constructor(browserType: BrowserType) {
     this._browserType = browserType;
   }
 
@@ -50,12 +50,12 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
 
 export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   private _server: ws.Server;
-  private _browserType: BrowserTypeBase;
+  private _browserType: BrowserType;
   private _browser: Browser;
   private _wsEndpoint: string;
   private _process: ChildProcess;
 
-  constructor(browserType: BrowserTypeBase, browser: Browser, port: number = 0) {
+  constructor(browserType: BrowserType, browser: Browser, port: number = 0) {
     super();
 
     this._browserType = browserType;
