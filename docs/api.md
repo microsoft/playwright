@@ -778,10 +778,32 @@ page.removeListener('request', logRequest);
 <!-- GEN:stop -->
 
 #### event: '_videostarted'
-- <[Object]> Video object.
+- <[Object]> Video object. Provides access to the video after it has been written to a file.
 
 **experimental**
 Emitted when video recording has started for this page. The event will fire only if [`_recordVideos`](#browsernewcontextoptions) option is configured on the parent context.
+
+An example of recording a video for single page.
+```js
+const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+
+(async () => {
+  const browser = await webkit.launch({
+    _videosPath: __dirname   // Save videos to custom directory
+  });
+  const context = await browser.newContext({
+    _recordVideos: { width: 640, height: 360 }
+  });
+  const page = await context.newPage();
+  const video = await page.waitForEvent('_videostarted');
+  await page.goto('https://github.com/microsoft/playwright');
+  // Video recording will stop automaticall when the page closes.
+  await page.close();
+  // Wait for the path to the video. It will become available
+  // after the video has been completely written to the the file.
+  console.log('Recorded video: ' + await video.path());
+})();
+```
 
 #### event: 'close'
 
