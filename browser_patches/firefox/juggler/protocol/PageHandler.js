@@ -137,6 +137,10 @@ class PageHandler {
     const options = this._pageTarget.browserContext().screencastOptions;
     if (options) {
       const file = OS.Path.join(options.dir, helper.generateId() + '.webm');
+      // On Mac the window may not yet be visible when TargetCreated and its
+      // NSWindow.windowNumber may be -1, so we wait until the window is known
+      // to be initialized and visible.
+      await this._pageTarget._pageWindowReady;
       await this.startVideoRecording(Object.assign({file}, options));
     }
   }
