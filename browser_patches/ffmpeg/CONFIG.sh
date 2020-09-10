@@ -21,9 +21,9 @@ LIBVPX_CONFIG="--enable-static \
                --disable-examples"
 
 FFMPEG_VERSION="n4.3.1"
-FFMPEG_CONFIG="--enable-gpl \
-               --enable-version3 \
+FFMPEG_CONFIG="--extra-version=playwright-build-$(cat ./BUILD_NUMBER | head -1) \
                --disable-debug \
+               --disable-autodetect \
                --disable-everything \
                --enable-ffmpeg \
                --enable-protocol=pipe \
