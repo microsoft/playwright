@@ -45,11 +45,18 @@ elif [[ "$1" == --cross-compile-win* ]]; then
     exit 1
   fi
 
+  dockerflags="";
+  # Use |-it| to run docker to support Ctrl-C if we run the script inside interactive terminal.
+  # Otherwise (e.g. cronjob) - do nothing.
+  if [[ -t 0 ]]; then
+    dockerflags="-it"
+  fi
+
   if [[ "$1" == "--cross-compile-win32" ]]; then
-    time docker run --init --rm -v"${PWD}":/host -it ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win32 /host/output/ffmpeg-win32.exe
+    time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win32 /host/output/ffmpeg-win32.exe
     cd output && zip ffmpeg.zip ffmpeg-win32.exe
   elif [[ "$1" == "--cross-compile-win64" ]]; then
-    time docker run --init --rm -v"${PWD}":/host -it ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win64 /host/output/ffmpeg-win64.exe
+    time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/crosscompile-from-linux-to-win.sh --win64 /host/output/ffmpeg-win64.exe
     cd output && zip ffmpeg.zip ffmpeg-win64.exe
   else
     echo "ERROR: unsupported platform - $1"
