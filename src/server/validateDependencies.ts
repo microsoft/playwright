@@ -88,6 +88,9 @@ async function validateDependenciesWindows(browserPath: string, browser: Browser
         `as Administrator:`,
         ``,
         `    Install-WindowsFeature Server-Media-Foundation`,
+        ``,
+        `For Windows N editions visit:`,
+        `https://support.microsoft.com/en-us/help/3145500/media-feature-pack-list-for-windows-n-editions`,
         ``);
   }
 
@@ -200,7 +203,7 @@ async function missingFileDependenciesWindows(filePath: string): Promise<Array<s
   });
   if (code !== 0)
     return [];
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
+  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim().toLowerCase());
   return missingDeps;
 }
 
