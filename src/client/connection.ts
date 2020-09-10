@@ -133,7 +133,9 @@ export class Connection {
   }
 
   private _createRemoteObject(parentGuid: string, type: string, guid: string, initializer: any): any {
-    const parent = this._objects.get(parentGuid)!;
+    const parent = this._objects.get(parentGuid);
+    if (!parent)
+      throw new Error(`Cannot find parent object ${parentGuid} to create ${guid}`);
     let result: ChannelOwner<any, any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {

@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
-import { assert, createGuid, debugAssert } from '../utils/utils';
+import { assert, createGuid, debugAssert, isUnderTest } from '../utils/utils';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -75,6 +75,12 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
+    if (this._disposed) {
+      if (isUnderTest())
+        throw new Error(`${this._guid} is sending "${method}" event after being disposed`);
+      // Just ignore this event outside of tests.
+      return;
+    }
     this._connection.sendMessageToClient(this._guid, method, params);
   }
 
