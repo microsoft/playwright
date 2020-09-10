@@ -212,7 +212,7 @@ for (const [name, item] of Object.entries(protocol)) {
       const returns = objectType(method.returns || {}, '');
       ts_types.set(resultName, method.returns ? returns.ts : 'void');
 
-      channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}): Promise<${resultName}>;`);
+      channels_ts.push(`  ${methodName}(params${method.parameters ? '' : '?'}: ${paramsName}, metadata?: Metadata): Promise<${resultName}>;`);
     }
 
     channels_ts.push(`}`);
