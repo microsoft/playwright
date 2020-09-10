@@ -31,12 +31,9 @@ declare global {
 }
 
 registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
-  let chromium;
-  if (options.WEBKIT && !LINUX) {
-    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch chromium.
-    chromium = await playwright.chromium.launch();
-    context = await chromium.newContext();
-  }
+  // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch chromium.
+  const chromium = await playwright.chromium.launch();
+  context = await chromium.newContext();
 
   const page = await context.newPage();
   const player = new VideoPlayer(page, server);
@@ -171,7 +168,7 @@ class VideoPlayer {
     const pixels = await this._page.$eval('video', (video: HTMLVideoElement, point) => {
       const canvas = document.createElement('canvas');
       if (!video.videoWidth || !video.videoHeight)
-        throw new Error('Video element is empty');
+        throw new Error('Video element is empty: ' + video.videoWidth + 'x' + video.videoHeight);
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       const context = canvas.getContext('2d');
@@ -185,12 +182,9 @@ class VideoPlayer {
 
 describe('screencast', suite => {
   suite.slow();
-  suite.flaky();
   suite.skip(options.WIRE);
 }, () => {
   it('should capture static page', test => {
-    test.flaky(options.CHROMIUM && LINUX && !options.HEADLESS);
-    test.flaky(options.WEBKIT && LINUX);
   }, async ({page, tmpDir, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     console.log('___ started should capture static page ' + (Date.now() - start) / 1000);
@@ -222,10 +216,6 @@ describe('screencast', suite => {
   });
 
   it('should capture navigation', test => {
-    test.flaky(options.CHROMIUM && MAC);
-    test.flaky(options.FIREFOX);
-    test.flaky(options.WEBKIT);
-    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     console.log('___ started should capture navigation ' + (Date.now() - start) / 1000);
@@ -265,7 +255,7 @@ describe('screencast', suite => {
     }
   });
 
-  it.only('should capture css transformation', test => {
+  it('should capture css transformation', test => {
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     async function ttt() {
@@ -273,15 +263,13 @@ describe('screencast', suite => {
       console.log((start % 1000) + ' ___ started should capture css transformation ' + (Date.now() - start) / 1000);
       console.log((start % 1000) + '     videoFile = ' + videoFile);
       // Set viewport equal to screencast frame size to avoid scaling.
-      // await page.setViewportSize({width: 320, height: 240});
-      // await page.goto(server.PREFIX + '/rotate-z.html');
-      // console.log((start % 1000) + ' navigated to first page ' + (Date.now() - start) / 1000);
-      // await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
-      // console.log((start % 1000) + ' started screencast ' + (Date.now() - start) / 1000);
-      // // TODO: in WebKit figure out why video size is not reported correctly for
-      // // static pictures.
-      // await new Promise(r => setTimeout(r, 1000));
-      // await toImpl(page)._delegate.stopScreencast();
+      await page.setViewportSize({width: 320, height: 240});
+      await page.goto(server.PREFIX + '/rotate-z.html');
+      console.log((start % 1000) + ' navigated to first page ' + (Date.now() - start) / 1000);
+      await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
+      console.log((start % 1000) + ' started screencast ' + (Date.now() - start) / 1000);
+      await new Promise(r => setTimeout(r, 1000));
+      await toImpl(page)._delegate.stopScreencast();
       console.log((start % 1000) + ' stopped screencast ' + (Date.now() - start) / 1000);
       expect(fs.existsSync(videoFile)).toBe(true);
 
@@ -320,7 +308,6 @@ describe('screencast', suite => {
   });
 
   it('should automatically start/finish when new page is created/closed', test => {
-    test.flaky(options.FIREFOX, 'Even slow is not slow enough');
   }, async ({browserType, tmpDir}) => {
     const browser = await browserType.launch({_videosPath: tmpDir});
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
@@ -388,7 +375,6 @@ describe('screencast', suite => {
   });
 
   it('should scale frames down to the requested size ', test => {
-    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
   }, async ({page, videoPlayer, videoFile, tmpDir, server, toImpl}) => {
     const start = Date.now();
     await page.setViewportSize({width: 640, height: 480});

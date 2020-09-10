@@ -48,28 +48,14 @@ async function countFrames() {
 async function seekLastFrame(isWPE) {
   let frameCount = await countFrames();
   // TODO: figure out why playing last frame in WPE resets the picture.
-  // if (isWPE && frameCount > 1)
-  //   --frameCount;
+  if (isWPE && frameCount > 1)
+    --frameCount;
   await playNFrames(frameCount);
   return frameCount;
 }
 
-let _videoDataLoaded = false;
-function handleDataLoaded() {
-  _videoDataLoaded = true;
-}
-function isDataLoaded() {
-  return _videoDataLoaded;
-}
-
-function onLoad() {
-  const video = document.querySelector('video');
-  video.onloadeddata = handleDataLoaded;
-  _videoDataLoaded = 'video = ' + video;
-}
-
 </script>
-<body onload='onLoad()'>
+<body>
 <video controls>
   <source src="v.webm" type="video/webm">
   Your browser does not support HTML video.
