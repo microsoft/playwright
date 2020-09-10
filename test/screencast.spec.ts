@@ -188,7 +188,7 @@ describe('screencast', suite => {
     expectAll(pixels, almostRed);
   });
 
-  it.only('should capture navigation', test => {
+  it('should capture navigation', test => {
     test.flaky(options.CHROMIUM && MAC);
     test.flaky(options.FIREFOX);
     test.flaky(options.WEBKIT);
