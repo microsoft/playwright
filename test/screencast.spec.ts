@@ -255,11 +255,10 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture css transformation', test => {
+  it.only('should capture css transformation', test => {
   }, async ({page, tmpDir, server, videoFile, videoPlayer, toImpl}) => {
     const start = Date.now();
     async function ttt() {
-      videoFile = '/home/yurys/Downloads/webkit-ubuntu-18.04-test-results/video/headless-should_capture_css_transformation-webkit-0_v.webm';
       console.log((start % 1000) + ' ___ started should capture css transformation ' + (Date.now() - start) / 1000);
       console.log((start % 1000) + '     videoFile = ' + videoFile);
       // Set viewport equal to screencast frame size to avoid scaling.
