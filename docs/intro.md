@@ -1,6 +1,6 @@
 # Getting Started
 
-<!-- GEN:toc -->
+<!-- GEN:toc-top-level -->
 - [Installation](#installation)
 - [Usage](#usage)
 - [First script](#first-script)
