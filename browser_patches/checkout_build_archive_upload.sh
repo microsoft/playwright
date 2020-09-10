@@ -36,7 +36,25 @@ BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
-if [[ "$BUILD_FLAVOR" == "chromium-linux-mirror-to-cdn" ]]; then
+if [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
+  BROWSER_NAME="ffmpeg"
+  EXTRA_BUILD_ARGS="--mac"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="10.14"
+  BUILD_BLOB_NAME="ffmpeg-mac.zip"
+elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win32" ]]; then
+  BROWSER_NAME="ffmpeg"
+  EXTRA_BUILD_ARGS="--cross-compile-win32"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="ffmpeg-win32.zip"
+elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win64" ]]; then
+  BROWSER_NAME="ffmpeg"
+  EXTRA_BUILD_ARGS="--cross-compile-win64"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="ffmpeg-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-linux-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--linux"
   EXPECTED_HOST_OS="Ubuntu"

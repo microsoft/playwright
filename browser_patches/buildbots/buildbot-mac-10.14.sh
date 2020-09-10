@@ -65,3 +65,6 @@ git pull origin master
 
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-mac-10.14 >/tmp/$(basename $0)--webkit-mac-10.14.log || true
+
+git pull origin master
+../checkout_build_archive_upload.sh ffmpeg-mac >/tmp/$(basename $0)--ffmpeg-mac.log || true

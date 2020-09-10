@@ -240,9 +240,16 @@ $ sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-9
 $ sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-9 100
 ```
 
+2. FFMPEG cross-compilation requires Docker. Install docker and add `$USER` to docker for sudo-less docker access
+
+```sh
+$ sudo apt-get install -y docker.io # install docker
+$ sudo usermod -aG docker $USER # add user to docker group
+$ newgrp docker # activate group changes
+```
+
 > **NOTE**: Firefox build config can be checked official Firefox builds, navigating to `about:buildconfig` URL.
 
 To document precisely my steps to bring up bots:
 - [July 22, 2020: Setting up Ubuntu 18.04 buildbot on Azure](https://gist.github.com/aslushnikov/a4a3823b894888546e741899e69a1d8e)
 - [July 22, 2020: Setting up Ubuntu 20.04 buildbot on Azure](https://gist.github.com/aslushnikov/a0bd658b575022e198443f856b5185e7)
-
