@@ -111,21 +111,24 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async click(params: channels.FrameClickParams, metadata?: channels.Metadata): Promise<void> {
-    const clickMetadata: ActionMetadata = { ...metadata, type: 'click', target: params.selector, page: this._frame._page };
-    await runAbortableTask(async progress => {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'click', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
       return await this._frame.click(progress, params.selector, params);
-    }, this._frame._page._timeoutSettings.timeout(params), clickMetadata);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async dblclick(params: channels.FrameDblclickParams): Promise<void> {
-    await this._frame.dblclick(params.selector, params);
+  async dblclick(params: channels.FrameDblclickParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'dblclick', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.dblclick(progress, params.selector, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
   async fill(params: channels.FrameFillParams, metadata?: channels.Metadata): Promise<void> {
-    const fillMetadata: ActionMetadata = { ...metadata, type: 'fill', value: params.value, target: params.selector, page: this._frame._page };
-    await runAbortableTask(async progress => {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'fill', value: params.value, target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
       return await this._frame.fill(progress, params.selector, params.value, params);
-    }, this._frame._page._timeoutSettings.timeout(params), fillMetadata);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
   async focus(params: channels.FrameFocusParams): Promise<void> {
@@ -150,33 +153,54 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return { value: value === null ? undefined : value };
   }
 
-  async hover(params: channels.FrameHoverParams): Promise<void> {
-    await this._frame.hover(params.selector, params);
+  async hover(params: channels.FrameHoverParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'hover', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.hover(progress, params.selector, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async selectOption(params: channels.FrameSelectOptionParams): Promise<channels.FrameSelectOptionResult> {
-    const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
-    return { values: await this._frame.selectOption(params.selector, elements, params.options || [], params) };
+  async selectOption(params: channels.FrameSelectOptionParams, metadata?: channels.Metadata): Promise<channels.FrameSelectOptionResult> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'selectOption', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
+      return { values: await this._frame.selectOption(progress, params.selector, elements, params.options || [], params) };
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async setInputFiles(params: channels.FrameSetInputFilesParams): Promise<void> {
-    await this._frame.setInputFiles(params.selector, params.files, params);
+  async setInputFiles(params: channels.FrameSetInputFilesParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'setInputFiles', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.setInputFiles(progress, params.selector, params.files, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async type(params: channels.FrameTypeParams): Promise<void> {
-    await this._frame.type(params.selector, params.text, params);
+  async type(params: channels.FrameTypeParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'type', value: params.text, target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.type(progress, params.selector, params.text, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async press(params: channels.FramePressParams): Promise<void> {
-    await this._frame.press(params.selector, params.key, params);
+  async press(params: channels.FramePressParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'press', value: params.key, target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.press(progress, params.selector, params.key, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async check(params: channels.FrameCheckParams): Promise<void> {
-    await this._frame.check(params.selector, params);
+  async check(params: channels.FrameCheckParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'check', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.check(progress, params.selector, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
-  async uncheck(params: channels.FrameUncheckParams): Promise<void> {
-    await this._frame.uncheck(params.selector, params);
+  async uncheck(params: channels.FrameUncheckParams, metadata?: channels.Metadata): Promise<void> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'uncheck', target: params.selector, page: this._frame._page };
+    return runAbortableTask(async progress => {
+      return await this._frame.uncheck(progress, params.selector, params);
+    }, this._frame._page._timeoutSettings.timeout(params), actionMetadata);
   }
 
   async waitForFunction(params: channels.FrameWaitForFunctionParams): Promise<channels.FrameWaitForFunctionResult> {
