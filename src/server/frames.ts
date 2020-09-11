@@ -770,43 +770,50 @@ export class Frame extends EventEmitter {
     return result!;
   }
 
+  private async _retryWithProgressIfNotConnected<R>(
+    progress: Progress,
+    selector: string,
+    action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
+    const info = this._page.selectors._parseSelector(selector);
+    while (progress.isRunning()) {
+      progress.log(`waiting for selector "${selector}"`);
+      const task = dom.waitForSelectorTask(info, 'attached');
+      const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
+      const element = handle.asElement() as dom.ElementHandle<Element>;
+      progress.cleanupWhenAborted(() => {
+        // Do not await here to avoid being blocked, either by stalled
+        // page (e.g. alert) or unresolved navigation in Chromium.
+        element.dispose();
+      });
+      const result = await action(element);
+      element.dispose();
+      if (result === 'error:notconnected') {
+        progress.log('element was detached from the DOM, retrying');
+        continue;
+      }
+      return result;
+    }
+    return undefined as any;
+  }
+
   private async _retryWithSelectorIfNotConnected<R>(
     selector: string, options: types.TimeoutOptions,
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    const info = this._page.selectors._parseSelector(selector);
     return this._page._runAbortableTask(async progress => {
-      while (progress.isRunning()) {
-        progress.log(`waiting for selector "${selector}"`);
-        const task = dom.waitForSelectorTask(info, 'attached');
-        const handle = await this._scheduleRerunnableHandleTask(progress, info.world, task);
-        const element = handle.asElement() as dom.ElementHandle<Element>;
-        progress.cleanupWhenAborted(() => {
-          // Do not await here to avoid being blocked, either by stalled
-          // page (e.g. alert) or unresolved navigation in Chromium.
-          element.dispose();
-        });
-        const result = await action(progress, element);
-        element.dispose();
-        if (result === 'error:notconnected') {
-          progress.log('element was detached from the DOM, retrying');
-          continue;
-        }
-        return result;
-      }
-      return undefined as any;
+      return this._retryWithProgressIfNotConnected(progress, selector, handle => action(progress, handle));
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async click(selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._click(progress, options));
+  async click(progress: Progress, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    return this._retryWithProgressIfNotConnected(progress, selector, handle => handle._click(progress, options));
   }
 
   async dblclick(selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._dblclick(progress, options));
   }
 
-  async fill(selector: string, value: string, options: types.NavigatingActionWaitOptions = {}) {
-    await this._retryWithSelectorIfNotConnected(selector, options, (progress, handle) => handle._fill(progress, value, options));
+  async fill(progress: Progress, selector: string, value: string, options: types.NavigatingActionWaitOptions) {
+    return this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options));
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {

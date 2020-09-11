@@ -17,8 +17,7 @@
 import { BrowserContext } from '../server/browserContext';
 import * as frames from '../server/frames';
 import { Page } from '../server/page';
-import { InstrumentingAgent } from '../server/instrumentation';
-import { Progress } from '../server/progress';
+import { ActionMetadata, ActionResult, InstrumentingAgent } from '../server/instrumentation';
 import { isDebugMode } from '../utils/utils';
 import * as debugScriptSource from '../generated/debugScriptSource';
 
@@ -43,6 +42,6 @@ export class DebugController implements InstrumentingAgent {
   async onContextDestroyed(context: BrowserContext): Promise<void> {
   }
 
-  async onBeforePageAction(page: Page, progress: Progress): Promise<void> {
+  async onAfterAction(result: ActionResult, metadata?: ActionMetadata): Promise<void> {
   }
 }

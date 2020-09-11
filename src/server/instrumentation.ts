@@ -14,14 +14,29 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from './browserContext';
-import { Page } from './page';
-import { Progress } from './progress';
+import type { BrowserContext } from './browserContext';
+import type { ElementHandle } from './dom';
+import type { Page } from './page';
+
+export type ActionMetadata = {
+  type: 'click' | 'fill',
+  page: Page,
+  target: ElementHandle | string,
+  value?: string,
+  stack?: string,
+};
+
+export type ActionResult = {
+  logs: string[],
+  startTime: number,
+  endTime: number,
+  error?: Error,
+};
 
 export interface InstrumentingAgent {
   onContextCreated(context: BrowserContext): Promise<void>;
   onContextDestroyed(context: BrowserContext): Promise<void>;
-  onBeforePageAction(page: Page, progress: Progress): Promise<void>;
+  onAfterAction(result: ActionResult, metadata?: ActionMetadata): Promise<void>;
 }
 
 export const instrumentingAgents = new Set<InstrumentingAgent>();

@@ -15,17 +15,18 @@
  */
 
 import type { BrowserContext } from '../server/browserContext';
-import type { PageSnapshot, SanpshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, SnapshotTraceEvent } from './traceTypes';
+import type { SanpshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
-import { InstrumentingAgent, instrumentingAgents } from '../server/instrumentation';
-import { Page } from '../server/page';
+import { ActionResult, InstrumentingAgent, instrumentingAgents, ActionMetadata } from '../server/instrumentation';
+import type { Page } from '../server/page';
 import { Progress, runAbortableTask } from '../server/progress';
 import { Snapshotter } from './snapshotter';
 import * as types from '../server/types';
+import type { ElementHandle } from '../server/dom';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
@@ -48,11 +49,9 @@ export class Tracer implements InstrumentingAgent {
   }
 
   async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    return runAbortableTask(async progress => {
-      const contextTracer = this._contextTracers.get(page.context());
-      if (contextTracer)
-        await contextTracer._snapshotter.takeSnapshot(progress, page, options.label || 'snapshot');
-    }, page._timeoutSettings.timeout(options));
+    const contextTracer = this._contextTracers.get(page.context());
+    if (contextTracer)
+      await contextTracer.captureSnapshot(page, options);
   }
 
   async onContextCreated(context: BrowserContext): Promise<void> {
@@ -66,10 +65,13 @@ export class Tracer implements InstrumentingAgent {
     }
   }
 
-  async onBeforePageAction(page: Page, progress: Progress): Promise<void> {
-    const contextTracer = this._contextTracers.get(page.context());
-    if (contextTracer)
-      await contextTracer._snapshotter.takeSnapshot(progress, page, 'progress');
+  async onAfterAction(result: ActionResult, metadata?: ActionMetadata): Promise<void> {
+    if (!metadata)
+      return;
+    const contextTracer = this._contextTracers.get(metadata.page.context());
+    if (!contextTracer)
+      return;
+    await contextTracer.recordAction(result, metadata);
   }
 }
 
@@ -114,17 +116,63 @@ class ContextTracer implements SnapshotterDelegate {
     this._appendTraceEvent(event);
   }
 
-  onSnapshot(snapshot: PageSnapshot): void {
-    const buffer = Buffer.from(JSON.stringify(snapshot));
-    const sha1 = calculateSha1(buffer);
-    const event: SnapshotTraceEvent = {
-      type: 'snapshot',
+  async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
+    await runAbortableTask(async progress => {
+      const label = options.label || 'snapshot';
+      const snapshot = await this._takeSnapshot(progress, page);
+      if (!snapshot)
+        return;
+      const event: ActionTraceEvent = {
+        type: 'action',
+        contextId: this._contextId,
+        action: 'snapshot',
+        label,
+        snapshot,
+      };
+      this._appendTraceEvent(event);
+    }, page._timeoutSettings.timeout(options));
+  }
+
+  async recordAction(result: ActionResult, metadata: ActionMetadata) {
+    let snapshot: { sha1: string, duration: number } | undefined;
+    try {
+      // Use 20% of the default timeout.
+      // Never use zero timeout to avoid stalling because of snapshot.
+      const timeout = (metadata.page._timeoutSettings.timeout({}) / 5) || 6000;
+      snapshot = await runAbortableTask(progress => this._takeSnapshot(progress, metadata.page), timeout);
+    } catch (e) {
+      snapshot = undefined;
+    }
+
+    const event: ActionTraceEvent = {
+      type: 'action',
       contextId: this._contextId,
-      label: snapshot.label,
-      sha1,
+      action: metadata.type,
+      target: await this._targetToString(metadata.target),
+      value: metadata.value,
+      snapshot,
+      startTime: result.startTime,
+      endTime: result.endTime,
+      stack: metadata.stack,
+      logs: result.logs.slice(),
+      error: result.error ? result.error.stack : undefined,
     };
     this._appendTraceEvent(event);
+  }
+
+  private async _targetToString(target: ElementHandle | string): Promise<string> {
+    return typeof target === 'string' ? target : await target._previewPromise;
+  }
+
+  private async _takeSnapshot(progress: Progress, page: Page): Promise<{ sha1: string, duration: number } | undefined> {
+    const startTime = monotonicTime();
+    const snapshot = await this._snapshotter.takeSnapshot(progress, page);
+    if (!snapshot)
+      return;
+    const buffer = Buffer.from(JSON.stringify(snapshot));
+    const sha1 = calculateSha1(buffer);
     this._writeArtifact(sha1, buffer);
+    return { sha1, duration: monotonicTime() - startTime };
   }
 
   async dispose() {

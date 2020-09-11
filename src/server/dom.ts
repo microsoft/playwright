@@ -99,18 +99,20 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   readonly _context: FrameExecutionContext;
   readonly _page: Page;
   readonly _objectId: string;
+  readonly _previewPromise: Promise<string>;
 
   constructor(context: FrameExecutionContext, objectId: string) {
     super(context, 'node', objectId);
     this._objectId = objectId;
     this._context = context;
     this._page = context.frame._page;
-    this._initializePreview().catch(e => {});
+    this._previewPromise = this._initializePreview().catch(e => 'node');
+    this._previewPromise.then(preview => this._setPreview('JSHandle@' + preview));
   }
 
   async _initializePreview() {
     const utility = await this._context.injectedScript();
-    this._setPreview(await utility.evaluate((injected, e) => 'JSHandle@' + injected.previewNode(e), this));
+    return utility.evaluate((injected, e) => injected.previewNode(e), this);
   }
 
   asElement(): ElementHandle<T> | null {
@@ -367,11 +369,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  click(options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._page._runAbortableTask(async progress => {
-      const result = await this._click(progress, options);
-      return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+  async click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    const result = await this._click(progress, options);
+    return assertDone(throwRetargetableDOMError(result));
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -406,11 +406,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     });
   }
 
-  async fill(value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return this._page._runAbortableTask(async progress => {
-      const result = await this._fill(progress, value, options);
-      assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+  async fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+    const result = await this._fill(progress, value, options);
+    assertDone(throwRetargetableDOMError(result));
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {

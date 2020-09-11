@@ -17,7 +17,7 @@
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import type { NetworkResourceTraceEvent, SnapshotTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent } from './traceTypes';
+import type { NetworkResourceTraceEvent, ActionTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent } from './traceTypes';
 import type { FrameSnapshot, PageSnapshot } from './snapshotter';
 import type { Browser, BrowserContext, Frame, Page, Route } from '../client/api';
 import type { Playwright } from '../client/playwright';
@@ -27,7 +27,7 @@ type TraceEvent =
     ContextCreatedTraceEvent |
     ContextDestroyedTraceEvent |
     NetworkResourceTraceEvent |
-    SnapshotTraceEvent;
+    ActionTraceEvent;
 
 class TraceViewer {
   private _playwright: Playwright;
@@ -71,47 +71,86 @@ class TraceViewer {
   async show(browserName: string) {
     const browser = await this._playwright[browserName as ('chromium' | 'firefox' | 'webkit')].launch({ headless: false });
     const uiPage = await browser.newPage();
-    await uiPage.exposeBinding('renderSnapshot', async (source, event: SnapshotTraceEvent) => {
-      const snapshot = await fsReadFileAsync(path.join(this._traceStorageDir, event.sha1), 'utf8');
-      const context = await this._ensureContext(browser, event.contextId);
+    await uiPage.exposeBinding('renderSnapshot', async (source, action: ActionTraceEvent) => {
+      const snapshot = await fsReadFileAsync(path.join(this._traceStorageDir, action.snapshot!.sha1), 'utf8');
+      const context = await this._ensureContext(browser, action.contextId);
       const page = await context.newPage();
-      await this._renderSnapshot(page, JSON.parse(snapshot), event.contextId);
+      await this._renderSnapshot(page, JSON.parse(snapshot), action.contextId);
     });
 
-    const snapshotsPerContext: { [contextId: string]: { label: string, snapshots: SnapshotTraceEvent[] } } = {};
+    const contextData: { [contextId: string]: { label: string, actions: ActionTraceEvent[] } } = {};
     for (const trace of this._traces) {
       let contextId = 0;
       for (const event of trace.events) {
-        if (event.type !== 'snapshot')
+        if (event.type !== 'action')
           continue;
         const contextEvent = this._contextEventById.get(event.contextId)!;
         if (contextEvent.browserName !== browserName)
           continue;
-        let contextSnapshots = snapshotsPerContext[contextEvent.contextId];
-        if (!contextSnapshots) {
-          contextSnapshots = { label: trace.traceFile + ' :: context' + (++contextId), snapshots: [] };
-          snapshotsPerContext[contextEvent.contextId] = contextSnapshots;
+        let data = contextData[contextEvent.contextId];
+        if (!data) {
+          data = { label: trace.traceFile + ' :: context' + (++contextId), actions: [] };
+          contextData[contextEvent.contextId] = data;
         }
-        contextSnapshots.snapshots.push(event);
+        data.actions.push(event);
       }
     }
-    await uiPage.evaluate(snapshotsPerContext => {
-      for (const contextSnapshots of Object.values(snapshotsPerContext)) {
+    await uiPage.evaluate(contextData => {
+      for (const data of Object.values(contextData)) {
         const header = document.createElement('div');
-        header.textContent = contextSnapshots.label;
+        header.textContent = data.label;
         header.style.margin = '10px';
         document.body.appendChild(header);
-        for (const event of contextSnapshots.snapshots) {
-          const button = document.createElement('button');
-          button.style.display = 'block';
-          button.textContent = `${event.label}`;
-          button.addEventListener('click', () => {
-            (window as any).renderSnapshot(event);
-          });
-          document.body.appendChild(button);
+        for (const action of data.actions) {
+          const div = document.createElement('div');
+          div.style.whiteSpace = 'pre';
+          div.style.borderBottom = '1px solid black';
+          const lines = [];
+          lines.push(`action: ${action.action}`);
+          if (action.label)
+            lines.push(`label: ${action.label}`);
+          if (action.target)
+            lines.push(`target: ${action.target}`);
+          if (action.value)
+            lines.push(`value: ${action.value}`);
+          if (action.startTime && action.endTime)
+            lines.push(`duration: ${action.endTime - action.startTime}ms`);
+          div.textContent = lines.join('\n');
+          if (action.error) {
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            summary.textContent = 'error';
+            details.appendChild(summary);
+            details.appendChild(document.createTextNode(action.error));
+            div.appendChild(details);
+          }
+          if (action.stack) {
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            summary.textContent = 'callstack';
+            details.appendChild(summary);
+            details.appendChild(document.createTextNode(action.stack));
+            div.appendChild(details);
+          }
+          if (action.logs && action.logs.length) {
+            const details = document.createElement('details');
+            const summary = document.createElement('summary');
+            summary.textContent = 'logs';
+            details.appendChild(summary);
+            details.appendChild(document.createTextNode(action.logs.join('\n')));
+            div.appendChild(details);
+          }
+          if (action.snapshot) {
+            const button = document.createElement('button');
+            button.style.display = 'block';
+            button.textContent = `snapshot after (${action.snapshot.duration}ms)`;
+            button.addEventListener('click', () => (window as any).renderSnapshot(action));
+            div.appendChild(button);
+          }
+          document.body.appendChild(div);
         }
       }
-    }, snapshotsPerContext);
+    }, contextData);
   }
 
   private async _ensureContext(browser: Browser, contextId: string): Promise<BrowserContext> {

@@ -45,7 +45,6 @@ export type FrameSnapshot = {
   resourceOverrides: { url: string, sha1: string }[],
 };
 export type PageSnapshot = {
-  label: string,
   viewportSize?: { width: number, height: number },
   // First frame is the main frame.
   frames: FrameSnapshot[],
@@ -54,7 +53,6 @@ export type PageSnapshot = {
 export interface SnapshotterDelegate {
   onBlob(blob: SnapshotterBlob): void;
   onResource(resource: SanpshotterResource): void;
-  onSnapshot(snapshot: PageSnapshot): void;
 }
 
 export class Snapshotter {
@@ -72,13 +70,6 @@ export class Snapshotter {
 
   dispose() {
     helper.removeEventListeners(this._eventListeners);
-  }
-
-  async takeSnapshot(progress: Progress, page: Page, label: string): Promise<void> {
-    assert(page.context() === this._context);
-    const snapshot = await this._snapshotPage(progress, page, label);
-    if (snapshot)
-      this._delegate.onSnapshot(snapshot);
   }
 
   private _onPage(page: Page) {
@@ -118,7 +109,9 @@ export class Snapshotter {
       this._delegate.onBlob({ sha1, buffer: body });
   }
 
-  private async _snapshotPage(progress: Progress, page: Page, label: string): Promise<PageSnapshot | null> {
+  async takeSnapshot(progress: Progress, page: Page): Promise<PageSnapshot | null> {
+    assert(page.context() === this._context);
+
     const frames = page.frames();
     const promises = frames.map(frame => this._snapshotFrame(progress, frame));
     const results = await Promise.all(promises);
@@ -169,7 +162,6 @@ export class Snapshotter {
     }
 
     return {
-      label,
       viewportSize,
       frames: [mainFrame.snapshot, ...childFrames],
     };
