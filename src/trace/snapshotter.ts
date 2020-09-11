@@ -18,10 +18,11 @@ import { BrowserContext } from '../server/browserContext';
 import { Page } from '../server/page';
 import * as network from '../server/network';
 import { helper, RegisteredListener } from '../server/helper';
-import { Progress } from '../server/progress';
+import { Progress, runAbortableTask } from '../server/progress';
 import { debugLogger } from '../utils/debugLogger';
 import { Frame } from '../server/frames';
 import * as js from '../server/javascript';
+import * as types from '../server/types';
 import { SnapshotData, takeSnapshotInFrame } from './snapshotterInjected';
 import { assert, calculateSha1, createGuid } from '../utils/utils';
 
@@ -109,23 +110,37 @@ export class Snapshotter {
       this._delegate.onBlob({ sha1, buffer: body });
   }
 
-  async takeSnapshot(progress: Progress, page: Page): Promise<PageSnapshot | null> {
+  async takeSnapshot(page: Page, timeout: number): Promise<PageSnapshot | null> {
     assert(page.context() === this._context);
 
     const frames = page.frames();
-    const promises = frames.map(frame => this._snapshotFrame(progress, frame));
-    const results = await Promise.all(promises);
+    const frameSnapshotPromises = frames.map(async frame => {
+      // TODO: use different timeout depending on the frame depth/origin
+      // to avoid waiting for too long for some useless frame.
+      const frameResult = await runAbortableTask(progress => this._snapshotFrame(progress, frame), timeout).catch(e => null);
+      if (frameResult)
+        return frameResult;
+      const frameSnapshot = {
+        frameId: frame._id,
+        url: frame.url(),
+        html: '<body>Snapshot is not available</body>',
+        resourceOverrides: [],
+      };
+      return { snapshot: frameSnapshot, mapping: new Map<Frame, string>() };
+    });
+
+    const viewportSize = await this._getViewportSize(page, timeout);
+    const results = await Promise.all(frameSnapshotPromises);
+
+    if (!viewportSize)
+      return null;
 
     const mainFrame = results[0];
-    if (!mainFrame)
-      return null;
     if (!mainFrame.snapshot.url.startsWith('http'))
       mainFrame.snapshot.url = 'http://playwright.snapshot/';
 
     const mapping = new Map<Frame, string>();
     for (const result of results) {
-      if (!result)
-        continue;
       for (const [key, value] of result.mapping)
         mapping.set(key, value);
     }
@@ -133,8 +148,6 @@ export class Snapshotter {
     const childFrames: FrameSnapshot[] = [];
     for (let i = 1; i < results.length; i++) {
       const result = results[i];
-      if (!result)
-        continue;
       const frame = frames[i];
       if (!mapping.has(frame))
         continue;
@@ -143,75 +156,68 @@ export class Snapshotter {
       childFrames.push(frameSnapshot);
     }
 
-    let viewportSize = page.viewportSize();
-    if (!viewportSize) {
-      try {
-        if (!progress.isRunning())
-          return null;
-
-        const context = await page.mainFrame()._utilityContext();
-        viewportSize = await context.evaluateInternal(() => {
-          return {
-            width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
-            height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
-          };
-        });
-      } catch (e) {
-        return null;
-      }
-    }
-
     return {
       viewportSize,
       frames: [mainFrame.snapshot, ...childFrames],
     };
   }
 
+  private async _getViewportSize(page: Page, timeout: number): Promise<types.Size | null> {
+    return runAbortableTask(async progress => {
+      const viewportSize = page.viewportSize();
+      if (viewportSize)
+        return viewportSize;
+      const context = await page.mainFrame()._utilityContext();
+      return context.evaluateInternal(() => {
+        return {
+          width: Math.max(document.body.offsetWidth, document.documentElement.offsetWidth),
+          height: Math.max(document.body.offsetHeight, document.documentElement.offsetHeight),
+        };
+      });
+    }, timeout).catch(e => null);
+  }
+
   private async _snapshotFrame(progress: Progress, frame: Frame): Promise<FrameSnapshotAndMapping | null> {
-    try {
-      if (!progress.isRunning())
-        return null;
-
-      const context = await frame._utilityContext();
-      const guid = createGuid();
-      const removeNoScript = !frame._page.context()._options.javaScriptEnabled;
-      const result = await js.evaluate(context, false /* returnByValue */, takeSnapshotInFrame, guid, removeNoScript) as js.JSHandle;
-      if (!progress.isRunning())
-        return null;
-
-      const properties = await result.getProperties();
-      const data = await properties.get('data')!.jsonValue() as SnapshotData;
-      const frameElements = await properties.get('frameElements')!.getProperties();
-      result.dispose();
-
-      const snapshot: FrameSnapshot = {
-        frameId: frame._id,
-        url: frame.url(),
-        html: data.html,
-        resourceOverrides: [],
-      };
-      const mapping = new Map<Frame, string>();
-
-      for (const { url, content } of data.resourceOverrides) {
-        const buffer = Buffer.from(content);
-        const sha1 = calculateSha1(buffer);
-        this._delegate.onBlob({ sha1, buffer });
-        snapshot.resourceOverrides.push({ url, sha1 });
-      }
-
-      for (let i = 0; i < data.frameUrls.length; i++) {
-        const element = frameElements.get(String(i))!.asElement();
-        if (!element)
-          continue;
-        const frame = await element.contentFrame().catch(e => null);
-        if (frame)
-          mapping.set(frame, data.frameUrls[i]);
-      }
-
-      return { snapshot, mapping };
-    } catch (e) {
+    if (!progress.isRunning())
       return null;
+
+    const context = await frame._utilityContext();
+    const guid = createGuid();
+    const removeNoScript = !frame._page.context()._options.javaScriptEnabled;
+    const result = await js.evaluate(context, false /* returnByValue */, takeSnapshotInFrame, guid, removeNoScript) as js.JSHandle;
+    if (!progress.isRunning())
+      return null;
+
+    const properties = await result.getProperties();
+    const data = await properties.get('data')!.jsonValue() as SnapshotData;
+    const frameElements = await properties.get('frameElements')!.getProperties();
+    result.dispose();
+
+    const snapshot: FrameSnapshot = {
+      frameId: frame._id,
+      url: frame.url(),
+      html: data.html,
+      resourceOverrides: [],
+    };
+    const mapping = new Map<Frame, string>();
+
+    for (const { url, content } of data.resourceOverrides) {
+      const buffer = Buffer.from(content);
+      const sha1 = calculateSha1(buffer);
+      this._delegate.onBlob({ sha1, buffer });
+      snapshot.resourceOverrides.push({ url, sha1 });
     }
+
+    for (let i = 0; i < data.frameUrls.length; i++) {
+      const element = frameElements.get(String(i))!.asElement();
+      if (!element)
+        continue;
+      const frame = await element.contentFrame().catch(e => null);
+      if (frame)
+        mapping.set(frame, data.frameUrls[i]);
+    }
+
+    return { snapshot, mapping };
   }
 }
 

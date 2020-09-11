@@ -20,5 +20,5 @@ it('should not throw', (test, parameters) => {
   test.skip(!options.TRACING);
 }, async ({page, server, playwright, toImpl}) => {
   await page.goto(server.PREFIX + '/snapshot/snapshot-with-css.html');
-  await (playwright as any).__tracer.captureSnapshot(toImpl(page), { timeout: 5000, label: 'snapshot' });
+  await (playwright as any).__tracer.captureSnapshot(toImpl(page), { label: 'snapshot' });
 });
