@@ -17,8 +17,8 @@
 
 import { it, expect, describe, options } from './playwright.fixtures';
 
-describe('mobile viewport', suite => {
-  suite.skip(options.FIREFOX);
+describe('mobile viewport', (suite, parameters) => {
+  suite.skip(options.FIREFOX(parameters));
 }, () => {
   it('should support mobile emulation', async ({playwright, browser, server}) => {
     const iPhone = playwright.devices['iPhone 6'];

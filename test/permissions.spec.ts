@@ -21,8 +21,8 @@ function getPermission(page, name) {
   return page.evaluate(name => navigator.permissions.query({name}).then(result => result.state), name);
 }
 
-describe('permissions', suite => {
-  suite.skip(options.WEBKIT);
+describe('permissions', (suite, parameters) => {
+  suite.skip(options.WEBKIT(parameters));
 }, () => {
   it('should be prompt by default', async ({page, server, context}) => {
     // Permissions API is not implemented in WebKit (see https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
@@ -101,10 +101,10 @@ describe('permissions', suite => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should trigger permission onchange', test => {
-    test.fail(options.WEBKIT);
-    test.fail(options.CHROMIUM && !options.HEADLESS);
-    test.flaky(options.FIREFOX && LINUX);
+  it('should trigger permission onchange', (test, parameters) => {
+    test.fail(options.WEBKIT(parameters));
+    test.fail(options.CHROMIUM(parameters) && !options.HEADLESS);
+    test.flaky(options.FIREFOX(parameters) && LINUX);
   }, async ({page, server, context}) => {
     // TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883
@@ -147,10 +147,10 @@ describe('permissions', suite => {
     await otherContext.close();
   });
 
-  it('should support clipboard read', test => {
-    test.fail(options.WEBKIT);
-    test.fail(options.FIREFOX, 'No such permissions (requires flag) in Firefox');
-    test.fixme(options.CHROMIUM && !options.HEADLESS);
+  it('should support clipboard read', (test, parameters) => {
+    test.fail(options.WEBKIT(parameters));
+    test.fail(options.FIREFOX(parameters), 'No such permissions (requires flag) in Firefox');
+    test.fixme(options.CHROMIUM(parameters) && !options.HEADLESS);
   }, async ({page, server, context}) => {
     await page.goto(server.EMPTY_PAGE);
     expect(await getPermission(page, 'clipboard-read')).toBe('prompt');

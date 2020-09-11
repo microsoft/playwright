@@ -17,8 +17,8 @@
 
 import { it, expect, options } from './playwright.fixtures';
 
-it('should fail without credentials', test => {
-  test.fail(options.CHROMIUM && !options.HEADLESS);
+it('should fail without credentials', (test, parameters) => {
+  test.fail(options.CHROMIUM(parameters) && !options.HEADLESS);
 }, async ({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();
@@ -28,8 +28,8 @@ it('should fail without credentials', test => {
   await context.close();
 });
 
-it('should work with setHTTPCredentials', test => {
-  test.fail(options.CHROMIUM && !options.HEADLESS);
+it('should work with setHTTPCredentials', (test, parameters) => {
+  test.fail(options.CHROMIUM(parameters) && !options.HEADLESS);
 }, async ({browser, server}) => {
   server.setAuth('/empty.html', 'user', 'pass');
   const context = await browser.newContext();

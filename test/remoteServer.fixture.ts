@@ -24,8 +24,8 @@ type ServerFixtures = {
   remoteServer: RemoteServer;
   stallingRemoteServer: RemoteServer;
 };
-export const serverFixtures = playwrightFixtures.extend<{}, ServerFixtures>();
-const { registerFixture } = serverFixtures;
+export const serverFixtures = playwrightFixtures.declareTestFixtures<ServerFixtures>();
+const { defineTestFixture } = serverFixtures;
 
 const playwrightPath = path.join(__dirname, '..');
 
@@ -116,14 +116,14 @@ export class RemoteServer {
   }
 }
 
-registerFixture('remoteServer', async ({browserType, defaultBrowserOptions}, test) => {
+defineTestFixture('remoteServer', async ({browserType, defaultBrowserOptions}, test) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, defaultBrowserOptions);
   await test(remoteServer);
   await remoteServer.close();
 });
 
-registerFixture('stallingRemoteServer', async ({browserType, defaultBrowserOptions}, test) => {
+defineTestFixture('stallingRemoteServer', async ({browserType, defaultBrowserOptions}, test) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
   await test(remoteServer);

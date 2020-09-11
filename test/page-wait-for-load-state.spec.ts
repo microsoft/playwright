@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 import type { Route } from '..';
 
 it('should pick up ongoing navigation', async ({page, server}) => {
@@ -69,7 +69,7 @@ it('should work with pages that have loaded before being connected to', async ({
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should wait for load state of empty url popup', async ({browser, page}) => {
+it('should wait for load state of empty url popup', async ({page, isFirefox}) => {
   const [popup, readyState] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -78,8 +78,8 @@ it('should wait for load state of empty url popup', async ({browser, page}) => {
     }),
   ]);
   await popup.waitForLoadState();
-  expect(readyState).toBe(options.FIREFOX ? 'uninitialized' : 'complete');
-  expect(await popup.evaluate(() => document.readyState)).toBe(options.FIREFOX ? 'uninitialized' : 'complete');
+  expect(readyState).toBe(isFirefox ? 'uninitialized' : 'complete');
+  expect(await popup.evaluate(() => document.readyState)).toBe(isFirefox ? 'uninitialized' : 'complete');
 });
 
 it('should wait for load state of about:blank popup ', async ({browser, page}) => {

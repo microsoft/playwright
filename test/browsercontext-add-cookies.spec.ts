@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should work', async ({context, page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -139,7 +139,7 @@ it('should isolate send cookie header', async ({server, context, browser}) => {
   }
 });
 
-it('should isolate cookies between launches', test => {
+it('should isolate cookies between launches', (test, parameters) => {
   test.slow();
 }, async ({browserType, server, defaultBrowserOptions}) => {
   const browser1 = await browserType.launch(defaultBrowserOptions);
@@ -315,7 +315,7 @@ it('should set cookies for a frame', async ({context, page, server}) => {
   expect(await page.frames()[1].evaluate('document.cookie')).toBe('frame-cookie=value');
 });
 
-it('should(not) block third party cookies', async ({context, page, server}) => {
+it('should(not) block third party cookies', async ({context, page, server, isChromium, isFirefox}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
     let fulfill;
@@ -328,7 +328,7 @@ it('should(not) block third party cookies', async ({context, page, server}) => {
   }, server.CROSS_PROCESS_PREFIX + '/grid.html');
   await page.frames()[1].evaluate(`document.cookie = 'username=John Doe'`);
   await page.waitForTimeout(2000);
-  const allowsThirdParty = options.CHROMIUM || options.FIREFOX;
+  const allowsThirdParty = isChromium || isFirefox;
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
     expect(cookies).toEqual([

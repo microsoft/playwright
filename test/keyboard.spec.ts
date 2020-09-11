@@ -83,8 +83,8 @@ it('insertText should only emit input event', async ({page, server}) => {
   expect(await events.jsonValue()).toEqual(['input']);
 });
 
-it('should report shiftKey', test => {
-  test.fail(options.FIREFOX && MAC);
+it('should report shiftKey', (test, parameters) => {
+  test.fail(options.FIREFOX(parameters) && MAC);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
@@ -342,7 +342,7 @@ it('should be able to prevent selectAll', async ({page, server}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
 });
 
-it('should support MacOS shortcuts', test => {
+it('should support MacOS shortcuts', (test, parameters) => {
   test.skip(!MAC);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
@@ -354,21 +354,21 @@ it('should support MacOS shortcuts', test => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some ');
 });
 
-it('should press the meta key', async ({page}) => {
+it('should press the meta key', async ({page, isFirefox}) => {
   const lastEvent = await captureLastKeydown(page);
   await page.keyboard.press('Meta');
   const {key, code, metaKey} = await lastEvent.jsonValue();
-  if (options.FIREFOX && !MAC)
+  if (isFirefox && !MAC)
     expect(key).toBe('OS');
   else
     expect(key).toBe('Meta');
 
-  if (options.FIREFOX)
+  if (isFirefox)
     expect(code).toBe('OSLeft');
   else
     expect(code).toBe('MetaLeft');
 
-  if (options.FIREFOX && !MAC)
+  if (isFirefox && !MAC)
     expect(metaKey).toBe(false);
   else
     expect(metaKey).toBe(true);
@@ -384,9 +384,9 @@ it('should work after a cross origin navigation', async ({page, server}) => {
 });
 
 // event.keyIdentifier has been removed from all browsers except WebKit
-it('should expose keyIdentifier in webkit', test => {
-  test.skip(!options.WEBKIT);
-}, async ({page, server}) => {
+it('should expose keyIdentifier in webkit', (test, parameters) => {
+  test.skip(!options.WEBKIT(parameters));
+}, async ({page}) => {
   const lastEvent = await captureLastKeydown(page);
   const keyMap = {
     'ArrowUp': 'Up',

@@ -21,8 +21,8 @@ const { it, expect, describe } = electronFixtures;
 import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
-describe('electron app', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('electron app', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should fire close event', async ({ playwright }) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);

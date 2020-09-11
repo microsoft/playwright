@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
-it('query', async ({page}) => {
+it('query', async ({page, isWebKit}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -59,9 +59,9 @@ it('query', async ({page}) => {
   expect(await page.$eval(`"x"`, e => e.outerHTML)).toBe('<div>x</div>');
   expect(await page.$eval(`'x'`, e => e.outerHTML)).toBe('<div>x</div>');
   let error = await page.$(`"`).catch(e => e);
-  expect(error.message).toContain(options.WEBKIT ? 'SyntaxError' : 'querySelector');
+  expect(error.message).toContain(isWebKit ? 'SyntaxError' : 'querySelector');
   error = await page.$(`'`).catch(e => e);
-  expect(error.message).toContain(options.WEBKIT ? 'SyntaxError' : 'querySelector');
+  expect(error.message).toContain(isWebKit ? 'SyntaxError' : 'querySelector');
 
   await page.setContent(`<div> ' </div><div> " </div>`);
   expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');

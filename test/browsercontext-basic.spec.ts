@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 import utils from './utils';
 
@@ -178,14 +178,14 @@ it('should close all belonging pages once closing context', async function({brow
   expect(context.pages().length).toBe(0);
 });
 
-it('should disable javascript', async ({browser}) => {
+it('should disable javascript', async ({browser, isWebKit}) => {
   {
     const context = await browser.newContext({ javaScriptEnabled: false });
     const page = await context.newPage();
     await page.goto('data:text/html, <script>var something = "forbidden"</script>');
     let error = null;
     await page.evaluate('something').catch(e => error = e);
-    if (options.WEBKIT)
+    if (isWebKit)
       expect(error.message).toContain('Can\'t find variable: something');
     else
       expect(error.message).toContain('something is not defined');

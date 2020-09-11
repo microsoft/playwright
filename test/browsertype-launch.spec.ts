@@ -36,8 +36,8 @@ it('should throw if userDataDir option is passed', async ({browserType, defaultB
   expect(waitError.message).toContain('launchPersistentContext');
 });
 
-it('should throw if page argument is passed', test => {
-  test.skip(options.FIREFOX);
+it('should throw if page argument is passed', (test, parameters) => {
+  test.skip(options.FIREFOX(parameters));
 }, async ({browserType, defaultBrowserOptions}) => {
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
@@ -45,7 +45,7 @@ it('should throw if page argument is passed', test => {
   expect(waitError.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', test => {
+it('should reject if launched browser fails immediately', (test, parameters) => {
   test.fixme(`I'm getting ENCONRESET on this one.`);
 }, async ({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions, {executablePath: path.join(__dirname, 'assets', 'dummy_bad_browser_executable.js')});
@@ -61,7 +61,7 @@ it('should reject if executable path is invalid', async ({browserType, defaultBr
   expect(waitError.message).toContain('Failed to launch');
 });
 
-it('should handle timeout', test => {
+it('should handle timeout', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({browserType, defaultBrowserOptions}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
@@ -71,7 +71,7 @@ it('should handle timeout', test => {
   expect(error.message).toContain(`<launched> pid=`);
 });
 
-it('should handle exception', test => {
+it('should handle exception', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
@@ -80,7 +80,7 @@ it('should handle exception', test => {
   expect(error.message).toContain('Dummy');
 });
 
-it('should report launch log', test => {
+it('should report launch log', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
@@ -89,7 +89,7 @@ it('should report launch log', test => {
   expect(error.message).toContain('<launching>');
 });
 
-it('should accept objects as options', test => {
+it('should accept objects as options', (test, parameters) => {
   test.slow();
 }, async ({browserType, defaultBrowserOptions}) => {
   // @ts-expect-error process is not a real option.

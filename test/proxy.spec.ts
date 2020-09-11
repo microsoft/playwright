@@ -77,8 +77,8 @@ it('should authenticate', async ({browserType, defaultBrowserOptions, server}) =
   await browser.close();
 });
 
-it('should exclude patterns', test => {
-  test.flaky(options.CHROMIUM && !options.HEADLESS, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
+it('should exclude patterns', (test, parameters) => {
+  test.flaky(options.CHROMIUM(parameters) && !options.HEADLESS, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
 }, async ({browserType, defaultBrowserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
@@ -119,8 +119,8 @@ it('should exclude patterns', test => {
   await browser.close();
 });
 
-it('should use socks proxy', test => {
-  test.flaky(MAC && options.WEBKIT, 'Intermittent page.goto: The network connection was lost error on bots');
+it('should use socks proxy', (test, parameters) => {
+  test.flaky(MAC && options.WEBKIT(parameters), 'Intermittent page.goto: The network connection was lost error on bots');
 }, async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
   const server = socks.createServer((info, accept, deny) => {
     let socket;

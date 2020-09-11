@@ -144,7 +144,7 @@ it('should create subdirectories when saving to non-existent user-specified path
   await page.close();
 });
 
-it('should save when connected remotely', test => {
+it('should save when connected remotely', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({tmpDir, server, browserType, remoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
@@ -190,7 +190,7 @@ it('should error when saving after deletion', async ({tmpDir, browser, server}) 
   await page.close();
 });
 
-it('should error when saving after deletion when connected remotely', test => {
+it('should error when saving after deletion when connected remotely', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({tmpDir, server, browserType, remoteServer}) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
@@ -254,8 +254,8 @@ it(`should report download path within page.on('download', …) handler for Blob
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await page.close();
 });
-it('should report alt-click downloads', test => {
-  test.fixme(options.FIREFOX || options.WEBKIT);
+it('should report alt-click downloads', (test, parameters) => {
+  test.fixme(options.FIREFOX(parameters) || options.WEBKIT(parameters));
 }, async ({browser, server}) => {
   // Firefox does not download on alt-click by default.
   // Our WebKit embedder does not download on alt-click, although Safari does.
@@ -277,8 +277,8 @@ it('should report alt-click downloads', test => {
   await page.close();
 });
 
-it('should report new window downloads', test => {
-  test.fixme(options.CHROMIUM && !options.HEADLESS);
+it('should report new window downloads', (test, parameters) => {
+  test.fixme(options.CHROMIUM(parameters) && !options.HEADLESS);
 }, async ({browser, server}) => {
   // TODO: - the test fails in headful Chromium as the popup page gets closed along
   // with the session before download completed event arrives.

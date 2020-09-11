@@ -25,14 +25,14 @@ type TestState = {
   window: ElectronPage;
 };
 
-export const electronFixtures = playwrightFixtures.extend<{}, TestState>();
-const { registerFixture } = electronFixtures;
+export const electronFixtures = playwrightFixtures.declareTestFixtures<TestState>();
+const { defineTestFixture } = electronFixtures;
 
 declare module '../../index' {
   const electron: ElectronLauncher;
 }
 
-registerFixture('application', async ({playwright}, test) => {
+defineTestFixture('application', async ({playwright}, test) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
   const application = await playwright.electron.launch(electronPath, {
     args: [path.join(__dirname, 'testApp.js')],
@@ -41,7 +41,7 @@ registerFixture('application', async ({playwright}, test) => {
   await application.close();
 });
 
-registerFixture('window', async ({application}, test) => {
+defineTestFixture('window', async ({application}, test) => {
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await test(page);
   await page.close();

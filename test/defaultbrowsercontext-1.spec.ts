@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 import fs from 'fs';
 import utils from './utils';
 
@@ -79,7 +79,7 @@ it('context.clearCookies() should work', async ({server, launchPersistent}) => {
   expect(await page.evaluate('document.cookie')).toBe('');
 });
 
-it('should(not) block third party cookies', async ({server, launchPersistent}) => {
+it('should(not) block third party cookies', async ({server, launchPersistent, isChromium, isFirefox}) => {
   const {page, context} = await launchPersistent();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
@@ -96,7 +96,7 @@ it('should(not) block third party cookies', async ({server, launchPersistent}) =
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = options.CHROMIUM || options.FIREFOX;
+  const allowsThirdParty = isChromium || isFirefox;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await context.cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -146,12 +146,12 @@ it('should support bypassCSP option', async ({server, launchPersistent}) => {
   expect(await page.evaluate('__injected')).toBe(42);
 });
 
-it('should support javascriptEnabled option', async ({launchPersistent}) => {
+it('should support javascriptEnabled option', async ({launchPersistent, isWebKit}) => {
   const {page} = await launchPersistent({javaScriptEnabled: false});
   await page.goto('data:text/html, <script>var something = "forbidden"</script>');
   let error = null;
   await page.evaluate('something').catch(e => error = e);
-  if (options.WEBKIT)
+  if (isWebKit)
     expect(error.message).toContain('Can\'t find variable: something');
   else
     expect(error.message).toContain('something is not defined');
@@ -170,7 +170,7 @@ it('should support offline option', async ({server, launchPersistent}) => {
   expect(error).toBeTruthy();
 });
 
-it('should support acceptDownloads option', test => {
+it('should support acceptDownloads option', (test, parameters) => {
   test.skip('Unskip once we support downloads in persistent context.');
 }, async ({server, launchPersistent}) => {
   const {page} = await launchPersistent({acceptDownloads: true});

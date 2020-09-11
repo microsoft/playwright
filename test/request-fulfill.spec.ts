@@ -50,8 +50,8 @@ it('should work with status code 422', async ({page, server}) => {
   expect(await page.evaluate(() => document.body.textContent)).toBe('Yo, page!');
 });
 
-it('should allow mocking binary responses', test => {
-  test.skip(options.FIREFOX && !options.HEADLESS, '// Firefox headful produces a different image.');
+it('should allow mocking binary responses', (test, parameters) => {
+  test.skip(options.FIREFOX(parameters) && !options.HEADLESS, '// Firefox headful produces a different image.');
 }, async ({page, server, golden}) => {
   await page.route('**/*', route => {
     const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
@@ -70,8 +70,8 @@ it('should allow mocking binary responses', test => {
   expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
 });
 
-it('should allow mocking svg with charset', test => {
-  test.skip(options.FIREFOX && !options.HEADLESS, '// Firefox headful produces a different image.');
+it('should allow mocking svg with charset', (test, parameters) => {
+  test.skip(options.FIREFOX(parameters) && !options.HEADLESS, '// Firefox headful produces a different image.');
 }, async ({page, server, golden}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {

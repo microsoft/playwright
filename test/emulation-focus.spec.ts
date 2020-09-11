@@ -101,8 +101,8 @@ it('should change document.activeElement', async ({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', test => {
-  test.skip(options.FIREFOX && !options.HEADLESS);
+it('should not affect screenshots', (test, parameters) => {
+  test.skip(options.FIREFOX(parameters) && !options.HEADLESS);
 }, async ({page, server, golden}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();

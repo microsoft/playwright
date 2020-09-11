@@ -26,10 +26,10 @@ type TestState = {
   downloadsBrowser: Browser;
   persistentDownloadsContext: BrowserContext;
 };
-const fixtures = playwrightFixtures.extend<{}, TestState>();
-const { it, expect, registerFixture } = fixtures;
+const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
+const { it, expect, defineTestFixture } = fixtures;
 
-registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, tmpDir}, test) => {
+defineTestFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, tmpDir}, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
@@ -43,7 +43,7 @@ registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserO
   await browser.close();
 });
 
-registerFixture('persistentDownloadsContext', async ({server, browserType, defaultBrowserOptions, tmpDir}, test) => {
+defineTestFixture('persistentDownloadsContext', async ({server, browserType, defaultBrowserOptions, tmpDir}, test) => {
   const userDataDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');

@@ -24,10 +24,10 @@ import { TestServer } from '../utils/testserver';
 type TestState = {
   videoPlayer: VideoPlayer;
 };
-const fixtures = playwrightFixtures.extend<{}, TestState>();
-const { it, expect, describe, registerFixture } = fixtures;
+const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
+const { it, expect, describe, defineTestFixture } = fixtures;
 
-registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
+defineTestFixture('videoPlayer', async ({playwright, context, server}, test) => {
   // WebKit on Mac & Windows cannot replay webm/vp8 video, is unrelyable
   // on Linux (times out) and in Firefox, so we always launch chromium for
   // playback.
@@ -181,7 +181,7 @@ describe('screencast', suite => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture navigation', test => {
+  it('should capture navigation', (test, parameters) => {
     test.flaky();
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
@@ -210,8 +210,8 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture css transformation', test => {
-    test.fail(options.WEBKIT && WIN, 'Does not work on WebKit Windows');
+  it('should capture css transformation', (test, parameters) => {
+    test.fail(options.WEBKIT(parameters) && WIN, 'Does not work on WebKit Windows');
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     // Set viewport equal to screencast frame size to avoid scaling.

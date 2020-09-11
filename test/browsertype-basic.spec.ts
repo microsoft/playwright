@@ -16,7 +16,7 @@
  */
 
 import fs from 'fs';
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('browserType.executablePath should work', test => {
   test.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH));
@@ -26,12 +26,12 @@ it('browserType.executablePath should work', test => {
   expect(fs.realpathSync(executablePath)).toBe(executablePath);
 });
 
-it('browserType.name should work', async ({browserType}) => {
-  if (options.WEBKIT)
+it('browserType.name should work', async ({browserType, isChromium, isFirefox, isWebKit}) => {
+  if (isWebKit)
     expect(browserType.name()).toBe('webkit');
-  else if (options.FIREFOX)
+  else if (isFirefox)
     expect(browserType.name()).toBe('firefox');
-  else if (options.CHROMIUM)
+  else if (isChromium)
     expect(browserType.name()).toBe('chromium');
   else
     throw new Error('Unknown browser');

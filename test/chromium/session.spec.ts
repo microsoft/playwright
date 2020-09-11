@@ -16,8 +16,8 @@
 import { it, expect, describe, options } from '../playwright.fixtures';
 import type { ChromiumBrowserContext, ChromiumBrowser } from '../../types/types';
 
-describe('session', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('session', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should work', async function({page}) {
     const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);

@@ -26,9 +26,9 @@ function crash(pageImpl, browserName) {
     pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
-describe('', suite => {
+describe('', (suite, parameters) => {
   suite.fixme(options.WIRE);
-  suite.flaky(options.FIREFOX && WIN);
+  suite.flaky(options.FIREFOX(parameters) && WIN);
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
@@ -63,9 +63,9 @@ describe('', suite => {
     expect(error.message).toContain('Navigation failed because page crashed');
   });
 
-  it('should be able to close context when page crashes', test => {
+  it('should be able to close context when page crashes', (test, parameters) => {
     test.fixme(options.WIRE);
-    test.flaky(options.FIREFOX && WIN);
+    test.flaky(options.FIREFOX(parameters) && WIN);
   }, async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(toImpl(page), browserName);

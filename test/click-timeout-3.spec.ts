@@ -17,7 +17,7 @@
 
 import { it, expect, options } from './playwright.fixtures';
 
-it('should fail when element jumps during hit testing', test => {
+it('should fail when element jumps during hit testing', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({page}) => {
   await page.setContent('<button>Click me</button>');

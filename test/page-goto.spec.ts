@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 import utils from './utils';
 import path from 'path';
@@ -134,7 +134,7 @@ it('should work with subframes return 204 with domcontentloaded', async ({page, 
   await page.goto(server.PREFIX + '/frames/one-frame.html', { waitUntil: 'domcontentloaded' });
 });
 
-it('should fail when server returns 204', async ({page, server}) => {
+it('should fail when server returns 204', async ({page, server, isChromium, isWebKit}) => {
   // Webkit just loads an empty page.
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 204;
@@ -143,9 +143,9 @@ it('should fail when server returns 204', async ({page, server}) => {
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).not.toBe(null);
-  if (options.CHROMIUM)
+  if (isChromium)
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (options.WEBKIT)
+  else if (isWebKit)
     expect(error.message).toContain('Aborted: 204 No Content');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -165,10 +165,10 @@ it('should work when page calls history API in beforeunload', async ({page, serv
   expect(response.status()).toBe(200);
 });
 
-it('should fail when navigating to bad url', async ({page}) => {
+it('should fail when navigating to bad url', async ({page, isChromium, isWebKit}) => {
   let error = null;
   await page.goto('asdfasdf').catch(e => error = e);
-  if (options.CHROMIUM || options.WEBKIT)
+  if (isChromium || isWebKit)
     expect(error.message).toContain('Cannot navigate to invalid URL');
   else
     expect(error.message).toContain('Invalid url');
@@ -210,14 +210,14 @@ it('should throw if networkidle2 is passed as an option', async ({page, server})
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should fail when main resources failed to load', async ({page}) => {
+it('should fail when main resources failed to load', async ({page, isChromium, isWebKit}) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
-  if (options.CHROMIUM)
+  if (isChromium)
     expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-  else if (options.WEBKIT && WIN)
+  else if (isWebKit && WIN)
     expect(error.message).toContain(`Couldn\'t connect to server`);
-  else if (options.WEBKIT)
+  else if (isWebKit)
     expect(error.message).toContain('Could not connect');
   else
     expect(error.message).toContain('NS_ERROR_CONNECTION_REFUSED');
@@ -300,7 +300,7 @@ it('should disable timeout when its set to 0', async ({page, server}) => {
   expect(loaded).toBe(true);
 });
 
-it('should fail when replaced by another navigation', async ({page, server}) => {
+it('should fail when replaced by another navigation', async ({page, server, isChromium, isWebKit}) => {
   let anotherPromise;
   server.setRoute('/empty.html', (req, res) => {
     anotherPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -308,9 +308,9 @@ it('should fail when replaced by another navigation', async ({page, server}) => 
   });
   const error = await page.goto(server.PREFIX + '/empty.html').catch(e => e);
   await anotherPromise;
-  if (options.CHROMIUM)
+  if (isChromium)
     expect(error.message).toContain('net::ERR_ABORTED');
-  else if (options.WEBKIT)
+  else if (isWebKit)
     expect(error.message).toContain('cancelled');
   else
     expect(error.message).toContain('NS_BINDING_ABORTED');
@@ -476,7 +476,7 @@ it('should fail when canceled by another navigation', async ({page, server}) => 
   expect(error.message).toBeTruthy();
 });
 
-it('extraHttpHeaders should be pushed to provisional page', test => {
+it('extraHttpHeaders should be pushed to provisional page', (test, parameters) => {
   test.flaky('This test is flaky, because we cannot await page.setExtraHTTPHeaders.');
   // We need a way to test our implementation by more than just public api.
 }, async ({page, server}) => {

@@ -26,19 +26,25 @@ import { installCoverageHooks } from './coverage';
 import { mkdtempAsync, removeFolderAsync } from './utils';
 import { fixtures as baseFixtures } from '@playwright/test-runner';
 
-export type PlaywrightWorkerFixtures = {
+type PlaywrightParameters = {
+  browserName: string;
+};
+
+type PlaywrightWorkerFixtures = {
   asset: (path: string) => string;
   defaultBrowserOptions: LaunchOptions;
   golden: (path: string) => string;
   playwright: typeof import('../index');
-  browserName: string;
   browserType: BrowserType<Browser>;
   browser: Browser;
   httpService: {server: TestServer, httpsServer: TestServer}
   toImpl: (rpcObject: any) => any;
+  isChromium: boolean;
+  isFirefox: boolean;
+  isWebKit: boolean;
 };
 
-export type PlaywrightFixtures = {
+type PlaywrightFixtures = {
   context: BrowserContext;
   server: TestServer;
   page: Page;
@@ -47,8 +53,12 @@ export type PlaywrightFixtures = {
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
 };
 
-const fixtures = baseFixtures.extend<PlaywrightWorkerFixtures, PlaywrightFixtures>();
-const { registerFixture, registerWorkerFixture } = fixtures;
+const fixtures = baseFixtures
+    .declareParameters<PlaywrightParameters>()
+    .declareWorkerFixtures<PlaywrightWorkerFixtures>()
+    .declareTestFixtures<PlaywrightFixtures>();
+const { defineTestFixture, defineWorkerFixture, defineParameter } = fixtures;
+
 export const playwrightFixtures = fixtures;
 export const it = fixtures.it;
 export const fit = fixtures.fit;
@@ -63,9 +73,9 @@ export const afterAll = fixtures.afterAll;
 export const expect = fixtures.expect;
 
 export const options = {
-  CHROMIUM: fixtures.parameters.browserName === 'chromium',
-  FIREFOX: fixtures.parameters.browserName === 'firefox',
-  WEBKIT: fixtures.parameters.browserName === 'webkit',
+  CHROMIUM: parameters => parameters.browserName === 'chromium',
+  FIREFOX: parameters => parameters.browserName === 'firefox',
+  WEBKIT: parameters => parameters.browserName === 'webkit',
   HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
@@ -83,7 +93,7 @@ global['MAC'] = platform === 'darwin';
 global['LINUX'] = platform === 'linux';
 global['WIN'] = platform === 'win32';
 
-registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
+defineWorkerFixture('httpService', async ({parallelIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
@@ -112,7 +122,7 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-registerWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
+defineWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
   const executablePath = getExecutablePath(browserName);
 
   if (executablePath)
@@ -125,7 +135,7 @@ registerWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
   });
 });
 
-registerWorkerFixture('playwright', async ({browserName}, test) => {
+defineWorkerFixture('playwright', async ({browserName, parallelIndex}, test) => {
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     require('../lib/utils/utils').setUnderTest();
@@ -163,27 +173,37 @@ registerWorkerFixture('playwright', async ({browserName}, test) => {
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(__dirname, 'coverage-report', fixtures.parameters.parallelIndex + '.json');
+    const coveragePath = path.join(__dirname, 'coverage-report', parallelIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
   }
 });
 
-registerWorkerFixture('toImpl', async ({playwright}, test) => {
+defineWorkerFixture('toImpl', async ({playwright}, test) => {
   await test((playwright as any)._toImpl);
 });
 
-registerWorkerFixture('browserType', async ({playwright, browserName}, test) => {
+defineWorkerFixture('browserType', async ({playwright, browserName}, test) => {
   const browserType = playwright[browserName];
   await test(browserType);
 });
 
-registerWorkerFixture('browserName', async ({}, test) => {
-  throw new Error(`Parameter 'browserName' is not specified`);
+defineParameter('browserName', 'Browser type name', '');
+
+defineWorkerFixture('isChromium', async ({browserName}, test) => {
+  await test(browserName === 'chromium');
 });
 
-registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
+defineWorkerFixture('isFirefox', async ({browserName}, test) => {
+  await test(browserName === 'firefox');
+});
+
+defineWorkerFixture('isWebKit', async ({browserName}, test) => {
+  await test(browserName === 'webkit');
+});
+
+defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch(defaultBrowserOptions);
   await test(browser);
   if (browser.contexts().length !== 0) {
@@ -193,15 +213,15 @@ registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, te
   await browser.close();
 });
 
-registerWorkerFixture('asset', async ({}, test) => {
+defineWorkerFixture('asset', async ({}, test) => {
   await test(p => path.join(__dirname, `assets`, p));
 });
 
-registerWorkerFixture('golden', async ({browserName}, test) => {
+defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-registerFixture('context', async ({browser, playwright, toImpl}, runTest, info) => {
+defineTestFixture('context', async ({browser, playwright, toImpl}, runTest, info) => {
   const context = await browser.newContext();
   const { test, config } = info;
   if ((playwright as any).__tracer) {
@@ -215,7 +235,7 @@ registerFixture('context', async ({browser, playwright, toImpl}, runTest, info) 
   await context.close();
 });
 
-registerFixture('page', async ({context, playwright, toImpl}, runTest, info) => {
+defineTestFixture('page', async ({context, playwright, toImpl}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
   const { test, config, result } = info;
@@ -229,7 +249,7 @@ registerFixture('page', async ({context, playwright, toImpl}, runTest, info) => 
   }
 });
 
-registerFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, browserType}, test) => {
+defineTestFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, browserType}, test) => {
   let context;
   async function launchPersistent(options) {
     if (context)
@@ -243,17 +263,17 @@ registerFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, brows
     await context.close();
 });
 
-registerFixture('server', async ({httpService}, test) => {
+defineTestFixture('server', async ({httpService}, test) => {
   httpService.server.reset();
   await test(httpService.server);
 });
 
-registerFixture('httpsServer', async ({httpService}, test) => {
+defineTestFixture('httpsServer', async ({httpService}, test) => {
   httpService.httpsServer.reset();
   await test(httpService.httpsServer);
 });
 
-registerFixture('tmpDir', async ({}, test) => {
+defineTestFixture('tmpDir', async ({}, test) => {
   const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
   await test(tmpDir);
   await removeFolderAsync(tmpDir).catch(e => {});

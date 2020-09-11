@@ -36,8 +36,8 @@ it('should have correct execution contexts', async ({ page, server }) => {
   expect(await page.frames()[1].evaluate(() => document.body.textContent.trim())).toBe(`Hi, I'm frame`);
 });
 
-function expectContexts(pageImpl, count) {
-  if (options.CHROMIUM)
+function expectContexts(pageImpl, count, isChromium) {
+  if (isChromium)
     expect(pageImpl._delegate._mainFrameSession._contextIdToContext.size).toBe(count);
   else
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
@@ -45,22 +45,22 @@ function expectContexts(pageImpl, count) {
 
 it('should dispose context on navigation', test => {
   test.skip(options.WIRE);
-}, async ({ page, server, toImpl }) => {
+}, async ({ page, server, toImpl, isChromium }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
-  expectContexts(toImpl(page), 4);
+  expectContexts(toImpl(page), 4, isChromium);
   await page.goto(server.EMPTY_PAGE);
-  expectContexts(toImpl(page), 2);
+  expectContexts(toImpl(page), 2, isChromium);
 });
 
-it('should dispose context on cross-origin navigation', test => {
+it('should dispose context on cross-origin navigation', (test, parameters) => {
   test.skip(options.WIRE);
-}, async ({ page, server, toImpl }) => {
+}, async ({ page, server, toImpl, isChromium }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
-  expectContexts(toImpl(page), 4);
+  expectContexts(toImpl(page), 4, isChromium);
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
-  expectContexts(toImpl(page), 2);
+  expectContexts(toImpl(page), 2, isChromium);
 });
 
 it('should execute after cross-site navigation', async ({ page, server }) => {
@@ -131,9 +131,9 @@ it('should be isolated between frames', async ({page, server}) => {
   expect(a2).toBe(2);
 });
 
-it('should work in iframes that failed initial navigation', test => {
-  test.fail(options.CHROMIUM);
-  test.fixme(options.FIREFOX);
+it('should work in iframes that failed initial navigation', (test, parameters) => {
+  test.fail(options.CHROMIUM(parameters));
+  test.fixme(options.FIREFOX(parameters));
 }, async ({page}) => {
   // - Firefox does not report domcontentloaded for the iframe.
   // - Chromium and Firefox report empty url.
@@ -155,8 +155,8 @@ it('should work in iframes that failed initial navigation', test => {
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it('should work in iframes that interrupted initial javascript url navigation', test => {
-  test.fixme(options.CHROMIUM);
+it('should work in iframes that interrupted initial javascript url navigation', (test, parameters) => {
+  test.fixme(options.CHROMIUM(parameters));
 }, async ({page, server}) => {
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);
