@@ -27,7 +27,7 @@ class SearchPage {
   constructor(page) {
     this.page = page;
   }
-  async goto() {
+  async navigate() {
     await this.page.goto('https://bing.com');
   }
   async search(text) {
