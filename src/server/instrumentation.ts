@@ -19,7 +19,7 @@ import type { ElementHandle } from './dom';
 import type { Page } from './page';
 
 export type ActionMetadata = {
-  type: 'click' | 'fill',
+  type: 'click' | 'fill' | 'dblclick' | 'hover' | 'selectOption' | 'setInputFiles' | 'type' | 'press' | 'check' | 'uncheck',
   page: Page,
   target: ElementHandle | string,
   value?: string,
