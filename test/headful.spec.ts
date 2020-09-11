@@ -26,9 +26,9 @@ it('should have default url when launching browser', async ({browserType, defaul
   await browserContext.close();
 });
 
-it('headless should be able to read cookies written by headful', test => {
-  test.fail(WIN && options.CHROMIUM);
-  test.flaky(options.FIREFOX);
+it('headless should be able to read cookies written by headful', (test, parameters) => {
+  test.fail(WIN && options.CHROMIUM(parameters));
+  test.flaky(options.FIREFOX(parameters));
   test.slow();
 }, async ({browserType, defaultBrowserOptions, server}) => {
   // see https://github.com/microsoft/playwright/issues/717
@@ -50,7 +50,7 @@ it('headless should be able to read cookies written by headful', test => {
   expect(cookie).toBe('foo=true');
 });
 
-it('should close browser with beforeunload page', test => {
+it('should close browser with beforeunload page', (test, parameters) => {
   test.slow();
 }, async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
   const browserContext = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, headless: false});
@@ -94,7 +94,7 @@ it('should close browser after context menu was triggered', async ({browserType,
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({browserType, defaultBrowserOptions, server}) => {
+it('should(not) block third party cookies', async ({browserType, defaultBrowserOptions, server, isChromium, isFirefox}) => {
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -112,7 +112,7 @@ it('should(not) block third party cookies', async ({browserType, defaultBrowserO
     return document.cookie;
   });
   await page.waitForTimeout(2000);
-  const allowsThirdParty = options.CHROMIUM || options.FIREFOX;
+  const allowsThirdParty = isChromium || isFirefox;
   expect(documentCookie).toBe(allowsThirdParty ? 'username=John Doe' : '');
   const cookies = await page.context().cookies(server.CROSS_PROCESS_PREFIX + '/grid.html');
   if (allowsThirdParty) {
@@ -134,8 +134,8 @@ it('should(not) block third party cookies', async ({browserType, defaultBrowserO
   await browser.close();
 });
 
-it('should not override viewport size when passed null', test => {
-  test.fixme(options.WEBKIT);
+it('should not override viewport size when passed null', (test, parameters) => {
+  test.fixme(options.WEBKIT(parameters));
 }, async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });

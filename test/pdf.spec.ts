@@ -20,8 +20,8 @@ import fs from 'fs';
 import path from 'path';
 
 
-it('should be able to save file', test => {
-  test.skip(!(options.HEADLESS && options.CHROMIUM), 'Printing to pdf is currently only supported in headless chromium.');
+it('should be able to save file', (test, parameters) => {
+  test.skip(!(options.HEADLESS && options.CHROMIUM(parameters)), 'Printing to pdf is currently only supported in headless chromium.');
 }, async ({page, tmpDir}) => {
   const outputFile = path.join(tmpDir, 'output.pdf');
   await page.pdf({path: outputFile});
@@ -29,8 +29,8 @@ it('should be able to save file', test => {
   fs.unlinkSync(outputFile);
 });
 
-it('should only have pdf in chromium', test => {
-  test.skip(options.CHROMIUM);
+it('should only have pdf in chromium', (test, parameters) => {
+  test.skip(options.CHROMIUM(parameters));
 }, async ({page}) => {
   expect(page.pdf).toBe(undefined);
 });

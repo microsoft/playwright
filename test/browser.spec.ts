@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should create new page', async function({browser}) {
   const page1 = await browser.newPage();
@@ -38,9 +38,9 @@ it('should throw upon second create new page', async function({browser}) {
   expect(error.message).toContain('Please use browser.newContext()');
 });
 
-it('version should work', async function({browser}) {
+it('version should work', async function({browser, isChromium}) {
   const version = browser.version();
-  if (options.CHROMIUM)
+  if (isChromium)
     expect(version.match(/^\d+\.\d+\.\d+\.\d+$/)).toBeTruthy();
   else
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();

@@ -201,7 +201,7 @@ it('should work with goto following click', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 });
 
-it('should report navigation in the log when clicking anchor', test => {
+it('should report navigation in the log when clicking anchor', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({page, server}) => {
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);

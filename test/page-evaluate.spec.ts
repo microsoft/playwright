@@ -415,8 +415,8 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it('should not throw an error when evaluation does a synchronous navigation and returns an object', test => {
-  test.fixme(options.WEBKIT);
+it('should not throw an error when evaluation does a synchronous navigation and returns an object', (test, parameters) => {
+  test.fixme(options.WEBKIT(parameters));
 }, async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
@@ -435,7 +435,7 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it('should transfer 100Mb of data from page to node.js', test => {
+it('should transfer 100Mb of data from page to node.js', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({ page }) => {
   // This is too slow with wire.

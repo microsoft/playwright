@@ -127,8 +127,8 @@ it('should be atomic', async ({playwright, page}) => {
   expect(await page.evaluate(() => window['_clicked'])).toBe(true);
 });
 
-it('should dispatch drag drop events', test => {
-  test.fail(options.WEBKIT);
+it('should dispatch drag drop events', (test, parameters) => {
+  test.fail(options.WEBKIT(parameters));
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
@@ -141,8 +141,8 @@ it('should dispatch drag drop events', test => {
   }, {source, target})).toBeTruthy();
 });
 
-it('should dispatch drag drop events', test => {
-  test.fail(options.WEBKIT);
+it('should dispatch drag drop events', (test, parameters) => {
+  test.fail(options.WEBKIT(parameters));
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());

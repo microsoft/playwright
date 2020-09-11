@@ -145,7 +145,7 @@ const utils = module.exports = {
       },
     });
 
-    testRunner.on('testfinished', test => {
+    testRunner.on('testfinished', (test, parameters) => {
       // Do not report tests from COVERAGE testsuite.
       // They don't bring much value to us.
       if (test.fullName.includes('**API COVERAGE**'))

@@ -15,9 +15,9 @@
  */
 
 import { options, playwrightFixtures } from '../playwright.fixtures';
-const { it, expect, describe, registerWorkerFixture } = playwrightFixtures;
+const { it, expect, describe, overrideWorkerFixture } = playwrightFixtures;
 
-registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
+overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
     args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
@@ -26,8 +26,8 @@ registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, te
   await browser.close();
 });
 
-describe('oopif', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('oopif', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should report oopif frames', async function({browser, page, server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -68,9 +68,9 @@ describe('oopif', suite => {
     expect(await countOOPIFs(browser)).toBe(1);
   });
 
-  it('should get the proper viewport', test => {
-    test.fixme(options.CHROMIUM);
-    test.skip(!options.CHROMIUM);
+  it('should get the proper viewport', (test, parameters) => {
+    test.fixme(options.CHROMIUM(parameters));
+    test.skip(!options.CHROMIUM(parameters));
   }, async ({browser, page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');

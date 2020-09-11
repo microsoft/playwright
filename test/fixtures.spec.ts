@@ -26,10 +26,10 @@ export type FixturesFixtures = {
   stallingConnectedRemoteServer: RemoteServer;
 };
 
-const fixturesFixtures = serverFixtures.extend<{}, FixturesFixtures>();
-const { it, describe, expect, registerFixture } = fixturesFixtures;
+const fixturesFixtures = serverFixtures.declareTestFixtures<FixturesFixtures>();
+const { it, describe, expect, defineTestFixture } = fixturesFixtures;
 
-registerFixture('connectedRemoteServer', async ({browserType, remoteServer, server}, test) => {
+defineTestFixture('connectedRemoteServer', async ({browserType, remoteServer, server}, test) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -37,7 +37,7 @@ registerFixture('connectedRemoteServer', async ({browserType, remoteServer, serv
   await browser.close();
 });
 
-registerFixture('stallingConnectedRemoteServer', async ({browserType, stallingRemoteServer, server}, test) => {
+defineTestFixture('stallingConnectedRemoteServer', async ({browserType, stallingRemoteServer, server}, test) => {
   const browser = await browserType.connect({ wsEndpoint: stallingRemoteServer.wsEndpoint() });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -45,7 +45,7 @@ registerFixture('stallingConnectedRemoteServer', async ({browserType, stallingRe
   await browser.close();
 });
 
-it('should close the browser when the node process closes', test => {
+it('should close the browser when the node process closes', (test, parameters) => {
   test.slow();
 }, async ({connectedRemoteServer}) => {
   if (WIN)

@@ -22,19 +22,19 @@ import type { ChromiumBrowser } from '../..';
 type TestState = {
   outputTraceFile: string;
 };
-const fixtures = playwrightFixtures.extend<{}, TestState>();
-const { it, expect, describe, registerFixture } = fixtures;
+const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
+const { it, expect, describe, defineTestFixture } = fixtures;
 
 
-registerFixture('outputTraceFile', async ({tmpDir}, test) => {
+defineTestFixture('outputTraceFile', async ({tmpDir}, test) => {
   const outputTraceFile = path.join(tmpDir, `trace.json`);
   await test(outputTraceFile);
   if (fs.existsSync(outputTraceFile))
     fs.unlinkSync(outputTraceFile);
 });
 
-describe('oopif', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('oopif', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should output a trace', async ({browser, page, server, outputTraceFile}) => {
     await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputTraceFile});

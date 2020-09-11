@@ -17,7 +17,7 @@
 
 import { it, expect, options } from './playwright.fixtures';
 
-it('should avoid side effects after timeout', test => {
+it('should avoid side effects after timeout', (test, parameters) => {
   test.skip(options.WIRE);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');

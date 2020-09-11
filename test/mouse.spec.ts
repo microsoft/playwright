@@ -27,10 +27,9 @@ function dimensions() {
   };
 }
 
-it('should click the document', test => {
-  test.flaky(options.FIREFOX && WIN);
+it('should click the document', (test, parameters) => {
+  test.flaky(options.FIREFOX(parameters) && WIN, 'Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016');
 }, async ({page, server}) => {
-  // Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {
@@ -124,12 +123,12 @@ it('should trigger hover state with removed window.Node', async ({page, server})
   expect(await page.evaluate(() => document.querySelector('button:hover').id)).toBe('button-6');
 });
 
-it('should set modifier keys on click', async ({page, server}) => {
+it('should set modifier keys on click', async ({page, server, isFirefox}) => {
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.evaluate(() => document.querySelector('#button-3').addEventListener('mousedown', e => window['lastEvent'] = e, true));
   const modifiers = {'Shift': 'shiftKey', 'Control': 'ctrlKey', 'Alt': 'altKey', 'Meta': 'metaKey'};
   // In Firefox, the Meta modifier only exists on Mac
-  if (options.FIREFOX && !MAC)
+  if (isFirefox && !MAC)
     delete modifiers['Meta'];
   for (const modifier in modifiers) {
     await page.keyboard.down(modifier);
@@ -145,9 +144,9 @@ it('should set modifier keys on click', async ({page, server}) => {
   }
 });
 
-it('should tween mouse movement', async ({page}) => {
+it('should tween mouse movement', async ({page, isWebKit}) => {
   // The test becomes flaky on WebKit without next line.
-  if (options.WEBKIT)
+  if (isWebKit)
     await page.evaluate(() => new Promise(requestAnimationFrame));
   await page.mouse.move(100, 100);
   await page.evaluate(() => {
@@ -166,8 +165,8 @@ it('should tween mouse movement', async ({page}) => {
   ]);
 });
 
-it('should work with mobile viewports and cross process navigations', test => {
-  test.skip(options.FIREFOX);
+it('should work with mobile viewports and cross process navigations', (test, parameters) => {
+  test.skip(options.FIREFOX(parameters));
 }, async ({browser, server}) => {
   // @see https://crbug.com/929806
   const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });

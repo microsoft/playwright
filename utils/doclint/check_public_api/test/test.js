@@ -21,9 +21,9 @@ const Source = require('../../Source');
 const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
 const { fixtures } = require('@playwright/test-runner');
-const { registerWorkerFixture, describe, it, expect } = fixtures;
+const { defineWorkerFixture, describe, it, expect } = fixtures;
 
-registerWorkerFixture('page', async({}, test) => {
+defineWorkerFixture('page', async({}, test) => {
   const browser = await playwright.chromium.launch();
   const page = await browser.newPage();
   await test(page);

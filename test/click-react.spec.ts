@@ -20,7 +20,7 @@ declare const renderComponent;
 declare const e;
 declare const MyButton;
 
-it('should report that selector does not match anymore', test => {
+it('should report that selector does not match anymore', (test, parameters) => {
   test.fail(true);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
@@ -41,7 +41,7 @@ it('should report that selector does not match anymore', test => {
   expect(error.message).toContain('element does not match the selector anymore');
 });
 
-it('should not retarget the handle when element is recycled', test => {
+it('should not retarget the handle when element is recycled', (test, parameters) => {
   test.fixme(true);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
@@ -70,7 +70,7 @@ it('should timeout when click opens alert', async ({page, server}) => {
   await dialog.dismiss();
 });
 
-it('should retarget when element is recycled during hit testing', test => {
+it('should retarget when element is recycled during hit testing', (test, parameters) => {
   test.fixme(true);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');
@@ -87,7 +87,7 @@ it('should retarget when element is recycled during hit testing', test => {
   expect(await page.evaluate('window.button2')).toBe(undefined);
 });
 
-it('should retarget when element is recycled before enabled check', test => {
+it('should retarget when element is recycled before enabled check', (test, parameters) => {
   test.fixme(true);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/react.html');

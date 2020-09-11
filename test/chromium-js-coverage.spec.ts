@@ -16,15 +16,15 @@
 
 import { it, expect, describe, options } from './playwright.fixtures';
 
-it('should be missing', test => {
-  test.skip(options.CHROMIUM);
+it('should be missing', (test, parameters) => {
+  test.skip(options.CHROMIUM(parameters));
 },
 async function({page}) {
   expect(page.coverage).toBe(null);
 });
 
-describe('oopif', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('oopif', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();

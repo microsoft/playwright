@@ -60,8 +60,8 @@ it('should fill date input after clicking', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
 });
 
-it('should throw on incorrect date', test => {
-  test.skip(options.WEBKIT);
+it('should throw on incorrect date', (test, parameters) => {
+  test.skip(options.WEBKIT(parameters));
 }, async ({page}) => {
   await page.setContent('<input type=date>');
   const error = await page.fill('input', '2020-13-05').catch(e => e);
@@ -74,8 +74,8 @@ it('should fill time input', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('13:15');
 });
 
-it('should throw on incorrect time', test => {
-  test.skip(options.WEBKIT);
+it('should throw on incorrect time', (test, parameters) => {
+  test.skip(options.WEBKIT(parameters));
 }, async ({page}) => {
   await page.setContent('<input type=time>');
   const error = await page.fill('input', '25:05').catch(e => e);
@@ -88,8 +88,8 @@ it('should fill datetime-local input', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
 });
 
-it('should throw on incorrect datetime-local', test => {
-  test.skip(options.WEBKIT || options.FIREFOX);
+it('should throw on incorrect datetime-local', (test, parameters) => {
+  test.skip(options.WEBKIT(parameters) || options.FIREFOX(parameters));
 }, async ({page, server}) => {
   await page.setContent('<input type=datetime-local>');
   const error = await page.fill('input', 'abc').catch(e => e);

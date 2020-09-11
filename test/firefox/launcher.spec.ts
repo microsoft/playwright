@@ -15,8 +15,8 @@
  */
 import { it, expect, options } from '../playwright.fixtures';
 
-it('should pass firefox user preferences', test => {
-  test.skip(!options.FIREFOX);
+it('should pass firefox user preferences', (test, parameters) => {
+  test.skip(!options.FIREFOX(parameters));
 }, async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,

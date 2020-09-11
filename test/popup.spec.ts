@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should inherit user agent from browser context', async function({browser, server}) {
   const context = await browser.newContext({
@@ -210,7 +210,7 @@ it('should expose function from browser context', async function({browser, serve
   expect(messages.join('|')).toBe('page|binding');
 });
 
-it('should not dispatch binding on a closed page', async function({browser, server}) {
+it('should not dispatch binding on a closed page', async function({browser, server, isFirefox}) {
   const context = await browser.newContext();
   const messages = [];
   await context.exposeFunction('add', (a, b) => {
@@ -233,7 +233,7 @@ it('should not dispatch binding on a closed page', async function({browser, serv
     }),
   ]);
   await context.close();
-  if (options.FIREFOX)
+  if (isFirefox)
     expect(messages.join('|')).toBe('close');
   else
     expect(messages.join('|')).toBe('binding|close');

@@ -16,8 +16,8 @@
 
 import { it, expect, describe, options } from './playwright.fixtures';
 
-describe('oopif', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('oopif', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should work', async function({browserType, page, server}) {
     await page.coverage.startCSSCoverage();

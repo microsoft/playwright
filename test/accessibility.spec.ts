@@ -17,7 +17,7 @@
 
 import { it, expect, describe, options } from './playwright.fixtures';
 
-it('should work', async function({page}) {
+it('should work', async ({ page, isFirefox, isChromium }) => {
   await page.setContent(`
   <head>
     <title>Accessibility Test</title>
@@ -36,7 +36,7 @@ it('should work', async function({page}) {
   // autofocus happens after a delay in chrome these days
   await page.waitForFunction(() => document.activeElement.hasAttribute('autofocus'));
 
-  const golden = options.FIREFOX ? {
+  const golden = isFirefox ? {
     role: 'document',
     name: 'Accessibility Test',
     children: [
@@ -49,7 +49,7 @@ it('should work', async function({page}) {
       {role: 'textbox', name: '', value: 'and a value'}, // firefox doesn't use aria-placeholder for the name
       {role: 'textbox', name: '', value: 'and a value', description: 'This is a description!'}, // and here
     ]
-  } : options.CHROMIUM ? {
+  } : isChromium ? {
     role: 'WebArea',
     name: 'Accessibility Test',
     children: [
@@ -79,11 +79,11 @@ it('should work', async function({page}) {
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('should work with regular text', async ({page}) => {
+it('should work with regular text', async ({page, isFirefox}) => {
   await page.setContent(`<div>Hello World</div>`);
   const snapshot = await page.accessibility.snapshot();
   expect(snapshot.children[0]).toEqual({
-    role: options.FIREFOX ? 'text leaf' : 'text',
+    role: isFirefox ? 'text leaf' : 'text',
     name: 'Hello World',
   });
 });
@@ -118,14 +118,14 @@ it('keyshortcuts', async ({page}) => {
   expect(snapshot.children[0].keyshortcuts).toEqual('foo');
 });
 
-it('should not report text nodes inside controls', async function({page}) {
+it('should not report text nodes inside controls', async function({page, isFirefox}) {
   await page.setContent(`
   <div role="tablist">
     <div role="tab" aria-selected="true"><b>Tab1</b></div>
     <div role="tab">Tab2</div>
   </div>`);
   const golden = {
-    role: options.FIREFOX ? 'document' : 'WebArea',
+    role: isFirefox ? 'document' : 'WebArea',
     name: '',
     children: [{
       role: 'tab',
@@ -139,14 +139,14 @@ it('should not report text nodes inside controls', async function({page}) {
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', test => {
-  test.skip(options.WEBKIT, 'WebKit rich text accessibility is iffy');
-}, async function({page}) {
+it('rich text editable fields should have children', (test, parameters) => {
+  test.skip(options.WEBKIT(parameters), 'WebKit rich text accessibility is iffy');
+}, async function({page, isFirefox}) {
   await page.setContent(`
   <div contenteditable="true">
     Edit this image: <img src="fakeimage.png" alt="my fake image">
   </div>`);
-  const golden = options.FIREFOX ? {
+  const golden = isFirefox ? {
     role: 'section',
     name: '',
     children: [{
@@ -172,14 +172,14 @@ it('rich text editable fields should have children', test => {
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', test => {
-  test.skip(options.WEBKIT, 'WebKit rich text accessibility is iffy');
-}, async function({page}) {
+it('rich text editable fields with role should have children', (test, parameters) => {
+  test.skip(options.WEBKIT(parameters), 'WebKit rich text accessibility is iffy');
+}, async function({page, isFirefox}) {
   await page.setContent(`
   <div contenteditable="true" role='textbox'>
     Edit this image: <img src="fakeimage.png" alt="my fake image">
   </div>`);
-  const golden = options.FIREFOX ? {
+  const golden = isFirefox ? {
     role: 'textbox',
     name: '',
     value: 'Edit this image: my fake image',
@@ -203,9 +203,9 @@ it('rich text editable fields with role should have children', test => {
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-describe('contenteditable', suite => {
-  suite.skip(options.FIREFOX, 'Firefox does not support contenteditable="plaintext-only"');
-  suite.skip(options.WEBKIT, 'WebKit rich text accessibility is iffy');
+describe('contenteditable', (suite, parameters) => {
+  suite.skip(options.FIREFOX(parameters), 'Firefox does not support contenteditable="plaintext-only"');
+  suite.skip(options.WEBKIT(parameters), 'WebKit rich text accessibility is iffy');
 }, () => {
   it('plain text field with role should not have children', async function({page}) {
     await page.setContent(`
@@ -239,17 +239,17 @@ describe('contenteditable', suite => {
   });
 });
 
-it('non editable textbox with role and tabIndex and label should not have children', async function({page}) {
+it('non editable textbox with role and tabIndex and label should not have children', async function({page, isChromium, isFirefox}) {
   await page.setContent(`
   <div role="textbox" tabIndex=0 aria-checked="true" aria-label="my favorite textbox">
     this is the inner content
     <img alt="yo" src="fakeimg.png">
   </div>`);
-  const golden = options.FIREFOX ? {
+  const golden = isFirefox ? {
     role: 'textbox',
     name: 'my favorite textbox',
     value: 'this is the inner content yo'
-  } : options.CHROMIUM ? {
+  } : isChromium ? {
     role: 'textbox',
     name: 'my favorite textbox',
     value: 'this is the inner content '
@@ -277,13 +277,13 @@ it('checkbox with and tabIndex and label should not have children', async functi
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('checkbox without label should not have children', async function({page}) {
+it('checkbox without label should not have children', async ({page, isFirefox}) => {
   await page.setContent(`
   <div role="checkbox" aria-checked="true">
     this is the inner content
     <img alt="yo" src="fakeimg.png">
   </div>`);
-  const golden = options.FIREFOX ? {
+  const golden = isFirefox ? {
     role: 'checkbox',
     name: 'this is the inner content yo',
     checked: true
@@ -317,7 +317,7 @@ it('should work an input', async ({page}) => {
   });
 });
 
-it('should work on a menu', async ({page}) => {
+it('should work on a menu', async ({page, isWebKit}) => {
   await page.setContent(`
     <div role="menu" title="My Menu">
       <div role="menuitem">First Item</div>
@@ -334,7 +334,7 @@ it('should work on a menu', async ({page}) => {
     [ { role: 'menuitem', name: 'First Item' },
       { role: 'menuitem', name: 'Second Item' },
       { role: 'menuitem', name: 'Third Item' } ],
-    orientation: options.WEBKIT ? 'vertical' : undefined
+    orientation: isWebKit ? 'vertical' : undefined
   });
 });
 

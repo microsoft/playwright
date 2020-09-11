@@ -18,8 +18,8 @@ import { options } from '../playwright.fixtures';
 import { electronFixtures } from './electron.fixture';
 const { it, expect, describe } = electronFixtures;
 
-describe('electron window', suite => {
-  suite.skip(!options.CHROMIUM);
+describe('electron window', (suite, parameters) => {
+  suite.skip(!options.CHROMIUM(parameters));
 }, () => {
   it('should click the button', async ({window, server}) => {
     await window.goto(server.PREFIX + '/input/button.html');

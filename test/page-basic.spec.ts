@@ -34,7 +34,7 @@ it('should not be visible in context.pages', async ({context}) => {
   expect(context.pages()).not.toContain(newPage);
 });
 
-it('should run beforeunload if asked for', async ({context, server}) => {
+it('should run beforeunload if asked for', async ({context, server, isChromium, isWebKit}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -44,9 +44,9 @@ it('should run beforeunload if asked for', async ({context, server}) => {
   const dialog = await newPage.waitForEvent('dialog');
   expect(dialog.type()).toBe('beforeunload');
   expect(dialog.defaultValue()).toBe('');
-  if (options.CHROMIUM)
+  if (isChromium)
     expect(dialog.message()).toBe('');
-  else if (options.WEBKIT)
+  else if (isWebKit)
     expect(dialog.message()).toBe('Leave?');
   else
     expect(dialog.message()).toBe('This page is asking you to confirm that you want to leave - data you have entered may not be saved.');
@@ -197,7 +197,7 @@ it('page.frame should respect url', async function({page, server}) {
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({page}) => {
+it('should have sane user agent', async ({page, isChromium, isFirefox}) => {
   const userAgent = await page.evaluate(() => navigator.userAgent);
   const [
     part1,
@@ -211,7 +211,7 @@ it('should have sane user agent', async ({page}) => {
   // Second part in parenthesis is platform - ignore it.
 
   // Third part for Firefox is the last one and encodes engine and browser versions.
-  if (options.FIREFOX) {
+  if (isFirefox) {
     const [engine, browser] = part3.split(' ');
     expect(engine.startsWith('Gecko')).toBe(true);
     expect(browser.startsWith('Firefox')).toBe(true);
@@ -225,7 +225,7 @@ it('should have sane user agent', async ({page}) => {
   // 5th part encodes real browser name and engine version.
   const [engine, browser] = part5.split(' ');
   expect(browser.startsWith('Safari/')).toBe(true);
-  if (options.CHROMIUM)
+  if (isChromium)
     expect(engine.includes('Chrome/')).toBe(true);
   else
     expect(engine.startsWith('Version/')).toBe(true);
@@ -252,8 +252,8 @@ it('frame.press should work', async ({page, server}) => {
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('frame.focus should work multiple times', test => {
-  test.fail(options.FIREFOX);
+it('frame.focus should work multiple times', (test, parameters) => {
+  test.fail(options.FIREFOX(parameters));
 }, async ({ context, server }) => {
   const page1 = await context.newPage();
   const page2 = await context.newPage();
