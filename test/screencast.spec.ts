@@ -29,12 +29,11 @@ declare global {
 }
 
 registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
-  let chromium;
-  if (options.WEBKIT && !LINUX) {
-    // WebKit on Mac & Windows cannot replay webm/vp8 video, so we launch chromium.
-    chromium = await playwright.chromium.launch();
-    context = await chromium.newContext();
-  }
+  // WebKit on Mac & Windows cannot replay webm/vp8 video, is unrelyable
+  // on Linux (times out) and in Firefox, so we always launch chromium for
+  // playback.
+  const chromium = await playwright.chromium.launch();
+  context = await chromium.newContext();
 
   const page = await context.newPage();
   const player = new VideoPlayer(page, server);
@@ -140,8 +139,7 @@ class VideoPlayer {
   }
 
   async seekLastFrame() {
-    const isWPE = LINUX && options.WEBKIT && options.HEADLESS;
-    return await this._page.evaluate(async x => await (window as any).seekLastFrame(x), isWPE);
+    return await this._page.evaluate(async x => await (window as any).seekLastFrame());
   }
 
   async pixels(point = {x: 0, y: 0}) {
@@ -162,13 +160,9 @@ class VideoPlayer {
 
 describe('screencast', suite => {
   suite.slow();
-  suite.flaky();
   suite.skip(options.WIRE);
 }, () => {
-  it('should capture static page', test => {
-    test.flaky(options.CHROMIUM && LINUX && !options.HEADLESS);
-    test.flaky(options.WEBKIT && LINUX);
-  }, async ({page, tmpDir, videoPlayer, toImpl}) => {
+  it('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
@@ -189,10 +183,7 @@ describe('screencast', suite => {
   });
 
   it('should capture navigation', test => {
-    test.flaky(options.CHROMIUM && MAC);
-    test.flaky(options.FIREFOX);
-    test.flaky(options.WEBKIT);
-    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
+    test.flaky();
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
@@ -221,7 +212,6 @@ describe('screencast', suite => {
   });
 
   it('should capture css transformation', test => {
-    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
     test.fail(options.WEBKIT && WIN, 'Does not work on WebKit Windows');
   }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
     const videoFile = path.join(tmpDir, 'v.webm');
@@ -244,10 +234,8 @@ describe('screencast', suite => {
     }
   });
 
-  it('should automatically start/finish when new page is created/closed', test => {
-    test.flaky(options.FIREFOX, 'Even slow is not slow enough');
-  }, async ({browserType, tmpDir}) => {
-    const browser = await browserType.launch({_videosPath: tmpDir});
+  it('should automatically start/finish when new page is created/closed', async ({browserType, defaultBrowserOptions, tmpDir}) => {
+    const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
     const [screencast, newPage] = await Promise.all([
       new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
@@ -263,8 +251,8 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should finish when contex closes', async ({browserType, tmpDir}) => {
-    const browser = await browserType.launch({_videosPath: tmpDir});
+  it('should finish when contex closes', async ({browserType, defaultBrowserOptions, tmpDir}) => {
+    const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
     const [video] = await Promise.all([
@@ -281,7 +269,7 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should fire striclty after context.newPage', async ({browser, tmpDir}) => {
+  it('should fire striclty after context.newPage', async ({browser}) => {
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
     const page = await context.newPage();
     // Should not hang.
@@ -289,8 +277,8 @@ describe('screencast', suite => {
     await context.close();
   });
 
-  it('should fire start event for popups', async ({browserType, tmpDir, server}) => {
-    const browser = await browserType.launch({_videosPath: tmpDir});
+  it('should fire start event for popups', async ({browserType, defaultBrowserOptions, tmpDir, server}) => {
+    const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
 
     const [page] = await Promise.all([
@@ -312,9 +300,7 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should scale frames down to the requested size ', test => {
-    test.fixme(options.WEBKIT && LINUX, 'Times out on bots');
-  }, async ({page, videoPlayer, tmpDir, server, toImpl}) => {
+  it('should scale frames down to the requested size ', async ({page, videoPlayer, tmpDir, server, toImpl}) => {
     await page.setViewportSize({width: 640, height: 480});
     const videoFile = path.join(tmpDir, 'v.webm');
     await page.goto(server.PREFIX + '/checkerboard.html');
