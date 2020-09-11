@@ -38,10 +38,23 @@ export type NetworkResourceTraceEvent = {
   sha1: string,
 };
 
+export type PageCreatedTraceEvent = {
+  type: 'page-created',
+  contextId: string,
+  pageId: string,
+};
+
+export type PageDestroyedTraceEvent = {
+  type: 'page-destroyed',
+  contextId: string,
+  pageId: string,
+};
+
 export type ActionTraceEvent = {
   type: 'action',
   contextId: string,
   action: string,
+  pageId?: string,
   target?: string,
   label?: string,
   value?: string,
