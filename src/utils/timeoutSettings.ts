@@ -17,7 +17,8 @@
 
 import { isDebugMode } from './utils';
 
-const DEFAULT_TIMEOUT = isDebugMode() ? 0 : 30000;
+export const DEFAULT_TIMEOUT = 30000;
+const TIMEOUT = isDebugMode() ? 0 : DEFAULT_TIMEOUT;
 
 export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
@@ -45,7 +46,7 @@ export class TimeoutSettings {
       return this._defaultTimeout;
     if (this._parent)
       return this._parent.navigationTimeout(options);
-    return DEFAULT_TIMEOUT;
+    return TIMEOUT;
   }
 
   timeout(options: { timeout?: number }): number {
@@ -55,12 +56,12 @@ export class TimeoutSettings {
       return this._defaultTimeout;
     if (this._parent)
       return this._parent.timeout(options);
-    return DEFAULT_TIMEOUT;
+    return TIMEOUT;
   }
 
   static timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
-    return DEFAULT_TIMEOUT;
+    return TIMEOUT;
   }
 }

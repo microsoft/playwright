@@ -23,11 +23,11 @@ import * as fs from 'fs';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
 import { ActionResult, InstrumentingAgent, instrumentingAgents, ActionMetadata } from '../server/instrumentation';
 import { Page } from '../server/page';
-import { Progress, runAbortableTask } from '../server/progress';
 import { Snapshotter } from './snapshotter';
 import * as types from '../server/types';
 import type { ElementHandle } from '../server/dom';
 import { helper, RegisteredListener } from '../server/helper';
+import { DEFAULT_TIMEOUT } from '../utils/timeoutSettings';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
@@ -59,20 +59,28 @@ export class Tracer implements InstrumentingAgent {
   }
 
   async onContextDestroyed(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
-    if (contextTracer) {
-      await contextTracer.dispose();
-      this._contextTracers.delete(context);
+    try {
+      const contextTracer = this._contextTracers.get(context);
+      if (contextTracer) {
+        await contextTracer.dispose();
+        this._contextTracers.delete(context);
+      }
+    } catch (e) {
+      // Do not throw from instrumentation.
     }
   }
 
   async onAfterAction(result: ActionResult, metadata?: ActionMetadata): Promise<void> {
-    if (!metadata)
-      return;
-    const contextTracer = this._contextTracers.get(metadata.page.context());
-    if (!contextTracer)
-      return;
-    await contextTracer.recordAction(result, metadata);
+    try {
+      if (!metadata)
+        return;
+      const contextTracer = this._contextTracers.get(metadata.page.context());
+      if (!contextTracer)
+        return;
+      await contextTracer.recordAction(result, metadata);
+    } catch (e) {
+      // Do not throw from instrumentation.
+    }
   }
 }
 
@@ -124,33 +132,21 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    await runAbortableTask(async progress => {
-      const label = options.label || 'snapshot';
-      const snapshot = await this._takeSnapshot(progress, page);
-      if (!snapshot)
-        return;
-      const event: ActionTraceEvent = {
-        type: 'action',
-        contextId: this._contextId,
-        action: 'snapshot',
-        label,
-        snapshot,
-      };
-      this._appendTraceEvent(event);
-    }, page._timeoutSettings.timeout(options));
+    const snapshot = await this._takeSnapshot(page, options.timeout);
+    if (!snapshot)
+      return;
+    const event: ActionTraceEvent = {
+      type: 'action',
+      contextId: this._contextId,
+      action: 'snapshot',
+      label: options.label || 'snapshot',
+      snapshot,
+    };
+    this._appendTraceEvent(event);
   }
 
   async recordAction(result: ActionResult, metadata: ActionMetadata) {
-    let snapshot: { sha1: string, duration: number } | undefined;
-    try {
-      // Use 20% of the default timeout.
-      // Never use zero timeout to avoid stalling because of snapshot.
-      const timeout = (metadata.page._timeoutSettings.timeout({}) / 5) || 6000;
-      snapshot = await runAbortableTask(progress => this._takeSnapshot(progress, metadata.page), timeout);
-    } catch (e) {
-      snapshot = undefined;
-    }
-
+    const snapshot = await this._takeSnapshot(metadata.page);
     const event: ActionTraceEvent = {
       type: 'action',
       contextId: this._contextId,
@@ -196,9 +192,14 @@ class ContextTracer implements SnapshotterDelegate {
     return typeof target === 'string' ? target : await target._previewPromise;
   }
 
-  private async _takeSnapshot(progress: Progress, page: Page): Promise<{ sha1: string, duration: number } | undefined> {
+  private async _takeSnapshot(page: Page, timeout: number = 0): Promise<{ sha1: string, duration: number } | undefined> {
+    if (!timeout) {
+      // Never use zero timeout to avoid stalling because of snapshot.
+      // Use 20% of the default timeout.
+      timeout = (page._timeoutSettings.timeout({}) || DEFAULT_TIMEOUT) / 5;
+    }
     const startTime = monotonicTime();
-    const snapshot = await this._snapshotter.takeSnapshot(progress, page);
+    const snapshot = await this._snapshotter.takeSnapshot(page, timeout);
     if (!snapshot)
       return;
     const buffer = Buffer.from(JSON.stringify(snapshot));
