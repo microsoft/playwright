@@ -122,7 +122,9 @@ class VideoPlayer {
       if (ended)
         throw new Error('All frames are empty');
       const pixels = await this.pixels();
-      if (!pixels.every(p => p === 255))
+      // Quick check if all pixels are almost white. In Firefox blank page is not
+      // truly white so whe check approximately.
+      if (!pixels.every(p => p > 245))
         return;
     }
   }
@@ -161,12 +163,16 @@ describe('screencast', suite => {
   suite.slow();
   suite.skip(options.WIRE);
 }, () => {
-  it('should capture static page', async ({page, tmpDir, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+  it('should capture static page', async ({browser, videoPlayer}) => {
+    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const page = await context.newPage();
+    const video = await page.waitForEvent('_videostarted') as any;
+
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     await new Promise(r => setTimeout(r, 1000));
-    await toImpl(page)._delegate.stopScreencast();
+    await page.close();
+
+    const videoFile = await video.path();
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
@@ -183,14 +189,18 @@ describe('screencast', suite => {
 
   it('should capture navigation', (test, parameters) => {
     test.flaky();
-  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+  }, async ({browser, server, videoPlayer}) => {
+    const context = await browser.newContext({_recordVideos: {width: 1280, height: 720}});
+    const page = await context.newPage();
+    const video = await page.waitForEvent('_videostarted') as any;
+
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     await new Promise(r => setTimeout(r, 1000));
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
     await new Promise(r => setTimeout(r, 1000));
-    await toImpl(page)._delegate.stopScreencast();
+    await page.close();
+
+    const videoFile = await video.path();
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
@@ -212,14 +222,18 @@ describe('screencast', suite => {
 
   it('should capture css transformation', (test, parameters) => {
     test.fail(options.WEBKIT(parameters) && WIN, 'Does not work on WebKit Windows');
-  }, async ({page, tmpDir, server, videoPlayer, toImpl}) => {
-    const videoFile = path.join(tmpDir, 'v.webm');
+  }, async ({browser, server, videoPlayer}) => {
+    const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.
-    await page.setViewportSize({width: 320, height: 240});
+    const context = await browser.newContext({_recordVideos: size, viewport: size});
+    const page = await context.newPage();
+    const video = await page.waitForEvent('_videostarted') as any;
+
     await page.goto(server.PREFIX + '/rotate-z.html');
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     await new Promise(r => setTimeout(r, 1000));
-    await toImpl(page)._delegate.stopScreencast();
+    await page.close();
+
+    const videoFile = await video.path();
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
@@ -299,12 +313,16 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should scale frames down to the requested size ', async ({page, videoPlayer, tmpDir, server, toImpl}) => {
-    await page.setViewportSize({width: 640, height: 480});
-    const videoFile = path.join(tmpDir, 'v.webm');
+  it('should scale frames down to the requested size ', async ({browser, videoPlayer, server}) => {
+    const context = await browser.newContext({
+      viewport: {width: 640, height: 480},
+      // Set size to 1/2 of the viewport.
+      _recordVideos: {width: 320, height: 240},
+    });
+    const page = await context.newPage();
+    const video = await page.waitForEvent('_videostarted') as any;
+
     await page.goto(server.PREFIX + '/checkerboard.html');
-    // Set size to 1/2 of the viewport.
-    await toImpl(page)._delegate.startScreencast({outputFile: videoFile, width: 320, height: 240});
     // Update the picture to ensure enough frames are generated.
     await page.$eval('.container', container => {
       container.firstElementChild.classList.remove('red');
@@ -314,7 +332,9 @@ describe('screencast', suite => {
       container.firstElementChild.classList.add('red');
     });
     await new Promise(r => setTimeout(r, 1000));
-    await toImpl(page)._delegate.stopScreencast();
+    await page.close();
+
+    const videoFile = await video.path();
     expect(fs.existsSync(videoFile)).toBe(true);
 
     await videoPlayer.load(videoFile);
