@@ -161,7 +161,6 @@ class VideoPlayer {
 
 describe('screencast', suite => {
   suite.slow();
-  suite.skip(options.WIRE);
 }, () => {
   it('should capture static page', async ({browser, videoPlayer}) => {
     const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
