@@ -238,10 +238,8 @@ export type BrowserContextOptions = {
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
   acceptDownloads?: boolean,
-  _recordVideos?: {
-    width: number,
-    height: number
-  }
+  _recordVideos?: boolean,
+  _videoSize?: Size,
 };
 
 export type EnvArray = { name: string, value: string }[];

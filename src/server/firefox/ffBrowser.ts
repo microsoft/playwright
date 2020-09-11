@@ -223,8 +223,9 @@ export class FFBrowserContext extends BrowserContext {
     if (this._options.colorScheme)
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
     if (this._options._recordVideos) {
+      const size = this._options._videoSize || this._options.viewport || { width: 1280, height: 720 };
       await this._browser._connection.send('Browser.setScreencastOptions', {
-        ...this._options._recordVideos,
+        ...size,
         dir: this._browser._options._videosPath!,
         browserContextId: this._browserContextId
       });

@@ -367,7 +367,8 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _recordVideos:
+        _recordVideos: boolean?
+        _videoSize:
           type: object?
           properties:
             width: number
