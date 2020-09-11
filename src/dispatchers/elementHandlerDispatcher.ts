@@ -20,6 +20,8 @@ import * as channels from '../protocol/channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
+import { runAbortableTask } from '../server/progress';
+import { ActionMetadata } from '../server/instrumentation';
 
 export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
   return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
@@ -77,8 +79,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     await this._elementHandle.hover(params);
   }
 
-  async click(params: channels.ElementHandleClickParams): Promise<void> {
-    await this._elementHandle.click(params);
+  async click(params: channels.ElementHandleClickParams, metadata?: channels.Metadata): Promise<void> {
+    const clickMetadata: ActionMetadata = { ...metadata, type: 'click', target: this._elementHandle, page: this._elementHandle._page };
+    return runAbortableTask(async progress => {
+      return await this._elementHandle.click(progress, params);
+    }, this._elementHandle._page._timeoutSettings.timeout(params), clickMetadata);
   }
 
   async dblclick(params: channels.ElementHandleDblclickParams): Promise<void> {
@@ -90,8 +95,11 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     return { values: await this._elementHandle.selectOption(elements, params.options || [], params) };
   }
 
-  async fill(params: channels.ElementHandleFillParams): Promise<void> {
-    await this._elementHandle.fill(params.value, params);
+  async fill(params: channels.ElementHandleFillParams, metadata?: channels.Metadata): Promise<void> {
+    const fillMetadata: ActionMetadata = { ...metadata, type: 'fill', value: params.value, target: this._elementHandle, page: this._elementHandle._page };
+    return runAbortableTask(async progress => {
+      return await this._elementHandle.fill(progress, params.value, params);
+    }, this._elementHandle._page._timeoutSettings.timeout(params), fillMetadata);
   }
 
   async selectText(params: channels.ElementHandleSelectTextParams): Promise<void> {

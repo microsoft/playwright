@@ -20,6 +20,8 @@ import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatch
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
+import { ActionMetadata } from '../server/instrumentation';
+import { runAbortableTask } from '../server/progress';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer> implements channels.FrameChannel {
   private _frame: Frame;
@@ -108,16 +110,22 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return { element: new ElementHandleDispatcher(this._scope, await this._frame.addStyleTag(params)) };
   }
 
-  async click(params: channels.FrameClickParams): Promise<void> {
-    await this._frame.click(params.selector, params);
+  async click(params: channels.FrameClickParams, metadata?: channels.Metadata): Promise<void> {
+    const clickMetadata: ActionMetadata = { ...metadata, type: 'click', target: params.selector, page: this._frame._page };
+    await runAbortableTask(async progress => {
+      return await this._frame.click(progress, params.selector, params);
+    }, this._frame._page._timeoutSettings.timeout(params), clickMetadata);
   }
 
   async dblclick(params: channels.FrameDblclickParams): Promise<void> {
     await this._frame.dblclick(params.selector, params);
   }
 
-  async fill(params: channels.FrameFillParams): Promise<void> {
-    await this._frame.fill(params.selector, params.value, params);
+  async fill(params: channels.FrameFillParams, metadata?: channels.Metadata): Promise<void> {
+    const fillMetadata: ActionMetadata = { ...metadata, type: 'fill', value: params.value, target: params.selector, page: this._frame._page };
+    await runAbortableTask(async progress => {
+      return await this._frame.fill(progress, params.selector, params.value, params);
+    }, this._frame._page._timeoutSettings.timeout(params), fillMetadata);
   }
 
   async focus(params: channels.FrameFocusParams): Promise<void> {

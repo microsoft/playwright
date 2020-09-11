@@ -32,7 +32,6 @@ import { Progress, runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
-import { instrumentingAgents } from './instrumentation';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -200,11 +199,7 @@ export class Page extends EventEmitter {
   }
 
   async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
-    return runAbortableTask(async progress => {
-      for (const agent of instrumentingAgents)
-        await agent.onBeforePageAction(this, progress);
-      return task(progress);
-    }, timeout);
+    return runAbortableTask(task, timeout);
   }
 
   async _onFileChooserOpened(handle: dom.ElementHandle) {

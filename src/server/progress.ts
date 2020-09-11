@@ -18,6 +18,7 @@ import { TimeoutError } from '../utils/errors';
 import { assert, monotonicTime } from '../utils/utils';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { debugLogger, LogName } from '../utils/debugLogger';
+import { ActionResult, instrumentingAgents, ActionMetadata } from './instrumentation';
 
 export interface Progress {
   readonly aborted: Promise<void>;
@@ -28,8 +29,8 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
-  const controller = new ProgressController(timeout);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, metadata?: ActionMetadata): Promise<T> {
+  const controller = new ProgressController(timeout, metadata);
   return controller.run(task);
 }
 
@@ -47,15 +48,17 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
+  private _metadata?: ActionMetadata;
   private _logName: LogName = 'api';
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number;
   private _timeout: number;
   private _logRecordring: string[] = [];
 
-  constructor(timeout: number) {
+  constructor(timeout: number, metadata?: ActionMetadata) {
     this._timeout = timeout;
     this._deadline = timeout ? monotonicTime() + timeout : 0;
+    this._metadata = metadata;
 
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
@@ -93,11 +96,19 @@ export class ProgressController {
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
     const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
+    const startTime = monotonicTime();
     try {
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
       this._state = 'finished';
+      const actionResult: ActionResult = {
+        startTime,
+        endTime: monotonicTime(),
+        logs: this._logRecordring,
+      };
+      for (const agent of instrumentingAgents)
+        await agent.onAfterAction(actionResult, this._metadata);
       this._logRecordring = [];
       return result;
     } catch (e) {
@@ -108,8 +119,16 @@ export class ProgressController {
           kLoggingNote);
       clearTimeout(timer);
       this._state = 'aborted';
-      this._logRecordring = [];
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
+      const actionResult: ActionResult = {
+        startTime,
+        endTime: monotonicTime(),
+        logs: this._logRecordring,
+        error: e,
+      };
+      for (const agent of instrumentingAgents)
+        await agent.onAfterAction(actionResult, this._metadata);
+      this._logRecordring = [];
       throw e;
     }
   }

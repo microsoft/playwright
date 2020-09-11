@@ -38,9 +38,20 @@ export type NetworkResourceTraceEvent = {
   sha1: string,
 };
 
-export type SnapshotTraceEvent = {
-  type: 'snapshot',
+export type ActionTraceEvent = {
+  type: 'action',
   contextId: string,
-  label: string,
-  sha1: string,
+  action: string,
+  target?: string,
+  label?: string,
+  value?: string,
+  startTime?: number,
+  endTime?: number,
+  logs?: string[],
+  snapshot?: {
+    sha1: string,
+    duration: number,
+  },
+  stack?: string,
+  error?: string,
 };
