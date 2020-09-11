@@ -8669,10 +8669,10 @@ index 0000000000000000000000000000000000000000..31a922667462de1a1edc24a10f25c064
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6cc90fc6576eeba03d9c6438b79ce4ca2af19db7
+index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a4f804673
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,387 @@
+@@ -0,0 +1,389 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -8856,7 +8856,9 @@ index 0000000000000000000000000000000000000000..6cc90fc6576eeba03d9c6438b79ce4ca
 +    {
 +        m_encoderQueue->dispatch([this, frame = WTFMove(frame)] {
 +            frame->convertToVpxImage(m_image.get());
-+            encodeFrame(m_image.get(), frame->duration());
++            // TODO: figure out why simply passing duration doesn't work well.
++            for (int i = 0; i < frame->duration(); i++)
++                encodeFrame(m_image.get(), 1);
 +        });
 +    }
 +
