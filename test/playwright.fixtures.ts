@@ -38,6 +38,7 @@ type PlaywrightWorkerFixtures = {
   browserType: BrowserType<Browser>;
   browser: Browser;
   httpService: {server: TestServer, httpsServer: TestServer}
+  domain: void;
   toImpl: (rpcObject: any) => any;
   isChromium: boolean;
   isFirefox: boolean;
