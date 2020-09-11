@@ -424,8 +424,16 @@ export class Frame extends EventEmitter {
     this._subtreeLifecycleEvents = events;
   }
 
+  setupNavigationProgressController(controller: ProgressController) {
+    this._page._disconnectedPromise.then(() => controller.abort(new Error('Navigation failed because page was closed!')));
+    this._page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
+    this._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));
+  }
+
   async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
-    return runNavigationTask(this, options, async progress => {
+    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(options));
+    this.setupNavigationProgressController(controller);
+    return controller.run(async progress => {
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
       progress.log(`navigating to "${url}", waiting until "${waitUntil}"`);
       const headers = this._page._state.extraHTTPHeaders || [];
@@ -471,31 +479,25 @@ export class Frame extends EventEmitter {
     });
   }
 
-  async waitForNavigation(options: types.NavigateOptions = {}): Promise<network.Response | null> {
-    return runNavigationTask(this, options, async progress => {
-      const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
-      progress.log(`waiting for navigation until "${waitUntil}"`);
+  async _waitForNavigation(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
+    const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
+    progress.log(`waiting for navigation until "${waitUntil}"`);
 
-      const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
-        // Any failed navigation results in a rejection.
-        if (event.error)
-          return true;
-        progress.log(`  navigated to "${this._url}"`);
+    const navigationEvent: NavigationEvent = await helper.waitForEvent(progress, this, Frame.Events.Navigation, (event: NavigationEvent) => {
+      // Any failed navigation results in a rejection.
+      if (event.error)
         return true;
-      }).promise;
-      if (navigationEvent.error)
-        throw navigationEvent.error;
+      progress.log(`  navigated to "${this._url}"`);
+      return true;
+    }).promise;
+    if (navigationEvent.error)
+      throw navigationEvent.error;
 
-      if (!this._subtreeLifecycleEvents.has(waitUntil))
-        await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
+    if (!this._subtreeLifecycleEvents.has(waitUntil))
+      await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
-      const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
-      return request ? request._finalRequest().response() : null;
-    });
-  }
-
-  async waitForLoadState(state: types.LifecycleEvent = 'load', options: types.TimeoutOptions = {}): Promise<void> {
-    return runNavigationTask(this, options, progress => this._waitForLoadState(progress, state));
+    const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
+    return request ? request._finalRequest().response() : null;
   }
 
   async _waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
@@ -606,7 +608,9 @@ export class Frame extends EventEmitter {
   }
 
   async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
-    return runNavigationTask(this, options, async progress => {
+    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(options));
+    this.setupNavigationProgressController(controller);
+    return controller.run(async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
       progress.log(`setting frame content, waiting until "${waitUntil}"`);
       const tag = `--playwright--set--content--${this._id}--${++this._setContentCounter}--`;
@@ -1081,15 +1085,6 @@ class SignalBarrier {
     if (!this._protectCount)
       this._promiseCallback();
   }
-}
-
-async function runNavigationTask<T>(frame: Frame, options: types.TimeoutOptions, task: (progress: Progress) => Promise<T>): Promise<T> {
-  const page = frame._page;
-  const controller = new ProgressController(page._timeoutSettings.navigationTimeout(options));
-  page._disconnectedPromise.then(() => controller.abort(new Error('Navigation failed because page was closed!')));
-  page._crashedPromise.then(() => controller.abort(new Error('Navigation failed because page crashed!')));
-  frame._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));
-  return controller.run(task);
 }
 
 function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.LifecycleEvent {

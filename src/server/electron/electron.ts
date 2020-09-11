@@ -27,7 +27,7 @@ import * as types from '../types';
 import { launchProcess, waitForLine, envArrayToObject } from '../processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { ProgressController } from '../progress';
+import { ProgressController, runAbortableTask } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { BrowserProcess } from '../browser';
@@ -88,7 +88,7 @@ export class ElectronApplication extends EventEmitter {
       this._windows.delete(page);
     });
     this._windows.add(page);
-    await page.mainFrame().waitForLoadState('domcontentloaded').catch(e => {}); // can happen after detach
+    await runAbortableTask(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded'), page._timeoutSettings.navigationTimeout({})).catch(e => {}); // can happen after detach
     this.emit(ElectronApplication.Events.Window, page);
   }
 

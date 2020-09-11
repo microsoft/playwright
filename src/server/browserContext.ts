@@ -175,7 +175,7 @@ export abstract class BrowserContext extends EventEmitter {
       await waitForEvent.promise;
     }
     const pages = this.pages();
-    await pages[0].mainFrame().waitForLoadState();
+    await pages[0].mainFrame()._waitForLoadState(progress, 'load');
     if (pages.length !== 1 || pages[0].mainFrame().url() !== 'about:blank')
       throw new Error(`Arguments can not specify page to be opened (first url is ${pages[0].mainFrame().url()})`);
     if (this._options.isMobile || this._options.locale) {
