@@ -217,7 +217,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _recordVideos: tOptional(tObject({
+    _recordVideos: tOptional(tBoolean),
+    _videoSize: tOptional(tObject({
       width: tNumber,
       height: tNumber,
     })),

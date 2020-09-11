@@ -235,7 +235,7 @@ describe('screencast', suite => {
 
   it('should automatically start/finish when new page is created/closed', async ({browserType, defaultBrowserOptions, tmpDir}) => {
     const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
-    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 }});
     const [screencast, newPage] = await Promise.all([
       new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
       context.newPage(),
@@ -252,7 +252,7 @@ describe('screencast', suite => {
 
   it('should finish when contex closes', async ({browserType, defaultBrowserOptions, tmpDir}) => {
     const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
-    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
 
     const [video] = await Promise.all([
       new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
@@ -269,7 +269,7 @@ describe('screencast', suite => {
   });
 
   it('should fire striclty after context.newPage', async ({browser}) => {
-    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
     const page = await context.newPage();
     // Should not hang.
     await page.waitForEvent('_videostarted');
@@ -278,7 +278,7 @@ describe('screencast', suite => {
 
   it('should fire start event for popups', async ({browserType, defaultBrowserOptions, tmpDir, server}) => {
     const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
-    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
 
     const [page] = await Promise.all([
       context.newPage(),
@@ -338,5 +338,44 @@ describe('screencast', suite => {
       const pixels = await videoPlayer.pixels({x: 300, y: 200});
       expectAll(pixels, almostRed);
     }
+  });
+
+  it('should use viewport as default size', async ({browser, page, tmpDir, videoPlayer, toImpl}) => {
+    const size = {width: 800, height: 600};
+    const context = await browser.newContext({_recordVideos: true, viewport: size});
+
+    const [video] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
+      context.newPage(),
+    ]);
+    await new Promise(r => setTimeout(r, 1000));
+    const [videoFile] = await Promise.all([
+      video.path(),
+      context.close(),
+    ]);
+
+    expect(fs.existsSync(videoFile)).toBe(true);
+    await videoPlayer.load(videoFile);
+    expect(await videoPlayer.videoWidth()).toBe(size.width);
+    expect(await videoPlayer.videoHeight()).toBe(size.height);
+  });
+
+  it('should be 1280x720 by default', async ({browser, page, tmpDir, videoPlayer, toImpl}) => {
+    const context = await browser.newContext({_recordVideos: true});
+
+    const [video] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
+      context.newPage(),
+    ]);
+    await new Promise(r => setTimeout(r, 1000));
+    const [videoFile] = await Promise.all([
+      video.path(),
+      context.close(),
+    ]);
+
+    expect(fs.existsSync(videoFile)).toBe(true);
+    await videoPlayer.load(videoFile);
+    expect(await videoPlayer.videoWidth()).toBe(1280);
+    expect(await videoPlayer.videoHeight()).toBe(720);
   });
 });

@@ -371,7 +371,8 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _recordVideos?: {
+  _recordVideos?: boolean,
+  _videoSize?: {
     width: number,
     height: number,
   },
@@ -408,7 +409,8 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _recordVideos?: {
+  _recordVideos?: boolean,
+  _videoSize?: {
     width: number,
     height: number,
   },
