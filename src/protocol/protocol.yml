@@ -12,6 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# This object can be send with any rpc call in the "metadata" field.
+Metadata:
+  type: object
+  properties:
+    stack: string?
+
+
 SerializedValue:
   type: object
   # Exactly one of the properties must be present.

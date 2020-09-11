@@ -19,6 +19,7 @@ import * as channels from '../protocol/channels';
 import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { assert, createGuid, debugAssert, isUnderTest } from '../utils/utils';
+import { tOptional } from '../protocol/validatorPrimitives';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -122,6 +123,7 @@ export class DispatcherConnection {
   private _rootDispatcher: Root;
   onmessage = (message: object) => {};
   private _validateParams: (type: string, method: string, params: any) => any;
+  private _validateMetadata: (metadata: any) => any;
 
   sendMessageToClient(guid: string, method: string, params: any, disallowDispatchers?: boolean) {
     const allowDispatchers = !disallowDispatchers;
@@ -152,6 +154,9 @@ export class DispatcherConnection {
         throw new ValidationError(`Unknown scheme for ${type}.${method}`);
       return scheme[name](params, '');
     };
+    this._validateMetadata = (metadata: any): any => {
+      return tOptional(scheme['Metadata'])(metadata, '');
+    };
   }
 
   rootDispatcher(): Dispatcher<any, any> {
@@ -159,7 +164,7 @@ export class DispatcherConnection {
   }
 
   async dispatch(message: object) {
-    const { id, guid, method, params } = message as any;
+    const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatchers.get(guid);
     if (!dispatcher) {
       this.onmessage({ id, error: serializeError(new Error('Target browser or context has been closed')) });
@@ -171,7 +176,7 @@ export class DispatcherConnection {
     }
     try {
       const validated = this._validateParams(dispatcher._type, method, params);
-      const result = await (dispatcher as any)[method](validated);
+      const result = await (dispatcher as any)[method](validated, this._validateMetadata(metadata));
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result, true) });
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });

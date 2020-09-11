@@ -23,6 +23,10 @@ export type Binary = string;
 export interface Channel extends EventEmitter {
 }
 
+export type Metadata = {
+  stack?: string,
+};
+
 export type SerializedValue = {
   n?: number,
   b?: boolean,
@@ -121,7 +125,7 @@ export interface RemoteBrowserChannel extends Channel {
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};
 export interface SelectorsChannel extends Channel {
-  register(params: SelectorsRegisterParams): Promise<SelectorsRegisterResult>;
+  register(params: SelectorsRegisterParams, metadata?: Metadata): Promise<SelectorsRegisterResult>;
 }
 export type SelectorsRegisterParams = {
   name: string,
@@ -139,8 +143,8 @@ export type BrowserTypeInitializer = {
   name: string,
 };
 export interface BrowserTypeChannel extends Channel {
-  launch(params: BrowserTypeLaunchParams): Promise<BrowserTypeLaunchResult>;
-  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams): Promise<BrowserTypeLaunchPersistentContextResult>;
+  launch(params: BrowserTypeLaunchParams, metadata?: Metadata): Promise<BrowserTypeLaunchResult>;
+  launchPersistentContext(params: BrowserTypeLaunchPersistentContextParams, metadata?: Metadata): Promise<BrowserTypeLaunchPersistentContextResult>;
 }
 export type BrowserTypeLaunchParams = {
   executablePath?: string,
@@ -325,11 +329,11 @@ export type BrowserInitializer = {
 };
 export interface BrowserChannel extends Channel {
   on(event: 'close', callback: (params: BrowserCloseEvent) => void): this;
-  close(params?: BrowserCloseParams): Promise<BrowserCloseResult>;
-  newContext(params: BrowserNewContextParams): Promise<BrowserNewContextResult>;
-  crNewBrowserCDPSession(params?: BrowserCrNewBrowserCDPSessionParams): Promise<BrowserCrNewBrowserCDPSessionResult>;
-  crStartTracing(params: BrowserCrStartTracingParams): Promise<BrowserCrStartTracingResult>;
-  crStopTracing(params?: BrowserCrStopTracingParams): Promise<BrowserCrStopTracingResult>;
+  close(params?: BrowserCloseParams, metadata?: Metadata): Promise<BrowserCloseResult>;
+  newContext(params: BrowserNewContextParams, metadata?: Metadata): Promise<BrowserNewContextResult>;
+  crNewBrowserCDPSession(params?: BrowserCrNewBrowserCDPSessionParams, metadata?: Metadata): Promise<BrowserCrNewBrowserCDPSessionResult>;
+  crStartTracing(params: BrowserCrStartTracingParams, metadata?: Metadata): Promise<BrowserCrStartTracingResult>;
+  crStopTracing(params?: BrowserCrStopTracingParams, metadata?: Metadata): Promise<BrowserCrStopTracingResult>;
 }
 export type BrowserCloseEvent = {};
 export type BrowserCloseParams = {};
@@ -447,23 +451,23 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
-  addCookies(params: BrowserContextAddCookiesParams): Promise<BrowserContextAddCookiesResult>;
-  addInitScript(params: BrowserContextAddInitScriptParams): Promise<BrowserContextAddInitScriptResult>;
-  clearCookies(params?: BrowserContextClearCookiesParams): Promise<BrowserContextClearCookiesResult>;
-  clearPermissions(params?: BrowserContextClearPermissionsParams): Promise<BrowserContextClearPermissionsResult>;
-  close(params?: BrowserContextCloseParams): Promise<BrowserContextCloseResult>;
-  cookies(params: BrowserContextCookiesParams): Promise<BrowserContextCookiesResult>;
-  exposeBinding(params: BrowserContextExposeBindingParams): Promise<BrowserContextExposeBindingResult>;
-  grantPermissions(params: BrowserContextGrantPermissionsParams): Promise<BrowserContextGrantPermissionsResult>;
-  newPage(params?: BrowserContextNewPageParams): Promise<BrowserContextNewPageResult>;
-  setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: BrowserContextSetDefaultTimeoutNoReplyParams): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
-  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams): Promise<BrowserContextSetExtraHTTPHeadersResult>;
-  setGeolocation(params: BrowserContextSetGeolocationParams): Promise<BrowserContextSetGeolocationResult>;
-  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams): Promise<BrowserContextSetHTTPCredentialsResult>;
-  setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
-  setOffline(params: BrowserContextSetOfflineParams): Promise<BrowserContextSetOfflineResult>;
-  crNewCDPSession(params: BrowserContextCrNewCDPSessionParams): Promise<BrowserContextCrNewCDPSessionResult>;
+  addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
+  addInitScript(params: BrowserContextAddInitScriptParams, metadata?: Metadata): Promise<BrowserContextAddInitScriptResult>;
+  clearCookies(params?: BrowserContextClearCookiesParams, metadata?: Metadata): Promise<BrowserContextClearCookiesResult>;
+  clearPermissions(params?: BrowserContextClearPermissionsParams, metadata?: Metadata): Promise<BrowserContextClearPermissionsResult>;
+  close(params?: BrowserContextCloseParams, metadata?: Metadata): Promise<BrowserContextCloseResult>;
+  cookies(params: BrowserContextCookiesParams, metadata?: Metadata): Promise<BrowserContextCookiesResult>;
+  exposeBinding(params: BrowserContextExposeBindingParams, metadata?: Metadata): Promise<BrowserContextExposeBindingResult>;
+  grantPermissions(params: BrowserContextGrantPermissionsParams, metadata?: Metadata): Promise<BrowserContextGrantPermissionsResult>;
+  newPage(params?: BrowserContextNewPageParams, metadata?: Metadata): Promise<BrowserContextNewPageResult>;
+  setDefaultNavigationTimeoutNoReply(params: BrowserContextSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<BrowserContextSetDefaultNavigationTimeoutNoReplyResult>;
+  setDefaultTimeoutNoReply(params: BrowserContextSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<BrowserContextSetDefaultTimeoutNoReplyResult>;
+  setExtraHTTPHeaders(params: BrowserContextSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<BrowserContextSetExtraHTTPHeadersResult>;
+  setGeolocation(params: BrowserContextSetGeolocationParams, metadata?: Metadata): Promise<BrowserContextSetGeolocationResult>;
+  setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: Metadata): Promise<BrowserContextSetHTTPCredentialsResult>;
+  setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
+  setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
+  crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -659,37 +663,37 @@ export interface PageChannel extends Channel {
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'videoStarted', callback: (params: PageVideoStartedEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
-  setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
-  setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams): Promise<PageSetDefaultTimeoutNoReplyResult>;
-  setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams): Promise<PageSetFileChooserInterceptedNoReplyResult>;
-  addInitScript(params: PageAddInitScriptParams): Promise<PageAddInitScriptResult>;
-  close(params: PageCloseParams): Promise<PageCloseResult>;
-  emulateMedia(params: PageEmulateMediaParams): Promise<PageEmulateMediaResult>;
-  exposeBinding(params: PageExposeBindingParams): Promise<PageExposeBindingResult>;
-  goBack(params: PageGoBackParams): Promise<PageGoBackResult>;
-  goForward(params: PageGoForwardParams): Promise<PageGoForwardResult>;
-  opener(params?: PageOpenerParams): Promise<PageOpenerResult>;
-  reload(params: PageReloadParams): Promise<PageReloadResult>;
-  screenshot(params: PageScreenshotParams): Promise<PageScreenshotResult>;
-  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams): Promise<PageSetExtraHTTPHeadersResult>;
-  setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams): Promise<PageSetNetworkInterceptionEnabledResult>;
-  setViewportSize(params: PageSetViewportSizeParams): Promise<PageSetViewportSizeResult>;
-  keyboardDown(params: PageKeyboardDownParams): Promise<PageKeyboardDownResult>;
-  keyboardUp(params: PageKeyboardUpParams): Promise<PageKeyboardUpResult>;
-  keyboardInsertText(params: PageKeyboardInsertTextParams): Promise<PageKeyboardInsertTextResult>;
-  keyboardType(params: PageKeyboardTypeParams): Promise<PageKeyboardTypeResult>;
-  keyboardPress(params: PageKeyboardPressParams): Promise<PageKeyboardPressResult>;
-  mouseMove(params: PageMouseMoveParams): Promise<PageMouseMoveResult>;
-  mouseDown(params: PageMouseDownParams): Promise<PageMouseDownResult>;
-  mouseUp(params: PageMouseUpParams): Promise<PageMouseUpResult>;
-  mouseClick(params: PageMouseClickParams): Promise<PageMouseClickResult>;
-  accessibilitySnapshot(params: PageAccessibilitySnapshotParams): Promise<PageAccessibilitySnapshotResult>;
-  pdf(params: PagePdfParams): Promise<PagePdfResult>;
-  crStartJSCoverage(params: PageCrStartJSCoverageParams): Promise<PageCrStartJSCoverageResult>;
-  crStopJSCoverage(params?: PageCrStopJSCoverageParams): Promise<PageCrStopJSCoverageResult>;
-  crStartCSSCoverage(params: PageCrStartCSSCoverageParams): Promise<PageCrStartCSSCoverageResult>;
-  crStopCSSCoverage(params?: PageCrStopCSSCoverageParams): Promise<PageCrStopCSSCoverageResult>;
-  bringToFront(params?: PageBringToFrontParams): Promise<PageBringToFrontResult>;
+  setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
+  setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
+  setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams, metadata?: Metadata): Promise<PageSetFileChooserInterceptedNoReplyResult>;
+  addInitScript(params: PageAddInitScriptParams, metadata?: Metadata): Promise<PageAddInitScriptResult>;
+  close(params: PageCloseParams, metadata?: Metadata): Promise<PageCloseResult>;
+  emulateMedia(params: PageEmulateMediaParams, metadata?: Metadata): Promise<PageEmulateMediaResult>;
+  exposeBinding(params: PageExposeBindingParams, metadata?: Metadata): Promise<PageExposeBindingResult>;
+  goBack(params: PageGoBackParams, metadata?: Metadata): Promise<PageGoBackResult>;
+  goForward(params: PageGoForwardParams, metadata?: Metadata): Promise<PageGoForwardResult>;
+  opener(params?: PageOpenerParams, metadata?: Metadata): Promise<PageOpenerResult>;
+  reload(params: PageReloadParams, metadata?: Metadata): Promise<PageReloadResult>;
+  screenshot(params: PageScreenshotParams, metadata?: Metadata): Promise<PageScreenshotResult>;
+  setExtraHTTPHeaders(params: PageSetExtraHTTPHeadersParams, metadata?: Metadata): Promise<PageSetExtraHTTPHeadersResult>;
+  setNetworkInterceptionEnabled(params: PageSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<PageSetNetworkInterceptionEnabledResult>;
+  setViewportSize(params: PageSetViewportSizeParams, metadata?: Metadata): Promise<PageSetViewportSizeResult>;
+  keyboardDown(params: PageKeyboardDownParams, metadata?: Metadata): Promise<PageKeyboardDownResult>;
+  keyboardUp(params: PageKeyboardUpParams, metadata?: Metadata): Promise<PageKeyboardUpResult>;
+  keyboardInsertText(params: PageKeyboardInsertTextParams, metadata?: Metadata): Promise<PageKeyboardInsertTextResult>;
+  keyboardType(params: PageKeyboardTypeParams, metadata?: Metadata): Promise<PageKeyboardTypeResult>;
+  keyboardPress(params: PageKeyboardPressParams, metadata?: Metadata): Promise<PageKeyboardPressResult>;
+  mouseMove(params: PageMouseMoveParams, metadata?: Metadata): Promise<PageMouseMoveResult>;
+  mouseDown(params: PageMouseDownParams, metadata?: Metadata): Promise<PageMouseDownResult>;
+  mouseUp(params: PageMouseUpParams, metadata?: Metadata): Promise<PageMouseUpResult>;
+  mouseClick(params: PageMouseClickParams, metadata?: Metadata): Promise<PageMouseClickResult>;
+  accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
+  pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
+  crStartJSCoverage(params: PageCrStartJSCoverageParams, metadata?: Metadata): Promise<PageCrStartJSCoverageResult>;
+  crStopJSCoverage(params?: PageCrStopJSCoverageParams, metadata?: Metadata): Promise<PageCrStopJSCoverageResult>;
+  crStartCSSCoverage(params: PageCrStartCSSCoverageParams, metadata?: Metadata): Promise<PageCrStartCSSCoverageResult>;
+  crStopCSSCoverage(params?: PageCrStopCSSCoverageParams, metadata?: Metadata): Promise<PageCrStopCSSCoverageResult>;
+  bringToFront(params?: PageBringToFrontParams, metadata?: Metadata): Promise<PageBringToFrontResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -1080,38 +1084,38 @@ export type FrameInitializer = {
 export interface FrameChannel extends Channel {
   on(event: 'loadstate', callback: (params: FrameLoadstateEvent) => void): this;
   on(event: 'navigated', callback: (params: FrameNavigatedEvent) => void): this;
-  evalOnSelector(params: FrameEvalOnSelectorParams): Promise<FrameEvalOnSelectorResult>;
-  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams): Promise<FrameEvalOnSelectorAllResult>;
-  addScriptTag(params: FrameAddScriptTagParams): Promise<FrameAddScriptTagResult>;
-  addStyleTag(params: FrameAddStyleTagParams): Promise<FrameAddStyleTagResult>;
-  check(params: FrameCheckParams): Promise<FrameCheckResult>;
-  click(params: FrameClickParams): Promise<FrameClickResult>;
-  content(params?: FrameContentParams): Promise<FrameContentResult>;
-  dblclick(params: FrameDblclickParams): Promise<FrameDblclickResult>;
-  dispatchEvent(params: FrameDispatchEventParams): Promise<FrameDispatchEventResult>;
-  evaluateExpression(params: FrameEvaluateExpressionParams): Promise<FrameEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams): Promise<FrameEvaluateExpressionHandleResult>;
-  fill(params: FrameFillParams): Promise<FrameFillResult>;
-  focus(params: FrameFocusParams): Promise<FrameFocusResult>;
-  frameElement(params?: FrameFrameElementParams): Promise<FrameFrameElementResult>;
-  getAttribute(params: FrameGetAttributeParams): Promise<FrameGetAttributeResult>;
-  goto(params: FrameGotoParams): Promise<FrameGotoResult>;
-  hover(params: FrameHoverParams): Promise<FrameHoverResult>;
-  innerHTML(params: FrameInnerHTMLParams): Promise<FrameInnerHTMLResult>;
-  innerText(params: FrameInnerTextParams): Promise<FrameInnerTextResult>;
-  press(params: FramePressParams): Promise<FramePressResult>;
-  querySelector(params: FrameQuerySelectorParams): Promise<FrameQuerySelectorResult>;
-  querySelectorAll(params: FrameQuerySelectorAllParams): Promise<FrameQuerySelectorAllResult>;
-  selectOption(params: FrameSelectOptionParams): Promise<FrameSelectOptionResult>;
-  setContent(params: FrameSetContentParams): Promise<FrameSetContentResult>;
-  setInputFiles(params: FrameSetInputFilesParams): Promise<FrameSetInputFilesResult>;
-  textContent(params: FrameTextContentParams): Promise<FrameTextContentResult>;
-  title(params?: FrameTitleParams): Promise<FrameTitleResult>;
-  type(params: FrameTypeParams): Promise<FrameTypeResult>;
-  uncheck(params: FrameUncheckParams): Promise<FrameUncheckResult>;
-  waitForFunction(params: FrameWaitForFunctionParams): Promise<FrameWaitForFunctionResult>;
-  waitForSelector(params: FrameWaitForSelectorParams): Promise<FrameWaitForSelectorResult>;
-  extendInjectedScript(params: FrameExtendInjectedScriptParams): Promise<FrameExtendInjectedScriptResult>;
+  evalOnSelector(params: FrameEvalOnSelectorParams, metadata?: Metadata): Promise<FrameEvalOnSelectorResult>;
+  evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, metadata?: Metadata): Promise<FrameEvalOnSelectorAllResult>;
+  addScriptTag(params: FrameAddScriptTagParams, metadata?: Metadata): Promise<FrameAddScriptTagResult>;
+  addStyleTag(params: FrameAddStyleTagParams, metadata?: Metadata): Promise<FrameAddStyleTagResult>;
+  check(params: FrameCheckParams, metadata?: Metadata): Promise<FrameCheckResult>;
+  click(params: FrameClickParams, metadata?: Metadata): Promise<FrameClickResult>;
+  content(params?: FrameContentParams, metadata?: Metadata): Promise<FrameContentResult>;
+  dblclick(params: FrameDblclickParams, metadata?: Metadata): Promise<FrameDblclickResult>;
+  dispatchEvent(params: FrameDispatchEventParams, metadata?: Metadata): Promise<FrameDispatchEventResult>;
+  evaluateExpression(params: FrameEvaluateExpressionParams, metadata?: Metadata): Promise<FrameEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: FrameEvaluateExpressionHandleParams, metadata?: Metadata): Promise<FrameEvaluateExpressionHandleResult>;
+  fill(params: FrameFillParams, metadata?: Metadata): Promise<FrameFillResult>;
+  focus(params: FrameFocusParams, metadata?: Metadata): Promise<FrameFocusResult>;
+  frameElement(params?: FrameFrameElementParams, metadata?: Metadata): Promise<FrameFrameElementResult>;
+  getAttribute(params: FrameGetAttributeParams, metadata?: Metadata): Promise<FrameGetAttributeResult>;
+  goto(params: FrameGotoParams, metadata?: Metadata): Promise<FrameGotoResult>;
+  hover(params: FrameHoverParams, metadata?: Metadata): Promise<FrameHoverResult>;
+  innerHTML(params: FrameInnerHTMLParams, metadata?: Metadata): Promise<FrameInnerHTMLResult>;
+  innerText(params: FrameInnerTextParams, metadata?: Metadata): Promise<FrameInnerTextResult>;
+  press(params: FramePressParams, metadata?: Metadata): Promise<FramePressResult>;
+  querySelector(params: FrameQuerySelectorParams, metadata?: Metadata): Promise<FrameQuerySelectorResult>;
+  querySelectorAll(params: FrameQuerySelectorAllParams, metadata?: Metadata): Promise<FrameQuerySelectorAllResult>;
+  selectOption(params: FrameSelectOptionParams, metadata?: Metadata): Promise<FrameSelectOptionResult>;
+  setContent(params: FrameSetContentParams, metadata?: Metadata): Promise<FrameSetContentResult>;
+  setInputFiles(params: FrameSetInputFilesParams, metadata?: Metadata): Promise<FrameSetInputFilesResult>;
+  textContent(params: FrameTextContentParams, metadata?: Metadata): Promise<FrameTextContentResult>;
+  title(params?: FrameTitleParams, metadata?: Metadata): Promise<FrameTitleResult>;
+  type(params: FrameTypeParams, metadata?: Metadata): Promise<FrameTypeResult>;
+  uncheck(params: FrameUncheckParams, metadata?: Metadata): Promise<FrameUncheckResult>;
+  waitForFunction(params: FrameWaitForFunctionParams, metadata?: Metadata): Promise<FrameWaitForFunctionResult>;
+  waitForSelector(params: FrameWaitForSelectorParams, metadata?: Metadata): Promise<FrameWaitForSelectorResult>;
+  extendInjectedScript(params: FrameExtendInjectedScriptParams, metadata?: Metadata): Promise<FrameExtendInjectedScriptResult>;
 }
 export type FrameLoadstateEvent = {
   add?: 'load' | 'domcontentloaded' | 'networkidle',
@@ -1528,8 +1532,8 @@ export type WorkerInitializer = {
 };
 export interface WorkerChannel extends Channel {
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
-  evaluateExpression(params: WorkerEvaluateExpressionParams): Promise<WorkerEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams): Promise<WorkerEvaluateExpressionHandleResult>;
+  evaluateExpression(params: WorkerEvaluateExpressionParams, metadata?: Metadata): Promise<WorkerEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, metadata?: Metadata): Promise<WorkerEvaluateExpressionHandleResult>;
 }
 export type WorkerCloseEvent = {};
 export type WorkerEvaluateExpressionParams = {
@@ -1561,12 +1565,12 @@ export type JSHandleInitializer = {
 };
 export interface JSHandleChannel extends Channel {
   on(event: 'previewUpdated', callback: (params: JSHandlePreviewUpdatedEvent) => void): this;
-  dispose(params?: JSHandleDisposeParams): Promise<JSHandleDisposeResult>;
-  evaluateExpression(params: JSHandleEvaluateExpressionParams): Promise<JSHandleEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams): Promise<JSHandleEvaluateExpressionHandleResult>;
-  getPropertyList(params?: JSHandleGetPropertyListParams): Promise<JSHandleGetPropertyListResult>;
-  getProperty(params: JSHandleGetPropertyParams): Promise<JSHandleGetPropertyResult>;
-  jsonValue(params?: JSHandleJsonValueParams): Promise<JSHandleJsonValueResult>;
+  dispose(params?: JSHandleDisposeParams, metadata?: Metadata): Promise<JSHandleDisposeResult>;
+  evaluateExpression(params: JSHandleEvaluateExpressionParams, metadata?: Metadata): Promise<JSHandleEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: JSHandleEvaluateExpressionHandleParams, metadata?: Metadata): Promise<JSHandleEvaluateExpressionHandleResult>;
+  getPropertyList(params?: JSHandleGetPropertyListParams, metadata?: Metadata): Promise<JSHandleGetPropertyListResult>;
+  getProperty(params: JSHandleGetPropertyParams, metadata?: Metadata): Promise<JSHandleGetPropertyResult>;
+  jsonValue(params?: JSHandleJsonValueParams, metadata?: Metadata): Promise<JSHandleJsonValueResult>;
 }
 export type JSHandlePreviewUpdatedEvent = {
   preview: string,
@@ -1622,35 +1626,35 @@ export type JSHandleJsonValueResult = {
 // ----------- ElementHandle -----------
 export type ElementHandleInitializer = {};
 export interface ElementHandleChannel extends JSHandleChannel {
-  evalOnSelector(params: ElementHandleEvalOnSelectorParams): Promise<ElementHandleEvalOnSelectorResult>;
-  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams): Promise<ElementHandleEvalOnSelectorAllResult>;
-  boundingBox(params?: ElementHandleBoundingBoxParams): Promise<ElementHandleBoundingBoxResult>;
-  check(params: ElementHandleCheckParams): Promise<ElementHandleCheckResult>;
-  click(params: ElementHandleClickParams): Promise<ElementHandleClickResult>;
-  contentFrame(params?: ElementHandleContentFrameParams): Promise<ElementHandleContentFrameResult>;
-  dblclick(params: ElementHandleDblclickParams): Promise<ElementHandleDblclickResult>;
-  dispatchEvent(params: ElementHandleDispatchEventParams): Promise<ElementHandleDispatchEventResult>;
-  fill(params: ElementHandleFillParams): Promise<ElementHandleFillResult>;
-  focus(params?: ElementHandleFocusParams): Promise<ElementHandleFocusResult>;
-  getAttribute(params: ElementHandleGetAttributeParams): Promise<ElementHandleGetAttributeResult>;
-  hover(params: ElementHandleHoverParams): Promise<ElementHandleHoverResult>;
-  innerHTML(params?: ElementHandleInnerHTMLParams): Promise<ElementHandleInnerHTMLResult>;
-  innerText(params?: ElementHandleInnerTextParams): Promise<ElementHandleInnerTextResult>;
-  ownerFrame(params?: ElementHandleOwnerFrameParams): Promise<ElementHandleOwnerFrameResult>;
-  press(params: ElementHandlePressParams): Promise<ElementHandlePressResult>;
-  querySelector(params: ElementHandleQuerySelectorParams): Promise<ElementHandleQuerySelectorResult>;
-  querySelectorAll(params: ElementHandleQuerySelectorAllParams): Promise<ElementHandleQuerySelectorAllResult>;
-  screenshot(params: ElementHandleScreenshotParams): Promise<ElementHandleScreenshotResult>;
-  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams): Promise<ElementHandleScrollIntoViewIfNeededResult>;
-  selectOption(params: ElementHandleSelectOptionParams): Promise<ElementHandleSelectOptionResult>;
-  selectText(params: ElementHandleSelectTextParams): Promise<ElementHandleSelectTextResult>;
-  setInputFiles(params: ElementHandleSetInputFilesParams): Promise<ElementHandleSetInputFilesResult>;
-  textContent(params?: ElementHandleTextContentParams): Promise<ElementHandleTextContentResult>;
-  type(params: ElementHandleTypeParams): Promise<ElementHandleTypeResult>;
-  uncheck(params: ElementHandleUncheckParams): Promise<ElementHandleUncheckResult>;
-  waitForElementState(params: ElementHandleWaitForElementStateParams): Promise<ElementHandleWaitForElementStateResult>;
-  waitForSelector(params: ElementHandleWaitForSelectorParams): Promise<ElementHandleWaitForSelectorResult>;
-  createSelectorForTest(params: ElementHandleCreateSelectorForTestParams): Promise<ElementHandleCreateSelectorForTestResult>;
+  evalOnSelector(params: ElementHandleEvalOnSelectorParams, metadata?: Metadata): Promise<ElementHandleEvalOnSelectorResult>;
+  evalOnSelectorAll(params: ElementHandleEvalOnSelectorAllParams, metadata?: Metadata): Promise<ElementHandleEvalOnSelectorAllResult>;
+  boundingBox(params?: ElementHandleBoundingBoxParams, metadata?: Metadata): Promise<ElementHandleBoundingBoxResult>;
+  check(params: ElementHandleCheckParams, metadata?: Metadata): Promise<ElementHandleCheckResult>;
+  click(params: ElementHandleClickParams, metadata?: Metadata): Promise<ElementHandleClickResult>;
+  contentFrame(params?: ElementHandleContentFrameParams, metadata?: Metadata): Promise<ElementHandleContentFrameResult>;
+  dblclick(params: ElementHandleDblclickParams, metadata?: Metadata): Promise<ElementHandleDblclickResult>;
+  dispatchEvent(params: ElementHandleDispatchEventParams, metadata?: Metadata): Promise<ElementHandleDispatchEventResult>;
+  fill(params: ElementHandleFillParams, metadata?: Metadata): Promise<ElementHandleFillResult>;
+  focus(params?: ElementHandleFocusParams, metadata?: Metadata): Promise<ElementHandleFocusResult>;
+  getAttribute(params: ElementHandleGetAttributeParams, metadata?: Metadata): Promise<ElementHandleGetAttributeResult>;
+  hover(params: ElementHandleHoverParams, metadata?: Metadata): Promise<ElementHandleHoverResult>;
+  innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: Metadata): Promise<ElementHandleInnerHTMLResult>;
+  innerText(params?: ElementHandleInnerTextParams, metadata?: Metadata): Promise<ElementHandleInnerTextResult>;
+  ownerFrame(params?: ElementHandleOwnerFrameParams, metadata?: Metadata): Promise<ElementHandleOwnerFrameResult>;
+  press(params: ElementHandlePressParams, metadata?: Metadata): Promise<ElementHandlePressResult>;
+  querySelector(params: ElementHandleQuerySelectorParams, metadata?: Metadata): Promise<ElementHandleQuerySelectorResult>;
+  querySelectorAll(params: ElementHandleQuerySelectorAllParams, metadata?: Metadata): Promise<ElementHandleQuerySelectorAllResult>;
+  screenshot(params: ElementHandleScreenshotParams, metadata?: Metadata): Promise<ElementHandleScreenshotResult>;
+  scrollIntoViewIfNeeded(params: ElementHandleScrollIntoViewIfNeededParams, metadata?: Metadata): Promise<ElementHandleScrollIntoViewIfNeededResult>;
+  selectOption(params: ElementHandleSelectOptionParams, metadata?: Metadata): Promise<ElementHandleSelectOptionResult>;
+  selectText(params: ElementHandleSelectTextParams, metadata?: Metadata): Promise<ElementHandleSelectTextResult>;
+  setInputFiles(params: ElementHandleSetInputFilesParams, metadata?: Metadata): Promise<ElementHandleSetInputFilesResult>;
+  textContent(params?: ElementHandleTextContentParams, metadata?: Metadata): Promise<ElementHandleTextContentResult>;
+  type(params: ElementHandleTypeParams, metadata?: Metadata): Promise<ElementHandleTypeResult>;
+  uncheck(params: ElementHandleUncheckParams, metadata?: Metadata): Promise<ElementHandleUncheckResult>;
+  waitForElementState(params: ElementHandleWaitForElementStateParams, metadata?: Metadata): Promise<ElementHandleWaitForElementStateResult>;
+  waitForSelector(params: ElementHandleWaitForSelectorParams, metadata?: Metadata): Promise<ElementHandleWaitForSelectorResult>;
+  createSelectorForTest(params: ElementHandleCreateSelectorForTestParams, metadata?: Metadata): Promise<ElementHandleCreateSelectorForTestResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -1987,7 +1991,7 @@ export type RequestInitializer = {
   redirectedFrom?: RequestChannel,
 };
 export interface RequestChannel extends Channel {
-  response(params?: RequestResponseParams): Promise<RequestResponseResult>;
+  response(params?: RequestResponseParams, metadata?: Metadata): Promise<RequestResponseResult>;
 }
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
@@ -2000,9 +2004,9 @@ export type RouteInitializer = {
   request: RequestChannel,
 };
 export interface RouteChannel extends Channel {
-  abort(params: RouteAbortParams): Promise<RouteAbortResult>;
-  continue(params: RouteContinueParams): Promise<RouteContinueResult>;
-  fulfill(params: RouteFulfillParams): Promise<RouteFulfillResult>;
+  abort(params: RouteAbortParams, metadata?: Metadata): Promise<RouteAbortResult>;
+  continue(params: RouteContinueParams, metadata?: Metadata): Promise<RouteContinueResult>;
+  fulfill(params: RouteFulfillParams, metadata?: Metadata): Promise<RouteFulfillResult>;
 }
 export type RouteAbortParams = {
   errorCode?: string,
@@ -2060,8 +2064,8 @@ export type ResponseInitializer = {
   }[],
 };
 export interface ResponseChannel extends Channel {
-  body(params?: ResponseBodyParams): Promise<ResponseBodyResult>;
-  finished(params?: ResponseFinishedParams): Promise<ResponseFinishedResult>;
+  body(params?: ResponseBodyParams, metadata?: Metadata): Promise<ResponseBodyResult>;
+  finished(params?: ResponseFinishedParams, metadata?: Metadata): Promise<ResponseFinishedResult>;
 }
 export type ResponseBodyParams = {};
 export type ResponseBodyOptions = {};
@@ -2095,8 +2099,8 @@ export type BindingCallInitializer = {
   args: SerializedValue[],
 };
 export interface BindingCallChannel extends Channel {
-  reject(params: BindingCallRejectParams): Promise<BindingCallRejectResult>;
-  resolve(params: BindingCallResolveParams): Promise<BindingCallResolveResult>;
+  reject(params: BindingCallRejectParams, metadata?: Metadata): Promise<BindingCallRejectResult>;
+  resolve(params: BindingCallResolveParams, metadata?: Metadata): Promise<BindingCallResolveResult>;
 }
 export type BindingCallRejectParams = {
   error: SerializedError,
@@ -2120,8 +2124,8 @@ export type DialogInitializer = {
   defaultValue: string,
 };
 export interface DialogChannel extends Channel {
-  accept(params: DialogAcceptParams): Promise<DialogAcceptResult>;
-  dismiss(params?: DialogDismissParams): Promise<DialogDismissResult>;
+  accept(params: DialogAcceptParams, metadata?: Metadata): Promise<DialogAcceptResult>;
+  dismiss(params?: DialogDismissParams, metadata?: Metadata): Promise<DialogDismissResult>;
 }
 export type DialogAcceptParams = {
   promptText?: string,
@@ -2137,7 +2141,7 @@ export type DialogDismissResult = void;
 // ----------- Video -----------
 export type VideoInitializer = {};
 export interface VideoChannel extends Channel {
-  path(params?: VideoPathParams): Promise<VideoPathResult>;
+  path(params?: VideoPathParams, metadata?: Metadata): Promise<VideoPathResult>;
 }
 export type VideoPathParams = {};
 export type VideoPathOptions = {};
@@ -2151,12 +2155,12 @@ export type DownloadInitializer = {
   suggestedFilename: string,
 };
 export interface DownloadChannel extends Channel {
-  path(params?: DownloadPathParams): Promise<DownloadPathResult>;
-  saveAs(params: DownloadSaveAsParams): Promise<DownloadSaveAsResult>;
-  saveAsStream(params?: DownloadSaveAsStreamParams): Promise<DownloadSaveAsStreamResult>;
-  failure(params?: DownloadFailureParams): Promise<DownloadFailureResult>;
-  stream(params?: DownloadStreamParams): Promise<DownloadStreamResult>;
-  delete(params?: DownloadDeleteParams): Promise<DownloadDeleteResult>;
+  path(params?: DownloadPathParams, metadata?: Metadata): Promise<DownloadPathResult>;
+  saveAs(params: DownloadSaveAsParams, metadata?: Metadata): Promise<DownloadSaveAsResult>;
+  saveAsStream(params?: DownloadSaveAsStreamParams, metadata?: Metadata): Promise<DownloadSaveAsStreamResult>;
+  failure(params?: DownloadFailureParams, metadata?: Metadata): Promise<DownloadFailureResult>;
+  stream(params?: DownloadStreamParams, metadata?: Metadata): Promise<DownloadStreamResult>;
+  delete(params?: DownloadDeleteParams, metadata?: Metadata): Promise<DownloadDeleteResult>;
 }
 export type DownloadPathParams = {};
 export type DownloadPathOptions = {};
@@ -2192,8 +2196,8 @@ export type DownloadDeleteResult = void;
 // ----------- Stream -----------
 export type StreamInitializer = {};
 export interface StreamChannel extends Channel {
-  read(params: StreamReadParams): Promise<StreamReadResult>;
-  close(params?: StreamCloseParams): Promise<StreamCloseResult>;
+  read(params: StreamReadParams, metadata?: Metadata): Promise<StreamReadResult>;
+  close(params?: StreamCloseParams, metadata?: Metadata): Promise<StreamCloseResult>;
 }
 export type StreamReadParams = {
   size?: number,
@@ -2212,8 +2216,8 @@ export type StreamCloseResult = void;
 export type CDPSessionInitializer = {};
 export interface CDPSessionChannel extends Channel {
   on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
-  send(params: CDPSessionSendParams): Promise<CDPSessionSendResult>;
-  detach(params?: CDPSessionDetachParams): Promise<CDPSessionDetachResult>;
+  send(params: CDPSessionSendParams, metadata?: Metadata): Promise<CDPSessionSendResult>;
+  detach(params?: CDPSessionDetachParams, metadata?: Metadata): Promise<CDPSessionDetachResult>;
 }
 export type CDPSessionEventEvent = {
   method: string,
@@ -2236,7 +2240,7 @@ export type CDPSessionDetachResult = void;
 // ----------- Electron -----------
 export type ElectronInitializer = {};
 export interface ElectronChannel extends Channel {
-  launch(params: ElectronLaunchParams): Promise<ElectronLaunchResult>;
+  launch(params: ElectronLaunchParams, metadata?: Metadata): Promise<ElectronLaunchResult>;
 }
 export type ElectronLaunchParams = {
   executablePath: string,
@@ -2273,10 +2277,10 @@ export interface ElectronApplicationChannel extends Channel {
   on(event: 'context', callback: (params: ElectronApplicationContextEvent) => void): this;
   on(event: 'close', callback: (params: ElectronApplicationCloseEvent) => void): this;
   on(event: 'window', callback: (params: ElectronApplicationWindowEvent) => void): this;
-  newBrowserWindow(params: ElectronApplicationNewBrowserWindowParams): Promise<ElectronApplicationNewBrowserWindowResult>;
-  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams): Promise<ElectronApplicationEvaluateExpressionResult>;
-  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
-  close(params?: ElectronApplicationCloseParams): Promise<ElectronApplicationCloseResult>;
+  newBrowserWindow(params: ElectronApplicationNewBrowserWindowParams, metadata?: Metadata): Promise<ElectronApplicationNewBrowserWindowResult>;
+  evaluateExpression(params: ElectronApplicationEvaluateExpressionParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionResult>;
+  evaluateExpressionHandle(params: ElectronApplicationEvaluateExpressionHandleParams, metadata?: Metadata): Promise<ElectronApplicationEvaluateExpressionHandleResult>;
+  close(params?: ElectronApplicationCloseParams, metadata?: Metadata): Promise<ElectronApplicationCloseResult>;
 }
 export type ElectronApplicationContextEvent = {
   context: BrowserContextChannel,

@@ -33,6 +33,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     };
   };
 
+  scheme.Metadata = tObject({
+    stack: tOptional(tString),
+  });
   scheme.SerializedValue = tObject({
     n: tOptional(tNumber),
     b: tOptional(tBoolean),
