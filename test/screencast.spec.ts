@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-import { options } from './playwright.fixtures';
-import { it, expect, describe, registerFixture } from '@playwright/test-runner';
+import { options, playwrightFixtures } from './playwright.fixtures';
 import type { Page } from '..';
 
 import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
 
-declare global {
-  interface TestState {
-    videoPlayer: VideoPlayer;
-  }
-}
+type TestState = {
+  videoPlayer: VideoPlayer;
+};
+const fixtures = playwrightFixtures.extend<{}, TestState>();
+const { it, expect, describe, registerFixture } = fixtures;
 
 registerFixture('videoPlayer', async ({playwright, context, server}, test) => {
   // WebKit on Mac & Windows cannot replay webm/vp8 video, is unrelyable

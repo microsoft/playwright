@@ -20,7 +20,8 @@ const path = require('path');
 const util = require('util');
 const os = require('os');
 const removeFolder = require('rimraf');
-const { expect } = require('@playwright/test-runner');
+const { fixtures } = require('@playwright/test-runner');
+const { expect } = fixtures;
 
 const {FlakinessDashboard} = require('../utils/flakiness-dashboard');
 const PROJECT_ROOT = fs.existsSync(path.join(__dirname, '..', 'package.json')) ? path.join(__dirname, '..') : path.join(__dirname, '..', '..');

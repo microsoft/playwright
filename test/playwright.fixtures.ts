@@ -23,42 +23,55 @@ import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-import { parameters, registerFixture, registerWorkerFixture } from '@playwright/test-runner';
 import { mkdtempAsync, removeFolderAsync } from './utils';
-export { it, fit, xit, describe, fdescribe, xdescribe, expect } from '@playwright/test-runner';
+import { fixtures as baseFixtures } from '@playwright/test-runner';
+
+export type PlaywrightWorkerFixtures = {
+  asset: (path: string) => string;
+  defaultBrowserOptions: LaunchOptions;
+  golden: (path: string) => string;
+  playwright: typeof import('../index');
+  browserName: string;
+  browserType: BrowserType<Browser>;
+  browser: Browser;
+  httpService: {server: TestServer, httpsServer: TestServer}
+  toImpl: (rpcObject: any) => any;
+};
+
+export type PlaywrightFixtures = {
+  context: BrowserContext;
+  server: TestServer;
+  page: Page;
+  httpsServer: TestServer;
+  browserServer: BrowserServer;
+  launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
+};
+
+const fixtures = baseFixtures.extend<PlaywrightWorkerFixtures, PlaywrightFixtures>();
+const { registerFixture, registerWorkerFixture } = fixtures;
+export const playwrightFixtures = fixtures;
+export const it = fixtures.it;
+export const fit = fixtures.fit;
+export const xit = fixtures.xit;
+export const describe = fixtures.describe;
+export const fdescribe = fixtures.fdescribe;
+export const xdescribe = fixtures.xdescribe;
+export const beforeEach = fixtures.beforeEach;
+export const afterEach = fixtures.afterEach;
+export const beforeAll = fixtures.beforeAll;
+export const afterAll = fixtures.afterAll;
+export const expect = fixtures.expect;
 
 export const options = {
-  CHROMIUM: parameters.browserName === 'chromium',
-  FIREFOX: parameters.browserName === 'firefox',
-  WEBKIT: parameters.browserName === 'webkit',
+  CHROMIUM: fixtures.parameters.browserName === 'chromium',
+  FIREFOX: fixtures.parameters.browserName === 'firefox',
+  WEBKIT: fixtures.parameters.browserName === 'webkit',
   HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
   // Tracing is currently not implemented under wire.
   TRACING: valueFromEnv('TRACING', false) && !process.env.PWWIRE,
 };
-
-declare global {
-  interface WorkerState {
-    asset: (path: string) => string;
-    defaultBrowserOptions: LaunchOptions;
-    golden: (path: string) => string;
-    playwright: typeof import('../index');
-    browserName: string;
-    browserType: BrowserType<Browser>;
-    browser: Browser;
-    httpService: {server: TestServer, httpsServer: TestServer}
-    toImpl: (rpcObject: any) => any;
-  }
-  interface TestState {
-    context: BrowserContext;
-    server: TestServer;
-    page: Page;
-    httpsServer: TestServer;
-    browserServer: BrowserServer;
-    launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
-  }
-}
 
 declare global {
   const MAC: boolean;
@@ -70,11 +83,11 @@ global['MAC'] = platform === 'darwin';
 global['LINUX'] = platform === 'linux';
 global['WIN'] = platform === 'win32';
 
-registerWorkerFixture('httpService', async ({}, test) => {
+registerWorkerFixture('httpService', async ({parallelIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + parameters.parallelIndex * 2;
+  const port = 8907 + parallelIndex * 2;
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
@@ -150,7 +163,7 @@ registerWorkerFixture('playwright', async ({browserName}, test) => {
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(__dirname, 'coverage-report', parameters.parallelIndex + '.json');
+    const coveragePath = path.join(__dirname, 'coverage-report', fixtures.parameters.parallelIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');

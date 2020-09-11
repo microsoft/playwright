@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { options } from '../playwright.fixtures';
-import { it, expect, describe, registerWorkerFixture } from '@playwright/test-runner';
+import { options, playwrightFixtures } from '../playwright.fixtures';
+const { it, expect, describe, registerWorkerFixture } = playwrightFixtures;
 
 registerWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
   const browser = await browserType.launch({

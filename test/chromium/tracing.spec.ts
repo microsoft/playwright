@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import { options } from '../playwright.fixtures';
-import { it, expect, describe, registerFixture } from '@playwright/test-runner';
-
+import { options, playwrightFixtures } from '../playwright.fixtures';
 import fs from 'fs';
 import path from 'path';
 import type { ChromiumBrowser } from '../..';
 
-declare global {
-  interface TestState {
-    outputTraceFile: string;
-  }
-}
+type TestState = {
+  outputTraceFile: string;
+};
+const fixtures = playwrightFixtures.extend<{}, TestState>();
+const { it, expect, describe, registerFixture } = fixtures;
+
 
 registerFixture('outputTraceFile', async ({tmpDir}, test) => {
   const outputTraceFile = path.join(tmpDir, `trace.json`);

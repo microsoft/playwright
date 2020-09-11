@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, registerFixture } from '@playwright/test-runner';
-import './playwright.fixtures';
+import { playwrightFixtures } from './playwright.fixtures';
 
 import path from 'path';
 import fs from 'fs';
@@ -23,12 +22,12 @@ import os from 'os';
 import {mkdtempAsync, removeFolderAsync} from './utils';
 import type { Browser, BrowserContext } from '..';
 
-declare global {
-  interface TestState {
-    downloadsBrowser: Browser;
-    persistentDownloadsContext: BrowserContext;
-  }
-}
+type TestState = {
+  downloadsBrowser: Browser;
+  persistentDownloadsContext: BrowserContext;
+};
+const fixtures = playwrightFixtures.extend<{}, TestState>();
+const { it, expect, registerFixture } = fixtures;
 
 registerFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, tmpDir}, test) => {
   server.setRoute('/download', (req, res) => {

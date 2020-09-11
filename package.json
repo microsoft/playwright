@@ -49,7 +49,7 @@
     "ws": "^7.3.1"
   },
   "devDependencies": {
-    "@playwright/test-runner": "^0.2.10",
+    "@playwright/test-runner": "^0.3.5",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",

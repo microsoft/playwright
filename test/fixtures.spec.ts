@@ -15,19 +15,19 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
-import './remoteServer.fixture';
-import { registerFixture } from '@playwright/test-runner';
-
+import { options } from './playwright.fixtures';
+import { serverFixtures } from './remoteServer.fixture';
 import { execSync } from 'child_process';
 import path from 'path';
+import { RemoteServer } from './remoteServer.fixture';
 
-declare global {
-  interface TestState {
-    connectedRemoteServer: TestState['remoteServer'];
-    stallingConnectedRemoteServer: TestState['stallingRemoteServer'];
-  }
-}
+export type FixturesFixtures = {
+  connectedRemoteServer: RemoteServer;
+  stallingConnectedRemoteServer: RemoteServer;
+};
+
+const fixturesFixtures = serverFixtures.extend<{}, FixturesFixtures>();
+const { it, describe, expect, registerFixture } = fixturesFixtures;
 
 registerFixture('connectedRemoteServer', async ({browserType, remoteServer, server}, test) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });

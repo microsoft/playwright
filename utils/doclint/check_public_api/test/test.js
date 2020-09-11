@@ -20,7 +20,8 @@ const checkPublicAPI = require('..');
 const Source = require('../../Source');
 const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
-const { registerWorkerFixture, describe, it, expect } = require('@playwright/test-runner');
+const { fixtures } = require('@playwright/test-runner');
+const { registerWorkerFixture, describe, it, expect } = fixtures;
 
 registerWorkerFixture('page', async({}, test) => {
   const browser = await playwright.chromium.launch();

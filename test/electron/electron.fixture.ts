@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import '../playwright.fixtures';
-import { registerFixture } from '@playwright/test-runner';
+import { playwrightFixtures } from '../playwright.fixtures';
 import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
-declare global {
-  interface TestState {
-    application: ElectronApplication;
-    window: ElectronPage;
-  }
-}
+type TestState = {
+  application: ElectronApplication;
+  window: ElectronPage;
+};
+
+export const electronFixtures = playwrightFixtures.extend<{}, TestState>();
+const { registerFixture } = electronFixtures;
 
 declare module '../../index' {
   const electron: ElectronLauncher;

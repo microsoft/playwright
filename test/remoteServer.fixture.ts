@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import { registerFixture } from '@playwright/test-runner';
+import { playwrightFixtures } from './playwright.fixtures';
 
 import path from 'path';
 import { spawn } from 'child_process';
 import type { BrowserType, Browser, LaunchOptions } from '..';
 
-declare global {
-  interface TestState {
-    remoteServer: RemoteServer;
-    stallingRemoteServer: RemoteServer;
-  }
-}
+type ServerFixtures = {
+  remoteServer: RemoteServer;
+  stallingRemoteServer: RemoteServer;
+};
+export const serverFixtures = playwrightFixtures.extend<{}, ServerFixtures>();
+const { registerFixture } = serverFixtures;
 
 const playwrightPath = path.join(__dirname, '..');
 
-class RemoteServer {
+export class RemoteServer {
   _output: Map<any, any>;
   _outputCallback: Map<any, any>;
   _browserType: BrowserType<Browser>;
