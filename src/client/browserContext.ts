@@ -31,7 +31,7 @@ import { isUnderTest, headersObjectToArray } from '../utils/utils';
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
-  readonly _browser: Browser | undefined;
+  readonly _browser: Browser | null = null;
   readonly _browserName: string;
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
   _timeoutSettings = new TimeoutSettings();
@@ -90,6 +90,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._channel.setDefaultTimeoutNoReply({ timeout });
+  }
+
+  browser(): Browser | null {
+    return this._browser;
   }
 
   pages(): Page[] {
