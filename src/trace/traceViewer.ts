@@ -17,7 +17,7 @@
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import type { NetworkResourceTraceEvent, ActionTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent } from './traceTypes';
+import type { NetworkResourceTraceEvent, ActionTraceEvent, ContextCreatedTraceEvent, ContextDestroyedTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent } from './traceTypes';
 import type { FrameSnapshot, PageSnapshot } from './snapshotter';
 import type { Browser, BrowserContext, Frame, Page, Route } from '../client/api';
 import type { Playwright } from '../client/playwright';
@@ -26,6 +26,8 @@ const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 type TraceEvent =
     ContextCreatedTraceEvent |
     ContextDestroyedTraceEvent |
+    PageCreatedTraceEvent |
+    PageDestroyedTraceEvent |
     NetworkResourceTraceEvent |
     ActionTraceEvent;
 
@@ -95,62 +97,77 @@ class TraceViewer {
         data.actions.push(event);
       }
     }
-    await uiPage.evaluate(contextData => {
-      for (const data of Object.values(contextData)) {
-        const header = document.createElement('div');
-        header.textContent = data.label;
-        header.style.margin = '10px';
-        document.body.appendChild(header);
-        for (const action of data.actions) {
-          const div = document.createElement('div');
-          div.style.whiteSpace = 'pre';
-          div.style.borderBottom = '1px solid black';
-          const lines = [];
-          lines.push(`action: ${action.action}`);
-          if (action.label)
-            lines.push(`label: ${action.label}`);
-          if (action.target)
-            lines.push(`target: ${action.target}`);
-          if (action.value)
-            lines.push(`value: ${action.value}`);
-          if (action.startTime && action.endTime)
-            lines.push(`duration: ${action.endTime - action.startTime}ms`);
-          div.textContent = lines.join('\n');
-          if (action.error) {
-            const details = document.createElement('details');
-            const summary = document.createElement('summary');
-            summary.textContent = 'error';
-            details.appendChild(summary);
-            details.appendChild(document.createTextNode(action.error));
-            div.appendChild(details);
+    await uiPage.evaluate(traces => {
+      function createSection(parent: Element, title: string): HTMLDetailsElement {
+        const details = document.createElement('details');
+        details.style.paddingLeft = '10px';
+        const summary = document.createElement('summary');
+        summary.textContent = title;
+        details.appendChild(summary);
+        parent.appendChild(details);
+        return details;
+      }
+
+      function createField(parent: Element, text: string) {
+        const div = document.createElement('div');
+        div.style.whiteSpace = 'pre';
+        div.textContent = text;
+        parent.appendChild(div);
+      }
+
+      for (const trace of traces) {
+        const traceSection = createSection(document.body, trace.traceFile);
+        traceSection.open = true;
+
+        const contextSections = new Map<string, Element>();
+        const pageSections = new Map<string, Element>();
+
+        for (const event of trace.events) {
+          if (event.type === 'context-created') {
+            const contextSection = createSection(traceSection, event.contextId);
+            contextSection.open = true;
+            contextSections.set(event.contextId, contextSection);
           }
-          if (action.stack) {
-            const details = document.createElement('details');
-            const summary = document.createElement('summary');
-            summary.textContent = 'callstack';
-            details.appendChild(summary);
-            details.appendChild(document.createTextNode(action.stack));
-            div.appendChild(details);
+          if (event.type === 'page-created') {
+            const contextSection = contextSections.get(event.contextId)!;
+            const pageSection = createSection(contextSection, event.pageId);
+            pageSection.open = true;
+            pageSections.set(event.pageId, pageSection);
           }
-          if (action.logs && action.logs.length) {
-            const details = document.createElement('details');
-            const summary = document.createElement('summary');
-            summary.textContent = 'logs';
-            details.appendChild(summary);
-            details.appendChild(document.createTextNode(action.logs.join('\n')));
-            div.appendChild(details);
+          if (event.type === 'action') {
+            const parentSection = event.pageId ? pageSections.get(event.pageId)! : contextSections.get(event.contextId)!;
+            const actionSection = createSection(parentSection, event.action);
+            if (event.label)
+              createField(actionSection, `label: ${event.label}`);
+            if (event.target)
+              createField(actionSection, `target: ${event.target}`);
+            if (event.value)
+              createField(actionSection, `value: ${event.value}`);
+            if (event.startTime && event.endTime)
+              createField(actionSection, `duration: ${event.endTime - event.startTime}ms`);
+            if (event.error) {
+              const errorSection = createSection(actionSection, 'error');
+              createField(errorSection, event.error);
+            }
+            if (event.stack) {
+              const errorSection = createSection(actionSection, 'stack');
+              createField(errorSection, event.stack);
+            }
+            if (event.logs && event.logs.length) {
+              const errorSection = createSection(actionSection, 'logs');
+              createField(errorSection, event.logs.join('\n'));
+            }
+            if (event.snapshot) {
+              const button = document.createElement('button');
+              button.style.display = 'block';
+              button.textContent = `snapshot after (${event.snapshot.duration}ms)`;
+              button.addEventListener('click', () => (window as any).renderSnapshot(event));
+              actionSection.appendChild(button);
+            }
           }
-          if (action.snapshot) {
-            const button = document.createElement('button');
-            button.style.display = 'block';
-            button.textContent = `snapshot after (${action.snapshot.duration}ms)`;
-            button.addEventListener('click', () => (window as any).renderSnapshot(action));
-            div.appendChild(button);
-          }
-          document.body.appendChild(div);
         }
       }
-    }, contextData);
+    }, this._traces);
   }
 
   private async _ensureContext(browser: Browser, contextId: string): Promise<BrowserContext> {

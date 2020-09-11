@@ -14,19 +14,20 @@
  * limitations under the License.
  */
 
-import type { BrowserContext } from '../server/browserContext';
+import { BrowserContext } from '../server/browserContext';
 import type { SanpshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent } from './traceTypes';
+import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
 import { ActionResult, InstrumentingAgent, instrumentingAgents, ActionMetadata } from '../server/instrumentation';
-import type { Page } from '../server/page';
+import { Page } from '../server/page';
 import { Progress, runAbortableTask } from '../server/progress';
 import { Snapshotter } from './snapshotter';
 import * as types from '../server/types';
 import type { ElementHandle } from '../server/dom';
+import { helper, RegisteredListener } from '../server/helper';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
@@ -80,7 +81,10 @@ class ContextTracer implements SnapshotterDelegate {
   private _traceStoragePromise: Promise<string>;
   private _appendEventChain: Promise<string>;
   private _writeArtifactChain: Promise<void>;
-  readonly _snapshotter: Snapshotter;
+  private _snapshotter: Snapshotter;
+  private _eventListeners: RegisteredListener[];
+  private _disposed = false;
+  private _pageToId = new Map<Page, string>();
 
   constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
     this._contextId = 'context@' + createGuid();
@@ -97,6 +101,9 @@ class ContextTracer implements SnapshotterDelegate {
     };
     this._appendTraceEvent(event);
     this._snapshotter = new Snapshotter(context, this);
+    this._eventListeners = [
+      helper.addEventListener(context, BrowserContext.Events.Page, this._onPage.bind(this)),
+    ];
   }
 
   onBlob(blob: SnapshotterBlob): void {
@@ -147,6 +154,7 @@ class ContextTracer implements SnapshotterDelegate {
     const event: ActionTraceEvent = {
       type: 'action',
       contextId: this._contextId,
+      pageId: this._pageToId.get(metadata.page),
       action: metadata.type,
       target: await this._targetToString(metadata.target),
       value: metadata.value,
@@ -158,6 +166,30 @@ class ContextTracer implements SnapshotterDelegate {
       error: result.error ? result.error.stack : undefined,
     };
     this._appendTraceEvent(event);
+  }
+
+  private _onPage(page: Page) {
+    const pageId = 'page@' + createGuid();
+    this._pageToId.set(page, pageId);
+
+    const event: PageCreatedTraceEvent = {
+      type: 'page-created',
+      contextId: this._contextId,
+      pageId,
+    };
+    this._appendTraceEvent(event);
+
+    page.once(Page.Events.Close, () => {
+      this._pageToId.delete(page);
+      if (this._disposed)
+        return;
+      const event: PageDestroyedTraceEvent = {
+        type: 'page-destroyed',
+        contextId: this._contextId,
+        pageId,
+      };
+      this._appendTraceEvent(event);
+    });
   }
 
   private async _targetToString(target: ElementHandle | string): Promise<string> {
@@ -176,6 +208,9 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   async dispose() {
+    this._disposed = true;
+    helper.removeEventListeners(this._eventListeners);
+    this._pageToId.clear();
     this._snapshotter.dispose();
     const event: ContextDestroyedTraceEvent = {
       type: 'context-destroyed',
