@@ -37,7 +37,8 @@ const fs = require('fs');
         _videosPath: __dirname,
       });
       const context = await browser.newContext({
-        _recordVideos: {width: 320, height: 240},
+        _recordVideos: true,
+        _videoSize: {width: 320, height: 240},
       });
       const page = await context.newPage();
       const video = await page.waitForEvent('_videostarted');
