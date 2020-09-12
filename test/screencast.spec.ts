@@ -163,7 +163,7 @@ describe('screencast', suite => {
   suite.slow();
 }, () => {
   it('should capture static page', async ({browser, videoPlayer}) => {
-    const context = await browser.newContext({_recordVideos: {width: 320, height: 240}});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
     const page = await context.newPage();
     const video = await page.waitForEvent('_videostarted') as any;
 
@@ -189,7 +189,7 @@ describe('screencast', suite => {
   it('should capture navigation', (test, parameters) => {
     test.flaky();
   }, async ({browser, server, videoPlayer}) => {
-    const context = await browser.newContext({_recordVideos: {width: 1280, height: 720}});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 1280, height: 720 } });
     const page = await context.newPage();
     const video = await page.waitForEvent('_videostarted') as any;
 
@@ -224,7 +224,7 @@ describe('screencast', suite => {
   }, async ({browser, server, videoPlayer}) => {
     const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.
-    const context = await browser.newContext({_recordVideos: size, viewport: size});
+    const context = await browser.newContext({ _recordVideos: true, _videoSize: size, viewport: size });
     const page = await context.newPage();
     const video = await page.waitForEvent('_videostarted') as any;
 
@@ -316,7 +316,8 @@ describe('screencast', suite => {
     const context = await browser.newContext({
       viewport: {width: 640, height: 480},
       // Set size to 1/2 of the viewport.
-      _recordVideos: {width: 320, height: 240},
+      _recordVideos: true,
+      _videoSize: { width: 320, height: 240 },
     });
     const page = await context.newPage();
     const video = await page.waitForEvent('_videostarted') as any;
