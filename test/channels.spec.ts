@@ -24,7 +24,6 @@ playwrightFixtures.defineWorkerFixture('domain', async ({ }, test) => {
   local.run(() => { });
   let err;
   local.on('error', e => err = e);
-  local.enter();
   await test(null);
   if (err)
     throw err;
