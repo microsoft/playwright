@@ -22,7 +22,7 @@ import * as js from './javascript';
 import { Page } from './page';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
-import { Progress } from './progress';
+import { Progress, runAbortableTask } from './progress';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 
 export class FrameExecutionContext extends js.ExecutionContext {
@@ -213,7 +213,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
-    return this._page._runAbortableTask(
+    return runAbortableTask(
         progress => this._waitAndScrollIntoViewIfNeeded(progress),
         this._page._timeoutSettings.timeout(options));
   }
@@ -432,7 +432,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectText(options: types.TimeoutOptions = {}): Promise<void> {
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       const poll = await this._evaluateHandleInUtility(([injected, node]) => {
         return injected.waitForVisibleAndSelectText(node);
@@ -469,7 +469,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async focus(): Promise<void> {
-    await this._page._runAbortableTask(async progress => {
+    await runAbortableTask(async progress => {
       const result = await this._focus(progress);
       await this._page._doSlowMo();
       return assertDone(throwRetargetableDOMError(result));
@@ -542,7 +542,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
-    return this._page._runAbortableTask(
+    return runAbortableTask(
         progress => this._page._screenshotter.screenshotElement(progress, this, options),
         this._page._timeoutSettings.timeout(options));
   }
@@ -572,7 +572,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: types.TimeoutOptions = {}): Promise<void> {
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`  waiting for element to be ${state}`);
       if (state === 'visible') {
         const poll = await this._evaluateHandleInUtility(([injected, node]) => {
@@ -625,7 +625,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     const info = this._page.selectors._parseSelector(selector);
     const task = waitForSelectorTask(info, state, this);
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       const context = await this._context.frame._context(info.world);
       const injected = await context.injectedScript();

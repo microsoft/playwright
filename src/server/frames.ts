@@ -23,7 +23,7 @@ import * as network from './network';
 import { Page } from './page';
 import * as types from './types';
 import { BrowserContext } from './browserContext';
-import { Progress, ProgressController } from './progress';
+import { Progress, ProgressController, runAbortableTask } from './progress';
 import { EventEmitter } from 'events';
 import { assert, makeWaitForNextTask } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
@@ -550,7 +550,7 @@ export class Frame extends EventEmitter {
       throw new Error(`state: expected one of (attached|detached|visible|hidden)`);
     const info = this._page.selectors._parseSelector(selector);
     const task = dom.waitForSelectorTask(info, state);
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`waiting for selector "${selector}"${state === 'attached' ? '' : ' to be ' + state}`);
       const result = await this._scheduleRerunnableHandleTask(progress, info.world, task);
       if (!result.asElement()) {
@@ -565,7 +565,7 @@ export class Frame extends EventEmitter {
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
     const info = this._page.selectors._parseSelector(selector);
     const task = dom.dispatchEventTask(info, type, eventInit || {});
-    await this._page._runAbortableTask(async progress => {
+    await runAbortableTask(async progress => {
       progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
       // Note: we always dispatch events in the main world.
       await this._scheduleRerunnableTask(progress, 'main', task);
@@ -799,7 +799,7 @@ export class Frame extends EventEmitter {
   private async _retryWithSelectorIfNotConnected<R>(
     selector: string, options: types.TimeoutOptions,
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       return this._retryWithProgressIfNotConnected(progress, selector, handle => action(progress, handle));
     }, this._page._timeoutSettings.timeout(options));
   }
@@ -824,7 +824,7 @@ export class Frame extends EventEmitter {
   async textContent(selector: string, options: types.TimeoutOptions = {}): Promise<string | null> {
     const info = this._page.selectors._parseSelector(selector);
     const task = dom.textContentTask(info);
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`  retrieving textContent from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
@@ -833,7 +833,7 @@ export class Frame extends EventEmitter {
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     const info = this._page.selectors._parseSelector(selector);
     const task = dom.innerTextTask(info);
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`  retrieving innerText from "${selector}"`);
       const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
       return result.innerText;
@@ -843,7 +843,7 @@ export class Frame extends EventEmitter {
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
     const info = this._page.selectors._parseSelector(selector);
     const task = dom.innerHTMLTask(info);
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`  retrieving innerHTML from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
@@ -852,7 +852,7 @@ export class Frame extends EventEmitter {
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
     const info = this._page.selectors._parseSelector(selector);
     const task = dom.getAttributeTask(info, name);
-    return this._page._runAbortableTask(async progress => {
+    return runAbortableTask(async progress => {
       progress.log(`  retrieving attribute "${name}" from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
@@ -896,7 +896,7 @@ export class Frame extends EventEmitter {
         return injectedScript.pollRaf((progress, continuePolling) => innerPredicate(arg) || continuePolling);
       return injectedScript.pollInterval(polling, (progress, continuePolling) => innerPredicate(arg) || continuePolling);
     }, { predicateBody, polling: options.pollingInterval, arg });
-    return this._page._runAbortableTask(
+    return runAbortableTask(
         progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
         this._page._timeoutSettings.timeout(options));
   }

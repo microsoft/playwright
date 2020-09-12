@@ -28,7 +28,7 @@ import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { Progress, runAbortableTask } from './progress';
+import { runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
@@ -198,10 +198,6 @@ export class Page extends EventEmitter {
     this._disconnectedCallback(new Error('Page closed'));
   }
 
-  async _runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
-    return runAbortableTask(task, timeout);
-  }
-
   async _onFileChooserOpened(handle: dom.ElementHandle) {
     const multiple = await handle.evaluate(element => !!(element as HTMLInputElement).multiple);
     if (!this.listenerCount(Page.Events.FileChooser)) {
@@ -356,7 +352,7 @@ export class Page extends EventEmitter {
   }
 
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
-    return this._runAbortableTask(
+    return runAbortableTask(
         progress => this._screenshotter.screenshotPage(progress, options),
         this._timeoutSettings.timeout(options));
   }
