@@ -552,7 +552,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async $$(selector: string): Promise<ElementHandle<Element>[]> {
-    return this._page.selectors._queryAll(this._context.frame, selector, this);
+    return this._page.selectors._queryAll(this._context.frame, selector, this, true /* adoptToMain */);
   }
 
   async _$evalExpression(selector: string, expression: string, isFunction: boolean, arg: any): Promise<any> {
