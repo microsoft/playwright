@@ -6,6 +6,7 @@ The Playwright API is available in multiple languages.
 - [JavaScript and TypeScript](#javascript-and-typescript)
 - [Python](#python)
 - [C#](#c)
+- [Go](#go)
 <!-- GEN:stop -->
 
 ## JavaScript and TypeScript
@@ -21,7 +22,7 @@ npm i -D playwright
 
 ## Python
 
-Playwright in Python is available in preview.
+Playwright for Python is available in preview.
 
 ```
 pip install playwright
@@ -33,7 +34,7 @@ pip install playwright
 
 ## C#
 
-Playwright in C# is available in preview.
+Playwright for C# is available in preview.
 
 ```
 dotnet add package PlaywrightSharp
@@ -41,3 +42,14 @@ dotnet add package PlaywrightSharp
 
 * [Playwright on NuGet](https://www.nuget.org/packages/PlaywrightSharp/)
 * [GitHub repo](https://github.com/hardkoded/playwright-sharp)
+
+## Go
+
+Playwright for Go is available in preview.
+
+```
+go get github.com/mxschmitt/playwright-go
+```
+
+* [GitHub repo](https://github.com/mxschmitt/playwright-go)
+* [Documentation](https://pkg.go.dev/github.com/mxschmitt/playwright-go?tab=doc)
