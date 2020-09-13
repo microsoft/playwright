@@ -31,6 +31,7 @@ export type ContextDestroyedTraceEvent = {
 export type NetworkResourceTraceEvent = {
   type: 'resource',
   contextId: string,
+  pageId: string,
   frameId: string,
   url: string,
   contentType: string,

@@ -29,8 +29,7 @@
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/checkCoverage.js",
-    "check-deps": "node utils/check_deps.js",
-    "show-trace": "node utils/showTestTraces.js"
+    "check-deps": "node utils/check_deps.js"
   },
   "author": {
     "name": "Microsoft Corporation"

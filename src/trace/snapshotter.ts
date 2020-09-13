@@ -26,7 +26,8 @@ import * as types from '../server/types';
 import { SnapshotData, takeSnapshotInFrame } from './snapshotterInjected';
 import { assert, calculateSha1, createGuid } from '../utils/utils';
 
-export type SanpshotterResource = {
+export type SnapshotterResource = {
+  pageId: string,
   frameId: string,
   url: string,
   contentType: string,
@@ -53,7 +54,8 @@ export type PageSnapshot = {
 
 export interface SnapshotterDelegate {
   onBlob(blob: SnapshotterBlob): void;
-  onResource(resource: SanpshotterResource): void;
+  onResource(resource: SnapshotterResource): void;
+  pageId(page: Page): string;
 }
 
 export class Snapshotter {
@@ -75,11 +77,11 @@ export class Snapshotter {
 
   private _onPage(page: Page) {
     this._eventListeners.push(helper.addEventListener(page, Page.Events.Response, (response: network.Response) => {
-      this._saveResource(response).catch(e => debugLogger.log('error', e));
+      this._saveResource(page, response).catch(e => debugLogger.log('error', e));
     }));
   }
 
-  private async _saveResource(response: network.Response) {
+  private async _saveResource(page: Page, response: network.Response) {
     const isRedirect = response.status() >= 300 && response.status() <= 399;
     if (isRedirect)
       return;
@@ -98,7 +100,8 @@ export class Snapshotter {
 
     const body = await response.body().catch(e => debugLogger.log('error', e));
     const sha1 = body ? calculateSha1(body) : 'none';
-    const resource: SanpshotterResource = {
+    const resource: SnapshotterResource = {
+      pageId: this._delegate.pageId(page),
       frameId: response.frame()._id,
       url,
       contentType,
