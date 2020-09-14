@@ -68,11 +68,7 @@ export class Selectors {
       return null;
     }
     const mainContext = await frame._mainContext();
-    if (elementHandle._context === mainContext)
-      return elementHandle;
-    const adopted = frame._page._delegate.adoptElementHandle(elementHandle, mainContext);
-    elementHandle.dispose();
-    return adopted;
+    return this._adoptIfNeeded(elementHandle, mainContext);
   }
 
   async _queryArray(frame: frames.Frame, selector: string, scope?: dom.ElementHandle): Promise<js.JSHandle<Element[]>> {
@@ -85,9 +81,9 @@ export class Selectors {
     return arrayHandle;
   }
 
-  async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, allowUtilityContext?: boolean): Promise<dom.ElementHandle<Element>[]> {
+  async _queryAll(frame: frames.Frame, selector: string, scope?: dom.ElementHandle, adoptToMain?: boolean): Promise<dom.ElementHandle<Element>[]> {
     const info = this._parseSelector(selector);
-    const context = await frame._context(allowUtilityContext ? info.world : 'main');
+    const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
       return injected.querySelectorAll(parsed, scope || document);
@@ -95,15 +91,27 @@ export class Selectors {
 
     const properties = await arrayHandle.getProperties();
     arrayHandle.dispose();
-    const result: dom.ElementHandle<Element>[] = [];
+
+    // Note: adopting elements one by one may be slow. If we encounter the issue here,
+    // we might introduce 'useMainContext' option or similar to speed things up.
+    const targetContext = adoptToMain ? await frame._mainContext() : context;
+    const result: Promise<dom.ElementHandle<Element>>[] = [];
     for (const property of properties.values()) {
       const elementHandle = property.asElement() as dom.ElementHandle<Element>;
       if (elementHandle)
-        result.push(elementHandle);
+        result.push(this._adoptIfNeeded(elementHandle, targetContext));
       else
         property.dispose();
     }
-    return result;
+    return Promise.all(result);
+  }
+
+  private async _adoptIfNeeded<T extends Node>(handle: dom.ElementHandle<T>, context: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
+    if (handle._context === context)
+      return handle;
+    const adopted = handle._page._delegate.adoptElementHandle(handle, context);
+    handle.dispose();
+    return adopted;
   }
 
   async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {

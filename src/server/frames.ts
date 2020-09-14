@@ -590,7 +590,7 @@ export class Frame extends EventEmitter {
   }
 
   async $$(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    return this._page.selectors._queryAll(this, selector);
+    return this._page.selectors._queryAll(this, selector, undefined, true /* adoptToMain */);
   }
 
   async content(): Promise<string> {
