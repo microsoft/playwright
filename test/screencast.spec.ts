@@ -20,9 +20,11 @@ import type { Page } from '..';
 import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
+import { mkdirIfNeeded } from '../lib/utils/utils';
 
 type TestState = {
   videoPlayer: VideoPlayer;
+  videoFile: string;
 };
 const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture } = fixtures;
@@ -41,6 +43,14 @@ defineTestFixture('videoPlayer', async ({playwright, context, server}, test) => 
     await chromium.close();
   else
     await page.close();
+});
+
+defineTestFixture('videoFile', async ({browserType}, runTest, info) => {
+  const { test, config } = info;
+  const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+  const videoFile = path.join(config.outputDir, 'screencast', `${browserType.name()}-${sanitizedTitle}-${test.results.length}_v.webm`);
+  await mkdirIfNeeded(videoFile);
+  await runTest(videoFile);
 });
 
 function almostRed(r, g, b, alpha) {
@@ -162,7 +172,7 @@ class VideoPlayer {
 describe('screencast', suite => {
   suite.slow();
 }, () => {
-  it('should capture static page', async ({browser, videoPlayer}) => {
+  it('should capture static page', async ({browser, videoPlayer, videoFile}) => {
     const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
     const page = await context.newPage();
     const video = await page.waitForEvent('_videostarted') as any;
@@ -171,8 +181,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const videoFile = await video.path();
-    expect(fs.existsSync(videoFile)).toBe(true);
+    const tmp = await video.path();
+    expect(fs.existsSync(tmp)).toBe(true);
+    fs.renameSync(tmp, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -188,7 +199,7 @@ describe('screencast', suite => {
 
   it('should capture navigation', (test, parameters) => {
     test.flaky();
-  }, async ({browser, server, videoPlayer}) => {
+  }, async ({browser, server, videoPlayer, videoFile}) => {
     const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 1280, height: 720 } });
     const page = await context.newPage();
     const video = await page.waitForEvent('_videostarted') as any;
@@ -199,8 +210,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const videoFile = await video.path();
-    expect(fs.existsSync(videoFile)).toBe(true);
+    const tmp = await video.path();
+    expect(fs.existsSync(tmp)).toBe(true);
+    fs.renameSync(tmp, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -221,7 +233,7 @@ describe('screencast', suite => {
 
   it('should capture css transformation', (test, parameters) => {
     test.fail(options.WEBKIT(parameters) && WIN, 'Does not work on WebKit Windows');
-  }, async ({browser, server, videoPlayer}) => {
+  }, async ({browser, server, videoPlayer, videoFile}) => {
     const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.
     const context = await browser.newContext({ _recordVideos: true, _videoSize: size, viewport: size });
@@ -232,8 +244,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const videoFile = await video.path();
-    expect(fs.existsSync(videoFile)).toBe(true);
+    const tmp = await video.path();
+    expect(fs.existsSync(tmp)).toBe(true);
+    fs.renameSync(tmp, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -312,7 +325,7 @@ describe('screencast', suite => {
     await browser.close();
   });
 
-  it('should scale frames down to the requested size ', async ({browser, videoPlayer, server}) => {
+  it('should scale frames down to the requested size ', async ({browser, videoPlayer, videoFile, server}) => {
     const context = await browser.newContext({
       viewport: {width: 640, height: 480},
       // Set size to 1/2 of the viewport.
@@ -334,8 +347,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const videoFile = await video.path();
-    expect(fs.existsSync(videoFile)).toBe(true);
+    const tmp = await video.path();
+    expect(fs.existsSync(tmp)).toBe(true);
+    fs.renameSync(tmp, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -360,7 +374,7 @@ describe('screencast', suite => {
     }
   });
 
-  it('should use viewport as default size', async ({browser, page, tmpDir, videoPlayer, toImpl}) => {
+  it('should use viewport as default size', async ({browser, videoPlayer, videoFile}) => {
     const size = {width: 800, height: 600};
     const context = await browser.newContext({_recordVideos: true, viewport: size});
 
@@ -369,18 +383,19 @@ describe('screencast', suite => {
       context.newPage(),
     ]);
     await new Promise(r => setTimeout(r, 1000));
-    const [videoFile] = await Promise.all([
+    const [tmpPath] = await Promise.all([
       video.path(),
       context.close(),
     ]);
 
-    expect(fs.existsSync(videoFile)).toBe(true);
+    expect(fs.existsSync(tmpPath)).toBe(true);
+    fs.renameSync(tmpPath, videoFile);
     await videoPlayer.load(videoFile);
     expect(await videoPlayer.videoWidth()).toBe(size.width);
     expect(await videoPlayer.videoHeight()).toBe(size.height);
   });
 
-  it('should be 1280x720 by default', async ({browser, page, tmpDir, videoPlayer, toImpl}) => {
+  it('should be 1280x720 by default', async ({browser, videoPlayer, videoFile}) => {
     const context = await browser.newContext({_recordVideos: true});
 
     const [video] = await Promise.all([
@@ -388,12 +403,13 @@ describe('screencast', suite => {
       context.newPage(),
     ]);
     await new Promise(r => setTimeout(r, 1000));
-    const [videoFile] = await Promise.all([
+    const [tmpPath] = await Promise.all([
       video.path(),
       context.close(),
     ]);
 
-    expect(fs.existsSync(videoFile)).toBe(true);
+    expect(fs.existsSync(tmpPath)).toBe(true);
+    fs.renameSync(tmpPath, videoFile);
     await videoPlayer.load(videoFile);
     expect(await videoPlayer.videoWidth()).toBe(1280);
     expect(await videoPlayer.videoHeight()).toBe(720);
