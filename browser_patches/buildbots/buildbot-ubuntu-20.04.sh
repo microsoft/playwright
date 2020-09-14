@@ -70,3 +70,6 @@ git pull origin master
 
 git pull origin master
 ../checkout_build_archive_upload.sh ffmpeg-cross-compile-win64 >/tmp/$(basename $0)--ffmpeg-cross-compile-win64.log || true
+
+git pull origin master
+../checkout_build_archive_upload.sh ffmpeg-linux >/tmp/$(basename $0)--ffmpeg-linux.log || true

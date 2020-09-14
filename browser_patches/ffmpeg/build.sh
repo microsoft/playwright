@@ -36,20 +36,27 @@ fi
 rm -rf ./output
 mkdir -p output
 
+dockerflags="";
+# Use |-it| to run docker to support Ctrl-C if we run the script inside interactive terminal.
+# Otherwise (e.g. cronjob) - do nothing.
+if [[ -t 0 ]]; then
+  dockerflags="-it"
+fi
+
 if [[ "$1" == "--mac" ]]; then
   bash ./build-mac.sh
   cd output && zip ffmpeg.zip ffmpeg-mac
-elif [[ "$1" == --cross-compile-win* ]]; then
+elif [[ "$1" == "--linux" ]]; then
   if ! command -v docker >/dev/null; then
     echo "ERROR: docker is required for the script"
     exit 1
   fi
-
-  dockerflags="";
-  # Use |-it| to run docker to support Ctrl-C if we run the script inside interactive terminal.
-  # Otherwise (e.g. cronjob) - do nothing.
-  if [[ -t 0 ]]; then
-    dockerflags="-it"
+  time docker run --init --rm -v"${PWD}":/host ${dockerflags} ubuntu:18.04 bash /host/build-linux.sh /host/output/ffmpeg-linux
+  cd output && zip ffmpeg.zip ffmpeg-linux
+elif [[ "$1" == --cross-compile-win* ]]; then
+  if ! command -v docker >/dev/null; then
+    echo "ERROR: docker is required for the script"
+    exit 1
   fi
 
   if [[ "$1" == "--cross-compile-win32" ]]; then
