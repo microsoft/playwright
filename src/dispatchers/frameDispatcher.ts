@@ -21,7 +21,7 @@ import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatche
 import { parseArgument, serializeResult } from './jsHandleDispatcher';
 import { ResponseDispatcher, RequestDispatcher } from './networkDispatchers';
 import { ActionMetadata } from '../server/instrumentation';
-import { runAbortableTask } from '../server/progress';
+import { ProgressController, runAbortableTask } from '../server/progress';
 
 export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer> implements channels.FrameChannel {
   private _frame: Frame;
@@ -53,8 +53,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     });
   }
 
-  async goto(params: channels.FrameGotoParams): Promise<channels.FrameGotoResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(params.url, params)) };
+  async goto(params: channels.FrameGotoParams, metadata?: channels.Metadata): Promise<channels.FrameGotoResult> {
+    const page = this._frame._page;
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'goto', value: params.url, page };
+    const controller = new ProgressController(page._timeoutSettings.navigationTimeout(params), actionMetadata);
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._frame.goto(controller, params.url, params)) };
   }
 
   async frameElement(): Promise<channels.FrameFrameElementResult> {
@@ -98,8 +101,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return { value: await this._frame.content() };
   }
 
-  async setContent(params: channels.FrameSetContentParams): Promise<void> {
-    await this._frame.setContent(params.html, params);
+  async setContent(params: channels.FrameSetContentParams, metadata?: channels.Metadata): Promise<void> {
+    const page = this._frame._page;
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'setContent', value: params.html, page };
+    const controller = new ProgressController(page._timeoutSettings.navigationTimeout(params), actionMetadata);
+    return await this._frame.setContent(controller, params.html, params);
   }
 
   async addScriptTag(params: channels.FrameAddScriptTagParams): Promise<channels.FrameAddScriptTagResult> {

@@ -19,9 +19,9 @@ import type { ElementHandle } from './dom';
 import type { Page } from './page';
 
 export type ActionMetadata = {
-  type: 'click' | 'fill' | 'dblclick' | 'hover' | 'selectOption' | 'setInputFiles' | 'type' | 'press' | 'check' | 'uncheck',
+  type: 'click' | 'fill' | 'dblclick' | 'hover' | 'selectOption' | 'setInputFiles' | 'type' | 'press' | 'check' | 'uncheck' | 'goto' | 'setContent' | 'goBack' | 'goForward' | 'reload',
   page: Page,
-  target: ElementHandle | string,
+  target?: ElementHandle | string,
   value?: string,
   stack?: string,
 };

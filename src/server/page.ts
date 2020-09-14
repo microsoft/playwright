@@ -262,8 +262,7 @@ export class Page extends EventEmitter {
       this.emit(Page.Events.Console, message);
   }
 
-  async reload(options: types.NavigateOptions = {}): Promise<network.Response | null> {
-    const controller = new ProgressController(this._timeoutSettings.navigationTimeout(options));
+  async reload(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
       const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
@@ -274,8 +273,7 @@ export class Page extends EventEmitter {
     return response;
   }
 
-  async goBack(options: types.NavigateOptions = {}): Promise<network.Response | null> {
-    const controller = new ProgressController(this._timeoutSettings.navigationTimeout(options));
+  async goBack(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
       const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
@@ -290,8 +288,7 @@ export class Page extends EventEmitter {
     return response;
   }
 
-  async goForward(options: types.NavigateOptions = {}): Promise<network.Response | null> {
-    const controller = new ProgressController(this._timeoutSettings.navigationTimeout(options));
+  async goForward(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
       const waitPromise = this.mainFrame()._waitForNavigation(progress, options);

@@ -430,8 +430,7 @@ export class Frame extends EventEmitter {
     this._detachedPromise.then(() => controller.abort(new Error('Navigating frame was detached!')));
   }
 
-  async goto(url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
-    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(options));
+  async goto(controller: ProgressController, url: string, options: types.GotoOptions = {}): Promise<network.Response | null> {
     this.setupNavigationProgressController(controller);
     return controller.run(async progress => {
       const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
@@ -607,8 +606,7 @@ export class Frame extends EventEmitter {
     });
   }
 
-  async setContent(html: string, options: types.NavigateOptions = {}): Promise<void> {
-    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(options));
+  async setContent(controller: ProgressController, html: string, options: types.NavigateOptions = {}): Promise<void> {
     this.setupNavigationProgressController(controller);
     return controller.run(async progress => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;

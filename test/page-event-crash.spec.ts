@@ -17,13 +17,13 @@
 
 import { it, expect, describe, options } from './playwright.fixtures';
 
-function crash(pageImpl, browserName) {
+function crash(page, toImpl, browserName) {
   if (browserName === 'chromium')
-    pageImpl.mainFrame().goto('chrome://crash').catch(e => {});
+    page.goto('chrome://crash').catch(e => {});
   else if (browserName === 'webkit')
-    pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
+    toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
   else if (browserName === 'firefox')
-    pageImpl._delegate._session.send('Page.crash', {}).catch(e => {});
+    toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
 describe('', (suite, parameters) => {
@@ -32,13 +32,13 @@ describe('', (suite, parameters) => {
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(toImpl(page), browserName);
+    crash(page, toImpl, browserName);
     await new Promise(f => page.on('crash', f));
   });
 
   it('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(toImpl(page), browserName);
+    crash(page, toImpl, browserName);
     await page.waitForEvent('crash');
     const err = await page.evaluate(() => {}).then(() => null, e => e);
     expect(err).toBeTruthy();
@@ -48,7 +48,7 @@ describe('', (suite, parameters) => {
   it('should cancel waitForEvent when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     const promise = page.waitForEvent('response').catch(e => e);
-    crash(toImpl(page), browserName);
+    crash(page, toImpl, browserName);
     const error = await promise;
     expect(error.message).toContain('Page crashed');
   });
@@ -58,7 +58,7 @@ describe('', (suite, parameters) => {
     server.setRoute('/one-style.css', () => {});
     const promise = page.goto(server.PREFIX + '/one-style.html').catch(e => e);
     await page.waitForNavigation({ waitUntil: 'domcontentloaded' });
-    crash(toImpl(page), browserName);
+    crash(page, toImpl, browserName);
     const error = await promise;
     expect(error.message).toContain('Navigation failed because page crashed');
   });
@@ -68,7 +68,7 @@ describe('', (suite, parameters) => {
     test.flaky(options.FIREFOX(parameters) && WIN);
   }, async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
-    crash(toImpl(page), browserName);
+    crash(page, toImpl, browserName);
     await page.waitForEvent('crash');
     await page.context().close();
   });
