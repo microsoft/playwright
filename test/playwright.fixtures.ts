@@ -48,7 +48,7 @@ declare global {
     browserType: BrowserType<Browser>;
     browser: Browser;
     httpService: {server: TestServer, httpsServer: TestServer}
-    dimain: void;
+    domain: void;
     toImpl: (rpcObject: any) => any;
   }
   interface TestState {
