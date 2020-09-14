@@ -15,7 +15,7 @@
  */
 
 import { BrowserContext } from '../server/browserContext';
-import type { SanpshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
+import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
@@ -118,10 +118,11 @@ class ContextTracer implements SnapshotterDelegate {
     this._writeArtifact(blob.sha1, blob.buffer);
   }
 
-  onResource(resource: SanpshotterResource): void {
+  onResource(resource: SnapshotterResource): void {
     const event: NetworkResourceTraceEvent = {
       type: 'resource',
       contextId: this._contextId,
+      pageId: resource.pageId,
       frameId: resource.frameId,
       url: resource.url,
       contentType: resource.contentType,
@@ -129,6 +130,10 @@ class ContextTracer implements SnapshotterDelegate {
       sha1: resource.sha1,
     };
     this._appendTraceEvent(event);
+  }
+
+  pageId(page: Page): string {
+    return this._pageToId.get(page)!;
   }
 
   async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
