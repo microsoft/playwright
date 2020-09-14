@@ -210,3 +210,57 @@ it('should work with multiline body', async ({page}) => {
 it('should wait for predicate with arguments', async ({page}) => {
   await page.waitForFunction(({arg1, arg2}) => arg1 + arg2 === 3, { arg1: 1, arg2: 2});
 });
+
+it('should not be called after finishing successfully', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+
+  const messages = [];
+  page.on('console', msg => {
+    if (msg.text().startsWith('waitForFunction'))
+      messages.push(msg.text());
+  });
+
+  await page.waitForFunction(() => {
+    console.log('waitForFunction1');
+    return true;
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    console.log('waitForFunction2');
+    return true;
+  });
+  await page.reload();
+  await page.waitForFunction(() => {
+    console.log('waitForFunction3');
+    return true;
+  });
+
+  expect(messages.join('|')).toBe('waitForFunction1|waitForFunction2|waitForFunction3');
+});
+
+it('should not be called after finishing unsuccessfully', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+
+  const messages = [];
+  page.on('console', msg => {
+    if (msg.text().startsWith('waitForFunction'))
+      messages.push(msg.text());
+  });
+
+  await page.waitForFunction(() => {
+    console.log('waitForFunction1');
+    throw new Error('waitForFunction1');
+  }).catch(e => null);
+  await page.reload();
+  await page.waitForFunction(() => {
+    console.log('waitForFunction2');
+    throw new Error('waitForFunction2');
+  }).catch(e => null);
+  await page.reload();
+  await page.waitForFunction(() => {
+    console.log('waitForFunction3');
+    throw new Error('waitForFunction3');
+  }).catch(e => null);
+
+  expect(messages.join('|')).toBe('waitForFunction1|waitForFunction2|waitForFunction3');
+});
