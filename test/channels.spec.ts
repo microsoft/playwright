@@ -15,8 +15,21 @@
  * limitations under the License.
  */
 
+import domain from 'domain';
+import { registerWorkerFixture } from '@playwright/test-runner';
 import { it, expect, options } from './playwright.fixtures';
 import type { ChromiumBrowser } from '..';
+
+registerWorkerFixture('domain', async ({ }, test) => {
+  const local = domain.create();
+  local.run(() => { });
+  let err;
+  local.on('error', e => err = e);
+  local.enter();
+  await test(null);
+  if (err)
+    throw err;
+});
 
 it('should work', async ({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();
@@ -142,6 +155,14 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
 
   await browser.close();
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
+});
+
+it('should work with the domain module', async ({ domain, browserType }) => {
+  const browser = await browserType.launch();
+  const page = await browser.newPage();
+  const result = await page.evaluate(() => 1 + 1);
+  expect(result).toBe(2);
+  await browser.close();
 });
 
 async function expectScopeState(object, golden) {
