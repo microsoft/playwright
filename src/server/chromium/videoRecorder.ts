@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-import { launchProcess } from '../processLauncher';
 import { ChildProcess } from 'child_process';
+import * as os from 'os';
+import * as path from 'path';
+import { assert } from '../../utils/utils';
+import { launchProcess } from '../processLauncher';
 import { Progress, ProgressController } from '../progress';
 import * as types from '../types';
-import * as path from 'path';
-import * as os from 'os';
-import { assert } from '../../utils/utils';
+import { spawnAsync } from '../validateDependencies';
 
 const fps = 25;
 
@@ -61,10 +62,16 @@ export class VideoRecorder {
 
     let ffmpegPath = 'ffmpeg';
     const binPath = path.join(__dirname, '../../../third_party/ffmpeg/');
-    if (os.platform() === 'win32')
+    if (os.platform() === 'win32') {
       ffmpegPath = path.join(binPath, os.arch() === 'x64' ? 'ffmpeg-win64.exe' : 'ffmpeg-win32.exe');
-    else if (os.platform() === 'darwin')
+    } else if (os.platform() === 'darwin') {
       ffmpegPath = path.join(binPath, 'ffmpeg-mac');
+    } else {
+      // Look for ffmpeg in PATH.
+      const {code, error} = await spawnAsync(ffmpegPath, ['-version'], {});
+      if (code !== 0 || error)
+        throw new Error('ffmpeg not found.\nInstall missing packages with:\n    sudo apt-get install ffmpeg');
+    }
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: ffmpegPath,
       args,
