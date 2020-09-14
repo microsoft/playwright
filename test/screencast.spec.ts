@@ -22,12 +22,29 @@ import path from 'path';
 import { TestServer } from '../utils/testserver';
 import { mkdirIfNeeded } from '../lib/utils/utils';
 
+type WorkerState = {
+  videoDir: string;
+};
 type TestState = {
   videoPlayer: VideoPlayer;
   videoFile: string;
 };
-const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
-const { it, expect, describe, defineTestFixture } = fixtures;
+const fixtures = playwrightFixtures.declareWorkerFixtures<WorkerState>().declareTestFixtures<TestState>();
+const { it, expect, describe, defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
+
+defineWorkerFixture('videoDir', async ({}, test, config) => {
+  await test(path.join((config as any).config.outputDir, 'screencast'));
+});
+
+overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions, videoDir}, test) => {
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
+    // Make sure videos are stored on the same volume as the test output dir.
+    _videosPath: videoDir,
+  });
+  await test(browser);
+  await browser.close();
+});
 
 defineTestFixture('videoPlayer', async ({playwright, context, server}, test) => {
   // WebKit on Mac & Windows cannot replay webm/vp8 video, is unrelyable
@@ -45,10 +62,10 @@ defineTestFixture('videoPlayer', async ({playwright, context, server}, test) => 
     await page.close();
 });
 
-defineTestFixture('videoFile', async ({browserType}, runTest, info) => {
-  const { test, config } = info;
+defineTestFixture('videoFile', async ({browserType, videoDir}, runTest, info) => {
+  const { test } = info;
   const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
-  const videoFile = path.join(config.outputDir, 'screencast', `${browserType.name()}-${sanitizedTitle}-${test.results.length}_v.webm`);
+  const videoFile = path.join(videoDir, `${browserType.name()}-${sanitizedTitle}-${test.results.length}_v.webm`);
   await mkdirIfNeeded(videoFile);
   await runTest(videoFile);
 });
@@ -181,9 +198,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const tmp = await video.path();
-    expect(fs.existsSync(tmp)).toBe(true);
-    fs.renameSync(tmp, videoFile);
+    const tmpPath = await video.path();
+    expect(fs.existsSync(tmpPath)).toBe(true);
+    fs.renameSync(tmpPath, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -210,9 +227,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const tmp = await video.path();
-    expect(fs.existsSync(tmp)).toBe(true);
-    fs.renameSync(tmp, videoFile);
+    const tmpPath = await video.path();
+    expect(fs.existsSync(tmpPath)).toBe(true);
+    fs.renameSync(tmpPath, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -244,9 +261,9 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await page.close();
 
-    const tmp = await video.path();
-    expect(fs.existsSync(tmp)).toBe(true);
-    fs.renameSync(tmp, videoFile);
+    const tmpPath = await video.path();
+    expect(fs.existsSync(tmpPath)).toBe(true);
+    fs.renameSync(tmpPath, videoFile);
 
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
@@ -259,8 +276,7 @@ describe('screencast', suite => {
     }
   });
 
-  it('should automatically start/finish when new page is created/closed', async ({browserType, defaultBrowserOptions, tmpDir}) => {
-    const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
+  it('should automatically start/finish when new page is created/closed', async ({browser, videoDir}) => {
     const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 }});
     const [screencast, newPage] = await Promise.all([
       new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
@@ -271,13 +287,11 @@ describe('screencast', suite => {
       screencast.path(),
       newPage.close(),
     ]);
-    expect(path.dirname(videoFile)).toBe(tmpDir);
+    expect(path.dirname(videoFile)).toBe(videoDir);
     await context.close();
-    await browser.close();
   });
 
-  it('should finish when contex closes', async ({browserType, defaultBrowserOptions, tmpDir}) => {
-    const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
+  it('should finish when contex closes', async ({browser, videoDir}) => {
     const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
 
     const [video] = await Promise.all([
@@ -289,9 +303,7 @@ describe('screencast', suite => {
       video.path(),
       context.close(),
     ]);
-    expect(path.dirname(videoFile)).toBe(tmpDir);
-
-    await browser.close();
+    expect(path.dirname(videoFile)).toBe(videoDir);
   });
 
   it('should fire striclty after context.newPage', async ({browser}) => {
@@ -302,8 +314,7 @@ describe('screencast', suite => {
     await context.close();
   });
 
-  it('should fire start event for popups', async ({browserType, defaultBrowserOptions, tmpDir, server}) => {
-    const browser = await browserType.launch({ ...defaultBrowserOptions, _videosPath: tmpDir });
+  it('should fire start event for popups', async ({browser, videoDir, server}) => {
     const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
 
     const [page] = await Promise.all([
@@ -320,9 +331,7 @@ describe('screencast', suite => {
       video.path(),
       popup.close()
     ]);
-    expect(path.dirname(videoFile)).toBe(tmpDir);
-
-    await browser.close();
+    expect(path.dirname(videoFile)).toBe(videoDir);
   });
 
   it('should scale frames down to the requested size ', async ({browser, videoPlayer, videoFile, server}) => {
