@@ -9,7 +9,7 @@ configurations are defined in [`//browser_patches/ffmpeg/CONFIG.sh`](./CONFIG.sh
 
 ## Building `ffmpeg-linux`
 
-Cross-compilation scripts are based on:
+Compilation scripts are based on:
 - https://trac.ffmpeg.org/wiki/CompilationGuide/Generic
 
 Prerequisites:
@@ -24,7 +24,7 @@ Building:
 
 ## Building `ffmpeg-mac`
 
-Cross-compilation scripts are based on:
+Compilation scripts are based on:
 - https://trac.ffmpeg.org/wiki/CompilationGuide/Generic
 - https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
 
