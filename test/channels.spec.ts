@@ -16,10 +16,11 @@
  */
 
 import domain from 'domain';
-import { it, expect, options, playwrightFixtures } from './playwright.fixtures';
+import { registerWorkerFixture } from '@playwright/test-runner';
+import { it, expect, options } from './playwright.fixtures';
 import type { ChromiumBrowser } from '..';
 
-playwrightFixtures.defineWorkerFixture('domain', async ({ }, test) => {
+registerWorkerFixture('domain', async ({ }, test) => {
   const local = domain.create();
   local.run(() => { });
   let err;
