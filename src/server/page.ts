@@ -28,7 +28,7 @@ import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
 import { FileChooser } from './fileChooser';
-import { runAbortableTask } from './progress';
+import { ProgressController, runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
@@ -262,34 +262,46 @@ export class Page extends EventEmitter {
       this.emit(Page.Events.Console, message);
   }
 
-  async reload(options?: types.NavigateOptions): Promise<network.Response | null> {
-    const waitPromise = this.mainFrame().waitForNavigation(options);
-    await this._delegate.reload();
-    const response = await waitPromise;
+  async reload(options: types.NavigateOptions = {}): Promise<network.Response | null> {
+    const controller = new ProgressController(this._timeoutSettings.navigationTimeout(options));
+    this.mainFrame().setupNavigationProgressController(controller);
+    const response = await controller.run(async progress => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
+      await this._delegate.reload();
+      return waitPromise;
+    });
     await this._doSlowMo();
     return response;
   }
 
-  async goBack(options?: types.NavigateOptions): Promise<network.Response | null> {
-    const waitPromise = this.mainFrame().waitForNavigation(options);
-    const result = await this._delegate.goBack();
-    if (!result) {
-      waitPromise.catch(() => {});
-      return null;
-    }
-    const response = await waitPromise;
+  async goBack(options: types.NavigateOptions = {}): Promise<network.Response | null> {
+    const controller = new ProgressController(this._timeoutSettings.navigationTimeout(options));
+    this.mainFrame().setupNavigationProgressController(controller);
+    const response = await controller.run(async progress => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
+      const result = await this._delegate.goBack();
+      if (!result) {
+        waitPromise.catch(() => {});
+        return null;
+      }
+      return waitPromise;
+    });
     await this._doSlowMo();
     return response;
   }
 
-  async goForward(options?: types.NavigateOptions): Promise<network.Response | null> {
-    const waitPromise = this.mainFrame().waitForNavigation(options);
-    const result = await this._delegate.goForward();
-    if (!result) {
-      waitPromise.catch(() => {});
-      return null;
-    }
-    const response = await waitPromise;
+  async goForward(options: types.NavigateOptions = {}): Promise<network.Response | null> {
+    const controller = new ProgressController(this._timeoutSettings.navigationTimeout(options));
+    this.mainFrame().setupNavigationProgressController(controller);
+    const response = await controller.run(async progress => {
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
+      const result = await this._delegate.goForward();
+      if (!result) {
+        waitPromise.catch(() => {});
+        return null;
+      }
+      return waitPromise;
+    });
     await this._doSlowMo();
     return response;
   }
