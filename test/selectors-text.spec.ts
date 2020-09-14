@@ -94,6 +94,9 @@ it('query', async ({page, isWebKit}) => {
   });
   expect(await page.$eval(`text=lowo`, e => e.outerHTML)).toBe('<div>helloworld</div>');
   expect(await page.$$eval(`text=lowo`, els => els.map(e => e.outerHTML).join(''))).toBe('<div>helloworld</div><span>helloworld</span>');
+
+  await page.setContent('<button id="testAttribute">Sign&nbsp;in</button>');
+  expect(await page.$eval('text="Sign in"', e => e.id)).toBe('testAttribute');
 });
 
 it('create', async ({page}) => {

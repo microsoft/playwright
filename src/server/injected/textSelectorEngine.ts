@@ -118,7 +118,7 @@ function queryInternal(root: SelectorRoot, matcher: Matcher, shadow: boolean): E
     if (!node)
       break;
     if (node.nodeType === Node.TEXT_NODE) {
-      lastText += node.nodeValue;
+      lastText += node.nodeValue ? node.nodeValue.replace(/\s/g, ' ') : node.nodeValue;
     } else {
       const element = node as Element;
       if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
