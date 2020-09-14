@@ -62,6 +62,8 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
           return obj.addListener;
         if (prop === 'removeEventListener')
           return obj.removeListener;
+        if (prop === 'domain') // https://github.com/microsoft/playwright/issues/3848
+          return obj.domain;
         return (params: any) => this._connection.sendMessageToServer(this._type, guid, String(prop), params);
       },
     });
