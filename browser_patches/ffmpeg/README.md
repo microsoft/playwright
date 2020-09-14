@@ -1,16 +1,30 @@
 # Playwright and FFMPEG
 
-Playwright requires FFMPEG to produce screncast. Playwright relies on stock
-FFMPEG on Ubuntu, and bundles FFMPEG binaries for Mac and Windows.
+Playwright requires FFMPEG to produce screncast and bundles FFMPEG binaries for Mac , Linux and Windows.
 
 ## Configuration
 
 We compile `libvpx` and `ffmpeg` only. Their source versions and build
 configurations are defined in [`//browser_patches/ffmpeg/CONFIG.sh`](./CONFIG.sh).
 
+## Building `ffmpeg-linux`
+
+Compilation scripts are based on:
+- https://trac.ffmpeg.org/wiki/CompilationGuide/Generic
+
+Prerequisites:
+- Mac or Linux
+- Docker
+
+Building:
+
+```
+~/playwright$ ./browser_patches/ffmpeg/build.sh --linux
+```
+
 ## Building `ffmpeg-mac`
 
-Cross-compilation scripts are based on:
+Compilation scripts are based on:
 - https://trac.ffmpeg.org/wiki/CompilationGuide/Generic
 - https://trac.ffmpeg.org/wiki/CompilationGuide/macOS
 

@@ -42,6 +42,12 @@ if [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
   BUILD_BLOB_NAME="ffmpeg-mac.zip"
+elif [[ "$BUILD_FLAVOR" == "ffmpeg-linux" ]]; then
+  BROWSER_NAME="ffmpeg"
+  EXTRA_BUILD_ARGS="--linux"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="20.04"
+  BUILD_BLOB_NAME="ffmpeg-linux.zip"
 elif [[ "$BUILD_FLAVOR" == "ffmpeg-cross-compile-win32" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--cross-compile-win32"
