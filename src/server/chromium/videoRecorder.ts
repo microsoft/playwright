@@ -67,10 +67,7 @@ export class VideoRecorder {
     } else if (os.platform() === 'darwin') {
       ffmpegPath = path.join(binPath, 'ffmpeg-mac');
     } else {
-      // Look for ffmpeg in PATH.
-      const {code, error} = await spawnAsync(ffmpegPath, ['-version'], {});
-      if (code !== 0 || error)
-        throw new Error('ffmpeg not found.\nInstall missing packages with:\n    sudo apt-get install ffmpeg');
+      ffmpegPath = path.join(binPath, 'ffmpeg-linux');
     }
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: ffmpegPath,
