@@ -423,4 +423,47 @@ describe('screencast', suite => {
     expect(await videoPlayer.videoWidth()).toBe(1280);
     expect(await videoPlayer.videoHeight()).toBe(720);
   });
+
+  it('should create read stream', async ({browser, server}) => {
+    const context = await browser.newContext({_recordVideos: true});
+
+    const [video, page] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
+      context.newPage(),
+    ]);
+    await page.goto(server.PREFIX + '/grid.html');
+    await new Promise(r => setTimeout(r, 1000));
+    const [stream, path] = await Promise.all([
+      video.createReadStream(),
+      video.path(),
+      // TODO: make it work with dead context!
+      page.close(),
+    ]);
+
+    const bufs = [];
+    stream.on('data', data => bufs.push(data));
+    await new Promise(f => stream.on('end', f));
+    const streamedData = Buffer.concat(bufs);
+    expect(fs.readFileSync(path).compare(streamedData)).toBe(0);
+  });
+
+  it('should saveAs', async ({browser, server, tmpDir}) => {
+    const context = await browser.newContext({_recordVideos: true});
+
+    const [video, page] = await Promise.all([
+      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
+      context.newPage(),
+    ]);
+    await page.goto(server.PREFIX + '/grid.html');
+    await new Promise(r => setTimeout(r, 1000));
+    const saveAsPath = path.join(tmpDir, 'v.webm');
+    const [videoPath] = await Promise.all([
+      video.path(),
+      video.saveAs(saveAsPath),
+      // TODO: make it work with dead context!
+      page.close(),
+    ]);
+
+    expect(fs.readFileSync(videoPath).compare(fs.readFileSync(saveAsPath))).toBe(0);
+  });
 });

@@ -814,6 +814,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.DialogDismissParams = tOptional(tObject({}));
   scheme.VideoPathParams = tOptional(tObject({}));
+  scheme.VideoSaveAsParams = tObject({
+    path: tString,
+  });
+  scheme.VideoStreamParams = tOptional(tObject({}));
   scheme.DownloadPathParams = tOptional(tObject({}));
   scheme.DownloadSaveAsParams = tObject({
     path: tString,

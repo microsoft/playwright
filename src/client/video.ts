@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
+import { Readable } from 'stream';
 import * as channels from '../protocol/channels';
+import * as fs from 'fs';
+import { mkdirIfNeeded } from '../utils/utils';
 import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
+import { Stream } from './stream';
 
 export class Video extends ChannelOwner<channels.VideoChannel, channels.VideoInitializer> {
   private _browser: Browser | null;
@@ -35,5 +39,32 @@ export class Video extends ChannelOwner<channels.VideoChannel, channels.VideoIni
     if (this._browser && this._browser._isRemote)
       throw new Error(`Path is not available when using browserType.connect().`);
     return (await this._channel.path()).value;
+  }
+
+  async saveAs(path: string): Promise<void> {
+    return this._wrapApiCall('video.saveAs', async () => {
+      if (!this._browser || !this._browser._isRemote) {
+        await this._channel.saveAs({ path });
+        return;
+      }
+
+      const stream = await this.createReadStream();
+      if (!stream)
+        throw new Error('Failed to copy video from server');
+      await mkdirIfNeeded(path);
+      await new Promise((resolve, reject) => {
+        stream.pipe(fs.createWriteStream(path))
+            .on('finish' as any, resolve)
+            .on('error' as any, reject);
+      });
+    });
+  }
+
+  async createReadStream(): Promise<Readable | null> {
+    const result = await this._channel.stream();
+    if (!result.stream)
+      return null;
+    const stream = Stream.from(result.stream);
+    return stream.stream();
   }
 }
