@@ -24,8 +24,10 @@ it('should create new context', async function({browser}) {
   const context = await browser.newContext();
   expect(browser.contexts().length).toBe(1);
   expect(browser.contexts().indexOf(context) !== -1).toBe(true);
+  expect(browser).toBe(context.browser());
   await context.close();
   expect(browser.contexts().length).toBe(0);
+  expect(browser).toBe(context.browser());
 });
 
 it('window.open should use parent tab context', async function({browser, server}) {

@@ -24,7 +24,7 @@ import * as fs from 'fs';
 import { mkdirIfNeeded } from '../utils/utils';
 
 export class Download extends ChannelOwner<channels.DownloadChannel, channels.DownloadInitializer> {
-  private _browser: Browser | undefined;
+  private _browser: Browser | null;
 
   static from(download: channels.DownloadChannel): Download {
     return (download as any)._object;

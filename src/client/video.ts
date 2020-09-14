@@ -20,7 +20,7 @@ import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 
 export class Video extends ChannelOwner<channels.VideoChannel, channels.VideoInitializer> {
-  private _browser: Browser | undefined;
+  private _browser: Browser | null;
 
   static from(channel: channels.VideoChannel): Video {
     return (channel as any)._object;

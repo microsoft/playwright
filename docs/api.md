@@ -309,6 +309,7 @@ await context.close();
 - [event: 'page'](#event-page)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg)
+- [browserContext.browser()](#browsercontextbrowser)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
@@ -398,6 +399,10 @@ await browserContext.addInitScript({
 ```
 
 > **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg) and [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg) is not defined.
+
+#### browserContext.browser()
+- returns: <[null]|[Browser]> Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
+
 #### browserContext.clearCookies()
 - returns: <[Promise]>
 
@@ -4430,6 +4435,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [event: 'page'](#event-page)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg)
+- [browserContext.browser()](#browsercontextbrowser)
 - [browserContext.clearCookies()](#browsercontextclearcookies)
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
