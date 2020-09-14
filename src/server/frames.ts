@@ -999,12 +999,14 @@ class RerunnableTask {
   private _reject: (reason: Error) => void = () => {};
   private _progress: Progress;
   private _returnByValue: boolean;
+  private _contextData: ContextData;
 
   constructor(data: ContextData, progress: Progress, task: dom.SchedulableTask<any>, returnByValue: boolean) {
     this._task = task;
     this._progress = progress;
     this._returnByValue = returnByValue;
-    data.rerunnableTasks.add(this);
+    this._contextData = data;
+    this._contextData.rerunnableTasks.add(this);
     this.promise = new Promise<any>((resolve, reject) => {
       // The task is either resolved with a value, or rejected with a meaningful evaluation error.
       this._resolve = resolve;
@@ -1021,6 +1023,7 @@ class RerunnableTask {
       const injectedScript = await context.injectedScript();
       const pollHandler = new dom.InjectedScriptPollHandler(this._progress, await this._task(injectedScript));
       const result = this._returnByValue ? await pollHandler.finish() : await pollHandler.finishHandle();
+      this._contextData.rerunnableTasks.delete(this);
       this._resolve(result);
     } catch (e) {
       // When the page is navigated, the promise is rejected.
@@ -1033,6 +1036,7 @@ class RerunnableTask {
       if (e.message.includes('Cannot find context with specified id'))
         return;
 
+      this._contextData.rerunnableTasks.delete(this);
       this._reject(e);
     }
   }
