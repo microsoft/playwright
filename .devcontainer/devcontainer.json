@@ -1,0 +1,8 @@
+{
+    "name": "Playwright",
+    "image": "mcr.microsoft.com/playwright:next",
+    "postCreateCommand": "npm install && npm run build",
+    "settings": {
+        "terminal.integrated.shell.linux": "/bin/bash"
+    }
+}
