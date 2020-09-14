@@ -112,8 +112,6 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
   }
   for (const dep of (await missingDLOPENLibraries(browser)))
     missingDeps.add(dep);
-  for (const dep of (await missingSystemBinaries(browser)))
-    missingDeps.add(dep);
   if (!missingDeps.size)
     return;
   // Check Ubuntu version.
@@ -233,17 +231,7 @@ async function missingDLOPENLibraries(browser: BrowserDescriptor): Promise<strin
   return libraries.filter(library => !isLibraryAvailable(library));
 }
 
-async function missingSystemBinaries(browser: BrowserDescriptor): Promise<string[]> {
-  if (browser.name !== 'chromium')
-    return [];
-  // Look for ffmpeg in PATH.
-  const {code, error} = await spawnAsync('ffmpeg', ['-version'], {});
-  if (code !== 0 || error)
-    return ['ffmpeg'];
-  return [];
-}
-
-function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
+export function spawnAsync(cmd: string, args: string[], options: any): Promise<{stdout: string, stderr: string, code: number, error?: Error}> {
   const process = spawn(cmd, args, options);
 
   return new Promise(resolve => {
@@ -436,6 +424,4 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
   // and if it's missing recommend installing missing gstreamer lib.
   // gstreamer1.0-libav -> libavcodec57 -> libx264-152
   'libx264.so': 'gstreamer1.0-libav',
-  // Required for screencast in Chromium.
-  'ffmpeg': 'ffmpeg',
 };
