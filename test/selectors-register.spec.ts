@@ -114,7 +114,7 @@ it('should handle errors', async ({playwright, page}) => {
   });
 
   error = await playwright.selectors.register('$', createDummySelector).catch(e => e);
-  expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
+  expect(error.message).toBe('Selector engine name may only contain [a-zA-Z_0-9-] characters');
 
   // Selector names are case-sensitive.
   await utils.registerEngine(playwright, 'dummy', createDummySelector);

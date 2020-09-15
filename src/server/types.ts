@@ -240,6 +240,8 @@ export type BrowserContextOptions = {
   acceptDownloads?: boolean,
   _recordVideos?: boolean,
   _videoSize?: Size,
+  recordTrace?: boolean,
+  artifactsName?: string,
 };
 
 export type EnvArray = { name: string, value: string }[];
@@ -258,6 +260,7 @@ type LaunchOptionsBase = {
   devtools?: boolean,
   proxy?: ProxySettings,
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,

@@ -16,6 +16,8 @@
 
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
+import * as util from 'util';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
 import { CRExecutionContext } from '../chromium/crExecutionContext';
@@ -31,6 +33,8 @@ import { ProgressController, runAbortableTask } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { BrowserProcess } from '../browser';
+
+const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 export type ElectronLaunchOptionsBase = {
   args?: string[],
@@ -159,6 +163,7 @@ export class Electron  {
           electronArguments.push('--no-sandbox');
       }
 
+      const artifactsPath = await mkdtempAsync(path.join(os.tmpdir(), 'playwright_artifacts-'));
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         executablePath,
         args: electronArguments,
@@ -169,7 +174,7 @@ export class Electron  {
         progress,
         pipe: true,
         cwd: options.cwd,
-        tempDirectories: [],
+        tempDirectories: [artifactsPath],
         attemptToGracefullyClose: () => app!.close(),
         onExit: (exitCode, signal) => {},
       });
@@ -186,7 +191,7 @@ export class Electron  {
         close: gracefullyClose,
         kill
       };
-      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, persistent: { noDefaultViewport: true }, browserProcess });
+      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, persistent: { noDefaultViewport: true }, browserProcess, artifactsPath });
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;

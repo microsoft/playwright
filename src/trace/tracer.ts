@@ -21,10 +21,9 @@ import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
-import { ActionResult, InstrumentingAgent, instrumentingAgents, ActionMetadata } from '../server/instrumentation';
+import { ActionResult, InstrumentingAgent, ActionMetadata } from '../server/instrumentation';
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';
-import * as types from '../server/types';
 import { ElementHandle } from '../server/dom';
 import { helper, RegisteredListener } from '../server/helper';
 import { DEFAULT_TIMEOUT } from '../utils/timeoutSettings';
@@ -36,26 +35,13 @@ const fsAccessAsync = util.promisify(fs.access.bind(fs));
 export class Tracer implements InstrumentingAgent {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
-  constructor() {
-    instrumentingAgents.add(this);
-  }
-
-  dispose() {
-    instrumentingAgents.delete(this);
-  }
-
-  traceContext(context: BrowserContext, traceStorageDir: string, traceFile: string) {
-    const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
-    this._contextTracers.set(context, contextTracer);
-  }
-
-  async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    const contextTracer = this._contextTracers.get(page.context());
-    if (contextTracer)
-      await contextTracer.captureSnapshot(page, options);
-  }
-
   async onContextCreated(context: BrowserContext): Promise<void> {
+    if (context._options.recordTrace) {
+      const traceStorageDir = path.join(context._browser._options.artifactsPath, '.sha1');
+      const traceFile = path.join(context._browser._options.artifactsPath, context._artifactsName, 'playwright.trace');
+      const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
+      this._contextTracers.set(context, contextTracer);
+    }
   }
 
   async onContextDestroyed(context: BrowserContext): Promise<void> {
@@ -134,21 +120,6 @@ class ContextTracer implements SnapshotterDelegate {
 
   pageId(page: Page): string {
     return this._pageToId.get(page)!;
-  }
-
-  async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    const snapshot = await this._takeSnapshot(page, options.timeout);
-    if (!snapshot)
-      return;
-    const event: ActionTraceEvent = {
-      type: 'action',
-      contextId: this._contextId,
-      action: 'snapshot',
-      pageId: this._pageToId.get(page),
-      label: options.label || 'snapshot',
-      snapshot,
-    };
-    this._appendTraceEvent(event);
   }
 
   async recordAction(result: ActionResult, metadata: ActionMetadata) {

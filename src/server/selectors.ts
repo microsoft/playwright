@@ -46,7 +46,7 @@ export class Selectors {
 
   async register(name: string, source: string, contentScript: boolean = false): Promise<void> {
     if (!name.match(/^[a-zA-Z_0-9-]+$/))
-      throw new Error('Selector engine name may only contain [a-zA-Z0-9_] characters');
+      throw new Error('Selector engine name may only contain [a-zA-Z_0-9-] characters');
     // Note: we keep 'zs' for future use.
     if (this._builtinEngines.has(name) || name === 'zs' || name === 'zs:light')
       throw new Error(`"${name}" is a predefined selector engine`);

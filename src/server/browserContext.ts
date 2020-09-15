@@ -17,6 +17,7 @@
 
 import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
+import { createGuid } from '../utils/utils';
 import { Browser } from './browser';
 import { Download } from './download';
 import * as frames from './frames';
@@ -61,6 +62,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _downloads = new Set<Download>();
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
+  readonly _artifactsName: string;
   private _selectors?: Selectors;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
@@ -69,6 +71,7 @@ export abstract class BrowserContext extends EventEmitter {
     this._options = options;
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
+    this._artifactsName = options.artifactsName || createGuid();
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
@@ -249,6 +252,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   verifyGeolocation(options.geolocation);
+  if (options.artifactsName && !options.artifactsName.match(/^[a-zA-Z_0-9-]+$/))
+    throw new Error('"artifactsName" may only contain [a-zA-Z_0-9-] characters');
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {
