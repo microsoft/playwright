@@ -15,14 +15,11 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { Progress, runAbortableTask } from '../progress';
-import * as types from '../types';
-import * as path from 'path';
 import * as os from 'os';
 import * as path from 'path';
 import { assert } from '../../utils/utils';
 import { launchProcess } from '../processLauncher';
-import { Progress, ProgressController } from '../progress';
+import { Progress, runAbortableTask } from '../progress';
 import * as types from '../types';
 import { spawnAsync } from '../validateDependencies';
 
