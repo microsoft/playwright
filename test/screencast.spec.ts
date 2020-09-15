@@ -427,10 +427,8 @@ describe('screencast', suite => {
   it('should create read stream', async ({browser, server}) => {
     const context = await browser.newContext({_recordVideos: true});
 
-    const [video, page] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      context.newPage(),
-    ]);
+    const page = await context.newPage();
+    const video = await page.waitForEvent('_videostarted') as any;
     await page.goto(server.PREFIX + '/grid.html');
     await new Promise(r => setTimeout(r, 1000));
     const [stream, path] = await Promise.all([
@@ -450,10 +448,8 @@ describe('screencast', suite => {
   it('should saveAs', async ({browser, server, tmpDir}) => {
     const context = await browser.newContext({_recordVideos: true});
 
-    const [video, page] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      context.newPage(),
-    ]);
+    const page = await context.newPage();
+    const video = await page.waitForEvent('_videostarted') as any;
     await page.goto(server.PREFIX + '/grid.html');
     await new Promise(r => setTimeout(r, 1000));
     const saveAsPath = path.join(tmpDir, 'v.webm');
