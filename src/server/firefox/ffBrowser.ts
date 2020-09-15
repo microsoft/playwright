@@ -47,6 +47,7 @@ export class FFBrowser extends Browser {
     }
     if (options.proxy) {
       const proxyServer = new URL(options.proxy.server);
+      let proxyPort = parseInt(proxyServer.port, 10);
       let aType: 'http'|'https'|'socks'|'socks4' = 'http';
       if (proxyServer.protocol === 'socks5:')
         aType = 'socks';
@@ -54,11 +55,17 @@ export class FFBrowser extends Browser {
         aType = 'socks4';
       else if (proxyServer.protocol === 'https:')
         aType = 'https';
+      if (proxyServer.port === '') {
+        if (proxyServer.protocol === 'http:')
+          proxyPort = 80;
+        else if (proxyServer.protocol === 'https:')
+          proxyPort = 443;
+      }
       promises.push(browser._connection.send('Browser.setBrowserProxy', {
         type: aType,
         bypass: options.proxy.bypass ? options.proxy.bypass.split(',').map(domain => domain.trim()) : [],
         host: proxyServer.hostname,
-        port: parseInt(proxyServer.port, 10),
+        port: proxyPort,
         username: options.proxy.username,
         password: options.proxy.password,
       }));

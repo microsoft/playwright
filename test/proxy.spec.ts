@@ -152,3 +152,11 @@ it('should use socks proxy', (test, parameters) => {
   await browser.close();
   server.close();
 });
+
+it('does launch without a port', async ({ browserType, defaultBrowserOptions }) => {
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
+    proxy: { server: 'http://localhost' }
+  });
+  await browser.close();
+});
