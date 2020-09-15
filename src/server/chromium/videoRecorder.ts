@@ -21,7 +21,6 @@ import { assert } from '../../utils/utils';
 import { launchProcess } from '../processLauncher';
 import { Progress, ProgressController } from '../progress';
 import * as types from '../types';
-import { spawnAsync } from '../validateDependencies';
 
 const fps = 25;
 
@@ -62,13 +61,12 @@ export class VideoRecorder {
 
     let ffmpegPath = 'ffmpeg';
     const binPath = path.join(__dirname, '../../../third_party/ffmpeg/');
-    if (os.platform() === 'win32') {
+    if (os.platform() === 'win32')
       ffmpegPath = path.join(binPath, os.arch() === 'x64' ? 'ffmpeg-win64.exe' : 'ffmpeg-win32.exe');
-    } else if (os.platform() === 'darwin') {
+    else if (os.platform() === 'darwin')
       ffmpegPath = path.join(binPath, 'ffmpeg-mac');
-    } else {
+    else
       ffmpegPath = path.join(binPath, 'ffmpeg-linux');
-    }
     const { launchedProcess, gracefullyClose } = await launchProcess({
       executablePath: ffmpegPath,
       args,
