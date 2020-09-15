@@ -183,6 +183,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
+    artifactsPath: tOptional(tString),
+    sharedArtifactsPath: tOptional(tString),
+    recordTrace: tOptional(tBoolean),
   });
   scheme.BrowserCloseParams = tOptional(tObject({}));
   scheme.BrowserNewContextParams = tObject({
@@ -217,6 +220,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
+    artifactsPath: tOptional(tString),
+    sharedArtifactsPath: tOptional(tString),
+    recordTrace: tOptional(tBoolean),
     _recordVideos: tOptional(tBoolean),
     _videoSize: tOptional(tObject({
       width: tNumber,

@@ -306,6 +306,9 @@ BrowserType:
           - dark
           - no-preference
         acceptDownloads: boolean?
+        artifactsPath: string?
+        sharedArtifactsPath: string?
+        recordTrace: boolean?
       returns:
         context: BrowserContext
 
@@ -367,6 +370,9 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
+        artifactsPath: string?
+        sharedArtifactsPath: string?
+        recordTrace: boolean?
         _recordVideos: boolean?
         _videoSize:
           type: object?

@@ -240,6 +240,9 @@ export type BrowserContextOptions = {
   acceptDownloads?: boolean,
   _recordVideos?: boolean,
   _videoSize?: Size,
+  recordTrace?: boolean,
+  artifactsPath?: string,
+  sharedArtifactsPath?: string,
 };
 
 export type EnvArray = { name: string, value: string }[];

@@ -69,3 +69,25 @@ export type ActionTraceEvent = {
   stack?: string,
   error?: string,
 };
+
+export type TraceEvent =
+    ContextCreatedTraceEvent |
+    ContextDestroyedTraceEvent |
+    PageCreatedTraceEvent |
+    PageDestroyedTraceEvent |
+    NetworkResourceTraceEvent |
+    ActionTraceEvent;
+
+
+export type FrameSnapshot = {
+  frameId: string,
+  url: string,
+  html: string,
+  resourceOverrides: { url: string, sha1: string }[],
+};
+
+export type PageSnapshot = {
+  viewportSize?: { width: number, height: number },
+  // First frame is the main frame.
+  frames: FrameSnapshot[],
+};

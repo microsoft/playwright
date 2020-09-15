@@ -260,6 +260,9 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
+  artifactsPath?: string,
+  sharedArtifactsPath?: string,
+  recordTrace?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
   executablePath?: string,
@@ -317,6 +320,9 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
+  artifactsPath?: string,
+  sharedArtifactsPath?: string,
+  recordTrace?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
@@ -371,6 +377,9 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
+  artifactsPath?: string,
+  sharedArtifactsPath?: string,
+  recordTrace?: boolean,
   _recordVideos?: boolean,
   _videoSize?: {
     width: number,
@@ -409,6 +418,9 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
+  artifactsPath?: string,
+  sharedArtifactsPath?: string,
+  recordTrace?: boolean,
   _recordVideos?: boolean,
   _videoSize?: {
     width: number,

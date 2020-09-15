@@ -26,6 +26,7 @@ import * as types from '../server/types';
 import { SnapshotData, takeSnapshotInFrame } from './snapshotterInjected';
 import { assert, calculateSha1, createGuid } from '../utils/utils';
 import { ElementHandle } from '../server/dom';
+import { FrameSnapshot, PageSnapshot } from './traceTypes';
 
 export type SnapshotterResource = {
   pageId: string,
@@ -39,18 +40,6 @@ export type SnapshotterResource = {
 export type SnapshotterBlob = {
   buffer: Buffer,
   sha1: string,
-};
-
-export type FrameSnapshot = {
-  frameId: string,
-  url: string,
-  html: string,
-  resourceOverrides: { url: string, sha1: string }[],
-};
-export type PageSnapshot = {
-  viewportSize?: { width: number, height: number },
-  // First frame is the main frame.
-  frames: FrameSnapshot[],
 };
 
 export interface SnapshotterDelegate {
