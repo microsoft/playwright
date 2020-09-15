@@ -95,19 +95,25 @@ export class VideoRecorder {
     assert(this._process);
     if (!this._isRunning())
       return;
-    const duration = this._lastFrameTimestamp ? Math.max(1, Math.round(25 * (timestamp - this._lastFrameTimestamp))) : 1;
-    this._progress.log(`writing ${duration} frame(s)`);
+    const repeatCount = this._lastFrameTimestamp ? Math.max(1, Math.round(25 * (timestamp - this._lastFrameTimestamp))) : 1;
+    this._progress.log(`writing ${repeatCount} frame(s)`);
+    this._lastWritePromise = this._flushLastFrame(repeatCount).catch(e => this._progress.log('Error while writing frame: ' + e));
     this._lastFrameBuffer = frame;
     this._lastFrameTimestamp = timestamp;
     this._lastWriteTimestamp = Date.now();
+  }
 
+  private async _flushLastFrame(repeatCount: number): Promise<void> {
+    assert(this._process);
+    const frame = this._lastFrameBuffer;
+    if (!frame)
+      return;
     const previousWrites = this._lastWritePromise;
     let finishedWriting: () => void;
-    this._lastWritePromise = new Promise(fulfill => finishedWriting = fulfill);
-    const writePromise = this._lastWritePromise;
+    const writePromise = new Promise<void>(fulfill => finishedWriting = fulfill);
     await previousWrites;
-    for (let i = 0; i < duration; i++) {
-      const callFinish = i === (duration - 1);
+    for (let i = 0; i < repeatCount; i++) {
+      const callFinish = i === (repeatCount - 1);
       this._process.stdin.write(frame, (error: Error | null | undefined) => {
         if (error)
           this._progress.log(`ffmpeg failed to write: ${error}`);
