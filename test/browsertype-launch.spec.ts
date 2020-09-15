@@ -33,7 +33,19 @@ it('should throw if userDataDir option is passed', async ({browserType, defaultB
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, {userDataDir: 'random-path'});
   await browserType.launch(options).catch(e => waitError = e);
-  expect(waitError.message).toContain('launchPersistentContext');
+  expect(waitError.message).toContain('userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
+});
+
+it('should throw if port option is passed', async ({browserType, defaultBrowserOptions}) => {
+  const options = Object.assign({}, defaultBrowserOptions, {port: 1234});
+  const error = await browserType.launch(options).catch(e => e);
+  expect(error.message).toContain('Cannot specify a port without launching as a server.');
+});
+
+it('should throw if port option is passed for persistent context', async ({browserType, defaultBrowserOptions}) => {
+  const options = Object.assign({}, defaultBrowserOptions, {port: 1234});
+  const error = await browserType.launchPersistentContext('foo', options).catch(e => e);
+  expect(error.message).toContain('Cannot specify a port without launching as a server.');
 });
 
 it('should throw if page argument is passed', test => {

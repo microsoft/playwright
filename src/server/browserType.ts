@@ -28,7 +28,7 @@ import { Progress, runAbortableTask } from './progress';
 import * as types from './types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
-import { assert, isDebugMode } from '../utils/utils';
+import { isDebugMode } from '../utils/utils';
 
 export interface BrowserType {
   executablePath(): string;
@@ -72,15 +72,12 @@ export abstract class BrowserTypeBase implements BrowserType {
   }
 
   async launch(options: types.LaunchOptions = {}): Promise<Browser> {
-    assert(!(options as any).userDataDir, 'userDataDir option is not supported in `browserType.launch`. Use `browserType.launchPersistentContext` instead');
-    assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
     const browser = await runAbortableTask(progress => this._innerLaunch(progress, options, undefined), TimeoutSettings.timeout(options), 'browser').catch(e => { throw this._rewriteStartupError(e); });
     return browser;
   }
 
   async launchPersistentContext(userDataDir: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
-    assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = validateLaunchOptions(options);
     const persistent: types.BrowserContextOptions = options;
     validateBrowserContextOptions(persistent);
