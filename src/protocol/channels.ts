@@ -2144,11 +2144,25 @@ export type DialogDismissResult = void;
 export type VideoInitializer = {};
 export interface VideoChannel extends Channel {
   path(params?: VideoPathParams, metadata?: Metadata): Promise<VideoPathResult>;
+  saveAs(params: VideoSaveAsParams, metadata?: Metadata): Promise<VideoSaveAsResult>;
+  stream(params?: VideoStreamParams, metadata?: Metadata): Promise<VideoStreamResult>;
 }
 export type VideoPathParams = {};
 export type VideoPathOptions = {};
 export type VideoPathResult = {
   value: string,
+};
+export type VideoSaveAsParams = {
+  path: string,
+};
+export type VideoSaveAsOptions = {
+
+};
+export type VideoSaveAsResult = void;
+export type VideoStreamParams = {};
+export type VideoStreamOptions = {};
+export type VideoStreamResult = {
+  stream?: StreamChannel,
 };
 
 // ----------- Download -----------

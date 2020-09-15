@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as util from 'util';
 import * as channels from '../protocol/channels';
 import { Video } from '../server/browserContext';
+import { mkdirIfNeeded } from '../utils/utils';
 import { Dispatcher, DispatcherScope } from './dispatcher';
+import { StreamDispatcher } from './streamDispatcher';
 
 export class VideoDispatcher extends Dispatcher<Video, channels.VideoInitializer> implements channels.VideoChannel {
   constructor(scope: DispatcherScope, screencast: Video) {
@@ -26,4 +30,18 @@ export class VideoDispatcher extends Dispatcher<Video, channels.VideoInitializer
   async path(): Promise<channels.VideoPathResult> {
     return { value: await this._object.path() };
   }
+
+  async saveAs(params: channels.VideoSaveAsParams): Promise<channels.VideoSaveAsResult> {
+    const fileName = await this._object.path();
+    await mkdirIfNeeded(params.path);
+    await util.promisify(fs.copyFile)(fileName, params.path);
+  }
+
+  async stream(): Promise<channels.VideoStreamResult> {
+    const fileName = await this._object.path();
+    const readable = fs.createReadStream(fileName);
+    await new Promise(f => readable.on('readable', f));
+    return { stream: new StreamDispatcher(this._scope, readable) };
+  }
+
 }

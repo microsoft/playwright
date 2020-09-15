@@ -1808,6 +1808,15 @@ Video:
       returns:
         value: string
 
+    # Blocks path until saved to the local |path|.
+    saveAs:
+      parameters:
+        path: string
+
+    stream:
+      returns:
+        stream: Stream?
+
 
 
 Download:
