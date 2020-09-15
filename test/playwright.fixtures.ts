@@ -58,7 +58,7 @@ const fixtures = baseFixtures
     .declareParameters<PlaywrightParameters>()
     .declareWorkerFixtures<PlaywrightWorkerFixtures>()
     .declareTestFixtures<PlaywrightFixtures>();
-const { defineTestFixture, defineWorkerFixture, defineParameter } = fixtures;
+const { defineTestFixture, defineWorkerFixture, defineParameter, generateParametrizedTests } = fixtures;
 
 export const playwrightFixtures = fixtures;
 export const it = fixtures.it;
@@ -191,6 +191,11 @@ defineWorkerFixture('browserType', async ({playwright, browserName}, test) => {
 });
 
 defineParameter('browserName', 'Browser type name', '');
+
+generateParametrizedTests(
+  'browserName',
+  process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit', 'firefox']);
+
 
 defineWorkerFixture('isChromium', async ({browserName}, test) => {
   await test(browserName === 'chromium');
