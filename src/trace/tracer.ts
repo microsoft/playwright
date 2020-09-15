@@ -25,7 +25,7 @@ import { ActionResult, InstrumentingAgent, instrumentingAgents, ActionMetadata }
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';
 import * as types from '../server/types';
-import type { ElementHandle } from '../server/dom';
+import { ElementHandle } from '../server/dom';
 import { helper, RegisteredListener } from '../server/helper';
 import { DEFAULT_TIMEOUT } from '../utils/timeoutSettings';
 
@@ -144,6 +144,7 @@ class ContextTracer implements SnapshotterDelegate {
       type: 'action',
       contextId: this._contextId,
       action: 'snapshot',
+      pageId: this._pageToId.get(page),
       label: options.label || 'snapshot',
       snapshot,
     };
@@ -157,7 +158,7 @@ class ContextTracer implements SnapshotterDelegate {
       contextId: this._contextId,
       pageId: this._pageToId.get(metadata.page),
       action: metadata.type,
-      target: await this._targetToString(metadata.target),
+      target: metadata.target instanceof ElementHandle ? await metadata.target._previewPromise : metadata.target,
       value: metadata.value,
       snapshot,
       startTime: result.startTime,
@@ -191,10 +192,6 @@ class ContextTracer implements SnapshotterDelegate {
       };
       this._appendTraceEvent(event);
     });
-  }
-
-  private async _targetToString(target: ElementHandle | string): Promise<string> {
-    return typeof target === 'string' ? target : await target._previewPromise;
   }
 
   private async _takeSnapshot(page: Page, timeout: number = 0): Promise<{ sha1: string, duration: number } | undefined> {

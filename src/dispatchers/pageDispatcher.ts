@@ -31,6 +31,8 @@ import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatche
 import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
 import { VideoDispatcher } from './videoDispatcher';
+import { ActionMetadata } from '../server/instrumentation';
+import { ProgressController } from '../server/progress';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
@@ -94,16 +96,22 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     await this._page.setExtraHTTPHeaders(params.headers);
   }
 
-  async reload(params: channels.PageReloadParams): Promise<channels.PageReloadResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(params)) };
+  async reload(params: channels.PageReloadParams, metadata?: channels.Metadata): Promise<channels.PageReloadResult> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'reload', page: this._page };
+    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(params), actionMetadata);
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.reload(controller, params)) };
   }
 
-  async goBack(params: channels.PageGoBackParams): Promise<channels.PageGoBackResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(params)) };
+  async goBack(params: channels.PageGoBackParams, metadata?: channels.Metadata): Promise<channels.PageGoBackResult> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'goBack', page: this._page };
+    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(params), actionMetadata);
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goBack(controller, params)) };
   }
 
-  async goForward(params: channels.PageGoForwardParams): Promise<channels.PageGoForwardResult> {
-    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(params)) };
+  async goForward(params: channels.PageGoForwardParams, metadata?: channels.Metadata): Promise<channels.PageGoForwardResult> {
+    const actionMetadata: ActionMetadata = { ...metadata, type: 'goForward', page: this._page };
+    const controller = new ProgressController(this._page._timeoutSettings.navigationTimeout(params), actionMetadata);
+    return { response: lookupNullableDispatcher<ResponseDispatcher>(await this._page.goForward(controller, params)) };
   }
 
   async emulateMedia(params: channels.PageEmulateMediaParams): Promise<void> {
