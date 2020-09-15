@@ -52,6 +52,7 @@ function build_ffmpeg {
   git clone git://source.ffmpeg.org/ffmpeg.git
   cd ffmpeg
   git checkout "${FFMPEG_VERSION}"
+  export PKG_CONFIG_PATH="${PREFIX}/lib/pkgconfig"
   # Prohibit pkg-config from using linux system installed libs.
   export PKG_CONFIG_LIBDIR=
 
