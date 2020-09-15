@@ -33,7 +33,7 @@ const fixtures = playwrightFixtures.declareWorkerFixtures<WorkerState>().declare
 const { it, expect, describe, defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
 
 defineWorkerFixture('videoDir', async ({}, test, config) => {
-  await test(path.join((config as any).config.outputDir, 'screencast'));
+  await test(path.join(config.outputDir, 'screencast'));
 });
 
 overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions, videoDir}, test) => {
