@@ -25,7 +25,7 @@ type SnapshotResult = {
   frameElements: Element[],
 };
 
-export function takeSnapshotInFrame(guid: string, removeNoScript: boolean): SnapshotResult {
+export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, target: Node | undefined): SnapshotResult {
   const shadowAttribute = 'playwright-shadow-root';
   const win = window;
   const doc = win.document;
@@ -161,6 +161,8 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean): Snap
       const element = node as Element;
       builder.push('<');
       builder.push(nodeName);
+      if (node === target)
+        builder.push(' __playwright_target__="true"');
       for (let i = 0; i < element.attributes.length; i++) {
         const name = element.attributes[i].name;
         let value = element.attributes[i].value;

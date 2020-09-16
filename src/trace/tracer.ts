@@ -137,7 +137,7 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    const snapshot = await this._takeSnapshot(page, options.timeout);
+    const snapshot = await this._takeSnapshot(page, undefined, options.timeout);
     if (!snapshot)
       return;
     const event: ActionTraceEvent = {
@@ -152,13 +152,13 @@ class ContextTracer implements SnapshotterDelegate {
   }
 
   async recordAction(result: ActionResult, metadata: ActionMetadata) {
-    const snapshot = await this._takeSnapshot(metadata.page);
+    const snapshot = await this._takeSnapshot(metadata.page, typeof metadata.target === 'string' ? undefined : metadata.target);
     const event: ActionTraceEvent = {
       type: 'action',
       contextId: this._contextId,
       pageId: this._pageToId.get(metadata.page),
       action: metadata.type,
-      target: metadata.target instanceof ElementHandle ? await metadata.target._previewPromise : metadata.target,
+      selector: typeof metadata.target === 'string' ? metadata.target : undefined,
       value: metadata.value,
       snapshot,
       startTime: result.startTime,
@@ -194,14 +194,14 @@ class ContextTracer implements SnapshotterDelegate {
     });
   }
 
-  private async _takeSnapshot(page: Page, timeout: number = 0): Promise<{ sha1: string, duration: number } | undefined> {
+  private async _takeSnapshot(page: Page, target: ElementHandle | undefined, timeout: number = 0): Promise<{ sha1: string, duration: number } | undefined> {
     if (!timeout) {
       // Never use zero timeout to avoid stalling because of snapshot.
       // Use 20% of the default timeout.
       timeout = (page._timeoutSettings.timeout({}) || DEFAULT_TIMEOUT) / 5;
     }
     const startTime = monotonicTime();
-    const snapshot = await this._snapshotter.takeSnapshot(page, timeout);
+    const snapshot = await this._snapshotter.takeSnapshot(page, target, timeout);
     if (!snapshot)
       return;
     const buffer = Buffer.from(JSON.stringify(snapshot));

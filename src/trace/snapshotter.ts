@@ -25,6 +25,7 @@ import * as js from '../server/javascript';
 import * as types from '../server/types';
 import { SnapshotData, takeSnapshotInFrame } from './snapshotterInjected';
 import { assert, calculateSha1, createGuid } from '../utils/utils';
+import { ElementHandle } from '../server/dom';
 
 export type SnapshotterResource = {
   pageId: string,
@@ -113,14 +114,14 @@ export class Snapshotter {
       this._delegate.onBlob({ sha1, buffer: body });
   }
 
-  async takeSnapshot(page: Page, timeout: number): Promise<PageSnapshot | null> {
+  async takeSnapshot(page: Page, target: ElementHandle | undefined, timeout: number): Promise<PageSnapshot | null> {
     assert(page.context() === this._context);
 
     const frames = page.frames();
     const frameSnapshotPromises = frames.map(async frame => {
       // TODO: use different timeout depending on the frame depth/origin
       // to avoid waiting for too long for some useless frame.
-      const frameResult = await runAbortableTask(progress => this._snapshotFrame(progress, frame), timeout).catch(e => null);
+      const frameResult = await runAbortableTask(progress => this._snapshotFrame(progress, target, frame), timeout).catch(e => null);
       if (frameResult)
         return frameResult;
       const frameSnapshot = {
@@ -180,14 +181,16 @@ export class Snapshotter {
     }, timeout).catch(e => null);
   }
 
-  private async _snapshotFrame(progress: Progress, frame: Frame): Promise<FrameSnapshotAndMapping | null> {
+  private async _snapshotFrame(progress: Progress, target: ElementHandle | undefined, frame: Frame): Promise<FrameSnapshotAndMapping | null> {
     if (!progress.isRunning())
       return null;
 
+    if (target && (await target.ownerFrame()) !== frame)
+      target = undefined;
     const context = await frame._utilityContext();
     const guid = createGuid();
     const removeNoScript = !frame._page.context()._options.javaScriptEnabled;
-    const result = await js.evaluate(context, false /* returnByValue */, takeSnapshotInFrame, guid, removeNoScript) as js.JSHandle;
+    const result = await js.evaluate(context, false /* returnByValue */, takeSnapshotInFrame, guid, removeNoScript, target) as js.JSHandle;
     if (!progress.isRunning())
       return null;
 

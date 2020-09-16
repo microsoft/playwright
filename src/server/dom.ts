@@ -99,20 +99,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   readonly _context: FrameExecutionContext;
   readonly _page: Page;
   readonly _objectId: string;
-  readonly _previewPromise: Promise<string>;
 
   constructor(context: FrameExecutionContext, objectId: string) {
     super(context, 'node', objectId);
     this._objectId = objectId;
     this._context = context;
     this._page = context.frame._page;
-    this._previewPromise = this._initializePreview().catch(e => 'node');
-    this._previewPromise.then(preview => this._setPreview('JSHandle@' + preview));
+    this._initializePreview().catch(e => {});
   }
 
   async _initializePreview() {
     const utility = await this._context.injectedScript();
-    return utility.evaluate((injected, e) => injected.previewNode(e), this);
+    this._setPreview(await utility.evaluate((injected, e) => 'JSHandle@' + injected.previewNode(e), this));
   }
 
   asElement(): ElementHandle<T> | null {
