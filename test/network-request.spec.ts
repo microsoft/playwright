@@ -56,7 +56,7 @@ it('should return headers', async ({page, server, isChromium, isFirefox, isWebKi
 });
 
 it('should get the same headers as the server', (test, parameters) => {
-  test.fail(options.CHROMIUM(parameters) || options.WEBKIT(parameters));
+  test.fail(options.CHROMIUM(parameters) || options.WEBKIT(parameters), 'Provisional headers differ from those in network stack');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;

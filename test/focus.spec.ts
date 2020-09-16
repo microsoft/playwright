@@ -79,7 +79,7 @@ it('should traverse focus in all directions', async function({page}) {
 });
 
 it('should traverse only form elements', (test, parameters) => {
-  test.skip(!MAC || !options.WEBKIT(parameters),
+  test.skip(!options.MAC(parameters) || !options.WEBKIT(parameters),
       'Chromium and WebKit both have settings for tab traversing all links, but it is only on by default in WebKit.');
 }, async function({page}) {
   await page.setContent(`

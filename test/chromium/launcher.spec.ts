@@ -39,7 +39,7 @@ it('should not throw with remote-debugging-port argument', (test, parameters) =>
 });
 
 it('should open devtools when "devtools: true" option is given', (test, parameters) => {
-  test.skip(!options.CHROMIUM(parameters) || options.WIRE || WIN);
+  test.skip(!options.CHROMIUM(parameters) || options.WIRE || options.WIN(parameters));
 }, async ({browserType, defaultBrowserOptions}) => {
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);

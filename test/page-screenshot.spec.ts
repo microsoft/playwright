@@ -219,7 +219,7 @@ describe('page screenshot', (suite, parameters) => {
 
   it('should work for webgl', (test, parameters) => {
     test.fixme(options.FIREFOX(parameters));
-    test.fixme(options.WEBKIT(parameters) && LINUX);
+    test.fixme(options.WEBKIT(parameters) && options.LINUX(parameters));
   }, async ({page, server, golden}) => {
     await page.setViewportSize({width: 640, height: 480});
     await page.goto(server.PREFIX + '/screenshots/webgl.html');

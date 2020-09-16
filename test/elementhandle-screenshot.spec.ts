@@ -363,7 +363,7 @@ describe('element screenshot', (suite, parameters) => {
   });
 
   it('should wait for element to stop moving', (test, parameters) => {
-    test.flaky(options.WEBKIT(parameters) && !options.HEADLESS && LINUX);
+    test.flaky(options.WEBKIT(parameters) && !options.HEADLESS && options.LINUX(parameters));
   }, async ({ page, server, golden }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');

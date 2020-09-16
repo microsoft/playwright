@@ -120,7 +120,7 @@ it('should exclude patterns', (test, parameters) => {
 });
 
 it('should use socks proxy', (test, parameters) => {
-  test.flaky(MAC && options.WEBKIT(parameters), 'Intermittent page.goto: The network connection was lost error on bots');
+  test.flaky(options.MAC(parameters) && options.WEBKIT(parameters), 'Intermittent page.goto: The network connection was lost error on bots');
 }, async ({ browserType, defaultBrowserOptions, parallelIndex }) => {
   const server = socks.createServer((info, accept, deny) => {
     let socket;

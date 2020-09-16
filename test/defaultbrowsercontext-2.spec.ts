@@ -69,7 +69,7 @@ it('should support ignoreHTTPSErrors option', async ({httpsServer, launchPersist
 });
 
 it('should support extraHTTPHeaders option', (test, parameters) => {
-  test.flaky(options.FIREFOX(parameters) && !options.HEADLESS && LINUX, 'Intermittent timeout on bots');
+  test.flaky(options.FIREFOX(parameters) && !options.HEADLESS && options.LINUX(parameters), 'Intermittent timeout on bots');
 }, async ({server, launchPersistent}) => {
   const {page} = await launchPersistent({extraHTTPHeaders: { foo: 'bar' }});
   const [request] = await Promise.all([

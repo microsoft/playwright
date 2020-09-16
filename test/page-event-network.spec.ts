@@ -41,7 +41,7 @@ it('Page.Events.Response', async ({page, server}) => {
   expect(responses[0].request()).toBeTruthy();
 });
 
-it('Page.Events.RequestFailed', async ({page, server, isChromium, isWebKit}) => {
+it('Page.Events.RequestFailed', async ({page, server, isChromium, isWebKit, isMac, isWindows}) => {
   server.setRoute('/one-style.css', (req, res) => {
     res.setHeader('Content-Type', 'text/css');
     res.connection.destroy();
@@ -56,9 +56,9 @@ it('Page.Events.RequestFailed', async ({page, server, isChromium, isWebKit}) => 
   if (isChromium) {
     expect(failedRequests[0].failure().errorText).toBe('net::ERR_EMPTY_RESPONSE');
   } else if (isWebKit) {
-    if (MAC)
+    if (isMac)
       expect(failedRequests[0].failure().errorText).toBe('The network connection was lost.');
-    else if (WIN)
+    else if (isWindows)
       expect(failedRequests[0].failure().errorText).toBe('Server returned nothing (no headers, no data)');
     else
       expect(failedRequests[0].failure().errorText).toBe('Message Corrupt');

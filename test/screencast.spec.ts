@@ -249,7 +249,7 @@ describe('screencast', suite => {
   });
 
   it('should capture css transformation', (test, parameters) => {
-    test.fail(options.WEBKIT(parameters) && WIN, 'Does not work on WebKit Windows');
+    test.fail(options.WEBKIT(parameters) && options.WIN(parameters), 'Does not work on WebKit Windows');
   }, async ({browser, server, videoPlayer, videoFile}) => {
     const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.

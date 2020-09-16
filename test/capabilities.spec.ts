@@ -18,7 +18,7 @@ import url from 'url';
 import { it, expect, options } from './playwright.fixtures';
 
 it('Web Assembly should work', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters) && WIN);
+  test.fail(options.WEBKIT(parameters) && options.WIN(parameters));
 }, async function({page, server}) {
   await page.goto(server.PREFIX + '/wasm/table2.html');
   expect(await page.evaluate('loadTable()')).toBe('42, 83');
@@ -51,7 +51,7 @@ it('should respect CSP', async ({page, server}) => {
 });
 
 it('should play video', (test, parameters) => {
-  test.fixme(options.WEBKIT(parameters) && (WIN || LINUX));
+  test.fixme(options.WEBKIT(parameters) && (options.WIN(parameters) || options.LINUX(parameters)));
 }, async ({page, asset, isWebKit}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.

@@ -115,7 +115,7 @@ it('should wait for disabled button', async ({page}) => {
 });
 
 it('should wait for stable position', (test, parameters) => {
-  test.fixme(options.FIREFOX(parameters) && LINUX);
+  test.fixme(options.FIREFOX(parameters) && options.LINUX(parameters));
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');

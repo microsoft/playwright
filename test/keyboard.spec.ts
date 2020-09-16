@@ -84,7 +84,7 @@ it('insertText should only emit input event', async ({page, server}) => {
 });
 
 it('should report shiftKey', (test, parameters) => {
-  test.fail(options.FIREFOX(parameters) && MAC);
+  test.fail(options.FIREFOX(parameters) && options.MAC(parameters));
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
@@ -312,11 +312,11 @@ it('should type emoji into an iframe', async ({page, server}) => {
   expect(await frame.$eval('textarea', textarea => textarea.value)).toBe('👹 Tokyo street Japan 🇯🇵');
 });
 
-it('should handle selectAll', async ({page, server}) => {
+it('should handle selectAll', async ({page, server, isMac}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.type('some text');
-  const modifier = MAC ? 'Meta' : 'Control';
+  const modifier = isMac ? 'Meta' : 'Control';
   await page.keyboard.down(modifier);
   await page.keyboard.press('a');
   await page.keyboard.up(modifier);
@@ -324,7 +324,7 @@ it('should handle selectAll', async ({page, server}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('');
 });
 
-it('should be able to prevent selectAll', async ({page, server}) => {
+it('should be able to prevent selectAll', async ({page, server, isMac}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
   await textarea.type('some text');
@@ -334,7 +334,7 @@ it('should be able to prevent selectAll', async ({page, server}) => {
         event.preventDefault();
     }, false);
   });
-  const modifier = MAC ? 'Meta' : 'Control';
+  const modifier = isMac ? 'Meta' : 'Control';
   await page.keyboard.down(modifier);
   await page.keyboard.press('a');
   await page.keyboard.up(modifier);
@@ -343,7 +343,7 @@ it('should be able to prevent selectAll', async ({page, server}) => {
 });
 
 it('should support MacOS shortcuts', (test, parameters) => {
-  test.skip(!MAC);
+  test.skip(!options.MAC(parameters));
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
@@ -354,11 +354,11 @@ it('should support MacOS shortcuts', (test, parameters) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some ');
 });
 
-it('should press the meta key', async ({page, isFirefox}) => {
+it('should press the meta key', async ({page, isFirefox, isMac}) => {
   const lastEvent = await captureLastKeydown(page);
   await page.keyboard.press('Meta');
   const {key, code, metaKey} = await lastEvent.jsonValue();
-  if (isFirefox && !MAC)
+  if (isFirefox && !isMac)
     expect(key).toBe('OS');
   else
     expect(key).toBe('Meta');
@@ -368,7 +368,7 @@ it('should press the meta key', async ({page, isFirefox}) => {
   else
     expect(code).toBe('MetaLeft');
 
-  if (isFirefox && !MAC)
+  if (isFirefox && !isMac)
     expect(metaKey).toBe(false);
   else
     expect(metaKey).toBe(true);

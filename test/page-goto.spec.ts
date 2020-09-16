@@ -210,12 +210,12 @@ it('should throw if networkidle2 is passed as an option', async ({page, server})
   expect(error.message).toContain(`waitUntil: expected one of (load|domcontentloaded|networkidle)`);
 });
 
-it('should fail when main resources failed to load', async ({page, isChromium, isWebKit}) => {
+it('should fail when main resources failed to load', async ({page, isChromium, isWebKit, isWindows}) => {
   let error = null;
   await page.goto('http://localhost:44123/non-existing-url').catch(e => error = e);
   if (isChromium)
     expect(error.message).toContain('net::ERR_CONNECTION_REFUSED');
-  else if (isWebKit && WIN)
+  else if (isWebKit && isWindows)
     expect(error.message).toContain(`Couldn\'t connect to server`);
   else if (isWebKit)
     expect(error.message).toContain('Could not connect');

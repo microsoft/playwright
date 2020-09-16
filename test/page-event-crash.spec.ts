@@ -28,7 +28,7 @@ function crash(page, toImpl, browserName) {
 
 describe('', (suite, parameters) => {
   suite.fixme(options.WIRE);
-  suite.flaky(options.FIREFOX(parameters) && WIN);
+  suite.flaky(options.FIREFOX(parameters) && options.WIN(parameters));
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
@@ -65,7 +65,7 @@ describe('', (suite, parameters) => {
 
   it('should be able to close context when page crashes', (test, parameters) => {
     test.fixme(options.WIRE);
-    test.flaky(options.FIREFOX(parameters) && WIN);
+    test.flaky(options.FIREFOX(parameters) && options.WIN(parameters));
   }, async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page, toImpl, browserName);
