@@ -523,17 +523,19 @@ export class Frame extends EventEmitter {
     return this._context('utility');
   }
 
-  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any): Promise<any> {
-    const context = await this._mainContext();
+  async _evaluateExpressionHandle(expression: string, isFunction: boolean, arg: any, world: types.World = 'main'): Promise<any> {
+    const context = await this._context(world);
     const handle = await context.evaluateExpressionHandleInternal(expression, isFunction, arg);
-    await this._page._doSlowMo();
+    if (world === 'main')
+      await this._page._doSlowMo();
     return handle;
   }
 
-  async _evaluateExpression(expression: string, isFunction: boolean, arg: any): Promise<any> {
-    const context = await this._mainContext();
+  async _evaluateExpression(expression: string, isFunction: boolean, arg: any, world: types.World = 'main'): Promise<any> {
+    const context = await this._context(world);
     const value = await context.evaluateExpressionInternal(expression, isFunction, arg);
-    await this._page._doSlowMo();
+    if (world === 'main')
+      await this._page._doSlowMo();
     return value;
   }
 

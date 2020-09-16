@@ -18,6 +18,7 @@
 import { it, expect, options } from './playwright.fixtures';
 
 import utils from './utils';
+import type { Frame } from '../src/client/frame';
 
 it('should have different execution contexts', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
@@ -179,4 +180,24 @@ it('evaluateHandle should work', async ({page, server}) => {
   const mainFrame = page.mainFrame();
   const windowHandle = await mainFrame.evaluateHandle(() => window);
   expect(windowHandle).toBeTruthy();
+});
+
+it('evaluateInUtility should work', async ({page}) => {
+  await page.setContent('<body>hello</body>');
+  const mainFrame = page.mainFrame() as any as Frame;
+  await mainFrame.evaluate(() => window['foo'] = 42);
+  expect(await mainFrame.evaluate(() => window['foo'])).toBe(42);
+  expect(await mainFrame._evaluateInUtility(() => window['foo'])).toBe(undefined);
+  expect(await mainFrame._evaluateInUtility(() => document.body.textContent)).toBe('hello');
+});
+
+it('evaluateHandleInUtility should work', async ({page}) => {
+  await page.setContent('<body>hello</body>');
+  const mainFrame = page.mainFrame() as any as Frame;
+  await mainFrame.evaluate(() => window['foo'] = 42);
+  expect(await mainFrame.evaluate(() => window['foo'])).toBe(42);
+  const handle1 = await mainFrame._evaluateHandleInUtility(() => window['foo']);
+  expect(await handle1.jsonValue()).toBe(undefined);
+  const handle2 = await mainFrame._evaluateHandleInUtility(() => document.body);
+  expect(await handle2.evaluate(body => body.textContent)).toBe('hello');
 });

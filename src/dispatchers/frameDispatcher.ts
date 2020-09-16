@@ -65,11 +65,11 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
   }
 
   async evaluateExpression(params: channels.FrameEvaluateExpressionParams): Promise<channels.FrameEvaluateExpressionResult> {
-    return { value: serializeResult(await this._frame._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { value: serializeResult(await this._frame._evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg), params.world)) };
   }
 
   async evaluateExpressionHandle(params: channels.FrameEvaluateExpressionHandleParams): Promise<channels.FrameEvaluateExpressionHandleResult> {
-    return { handle: createHandle(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg))) };
+    return { handle: createHandle(this._scope, await this._frame._evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg), params.world)) };
   }
 
   async waitForSelector(params: channels.FrameWaitForSelectorParams): Promise<channels.FrameWaitForSelectorResult> {
