@@ -1264,9 +1264,10 @@ export type FrameEvaluateExpressionParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+  world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionOptions = {
-
+  world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionResult = {
   value: SerializedValue,
@@ -1275,9 +1276,10 @@ export type FrameEvaluateExpressionHandleParams = {
   expression: string,
   isFunction: boolean,
   arg: SerializedArgument,
+  world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionHandleOptions = {
-
+  world?: 'main' | 'utility',
 };
 export type FrameEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,

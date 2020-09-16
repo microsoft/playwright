@@ -93,7 +93,7 @@ function waitForEvent<T = void>(emitter: EventEmitter, event: string, predicate?
 }
 
 function waitForTimeout(timeout: number): { promise: Promise<void>, dispose: () => void } {
-  let timeoutId: number;
+  let timeoutId: any;
   const promise = new Promise<void>(resolve => timeoutId = setTimeout(resolve, timeout));
   const dispose = () => clearTimeout(timeoutId);
   return { promise, dispose };
