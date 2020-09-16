@@ -56,7 +56,7 @@ export type ActionTraceEvent = {
   contextId: string,
   action: string,
   pageId?: string,
-  target?: string,
+  selector?: string,
   label?: string,
   value?: string,
   startTime?: number,
