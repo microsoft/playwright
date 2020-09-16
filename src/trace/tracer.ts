@@ -14,70 +14,48 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../server/browserContext';
+import { ActionListener, ActionMetadata, BrowserContext } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
 import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
-import { ActionResult, InstrumentingAgent, instrumentingAgents, ActionMetadata } from '../server/instrumentation';
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';
 import * as types from '../server/types';
 import { ElementHandle } from '../server/dom';
 import { helper, RegisteredListener } from '../server/helper';
 import { DEFAULT_TIMEOUT } from '../utils/timeoutSettings';
+import { ProgressResult } from '../server/progress';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const fsAccessAsync = util.promisify(fs.access.bind(fs));
 
-export class Tracer implements InstrumentingAgent {
-  private _contextTracers = new Map<BrowserContext, ContextTracer>();
+// TODO: merge Trace and ContextTracer.
+export class Tracer implements ActionListener {
+  private _context: BrowserContext;
+  private _contextTracer: ContextTracer;
 
-  constructor() {
-    instrumentingAgents.add(this);
-  }
-
-  dispose() {
-    instrumentingAgents.delete(this);
-  }
-
-  traceContext(context: BrowserContext, traceStorageDir: string, traceFile: string) {
-    const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
-    this._contextTracers.set(context, contextTracer);
+  constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
+    this._context = context;
+    this._contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
+    this._context._actionListeners.add(this);
   }
 
   async captureSnapshot(page: Page, options: types.TimeoutOptions & { label?: string } = {}): Promise<void> {
-    const contextTracer = this._contextTracers.get(page.context());
-    if (contextTracer)
-      await contextTracer.captureSnapshot(page, options);
+    await this._contextTracer.captureSnapshot(page, options);
   }
 
-  async onContextCreated(context: BrowserContext): Promise<void> {
+  async dispose(): Promise<void> {
+    this._context._actionListeners.delete(this);
+    await this._contextTracer.dispose();
   }
 
-  async onContextDestroyed(context: BrowserContext): Promise<void> {
+  async onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void> {
     try {
-      const contextTracer = this._contextTracers.get(context);
-      if (contextTracer) {
-        await contextTracer.dispose();
-        this._contextTracers.delete(context);
-      }
-    } catch (e) {
-      // Do not throw from instrumentation.
-    }
-  }
-
-  async onAfterAction(result: ActionResult, metadata?: ActionMetadata): Promise<void> {
-    try {
-      if (!metadata)
-        return;
-      const contextTracer = this._contextTracers.get(metadata.page.context());
-      if (!contextTracer)
-        return;
-      await contextTracer.recordAction(result, metadata);
+      await this._contextTracer.recordAction(result, metadata);
     } catch (e) {
       // Do not throw from instrumentation.
     }
@@ -151,7 +129,7 @@ class ContextTracer implements SnapshotterDelegate {
     this._appendTraceEvent(event);
   }
 
-  async recordAction(result: ActionResult, metadata: ActionMetadata) {
+  async recordAction(result: ProgressResult, metadata: ActionMetadata) {
     const snapshot = await this._takeSnapshot(metadata.page, typeof metadata.target === 'string' ? undefined : metadata.target);
     const event: ActionTraceEvent = {
       type: 'action',

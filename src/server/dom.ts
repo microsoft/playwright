@@ -22,7 +22,7 @@ import * as js from './javascript';
 import { Page } from './page';
 import { SelectorInfo } from './selectors';
 import * as types from './types';
-import { Progress, runAbortableTask } from './progress';
+import { Progress, ProgressController, runAbortableTask } from './progress';
 import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 
 export class FrameExecutionContext extends js.ExecutionContext {
@@ -356,36 +356,44 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
-    const result = await this._hover(progress, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async hover(controller: ProgressController, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._hover(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(point.x, point.y), options);
   }
 
-  async click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
-    const result = await this._click(progress, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async click(controller: ProgressController, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._click(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse.click(point.x, point.y, options), options);
   }
 
-  async dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
-    const result = await this._dblclick(progress, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async dblclick(controller: ProgressController, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._dblclick(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
-  async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
-    const result = await this._selectOption(progress, elements, values, options);
-    return throwRetargetableDOMError(result);
+  async selectOption(controller: ProgressController, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
+    return controller.run(async progress => {
+      const result = await this._selectOption(progress, elements, values, options);
+      return throwRetargetableDOMError(result);
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
@@ -398,9 +406,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     });
   }
 
-  async fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    const result = await this._fill(progress, value, options);
-    assertDone(throwRetargetableDOMError(result));
+  async fill(controller: ProgressController, value: string, options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._fill(progress, value, options);
+      assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -441,9 +451,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(progress: Progress, files: types.FilePayload[], options: types.NavigatingActionWaitOptions) {
-    const result = await this._setInputFiles(progress, files, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async setInputFiles(controller: ProgressController, files: types.FilePayload[], options: types.NavigatingActionWaitOptions) {
+    return controller.run(async progress => {
+      const result = await this._setInputFiles(progress, files, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _setInputFiles(progress: Progress, files: types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -480,9 +492,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return throwFatalDOMError(result);
   }
 
-  async type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
-    const result = await this._type(progress, text, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async type(controller: ProgressController, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._type(progress, text, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -497,9 +511,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 'input');
   }
 
-  async press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
-    const result = await this._press(progress, key, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async press(controller: ProgressController, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._press(progress, key, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -514,14 +530,18 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, 'input');
   }
 
-  async check(progress: Progress, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const result = await this._setChecked(progress, true, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async check(controller: ProgressController, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    return controller.run(async progress => {
+      const result = await this._setChecked(progress, true, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async uncheck(progress: Progress, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    const result = await this._setChecked(progress, false, options);
-    return assertDone(throwRetargetableDOMError(result));
+  async uncheck(controller: ProgressController, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    return controller.run(async progress => {
+      const result = await this._setChecked(progress, false, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {

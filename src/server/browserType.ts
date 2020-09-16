@@ -66,9 +66,11 @@ export abstract class BrowserType {
 
   async launch(options: types.LaunchOptions = {}): Promise<Browser> {
     options = validateLaunchOptions(options);
-    const controller = new ProgressController(TimeoutSettings.timeout(options));
+    const controller = new ProgressController();
     controller.setLogName('browser');
-    const browser = await controller.run(progress => this._innerLaunch(progress, options, undefined).catch(e => { throw this._rewriteStartupError(e); }));
+    const browser = await controller.run(progress => {
+      return this._innerLaunch(progress, options, undefined).catch(e => { throw this._rewriteStartupError(e); });
+    }, TimeoutSettings.timeout(options));
     return browser;
   }
 
@@ -76,9 +78,11 @@ export abstract class BrowserType {
     options = validateLaunchOptions(options);
     const persistent: types.BrowserContextOptions = options;
     validateBrowserContextOptions(persistent);
-    const controller = new ProgressController(TimeoutSettings.timeout(options));
+    const controller = new ProgressController();
     controller.setLogName('browser');
-    const browser = await controller.run(progress => this._innerLaunch(progress, options, persistent, userDataDir).catch(e => { throw this._rewriteStartupError(e); }));
+    const browser = await controller.run(progress => {
+      return this._innerLaunch(progress, options, persistent, userDataDir).catch(e => { throw this._rewriteStartupError(e); });
+    }, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
   }
 

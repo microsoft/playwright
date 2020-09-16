@@ -20,8 +20,7 @@ import * as channels from '../protocol/channels';
 import { DispatcherScope, lookupNullableDispatcher } from './dispatcher';
 import { JSHandleDispatcher, serializeResult, parseArgument } from './jsHandleDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { runAbortableTask } from '../server/progress';
-import { ActionMetadata } from '../server/instrumentation';
+import { runAction } from '../server/browserContext';
 
 export function createHandle(scope: DispatcherScope, handle: js.JSHandle): JSHandleDispatcher {
   return handle.asElement() ? new ElementHandleDispatcher(scope, handle.asElement()!) : new JSHandleDispatcher(scope, handle);
@@ -76,39 +75,34 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async hover(params: channels.ElementHandleHoverParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'hover', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.hover(progress, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.hover(controller, params);
+    }, { ...metadata, type: 'hover', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async click(params: channels.ElementHandleClickParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'click', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.click(progress, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.click(controller, params);
+    }, { ...metadata, type: 'click', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async dblclick(params: channels.ElementHandleDblclickParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'dblclick', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.dblclick(progress, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.dblclick(controller, params);
+    }, { ...metadata, type: 'dblclick', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async selectOption(params: channels.ElementHandleSelectOptionParams, metadata?: channels.Metadata): Promise<channels.ElementHandleSelectOptionResult> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'selectOption', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
+    return runAction(async controller => {
       const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);
-      return { values: await this._elementHandle.selectOption(progress, elements, params.options || [], params) };
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+      return { values: await this._elementHandle.selectOption(controller, elements, params.options || [], params) };
+    }, { ...metadata, type: 'selectOption', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async fill(params: channels.ElementHandleFillParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'fill', value: params.value, target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.fill(progress, params.value, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.fill(controller, params.value, params);
+    }, { ...metadata, type: 'fill', value: params.value, target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async selectText(params: channels.ElementHandleSelectTextParams): Promise<void> {
@@ -116,10 +110,9 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async setInputFiles(params: channels.ElementHandleSetInputFilesParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'setInputFiles', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.setInputFiles(progress, params.files, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.setInputFiles(controller, params.files, params);
+    }, { ...metadata, type: 'setInputFiles', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async focus(): Promise<void> {
@@ -127,31 +120,27 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
   }
 
   async type(params: channels.ElementHandleTypeParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'type', value: params.text, target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.type(progress, params.text, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.type(controller, params.text, params);
+    }, { ...metadata, type: 'type', value: params.text, target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async press(params: channels.ElementHandlePressParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'press', value: params.key, target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.press(progress, params.key, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.press(controller, params.key, params);
+    }, { ...metadata, type: 'press', value: params.key, target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async check(params: channels.ElementHandleCheckParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'check', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.check(progress, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.check(controller, params);
+    }, { ...metadata, type: 'check', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async uncheck(params: channels.ElementHandleUncheckParams, metadata?: channels.Metadata): Promise<void> {
-    const actionMetadata: ActionMetadata = { ...metadata, type: 'uncheck', target: this._elementHandle, page: this._elementHandle._page };
-    return runAbortableTask(async progress => {
-      return await this._elementHandle.uncheck(progress, params);
-    }, this._elementHandle._page._timeoutSettings.timeout(params), actionMetadata);
+    return runAction(async controller => {
+      return await this._elementHandle.uncheck(controller, params);
+    }, { ...metadata, type: 'uncheck', target: this._elementHandle, page: this._elementHandle._page });
   }
 
   async boundingBox(): Promise<channels.ElementHandleBoundingBoxResult> {

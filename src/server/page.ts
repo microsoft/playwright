@@ -268,7 +268,7 @@ export class Page extends EventEmitter {
       const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
       await this._delegate.reload();
       return waitPromise;
-    });
+    }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
   }
@@ -283,7 +283,7 @@ export class Page extends EventEmitter {
         return null;
       }
       return waitPromise;
-    });
+    }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
   }
@@ -298,7 +298,7 @@ export class Page extends EventEmitter {
         return null;
       }
       return waitPromise;
-    });
+    }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
   }

@@ -20,11 +20,10 @@ import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
-import { instrumentingAgents } from './server/instrumentation';
-import { DebugController } from './debug/debugController';
+import { installDebugController } from './debug/debugController';
 
 export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
-  instrumentingAgents.add(new DebugController());
+  installDebugController();
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();

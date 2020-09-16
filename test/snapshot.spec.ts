@@ -18,7 +18,7 @@ import { it, options } from './playwright.fixtures';
 
 it('should not throw', (test, parameters) => {
   test.skip(!options.TRACING);
-}, async ({page, server, playwright, toImpl}) => {
+}, async ({page, server, context, toImpl}) => {
   await page.goto(server.PREFIX + '/snapshot/snapshot-with-css.html');
-  await (playwright as any).__tracer.captureSnapshot(toImpl(page), { label: 'snapshot' });
+  await (context as any).__tracer.captureSnapshot(toImpl(page), { label: 'snapshot' });
 });
