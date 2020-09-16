@@ -46,7 +46,7 @@ docker run -it --rm --ipc=host mcr.microsoft.com/playwright:bionic /bin/bash
 On untrusted websites, it's recommended to use a separate user for launching the browsers in combination with the seccomp profile. Inside the container or if you are using the Docker image as a base image you have to use `adduser` for it.
 
 ```
-$ docker run -it --rm --ipc=host --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
+$ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json mcr.microsoft.com/playwright:bionic /bin/bash
 ```
 
 [`seccomp_profile.json`](seccomp_profile.json) is needed to run Chromium with sandbox. This is
@@ -71,7 +71,6 @@ a [default Docker seccomp profile](https://github.com/docker/engine/blob/d0d99b0
 
 > **NOTE**: Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
 
-Since the seccomp profile is now in use, you have to create a separate user with `adduser pwuser` which you use to run your browsers with Playwright.
 
 ### Using on CI
 
