@@ -63,7 +63,7 @@ it('should dismiss the confirm prompt', async ({page}) => {
 });
 
 it('should be able to close context with open alert', (test, parameters) => {
-  test.fixme(options.WEBKIT(parameters) && MAC);
+  test.fixme(options.WEBKIT(parameters) && options.MAC(parameters));
 }, async ({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();

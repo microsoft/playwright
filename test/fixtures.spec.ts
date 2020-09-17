@@ -45,20 +45,20 @@ defineTestFixture('stallingConnectedRemoteServer', async ({browserType, stalling
   await browser.close();
 });
 
-it('should close the browser when the node process closes', (test, parameters) => {
+it('should close the browser when the node process closes', test => {
   test.slow();
-}, async ({connectedRemoteServer}) => {
-  if (WIN)
+}, async ({connectedRemoteServer, isWindows}) => {
+  if (isWindows)
     execSync(`taskkill /pid ${connectedRemoteServer.child().pid} /T /F`);
   else
     process.kill(connectedRemoteServer.child().pid);
-  expect(await connectedRemoteServer.childExitCode()).toBe(WIN ? 1 : 0);
+  expect(await connectedRemoteServer.childExitCode()).toBe(isWindows ? 1 : 0);
   // We might not get browser exitCode in time when killing the parent node process,
   // so we don't check it here.
 });
 
-describe('fixtures', suite => {
-  suite.skip(WIN || !options.HEADLESS);
+describe('fixtures', (suite, parameters) => {
+  suite.skip(options.WIN(parameters) || !options.HEADLESS);
   suite.slow();
 }, () => {
   // Cannot reliably send signals on Windows.

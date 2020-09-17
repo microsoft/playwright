@@ -175,14 +175,14 @@ it('should work with Shift-clicking', (test, parameters) => {
 it('should work with Ctrl-clicking', (test, parameters) => {
   test.fixme(options.WEBKIT(parameters), 'Ctrl+Click does not open a new tab.');
   test.fixme(options.FIREFOX(parameters), 'Reports an opener in this case.');
-}, async ({browser, server}) => {
+}, async ({browser, server, isMac}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
     context.waitForEvent('page'),
-    page.click('a', { modifiers: [ MAC ? 'Meta' : 'Control'] }),
+    page.click('a', { modifiers: [ isMac ? 'Meta' : 'Control'] }),
   ]);
   expect(await popup.opener()).toBe(null);
   await context.close();

@@ -104,7 +104,7 @@ describe('permissions', (suite, parameters) => {
   it('should trigger permission onchange', (test, parameters) => {
     test.fail(options.WEBKIT(parameters));
     test.fail(options.CHROMIUM(parameters) && !options.HEADLESS);
-    test.flaky(options.FIREFOX(parameters) && LINUX);
+    test.flaky(options.FIREFOX(parameters) && options.LINUX(parameters));
   }, async ({page, server, context}) => {
     // TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883

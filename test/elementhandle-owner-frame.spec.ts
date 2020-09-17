@@ -35,7 +35,7 @@ it('should work for cross-process iframes', async ({ page, server }) => {
 });
 
 it('should work for document', (test, parameters) => {
-  test.flaky(WIN && options.WEBKIT(parameters));
+  test.flaky(options.WIN(parameters) && options.WEBKIT(parameters));
 }, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);

@@ -25,8 +25,10 @@ import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
 import { mkdtempAsync, removeFolderAsync } from './utils';
 import { fixtures as baseFixtures } from '@playwright/test-runner';
+import assert from 'assert';
 
 type PlaywrightParameters = {
+  platform: 'win32' | 'linux' | 'darwin'
   browserName: string;
 };
 
@@ -43,6 +45,9 @@ type PlaywrightWorkerFixtures = {
   isChromium: boolean;
   isFirefox: boolean;
   isWebKit: boolean;
+  isWindows: boolean;
+  isMac: boolean;
+  isLinux: boolean;
 };
 
 type PlaywrightFixtures = {
@@ -74,25 +79,18 @@ export const afterAll = fixtures.afterAll;
 export const expect = fixtures.expect;
 
 export const options = {
-  CHROMIUM: parameters => parameters.browserName === 'chromium',
-  FIREFOX: parameters => parameters.browserName === 'firefox',
-  WEBKIT: parameters => parameters.browserName === 'webkit',
+  CHROMIUM: (parameters: PlaywrightParameters) => parameters.browserName === 'chromium',
+  FIREFOX: (parameters: PlaywrightParameters) => parameters.browserName === 'firefox',
+  WEBKIT: (parameters: PlaywrightParameters) => parameters.browserName === 'webkit',
+  MAC: (parameters: PlaywrightParameters) => parameters.platform === 'darwin',
+  LINUX: (parameters: PlaywrightParameters) => parameters.platform === 'linux',
+  WIN: (parameters: PlaywrightParameters) => parameters.platform === 'win32',
   HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
   // Tracing is currently not implemented under wire.
   TRACING: valueFromEnv('TRACING', false) && !process.env.PWWIRE,
 };
-
-declare global {
-  const MAC: boolean;
-  const LINUX: boolean;
-  const WIN: boolean;
-}
-const platform = os.platform();
-global['MAC'] = platform === 'darwin';
-global['LINUX'] = platform === 'linux';
-global['WIN'] = platform === 'win32';
 
 defineWorkerFixture('httpService', async ({parallelIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
@@ -136,7 +134,8 @@ defineWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
   });
 });
 
-defineWorkerFixture('playwright', async ({browserName, parallelIndex}, test) => {
+defineWorkerFixture('playwright', async ({browserName, parallelIndex, platform}, test) => {
+  assert(platform); // Depend on platform to generate all tests.
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
     require('../lib/utils/utils').setUnderTest();
@@ -192,10 +191,15 @@ defineWorkerFixture('browserType', async ({playwright, browserName}, test) => {
 
 defineParameter('browserName', 'Browser type name', '');
 
+defineParameter('platform', 'Operating system', process.platform as ('win32' | 'linux' | 'darwin'));
+
 generateParametrizedTests(
     'browserName',
     process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit', 'firefox']);
 
+generateParametrizedTests(
+    'platform',
+    process.env.PWTESTREPORT ? ['win32', 'darwin', 'linux'] : [process.platform as ('win32' | 'linux' | 'darwin')]);
 
 defineWorkerFixture('isChromium', async ({browserName}, test) => {
   await test(browserName === 'chromium');
@@ -207,6 +211,18 @@ defineWorkerFixture('isFirefox', async ({browserName}, test) => {
 
 defineWorkerFixture('isWebKit', async ({browserName}, test) => {
   await test(browserName === 'webkit');
+});
+
+defineWorkerFixture('isWindows', async ({platform}, test) => {
+  await test(platform === 'win32');
+});
+
+defineWorkerFixture('isMac', async ({platform}, test) => {
+  await test(platform === 'darwin');
+});
+
+defineWorkerFixture('isLinux', async ({platform}, test) => {
+  await test(platform === 'linux');
 });
 
 defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {

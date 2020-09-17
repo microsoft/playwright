@@ -27,7 +27,7 @@ it('should have default url when launching browser', async ({browserType, defaul
 });
 
 it('headless should be able to read cookies written by headful', (test, parameters) => {
-  test.fail(WIN && options.CHROMIUM(parameters));
+  test.fail(options.WIN(parameters) && options.CHROMIUM(parameters));
   test.flaky(options.FIREFOX(parameters));
   test.slow();
 }, async ({browserType, defaultBrowserOptions, server}) => {
