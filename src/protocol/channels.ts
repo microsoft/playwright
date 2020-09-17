@@ -168,6 +168,7 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
@@ -195,6 +196,7 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
@@ -226,6 +228,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -260,8 +263,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
-  artifactsPath?: string,
-  sharedArtifactsPath?: string,
+  relativeArtifactsPath?: string,
   recordTrace?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
@@ -286,6 +288,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -320,8 +323,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
-  artifactsPath?: string,
-  sharedArtifactsPath?: string,
+  relativeArtifactsPath?: string,
   recordTrace?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -377,8 +379,7 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  artifactsPath?: string,
-  sharedArtifactsPath?: string,
+  relativeArtifactsPath?: string,
   recordTrace?: boolean,
   _recordVideos?: boolean,
   _videoSize?: {
@@ -418,8 +419,7 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  artifactsPath?: string,
-  sharedArtifactsPath?: string,
+  relativeArtifactsPath?: string,
   recordTrace?: boolean,
   _recordVideos?: boolean,
   _videoSize?: {

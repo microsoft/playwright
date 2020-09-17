@@ -220,6 +220,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        artifactsPath: string?
         _videosPath: string?
         firefoxUserPrefs: json?
         chromiumSandbox: boolean?
@@ -259,6 +260,7 @@ BrowserType:
             username: string?
             password: string?
         downloadsPath: string?
+        artifactsPath: string?
         _videosPath: string?
         chromiumSandbox: boolean?
         slowMo: number?
@@ -306,8 +308,7 @@ BrowserType:
           - dark
           - no-preference
         acceptDownloads: boolean?
-        artifactsPath: string?
-        sharedArtifactsPath: string?
+        relativeArtifactsPath: string?
         recordTrace: boolean?
       returns:
         context: BrowserContext
@@ -370,8 +371,7 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
-        artifactsPath: string?
-        sharedArtifactsPath: string?
+        relativeArtifactsPath: string?
         recordTrace: boolean?
         _recordVideos: boolean?
         _videoSize:

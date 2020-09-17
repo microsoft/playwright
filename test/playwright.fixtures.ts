@@ -120,15 +120,16 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-defineWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
+defineWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest, config) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
-  await test({
+  await runTest({
     handleSIGINT: false,
     slowMo: options.SLOW_MO,
     headless: options.HEADLESS,
     executablePath,
+    artifactsPath: config.outputDir,
   });
 });
 
@@ -240,8 +241,7 @@ defineTestFixture('context', async ({browser}, runTest, info) => {
   const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
   const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
   const contextOptions: BrowserContextOptions = {
-    artifactsPath: path.join(config.outputDir, relativePath, sanitizedTitle),
-    sharedArtifactsPath: path.join(config.outputDir, '.playwright-shared'),
+    relativeArtifactsPath: path.join(relativePath, sanitizedTitle),
     recordTrace: !!options.TRACING,
   };
   const context = await browser.newContext(contextOptions);

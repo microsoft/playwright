@@ -27,6 +27,7 @@ import { Page, PageBinding } from './page';
 import { Progress, ProgressController, ProgressResult } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
+import * as path from 'path';
 
 export class Video {
   private readonly _path: string;
@@ -92,6 +93,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   readonly _actionListeners = new Set<ActionListener>();
+  readonly _artifactsPath?: string;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -99,6 +101,11 @@ export abstract class BrowserContext extends EventEmitter {
     this._options = options;
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
+    if (browser._options.artifactsPath) {
+      this._artifactsPath = browser._options.artifactsPath;
+      if (options.relativeArtifactsPath)
+        this._artifactsPath = path.join(this._artifactsPath, options.relativeArtifactsPath);
+    }
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 

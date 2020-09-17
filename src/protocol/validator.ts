@@ -121,6 +121,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
+    artifactsPath: tOptional(tString),
     _videosPath: tOptional(tString),
     firefoxUserPrefs: tOptional(tAny),
     chromiumSandbox: tOptional(tBoolean),
@@ -149,6 +150,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
     downloadsPath: tOptional(tString),
+    artifactsPath: tOptional(tString),
     _videosPath: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     slowMo: tOptional(tNumber),
@@ -183,8 +185,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    artifactsPath: tOptional(tString),
-    sharedArtifactsPath: tOptional(tString),
+    relativeArtifactsPath: tOptional(tString),
     recordTrace: tOptional(tBoolean),
   });
   scheme.BrowserCloseParams = tOptional(tObject({}));
@@ -220,8 +221,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    artifactsPath: tOptional(tString),
-    sharedArtifactsPath: tOptional(tString),
+    relativeArtifactsPath: tOptional(tString),
     recordTrace: tOptional(tBoolean),
     _recordVideos: tOptional(tBoolean),
     _videoSize: tOptional(tObject({

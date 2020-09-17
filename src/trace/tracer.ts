@@ -42,10 +42,10 @@ class Tracer implements ContextListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (!context._options.recordTrace)
       return;
-    if (!context._options.artifactsPath)
+    if (!context._artifactsPath)
       throw new Error(`"recordTrace" option requires "artifactsPath" to be specified`);
-    const traceStorageDir = context._options.sharedArtifactsPath || path.join(context._options.artifactsPath, '.shared');
-    const traceFile = path.join(context._options.artifactsPath, 'playwright.trace');
+    const traceStorageDir = path.join(context._browser._options.artifactsPath!, '.playwright-shared');
+    const traceFile = path.join(context._artifactsPath, 'playwright.trace');
     const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
     this._contextTracers.set(context, contextTracer);
   }

@@ -19,15 +19,17 @@ import type * as trace from '../types/trace';
 import * as path from 'path';
 import * as fs from 'fs';
 
-it('should record trace', async ({browser, server, tmpDir}) => {
-  const context = await browser.newContext({
+it('should record trace', async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
     artifactsPath: tmpDir,
-    recordTrace: true,
   });
+  const context = await browser.newContext({ recordTrace: true });
   const page = await context.newPage();
   const url = server.PREFIX + '/snapshot/snapshot-with-css.html';
   await page.goto(url);
   await context.close();
+  await browser.close();
 
   const traceFile = path.join(tmpDir, 'playwright.trace');
   const traceFileContent = await fs.promises.readFile(traceFile, 'utf8');
@@ -49,10 +51,15 @@ it('should record trace', async ({browser, server, tmpDir}) => {
   expect(gotoEvent.value).toBe(url);
 
   expect(gotoEvent.snapshot).toBeTruthy();
-  expect(fs.existsSync(path.join(tmpDir, '.shared', gotoEvent.snapshot!.sha1))).toBe(true);
+  expect(fs.existsSync(path.join(tmpDir, '.playwright-shared', gotoEvent.snapshot!.sha1))).toBe(true);
 });
 
-it('should require artifactsPath', async ({browser}) => {
+it('should require artifactsPath', async ({browserType, defaultBrowserOptions}) => {
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
+    artifactsPath: undefined,
+  });
   const error = await browser.newContext({ recordTrace: true }).catch(e => e);
   expect(error.message).toContain('"recordTrace" option requires "artifactsPath" to be specified');
+  await browser.close();
 });

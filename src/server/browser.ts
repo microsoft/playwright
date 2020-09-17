@@ -32,6 +32,7 @@ export interface BrowserProcess {
 
 export type BrowserOptions = types.UIOptions & {
   name: string,
+  artifactsPath?: string,
   downloadsPath?: string,
   _videosPath?: string,
   headful?: boolean,
