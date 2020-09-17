@@ -88,10 +88,10 @@ See [all available image tags](https://mcr.microsoft.com/v2/playwright/tags/list
 Use [`//docs/docker/build.sh`](build.sh) to build the image.
 
 ```
-$ ./docs/docker/build.sh
+$ ./docs/docker/build.sh bionic playwright:localbuild-bionic
 ```
 
-The image will be tagged as `playwright:localbuild` and could be run as:
+The image will be tagged as `playwright:localbuild-bionic` and could be run as:
 
 ```
 $ docker run --rm -it playwright:localbuild /bin/bash

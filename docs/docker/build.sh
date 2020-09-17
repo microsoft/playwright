@@ -2,13 +2,13 @@
 set -e
 set +x
 
-if [[ ($1 == '--help') || ($1 == '-h') ]]; then
-  echo "usage: $(basename $0)"
+if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
+  echo "usage: $(basename $0) {bionic,focal} playwright:localbuild-bionic"
   echo
-  echo "Build Playwright docker image and tag it as 'playwright:localbuild'."
+  echo "Build Playwright docker image and tag it as 'playwright:localbuild-bionic'."
   echo "Once image is built, you can run it with"
   echo ""
-  echo "  docker run --rm -it playwright:localbuild /bin/bash"
+  echo "  docker run --rm -it playwright:localbuildbionic /bin/bash"
   echo ""
   echo "NOTE: this requires on Playwright dependencies to be installed with 'npm install'"
   echo "      and Playwright itself being built with 'npm run build'"
@@ -27,4 +27,4 @@ cd "$(dirname "$0")"
 # image.
 node ../../packages/build_package.js playwright ./playwright.tar.gz
 
-docker build -t "playwright:localbuild" -f Dockerfile.bionic .
+docker build -t "$2" -f "Dockerfile.$1" .
