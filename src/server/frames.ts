@@ -475,7 +475,7 @@ export class Frame extends EventEmitter {
       const response = request ? request._finalRequest().response() : null;
       await this._page._doSlowMo();
       return response;
-    });
+    }, this._page._timeoutSettings.navigationTimeout(options));
   }
 
   async _waitForNavigation(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -631,7 +631,7 @@ export class Frame extends EventEmitter {
       }, { html, tag });
       await Promise.all([contentPromise, lifecyclePromise]);
       await this._page._doSlowMo();
-    });
+    }, this._page._timeoutSettings.navigationTimeout(options));
   }
 
   name(): string {
@@ -808,16 +808,22 @@ export class Frame extends EventEmitter {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async click(progress: Progress, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._click(progress, options)));
+  async click(controller: ProgressController, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._click(progress, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async dblclick(progress: Progress, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._dblclick(progress, options)));
+  async dblclick(controller: ProgressController, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._dblclick(progress, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async fill(progress: Progress, selector: string, value: string, options: types.NavigatingActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options)));
+  async fill(controller: ProgressController, selector: string, value: string, options: types.NavigatingActionWaitOptions) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
@@ -862,32 +868,46 @@ export class Frame extends EventEmitter {
     }, this._page._timeoutSettings.timeout(options));
   }
 
-  async hover(progress: Progress, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._hover(progress, options)));
+  async hover(controller: ProgressController, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._hover(progress, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async selectOption(progress: Progress, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._selectOption(progress, elements, values, options));
+  async selectOption(controller: ProgressController, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
+    return controller.run(async progress => {
+      return await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._selectOption(progress, elements, values, options));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async setInputFiles(progress: Progress, selector: string, files: types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setInputFiles(progress, files, options)));
+  async setInputFiles(controller: ProgressController, selector: string, files: types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setInputFiles(progress, files, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async type(progress: Progress, selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._type(progress, text, options)));
+  async type(controller: ProgressController, selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._type(progress, text, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async press(progress: Progress, selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._press(progress, key, options)));
+  async press(controller: ProgressController, selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._press(progress, key, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, true, options)));
+  async check(controller: ProgressController, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, true, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
-  async uncheck(progress: Progress, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, false, options)));
+  async uncheck(controller: ProgressController, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, false, options)));
+    }, this._page._timeoutSettings.timeout(options));
   }
 
   async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {

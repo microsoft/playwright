@@ -119,10 +119,10 @@ export class ElectronApplication extends EventEmitter {
   }
 
   private async _waitForEvent(event: string, predicate?: Function): Promise<any> {
-    const progressController = new ProgressController(this._timeoutSettings.timeout({}));
+    const progressController = new ProgressController();
     if (event !== ElectronApplication.Events.Close)
       this._browserContext._closePromise.then(error => progressController.abort(error));
-    return progressController.run(progress => helper.waitForEvent(progress, this, event, predicate).promise);
+    return progressController.run(progress => helper.waitForEvent(progress, this, event, predicate).promise, this._timeoutSettings.timeout({}));
   }
 
   async _init()  {
@@ -147,7 +147,7 @@ export class Electron  {
       handleSIGTERM = true,
       handleSIGHUP = true,
     } = options;
-    const controller = new ProgressController(TimeoutSettings.timeout(options));
+    const controller = new ProgressController();
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
@@ -190,6 +190,6 @@ export class Electron  {
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;
-    });
+    }, TimeoutSettings.timeout(options));
   }
 }

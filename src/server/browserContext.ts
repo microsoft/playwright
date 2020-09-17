@@ -18,13 +18,13 @@
 import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Browser } from './browser';
+import * as dom from './dom';
 import { Download } from './download';
 import * as frames from './frames';
 import { helper } from './helper';
-import { instrumentingAgents } from './instrumentation';
 import * as network from './network';
 import { Page, PageBinding } from './page';
-import { Progress } from './progress';
+import { Progress, ProgressController, ProgressResult } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
 
@@ -42,6 +42,35 @@ export class Video {
     return this._path;
   }
 }
+
+export type ActionMetadata = {
+  type: 'click' | 'fill' | 'dblclick' | 'hover' | 'selectOption' | 'setInputFiles' | 'type' | 'press' | 'check' | 'uncheck' | 'goto' | 'setContent' | 'goBack' | 'goForward' | 'reload',
+  page: Page,
+  target?: dom.ElementHandle | string,
+  value?: string,
+  stack?: string,
+};
+
+export interface ActionListener {
+  onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void>;
+}
+
+export async function runAction<T>(task: (controller: ProgressController) => Promise<T>, metadata: ActionMetadata): Promise<T> {
+  const controller = new ProgressController();
+  controller.setListener(async result => {
+    for (const listener of metadata.page._browserContext._actionListeners)
+      await listener.onAfterAction(result, metadata);
+  });
+  const result = await task(controller);
+  return result;
+}
+
+export interface ContextListener {
+  onContextCreated(context: BrowserContext): Promise<void>;
+  onContextDestroyed(context: BrowserContext): Promise<void>;
+}
+
+export const contextListeners = new Set<ContextListener>();
 
 export abstract class BrowserContext extends EventEmitter {
   static Events = {
@@ -62,6 +91,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browser: Browser;
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
+  readonly _actionListeners = new Set<ActionListener>();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -81,8 +111,8 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _initialize() {
-    for (const agent of instrumentingAgents)
-      await agent.onContextCreated(this);
+    for (const listener of contextListeners)
+      await listener.onContextCreated(this);
   }
 
   _browserClosed() {
@@ -226,8 +256,8 @@ export abstract class BrowserContext extends EventEmitter {
       this._closedStatus = 'closing';
       await this._doClose();
       await Promise.all([...this._downloads].map(d => d.delete()));
-      for (const agent of instrumentingAgents)
-        await agent.onContextDestroyed(this);
+      for (const listener of contextListeners)
+        await listener.onContextDestroyed(this);
       this._didCloseInternal();
     }
     await this._closePromise;

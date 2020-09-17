@@ -18,7 +18,13 @@ import { TimeoutError } from '../utils/errors';
 import { assert, monotonicTime } from '../utils/utils';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { debugLogger, LogName } from '../utils/debugLogger';
-import { ActionResult, instrumentingAgents, ActionMetadata } from './instrumentation';
+
+export type ProgressResult = {
+  logs: string[],
+  startTime: number,
+  endTime: number,
+  error?: Error,
+};
 
 export interface Progress {
   readonly aborted: Promise<void>;
@@ -29,9 +35,9 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, metadata?: ActionMetadata): Promise<T> {
-  const controller = new ProgressController(timeout, metadata);
-  return controller.run(task);
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
+  const controller = new ProgressController();
+  return controller.run(task, timeout);
 }
 
 export class ProgressController {
@@ -48,18 +54,14 @@ export class ProgressController {
   // Cleanups to be run only in the case of abort.
   private _cleanups: (() => any)[] = [];
 
-  private _metadata?: ActionMetadata;
   private _logName: LogName = 'api';
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
-  private _deadline: number;
-  private _timeout: number;
+  private _deadline: number = 0;
+  private _timeout: number = 0;
   private _logRecordring: string[] = [];
+  private _listener?: (result: ProgressResult) => Promise<void>;
 
-  constructor(timeout: number, metadata?: ActionMetadata) {
-    this._timeout = timeout;
-    this._deadline = timeout ? monotonicTime() + timeout : 0;
-    this._metadata = metadata;
-
+  constructor() {
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
     this._forceAbortPromise.catch(e => null);  // Prevent unhandle promsie rejection.
     this._abortedPromise = new Promise(resolve => this._aborted = resolve);
@@ -69,7 +71,16 @@ export class ProgressController {
     this._logName = logName;
   }
 
-  async run<T>(task: (progress: Progress) => Promise<T>): Promise<T> {
+  setListener(listener: (result: ProgressResult) => Promise<void>) {
+    this._listener = listener;
+  }
+
+  async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
+    if (timeout) {
+      this._timeout = timeout;
+      this._deadline = timeout ? monotonicTime() + timeout : 0;
+    }
+
     assert(this._state === 'before');
     this._state = 'running';
 
@@ -102,32 +113,32 @@ export class ProgressController {
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
       this._state = 'finished';
-      const actionResult: ActionResult = {
-        startTime,
-        endTime: monotonicTime(),
-        logs: this._logRecordring,
-      };
-      for (const agent of instrumentingAgents)
-        await agent.onAfterAction(actionResult, this._metadata);
+      if (this._listener) {
+        await this._listener({
+          startTime,
+          endTime: monotonicTime(),
+          logs: this._logRecordring,
+        });
+      }
       this._logRecordring = [];
       return result;
     } catch (e) {
       this._aborted();
+      clearTimeout(timer);
+      this._state = 'aborted';
+      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
+      if (this._listener) {
+        await this._listener({
+          startTime,
+          endTime: monotonicTime(),
+          logs: this._logRecordring,
+          error: e,
+        });
+      }
       rewriteErrorMessage(e,
           e.message +
           formatLogRecording(this._logRecordring) +
           kLoggingNote);
-      clearTimeout(timer);
-      this._state = 'aborted';
-      await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
-      const actionResult: ActionResult = {
-        startTime,
-        endTime: monotonicTime(),
-        logs: this._logRecordring,
-        error: e,
-      };
-      for (const agent of instrumentingAgents)
-        await agent.onAfterAction(actionResult, this._metadata);
       this._logRecordring = [];
       throw e;
     }

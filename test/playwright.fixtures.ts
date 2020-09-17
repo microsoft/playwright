@@ -161,13 +161,7 @@ defineWorkerFixture('playwright', async ({browserName, parallelIndex, platform},
     await teardownCoverage();
   } else {
     const playwright = require('../index');
-    if (options.TRACING) {
-      const tracerFactory = require('../lib/trace/tracer').Tracer;
-      playwright.__tracer = new tracerFactory();
-    }
     await test(playwright);
-    if (playwright.__tracer)
-      playwright.__tracer.dispose();
     await teardownCoverage();
   }
 
@@ -243,18 +237,24 @@ defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-defineTestFixture('context', async ({browser, playwright, toImpl}, runTest, info) => {
+defineTestFixture('context', async ({browser, toImpl}, runTest, info) => {
   const context = await browser.newContext();
-  const { test, config } = info;
-  if ((playwright as any).__tracer) {
+
+  if (options.TRACING) {
+    const { test, config } = info;
     const traceStorageDir = path.join(config.outputDir, 'trace-storage');
     const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const traceFile = path.join(config.outputDir, relativePath, sanitizedTitle + '.trace');
-    (playwright as any).__tracer.traceContext(toImpl(context), traceStorageDir, traceFile);
+    const tracerFactory = require('../lib/trace/tracer').Tracer;
+    (context as any).__tracer = new tracerFactory(toImpl(context), traceStorageDir, traceFile);
   }
+
   await runTest(context);
   await context.close();
+
+  if ((context as any).__tracer)
+    await (context as any).__tracer.dispose();
 });
 
 defineTestFixture('page', async ({context, playwright, toImpl}, runTest, info) => {

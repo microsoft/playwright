@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-import { BrowserContext } from '../server/browserContext';
+import { BrowserContext, ContextListener, contextListeners } from '../server/browserContext';
 import * as frames from '../server/frames';
 import { Page } from '../server/page';
-import { ActionMetadata, ActionResult, InstrumentingAgent } from '../server/instrumentation';
 import { isDebugMode } from '../utils/utils';
 import * as debugScriptSource from '../generated/debugScriptSource';
 
-export class DebugController implements InstrumentingAgent {
+export function installDebugController() {
+  contextListeners.add(new DebugController());
+}
+
+class DebugController implements ContextListener {
   private async ensureInstalledInFrame(frame: frames.Frame) {
     try {
       await frame.extendInjectedScript(debugScriptSource.source);
@@ -40,8 +43,5 @@ export class DebugController implements InstrumentingAgent {
   }
 
   async onContextDestroyed(context: BrowserContext): Promise<void> {
-  }
-
-  async onAfterAction(result: ActionResult, metadata?: ActionMetadata): Promise<void> {
   }
 }
