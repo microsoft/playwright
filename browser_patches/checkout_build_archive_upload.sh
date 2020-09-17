@@ -36,7 +36,11 @@ BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
-if [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
+if [[ "$BUILD_FLAVOR" == "winldd-win64" ]]; then
+  BROWSER_NAME="winldd"
+  EXPECTED_HOST_OS="MINGW"
+  BUILD_BLOB_NAME="winldd-win64.zip"
+elif [[ "$BUILD_FLAVOR" == "ffmpeg-mac" ]]; then
   BROWSER_NAME="ffmpeg"
   EXTRA_BUILD_ARGS="--mac"
   EXPECTED_HOST_OS="Darwin"
