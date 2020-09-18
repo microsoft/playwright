@@ -50,6 +50,8 @@ while true; do
   ../checkout_build_archive_upload.sh firefox-win32 || true
   git pull origin master
   ../checkout_build_archive_upload.sh firefox-win64 || true
+  git pull origin master
+  ../checkout_build_archive_upload.sh winldd-win64 || true
   newTimestamp=$(date +%s)
   delta=$(( 300 - newTimestamp + timestamp ));
   if (( delta > 0 )); then
