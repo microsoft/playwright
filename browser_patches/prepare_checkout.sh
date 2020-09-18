@@ -39,6 +39,9 @@ if [[ ("$1" == "chromium") || ("$1" == "chromium/") || ("$1" == "cr") ]]; then
 elif [[ ("$1" == "ffmpeg") || ("$1" == "ffmpeg/") ]]; then
   echo "FYI: ffmpeg checkout is not supported. Use '//browser_patches/ffmpeg/build.sh' instead"
   exit 0
+elif [[ ("$1" == "winldd") || ("$1" == "winldd/") ]]; then
+  echo "FYI: winldd source code is available right away"
+  exit 0
 elif [[ ("$1" == "firefox") || ("$1" == "firefox/") || ("$1" == "ff") ]]; then
   FRIENDLY_CHECKOUT_PATH="//browser_patches/firefox/checkout";
   CHECKOUT_PATH="$PWD/firefox/checkout"
