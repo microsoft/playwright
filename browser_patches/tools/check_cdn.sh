@@ -68,13 +68,23 @@ CR_ALIASES=(
 FFMPEG_REVISION=$(head -1 ../ffmpeg/BUILD_NUMBER)
 FFMPEG_ARCHIVES=(
   "$HOST/ffmpeg/%s/ffmpeg-mac.zip"
+  "$HOST/ffmpeg/%s/ffmpeg-linux.zip"
   "$HOST/ffmpeg/%s/ffmpeg-win32.zip"
   "$HOST/ffmpeg/%s/ffmpeg-win64.zip"
 )
 FFMPEG_ALIASES=(
   "FFMPEG-MAC"
+  "FFMPEG-LINUX"
   "FFMPEG-WIN32"
   "FFMPEG-WIN64"
+)
+
+WINLDD_REVISION=$(head -1 ../winldd/BUILD_NUMBER)
+WINLDD_ARCHIVES=(
+  "$HOST/winldd/%s/winldd-win64.zip"
+)
+WINLDD_ALIASES=(
+  "WINLDD-WIN64"
 )
 
 COLUMN="%-18s"
@@ -103,6 +113,10 @@ elif [[ ("$1" == "ffmpeg") || ("$1" == "ffmpeg/") ]]; then
   REVISION=$FFMPEG_REVISION
   ARCHIVES=("${FFMPEG_ARCHIVES[@]}")
   ALIASES=("${FFMPEG_ALIASES[@]}")
+elif [[ ("$1" == "winldd") || ("$1" == "winldd/") ]]; then
+  REVISION=$WINLDD_REVISION
+  ARCHIVES=("${WINLDD_ARCHIVES[@]}")
+  ALIASES=("${WINLDD_ALIASES[@]}")
 else
   echo ERROR: unknown application - "$1"
   exit 1
