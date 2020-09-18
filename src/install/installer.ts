@@ -34,6 +34,7 @@ const removeFolderAsync = util.promisify(removeFolder);
 
 export async function installBrowsersWithProgressBar(packagePath: string) {
   const browsersPath = browserPaths.browsersPath(packagePath);
+  await fsMkdirAsync(browsersPath, { recursive: true });
   const releaseLock = await lockfile.lock(browsersPath, {
     retries: {
       retries: 10,
