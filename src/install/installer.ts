@@ -19,6 +19,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 import * as removeFolder from 'rimraf';
+import * as lockfile from 'proper-lockfile';
 import * as browserPaths from '../utils/browserPaths';
 import * as browserFetcher from './browserFetcher';
 import { getFromENV } from '../utils/utils';
@@ -33,6 +34,16 @@ const removeFolderAsync = util.promisify(removeFolder);
 
 export async function installBrowsersWithProgressBar(packagePath: string) {
   const browsersPath = browserPaths.browsersPath(packagePath);
+  const releaseLock = await lockfile.lock(browsersPath, {
+    retries: {
+      retries: 10,
+      // Retry 20 times during 10 minutes with
+      // exponential back-off.
+      // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
+      factor: 1.27579,
+    },
+    lockfilePath: path.join(browsersPath, '__dirlock'),
+  });
   const linksDir = path.join(browsersPath, '.links');
 
   if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
@@ -42,6 +53,7 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
   await fsMkdirAsync(linksDir,  { recursive: true });
   await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
   await validateCache(packagePath, browsersPath, linksDir);
+  await releaseLock();
 }
 
 async function validateCache(packagePath: string, browsersPath: string, linksDir: string) {
