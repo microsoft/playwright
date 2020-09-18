@@ -21,9 +21,11 @@ import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { installDebugController } from './debug/debugController';
+import { installTracer } from './trace/tracer';
 
 export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
   installDebugController();
+  installTracer();
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();

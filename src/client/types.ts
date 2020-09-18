@@ -82,6 +82,7 @@ export type LaunchServerOptions = {
     password?: string
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   chromiumSandbox?: boolean,
   port?: number,

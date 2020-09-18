@@ -96,6 +96,7 @@ export abstract class BrowserType {
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
+      artifactsPath: options.artifactsPath,
       downloadsPath,
       _videosPath,
       browserProcess,
@@ -134,6 +135,7 @@ export abstract class BrowserType {
       }
       return dir;
     };
+    // TODO: use artifactsPath for downloads and videos.
     const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
     const _videosPath = await ensurePath(VIDEOS_FOLDER, options._videosPath);
 

@@ -21,8 +21,10 @@ import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Electron } from './server/electron/electron';
 import { gracefullyCloseAll } from './server/processLauncher';
 import { installDebugController } from './debug/debugController';
+import { installTracer } from './trace/tracer';
 
 installDebugController();
+installTracer();
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);

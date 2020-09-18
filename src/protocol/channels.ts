@@ -168,6 +168,7 @@ export type BrowserTypeLaunchParams = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
@@ -195,6 +196,7 @@ export type BrowserTypeLaunchOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
@@ -226,6 +228,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -260,6 +263,8 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
+  relativeArtifactsPath?: string,
+  recordTrace?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
   executablePath?: string,
@@ -283,6 +288,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     password?: string,
   },
   downloadsPath?: string,
+  artifactsPath?: string,
   _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -317,6 +323,8 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
+  relativeArtifactsPath?: string,
+  recordTrace?: boolean,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
   context: BrowserContextChannel,
@@ -371,6 +379,8 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
+  relativeArtifactsPath?: string,
+  recordTrace?: boolean,
   _recordVideos?: boolean,
   _videoSize?: {
     width: number,
@@ -409,6 +419,8 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
+  relativeArtifactsPath?: string,
+  recordTrace?: boolean,
   _recordVideos?: boolean,
   _videoSize?: {
     width: number,

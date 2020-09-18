@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import childProcess from 'child_process';
-import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer } from '../index';
+import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer, BrowserContextOptions } from '../index';
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
@@ -88,8 +88,7 @@ export const options = {
   HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
-  // Tracing is currently not implemented under wire.
-  TRACING: valueFromEnv('TRACING', false) && !process.env.PWWIRE,
+  TRACING: valueFromEnv('TRACING', false),
 };
 
 defineWorkerFixture('httpService', async ({parallelIndex}, test) => {
@@ -121,16 +120,16 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-defineWorkerFixture('defaultBrowserOptions', async ({browserName}, test) => {
+defineWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest, config) => {
   const executablePath = getExecutablePath(browserName);
-
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
-  await test({
+  await runTest({
     handleSIGINT: false,
     slowMo: options.SLOW_MO,
     headless: options.HEADLESS,
-    executablePath
+    executablePath,
+    artifactsPath: config.outputDir,
   });
 });
 
@@ -237,27 +236,20 @@ defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-defineTestFixture('context', async ({browser, toImpl}, runTest, info) => {
-  const context = await browser.newContext();
-
-  if (options.TRACING) {
-    const { test, config } = info;
-    const traceStorageDir = path.join(config.outputDir, 'trace-storage');
-    const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
-    const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
-    const traceFile = path.join(config.outputDir, relativePath, sanitizedTitle + '.trace');
-    const tracerFactory = require('../lib/trace/tracer').Tracer;
-    (context as any).__tracer = new tracerFactory(toImpl(context), traceStorageDir, traceFile);
-  }
-
+defineTestFixture('context', async ({browser}, runTest, info) => {
+  const { test, config } = info;
+  const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
+  const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+  const contextOptions: BrowserContextOptions = {
+    relativeArtifactsPath: path.join(relativePath, sanitizedTitle),
+    recordTrace: !!options.TRACING,
+  };
+  const context = await browser.newContext(contextOptions);
   await runTest(context);
   await context.close();
-
-  if ((context as any).__tracer)
-    await (context as any).__tracer.dispose();
 });
 
-defineTestFixture('page', async ({context, playwright, toImpl}, runTest, info) => {
+defineTestFixture('page', async ({context}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
   const { test, config, result } = info;
@@ -266,8 +258,6 @@ defineTestFixture('page', async ({context, playwright, toImpl}, runTest, info) =
     const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
     const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
     await page.screenshot({ timeout: 5000, path: assetPath });
-    if ((playwright as any).__tracer)
-      await (playwright as any).__tracer.captureSnapshot(toImpl(page), { timeout: 5000, label: 'Test Failed' });
   }
 });
 
