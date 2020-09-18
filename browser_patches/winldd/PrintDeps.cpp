@@ -113,7 +113,7 @@ int printDependencies(const char* library)
 
 int printUsage()
 {
-    std::cout << "Usage:\n  PrintDeps FILE..." << std::endl;
+    std::cout << "Version: r" << BUILD_NUMBER << " Usage:\n  PrintDeps FILE..." << std::endl;
     return -1;
 }
 
