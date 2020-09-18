@@ -21,7 +21,6 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
-import { makeWaitForNextTask } from '../utils/utils';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -34,7 +33,6 @@ export type BrowserOptions = types.UIOptions & {
   name: string,
   artifactsPath?: string,
   downloadsPath?: string,
-  _videosPath?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
@@ -50,7 +48,7 @@ export abstract class Browser extends EventEmitter {
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
   private _startedClosing = false;
-  private readonly _idToVideo = new Map<string, Video>();
+  readonly _idToVideo = new Map<string, Video>();
 
   constructor(options: BrowserOptions) {
     super();
@@ -89,20 +87,19 @@ export abstract class Browser extends EventEmitter {
     this._downloads.delete(uuid);
   }
 
-  _videoStarted(videoId: string, file: string, pageOrError: Promise<Page | Error>) {
-    const video = new Video(file);
+  _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
+    const video = new Video(context, videoId, path);
     this._idToVideo.set(videoId, video);
     pageOrError.then(pageOrError => {
-      // Emit the event in another task to ensure that newPage response is handled before.
       if (pageOrError instanceof Page)
-        makeWaitForNextTask()(() => pageOrError.emit(Page.Events.VideoStarted, video));
+        pageOrError.emit(Page.Events.VideoStarted, video);
     });
   }
 
   _videoFinished(videoId: string) {
-    const video = this._idToVideo.get(videoId);
+    const video = this._idToVideo.get(videoId)!;
     this._idToVideo.delete(videoId);
-    video!._finishCallback();
+    video._finishCallback();
   }
 
   _didClose() {

@@ -115,7 +115,7 @@ export class Snapshotter {
         return frameResult;
       const frameSnapshot = {
         frameId: frame._id,
-        url: frame.url(),
+        url: removeHash(frame.url()),
         html: '<body>Snapshot is not available</body>',
         resourceOverrides: [],
       };
@@ -190,7 +190,7 @@ export class Snapshotter {
 
     const snapshot: FrameSnapshot = {
       frameId: frame._id,
-      url: frame.url(),
+      url: removeHash(frame.url()),
       html: data.html,
       resourceOverrides: [],
     };
@@ -213,6 +213,16 @@ export class Snapshotter {
     }
 
     return { snapshot, mapping };
+  }
+}
+
+function removeHash(url: string) {
+  try {
+    const u = new URL(url);
+    u.hash = '';
+    return u.toString();
+  } catch (e) {
+    return url;
   }
 }
 

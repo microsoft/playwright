@@ -169,7 +169,6 @@ export type BrowserTypeLaunchParams = {
   },
   downloadsPath?: string,
   artifactsPath?: string,
-  _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -197,7 +196,6 @@ export type BrowserTypeLaunchOptions = {
   },
   downloadsPath?: string,
   artifactsPath?: string,
-  _videosPath?: string,
   firefoxUserPrefs?: any,
   chromiumSandbox?: boolean,
   slowMo?: number,
@@ -229,7 +227,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   downloadsPath?: string,
   artifactsPath?: string,
-  _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
@@ -289,7 +286,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   downloadsPath?: string,
   artifactsPath?: string,
-  _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
   noDefaultViewport?: boolean,
@@ -381,8 +377,8 @@ export type BrowserNewContextParams = {
   acceptDownloads?: boolean,
   relativeArtifactsPath?: string,
   recordTrace?: boolean,
-  _recordVideos?: boolean,
-  _videoSize?: {
+  recordVideos?: boolean,
+  videoSize?: {
     width: number,
     height: number,
   },
@@ -421,8 +417,8 @@ export type BrowserNewContextOptions = {
   acceptDownloads?: boolean,
   relativeArtifactsPath?: string,
   recordTrace?: boolean,
-  _recordVideos?: boolean,
-  _videoSize?: {
+  recordVideos?: boolean,
+  videoSize?: {
     width: number,
     height: number,
   },
@@ -675,7 +671,6 @@ export interface PageChannel extends Channel {
   on(event: 'requestFinished', callback: (params: PageRequestFinishedEvent) => void): this;
   on(event: 'response', callback: (params: PageResponseEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
-  on(event: 'videoStarted', callback: (params: PageVideoStartedEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
@@ -757,9 +752,6 @@ export type PageResponseEvent = {
 export type PageRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
-};
-export type PageVideoStartedEvent = {
-  video: VideoChannel,
 };
 export type PageWorkerEvent = {
   worker: WorkerChannel,
@@ -2153,31 +2145,6 @@ export type DialogAcceptResult = void;
 export type DialogDismissParams = {};
 export type DialogDismissOptions = {};
 export type DialogDismissResult = void;
-
-// ----------- Video -----------
-export type VideoInitializer = {};
-export interface VideoChannel extends Channel {
-  path(params?: VideoPathParams, metadata?: Metadata): Promise<VideoPathResult>;
-  saveAs(params: VideoSaveAsParams, metadata?: Metadata): Promise<VideoSaveAsResult>;
-  stream(params?: VideoStreamParams, metadata?: Metadata): Promise<VideoStreamResult>;
-}
-export type VideoPathParams = {};
-export type VideoPathOptions = {};
-export type VideoPathResult = {
-  value: string,
-};
-export type VideoSaveAsParams = {
-  path: string,
-};
-export type VideoSaveAsOptions = {
-
-};
-export type VideoSaveAsResult = void;
-export type VideoStreamParams = {};
-export type VideoStreamOptions = {};
-export type VideoStreamResult = {
-  stream?: StreamChannel,
-};
 
 // ----------- Download -----------
 export type DownloadInitializer = {

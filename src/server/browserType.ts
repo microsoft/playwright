@@ -34,7 +34,6 @@ const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => fs.stat(path, err => resolve(!err)));
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
-const VIDEOS_FOLDER = path.join(os.tmpdir(), 'playwright_videos-');
 
 type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
 
@@ -77,7 +76,6 @@ export abstract class BrowserType {
   async launchPersistentContext(userDataDir: string, options: types.LaunchPersistentOptions = {}): Promise<BrowserContext> {
     options = validateLaunchOptions(options);
     const persistent: types.BrowserContextOptions = options;
-    validateBrowserContextOptions(persistent);
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
@@ -88,7 +86,7 @@ export abstract class BrowserType {
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
-    const { browserProcess, downloadsPath, _videosPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
+    const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
@@ -98,10 +96,11 @@ export abstract class BrowserType {
       headful: !options.headless,
       artifactsPath: options.artifactsPath,
       downloadsPath,
-      _videosPath,
       browserProcess,
       proxy: options.proxy,
     };
+    if (persistent)
+      validateBrowserContextOptions(persistent, browserOptions);
     copyTestHooks(options, browserOptions);
     const browser = await this._connectToTransport(transport, browserOptions);
     // We assume no control when using custom arguments, and do not prepare the default context in that case.
@@ -110,7 +109,7 @@ export abstract class BrowserType {
     return browser;
   }
 
-  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, downloadsPath: string, _videosPath: string, transport: ConnectionTransport }> {
+  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, downloadsPath: string, transport: ConnectionTransport }> {
     const {
       ignoreDefaultArgs,
       ignoreAllDefaultArgs,
@@ -135,9 +134,8 @@ export abstract class BrowserType {
       }
       return dir;
     };
-    // TODO: use artifactsPath for downloads and videos.
+    // TODO: use artifactsPath for downloads.
     const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
-    const _videosPath = await ensurePath(VIDEOS_FOLDER, options._videosPath);
 
     if (!userDataDir) {
       userDataDir = await mkdtempAsync(path.join(os.tmpdir(), `playwright_${this._name}dev_profile-`));
@@ -211,7 +209,7 @@ export abstract class BrowserType {
       const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
       transport = new PipeTransport(stdio[3], stdio[4]);
     }
-    return { browserProcess, downloadsPath, _videosPath, transport };
+    return { browserProcess, downloadsPath, transport };
   }
 
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];

@@ -99,7 +99,7 @@ export class FFBrowser extends Browser {
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    validateBrowserContextOptions(options);
+    validateBrowserContextOptions(options, this._options);
     if (options.isMobile)
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this._connection.send('Browser.createBrowserContext', { removeOnDetach: true });
@@ -229,13 +229,15 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setOffline(this._options.offline));
     if (this._options.colorScheme)
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
-    if (this._options._recordVideos) {
-      const size = this._options._videoSize || this._options.viewport || { width: 1280, height: 720 };
-      await this._browser._connection.send('Browser.setScreencastOptions', {
-        ...size,
-        dir: this._browser._options._videosPath!,
-        browserContextId: this._browserContextId
-      });
+    if (this._options.recordVideos) {
+      const size = this._options.videoSize || this._options.viewport || { width: 1280, height: 720 };
+      promises.push(this._ensureArtifactsPath().then(() => {
+        return this._browser._connection.send('Browser.setScreencastOptions', {
+          ...size,
+          dir: this._artifactsPath!,
+          browserContextId: this._browserContextId
+        });
+      }));
     }
 
     await Promise.all(promises);

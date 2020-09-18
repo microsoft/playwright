@@ -221,8 +221,8 @@ Indicates that the browser is connected.
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `relativeArtifactsPath` <[string]> Specifies a folder for artifacts like downloads, videos and traces, relative to `artifactsPath` from [`browserType.launch`](#browsertypelaunchoptions). Defaults to `.`.
-  - `_recordVideos` <[boolean]> **experimental** Enables automatic video recording for new pages.
-  - `_videoSize` <[Object]> **experimental** Specifies dimensions of the automatically recorded video. Can only be used if `_recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `recordVideos` <[boolean]> Enables video recording for all pages to the `relativeArtifactsPath` folder.
+  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordTrace` <[boolean]> Enables trace recording to the `relativeArtifactsPath` folder.
@@ -269,8 +269,8 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `relativeArtifactsPath` <[string]> Specifies a folder for artifacts like downloads, videos and traces, relative to `artifactsPath` from [`browserType.launch`](#browsertypelaunchoptions). Defaults to `.`.
-  - `_recordVideos` <[boolean]> **experimental** Enables automatic video recording for the new page.
-  - `_videoSize` <[Object]> **experimental** Specifies dimensions of the automatically recorded video. Can only be used if `_recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `recordVideos` <[boolean]> Enables video recording for all pages to the `relativeArtifactsPath` folder.
+  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordTrace` <[boolean]> Enables trace recording to the `relativeArtifactsPath` folder.
@@ -701,7 +701,6 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
-- [event: '_videostarted'](#event-_videostarted)
 - [event: 'close'](#event-close-1)
 - [event: 'console'](#event-console)
 - [event: 'crash'](#event-crash)
@@ -787,35 +786,6 @@ page.removeListener('request', logRequest);
 - [page.waitForTimeout(timeout)](#pagewaitfortimeouttimeout)
 - [page.workers()](#pageworkers)
 <!-- GEN:stop -->
-
-#### event: '_videostarted'
-- <[Object]> Video object. Provides access to the video after it has been written to a file.
-
-**experimental**
-Emitted when video recording has started for this page. The event will fire only if [`_recordVideos`](#browsernewcontextoptions) option is configured on the parent context.
-
-An example of recording a video for single page.
-```js
-const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
-
-(async () => {
-  const browser = await webkit.launch({
-    _videosPath: __dirname   // Save videos to custom directory
-  });
-  const context = await browser.newContext({
-    _recordVideos: true,
-    _videoSize: { width: 640, height: 360 }
-  });
-  const page = await context.newPage();
-  const video = await page.waitForEvent('_videostarted');
-  await page.goto('https://github.com/microsoft/playwright');
-  // Video recording will stop automaticall when the page closes.
-  await page.close();
-  // Wait for the path to the video. It will become available
-  // after the video has been completely written to the the file.
-  console.log('Recorded video: ' + await video.path());
-})();
-```
 
 #### event: 'close'
 
@@ -4205,7 +4175,6 @@ This methods attaches Playwright to an existing browser instance.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `artifactsPath` <[string]> Specifies a folder for various artifacts like downloads, videos and traces. If not specified, artifacts are not collected.
-  - `_videosPath` <[string]> **experimental** If specified, recorded videos are saved into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -4282,9 +4251,8 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `relativeArtifactsPath` <[string]> Specifies a folder for artifacts like downloads, videos and traces, relative to `artifactsPath`. Defaults to `.`.
-  - `_videosPath` <[string]> **experimental** If specified, recorded videos are saved into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
-  - `_recordVideos` <[boolean]> **experimental** Enables automatic video recording for new pages.
-  - `_videoSize` <[Object]> **experimental** Specifies dimensions of the automatically recorded video. Can only be used if `_recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `recordVideos` <[boolean]> Enables video recording for all pages to the `relativeArtifactsPath` folder.
+  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordTrace` <[boolean]> Enables trace recording to the `relativeArtifactsPath` folder.
@@ -4306,7 +4274,6 @@ Launches browser that uses persistent storage located at `userDataDir` and retur
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `artifactsPath` <[string]> Specifies a folder for various artifacts like downloads, videos and traces. If not specified, artifacts are not collected.
-  - `_videosPath` <[string]> **experimental** If specified, recorded videos are saved into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.

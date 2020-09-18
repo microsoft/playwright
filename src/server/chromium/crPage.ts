@@ -458,13 +458,15 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source));
-    if (this._crPage._browserContext._options._recordVideos) {
-      const size = this._crPage._browserContext._options._videoSize || this._crPage._browserContext._options.viewport || { width: 1280, height: 720 };
+    if (this._isMainFrame() && this._crPage._browserContext._options.recordVideos) {
+      const size = this._crPage._browserContext._options.videoSize || this._crPage._browserContext._options.viewport || { width: 1280, height: 720 };
       const screencastId = createGuid();
-      const outputFile = path.join(this._crPage._browserContext._browser._options._videosPath!, screencastId + '.webm');
-      promises.push(this._startScreencast(screencastId, {
-        ...size,
-        outputFile,
+      const outputFile = path.join(this._crPage._browserContext._artifactsPath!, screencastId + '.webm');
+      promises.push(this._crPage._browserContext._ensureArtifactsPath().then(() => {
+        return this._startScreencast(screencastId, {
+          ...size,
+          outputFile,
+        });
       }));
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
@@ -764,7 +766,7 @@ class FrameSession {
       this._screencastState = 'started';
       this._videoRecorder = videoRecorder;
       this._screencastId = screencastId;
-      this._crPage._browserContext._browser._videoStarted(screencastId, options.outputFile, this._crPage.pageOrError());
+      this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
     } catch (e) {
       videoRecorder.stop().catch(() => {});
       throw e;

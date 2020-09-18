@@ -17,7 +17,8 @@
 
 import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
-import { Browser } from './browser';
+import { mkdirIfNeeded } from '../utils/utils';
+import { Browser, BrowserOptions } from './browser';
 import * as dom from './dom';
 import { Download } from './download';
 import * as frames from './frames';
@@ -30,17 +31,17 @@ import * as types from './types';
 import * as path from 'path';
 
 export class Video {
-  private readonly _path: string;
+  readonly _videoId: string;
+  readonly _path: string;
+  readonly _context: BrowserContext;
+  readonly _finishedPromise: Promise<void>;
   _finishCallback: () => void = () => {};
-  private readonly _finishedPromise: Promise<void>;
-  constructor(path: string) {
-    this._path = path;
-    this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
-  }
 
-  async path(): Promise<string> {
-    await this._finishedPromise;
-    return this._path;
+  constructor(context: BrowserContext, videoId: string, path: string) {
+    this._videoId = videoId;
+    this._path = path;
+    this._context = context;
+    this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
 }
 
@@ -120,6 +121,11 @@ export abstract class BrowserContext extends EventEmitter {
   async _initialize() {
     for (const listener of contextListeners)
       await listener.onContextCreated(this);
+  }
+
+  async _ensureArtifactsPath() {
+    if (this._artifactsPath)
+      await mkdirIfNeeded(path.join(this._artifactsPath, 'dummy'));
   }
 
   _browserClosed() {
@@ -262,7 +268,14 @@ export abstract class BrowserContext extends EventEmitter {
     if (this._closedStatus === 'open') {
       this._closedStatus = 'closing';
       await this._doClose();
-      await Promise.all([...this._downloads].map(d => d.delete()));
+      const promises: Promise<any>[] = [];
+      for (const download of this._downloads)
+        promises.push(download.delete());
+      for (const video of this._browser._idToVideo.values()) {
+        if (video._context === this)
+          promises.push(video._finishedPromise);
+      }
+      await Promise.all(promises);
       for (const listener of contextListeners)
         await listener.onContextDestroyed(this);
       this._didCloseInternal();
@@ -278,7 +291,7 @@ export function assertBrowserContextIsNotOwned(context: BrowserContext) {
   }
 }
 
-export function validateBrowserContextOptions(options: types.BrowserContextOptions) {
+export function validateBrowserContextOptions(options: types.BrowserContextOptions, browserOptions: BrowserOptions) {
   if (options.noDefaultViewport && options.deviceScaleFactor !== undefined)
     throw new Error(`"deviceScaleFactor" option is not supported with null "viewport"`);
   if (options.noDefaultViewport && options.isMobile !== undefined)
@@ -286,6 +299,10 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   verifyGeolocation(options.geolocation);
+  if (options.recordTrace && !browserOptions.artifactsPath)
+    throw new Error(`"recordTrace" option requires "artifactsPath" to be specified`);
+  if (options.recordVideos && !browserOptions.artifactsPath)
+    throw new Error(`"recordVideos" option requires "artifactsPath" to be specified`);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

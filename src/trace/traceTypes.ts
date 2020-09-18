@@ -51,6 +51,13 @@ export type PageDestroyedTraceEvent = {
   pageId: string,
 };
 
+export type PageVideoTraceEvent = {
+  type: 'page-video',
+  contextId: string,
+  pageId: string,
+  fileName: string,
+};
+
 export type ActionTraceEvent = {
   type: 'action',
   contextId: string,
@@ -75,6 +82,7 @@ export type TraceEvent =
     ContextDestroyedTraceEvent |
     PageCreatedTraceEvent |
     PageDestroyedTraceEvent |
+    PageVideoTraceEvent |
     NetworkResourceTraceEvent |
     ActionTraceEvent;
 
