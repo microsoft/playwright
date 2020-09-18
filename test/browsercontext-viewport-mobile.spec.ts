@@ -138,11 +138,23 @@ describe('mobile viewport', (suite, parameters) => {
     const mobilepage = await browser.newPage({ ...iPhone });
     expect(await mobilepage.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(false);
     expect(await mobilepage.evaluate(() => matchMedia('(hover: none)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-hover: hover)').matches)).toBe(false);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-hover: none)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(false);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-pointer: coarse)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-pointer: fine)').matches)).toBe(false);
     await mobilepage.close();
 
     const desktopPage = await browser.newPage();
     expect(await desktopPage.evaluate(() => matchMedia('(hover: none)').matches)).toBe(false);
     expect(await desktopPage.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(true);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-hover: none)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-hover: hover)').matches)).toBe(true);
+    expect(await desktopPage.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-pointer: coarse)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-pointer: fine)').matches)).toBe(true);
     await desktopPage.close();
   });
 });
