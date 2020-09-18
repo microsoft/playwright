@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
+import { it, expect, attachFrame } from './playwright.fixtures';
 
 it('should navigate subframes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
@@ -53,9 +51,9 @@ it('should return matching responses', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   // Attach three frames.
   const frames = [
-    await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
-    await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE),
-    await utils.attachFrame(page, 'frame3', server.EMPTY_PAGE),
+    await attachFrame(page, 'frame1', server.EMPTY_PAGE),
+    await attachFrame(page, 'frame2', server.EMPTY_PAGE),
+    await attachFrame(page, 'frame3', server.EMPTY_PAGE),
   ];
   const serverResponses = [];
   server.setRoute('/0.html', (req, res) => serverResponses.push(res));

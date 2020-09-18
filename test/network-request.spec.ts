@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, options, attachFrame } from './playwright.fixtures';
 
 it('should work for main frame navigation request', async ({page, server}) => {
   const requests = [];
@@ -30,7 +29,7 @@ it('should work for subframe navigation request', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const requests = [];
   page.on('request', request => requests.push(request));
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   expect(requests.length).toBe(1);
   expect(requests[0].frame()).toBe(page.frames()[1]);
 });

@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
+import { it, expect, verifyViewport } from './playwright.fixtures';
 
 it('should create new context', async function({browser}) {
   expect(browser.contexts().length).toBe(0);
@@ -90,7 +88,7 @@ it('should isolate localStorage and cookies', async function({browser, server}) 
 it('should propagate default viewport to the page', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
   const page = await context.newPage();
-  await utils.verifyViewport(page, 456, 789);
+  await verifyViewport(page, 456, 789);
   await context.close();
 });
 
@@ -99,7 +97,7 @@ it('should make a copy of default viewport', async ({ browser }) => {
   const context = await browser.newContext({ viewport });
   viewport.width = 567;
   const page = await context.newPage();
-  await utils.verifyViewport(page, 456, 789);
+  await verifyViewport(page, 456, 789);
   await context.close();
 });
 

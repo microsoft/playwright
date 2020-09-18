@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, describe, options, verifyViewport } from './playwright.fixtures';
 import path from 'path';
 import fs from 'fs';
 
@@ -122,7 +121,7 @@ describe('page screenshot', (suite, parameters) => {
     await page.goto(server.PREFIX + '/grid.html');
     const screenshot = await page.screenshot({ fullPage: true });
     expect(screenshot).toBeInstanceOf(Buffer);
-    await utils.verifyViewport(page, 500, 500);
+    await verifyViewport(page, 500, 500);
   });
 
   it('should run in parallel in multiple pages', async ({server, context, golden}) => {
@@ -262,32 +261,32 @@ describe('page screenshot', (suite, parameters) => {
     expect(await page.screenshot()).toMatchImage(golden('screenshot-iframe.png'));
   });
 
-  it('path option should work', async ({page, server, golden, tmpDir}) => {
+  it('path option should work', async ({page, server, golden, testOutputDir}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
-    const outputPath = path.join(tmpDir, 'screenshot.png');
+    const outputPath = path.join(testOutputDir, 'screenshot.png');
     await page.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('screenshot-sanity.png'));
   });
 
-  it('path option should create subdirectories', async ({page, server, golden, tmpDir}) => {
+  it('path option should create subdirectories', async ({page, server, golden, testOutputDir}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
-    const outputPath = path.join(tmpDir, 'these', 'are', 'directories', 'screenshot.png');
+    const outputPath = path.join(testOutputDir, 'these', 'are', 'directories', 'screenshot.png');
     await page.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('screenshot-sanity.png'));
   });
 
-  it('path option should detect jpeg', async ({page, server, golden, tmpDir}) => {
+  it('path option should detect jpeg', async ({page, server, golden, testOutputDir}) => {
     await page.setViewportSize({ width: 100, height: 100 });
     await page.goto(server.EMPTY_PAGE);
-    const outputPath = path.join(tmpDir, 'screenshot.jpg');
+    const outputPath = path.join(testOutputDir, 'screenshot.jpg');
     const screenshot = await page.screenshot({omitBackground: true, path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('white.jpg'));
     expect(screenshot).toMatchImage(golden('white.jpg'));
   });
 
-  it('path option should throw for unsupported mime type', async ({page, server, golden, tmpDir}) => {
+  it('path option should throw for unsupported mime type', async ({page}) => {
     const error = await page.screenshot({ path: 'file.txt' }).catch(e => e);
     expect(error.message).toContain('path: unsupported mime type "text/plain"');
   });

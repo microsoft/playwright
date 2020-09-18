@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, options, attachFrame } from './playwright.fixtures';
 
 it('should think that it is focused by default', async ({page}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);
@@ -127,8 +126,8 @@ it('should not affect screenshots', (test, parameters) => {
 it('should change focused iframe', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [frame1, frame2] = await Promise.all([
-    utils.attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
-    utils.attachFrame(page, 'frame2', server.PREFIX + '/input/textarea.html'),
+    attachFrame(page, 'frame1', server.PREFIX + '/input/textarea.html'),
+    attachFrame(page, 'frame2', server.PREFIX + '/input/textarea.html'),
   ]);
   function logger() {
     self['_events'] = [];

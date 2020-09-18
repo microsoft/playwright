@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, options, attachFrame } from './playwright.fixtures';
 
 it('should type into a textarea', async ({page}) => {
   await page.evaluate(() => {
@@ -305,7 +304,7 @@ it('should type emoji', async ({page, server}) => {
 
 it('should type emoji into an iframe', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'emoji-test', server.PREFIX + '/input/textarea.html');
+  await attachFrame(page, 'emoji-test', server.PREFIX + '/input/textarea.html');
   const frame = page.frames()[1];
   const textarea = await frame.$('textarea');
   await textarea.type('👹 Tokyo street Japan 🇯🇵');

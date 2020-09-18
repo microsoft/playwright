@@ -18,7 +18,6 @@
 import { it, expect } from './playwright.fixtures';
 
 import path from 'path';
-import utils from './utils';
 
 it('should work', async ({playwright, browser}) => {
   const createTagSelector = () => ({
@@ -33,11 +32,11 @@ it('should work', async ({playwright, browser}) => {
     }
   });
   // Register one engine before creating context.
-  await utils.registerEngine(playwright, 'tag', `(${createTagSelector.toString()})()`);
+  await playwright.selectors.register('tag', `(${createTagSelector.toString()})()`);
 
   const context = await browser.newContext();
   // Register another engine after creating context.
-  await utils.registerEngine(playwright, 'tag2', `(${createTagSelector.toString()})()`);
+  await playwright.selectors.register('tag2', `(${createTagSelector.toString()})()`);
 
   const page = await context.newPage();
   await page.setContent('<div><span></span></div><div></div>');
@@ -60,7 +59,7 @@ it('should work', async ({playwright, browser}) => {
 });
 
 it('should work with path', async ({playwright, page}) => {
-  await utils.registerEngine(playwright, 'foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
+  await playwright.selectors.register('foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
   await page.setContent('<section></section>');
   expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
 });
@@ -75,8 +74,8 @@ it('should work in main and isolated world', async ({playwright, page}) => {
       return [document.body, document.documentElement, window['__answer']];
     }
   });
-  await utils.registerEngine(playwright, 'main', createDummySelector);
-  await utils.registerEngine(playwright, 'isolated', createDummySelector, { contentScript: true });
+  await playwright.selectors.register('main', createDummySelector);
+  await playwright.selectors.register('isolated', createDummySelector, { contentScript: true });
   await page.setContent('<div><span><section></section></span></div>');
   await page.evaluate(() => window['__answer'] = document.querySelector('span'));
   // Works in main if asked.
@@ -117,8 +116,8 @@ it('should handle errors', async ({playwright, page}) => {
   expect(error.message).toBe('Selector engine name may only contain [a-zA-Z0-9_] characters');
 
   // Selector names are case-sensitive.
-  await utils.registerEngine(playwright, 'dummy', createDummySelector);
-  await utils.registerEngine(playwright, 'duMMy', createDummySelector);
+  await playwright.selectors.register('dummy', createDummySelector);
+  await playwright.selectors.register('duMMy', createDummySelector);
 
   error = await playwright.selectors.register('dummy', createDummySelector).catch(e => e);
   expect(error.message).toBe('"dummy" selector engine has been already registered');

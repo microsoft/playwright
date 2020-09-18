@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, options, attachFrame } from './playwright.fixtures';
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)
@@ -315,7 +314,7 @@ it('should click links which cause navigation', async ({page, server}) => {
 it('should click the button inside an iframe', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<div style="width:100px;height:100px">spacer</div>');
-  await utils.attachFrame(page, 'button-test', server.PREFIX + '/input/button.html');
+  await attachFrame(page, 'button-test', server.PREFIX + '/input/button.html');
   const frame = page.frames()[1];
   const button = await frame.$('button');
   await button.click();
@@ -331,7 +330,7 @@ it('should click the button with fixed position inside an iframe', (test, parame
   await page.goto(server.EMPTY_PAGE);
   await page.setViewportSize({width: 500, height: 500});
   await page.setContent('<div style="width:100px;height:2000px">spacer</div>');
-  await utils.attachFrame(page, 'button-test', server.CROSS_PROCESS_PREFIX + '/input/button.html');
+  await attachFrame(page, 'button-test', server.CROSS_PROCESS_PREFIX + '/input/button.html');
   const frame = page.frames()[1];
   await frame.$eval('button', button => button.style.setProperty('position', 'fixed'));
   await frame.click('button');
@@ -343,7 +342,7 @@ it('should click the button with deviceScaleFactor set', async ({browser, server
   const page = await context.newPage();
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
   await page.setContent('<div style="width:100px;height:100px">spacer</div>');
-  await utils.attachFrame(page, 'button-test', server.PREFIX + '/input/button.html');
+  await attachFrame(page, 'button-test', server.PREFIX + '/input/button.html');
   const frame = page.frames()[1];
   const button = await frame.$('button');
   await button.click();

@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
+import { it, expect, attachFrame } from './playwright.fixtures';
 
 it('should work', async ({browser, server}) => {
   {
@@ -49,7 +47,7 @@ it('should work for subframes', async ({browser, server}) => {
     const page = await context.newPage();
     const [request] = await Promise.all([
       server.waitForRequest('/empty.html'),
-      utils.attachFrame(page, 'frame1', server.EMPTY_PAGE),
+      attachFrame(page, 'frame1', server.EMPTY_PAGE),
     ]);
     expect(request.headers['user-agent']).toBe('foobar');
     await context.close();

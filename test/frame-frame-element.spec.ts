@@ -15,15 +15,13 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
+import { it, expect, attachFrame } from './playwright.fixtures';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
-  const frame3 = await utils.attachFrame(page, 'frame3', server.EMPTY_PAGE);
+  const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame2', server.EMPTY_PAGE);
+  const frame3 = await attachFrame(page, 'frame3', server.EMPTY_PAGE);
   const frame1handle1 = await page.$('#frame1');
   const frame1handle2 = await frame1.frameElement();
   const frame3handle1 = await page.$('#frame3');
@@ -35,7 +33,7 @@ it('should work', async ({page, server}) => {
 
 it('should work with contentFrame', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  const frame = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  const frame = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const handle = await frame.frameElement();
   const contentFrame = await handle.contentFrame();
   expect(contentFrame).toBe(frame);
@@ -43,7 +41,7 @@ it('should work with contentFrame', async ({page, server}) => {
 
 it('should throw when detached', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   await page.$eval('#frame1', e => e.remove());
   const error = await frame1.frameElement().catch(e => e);
   expect(error.message).toContain('Frame has been detached.');
