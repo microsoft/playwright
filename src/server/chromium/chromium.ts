@@ -120,7 +120,8 @@ export class Chromium extends BrowserType {
       chromeArguments.push(
           '--headless',
           '--hide-scrollbars',
-          '--mute-audio'
+          '--mute-audio',
+          '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
       );
     }
     if (options.chromiumSandbox === false)
@@ -173,5 +174,4 @@ const DEFAULT_ARGS = [
   '--enable-automation',
   '--password-store=basic',
   '--use-mock-keychain',
-  '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4'
 ];
