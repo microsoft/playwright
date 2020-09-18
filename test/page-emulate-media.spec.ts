@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, attachFrame } from './playwright.fixtures';
 
 it('should emulate type', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('screen').matches)).toBe(true);
@@ -110,7 +109,7 @@ it('should work in popup', async ({browser, server}) => {
 it('should work in cross-process iframe', async ({browser, server}) => {
   const page = await browser.newPage({ colorScheme: 'dark' });
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
   const frame = page.frames()[1];
   expect(await frame.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
   await page.close();

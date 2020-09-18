@@ -16,9 +16,7 @@
 import { it, expect, options } from '../playwright.fixtures';
 
 import path from 'path';
-import utils from '../utils';
 import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';
-const { makeUserDataDir, removeUserDataDir } = utils;
 
 it('should throw with remote-debugging-pipe argument', (test, parameters) => {
   test.skip(options.WIRE || !options.CHROMIUM(parameters));
@@ -58,8 +56,8 @@ it('should open devtools when "devtools: true" option is given', (test, paramete
 
 it('should return background pages', (test, parameters) => {
   test.skip(!options.CHROMIUM(parameters));
-}, async ({browserType, defaultBrowserOptions}) => {
-  const userDataDir = await makeUserDataDir();
+}, async ({browserType, defaultBrowserOptions, createUserDataDir}) => {
+  const userDataDir = await createUserDataDir();
   const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
   const extensionOptions = {...defaultBrowserOptions,
     headless: false,
@@ -77,7 +75,6 @@ it('should return background pages', (test, parameters) => {
   expect(context.backgroundPages()).toContain(backgroundPage);
   expect(context.pages()).not.toContain(backgroundPage);
   await context.close();
-  await removeUserDataDir(userDataDir);
 });
 
 it('should not create pages automatically', (test, parameters) => {

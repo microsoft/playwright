@@ -16,11 +16,8 @@
 
 import { it, expect, options } from './playwright.fixtures';
 
-import utils from './utils';
-const { makeUserDataDir, removeUserDataDir } = utils;
-
-it('should have default url when launching browser', async ({browserType, defaultBrowserOptions, tmpDir}) => {
-  const browserContext = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, headless: false });
+it('should have default url when launching browser', async ({browserType, defaultBrowserOptions, createUserDataDir}) => {
+  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...defaultBrowserOptions, headless: false });
   const urls = browserContext.pages().map(page => page.url());
   expect(urls).toEqual(['about:blank']);
   await browserContext.close();
@@ -30,9 +27,9 @@ it('headless should be able to read cookies written by headful', (test, paramete
   test.fail(options.WIN(parameters) && options.CHROMIUM(parameters));
   test.flaky(options.FIREFOX(parameters));
   test.slow();
-}, async ({browserType, defaultBrowserOptions, server}) => {
+}, async ({browserType, defaultBrowserOptions, server, createUserDataDir}) => {
   // see https://github.com/microsoft/playwright/issues/717
-  const userDataDir = await makeUserDataDir();
+  const userDataDir = await createUserDataDir();
   // Write a cookie in headful chrome
   const headfulContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
   const headfulPage = await headfulContext.newPage();
@@ -45,15 +42,13 @@ it('headless should be able to read cookies written by headful', (test, paramete
   await headlessPage.goto(server.EMPTY_PAGE);
   const cookie = await headlessPage.evaluate(() => document.cookie);
   await headlessContext.close();
-  // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-  await removeUserDataDir(userDataDir);
   expect(cookie).toBe('foo=true');
 });
 
 it('should close browser with beforeunload page', (test, parameters) => {
   test.slow();
-}, async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
-  const browserContext = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, headless: false});
+}, async ({browserType, defaultBrowserOptions, server, createUserDataDir}) => {
+  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...defaultBrowserOptions, headless: false});
   const page = await browserContext.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers

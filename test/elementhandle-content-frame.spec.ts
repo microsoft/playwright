@@ -15,13 +15,11 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
+import { it, expect, attachFrame } from './playwright.fixtures';
 
 it('should work', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const elementHandle = await page.$('#frame1');
   const frame = await elementHandle.contentFrame();
   expect(frame).toBe(page.frames()[1]);
@@ -29,7 +27,7 @@ it('should work', async ({ page, server }) => {
 
 it('should work for cross-process iframes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
   const elementHandle = await page.$('#frame1');
   const frame = await elementHandle.contentFrame();
   expect(frame).toBe(page.frames()[1]);
@@ -37,7 +35,7 @@ it('should work for cross-process iframes', async ({ page, server }) => {
 
 it('should work for cross-frame evaluations', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   const elementHandle = await frame.evaluateHandle(() => window.top.document.querySelector('#frame1'));
   expect(await elementHandle.contentFrame()).toBe(frame);
@@ -45,7 +43,7 @@ it('should work for cross-frame evaluations', async ({ page, server }) => {
 
 it('should return null for non-iframes', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   const elementHandle = await frame.evaluateHandle(() => document.body);
   expect(await elementHandle.contentFrame()).toBe(null);
@@ -53,7 +51,7 @@ it('should return null for non-iframes', async ({ page, server }) => {
 
 it('should return null for document.documentElement', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   const elementHandle = await frame.evaluateHandle(() => document.documentElement);
   expect(await elementHandle.contentFrame()).toBe(null);

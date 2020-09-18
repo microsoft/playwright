@@ -17,15 +17,18 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import util from 'util';
 import childProcess from 'child_process';
-import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, BrowserServer, BrowserContextOptions } from '../index';
+import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, Frame, BrowserServer, BrowserContextOptions } from '../index';
 import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-import { mkdtempAsync, removeFolderAsync } from './utils';
 import { fixtures as baseFixtures } from '@playwright/test-runner';
 import assert from 'assert';
+
+const mkdtempAsync = util.promisify(fs.mkdtemp);
+const removeFolderAsync = util.promisify(require('rimraf'));
 
 type PlaywrightParameters = {
   platform: 'win32' | 'linux' | 'darwin'
@@ -48,21 +51,24 @@ type PlaywrightWorkerFixtures = {
   isWindows: boolean;
   isMac: boolean;
   isLinux: boolean;
+  expectedSSLError: string;
 };
 
-type PlaywrightFixtures = {
+type PlaywrightTestFixtures = {
   context: BrowserContext;
   server: TestServer;
   page: Page;
   httpsServer: TestServer;
   browserServer: BrowserServer;
+  testOutputDir: string;
+  createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
 };
 
 const fixtures = baseFixtures
     .declareParameters<PlaywrightParameters>()
     .declareWorkerFixtures<PlaywrightWorkerFixtures>()
-    .declareTestFixtures<PlaywrightFixtures>();
+    .declareTestFixtures<PlaywrightTestFixtures>();
 const { defineTestFixture, defineWorkerFixture, defineParameter, generateParametrizedTests } = fixtures;
 
 export const playwrightFixtures = fixtures;
@@ -236,12 +242,42 @@ defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-defineTestFixture('context', async ({browser}, runTest, info) => {
+defineWorkerFixture('expectedSSLError', async ({browserName, platform}, runTest) => {
+  let expectedSSLError: string;
+  if (browserName === 'chromium') {
+    expectedSSLError = 'net::ERR_CERT_AUTHORITY_INVALID';
+  } else if (browserName === 'webkit') {
+    if (platform === 'darwin')
+      expectedSSLError = 'The certificate for this server is invalid';
+    else if (platform === 'win32')
+      expectedSSLError = 'SSL peer certificate or SSH remote key was not OK';
+    else
+      expectedSSLError = 'Unacceptable TLS certificate';
+  } else {
+    expectedSSLError = 'SSL_ERROR_UNKNOWN';
+  }
+  await runTest(expectedSSLError);
+});
+
+defineTestFixture('testOutputDir', async ({}, runTest, info) => {
   const { test, config } = info;
   const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
   const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle);
+  await fs.promises.mkdir(testOutputDir, { recursive: true });
+  await runTest(testOutputDir);
+  const files = await fs.promises.readdir(testOutputDir);
+  if (!files.length) {
+    // Do not leave an empty useless directory.
+    // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
+    await removeFolderAsync(testOutputDir).catch(e => {});
+  }
+});
+
+defineTestFixture('context', async ({browser, testOutputDir}, runTest, info) => {
+  const { config } = info;
   const contextOptions: BrowserContextOptions = {
-    relativeArtifactsPath: path.join(relativePath, sanitizedTitle),
+    relativeArtifactsPath: path.relative(config.outputDir, testOutputDir),
     recordTrace: !!options.TRACING,
   };
   const context = await browser.newContext(contextOptions);
@@ -249,24 +285,37 @@ defineTestFixture('context', async ({browser}, runTest, info) => {
   await context.close();
 });
 
-defineTestFixture('page', async ({context}, runTest, info) => {
+defineTestFixture('page', async ({context, testOutputDir}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
-  const { test, config, result } = info;
-  if (result.status === 'failed' || result.status === 'timedOut') {
-    const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
-    const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
-    const assetPath = path.join(config.outputDir, relativePath, sanitizedTitle) + '-failed.png';
-    await page.screenshot({ timeout: 5000, path: assetPath });
-  }
+  const { result } = info;
+  if (result.status === 'failed' || result.status === 'timedOut')
+    await page.screenshot({ timeout: 5000, path: path.join(testOutputDir, 'test-failed.png') });
 });
 
-defineTestFixture('launchPersistent', async ({tmpDir, defaultBrowserOptions, browserType}, test) => {
+defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest, info) => {
+  let counter = 0;
+  const dirs: string[] = [];
+  async function createUserDataDir() {
+    const dir = path.join(testOutputDir, `user-data-dir-${counter++}`);
+    dirs.push(dir);
+    await fs.promises.mkdir(dir, { recursive: true });
+    return dir;
+  }
+  await runTest(createUserDataDir);
+  // Remove user data dirs, because we cannot upload them as test result artifacts.
+  // - Firefox removes lock file later, repsumably from another watchdog process?
+  // - WebKit has circular symlinks that makes CI go crazy.
+  await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => {})));
+});
+
+defineTestFixture('launchPersistent', async ({createUserDataDir, defaultBrowserOptions, browserType}, test) => {
   let context;
   async function launchPersistent(options) {
     if (context)
       throw new Error('can only launch one persitent context');
-    context = await browserType.launchPersistentContext(tmpDir, {...defaultBrowserOptions, ...options});
+    const userDataDir = await createUserDataDir();
+    context = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, ...options});
     const page = context.pages()[0];
     return {context, page};
   }
@@ -295,4 +344,29 @@ function valueFromEnv(name, defaultValue) {
   if (!(name in process.env))
     return defaultValue;
   return JSON.parse(process.env[name]);
+}
+
+export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
+  const handle = await page.evaluateHandle(async ({ frameId, url }) => {
+    const frame = document.createElement('iframe');
+    frame.src = url;
+    frame.id = frameId;
+    document.body.appendChild(frame);
+    await new Promise(x => frame.onload = x);
+    return frame;
+  }, { frameId, url });
+  return handle.asElement().contentFrame();
+}
+
+export async function detachFrame(page: Page, frameId: string) {
+  await page.evaluate(frameId => {
+    document.getElementById(frameId).remove();
+  }, frameId);
+}
+
+export async function verifyViewport(page: Page, width: number, height: number) {
+  expect(page.viewportSize().width).toBe(width);
+  expect(page.viewportSize().height).toBe(height);
+  expect(await page.evaluate('window.innerWidth')).toBe(width);
+  expect(await page.evaluate('window.innerHeight')).toBe(height);
 }

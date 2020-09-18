@@ -16,9 +16,7 @@
  */
 
 import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
-import type { Frame } from '..';
+import type { Frame } from '../index';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -72,14 +70,14 @@ it('should work with clicking on anchor links', async ({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE + '#foobar');
 });
 
-it('should work with clicking on links which do not commit navigation', async ({page, server, httpsServer, browserName}) => {
+it('should work with clicking on links which do not commit navigation', async ({page, server, httpsServer, expectedSSLError}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`<a href='${httpsServer.EMPTY_PAGE}'>foobar</a>`);
   const [error] = await Promise.all([
     page.waitForNavigation().catch(e => e),
     page.click('a'),
   ]);
-  utils.expectSSLError(browserName, error.message);
+  expect(error.message).toContain(expectedSSLError);
 });
 
 it('should work with history.pushState()', async ({page, server}) => {

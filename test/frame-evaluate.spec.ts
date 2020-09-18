@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options, attachFrame, detachFrame } from './playwright.fixtures';
 
-import utils from './utils';
 import type { Frame } from '../src/client/frame';
 
 it('should have different execution contexts', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   expect(page.frames().length).toBe(2);
   await page.frames()[0].evaluate(() => window['FOO'] = 'foo');
   await page.frames()[1].evaluate(() => window['FOO'] = 'bar');
@@ -99,15 +98,15 @@ it('should allow cross-frame element handles', async ({ page, server }) => {
 
 it('should not allow cross-frame element handles when frames do not script each other', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  const frame = await utils.attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
+  const frame = await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');
   const bodyHandle = await frame.$('body');
   const error = await page.evaluate(body => body.innerHTML, bodyHandle).catch(e => e);
   expect(error.message).toContain('Unable to adopt element handle from a different document');
 });
 
 it('should throw for detached frames', async ({page, server}) => {
-  const frame1 = await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-  await utils.detachFrame(page, 'frame1');
+  const frame1 = await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await detachFrame(page, 'frame1');
   let error = null;
   await frame1.evaluate(() => 7 * 8).catch(e => error = e);
   expect(error.message).toContain('Execution Context is not available in detached frame');
@@ -115,7 +114,7 @@ it('should throw for detached frames', async ({page, server}) => {
 
 it('should be isolated between frames', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   expect(page.frames().length).toBe(2);
   const [frame1, frame2] = page.frames();
   expect(frame1 !== frame2).toBeTruthy();

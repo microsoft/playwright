@@ -26,11 +26,8 @@ const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture } = fixtures;
 
 
-defineTestFixture('outputTraceFile', async ({tmpDir}, test) => {
-  const outputTraceFile = path.join(tmpDir, `trace.json`);
-  await test(outputTraceFile);
-  if (fs.existsSync(outputTraceFile))
-    fs.unlinkSync(outputTraceFile);
+defineTestFixture('outputTraceFile', async ({testOutputDir}, test) => {
+  await test(path.join(testOutputDir, `trace.json`));
 });
 
 describe('oopif', (suite, parameters) => {
@@ -43,8 +40,8 @@ describe('oopif', (suite, parameters) => {
     expect(fs.existsSync(outputTraceFile)).toBe(true);
   });
 
-  it('should create directories as needed', async ({browser, page, server, tmpDir}) => {
-    const filePath = path.join(tmpDir, 'these', 'are', 'directories');
+  it('should create directories as needed', async ({browser, page, server, testOutputDir}) => {
+    const filePath = path.join(testOutputDir, 'these', 'are', 'directories', 'trace.json');
     await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: filePath});
     await page.goto(server.PREFIX + '/grid.html');
     await (browser as ChromiumBrowser).stopTracing();

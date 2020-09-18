@@ -16,7 +16,6 @@
  */
 
 import { options } from './playwright.fixtures';
-import utils from './utils';
 import { serverFixtures } from './remoteServer.fixture';
 const { it, expect, describe } = serverFixtures;
 
@@ -175,13 +174,13 @@ describe('connect', suite => {
       }
     });
     // Register one engine before connecting.
-    await utils.registerEngine(playwright, 'mycss1', mycss);
+    await playwright.selectors.register('mycss1', mycss);
 
     const browser1 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
     const context1 = await browser1.newContext();
 
     // Register another engine after creating context.
-    await utils.registerEngine(playwright, 'mycss2', mycss);
+    await playwright.selectors.register('mycss2', mycss);
 
     const page1 = await context1.newPage();
     await page1.setContent(`<div>hello</div>`);
@@ -192,7 +191,7 @@ describe('connect', suite => {
     const browser2 = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
 
     // Register third engine after second connect.
-    await utils.registerEngine(playwright, 'mycss3', mycss);
+    await playwright.selectors.register('mycss3', mycss);
 
     const page2 = await browser2.newPage();
     await page2.setContent(`<div>hello</div>`);

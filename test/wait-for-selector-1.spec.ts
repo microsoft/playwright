@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, attachFrame, detachFrame } from './playwright.fixtures';
 
 async function giveItTimeToLog(frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));
@@ -197,7 +196,7 @@ it('should work when node is added through innerHTML', async ({page, server}) =>
 
 it('page.waitForSelector is shortcut for main frame', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const otherFrame = page.frames()[1];
   const watchdog = page.waitForSelector('div', { state: 'attached' });
   await otherFrame.evaluate(addElement, 'div');
@@ -207,8 +206,8 @@ it('page.waitForSelector is shortcut for main frame', async ({page, server}) => 
 });
 
 it('should run in specified frame', async ({page, server}) => {
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame2', server.EMPTY_PAGE);
   const frame1 = page.frames()[1];
   const frame2 = page.frames()[2];
   const waitForSelectorPromise = frame2.waitForSelector('div', { state: 'attached' });
@@ -219,11 +218,11 @@ it('should run in specified frame', async ({page, server}) => {
 });
 
 it('should throw when frame is detached', async ({page, server}) => {
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   let waitError = null;
   const waitPromise = frame.waitForSelector('.box').catch(e => waitError = e);
-  await utils.detachFrame(page, 'frame1');
+  await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
   expect(waitError.message).toContain('waitForFunction failed: frame got detached.');

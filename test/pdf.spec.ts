@@ -22,11 +22,10 @@ import path from 'path';
 
 it('should be able to save file', (test, parameters) => {
   test.skip(!(options.HEADLESS && options.CHROMIUM(parameters)), 'Printing to pdf is currently only supported in headless chromium.');
-}, async ({page, tmpDir}) => {
-  const outputFile = path.join(tmpDir, 'output.pdf');
+}, async ({page, testOutputDir}) => {
+  const outputFile = path.join(testOutputDir, 'output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
-  fs.unlinkSync(outputFile);
 });
 
 it('should only have pdf in chromium', (test, parameters) => {

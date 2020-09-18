@@ -14,9 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from './playwright.fixtures';
-
-import * as utils from './utils';
+import { it, expect, attachFrame } from './playwright.fixtures';
 
 it('should bypass CSP meta tag', async ({browser, server}) => {
   // Make sure CSP prohibits addScriptTag.
@@ -83,7 +81,7 @@ it('should bypass CSP in iframes as well', async ({browser, server}) => {
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
+    const frame = await attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
     await frame.addScriptTag({content: 'window["__injected"] = 42;'}).catch(e => void e);
     expect(await frame.evaluate('window["__injected"]')).toBe(undefined);
     await context.close();
@@ -94,7 +92,7 @@ it('should bypass CSP in iframes as well', async ({browser, server}) => {
     const context = await browser.newContext({ bypassCSP: true });
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    const frame = await utils.attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
+    const frame = await attachFrame(page, 'frame1', server.PREFIX + '/csp.html');
     await frame.addScriptTag({content: 'window["__injected"] = 42;'}).catch(e => void e);
     expect(await frame.evaluate('window["__injected"]')).toBe(42);
     await context.close();

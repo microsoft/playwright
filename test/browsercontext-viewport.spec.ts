@@ -14,18 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from './playwright.fixtures';
-
-import utils from './utils';
+import { it, expect, verifyViewport } from './playwright.fixtures';
 
 it('should get the proper default viewport size', async ({page, server}) => {
-  await utils.verifyViewport(page, 1280, 720);
+  await verifyViewport(page, 1280, 720);
 });
 
 it('should set the proper viewport size', async ({page, server}) => {
-  await utils.verifyViewport(page, 1280, 720);
+  await verifyViewport(page, 1280, 720);
   await page.setViewportSize({width: 123, height: 456});
-  await utils.verifyViewport(page, 123, 456);
+  await verifyViewport(page, 123, 456);
 });
 
 it('should return correct outerWidth and outerHeight', async ({page}) => {

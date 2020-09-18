@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect, verifyViewport } from './playwright.fixtures';
 import fs from 'fs';
-import utils from './utils';
 
 it('context.cookies() should work', async ({server, launchPersistent}) => {
   const {page} = await launchPersistent();
@@ -119,9 +118,9 @@ it('should(not) block third party cookies', async ({server, launchPersistent, is
 
 it('should support viewport option', async ({launchPersistent}) => {
   const {page, context} = await launchPersistent({viewport: { width: 456, height: 789 }});
-  await utils.verifyViewport(page, 456, 789);
+  await verifyViewport(page, 456, 789);
   const page2 = await context.newPage();
-  await utils.verifyViewport(page2, 456, 789);
+  await verifyViewport(page2, 456, 789);
 });
 
 it('should support deviceScaleFactor option', async ({launchPersistent}) => {

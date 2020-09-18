@@ -15,9 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options, verifyViewport } from './playwright.fixtures';
 
-import utils from './utils';
 import {PNG} from 'pngjs';
 import path from 'path';
 import fs from 'fs';
@@ -77,7 +76,7 @@ describe('element screenshot', (suite, parameters) => {
     const screenshots = await Promise.all(promises);
     expect(screenshots[2]).toMatchImage(golden('screenshot-element-larger-than-viewport.png'));
 
-    await utils.verifyViewport(page, 500, 500);
+    await verifyViewport(page, 500, 500);
   });
 
   it('should capture full element when larger than viewport', async ({page, golden}) => {
@@ -104,7 +103,7 @@ describe('element screenshot', (suite, parameters) => {
     const screenshot = await elementHandle.screenshot();
     expect(screenshot).toMatchImage(golden('screenshot-element-larger-than-viewport.png'));
 
-    await utils.verifyViewport(page, 500, 500);
+    await verifyViewport(page, 500, 500);
   });
 
   it('should scroll element into view', async ({page, golden}) => {
@@ -282,10 +281,10 @@ describe('element screenshot', (suite, parameters) => {
   it('should restore default viewport after fullPage screenshot', async ({ browser }) => {
     const context = await browser.newContext({ viewport: { width: 456, height: 789 } });
     const page = await context.newPage();
-    await utils.verifyViewport(page, 456, 789);
+    await verifyViewport(page, 456, 789);
     const screenshot = await page.screenshot({ fullPage: true });
     expect(screenshot).toBeInstanceOf(Buffer);
-    await utils.verifyViewport(page, 456, 789);
+    await verifyViewport(page, 456, 789);
     await context.close();
   });
 
@@ -298,7 +297,7 @@ describe('element screenshot', (suite, parameters) => {
     const __testHookBeforeScreenshot = () => { throw new Error('oh my'); };
     const error = await page.screenshot({ fullPage: true, __testHookBeforeScreenshot } as any).catch(e => e);
     expect(error.message).toContain('oh my');
-    await utils.verifyViewport(page, 350, 360);
+    await verifyViewport(page, 350, 360);
     await context.close();
   });
 
@@ -311,10 +310,10 @@ describe('element screenshot', (suite, parameters) => {
     const __testHookAfterScreenshot = () => new Promise(f => setTimeout(f, 5000));
     const error = await page.screenshot({ fullPage: true, __testHookAfterScreenshot, timeout: 3000 } as any).catch(e => e);
     expect(error.message).toContain('page.screenshot: Timeout 3000ms exceeded');
-    await utils.verifyViewport(page, 350, 360);
+    await verifyViewport(page, 350, 360);
     await page.setViewportSize({ width: 400, height: 400 });
     await page.waitForTimeout(3000); // Give it some time to wrongly restore previous viewport.
-    await utils.verifyViewport(page, 400, 400);
+    await verifyViewport(page, 400, 400);
     await context.close();
   });
 
@@ -358,7 +357,7 @@ describe('element screenshot', (suite, parameters) => {
     const __testHookBeforeScreenshot = () => { throw new Error('oh my'); };
     const error = await elementHandle.screenshot({ __testHookBeforeScreenshot } as any).catch(e => e);
     expect(error.message).toContain('oh my');
-    await utils.verifyViewport(page, 350, 360);
+    await verifyViewport(page, 350, 360);
     await context.close();
   });
 
@@ -384,12 +383,12 @@ describe('element screenshot', (suite, parameters) => {
     expect(screenshot).toBeInstanceOf(Buffer);
   });
 
-  it('path option should create subdirectories', async ({page, server, golden, tmpDir}) => {
+  it('path option should create subdirectories', async ({page, server, golden, testOutputDir}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
     await page.evaluate(() => window.scrollBy(50, 100));
     const elementHandle = await page.$('.box:nth-of-type(3)');
-    const outputPath = path.join(tmpDir, 'these', 'are', 'directories', 'screenshot.png');
+    const outputPath = path.join(testOutputDir, 'these', 'are', 'directories', 'screenshot.png');
     await elementHandle.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage(golden('screenshot-element-bounding-box.png'));
   });

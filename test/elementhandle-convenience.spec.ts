@@ -16,7 +16,6 @@
  */
 
 import { it, expect } from './playwright.fixtures';
-import utils from './utils';
 
 it('should have a nice preview', async ({ page, server }) => {
   await page.goto(`${server.PREFIX}/dom.html`);
@@ -86,7 +85,7 @@ it('textContent should be atomic', async ({ playwright, page }) => {
       return result;
     }
   });
-  await utils.registerEngine(playwright, 'textContent', createDummySelector);
+  await playwright.selectors.register('textContent', createDummySelector);
   await page.setContent(`<div>Hello</div>`);
   const tc = await page.textContent('textContent=div');
   expect(tc).toBe('Hello');
@@ -109,7 +108,7 @@ it('innerText should be atomic', async ({ playwright, page }) => {
       return result;
     }
   });
-  await utils.registerEngine(playwright, 'innerText', createDummySelector);
+  await playwright.selectors.register('innerText', createDummySelector);
   await page.setContent(`<div>Hello</div>`);
   const tc = await page.innerText('innerText=div');
   expect(tc).toBe('Hello');
@@ -132,7 +131,7 @@ it('innerHTML should be atomic', async ({ playwright, page }) => {
       return result;
     }
   });
-  await utils.registerEngine(playwright, 'innerHTML', createDummySelector);
+  await playwright.selectors.register('innerHTML', createDummySelector);
   await page.setContent(`<div>Hello<span>world</span></div>`);
   const tc = await page.innerHTML('innerHTML=div');
   expect(tc).toBe('Hello<span>world</span>');
@@ -155,7 +154,7 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
       return result;
     }
   });
-  await utils.registerEngine(playwright, 'getAttribute', createDummySelector);
+  await playwright.selectors.register('getAttribute', createDummySelector);
   await page.setContent(`<div foo=hello></div>`);
   const tc = await page.getAttribute('getAttribute=div', 'foo');
   expect(tc).toBe('hello');

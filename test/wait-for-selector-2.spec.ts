@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
-import utils from './utils';
+import { it, expect, attachFrame, detachFrame } from './playwright.fixtures';
 
 const addElement = tag => document.body.appendChild(document.createElement(tag));
 
@@ -217,8 +216,8 @@ it('should respect timeout xpath', async ({page, playwright}) => {
 });
 
 it('should run in specified frame xpath', async ({page, server}) => {
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
-  await utils.attachFrame(page, 'frame2', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame2', server.EMPTY_PAGE);
   const frame1 = page.frames()[1];
   const frame2 = page.frames()[2];
   const waitForXPathPromise = frame2.waitForSelector('//div', { state: 'attached' });
@@ -229,11 +228,11 @@ it('should run in specified frame xpath', async ({page, server}) => {
 });
 
 it('should throw when frame is detached xpath', async ({page, server}) => {
-  await utils.attachFrame(page, 'frame1', server.EMPTY_PAGE);
+  await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
   let waitError = null;
   const waitPromise = frame.waitForSelector('//*[@class="box"]').catch(e => waitError = e);
-  await utils.detachFrame(page, 'frame1');
+  await detachFrame(page, 'frame1');
   await waitPromise;
   expect(waitError).toBeTruthy();
   expect(waitError.message).toContain('waitForFunction failed: frame got detached.');
