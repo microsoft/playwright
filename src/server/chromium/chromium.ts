@@ -173,4 +173,5 @@ const DEFAULT_ARGS = [
   '--enable-automation',
   '--password-store=basic',
   '--use-mock-keychain',
+  '--blink-settings=primaryHoverType=2'
 ];
