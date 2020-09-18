@@ -45,6 +45,9 @@ SOFTWARE.
 #include <windows.h>
 #include <Dbghelp.h>
 
+#define STRINGIFY(x) #x
+#define STRINGIFY_MACRO(y) STRINGIFY(y)
+
 using DepsMap = std::map<std::string, std::string>;
 
 std::string getLastErrorString()
@@ -113,7 +116,7 @@ int printDependencies(const char* library)
 
 int printUsage()
 {
-    std::cout << "Usage:\n  PrintDeps FILE..." << std::endl;
+    std::cout << "Version: r" << STRINGIFY_MACRO(BUILD_NUMBER) << " Usage:\n  PrintDeps FILE..." << std::endl;
     return -1;
 }
 
