@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import { ActionListener, ActionMetadata, BrowserContext, ContextListener, contextListeners } from '../server/browserContext';
+import { ActionListener, ActionMetadata, BrowserContext, ContextListener, contextListeners, Video } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent } from './traceTypes';
+import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent, PageVideoTraceEvent } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
@@ -42,10 +42,8 @@ class Tracer implements ContextListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (!context._options.recordTrace)
       return;
-    if (!context._artifactsPath)
-      throw new Error(`"recordTrace" option requires "artifactsPath" to be specified`);
     const traceStorageDir = path.join(context._browser._options.artifactsPath!, '.playwright-shared');
-    const traceFile = path.join(context._artifactsPath, 'playwright.trace');
+    const traceFile = path.join(context._artifactsPath!, 'playwright.trace');
     const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
     this._contextTracers.set(context, contextTracer);
   }
@@ -146,6 +144,18 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       pageId,
     };
     this._appendTraceEvent(event);
+
+    page.on(Page.Events.VideoStarted, (video: Video) => {
+      if (this._disposed)
+        return;
+      const event: PageVideoTraceEvent = {
+        type: 'page-video',
+        contextId: this._contextId,
+        pageId,
+        fileName: path.basename(video._path),
+      };
+      this._appendTraceEvent(event);
+    });
 
     page.once(Page.Events.Close, () => {
       this._pageToId.delete(page);

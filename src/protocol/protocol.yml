@@ -221,7 +221,6 @@ BrowserType:
             password: string?
         downloadsPath: string?
         artifactsPath: string?
-        _videosPath: string?
         firefoxUserPrefs: json?
         chromiumSandbox: boolean?
         slowMo: number?
@@ -261,7 +260,6 @@ BrowserType:
             password: string?
         downloadsPath: string?
         artifactsPath: string?
-        _videosPath: string?
         chromiumSandbox: boolean?
         slowMo: number?
         noDefaultViewport: boolean?
@@ -373,8 +371,8 @@ Browser:
         acceptDownloads: boolean?
         relativeArtifactsPath: string?
         recordTrace: boolean?
-        _recordVideos: boolean?
-        _videoSize:
+        recordVideos: boolean?
+        videoSize:
           type: object?
           properties:
             width: number
@@ -913,10 +911,6 @@ Page:
       parameters:
         route: Route
         request: Request
-
-    videoStarted:
-      parameters:
-        video: Video
 
     worker:
       parameters:
@@ -1812,26 +1806,6 @@ Dialog:
         promptText: string?
 
     dismiss:
-
-
-
-Video:
-  type: interface
-
-  commands:
-
-    path:
-      returns:
-        value: string
-
-    # Blocks path until saved to the local |path|.
-    saveAs:
-      parameters:
-        path: string
-
-    stream:
-      returns:
-        stream: Stream?
 
 
 

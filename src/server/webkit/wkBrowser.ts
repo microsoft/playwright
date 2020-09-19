@@ -74,7 +74,7 @@ export class WKBrowser extends Browser {
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    validateBrowserContextOptions(options);
+    validateBrowserContextOptions(options, this._options);
     const { browserContextId } = await this._browserSession.send('Playwright.createContext');
     options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
     const context = new WKBrowserContext(this, browserContextId, options);

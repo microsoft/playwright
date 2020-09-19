@@ -31,7 +31,6 @@ import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { Video } from '../browserContext';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -50,7 +49,6 @@ export class FFPage implements PageDelegate {
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
-  private readonly _idToScreencast = new Map<string, Video>();
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
     this._session = session;
@@ -258,7 +256,7 @@ export class FFPage implements PageDelegate {
   }
 
   _onScreencastStarted(event: Protocol.Page.screencastStartedPayload) {
-    this._browserContext._browser._videoStarted(event.screencastId, event.file, this.pageOrError());
+    this._browserContext._browser._videoStarted(this._browserContext, event.screencastId, event.file, this.pageOrError());
   }
 
   async exposeBinding(binding: PageBinding) {

@@ -34,22 +34,19 @@ const fs = require('fs');
   for (const browserType of success) {
     try {
       const browser = await playwright[browserType].launch({
-        _videosPath: __dirname,
+        artifactsPath: __dirname,
       });
       const context = await browser.newContext({
-        _recordVideos: true,
-        _videoSize: {width: 320, height: 240},
+        recordVideos: true,
+        videoSize: {width: 320, height: 240},
       });
-      const page = await context.newPage();
-      const video = await page.waitForEvent('_videostarted');
+      await context.newPage();
       // Wait fo 1 second to actually record something.
       await new Promise(x => setTimeout(x, 1000));
-      const [videoFile] = await Promise.all([
-        video.path(),
-        context.close(),
-      ]);
+      await context.close();
       await browser.close();
-      if (!fs.existsSync(videoFile)) {
+      const videoFile = fs.readdirSync(__dirname).find(name => name.endsWith('webm'));
+      if (!videoFile) {
         console.error(`ERROR: Package "${requireName}", browser "${browserType}" should have created screencast!`);
         process.exit(1);
       }

@@ -122,7 +122,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     downloadsPath: tOptional(tString),
     artifactsPath: tOptional(tString),
-    _videosPath: tOptional(tString),
     firefoxUserPrefs: tOptional(tAny),
     chromiumSandbox: tOptional(tBoolean),
     slowMo: tOptional(tNumber),
@@ -151,7 +150,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     downloadsPath: tOptional(tString),
     artifactsPath: tOptional(tString),
-    _videosPath: tOptional(tString),
     chromiumSandbox: tOptional(tBoolean),
     slowMo: tOptional(tNumber),
     noDefaultViewport: tOptional(tBoolean),
@@ -223,8 +221,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     acceptDownloads: tOptional(tBoolean),
     relativeArtifactsPath: tOptional(tString),
     recordTrace: tOptional(tBoolean),
-    _recordVideos: tOptional(tBoolean),
-    _videoSize: tOptional(tObject({
+    recordVideos: tOptional(tBoolean),
+    videoSize: tOptional(tObject({
       width: tNumber,
       height: tNumber,
     })),
@@ -821,11 +819,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     promptText: tOptional(tString),
   });
   scheme.DialogDismissParams = tOptional(tObject({}));
-  scheme.VideoPathParams = tOptional(tObject({}));
-  scheme.VideoSaveAsParams = tObject({
-    path: tString,
-  });
-  scheme.VideoStreamParams = tOptional(tObject({}));
   scheme.DownloadPathParams = tOptional(tObject({}));
   scheme.DownloadSaveAsParams = tObject({
     path: tString,

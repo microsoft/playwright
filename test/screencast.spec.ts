@@ -15,59 +15,57 @@
  */
 
 import { options, playwrightFixtures } from './playwright.fixtures';
-import type { Page } from '..';
+import type { Page, Browser } from '..';
 
 import fs from 'fs';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
-import { mkdirIfNeeded } from '../lib/utils/utils';
 
 type WorkerState = {
-  videoDir: string;
+  videoPlayerBrowser: Browser,
 };
 type TestState = {
   videoPlayer: VideoPlayer;
-  videoFile: string;
+  relativeArtifactsPath: string;
+  videoDir: string;
 };
 const fixtures = playwrightFixtures.declareWorkerFixtures<WorkerState>().declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
 
-defineWorkerFixture('videoDir', async ({}, test, config) => {
-  await test(path.join(config.outputDir, 'screencast'));
-});
-
-overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions, videoDir}, test) => {
+overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test, config) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
     // Make sure videos are stored on the same volume as the test output dir.
-    _videosPath: videoDir,
+    artifactsPath: path.join(config.outputDir, '.screencast'),
   });
   await test(browser);
   await browser.close();
 });
 
-defineTestFixture('videoPlayer', async ({playwright, context, server}, test) => {
+defineWorkerFixture('videoPlayerBrowser', async ({playwright}, runTest) => {
   // WebKit on Mac & Windows cannot replay webm/vp8 video, is unrelyable
   // on Linux (times out) and in Firefox, so we always launch chromium for
   // playback.
-  const chromium = await playwright.chromium.launch();
-  context = await chromium.newContext();
-
-  const page = await context.newPage();
-  const player = new VideoPlayer(page, server);
-  await test(player);
-  if (chromium)
-    await chromium.close();
-  else
-    await page.close();
+  const browser = await playwright.chromium.launch();
+  await runTest(browser);
+  await browser.close();
 });
 
-defineTestFixture('videoFile', async ({browserType, videoDir}, runTest, info) => {
+defineTestFixture('videoPlayer', async ({videoPlayerBrowser, server}, test) => {
+  const page = await videoPlayerBrowser.newPage();
+  await test(new VideoPlayer(page, server));
+  await page.close();
+});
+
+defineTestFixture('relativeArtifactsPath', async ({browserType}, runTest, info) => {
   const { test } = info;
   const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
-  const videoFile = path.join(videoDir, `${browserType.name()}-${sanitizedTitle}-${test.results.length}_v.webm`);
-  await mkdirIfNeeded(videoFile);
-  await runTest(videoFile);
+  const relativeArtifactsPath = `${browserType.name()}-${sanitizedTitle}-${test.results.length}`;
+  await runTest(relativeArtifactsPath);
+});
+
+defineTestFixture('videoDir', async ({relativeArtifactsPath}, runTest, info) => {
+  await runTest(path.join(info.config.outputDir, '.screencast', relativeArtifactsPath));
 });
 
 function almostRed(r, g, b, alpha) {
@@ -112,9 +110,20 @@ function expectAll(pixels, rgbaPredicate) {
   }
 }
 
+async function findVideo(videoDir: string) {
+  const files = await fs.promises.readdir(videoDir);
+  return path.join(videoDir, files.find(file => file.endsWith('webm')));
+}
+
+async function findVideos(videoDir: string) {
+  const files = await fs.promises.readdir(videoDir);
+  return files.filter(file => file.endsWith('webm')).map(file => path.join(videoDir, file));
+}
+
 class VideoPlayer {
   private readonly _page: Page;
   private readonly _server: TestServer;
+
   constructor(page: Page, server: TestServer) {
     this._page = page;
     this._server = server;
@@ -189,19 +198,29 @@ class VideoPlayer {
 describe('screencast', suite => {
   suite.slow();
 }, () => {
-  it('should capture static page', async ({browser, videoPlayer, videoFile}) => {
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
+  it('should require artifactsPath', async ({browserType, defaultBrowserOptions}) => {
+    const browser = await browserType.launch({
+      ...defaultBrowserOptions,
+      artifactsPath: undefined,
+    });
+    const error = await browser.newContext({ recordVideos: true }).catch(e => e);
+    expect(error.message).toContain('"recordVideos" option requires "artifactsPath" to be specified');
+    await browser.close();
+  });
+
+  it('should capture static page', async ({browser, videoPlayer, relativeArtifactsPath, videoDir}) => {
+    const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
+      videoSize: { width: 320, height: 240 }
+    });
     const page = await context.newPage();
-    const video = await page.waitForEvent('_videostarted') as any;
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await new Promise(r => setTimeout(r, 1000));
-    await page.close();
+    await context.close();
 
-    const tmpPath = await video.path();
-    expect(fs.existsSync(tmpPath)).toBe(true);
-    fs.renameSync(tmpPath, videoFile);
-
+    const videoFile = await findVideo(videoDir);
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
     expect(duration).toBeGreaterThan(0);
@@ -216,21 +235,21 @@ describe('screencast', suite => {
 
   it('should capture navigation', (test, parameters) => {
     test.flaky();
-  }, async ({browser, server, videoPlayer, videoFile}) => {
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 1280, height: 720 } });
+  }, async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
+    const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
+      videoSize: { width: 1280, height: 720 }
+    });
     const page = await context.newPage();
-    const video = await page.waitForEvent('_videostarted') as any;
 
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
     await new Promise(r => setTimeout(r, 1000));
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
     await new Promise(r => setTimeout(r, 1000));
-    await page.close();
+    await context.close();
 
-    const tmpPath = await video.path();
-    expect(fs.existsSync(tmpPath)).toBe(true);
-    fs.renameSync(tmpPath, videoFile);
-
+    const videoFile = await findVideo(videoDir);
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
     expect(duration).toBeGreaterThan(0);
@@ -250,21 +269,22 @@ describe('screencast', suite => {
 
   it('should capture css transformation', (test, parameters) => {
     test.fail(options.WEBKIT(parameters) && options.WIN(parameters), 'Does not work on WebKit Windows');
-  }, async ({browser, server, videoPlayer, videoFile}) => {
+  }, async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
     const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: size, viewport: size });
+    const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
+      videoSize: size,
+      viewport: size,
+    });
     const page = await context.newPage();
-    const video = await page.waitForEvent('_videostarted') as any;
 
     await page.goto(server.PREFIX + '/rotate-z.html');
     await new Promise(r => setTimeout(r, 1000));
-    await page.close();
+    await context.close();
 
-    const tmpPath = await video.path();
-    expect(fs.existsSync(tmpPath)).toBe(true);
-    fs.renameSync(tmpPath, videoFile);
-
+    const videoFile = await findVideo(videoDir);
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
     expect(duration).toBeGreaterThan(0);
@@ -276,73 +296,35 @@ describe('screencast', suite => {
     }
   });
 
-  it('should automatically start/finish when new page is created/closed', async ({browser, videoDir}) => {
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 }});
-    const [screencast, newPage] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      context.newPage(),
-    ]);
-
-    const [videoFile] = await Promise.all([
-      screencast.path(),
-      newPage.close(),
-    ]);
-    expect(path.dirname(videoFile)).toBe(videoDir);
-    await context.close();
-  });
-
-  it('should finish when contex closes', async ({browser, videoDir}) => {
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
-
-    const [video] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      context.newPage(),
-    ]);
-
-    const [videoFile] = await Promise.all([
-      video.path(),
-      context.close(),
-    ]);
-    expect(path.dirname(videoFile)).toBe(videoDir);
-  });
-
-  it('should fire striclty after context.newPage', async ({browser}) => {
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
-    const page = await context.newPage();
-    // Should not hang.
-    await page.waitForEvent('_videostarted');
-    await context.close();
-  });
-
-  it('should fire start event for popups', async ({browser, videoDir, server}) => {
-    const context = await browser.newContext({ _recordVideos: true, _videoSize: { width: 320, height: 240 } });
-
-    const [page] = await Promise.all([
-      context.newPage(),
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-    ]);
-    await page.goto(server.EMPTY_PAGE);
-    const [video, popup] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      new Promise<Page>(resolve => context.on('page', resolve)),
-      page.evaluate(() => { window.open('about:blank'); })
-    ]);
-    const [videoFile] = await Promise.all([
-      video.path(),
-      popup.close()
-    ]);
-    expect(path.dirname(videoFile)).toBe(videoDir);
-  });
-
-  it('should scale frames down to the requested size ', async ({browser, videoPlayer, videoFile, server}) => {
+  it('should work for popups', async ({browser, relativeArtifactsPath, videoDir, server}) => {
     const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
+      videoSize: { width: 320, height: 240 }
+    });
+
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate(() => { window.open('about:blank'); }),
+    ]);
+    await new Promise(r => setTimeout(r, 1000));
+    await context.close();
+
+    const videoFiles = await findVideos(videoDir);
+    expect(videoFiles.length).toBe(2);
+  });
+
+  it('should scale frames down to the requested size ', async ({browser, videoPlayer, relativeArtifactsPath, videoDir, server}) => {
+    const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
       viewport: {width: 640, height: 480},
       // Set size to 1/2 of the viewport.
-      _recordVideos: true,
-      _videoSize: { width: 320, height: 240 },
+      videoSize: { width: 320, height: 240 },
     });
     const page = await context.newPage();
-    const video = await page.waitForEvent('_videostarted') as any;
 
     await page.goto(server.PREFIX + '/checkerboard.html');
     // Update the picture to ensure enough frames are generated.
@@ -354,12 +336,9 @@ describe('screencast', suite => {
       container.firstElementChild.classList.add('red');
     });
     await new Promise(r => setTimeout(r, 1000));
-    await page.close();
+    await context.close();
 
-    const tmp = await video.path();
-    expect(fs.existsSync(tmp)).toBe(true);
-    fs.renameSync(tmp, videoFile);
-
+    const videoFile = await findVideo(videoDir);
     await videoPlayer.load(videoFile);
     const duration = await videoPlayer.duration();
     expect(duration).toBeGreaterThan(0);
@@ -383,83 +362,37 @@ describe('screencast', suite => {
     }
   });
 
-  it('should use viewport as default size', async ({browser, videoPlayer, videoFile}) => {
+  it('should use viewport as default size', async ({browser, videoPlayer, relativeArtifactsPath, videoDir}) => {
     const size = {width: 800, height: 600};
-    const context = await browser.newContext({_recordVideos: true, viewport: size});
+    const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
+      viewport: size,
+    });
 
-    const [video] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      context.newPage(),
-    ]);
+    await context.newPage();
     await new Promise(r => setTimeout(r, 1000));
-    const [tmpPath] = await Promise.all([
-      video.path(),
-      context.close(),
-    ]);
+    await context.close();
 
-    expect(fs.existsSync(tmpPath)).toBe(true);
-    fs.renameSync(tmpPath, videoFile);
+    const videoFile = await findVideo(videoDir);
     await videoPlayer.load(videoFile);
     expect(await videoPlayer.videoWidth()).toBe(size.width);
     expect(await videoPlayer.videoHeight()).toBe(size.height);
   });
 
-  it('should be 1280x720 by default', async ({browser, videoPlayer, videoFile}) => {
-    const context = await browser.newContext({_recordVideos: true});
+  it('should be 1280x720 by default', async ({browser, videoPlayer, relativeArtifactsPath, videoDir}) => {
+    const context = await browser.newContext({
+      relativeArtifactsPath,
+      recordVideos: true,
+    });
 
-    const [video] = await Promise.all([
-      new Promise<any>(r => context.on('page', page => page.on('_videostarted', r))),
-      context.newPage(),
-    ]);
+    await context.newPage();
     await new Promise(r => setTimeout(r, 1000));
-    const [tmpPath] = await Promise.all([
-      video.path(),
-      context.close(),
-    ]);
+    await context.close();
 
-    expect(fs.existsSync(tmpPath)).toBe(true);
-    fs.renameSync(tmpPath, videoFile);
+    const videoFile = await findVideo(videoDir);
     await videoPlayer.load(videoFile);
     expect(await videoPlayer.videoWidth()).toBe(1280);
     expect(await videoPlayer.videoHeight()).toBe(720);
-  });
-
-  it('should create read stream', async ({browser, server}) => {
-    const context = await browser.newContext({_recordVideos: true});
-
-    const page = await context.newPage();
-    const video = await page.waitForEvent('_videostarted') as any;
-    await page.goto(server.PREFIX + '/grid.html');
-    await new Promise(r => setTimeout(r, 1000));
-    const [stream, path] = await Promise.all([
-      video.createReadStream(),
-      video.path(),
-      // TODO: make it work with dead context!
-      page.close(),
-    ]);
-
-    const bufs = [];
-    stream.on('data', data => bufs.push(data));
-    await new Promise(f => stream.on('end', f));
-    const streamedData = Buffer.concat(bufs);
-    expect(fs.readFileSync(path).compare(streamedData)).toBe(0);
-  });
-
-  it('should saveAs', async ({browser, server, tmpDir}) => {
-    const context = await browser.newContext({_recordVideos: true});
-
-    const page = await context.newPage();
-    const video = await page.waitForEvent('_videostarted') as any;
-    await page.goto(server.PREFIX + '/grid.html');
-    await new Promise(r => setTimeout(r, 1000));
-    const saveAsPath = path.join(tmpDir, 'v.webm');
-    const [videoPath] = await Promise.all([
-      video.path(),
-      video.saveAs(saveAsPath),
-      // TODO: make it work with dead context!
-      page.close(),
-    ]);
-
-    expect(fs.readFileSync(videoPath).compare(fs.readFileSync(saveAsPath))).toBe(0);
   });
 });

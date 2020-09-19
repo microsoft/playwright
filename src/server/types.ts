@@ -238,8 +238,8 @@ export type BrowserContextOptions = {
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
   acceptDownloads?: boolean,
-  _recordVideos?: boolean,
-  _videoSize?: Size,
+  recordVideos?: boolean,
+  videoSize?: Size,
   recordTrace?: boolean,
   relativeArtifactsPath?: string,
 };
@@ -261,7 +261,6 @@ type LaunchOptionsBase = {
   proxy?: ProxySettings,
   artifactsPath?: string,
   downloadsPath?: string,
-  _videosPath?: string,
   chromiumSandbox?: boolean,
   slowMo?: number,
 };
