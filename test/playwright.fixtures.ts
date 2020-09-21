@@ -52,6 +52,7 @@ type PlaywrightWorkerFixtures = {
   isMac: boolean;
   isLinux: boolean;
   expectedSSLError: string;
+  requireIsolatedPlaywright: () => typeof import ('../index')
 };
 
 type PlaywrightTestFixtures = {
@@ -177,6 +178,20 @@ defineWorkerFixture('playwright', async ({browserName, parallelIndex, platform},
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
   }
+});
+
+defineWorkerFixture('requireIsolatedPlaywright', async ({}, test) => {
+  await test(() => {
+    const oldCache = {...require.cache};
+    for (const name in require.cache)
+      delete require.cache[name];
+    const playwright = require('../index');
+    for (const name in require.cache)
+      delete require.cache[name];
+    for (const name in oldCache)
+      require.cache[name] = oldCache[name];
+    return playwright;
+  });
 });
 
 defineWorkerFixture('toImpl', async ({playwright}, test) => {

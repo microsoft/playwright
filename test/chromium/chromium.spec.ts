@@ -88,4 +88,18 @@ describe('chromium', (suite, parameters) => {
     // make it work with Edgium.
     expect(serverRequest.headers.intervention).toContain('feature/5718547946799104');
   });
+  it('should support PLAYWRIGHT_CHROMIUM_DEBUG_PORT', async ({requireIsolatedPlaywright, defaultBrowserOptions, parallelIndex}) => {
+    const orig = process.env.PLAYWRIGHT_CHROMIUM_DEBUG_PORT;
+    const port = 9123 + parallelIndex;
+
+    process.env.PLAYWRIGHT_CHROMIUM_DEBUG_PORT = String(port);
+    const playwright = requireIsolatedPlaywright();
+    const browser = await playwright.chromium.launch(defaultBrowserOptions);
+    process.env.PLAYWRIGHT_CHROMIUM_DEBUG_PORT = orig;
+
+    const page = await browser.newPage();
+    await page.goto(`http://localhost:${port}/json/version`);
+    const json = JSON.parse(await page.textContent('body'));
+    expect(json['User-Agent']).toContain('Mozilla/5.0');
+  });
 });
