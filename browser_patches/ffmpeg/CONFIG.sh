@@ -38,8 +38,12 @@ FFMPEG_CONFIG="--extra-version=playwright-build-$(cat ./BUILD_NUMBER | head -1) 
                --enable-libvpx \
                --enable-static \
                --enable-encoder=libvpx_vp8 \
+               --enable-decoder=libvpx_vp8 \
+               --enable-demuxer=matroska \
+               --enable-encoder=png \
+               --enable-zlib \
+               --enable-muxer=image2 \
                --disable-pthreads \
-               --disable-zlib \
                --disable-iconv \
                --disable-w32threads \
                --disable-bzlib"
