@@ -1,5 +1,5 @@
 #!/bin/bash
 
-echo "-- tagging: $1"
-docker tag playwright:localbuild $1
-docker push $1
+echo "-- tagging: $2"
+docker tag $1 $2
+docker push $2

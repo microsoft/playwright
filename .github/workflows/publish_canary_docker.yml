@@ -29,9 +29,9 @@ jobs:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - run: ./docs/docker/build.sh
+    - run: ./docs/docker/build.sh bionic playwright:localbuild-bionic
     - name: tag & publish
       run: |
-        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:next
-        ./docs/docker/tag_and_push.sh playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
+        ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next
+        ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
 
