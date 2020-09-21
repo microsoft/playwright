@@ -12,6 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+ZLIB_VERSION="v1.2.11"
+ZLIB_CONFIG="--static"
+
 LIBVPX_VERSION="v1.9.0"
 LIBVPX_CONFIG="--enable-static \
                --disable-shared \

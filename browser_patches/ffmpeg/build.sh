@@ -21,7 +21,7 @@ trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
 
 if [[ ("$1" == "-h") || ("$1" == "--help") ]]; then
-  echo "usage: $(basename $0) [--mac|--cross-compile-win32|--cross-compile-win64]"
+  echo "usage: $(basename $0) [--mac|--linux|--cross-compile-win32|--cross-compile-win64]"
   echo
   echo "Build ffmpeg for the given platform"
   echo

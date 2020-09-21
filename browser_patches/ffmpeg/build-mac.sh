@@ -31,6 +31,15 @@ BUILDDIR="${PWD}/build"
 PREFIX="${BUILDDIR}/osx_prefix"
 OUTPUT_PATH="${PWD}/output/ffmpeg-mac"
 
+function build_zlib {
+  cd "${BUILDDIR}"
+  git clone https://github.com/madler/zlib
+  cd zlib
+  git checkout "${ZLIB_VERSION}"
+  ./configure --prefix="${PREFIX}" ${ZLIB_CONFIG}
+  make && make install
+}
+
 function build_libvpx {
   cd "${BUILDDIR}"
   git clone https://chromium.googlesource.com/webm/libvpx
@@ -79,6 +88,7 @@ set -x
 rm -rf "${BUILDDIR}"
 mkdir -p "${BUILDDIR}"
 
+build_zlib
 build_libvpx
 build_ffmpeg
 
