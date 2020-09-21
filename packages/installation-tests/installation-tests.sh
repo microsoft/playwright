@@ -40,9 +40,10 @@ function copy_test_scripts {
 }
 
 function run_tests {
+  test_skip_browser_download
+  return;
   test_screencast
   test_typescript_types
-  test_skip_browser_download
   test_playwright_global_installation_subsequent_installs
   test_playwright_should_work
   test_playwright_chromium_should_work

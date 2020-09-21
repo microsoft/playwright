@@ -33,6 +33,11 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const removeFolderAsync = util.promisify(removeFolder);
 
 export async function installBrowsersWithProgressBar(packagePath: string) {
+  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
+    browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
+    return false;
+  }
+
   const browsersPath = browserPaths.browsersPath(packagePath);
   await fsMkdirAsync(browsersPath, { recursive: true });
   const releaseLock = await lockfile.lock(browsersPath, {
@@ -47,10 +52,6 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
   });
   const linksDir = path.join(browsersPath, '.links');
 
-  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
-    browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
-    return false;
-  }
   await fsMkdirAsync(linksDir,  { recursive: true });
   await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
   await validateCache(packagePath, browsersPath, linksDir);
