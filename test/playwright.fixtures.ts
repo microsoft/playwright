@@ -260,9 +260,9 @@ defineWorkerFixture('expectedSSLError', async ({browserName, platform}, runTest)
 });
 
 defineTestFixture('testOutputDir', async ({}, runTest, info) => {
-  const { test, config } = info;
-  const relativePath = path.relative(config.testDir, test.file).replace(/\.spec\.[jt]s/, '');
-  const sanitizedTitle = test.title.replace(/[^\w\d]+/g, '_');
+  const { spec, config } = info;
+  const relativePath = path.relative(config.testDir, spec.file).replace(/\.spec\.[jt]s/, '');
+  const sanitizedTitle = spec.title.replace(/[^\w\d]+/g, '_');
   const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle);
   await fs.promises.mkdir(testOutputDir, { recursive: true });
   await runTest(testOutputDir);
@@ -291,8 +291,8 @@ defineTestFixture('context', async ({browser, testOutputDir}, runTest, info) => 
 defineTestFixture('page', async ({context, testOutputDir}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
-  const { result } = info;
-  if (result.status === 'failed' || result.status === 'timedOut')
+  const { testRun } = info;
+  if (testRun.status === 'failed' || testRun.status === 'timedOut')
     await page.screenshot({ timeout: 5000, path: path.join(testOutputDir, 'test-failed.png') });
 });
 
