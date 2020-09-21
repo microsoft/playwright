@@ -993,10 +993,6 @@ Note that userVisibleOnly = true is the only currently supported type.
        */
       userVisibleOnly?: boolean;
       /**
-       * For "wake-lock" permission, must specify type as either "screen" or "system".
-       */
-      type?: string;
-      /**
        * For "clipboard" permission, may specify allowWithoutSanitization.
        */
       allowWithoutSanitization?: boolean;
@@ -1408,10 +1404,14 @@ document.written STYLE tags.
       /**
        * Whether this stylesheet is mutable. Inline stylesheets become mutable
 after they have been modified via CSSOM API.
-<link> element's stylesheets are never mutable. Constructed stylesheets
-(new CSSStyleSheet()) are mutable immediately after creation.
+<link> element's stylesheets become mutable only if DevTools modifies them.
+Constructed stylesheets (new CSSStyleSheet()) are mutable immediately after creation.
        */
       isMutable: boolean;
+      /**
+       * Whether this stylesheet is a constructed stylesheet (created using new CSSStyleSheet()).
+       */
+      isConstructed: boolean;
       /**
        * Line offset of the stylesheet within the resource (zero based).
        */
@@ -7261,10 +7261,16 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
     export type CrossOriginOpenerPolicyValue = "SameOrigin"|"SameOriginAllowPopups"|"UnsafeNone"|"SameOriginPlusCoep";
     export interface CrossOriginOpenerPolicyStatus {
       value: CrossOriginOpenerPolicyValue;
+      reportOnlyValue: CrossOriginOpenerPolicyValue;
+      reportingEndpoint?: string;
+      reportOnlyReportingEndpoint?: string;
     }
     export type CrossOriginEmbedderPolicyValue = "None"|"RequireCorp";
     export interface CrossOriginEmbedderPolicyStatus {
       value: CrossOriginEmbedderPolicyValue;
+      reportOnlyValue: CrossOriginEmbedderPolicyValue;
+      reportingEndpoint?: string;
+      reportOnlyReportingEndpoint?: string;
     }
     export interface SecurityIsolationStatus {
       coop: CrossOriginOpenerPolicyStatus;
@@ -8152,6 +8158,17 @@ default domain and path values of the created cookie.
     export type setExtraHTTPHeadersReturnValue = {
     }
     /**
+     * Specifies whether to sned a debug header to all outgoing requests.
+     */
+    export type setAttachDebugHeaderParameters = {
+      /**
+       * Whether to send a debug header.
+       */
+      enabled: boolean;
+    }
+    export type setAttachDebugHeaderReturnValue = {
+    }
+    /**
      * Sets the requests to intercept that match the provided patterns and optionally resource types.
 Deprecated, please use Fetch.enable instead.
      */
@@ -8298,6 +8315,10 @@ continueInterceptedRequest call.
        * The named grid areas border color (Default: transparent).
        */
       areaBorderColor?: DOM.RGBA;
+      /**
+       * The grid container background color (Default: transparent).
+       */
+      gridBackgroundColor?: DOM.RGBA;
     }
     /**
      * Configuration data for the highlighting of page elements.
@@ -8780,6 +8801,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      */
     export type AdFrameType = "none"|"child"|"root";
     /**
+     * Indicates whether the frame is a secure context and why it is the case.
+     */
+    export type SecureContextType = "Secure"|"SecureLocalhost"|"InsecureScheme"|"InsecureAncestor";
+    /**
+     * Indicates whether the frame is cross-origin isolated and why it is the case.
+     */
+    export type CrossOriginIsolatedContextType = "Isolated"|"NotIsolated"|"NotIsolatedFeatureDisabled";
+    /**
      * Information about the Frame on the page.
      */
     export interface Frame {
@@ -8830,6 +8859,14 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Indicates whether this frame was tagged as an ad.
        */
       adFrameType?: AdFrameType;
+      /**
+       * Indicates whether the main document is a secure context and explains why that is the case.
+       */
+      secureContextType: SecureContextType;
+      /**
+       * Indicates whether this is a cross origin isolated context.
+       */
+      crossOriginIsolatedContextType: CrossOriginIsolatedContextType;
     }
     /**
      * Information about the Resource on the page.
@@ -12194,7 +12231,7 @@ capacity and glitch may occur.
       sampleRate: number;
     }
     /**
-     * Protocol object for AudioListner
+     * Protocol object for AudioListener
      */
     export interface AudioListener {
       listenerId: GraphObjectId;
@@ -13965,6 +14002,23 @@ profile startTime.
        */
       value: number;
     }
+    /**
+     * Runtime call counter information.
+     */
+    export interface RuntimeCallCounterInfo {
+      /**
+       * Counter name.
+       */
+      name: string;
+      /**
+       * Counter value.
+       */
+      value: number;
+      /**
+       * Counter time in seconds.
+       */
+      time: number;
+    }
     
     export type consoleProfileFinishedPayload = {
       id: string;
@@ -14131,6 +14185,31 @@ coverage needs to have started.
       result: ScriptTypeProfile[];
     }
     /**
+     * Enable counters collection.
+     */
+    export type enableCountersParameters = {
+    }
+    export type enableCountersReturnValue = {
+    }
+    /**
+     * Disable counters collection.
+     */
+    export type disableCountersParameters = {
+    }
+    export type disableCountersReturnValue = {
+    }
+    /**
+     * Retrieve counters.
+     */
+    export type getCountersParameters = {
+    }
+    export type getCountersReturnValue = {
+      /**
+       * Collected counters information.
+       */
+      result: CounterInfo[];
+    }
+    /**
      * Enable run time call stats collection.
      */
     export type enableRuntimeCallStatsParameters = {
@@ -14151,9 +14230,9 @@ coverage needs to have started.
     }
     export type getRuntimeCallStatsReturnValue = {
       /**
-       * Collected counter information.
+       * Collected runtime call counter information.
        */
-      result: CounterInfo[];
+      result: RuntimeCallCounterInfo[];
     }
   }
   
@@ -15520,6 +15599,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setCookies": Network.setCookiesParameters;
     "Network.setDataSizeLimitsForTest": Network.setDataSizeLimitsForTestParameters;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
+    "Network.setAttachDebugHeader": Network.setAttachDebugHeaderParameters;
     "Network.setRequestInterception": Network.setRequestInterceptionParameters;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideParameters;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
@@ -15738,6 +15818,9 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Profiler.stopTypeProfile": Profiler.stopTypeProfileParameters;
     "Profiler.takePreciseCoverage": Profiler.takePreciseCoverageParameters;
     "Profiler.takeTypeProfile": Profiler.takeTypeProfileParameters;
+    "Profiler.enableCounters": Profiler.enableCountersParameters;
+    "Profiler.disableCounters": Profiler.disableCountersParameters;
+    "Profiler.getCounters": Profiler.getCountersParameters;
     "Profiler.enableRuntimeCallStats": Profiler.enableRuntimeCallStatsParameters;
     "Profiler.disableRuntimeCallStats": Profiler.disableRuntimeCallStatsParameters;
     "Profiler.getRuntimeCallStats": Profiler.getRuntimeCallStatsParameters;
@@ -16013,6 +16096,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setCookies": Network.setCookiesReturnValue;
     "Network.setDataSizeLimitsForTest": Network.setDataSizeLimitsForTestReturnValue;
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
+    "Network.setAttachDebugHeader": Network.setAttachDebugHeaderReturnValue;
     "Network.setRequestInterception": Network.setRequestInterceptionReturnValue;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideReturnValue;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
@@ -16231,6 +16315,9 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Profiler.stopTypeProfile": Profiler.stopTypeProfileReturnValue;
     "Profiler.takePreciseCoverage": Profiler.takePreciseCoverageReturnValue;
     "Profiler.takeTypeProfile": Profiler.takeTypeProfileReturnValue;
+    "Profiler.enableCounters": Profiler.enableCountersReturnValue;
+    "Profiler.disableCounters": Profiler.disableCountersReturnValue;
+    "Profiler.getCounters": Profiler.getCountersReturnValue;
     "Profiler.enableRuntimeCallStats": Profiler.enableRuntimeCallStatsReturnValue;
     "Profiler.disableRuntimeCallStats": Profiler.disableRuntimeCallStatsReturnValue;
     "Profiler.getRuntimeCallStats": Profiler.getRuntimeCallStatsReturnValue;
