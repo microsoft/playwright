@@ -54,6 +54,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   }
 
   executablePath(): string {
+    if (!this._initializer.executablePath)
+      throw new Error('Browser is not supported on current platform');
     return this._initializer.executablePath;
   }
 
