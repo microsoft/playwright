@@ -52,6 +52,23 @@ elif ! [[ -d $(dirname "${output_path}") ]]; then
   die "ERROR: folder for output path ${output_path} does not exist."
 fi
 
+function build_zlib {
+  cd "${HOME}"
+  git clone https://github.com/madler/zlib
+  cd zlib
+  git checkout "${ZLIB_VERSION}"
+  ./configure --prefix="${PREFIX}" ${ZLIB_CONFIG}
+  make \
+    CC="${toolchain_prefix}gcc" \
+    CXX="${toolchain_prefix}g++" \
+    AR="${toolchain_prefix}ar" \
+    PREFIX="$PREFIX" \
+    RANLIB="${toolchain_prefix}ranlib" \
+    LD="${toolchain_prefix}ld" \
+    STRIP="${toolchain_prefix}strip"
+  make install
+}
+
 function build_libvpx {
   cd "${HOME}"
   git clone https://chromium.googlesource.com/webm/libvpx
@@ -109,6 +126,7 @@ source ./CONFIG.sh
 apt-get update
 apt-get install -y mingw-w64 git make yasm pkg-config
 
+build_zlib
 build_libvpx
 build_ffmpeg
 
