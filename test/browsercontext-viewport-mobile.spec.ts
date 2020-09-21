@@ -130,4 +130,31 @@ describe('mobile viewport', (suite, parameters) => {
     expect(await page.evaluate(() => window.innerWidth)).toBe(320);
     await context.close();
   });
+
+  it('should emulate the hover media feature', (test, parameters) => {
+    test.fail(options.WEBKIT(parameters));
+  }, async ({playwright, browser}) => {
+    const iPhone = playwright.devices['iPhone 6'];
+    const mobilepage = await browser.newPage({ ...iPhone });
+    expect(await mobilepage.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(false);
+    expect(await mobilepage.evaluate(() => matchMedia('(hover: none)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-hover: hover)').matches)).toBe(false);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-hover: none)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(false);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-pointer: coarse)').matches)).toBe(true);
+    expect(await mobilepage.evaluate(() => matchMedia('(any-pointer: fine)').matches)).toBe(false);
+    await mobilepage.close();
+
+    const desktopPage = await browser.newPage();
+    expect(await desktopPage.evaluate(() => matchMedia('(hover: none)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(true);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-hover: none)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-hover: hover)').matches)).toBe(true);
+    expect(await desktopPage.evaluate(() => matchMedia('(pointer: coarse)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(pointer: fine)').matches)).toBe(true);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-pointer: coarse)').matches)).toBe(false);
+    expect(await desktopPage.evaluate(() => matchMedia('(any-pointer: fine)').matches)).toBe(true);
+    await desktopPage.close();
+  });
 });
