@@ -39,7 +39,7 @@ type WebSocketNotPipe = { webSocketRegex: RegExp, stream: 'stdout' | 'stderr' };
 
 export abstract class BrowserType {
   private _name: string;
-  private _executablePath: string | undefined;
+  private _executablePath: string;
   private _webSocketNotPipe: WebSocketNotPipe | null;
   private _browserDescriptor: browserPaths.BrowserDescriptor;
   readonly _browserPath: string;
@@ -49,13 +49,11 @@ export abstract class BrowserType {
     const browsersPath = browserPaths.browsersPath(packagePath);
     this._browserDescriptor = browser;
     this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
-    this._executablePath = browserPaths.executablePath(this._browserPath, browser);
+    this._executablePath = browserPaths.executablePath(this._browserPath, browser) || '';
     this._webSocketNotPipe = webSocketOrPipe;
   }
 
   executablePath(): string {
-    if (!this._executablePath)
-      throw new Error('Browser is not supported on current platform');
     return this._executablePath;
   }
 
