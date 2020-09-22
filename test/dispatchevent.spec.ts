@@ -137,9 +137,7 @@ it('should dispatch drag drop events', async ({page, server}) => {
   }, {source, target})).toBeTruthy();
 });
 
-it('should dispatch drag drop events', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters));
-}, async ({page, server}) => {
+it('should dispatch drag drop events', async ({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   const source = await page.$('#source');
