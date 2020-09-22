@@ -58,8 +58,7 @@ defineTestFixture('videoPlayer', async ({videoPlayerBrowser, server}, test) => {
 });
 
 defineTestFixture('relativeArtifactsPath', async ({browserType}, runTest, info) => {
-  const { spec } = info;
-  const sanitizedTitle = spec.title.replace(/[^\w\d]+/g, '_');
+  const sanitizedTitle = info.title.replace(/[^\w\d]+/g, '_');
   const relativeArtifactsPath = `${browserType.name()}-${sanitizedTitle}`;
   await runTest(relativeArtifactsPath);
 });
