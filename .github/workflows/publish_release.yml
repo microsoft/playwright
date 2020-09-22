@@ -41,6 +41,7 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: ./docs/docker/build.sh bionic playwright:localbuild-bionic
+    - run: ./docs/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish
       run: |
         # GITHUB_REF has a form of `refs/tags/v1.3.0`.
@@ -49,3 +50,6 @@ jobs:
         ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:latest
         ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:bionic
         ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:${TAG_NAME}
+
+        ./docs/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:focal
+        ./docs/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:${TAG_NAME}-focal
