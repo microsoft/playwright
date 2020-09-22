@@ -2463,6 +2463,10 @@ export module Protocol {
      */
     export type setBreakpointForEventListenerParameters = {
       eventListenerId: EventListenerId;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: Debugger.BreakpointOptions;
     }
     export type setBreakpointForEventListenerReturnValue = {
     }
@@ -2976,6 +2980,10 @@ might return multiple quads for inline nodes.
        * Type of the operation to stop upon.
        */
       type: DOMBreakpointType;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: Debugger.BreakpointOptions;
     }
     export type setDOMBreakpointReturnValue = {
     }
@@ -3003,6 +3011,10 @@ might return multiple quads for inline nodes.
        * The name of the specific event to stop on.
        */
       eventName?: string;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: Debugger.BreakpointOptions;
     }
     export type setEventBreakpointReturnValue = {
     }
@@ -3030,6 +3042,10 @@ might return multiple quads for inline nodes.
        * Whether the URL string is a regular expression.
        */
       isRegex?: boolean;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: Debugger.BreakpointOptions;
     }
     export type setURLBreakpointReturnValue = {
     }
@@ -3041,6 +3057,10 @@ might return multiple quads for inline nodes.
        * Resource URL substring. An empty string will stop pausing on all requests.
        */
       url: string;
+      /**
+       * Whether the URL string is a regular expression.
+       */
+      isRegex?: boolean;
     }
     export type removeURLBreakpointReturnValue = {
     }
@@ -3760,6 +3780,10 @@ might return multiple quads for inline nodes.
      */
     export type setPauseOnDebuggerStatementsParameters = {
       enabled: boolean;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
     }
     export type setPauseOnDebuggerStatementsReturnValue = {
     }
@@ -3771,6 +3795,10 @@ might return multiple quads for inline nodes.
        * Pause on exceptions mode.
        */
       state: "none"|"uncaught"|"all";
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
     }
     export type setPauseOnExceptionsReturnValue = {
     }
@@ -3779,6 +3807,10 @@ might return multiple quads for inline nodes.
      */
     export type setPauseOnAssertionsParameters = {
       enabled: boolean;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
     }
     export type setPauseOnAssertionsReturnValue = {
     }
@@ -3787,6 +3819,10 @@ might return multiple quads for inline nodes.
      */
     export type setPauseOnMicrotasksParameters = {
       enabled: boolean;
+      /**
+       * Options to apply to this breakpoint to modify its behavior.
+       */
+      options?: BreakpointOptions;
     }
     export type setPauseOnMicrotasksReturnValue = {
     }
@@ -4514,15 +4550,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     export type inspectPayload = {
       object: Runtime.RemoteObject;
       hints: { [key: string]: string };
-    }
-    /**
-     * Fired when the backend has alternate domains that need to be activated.
-     */
-    export type activateExtraDomainsPayload = {
-      /**
-       * Domain names that need activation
-       */
-      domains: string[];
     }
     
     /**
@@ -6436,10 +6463,7 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
      * Forces the given appearance for the page.
      */
     export type setForcedAppearanceParameters = {
-      /**
-       * Appearance name to force. Empty string disables the override.
-       */
-      appearance: Appearance;
+      appearance?: Appearance;
     }
     export type setForcedAppearanceReturnValue = {
     }
@@ -8359,7 +8383,6 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "Heap.trackingComplete": Heap.trackingCompletePayload;
     "Inspector.evaluateForTestInFrontend": Inspector.evaluateForTestInFrontendPayload;
     "Inspector.inspect": Inspector.inspectPayload;
-    "Inspector.activateExtraDomains": Inspector.activateExtraDomainsPayload;
     "LayerTree.layerTreeDidChange": LayerTree.layerTreeDidChangePayload;
     "Memory.memoryPressure": Memory.memoryPressurePayload;
     "Memory.trackingStart": Memory.trackingStartPayload;
