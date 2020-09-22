@@ -23,6 +23,7 @@ import { helper } from './helper';
 import { Progress } from './progress';
 import * as types from './types';
 import { isUnderTest } from '../utils/utils';
+import { EventEmitter } from 'events';
 
 export type Env = {[key: string]: string | number | boolean | undefined};
 
@@ -57,6 +58,26 @@ const gracefullyCloseSet = new Set<() => Promise<void>>();
 export async function gracefullyCloseAll() {
   await Promise.all(Array.from(gracefullyCloseSet).map(gracefullyClose => gracefullyClose().catch(e => {})));
 }
+
+class EventEmitterWrapper extends EventEmitter {
+  private _wrappedEvents: Set<string | symbol>;
+  constructor(emitter: EventEmitter) {
+    super();
+    this.setMaxListeners(0);
+    this._wrappedEvents = new Set();
+    for (const method of ['addListener', 'on', 'once', 'prependListener', 'prependOnceListener'] as const) {
+      this[method] = (event: string | symbol, listener: (...args: any[]) => void) => {
+        if (!this._wrappedEvents.has(event)) {
+          this._wrappedEvents.add(event);
+          emitter.addListener(event, (...eventArgs) => this.emit(event, ...eventArgs));
+        }
+        return super[method](event, listener);
+      };
+    }
+  }
+}
+
+const processWrapper = new EventEmitterWrapper(process);
 
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const cleanup = () => helper.removeFolders(options.tempDirectories);
@@ -115,9 +136,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     cleanup().then(fulfillCleanup);
   });
 
-  const listeners = [ helper.addEventListener(process, 'exit', killProcess) ];
+  const listeners = [ helper.addEventListener(processWrapper, 'exit', killProcess) ];
   if (options.handleSIGINT) {
-    listeners.push(helper.addEventListener(process, 'SIGINT', () => {
+    listeners.push(helper.addEventListener(processWrapper, 'SIGINT', () => {
       gracefullyClose().then(() => {
         // Give tests a chance to dispatch any async calls.
         if (isUnderTest())
@@ -128,9 +149,9 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     }));
   }
   if (options.handleSIGTERM)
-    listeners.push(helper.addEventListener(process, 'SIGTERM', gracefullyClose));
+    listeners.push(helper.addEventListener(processWrapper, 'SIGTERM', gracefullyClose));
   if (options.handleSIGHUP)
-    listeners.push(helper.addEventListener(process, 'SIGHUP', gracefullyClose));
+    listeners.push(helper.addEventListener(processWrapper, 'SIGHUP', gracefullyClose));
   gracefullyCloseSet.add(gracefullyClose);
 
   let gracefullyClosing = false;
