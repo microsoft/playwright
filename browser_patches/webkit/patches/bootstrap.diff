@@ -313,13 +313,25 @@ index 508eb02ec95c52408384a1e2b77648afd426dd9d..05f483dced4b62ffdd60b0a044750480
  {
      return m_router.hasLocalFrontend() ? Inspector::FrontendChannel::ConnectionType::Local : Inspector::FrontendChannel::ConnectionType::Remote;
 diff --git a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-index edcd489b76e080827e0741f14bab09f9ea9303d4..cbb18bbff3c6277fdcc6455160d692d03d56c338 100644
+index edcd489b76e080827e0741f14bab09f9ea9303d4..25a20c38575604ca1702a23ccf55c2024a07d993 100644
 --- a/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
 +++ b/Source/JavaScriptCore/inspector/agents/InspectorTargetAgent.h
-@@ -50,15 +50,21 @@ public:
-     Protocol::ErrorStringOr<void> setPauseOnStart(bool);
-     Protocol::ErrorStringOr<void> resume(const String& targetId);
-     Protocol::ErrorStringOr<void> sendMessageToTarget(const String& targetId, const String& message);
+@@ -43,22 +43,28 @@ public:
+     ~InspectorTargetAgent();
+ 
+     // InspectorAgentBase
+-    void didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*);
+-    void willDestroyFrontendAndBackend(DisconnectReason);
++    void didCreateFrontendAndBackend(FrontendRouter*, BackendDispatcher*) override;
++    void willDestroyFrontendAndBackend(DisconnectReason) override;
+ 
+     // TargetBackendDispatcherHandler
+-    Protocol::ErrorStringOr<void> setPauseOnStart(bool);
+-    Protocol::ErrorStringOr<void> resume(const String& targetId);
+-    Protocol::ErrorStringOr<void> sendMessageToTarget(const String& targetId, const String& message);
++    Protocol::ErrorStringOr<void> setPauseOnStart(bool) override;
++    Protocol::ErrorStringOr<void> resume(const String& targetId) override;
++    Protocol::ErrorStringOr<void> sendMessageToTarget(const String& targetId, const String& message) override;
 +    Protocol::ErrorStringOr<void> activate(const String& targetId) override;
 +    Protocol::ErrorStringOr<void> close(const String& targetId, Optional<bool>&& runBeforeUnload) override;
  
