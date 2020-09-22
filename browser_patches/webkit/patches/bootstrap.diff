@@ -2655,7 +2655,7 @@ index f6c83ea43b81e59816130269a28b1a6623b99854..69d4f43dc676e6c1fa08146ca704cf36
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.h b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
-index 7f2872df49e0d40ab020cd9884ded00308f1a2a6..d29615ad8f2dedcadd4ee2dd422f53ff3858f9e1 100644
+index 7f2872df49e0d40ab020cd9884ded00308f1a2a6..a2512f35fdea0d0f6ea9393354461e022c2576f3 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.h
 @@ -55,6 +55,7 @@ namespace WebCore {
@@ -2679,7 +2679,7 @@ index 7f2872df49e0d40ab020cd9884ded00308f1a2a6..d29615ad8f2dedcadd4ee2dd422f53ff
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::DOM::NodeId>>> getSearchResults(const String& searchId, int fromIndex, int toIndex);
      Inspector::Protocol::ErrorStringOr<void> discardSearchResults(const String& searchId);
 -    Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObject>> resolveNode(Inspector::Protocol::DOM::NodeId, const String& objectGroup);
-+    Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObject>> resolveNode(Optional<Inspector::Protocol::DOM::NodeId>&& nodeId, const String& objectId, Optional<int>&& contextId, const String& objectGroup) override;
++    Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Runtime::RemoteObject>> resolveNode(Optional<Inspector::Protocol::DOM::NodeId>&& nodeId, const String& objectId, Optional<int>&& contextId, const String& objectGroup);
      Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<String>>> getAttributes(Inspector::Protocol::DOM::NodeId);
  #if PLATFORM(IOS_FAMILY)
      Inspector::Protocol::ErrorStringOr<void> setInspectModeEnabled(bool, RefPtr<JSON::Object>&& highlightConfig);
@@ -2687,10 +2687,10 @@ index 7f2872df49e0d40ab020cd9884ded00308f1a2a6..d29615ad8f2dedcadd4ee2dd422f53ff
      Inspector::Protocol::ErrorStringOr<void> focus(Inspector::Protocol::DOM::NodeId);
      Inspector::Protocol::ErrorStringOr<void> setInspectedNode(Inspector::Protocol::DOM::NodeId);
      Inspector::Protocol::ErrorStringOr<void> setAllowEditingUserAgentShadowTrees(bool);
-+    Inspector::Protocol::ErrorStringOr<std::tuple<String /* contentFrameId */, String /* ownerFrameId */>> describeNode(const String& objectId) override;
-+    Inspector::Protocol::ErrorStringOr<void> scrollIntoViewIfNeeded(const String& objectId, RefPtr<JSON::Object>&& rect) override;
-+    Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>> getContentQuads(const String& objectId) override;
-+    Inspector::Protocol::ErrorStringOr<void> setInputFiles(const String& objectId, Ref<JSON::Array>&& files) override;
++    Inspector::Protocol::ErrorStringOr<std::tuple<String /* contentFrameId */, String /* ownerFrameId */>> describeNode(const String& objectId);
++    Inspector::Protocol::ErrorStringOr<void> scrollIntoViewIfNeeded(const String& objectId, RefPtr<JSON::Object>&& rect);
++    Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::DOM::Quad>>> getContentQuads(const String& objectId);
++    Inspector::Protocol::ErrorStringOr<void> setInputFiles(const String& objectId, Ref<JSON::Array>&& files);
  
      // InspectorInstrumentation
      Inspector::Protocol::DOM::NodeId identifierForNode(Node&);
@@ -3713,7 +3713,7 @@ index ae25fcebc93d504bb0abf17b61bbe1d73efcc1e3..9d0cc967efe17c6fc94e694d8806e1c4
 +
  } // namespace WebCore
 diff --git a/Source/WebCore/inspector/agents/InspectorPageAgent.h b/Source/WebCore/inspector/agents/InspectorPageAgent.h
-index d2b065e13651fafe747325f02e7701fbf1e8e45e..9076ff5fa9b746f9f13823146504829593f11bef 100644
+index d2b065e13651fafe747325f02e7701fbf1e8e45e..3b5db3e7404fc890acab9864d23bbbc6b54b27fd 100644
 --- a/Source/WebCore/inspector/agents/InspectorPageAgent.h
 +++ b/Source/WebCore/inspector/agents/InspectorPageAgent.h
 @@ -34,17 +34,23 @@
@@ -3759,8 +3759,8 @@ index d2b065e13651fafe747325f02e7701fbf1e8e45e..9076ff5fa9b746f9f138231465048295
      Inspector::Protocol::ErrorStringOr<void> enable();
      Inspector::Protocol::ErrorStringOr<void> disable();
      Inspector::Protocol::ErrorStringOr<void> reload(Optional<bool>&& ignoreCache, Optional<bool>&& revalidateAllResources);
-+    Inspector::Protocol::ErrorStringOr<void> goBack() override;
-+    Inspector::Protocol::ErrorStringOr<void> goForward() override;
++    Inspector::Protocol::ErrorStringOr<void> goBack();
++    Inspector::Protocol::ErrorStringOr<void> goForward();
      Inspector::Protocol::ErrorStringOr<void> navigate(const String& url);
      Inspector::Protocol::ErrorStringOr<void> overrideUserAgent(const String&);
      Inspector::Protocol::ErrorStringOr<void> overrideSetting(Inspector::Protocol::Page::Setting, Optional<bool>&& value);
@@ -3768,23 +3768,23 @@ index d2b065e13651fafe747325f02e7701fbf1e8e45e..9076ff5fa9b746f9f138231465048295
  #if ENABLE(DARK_MODE_CSS) || HAVE(OS_DARK_MODE_SUPPORT)
      Inspector::Protocol::ErrorStringOr<void> setForcedAppearance(Optional<Inspector::Protocol::Page::Appearance>&&);
  #endif
-+    Inspector::Protocol::ErrorStringOr<void> setTimeZone(const String&) override;
-+    Inspector::Protocol::ErrorStringOr<void> setTouchEmulationEnabled(bool) override;
++    Inspector::Protocol::ErrorStringOr<void> setTimeZone(const String&);
++    Inspector::Protocol::ErrorStringOr<void> setTouchEmulationEnabled(bool);
      Inspector::Protocol::ErrorStringOr<String> snapshotNode(Inspector::Protocol::DOM::NodeId);
      Inspector::Protocol::ErrorStringOr<String> snapshotRect(int x, int y, int width, int height, Inspector::Protocol::Page::CoordinateSystem);
  #if ENABLE(WEB_ARCHIVE) && USE(CF)
      Inspector::Protocol::ErrorStringOr<String> archive();
  #endif
  
-+    Inspector::Protocol::ErrorStringOr<void> insertText(const String& text) override;
-+    Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Page::AXNode>> accessibilitySnapshot(const String& objectId) override;
-+    Inspector::Protocol::ErrorStringOr<void> setInterceptFileChooserDialog(bool enabled) override;
-+    Inspector::Protocol::ErrorStringOr<void> setDefaultBackgroundColorOverride(RefPtr<JSON::Object>&&) override;
-+    Inspector::Protocol::ErrorStringOr<void> createUserWorld(const String&) override;
-+    Inspector::Protocol::ErrorStringOr<void> setBypassCSP(bool) override;
-+    Inspector::Protocol::ErrorStringOr<void> crash()override;
-+    Inspector::Protocol::ErrorStringOr<void> setScreenSizeOverride(int width, int height) override;
-+    Inspector::Protocol::ErrorStringOr<void> setOrientationOverride(Optional<int>&& angle) override;
++    Inspector::Protocol::ErrorStringOr<void> insertText(const String& text);
++    Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::Page::AXNode>> accessibilitySnapshot(const String& objectId);
++    Inspector::Protocol::ErrorStringOr<void> setInterceptFileChooserDialog(bool enabled);
++    Inspector::Protocol::ErrorStringOr<void> setDefaultBackgroundColorOverride(RefPtr<JSON::Object>&&);
++    Inspector::Protocol::ErrorStringOr<void> createUserWorld(const String&);
++    Inspector::Protocol::ErrorStringOr<void> setBypassCSP(bool);
++    Inspector::Protocol::ErrorStringOr<void> crash();
++    Inspector::Protocol::ErrorStringOr<void> setScreenSizeOverride(int width, int height);
++    Inspector::Protocol::ErrorStringOr<void> setOrientationOverride(Optional<int>&& angle);
 +
      // InspectorInstrumentation
 -    void domContentEventFired();
@@ -11548,7 +11548,7 @@ index 04f3227cd55c992a42cd96a3f25d697aed7965a2..f0d36935f47bab03ea2ec50b70509206
  
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c09db72a276875db36077bb49f8c7d6ff7b4eb8f
+index 0000000000000000000000000000000000000000..e6e700e846ea091a190b6b1f5c5636fed4389909
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorEmulationAgent.cpp
 @@ -0,0 +1,146 @@
@@ -11645,7 +11645,7 @@ index 0000000000000000000000000000000000000000..c09db72a276875db36077bb49f8c7d6f
 +    });
 +}
 +
-+Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setJavaScriptEnabled(bool enabled)
++Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setJavaScriptEnabled(bool enabled)
 +{
 +    auto copy = m_page.preferences().copy();
 +    copy->setJavaScriptEnabled(enabled);
@@ -11653,7 +11653,7 @@ index 0000000000000000000000000000000000000000..c09db72a276875db36077bb49f8c7d6f
 +    return { };
 +}
 +
-+Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setAuthCredentials(const String& username, const String& password)
++Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setAuthCredentials(const String& username, const String& password)
 +{
 +    if (!!username && !!password)
 +        m_page.setAuthCredentialsForAutomation(WebCore::Credential(username, password, CredentialPersistencePermanent));
@@ -11662,13 +11662,13 @@ index 0000000000000000000000000000000000000000..c09db72a276875db36077bb49f8c7d6f
 +    return { };
 +}
 +
-+Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setActiveAndFocused(Optional<bool>&& active)
++Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::setActiveAndFocused(Optional<bool>&& active)
 +{
 +    m_page.setActiveForAutomation(WTFMove(active));
 +    return { };
 +}
 +
-+Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::grantPermissions(const String& origin, Ref<JSON::Array>&& values)
++Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::grantPermissions(const String& origin, Ref<JSON::Array>&& values)
 +{
 +    HashSet<String> set;
 +    for (const auto& value : values.get()) {
@@ -11683,7 +11683,7 @@ index 0000000000000000000000000000000000000000..c09db72a276875db36077bb49f8c7d6f
 +    return { };
 +}
 +
-+Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::resetPermissions()
++Inspector::Protocol::ErrorStringOr<void> WebPageInspectorEmulationAgent::resetPermissions()
 +{
 +    m_permissions.clear();
 +    m_page.setPermissionsForAutomation(m_permissions);
