@@ -14,6 +14,8 @@
   * [Build the image](#build-the-image)
   * [Push](#push)
 - [Base images](#base-images)
+  * [Ubuntu 20](#ubuntu-20)
+  * [Ubuntu 18](#ubuntu-18)
   * [Alpine](#alpine)
 <!-- GEN:stop -->
 
@@ -110,7 +112,13 @@ Status of push to MCR can be [verified here](https://mcrflow-status-ui.azurewebs
 
 ## Base images
 
-`playwright:bionic` is based on Ubuntu 18.04 LTS (Bionic Beaver).
+### Ubuntu 20
+
+`mcr.microsoft.com/playwright:focal` is based on Ubuntu 20.04 LTS (Focal Fossa).
+
+### Ubuntu 18
+
+`mcr.microsoft.com/playwright:bionic` is based on Ubuntu 18.04 LTS (Bionic Beaver).
 
 ### Alpine
 
