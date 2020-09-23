@@ -202,4 +202,14 @@ describe('connect', suite => {
 
     await browser1.close();
   });
+
+  it('should not throw on close after disconnect', async ({browserType, remoteServer, server}) => {
+    const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    await remote.newPage();
+    await Promise.all([
+      new Promise(f => remote.on('disconnected', f)),
+      remoteServer.close()
+    ]);
+    await remote.close();
+  });
 });

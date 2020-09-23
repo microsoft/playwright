@@ -53,6 +53,7 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
+        shard: ['1', '2']
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v2
@@ -62,14 +63,14 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npx test-runner test/ --jobs=1 --forbid-only --timeout=30000 --global-timeout=5400000 --retries=3 --reporter=dot,json
+    - run: npx test-runner test/ --jobs=1 --forbid-only --timeout=30000 --global-timeout=5400000 --retries=3 --reporter=dot,json --shard=${{ matrix.shard }}/2
       env:
         BROWSER: ${{ matrix.browser }}
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: ${{ matrix.browser }}-mac-test-results
+        name: ${{ matrix.browser }}-mac-test-results-${{ matrix.shard }}
         path: test-results
 
   test_win:

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
 
 it('should dispatch click event', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
@@ -125,9 +125,7 @@ it('should be atomic', async ({playwright, page}) => {
   expect(await page.evaluate(() => window['_clicked'])).toBe(true);
 });
 
-it('should dispatch drag drop events', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters));
-}, async ({page, server}) => {
+it('should dispatch drag drop events', async ({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
@@ -139,9 +137,7 @@ it('should dispatch drag drop events', (test, parameters) => {
   }, {source, target})).toBeTruthy();
 });
 
-it('should dispatch drag drop events', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters));
-}, async ({page, server}) => {
+it('should dispatch drag drop events', async ({page, server}) => {
   await page.goto(server.PREFIX + '/drag-n-drop.html');
   const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
   const source = await page.$('#source');

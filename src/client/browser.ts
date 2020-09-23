@@ -26,7 +26,6 @@ import { headersObjectToArray } from '../utils/utils';
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
-  private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
   _isRemote = false;
 
@@ -83,18 +82,22 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   }
 
   async close(): Promise<void> {
-    return this._wrapApiCall('browser.close', async () => {
-      if (!this._isClosedOrClosing) {
-        this._isClosedOrClosing = true;
+    try {
+      await this._wrapApiCall('browser.close', async () => {
         await this._channel.close();
-      }
-      await this._closedPromise;
-    });
+        await this._closedPromise;
+      });
+    } catch (e) {
+      if (e.message === 'browser.close: Browser has been closed')
+        return;
+      if (e.message === 'browser.close: Target browser or context has been closed')
+        return;
+      throw e;
+    }
   }
 
   _didClose() {
     this._isConnected = false;
     this.emit(Events.Browser.Disconnected);
-    this._isClosedOrClosing = true;
   }
 }

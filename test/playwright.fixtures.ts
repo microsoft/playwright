@@ -97,11 +97,11 @@ export const options = {
   TRACING: valueFromEnv('TRACING', false),
 };
 
-defineWorkerFixture('httpService', async ({parallelIndex}, test) => {
+defineWorkerFixture('httpService', async ({workerIndex}, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + parallelIndex * 2;
+  const port = 8907 + workerIndex * 2;
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
@@ -139,7 +139,7 @@ defineWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest, conf
   });
 });
 
-defineWorkerFixture('playwright', async ({browserName, parallelIndex, platform}, test) => {
+defineWorkerFixture('playwright', async ({browserName, workerIndex, platform}, test) => {
   assert(platform); // Depend on platform to generate all tests.
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
@@ -172,7 +172,7 @@ defineWorkerFixture('playwright', async ({browserName, parallelIndex, platform},
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(__dirname, 'coverage-report', parallelIndex + '.json');
+    const coveragePath = path.join(__dirname, 'coverage-report', workerIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
@@ -260,10 +260,9 @@ defineWorkerFixture('expectedSSLError', async ({browserName, platform}, runTest)
 });
 
 defineTestFixture('testOutputDir', async ({}, runTest, info) => {
-  const { spec, config } = info;
-  const relativePath = path.relative(config.testDir, spec.file).replace(/\.spec\.[jt]s/, '');
-  const sanitizedTitle = spec.title.replace(/[^\w\d]+/g, '_');
-  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle);
+  const relativePath = path.relative(info.config.testDir, info.file).replace(/\.spec\.[jt]s/, '');
+  const sanitizedTitle = info.title.replace(/[^\w\d]+/g, '_');
+  const testOutputDir = path.join(info.config.outputDir, relativePath, sanitizedTitle);
   await fs.promises.mkdir(testOutputDir, { recursive: true });
   await runTest(testOutputDir);
   const files = await fs.promises.readdir(testOutputDir);
@@ -291,8 +290,7 @@ defineTestFixture('context', async ({browser, testOutputDir}, runTest, info) => 
 defineTestFixture('page', async ({context, testOutputDir}, runTest, info) => {
   const page = await context.newPage();
   await runTest(page);
-  const { testRun } = info;
-  if (testRun.status === 'failed' || testRun.status === 'timedOut')
+  if (info.status === 'failed' || info.status === 'timedOut')
     await page.screenshot({ timeout: 5000, path: path.join(testOutputDir, 'test-failed.png') });
 });
 
