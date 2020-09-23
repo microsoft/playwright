@@ -61,6 +61,7 @@ type PlaywrightTestFixtures = {
   httpsServer: TestServer;
   browserServer: BrowserServer;
   testOutputDir: string;
+  tmpDir: string;
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
 };
@@ -97,11 +98,11 @@ export const options = {
   TRACING: valueFromEnv('TRACING', false),
 };
 
-defineWorkerFixture('httpService', async ({workerIndex}, test) => {
+defineWorkerFixture('httpService', async ({ testWorkerIndex }, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + workerIndex * 2;
+  const port = 8907 + testWorkerIndex * 2;
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
@@ -126,7 +127,7 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-defineWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest, config) => {
+defineWorkerFixture('defaultBrowserOptions', async ({ browserName, testConfig }, runTest) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -135,11 +136,11 @@ defineWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest, conf
     slowMo: options.SLOW_MO,
     headless: options.HEADLESS,
     executablePath,
-    artifactsPath: config.outputDir,
+    artifactsPath: testConfig.outputDir,
   });
 });
 
-defineWorkerFixture('playwright', async ({browserName, workerIndex, platform}, test) => {
+defineWorkerFixture('playwright', async ({browserName, testWorkerIndex, platform}, test) => {
   assert(platform); // Depend on platform to generate all tests.
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
@@ -172,7 +173,7 @@ defineWorkerFixture('playwright', async ({browserName, workerIndex, platform}, t
 
   async function teardownCoverage() {
     uninstall();
-    const coveragePath = path.join(__dirname, 'coverage-report', workerIndex + '.json');
+    const coveragePath = path.join(__dirname, 'coverage-report', testWorkerIndex + '.json');
     const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
     await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
     await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
@@ -259,10 +260,10 @@ defineWorkerFixture('expectedSSLError', async ({browserName, platform}, runTest)
   await runTest(expectedSSLError);
 });
 
-defineTestFixture('testOutputDir', async ({}, runTest, info) => {
-  const relativePath = path.relative(info.config.testDir, info.file).replace(/\.spec\.[jt]s/, '');
-  const sanitizedTitle = info.title.replace(/[^\w\d]+/g, '_');
-  const testOutputDir = path.join(info.config.outputDir, relativePath, sanitizedTitle);
+defineTestFixture('testOutputDir', async ({ testInfo }, runTest) => {
+  const relativePath = path.relative(testInfo.config.testDir, testInfo.file).replace(/\.spec\.[jt]s/, '');
+  const sanitizedTitle = testInfo.title.replace(/[^\w\d]+/g, '_');
+  const testOutputDir = path.join(testInfo.config.outputDir, relativePath, sanitizedTitle);
   await fs.promises.mkdir(testOutputDir, { recursive: true });
   await runTest(testOutputDir);
   const files = await fs.promises.readdir(testOutputDir);
@@ -273,10 +274,9 @@ defineTestFixture('testOutputDir', async ({}, runTest, info) => {
   }
 });
 
-defineTestFixture('context', async ({browser, testOutputDir}, runTest, info) => {
-  const { config } = info;
+defineTestFixture('context', async ({ browser, testOutputDir, testConfig }, runTest) => {
   const contextOptions: BrowserContextOptions = {
-    relativeArtifactsPath: path.relative(config.outputDir, testOutputDir),
+    relativeArtifactsPath: path.relative(testConfig.outputDir, testOutputDir),
     recordTrace: !!options.TRACING,
     // TODO: enable videos. Currently, long videos are slowly processed by Chromium
     // and (sometimes) Firefox, which causes test timeouts.
@@ -287,14 +287,14 @@ defineTestFixture('context', async ({browser, testOutputDir}, runTest, info) => 
   await context.close();
 });
 
-defineTestFixture('page', async ({context, testOutputDir}, runTest, info) => {
+defineTestFixture('page', async ({ context, testOutputDir, testInfo }, runTest) => {
   const page = await context.newPage();
   await runTest(page);
-  if (info.status === 'failed' || info.status === 'timedOut')
+  if (testInfo.status === 'failed' || testInfo.status === 'timedOut')
     await page.screenshot({ timeout: 5000, path: path.join(testOutputDir, 'test-failed.png') });
 });
 
-defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest, info) => {
+defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest) => {
   let counter = 0;
   const dirs: string[] = [];
   async function createUserDataDir() {
