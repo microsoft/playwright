@@ -32,11 +32,11 @@ type TestState = {
 const fixtures = playwrightFixtures.declareWorkerFixtures<WorkerState>().declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
 
-overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test, config) => {
+overrideWorkerFixture('browser', async ({ browserType, defaultBrowserOptions, testConfig }, test) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
     // Make sure videos are stored on the same volume as the test output dir.
-    artifactsPath: path.join(config.outputDir, '.screencast'),
+    artifactsPath: path.join(testConfig.outputDir, '.screencast'),
   });
   await test(browser);
   await browser.close();
@@ -57,14 +57,14 @@ defineTestFixture('videoPlayer', async ({videoPlayerBrowser, server}, test) => {
   await page.close();
 });
 
-defineTestFixture('relativeArtifactsPath', async ({browserType}, runTest, info) => {
-  const sanitizedTitle = info.title.replace(/[^\w\d]+/g, '_');
+defineTestFixture('relativeArtifactsPath', async ({ browserType, testInfo }, runTest) => {
+  const sanitizedTitle = testInfo.title.replace(/[^\w\d]+/g, '_');
   const relativeArtifactsPath = `${browserType.name()}-${sanitizedTitle}`;
   await runTest(relativeArtifactsPath);
 });
 
-defineTestFixture('videoDir', async ({relativeArtifactsPath}, runTest, info) => {
-  await runTest(path.join(info.config.outputDir, '.screencast', relativeArtifactsPath));
+defineTestFixture('videoDir', async ({ relativeArtifactsPath, testConfig }, runTest) => {
+  await runTest(path.join(testConfig.outputDir, '.screencast', relativeArtifactsPath));
 });
 
 function almostRed(r, g, b, alpha) {
@@ -232,7 +232,7 @@ describe('screencast', suite => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture navigation', (test, parameters) => {
+  it('should capture navigation', test => {
     test.flaky();
   }, async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
     const context = await browser.newContext({

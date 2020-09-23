@@ -26,9 +26,9 @@ describe('lauch server', suite => {
     await browserServer.close();
   });
 
-  it('should work with port', async ({browserType, defaultBrowserOptions, workerIndex}) => {
-    const browserServer = await browserType.launchServer({ ...defaultBrowserOptions, port: 8800 + workerIndex });
-    expect(browserServer.wsEndpoint()).toContain(String(8800 + workerIndex));
+  it('should work with port', async ({browserType, defaultBrowserOptions, testWorkerIndex}) => {
+    const browserServer = await browserType.launchServer({ ...defaultBrowserOptions, port: 8800 + testWorkerIndex });
+    expect(browserServer.wsEndpoint()).toContain(String(8800 + testWorkerIndex));
     await browserServer.close();
   });
 
