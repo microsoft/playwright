@@ -61,13 +61,13 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._browserType = browserType;
     this._browser = browser;
 
-    const token = createGuid();
+    const token: string = createGuid();
     this._server = new ws.Server({ port });
-    const address = this._server.address();
+    const address: string | ws.AddressInfo = this._server.address();
     this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
     this._process = browser._options.browserProcess.process;
 
-    this._server.on('connection', (socket: ws, req) => {
+    this._server.on('connection', (socket: ws, req): void => {
       if (req.url !== '/' + token) {
         socket.close();
         return;
@@ -97,21 +97,21 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     await this._browser._options.browserProcess.kill();
   }
 
-  private _clientAttached(socket: ws) {
+  private _clientAttached(socket: ws): void {
     const connection = new DispatcherConnection();
     connection.onmessage = message => {
       if (socket.readyState !== ws.CLOSING)
         socket.send(JSON.stringify(message));
     };
-    socket.on('message', (message: string) => {
+    socket.on('message', (message: string): void => {
       connection.dispatch(JSON.parse(Buffer.from(message).toString()));
     });
-    socket.on('error', () => {});
+    socket.on('error', (): void => {});
     const selectors = new Selectors();
     const scope = connection.rootDispatcher();
     const browser = new ConnectedBrowser(scope, this._browser, selectors);
     new RemoteBrowserDispatcher(scope, browser, selectors);
-    socket.on('close', () => {
+    socket.on('close', (): void => {
       // Avoid sending any more messages over closed socket.
       connection.onmessage = () => {};
       // Cleanup contexts upon disconnect.
@@ -153,7 +153,7 @@ class ConnectedBrowser extends BrowserDispatcher {
     this._didClose();
   }
 
-  _didClose() {
+  _didClose(): void {
     if (!this._closed) {
       // We come here multiple times:
       // - from ConnectedBrowser.close();

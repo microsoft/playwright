@@ -16,7 +16,7 @@
 
 import { ActionListener, ActionMetadata, BrowserContext, ContextListener, contextListeners, Video } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent, PageVideoTraceEvent } from './traceTypes';
+import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent, PageVideoTraceEvent, Snapshot, PageSnapshot } from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
@@ -32,24 +32,24 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const fsAccessAsync = util.promisify(fs.access.bind(fs));
 
-export function installTracer() {
+export function installTracer(): void {
   contextListeners.add(new Tracer());
 }
 
 class Tracer implements ContextListener {
-  private _contextTracers = new Map<BrowserContext, ContextTracer>();
+  private _contextTracers: Map<BrowserContext, ContextTracer> = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (!context._options.recordTrace)
       return;
-    const traceStorageDir = path.join(context._browser._options.artifactsPath!, '.playwright-shared');
-    const traceFile = path.join(context._artifactsPath!, 'playwright.trace');
-    const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
+    const traceStorageDir: string = path.join(context._browser._options.artifactsPath!, '.playwright-shared');
+    const traceFile: string = path.join(context._artifactsPath!, 'playwright.trace');
+    const contextTracer: ContextTracer = new ContextTracer(context, traceStorageDir, traceFile);
     this._contextTracers.set(context, contextTracer);
   }
 
   async onContextDestroyed(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
+    const contextTracer: ContextTracer | undefined = this._contextTracers.get(context);
     if (contextTracer) {
       await contextTracer.dispose().catch(e => {});
       this._contextTracers.delete(context);
@@ -65,8 +65,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   private _writeArtifactChain: Promise<void>;
   private _snapshotter: Snapshotter;
   private _eventListeners: RegisteredListener[];
-  private _disposed = false;
-  private _pageToId = new Map<Page, string>();
+  private _disposed: boolean = false;
+  private _pageToId: Map<Page, string> = new Map<Page, string>();
 
   constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
     this._context = context;
@@ -114,7 +114,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
 
   async onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void> {
     try {
-      const snapshot = await this._takeSnapshot(metadata.page, typeof metadata.target === 'string' ? undefined : metadata.target);
+      const snapshot: Snapshot | undefined = await this._takeSnapshot(metadata.page, typeof metadata.target === 'string' ? undefined : metadata.target);
       const event: ActionTraceEvent = {
         type: 'action',
         contextId: this._contextId,
@@ -135,7 +135,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   }
 
   private _onPage(page: Page) {
-    const pageId = 'page@' + createGuid();
+    const pageId: string = 'page@' + createGuid();
     this._pageToId.set(page, pageId);
 
     const event: PageCreatedTraceEvent = {
@@ -145,7 +145,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     };
     this._appendTraceEvent(event);
 
-    page.on(Page.Events.VideoStarted, (video: Video) => {
+    page.on(Page.Events.VideoStarted, (video: Video): void => {
       if (this._disposed)
         return;
       const event: PageVideoTraceEvent = {
@@ -176,17 +176,17 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       // Use 20% of the default timeout.
       timeout = (page._timeoutSettings.timeout({}) || DEFAULT_TIMEOUT) / 5;
     }
-    const startTime = monotonicTime();
-    const snapshot = await this._snapshotter.takeSnapshot(page, target, timeout);
+    const startTime: number = monotonicTime();
+    const snapshot: PageSnapshot | null = await this._snapshotter.takeSnapshot(page, target, timeout);
     if (!snapshot)
       return;
-    const buffer = Buffer.from(JSON.stringify(snapshot));
-    const sha1 = calculateSha1(buffer);
+    const buffer: Buffer = Buffer.from(JSON.stringify(snapshot));
+    const sha1: string = calculateSha1(buffer);
     this._writeArtifact(sha1, buffer);
     return { sha1, duration: monotonicTime() - startTime };
   }
 
-  async dispose() {
+  async dispose(): Promise<void> {
     this._disposed = true;
     this._context._actionListeners.delete(this);
     helper.removeEventListeners(this._eventListeners);
@@ -203,15 +203,15 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     await this._writeArtifactChain;
   }
 
-  private _writeArtifact(sha1: string, buffer: Buffer) {
+  private _writeArtifact(sha1: string, buffer: Buffer): void {
     // Save all write promises to wait for them in dispose.
     const promise = this._innerWriteArtifact(sha1, buffer);
     this._writeArtifactChain = this._writeArtifactChain.then(() => promise);
   }
 
   private async _innerWriteArtifact(sha1: string, buffer: Buffer): Promise<void> {
-    const traceDirectory = await this._traceStoragePromise;
-    const filePath = path.join(traceDirectory, sha1);
+    const traceDirectory: string = await this._traceStoragePromise;
+    const filePath: string = path.join(traceDirectory, sha1);
     try {
       await fsAccessAsync(filePath);
     } catch (e) {
@@ -220,7 +220,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     }
   }
 
-  private _appendTraceEvent(event: any) {
+  private _appendTraceEvent(event: any): void {
     // Serialize all writes to the trace file.
     const timestamp = monotonicTime();
     this._appendEventChain = this._appendEventChain.then(async traceFile => {

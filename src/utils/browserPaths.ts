@@ -30,15 +30,15 @@ export type BrowserDescriptor = {
 };
 
 export const hostPlatform = ((): BrowserPlatform => {
-  const platform = os.platform();
+  const platform: NodeJS.Platform = os.platform();
   if (platform === 'darwin') {
-    const macVersion = execSync('sw_vers -productVersion', {
+    const macVersion: string = execSync('sw_vers -productVersion', {
       stdio: ['ignore', 'pipe', 'ignore']
     }).toString('utf8').trim().split('.').slice(0, 2).join('.');
     return `mac${macVersion}` as BrowserPlatform;
   }
   if (platform === 'linux') {
-    const ubuntuVersion = getUbuntuVersionSync();
+    const ubuntuVersion: string = getUbuntuVersionSync();
     if (parseInt(ubuntuVersion, 10) <= 19)
       return 'ubuntu18.04';
     return 'ubuntu20.04';
@@ -112,7 +112,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
   return tokens ? path.join(browserPath, ...tokens) : undefined;
 }
 
-function cacheDirectory() {
+function cacheDirectory(): string {
   if (process.platform === 'linux')
     return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
 
@@ -125,7 +125,7 @@ function cacheDirectory() {
 }
 
 const defaultBrowsersPath = ((): string | undefined => {
-  const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
+  const envDefined: string | undefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   if (envDefined === '0')
     return undefined;
   return envDefined || path.join(cacheDirectory(), 'ms-playwright');
@@ -144,6 +144,6 @@ export function markerFilePath(browsersPath: string, browser: BrowserDescriptor)
 }
 
 export function isBrowserDirectory(browserPath: string): boolean {
-  const baseName = path.basename(browserPath);
+  const baseName: string = path.basename(browserPath);
   return baseName.startsWith('chromium-') || baseName.startsWith('firefox-') || baseName.startsWith('webkit-');
 }

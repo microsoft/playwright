@@ -28,7 +28,7 @@ installTracer();
 
 const dispatcherConnection = new DispatcherConnection();
 const transport = new Transport(process.stdout, process.stdin);
-transport.onclose = async () => {
+transport.onclose = async (): Promise<void> => {
   // Force exit after 30 seconds.
   setTimeout(() => process.exit(0), 30000);
   // Meanwhile, try to gracefully close all browsers.
