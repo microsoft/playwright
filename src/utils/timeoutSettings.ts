@@ -29,11 +29,11 @@ export class TimeoutSettings {
     this._parent = parent;
   }
 
-  setDefaultTimeout(timeout: number) {
+  setDefaultTimeout(timeout: number): void {
     this._defaultTimeout = timeout;
   }
 
-  setDefaultNavigationTimeout(timeout: number) {
+  setDefaultNavigationTimeout(timeout: number): void {
     this._defaultNavigationTimeout = timeout;
   }
 

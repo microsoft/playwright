@@ -47,7 +47,7 @@ export function makeWaitForNextTask() {
     callback();
   };
 
-  return (callback: () => void) => {
+  return (callback: () => void): void => {
     callbacks.push(callback);
     if (!spinning) {
       spinning = true;
@@ -88,7 +88,7 @@ export function isDebugMode(): boolean {
 }
 
 let _isUnderTest = false;
-export function setUnderTest() {
+export function setUnderTest(): void {
   _isUnderTest = true;
 }
 export function isUnderTest(): boolean {
@@ -102,7 +102,7 @@ export function getFromENV(name: string) {
   return value;
 }
 
-export async function mkdirIfNeeded(filePath: string) {
+export async function mkdirIfNeeded(filePath: string): Promise<void> {
   // This will harmlessly throw on windows if the dirname is the root directory.
   await mkdirAsync(path.dirname(filePath), {recursive: true}).catch(() => {});
 }

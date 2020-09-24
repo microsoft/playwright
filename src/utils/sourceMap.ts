@@ -90,7 +90,7 @@ function base64VLQ(value: number): string {
   return result;
 }
 
-function generateSourceMap(filePath: string, sourcePosition: Position, compiledPosition: Position, delta: Position): any {
+function generateSourceMap(filePath: string, sourcePosition: Position, compiledPosition: Position, delta: Position): string {
   const mappings = [];
   let lastCompiled = { line: 0, column: 0 };
   let lastSource = { line: 0, column: 0 };

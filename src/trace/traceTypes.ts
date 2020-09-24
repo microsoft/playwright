@@ -99,3 +99,8 @@ export type PageSnapshot = {
   // First frame is the main frame.
   frames: FrameSnapshot[],
 };
+
+export type Snapshot = {
+  sha1: string
+  duration: number
+}

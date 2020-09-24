@@ -25,13 +25,21 @@ type SnapshotResult = {
   frameElements: Element[],
 };
 
-export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, target: Node | undefined): SnapshotResult {
-  const shadowAttribute = 'playwright-shadow-root';
-  const win = window;
-  const doc = win.document;
+type Escaped = {
+  '&': string
+  '<': string
+  '>': string
+  '"': string
+  '\'': string
+}
 
-  const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
-  const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, target: Node | undefined): SnapshotResult {
+  const shadowAttribute: string = 'playwright-shadow-root';
+  const win: Window & typeof globalThis = window;
+  const doc: Document = win.document;
+
+  const autoClosing: Set<string> = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+  const escaped: Escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
 
   const escapeAttribute = (s: string): string => {
     return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
@@ -43,12 +51,12 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
     return s.replace(/'/g, '\\\'');
   };
 
-  const chunks = new Map<string, string>();
-  const frameUrlToFrameElement = new Map<string, Element>();
-  const styleNodeToStyleSheetText = new Map<Node, string>();
-  const styleSheetUrlToContentOverride = new Map<string, string>();
+  const chunks: Map<string, string> = new Map<string, string>();
+  const frameUrlToFrameElement: Map<string, Element> = new Map<string, Element>();
+  const styleNodeToStyleSheetText: Map<Node, string> = new Map<Node, string>();
+  const styleSheetUrlToContentOverride: Map<string, string> = new Map<string, string>();
 
-  let counter = 0;
+  let counter: number = 0;
   const nextId = (): string => {
     return guid + (++counter);
   };
@@ -72,7 +80,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
   const sanitizeSrcSet = (srcset: string): string => {
     return srcset.split(',').map(src => {
       src = src.trim();
-      const spaceIndex = src.lastIndexOf(' ');
+      const spaceIndex: number = src.lastIndexOf(' ');
       if (spaceIndex === -1)
         return sanitizeUrl(src);
       return sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
@@ -80,7 +88,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
   };
 
   const getSheetBase = (sheet: CSSStyleSheet): string => {
-    let rootSheet = sheet;
+    let rootSheet: CSSStyleSheet = sheet;
     while (rootSheet.parentStyleSheet)
       rootSheet = rootSheet.parentStyleSheet;
     if (rootSheet.ownerNode)
@@ -102,14 +110,14 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
           visitStyleSheet((rule as CSSImportRule).styleSheet);
       }
 
-      const cssText = getSheetText(sheet);
+      const cssText: string = getSheetText(sheet);
       if (sheet.ownerNode && sheet.ownerNode.nodeName === 'STYLE') {
         // Stylesheets with owner STYLE nodes will be rewritten.
         styleNodeToStyleSheetText.set(sheet.ownerNode, cssText);
       } else if (sheet.href !== null) {
         // Other stylesheets will have resource overrides.
-        const base = getSheetBase(sheet);
-        const url = resolve(base, sheet.href);
+        const base: string = getSheetBase(sheet);
+        const url: string = resolve(base, sheet.href);
         styleSheetUrlToContentOverride.set(url, cssText);
       }
     } catch (e) {
@@ -118,11 +126,11 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
   };
 
   const visit = (node: Node | ShadowRoot, builder: string[]) => {
-    const nodeName = node.nodeName;
-    const nodeType = node.nodeType;
+    const nodeName: string = node.nodeName;
+    const nodeType: number = node.nodeType;
 
     if (nodeType === Node.DOCUMENT_TYPE_NODE) {
-      const docType = node as DocumentType;
+      const docType: DocumentType = node as DocumentType;
       builder.push(`<!DOCTYPE ${docType.name}>`);
       return;
     }
@@ -138,7 +146,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
       return;
 
     if (nodeType === Node.DOCUMENT_NODE || nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-      const documentOrShadowRoot = node as DocumentOrShadowRoot;
+      const documentOrShadowRoot: DocumentOrShadowRoot = node as DocumentOrShadowRoot;
       for (const sheet of documentOrShadowRoot.styleSheets)
         visitStyleSheet(sheet);
     }
@@ -150,7 +158,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
       return;
 
     if (nodeName === 'STYLE') {
-      const cssText = styleNodeToStyleSheetText.get(node) || node.textContent || '';
+      const cssText: string = styleNodeToStyleSheetText.get(node) || node.textContent || '';
       builder.push('<style>');
       builder.push(cssText);
       builder.push('</style>');
@@ -158,14 +166,14 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
     }
 
     if (nodeType === Node.ELEMENT_NODE) {
-      const element = node as Element;
+      const element: Element = node as Element;
       builder.push('<');
       builder.push(nodeName);
       if (node === target)
         builder.push(' __playwright_target__="true"');
       for (let i = 0; i < element.attributes.length; i++) {
-        const name = element.attributes[i].name;
-        let value = element.attributes[i].value;
+        const name: string = element.attributes[i].name;
+        let value: string = element.attributes[i].value;
         if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
           continue;
         if (name === 'checked' || name === 'disabled' || name === 'checked')
@@ -174,7 +182,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
           continue;
         if (name === 'src' && (nodeName === 'IFRAME' || nodeName === 'FRAME')) {
           // TODO: handle srcdoc?
-          let protocol = win.location.protocol;
+          let protocol: string = win.location.protocol;
           if (!protocol.startsWith('http'))
             protocol = 'http:';
           value = protocol + '//' + nextId() + '/';
@@ -210,7 +218,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
       if (element.shadowRoot) {
         const b: string[] = [];
         visit(element.shadowRoot, b);
-        const chunkId = nextId();
+        const chunkId: string = nextId();
         chunks.set(chunkId, b.join(''));
         builder.push(' ');
         builder.push(shadowAttribute);
@@ -221,7 +229,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
       builder.push('>');
     }
     if (nodeName === 'HEAD') {
-      let baseHref = document.baseURI;
+      let baseHref: string = document.baseURI;
       let baseTarget: string | undefined;
       for (let child = node.firstChild; child; child = child.nextSibling) {
         if (child.nodeName === 'BASE') {
@@ -247,10 +255,10 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
     }
     if (node.nodeName === 'BODY' && chunks.size) {
       builder.push('<script>');
-      const shadowChunks = Array.from(chunks).map(([chunkId, html]) => {
+      const shadowChunks: string = Array.from(chunks).map(([chunkId, html]) => {
         return `  ['${chunkId}', '${escapeScriptString(html)}']`;
       }).join(',\n');
-      const scriptContent = `\n(${applyShadowsInPage.toString()})('${shadowAttribute}', new Map([\n${shadowChunks}\n]))\n`;
+      const scriptContent: string = `\n(${applyShadowsInPage.toString()})('${shadowAttribute}', new Map([\n${shadowChunks}\n]))\n`;
       builder.push(scriptContent);
       builder.push('</script>');
     }
@@ -262,7 +270,7 @@ export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, targe
   };
 
   function applyShadowsInPage(shadowAttribute: string, shadowContent: Map<string, string>) {
-    const visitShadows = (root: Document | ShadowRoot) => {
+    const visitShadows = (root: Document | ShadowRoot): void => {
       const elements = root.querySelectorAll(`[${shadowAttribute}]`);
       for (let i = 0; i < elements.length; i++) {
         const host = elements[i];
