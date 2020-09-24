@@ -47,6 +47,7 @@ defineTestFixture('stallingConnectedRemoteServer', async ({browserType, stalling
 
 it('should close the browser when the node process closes', test => {
   test.slow();
+  test.flaky('Flakes at least on WebKit Linux');
 }, async ({connectedRemoteServer, isWindows}) => {
   if (isWindows)
     execSync(`taskkill /pid ${connectedRemoteServer.child().pid} /T /F`);

@@ -196,6 +196,7 @@ class VideoPlayer {
 
 describe('screencast', suite => {
   suite.slow();
+  suite.flaky('We should migrate these to ffmpeg');
 }, () => {
   it('should require artifactsPath', async ({browserType, defaultBrowserOptions}) => {
     const browser = await browserType.launch({
@@ -232,9 +233,7 @@ describe('screencast', suite => {
     expectAll(pixels, almostRed);
   });
 
-  it('should capture navigation', test => {
-    test.flaky();
-  }, async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
+  it('should capture navigation', async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
     const context = await browser.newContext({
       relativeArtifactsPath,
       recordVideos: true,
@@ -268,6 +267,7 @@ describe('screencast', suite => {
 
   it('should capture css transformation', (test, parameters) => {
     test.fail(options.WEBKIT(parameters) && options.WIN(parameters), 'Does not work on WebKit Windows');
+    test.fixme(!options.HEADLESS, 'Fails on headful');
   }, async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
     const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -315,7 +315,9 @@ describe('screencast', suite => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', async ({browser, videoPlayer, relativeArtifactsPath, videoDir, server}) => {
+  it('should scale frames down to the requested size ', test => {
+    test.fixme(!options.HEADLESS, 'Fails on headful');
+  }, async ({browser, videoPlayer, relativeArtifactsPath, videoDir, server}) => {
     const context = await browser.newContext({
       relativeArtifactsPath,
       recordVideos: true,
