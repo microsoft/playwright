@@ -133,7 +133,7 @@ function findPosition(source: string, offset: number): Position {
   return result;
 }
 
-function advancePosition(position: Position, delta: Position) {
+function advancePosition(position: Position, delta: Position): Position {
   return {
     line: position.line + delta.line,
     column: delta.column + (delta.line ? 0 : position.column),
