@@ -23,6 +23,7 @@
 * [playwright-test](https://github.com/hugomrdias/playwright-test) Run unit tests and benchmarks in browsers with Node's seamless experience.
 * [playwright-video](https://github.com/qawolf/playwright-video): Capture a video while executing a Playwright script
 * [QA Wolf](https://github.com/qawolf/qawolf): Record and create Playwright tests and then run them in CI
+* [Root Cause OSS](https://github.com/testimio/root-cause): Capture screenshots on every step and display in a viewer with logs for easy troubleshooting.
 * [test-real-styles](https://github.com/Xiphe/test-real-styles): Utility to test real styling of virtual DOM elements in a browser
 * [Testim Playground](https://www.testim.io/playground/): Record Playwright UI tests as code
 * [Try Playwright](https://try.playwright.tech/): Interactive playground for Playwright to run examples directly from your browser
