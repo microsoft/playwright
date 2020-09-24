@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
 
 import path from 'path';
 import url from 'url';
@@ -360,7 +360,10 @@ it('should not leak listeners during bad navigation', async ({page, server}) => 
   expect(warning).toBe(null);
 });
 
-it('should not leak listeners during navigation of 20 pages', async ({page, context, server}) => {
+it('should not leak listeners during navigation of 20 pages', test => {
+  test.flaky(options.TRACING, 'Flakes on tracing');
+  test.slow('We open 20 pages here');
+}, async ({page, context, server}) => {
   let warning = null;
   const warningHandler = w => warning = w;
   process.on('warning', warningHandler);
