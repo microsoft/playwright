@@ -278,9 +278,7 @@ defineTestFixture('context', async ({ browser, testOutputDir, testConfig }, runT
   const contextOptions: BrowserContextOptions = {
     relativeArtifactsPath: path.relative(testConfig.outputDir, testOutputDir),
     recordTrace: !!options.TRACING,
-    // TODO: enable videos. Currently, long videos are slowly processed by Chromium
-    // and (sometimes) Firefox, which causes test timeouts.
-    // recordVideos: !!options.TRACING,
+    recordVideos: !!options.TRACING,
   };
   const context = await browser.newContext(contextOptions);
   await runTest(context);
