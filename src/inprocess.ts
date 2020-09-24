@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { DispatcherConnection } from './dispatchers/dispatcher';
+import { Dispatcher, DispatcherConnection } from './dispatchers/dispatcher';
 import type { Playwright as PlaywrightImpl } from './server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
@@ -45,6 +45,6 @@ export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
   clientConnection.onmessage = message => setImmediate(() => dispatcherConnection.dispatch(message));
 
-  (playwrightAPI as any)._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
+  (playwrightAPI as any)._toImpl = (x: any): Dispatcher<any, any> | undefined => dispatcherConnection._dispatchers.get(x._guid)!._object;
   return playwrightAPI;
 }

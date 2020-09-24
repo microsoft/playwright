@@ -17,7 +17,7 @@
 import * as path from 'path';
 
 // NOTE: update this to point to playwright/lib when moving this file.
-const PLAYWRIGHT_LIB_PATH = path.normalize(path.join(__dirname, '..'));
+const PLAYWRIGHT_LIB_PATH: string = path.normalize(path.join(__dirname, '..'));
 
 type ParsedStackFrame = { filePath: string, functionName: string };
 
@@ -31,26 +31,26 @@ function parseStackFrame(frame: string): ParsedStackFrame | null {
   let location: string;
   let functionName: string;
   if (frame.endsWith(')')) {
-    const from = frame.indexOf('(');
+    const from: number = frame.indexOf('(');
     location = frame.substring(from + 1, frame.length - 1);
     functionName = frame.substring(0, from).trim();
   } else {
     location = frame;
     functionName = '';
   }
-  const match = location.match(/^(?:async )?([^(]*):(\d+):(\d+)$/);
+  const match: RegExpMatchArray | null = location.match(/^(?:async )?([^(]*):(\d+):(\d+)$/);
   if (!match)
     return null;
-  const filePath = match[1];
+  const filePath: string = match[1];
   return { filePath, functionName };
 }
 
 export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | null {
-  const error = new Error();
-  const stackFrames = (error.stack || '').split('\n').slice(2);
+  const error: Error = new Error();
+  const stackFrames: string[] = (error.stack || '').split('\n').slice(2);
   // Find first stackframe that doesn't point to ignorePrefix.
   for (const frame of stackFrames) {
-    const parsed = parseStackFrame(frame);
+    const parsed: ParsedStackFrame | null = parseStackFrame(frame);
     if (!parsed)
       return null;
     if (parsed.filePath.startsWith(ignorePrefix))
@@ -62,7 +62,7 @@ export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | 
 
 export function rewriteErrorMessage(e: Error, newMessage: string): Error {
   if (e.stack) {
-    const index = e.stack.indexOf(e.message);
+    const index: number = e.stack.indexOf(e.message);
     if (index !== -1)
       e.stack = e.stack.substring(0, index) + newMessage + e.stack.substring(index + e.message.length);
   }

@@ -45,7 +45,7 @@ class DebugLogger {
     }
   }
 
-  log(name: LogName, message: string | Error | object) {
+  log(name: LogName, message: string | Error | object): void {
     let cachedDebugger = this._debuggers.get(name);
     if (!cachedDebugger) {
       cachedDebugger = debug(`pw:${name}`);
@@ -55,7 +55,7 @@ class DebugLogger {
     cachedDebugger(message);
   }
 
-  isEnabled(name: LogName) {
+  isEnabled(name: LogName): boolean {
     return debug.enabled(`pw:${name}`);
   }
 }
