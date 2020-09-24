@@ -49,7 +49,7 @@
     "ws": "^7.3.1"
   },
   "devDependencies": {
-    "@playwright/test-runner": "^0.3.29",
+    "@playwright/test-runner": "^0.9.1",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",
@@ -72,6 +72,7 @@
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.11.3",
     "pkg": "^4.4.9",
+    "pwt": "^0.9.1",
     "socksv5": "0.0.6",
     "ts-loader": "^8.0.3",
     "typescript": "^4.0.2",
