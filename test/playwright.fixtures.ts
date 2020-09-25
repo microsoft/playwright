@@ -276,11 +276,12 @@ defineTestFixture('testOutputDir', async ({ testInfo }, runTest) => {
   }
 });
 
-defineTestFixture('context', async ({ browser, testOutputDir }, runTest) => {
+defineTestFixture('context', async ({ browser, testOutputDir, testInfo }, runTest) => {
   const contextOptions: BrowserContextOptions = {
     relativeArtifactsPath: path.relative(config.outputDir, testOutputDir),
     recordTrace: !!options.TRACING,
     recordVideos: !!options.TRACING,
+    deadline: testInfo.deadline
   };
   const context = await browser.newContext(contextOptions);
   await runTest(context);

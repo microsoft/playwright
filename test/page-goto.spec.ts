@@ -244,7 +244,7 @@ it('should fail when exceeding default maximum navigation timeout', async ({page
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
-it('should fail when exceeding browser context navigation timeout', async ({page, server, playwright}) => {
+it.only('should fail when exceeding browser context navigation timeout', async ({page, server, playwright}) => {
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;

@@ -377,6 +377,7 @@ Browser:
           properties:
             width: number
             height: number
+        deadline: number?
       returns:
         context: BrowserContext
 

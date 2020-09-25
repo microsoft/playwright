@@ -106,9 +106,14 @@ export class ProgressController {
     };
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
-    const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
+    let timer: NodeJS.Timeout | undefined;
     const startTime = monotonicTime();
+
     try {
+      if (progress.timeUntilDeadline() <= 0)
+        throw timeoutError;
+
+      const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
       const promise = task(progress);
       const result = await Promise.race([promise, this._forceAbortPromise]);
       clearTimeout(timer);
@@ -124,7 +129,8 @@ export class ProgressController {
       return result;
     } catch (e) {
       this._aborted();
-      clearTimeout(timer);
+      if (timer)
+        clearTimeout(timer);
       this._state = 'aborted';
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       if (this._listener) {

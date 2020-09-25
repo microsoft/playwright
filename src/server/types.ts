@@ -242,6 +242,7 @@ export type BrowserContextOptions = {
   videoSize?: Size,
   recordTrace?: boolean,
   relativeArtifactsPath?: string,
+  deadline?: number,
 };
 
 export type EnvArray = { name: string, value: string }[];

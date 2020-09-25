@@ -382,6 +382,7 @@ export type BrowserNewContextParams = {
     width: number,
     height: number,
   },
+  deadline?: number,
 };
 export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
@@ -422,6 +423,7 @@ export type BrowserNewContextOptions = {
     width: number,
     height: number,
   },
+  deadline?: number,
 };
 export type BrowserNewContextResult = {
   context: BrowserContextChannel,

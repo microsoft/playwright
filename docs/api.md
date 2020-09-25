@@ -226,6 +226,7 @@ Indicates that the browser is connected.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordTrace` <[boolean]> Enables trace recording to the `relativeArtifactsPath` folder.
+  - `deadline` <[number]> Context operation deadline after which calls accepting the timeout start failing as timed out.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -274,6 +275,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordTrace` <[boolean]> Enables trace recording to the `relativeArtifactsPath` folder.
+  - `deadline` <[number]> Context operation deadline after which calls accepting the timeout start failing as timed out.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -4256,6 +4258,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordTrace` <[boolean]> Enables trace recording to the `relativeArtifactsPath` folder.
+  - `deadline` <[number]> Context operation deadline after which calls accepting the timeout start failing as timed out.
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.

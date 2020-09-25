@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { isDebugMode } from './utils';
+import { time } from 'console';
+import { isDebugMode, monotonicTime } from './utils';
 
 export const DEFAULT_TIMEOUT = 30000;
 const TIMEOUT = isDebugMode() ? 0 : DEFAULT_TIMEOUT;
@@ -24,9 +25,14 @@ export class TimeoutSettings {
   private _parent: TimeoutSettings | undefined;
   private _defaultTimeout: number | null = null;
   private _defaultNavigationTimeout: number | null = null;
+  private _deadline: number | null = null;
 
   constructor(parent?: TimeoutSettings) {
     this._parent = parent;
+  }
+
+  setDeadline(deadline: number) {
+    this._deadline = deadline;
   }
 
   setDefaultTimeout(timeout: number) {
@@ -38,6 +44,10 @@ export class TimeoutSettings {
   }
 
   navigationTimeout(options: { timeout?: number }): number {
+    return this._capWithDeadline(this._navigationTimeout(options));
+  }
+
+  private _navigationTimeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (this._defaultNavigationTimeout !== null)
@@ -50,6 +60,11 @@ export class TimeoutSettings {
   }
 
   timeout(options: { timeout?: number }): number {
+    let timeout = this._timeout(options);
+    return this._capWithDeadline(timeout);
+  }
+
+  private _timeout(options: { timeout?: number }): number {
     if (typeof options.timeout === 'number')
       return options.timeout;
     if (this._defaultTimeout !== null)
@@ -57,6 +72,15 @@ export class TimeoutSettings {
     if (this._parent)
       return this._parent.timeout(options);
     return TIMEOUT;
+  }
+
+  private _capWithDeadline(timeout: number): number {
+    if (!this._deadline)
+      return timeout;
+    const deadlineTimeout = Math.max(1, this._deadline - monotonicTime());
+    if (!timeout)
+      return deadlineTimeout;
+    return Math.min(timeout, deadlineTimeout);
   }
 
   static timeout(options: { timeout?: number }): number {

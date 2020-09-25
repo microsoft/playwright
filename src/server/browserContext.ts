@@ -108,6 +108,8 @@ export abstract class BrowserContext extends EventEmitter {
         this._artifactsPath = path.join(this._artifactsPath, options.relativeArtifactsPath);
     }
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
+    if (options.deadline)
+      this._timeoutSettings.setDeadline(options.deadline);
   }
 
   _setSelectors(selectors: Selectors) {

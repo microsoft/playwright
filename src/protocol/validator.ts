@@ -226,6 +226,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       width: tNumber,
       height: tNumber,
     })),
+    deadline: tOptional(tNumber),
   });
   scheme.BrowserCrNewBrowserCDPSessionParams = tOptional(tObject({}));
   scheme.BrowserCrStartTracingParams = tObject({
