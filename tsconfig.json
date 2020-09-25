@@ -3,6 +3,7 @@
     "target": "ESNext",
     "module": "commonjs",
     "lib": ["esnext", "dom", "DOM.Iterable"],
+    "sourceMap": true,
     "rootDir": "./src",
     "outDir": "./lib",
     "strict": true,
