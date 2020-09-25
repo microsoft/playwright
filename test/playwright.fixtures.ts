@@ -24,8 +24,11 @@ import { TestServer } from '../utils/testserver';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-import { fixtures as baseFixtures } from '@playwright/test-runner';
+import { fixtures as baseFixtures, config } from '@playwright/test-runner';
 import assert from 'assert';
+import { expect } from '@playwright/test';
+export { expect } from '@playwright/test';
+export { config } from '@playwright/test-runner';
 
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 const removeFolderAsync = util.promisify(require('rimraf'));
@@ -83,7 +86,6 @@ export const beforeEach = fixtures.beforeEach;
 export const afterEach = fixtures.afterEach;
 export const beforeAll = fixtures.beforeAll;
 export const afterAll = fixtures.afterAll;
-export const expect = fixtures.expect;
 
 export const options = {
   CHROMIUM: (parameters: PlaywrightParameters) => parameters.browserName === 'chromium',
@@ -127,7 +129,7 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-defineWorkerFixture('defaultBrowserOptions', async ({ browserName, testConfig }, runTest) => {
+defineWorkerFixture('defaultBrowserOptions', async ({ browserName }, runTest) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -136,7 +138,7 @@ defineWorkerFixture('defaultBrowserOptions', async ({ browserName, testConfig },
     slowMo: options.SLOW_MO,
     headless: options.HEADLESS,
     executablePath,
-    artifactsPath: testConfig.outputDir,
+    artifactsPath: config.outputDir,
   });
 });
 
@@ -261,9 +263,9 @@ defineWorkerFixture('expectedSSLError', async ({browserName, platform}, runTest)
 });
 
 defineTestFixture('testOutputDir', async ({ testInfo }, runTest) => {
-  const relativePath = path.relative(testInfo.config.testDir, testInfo.file).replace(/\.spec\.[jt]s/, '');
+  const relativePath = path.relative(config.testDir, testInfo.file).replace(/\.spec\.[jt]s/, '');
   const sanitizedTitle = testInfo.title.replace(/[^\w\d]+/g, '_');
-  const testOutputDir = path.join(testInfo.config.outputDir, relativePath, sanitizedTitle);
+  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle);
   await fs.promises.mkdir(testOutputDir, { recursive: true });
   await runTest(testOutputDir);
   const files = await fs.promises.readdir(testOutputDir);
@@ -274,9 +276,9 @@ defineTestFixture('testOutputDir', async ({ testInfo }, runTest) => {
   }
 });
 
-defineTestFixture('context', async ({ browser, testOutputDir, testConfig }, runTest) => {
+defineTestFixture('context', async ({ browser, testOutputDir }, runTest) => {
   const contextOptions: BrowserContextOptions = {
-    relativeArtifactsPath: path.relative(testConfig.outputDir, testOutputDir),
+    relativeArtifactsPath: path.relative(config.outputDir, testOutputDir),
     recordTrace: !!options.TRACING,
     recordVideos: !!options.TRACING,
   };

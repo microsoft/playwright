@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, playwrightFixtures } from './playwright.fixtures';
+import { options, playwrightFixtures, config } from './playwright.fixtures';
 import type { Page, Browser } from '..';
 
 import fs from 'fs';
@@ -32,11 +32,11 @@ type TestState = {
 const fixtures = playwrightFixtures.declareWorkerFixtures<WorkerState>().declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
 
-overrideWorkerFixture('browser', async ({ browserType, defaultBrowserOptions, testConfig }, test) => {
+overrideWorkerFixture('browser', async ({ browserType, defaultBrowserOptions }, test) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
     // Make sure videos are stored on the same volume as the test output dir.
-    artifactsPath: path.join(testConfig.outputDir, '.screencast'),
+    artifactsPath: path.join(config.outputDir, '.screencast'),
   });
   await test(browser);
   await browser.close();
@@ -63,8 +63,8 @@ defineTestFixture('relativeArtifactsPath', async ({ browserType, testInfo }, run
   await runTest(relativeArtifactsPath);
 });
 
-defineTestFixture('videoDir', async ({ relativeArtifactsPath, testConfig }, runTest) => {
-  await runTest(path.join(testConfig.outputDir, '.screencast', relativeArtifactsPath));
+defineTestFixture('videoDir', async ({ relativeArtifactsPath }, runTest) => {
+  await runTest(path.join(config.outputDir, '.screencast', relativeArtifactsPath));
 });
 
 function almostRed(r, g, b, alpha) {
