@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, verifyViewport } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { verifyViewport } from './utils';
 import fs from 'fs';
 
 it('context.cookies() should work', async ({server, launchPersistent}) => {

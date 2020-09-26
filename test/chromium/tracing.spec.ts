@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, playwrightFixtures } from '../playwright.fixtures';
+import { options, fixtures as playwrightFixtures } from '../playwright.fixtures';
 import fs from 'fs';
 import path from 'path';
 import type { ChromiumBrowser } from '../..';
@@ -24,7 +24,6 @@ type TestState = {
 };
 const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture } = fixtures;
-
 
 defineTestFixture('outputTraceFile', async ({testOutputDir}, test) => {
   await test(path.join(testOutputDir, `trace.json`));

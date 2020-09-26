@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, verifyViewport } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { verifyViewport } from './utils';
 
 it('should get the proper default viewport size', async ({page, server}) => {
   await verifyViewport(page, 1280, 720);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { playwrightFixtures } from './playwright.fixtures';
+import { fixtures as baseFixtures } from './playwright.fixtures';
 
 import fs from 'fs';
 import type { Browser, BrowserContext } from '..';
@@ -23,7 +23,7 @@ type TestState = {
   downloadsBrowser: Browser;
   persistentDownloadsContext: BrowserContext;
 };
-const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
+const fixtures = baseFixtures.declareTestFixtures<TestState>();
 const { it, expect, defineTestFixture } = fixtures;
 
 defineTestFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, testOutputDir}, test) => {

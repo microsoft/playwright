@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, options, attachFrame, detachFrame } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
+import { attachFrame, detachFrame } from './utils';
 
 import type { Frame } from '../src/client/frame';
 

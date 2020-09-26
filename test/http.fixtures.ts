@@ -17,8 +17,6 @@
 import { fixtures as baseFixtures } from '@playwright/test-runner';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
-export { expect } from '@playwright/test';
-export { config } from '@playwright/test-runner';
 
 type HttpWorkerFixtures = {
   asset: (path: string) => string;

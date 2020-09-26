@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { playwrightFixtures } from './playwright.fixtures';
+import { fixtures as baseFixtures } from './playwright.fixtures';
 
 import path from 'path';
 import { spawn } from 'child_process';
@@ -24,7 +24,7 @@ type ServerFixtures = {
   remoteServer: RemoteServer;
   stallingRemoteServer: RemoteServer;
 };
-export const serverFixtures = playwrightFixtures.declareTestFixtures<ServerFixtures>();
+export const serverFixtures = baseFixtures.declareTestFixtures<ServerFixtures>();
 const { defineTestFixture } = serverFixtures;
 
 const playwrightPath = path.join(__dirname, '..');

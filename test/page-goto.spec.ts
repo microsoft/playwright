@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
-
 import path from 'path';
 import url from 'url';
+import { expect, it, options } from './playwright.fixtures';
+import { expectedSSLError } from './utils';
 
 it('should work', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -173,7 +173,7 @@ it('should fail when navigating to bad url', async ({page, isChromium, isWebKit}
     expect(error.message).toContain('Invalid url');
 });
 
-it('should fail when navigating to bad SSL', async ({page, httpsServer, expectedSSLError}) => {
+it('should fail when navigating to bad SSL', async ({page, browserName, httpsServer}) => {
   // Make sure that network events do not emit 'undefined'.
   // @see https://crbug.com/750469
   page.on('request', request => expect(request).toBeTruthy());
@@ -181,15 +181,15 @@ it('should fail when navigating to bad SSL', async ({page, httpsServer, expected
   page.on('requestfailed', request => expect(request).toBeTruthy());
   let error = null;
   await page.goto(httpsServer.EMPTY_PAGE).catch(e => error = e);
-  expect(error.message).toContain(expectedSSLError);
+  expect(error.message).toContain(expectedSSLError(browserName));
 });
 
-it('should fail when navigating to bad SSL after redirects', async ({page, server, httpsServer, expectedSSLError}) => {
+it('should fail when navigating to bad SSL after redirects', async ({page, browserName, server, httpsServer}) => {
   server.setRedirect('/redirect/1.html', '/redirect/2.html');
   server.setRedirect('/redirect/2.html', '/empty.html');
   let error = null;
   await page.goto(httpsServer.PREFIX + '/redirect/1.html').catch(e => error = e);
-  expect(error.message).toContain(expectedSSLError);
+  expect(error.message).toContain(expectedSSLError(browserName));
 });
 
 it('should not crash when navigating to bad SSL after a cross origin navigation', async ({page, server, httpsServer}) => {

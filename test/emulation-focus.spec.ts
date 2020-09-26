@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, options, attachFrame } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
+import { attachFrame } from './utils';
 
 it('should think that it is focused by default', async ({page}) => {
   expect(await page.evaluate('document.hasFocus()')).toBe(true);

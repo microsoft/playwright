@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, attachFrame } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { attachFrame } from './utils';
 
 it('should fire for navigation requests', async ({page, server}) => {
   const requests = [];
