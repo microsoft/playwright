@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, fixtures as playwrightFixtures } from '../fixtures';
+import { fixtures as playwrightFixtures } from '../fixtures';
 import fs from 'fs';
 import path from 'path';
 import type { ChromiumBrowser } from '../..';
@@ -29,8 +29,8 @@ defineTestFixture('outputTraceFile', async ({testOutputDir}, test) => {
   await test(path.join(testOutputDir, `trace.json`));
 });
 
-describe('oopif', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('oopif', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should output a trace', async ({browser, page, server, outputTraceFile}) => {
     await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: outputTraceFile});

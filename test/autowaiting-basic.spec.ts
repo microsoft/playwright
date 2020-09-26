@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should await navigation when clicking anchor', async ({page, server}) => {
   const messages = [];
@@ -201,8 +201,8 @@ it('should work with goto following click', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
 });
 
-it('should report navigation in the log when clicking anchor', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should report navigation in the log when clicking anchor', (test, { wire }) => {
+  test.skip(wire);
 }, async ({page, server}) => {
   await page.setContent(`<a href="${server.PREFIX + '/frames/one-frame.html'}">click me</a>`);
   const __testHookAfterPointerAction = () => new Promise(f => setTimeout(f, 6000));

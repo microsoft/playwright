@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
-it('should avoid side effects after timeout', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should avoid side effects after timeout', (test, { wire }) => {
+  test.skip(wire);
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const error = await page.click('button', { timeout: 2000, __testHookBeforePointerAction: () => new Promise(f => setTimeout(f, 2500))} as any).catch(e => e);

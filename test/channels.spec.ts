@@ -16,7 +16,7 @@
  */
 
 import domain from 'domain';
-import { options, fixtures as baseFixtures } from './fixtures';
+import { fixtures as baseFixtures } from './fixtures';
 import type { ChromiumBrowser } from '..';
 
 type DomainFixtures = {
@@ -84,8 +84,8 @@ it('should scope context handles', async ({browserType, browser, server}) => {
   await expectScopeState(browser, GOLDEN_PRECONDITION);
 });
 
-it('should scope CDPSession handles', (test, parameters) => {
-  test.skip(!options.CHROMIUM(parameters));
+it('should scope CDPSession handles', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
 }, async ({browserType, browser}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',

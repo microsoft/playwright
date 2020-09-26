@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
 it('should work for main frame navigation request', async ({page, server}) => {
@@ -55,8 +55,8 @@ it('should return headers', async ({page, server, isChromium, isFirefox, isWebKi
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 
-it('should get the same headers as the server', (test, parameters) => {
-  test.fail(options.CHROMIUM(parameters) || options.WEBKIT(parameters), 'Provisional headers differ from those in network stack');
+it('should get the same headers as the server', (test, { browserName }) => {
+  test.fail(browserName === 'chromium' || browserName === 'webkit', 'Provisional headers differ from those in network stack');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;

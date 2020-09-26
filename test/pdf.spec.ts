@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 import fs from 'fs';
 import path from 'path';
 
 
-it('should be able to save file', (test, parameters) => {
-  test.skip(!(options.HEADLESS && options.CHROMIUM(parameters)), 'Printing to pdf is currently only supported in headless chromium.');
+it('should be able to save file', (test, { browserName, headful }) => {
+  test.skip(headful || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
 }, async ({page, testOutputDir}) => {
   const outputFile = path.join(testOutputDir, 'output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });
 
-it('should only have pdf in chromium', (test, parameters) => {
-  test.skip(options.CHROMIUM(parameters));
+it('should only have pdf in chromium', (test, { browserName }) => {
+  test.skip(browserName === 'chromium');
 }, async ({page}) => {
   expect(page.pdf).toBe(undefined);
 });

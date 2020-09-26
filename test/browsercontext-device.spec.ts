@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
-describe('device', (suite, parameters) => {
-  suite.skip(options.FIREFOX(parameters));
+describe('device', (suite, { browserName }) => {
+  suite.skip(browserName === 'firefox');
 }, () => {
   it('should work', async ({playwright, browser, server}) => {
     const iPhone = playwright.devices['iPhone 6'];

@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, options } from '../fixtures';
+import { it, expect } from '../fixtures';
 
-it('should pass firefox user preferences', (test, parameters) => {
-  test.skip(!options.FIREFOX(parameters));
+it('should pass firefox user preferences', (test, { browserName }) => {
+  test.skip(browserName !== 'firefox');
 }, async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,

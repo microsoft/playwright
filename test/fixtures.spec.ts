@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { options } from './fixtures';
 import { serverFixtures } from './remoteServer.fixture';
 import { execSync } from 'child_process';
 import path from 'path';
@@ -58,8 +57,8 @@ it('should close the browser when the node process closes', test => {
   // so we don't check it here.
 });
 
-describe('fixtures', (suite, parameters) => {
-  suite.skip(options.WIN(parameters) || !options.HEADLESS);
+describe('fixtures', (suite, { platform, headful }) => {
+  suite.skip(platform === 'win32' || headful);
   suite.slow();
 }, () => {
   // Cannot reliably send signals on Windows.

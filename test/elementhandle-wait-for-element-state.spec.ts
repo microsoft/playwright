@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 async function giveItAChanceToResolve(page) {
   for (let i = 0; i < 5; i++)
@@ -114,8 +114,8 @@ it('should wait for disabled button', async ({page}) => {
   await promise;
 });
 
-it('should wait for stable position', (test, parameters) => {
-  test.fixme(options.FIREFOX(parameters) && options.LINUX(parameters));
+it('should wait for stable position', (test, { browserName, platform }) => {
+  test.fixme(browserName === 'firefox' && platform === 'linux');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/button.html');
   const button = await page.$('button');

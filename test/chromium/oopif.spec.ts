@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, fixtures as playwrightFixtures } from '../fixtures';
+import { fixtures as playwrightFixtures } from '../fixtures';
 const { it, expect, describe, overrideWorkerFixture } = playwrightFixtures;
 
 overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
@@ -26,8 +26,8 @@ overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, te
   await browser.close();
 });
 
-describe('oopif', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('oopif', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should report oopif frames', async function({browser, page, server}) {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
@@ -68,9 +68,9 @@ describe('oopif', (suite, parameters) => {
     expect(await countOOPIFs(browser)).toBe(1);
   });
 
-  it('should get the proper viewport', (test, parameters) => {
-    test.fixme(options.CHROMIUM(parameters));
-    test.skip(!options.CHROMIUM(parameters));
+  it('should get the proper viewport', (test, { browserName }) => {
+    test.fixme(browserName === 'chromium');
+    test.skip(browserName !== 'chromium');
   }, async ({browser, page, server}) => {
     expect(page.viewportSize()).toEqual({width: 1280, height: 720});
     await page.goto(server.PREFIX + '/dynamic-oopif.html');

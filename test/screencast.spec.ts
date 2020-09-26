@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, fixtures as playwrightFixtures, config } from './fixtures';
+import { fixtures as playwrightFixtures, config } from './fixtures';
 import type { Page, Browser } from '..';
 
 import fs from 'fs';
@@ -265,9 +265,9 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture css transformation', (test, parameters) => {
-    test.fail(options.WEBKIT(parameters) && options.WIN(parameters), 'Does not work on WebKit Windows');
-    test.fixme(!options.HEADLESS, 'Fails on headful');
+  it('should capture css transformation', (test, { browserName, platform, headful }) => {
+    test.fail(browserName === 'webkit' && platform === 'win32', 'Does not work on WebKit Windows');
+    test.fixme(headful, 'Fails on headful');
   }, async ({browser, server, videoPlayer, relativeArtifactsPath, videoDir}) => {
     const size = {width: 320, height: 240};
     // Set viewport equal to screencast frame size to avoid scaling.
@@ -315,8 +315,8 @@ describe('screencast', suite => {
     expect(videoFiles.length).toBe(2);
   });
 
-  it('should scale frames down to the requested size ', test => {
-    test.fixme(!options.HEADLESS, 'Fails on headful');
+  it('should scale frames down to the requested size ', (test, parameters) => {
+    test.fixme(parameters.headful, 'Fails on headful');
   }, async ({browser, videoPlayer, relativeArtifactsPath, videoDir, server}) => {
     const context = await browser.newContext({
       relativeArtifactsPath,

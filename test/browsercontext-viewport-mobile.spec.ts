@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
-describe('mobile viewport', (suite, parameters) => {
-  suite.skip(options.FIREFOX(parameters));
+describe('mobile viewport', (suite, { browserName }) => {
+  suite.skip(browserName === 'firefox');
 }, () => {
   it('should support mobile emulation', async ({playwright, browser, server}) => {
     const iPhone = playwright.devices['iPhone 6'];
@@ -131,8 +131,8 @@ describe('mobile viewport', (suite, parameters) => {
     await context.close();
   });
 
-  it('should emulate the hover media feature', (test, parameters) => {
-    test.fail(options.WEBKIT(parameters));
+  it('should emulate the hover media feature', (test, { browserName }) => {
+    test.fail(browserName === 'webkit');
   }, async ({playwright, browser}) => {
     const iPhone = playwright.devices['iPhone 6'];
     const mobilepage = await browser.newPage({ ...iPhone });

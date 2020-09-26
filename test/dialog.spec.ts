@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should fire', async ({page, server}) => {
   page.on('dialog', dialog => {
@@ -62,8 +62,8 @@ it('should dismiss the confirm prompt', async ({page}) => {
   expect(result).toBe(false);
 });
 
-it('should be able to close context with open alert', (test, parameters) => {
-  test.fixme(options.WEBKIT(parameters) && options.MAC(parameters));
+it('should be able to close context with open alert', (test, { browserName, platform }) => {
+  test.fixme(browserName === 'webkit' && platform === 'darwin');
 }, async ({browser}) => {
   const context = await browser.newContext();
   const page = await context.newPage();

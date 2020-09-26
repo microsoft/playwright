@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import url from 'url';
 
 it('page.goBack should work', async ({page, server}) => {
@@ -52,8 +52,8 @@ it('page.goBack should work with HistoryAPI', async ({page, server}) => {
   expect(page.url()).toBe(server.PREFIX + '/first.html');
 });
 
-it('page.goBack should work for file urls', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters) && options.MAC(parameters));
+it('page.goBack should work for file urls', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform === 'darwin');
 }, async ({page, server, asset}) => {
   // WebKit embedder fails to go back/forward to the file url.
   const url1 = url.pathToFileURL(asset('empty.html')).href;

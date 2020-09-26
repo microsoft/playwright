@@ -16,7 +16,7 @@
  */
 
 import path from 'path';
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should reject all promises when browser is closed', async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);
@@ -48,8 +48,8 @@ it('should throw if port option is passed for persistent context', async ({brows
   expect(error.message).toContain('Cannot specify a port without launching as a server.');
 });
 
-it('should throw if page argument is passed', (test, parameters) => {
-  test.skip(options.FIREFOX(parameters));
+it('should throw if page argument is passed', (test, { browserName }) => {
+  test.skip(browserName === 'firefox');
 }, async ({browserType, defaultBrowserOptions}) => {
   let waitError = null;
   const options = Object.assign({}, defaultBrowserOptions, { args: ['http://example.com'] });
@@ -73,8 +73,8 @@ it('should reject if executable path is invalid', async ({browserType, defaultBr
   expect(waitError.message).toContain('Failed to launch');
 });
 
-it('should handle timeout', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should handle timeout', (test, { wire }) => {
+  test.skip(wire);
 }, async ({browserType, defaultBrowserOptions}) => {
   const options = { ...defaultBrowserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
@@ -83,8 +83,8 @@ it('should handle timeout', (test, parameters) => {
   expect(error.message).toContain(`<launched> pid=`);
 });
 
-it('should handle exception', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should handle exception', (test, { wire }) => {
+  test.skip(wire);
 }, async ({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
@@ -92,8 +92,8 @@ it('should handle exception', (test, parameters) => {
   expect(error.message).toContain('Dummy');
 });
 
-it('should report launch log', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should report launch log', (test, { wire }) => {
+  test.skip(wire);
 }, async ({browserType, defaultBrowserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...defaultBrowserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };

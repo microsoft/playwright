@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-import { options } from '../fixtures';
 import { electronFixtures } from './electron.fixture';
 const { it, expect, describe } = electronFixtures;
 
 import path from 'path';
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
 
-describe('electron app', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('electron app', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should fire close event', async ({ playwright }) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);

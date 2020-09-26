@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should return no cookies in pristine browser context', async ({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);
@@ -73,8 +73,8 @@ it('should properly report httpOnly cookie', async ({context, page, server}) => 
   expect(cookies[0].httpOnly).toBe(true);
 });
 
-it('should properly report "Strict" sameSite cookie', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters) && options.WIN(parameters));
+it('should properly report "Strict" sameSite cookie', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform === 'win32');
 }, async ({context, page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Strict');
@@ -86,8 +86,8 @@ it('should properly report "Strict" sameSite cookie', (test, parameters) => {
   expect(cookies[0].sameSite).toBe('Strict');
 });
 
-it('should properly report "Lax" sameSite cookie', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters) && options.WIN(parameters));
+it('should properly report "Lax" sameSite cookie', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform === 'win32');
 }, async ({context, page, server}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', 'name=value;SameSite=Lax');

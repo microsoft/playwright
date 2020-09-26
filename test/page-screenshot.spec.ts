@@ -15,15 +15,15 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 import { verifyViewport } from './utils';
 import path from 'path';
 import fs from 'fs';
 
 // Firefox headful produces a different image.
 
-describe('page screenshot', (suite, parameters) => {
-  suite.skip(options.FIREFOX(parameters) && !options.HEADLESS);
+describe('page screenshot', (suite, { browserName, headful }) => {
+  suite.skip(browserName === 'firefox' && headful);
 }, () => {
   it('should work', async ({page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
@@ -141,8 +141,8 @@ describe('page screenshot', (suite, parameters) => {
     await Promise.all(pages.map(page => page.close()));
   });
 
-  it('should allow transparency', (test, parameters) => {
-    test.fail(options.FIREFOX(parameters));
+  it('should allow transparency', (test, { browserName }) => {
+    test.fail(browserName === 'firefox');
   }, async ({page, golden}) => {
     await page.setViewportSize({ width: 50, height: 150 });
     await page.setContent(`
@@ -177,8 +177,8 @@ describe('page screenshot', (suite, parameters) => {
     expect(screenshot).toMatchImage(golden('screenshot-clip-odd-size.png'));
   });
 
-  it('should work with a mobile viewport', (test, parameters) => {
-    test.skip(options.FIREFOX(parameters));
+  it('should work with a mobile viewport', (test, { browserName }) => {
+    test.skip(browserName === 'firefox');
   }, async ({browser, server, golden}) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
     const page = await context.newPage();
@@ -188,8 +188,8 @@ describe('page screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should work with a mobile viewport and clip', (test, parameters) => {
-    test.skip(options.FIREFOX(parameters));
+  it('should work with a mobile viewport and clip', (test, { browserName }) => {
+    test.skip(browserName === 'firefox');
   }, async ({browser, server, golden}) => {
     const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
     const page = await context.newPage();
@@ -199,8 +199,8 @@ describe('page screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should work with a mobile viewport and fullPage', (test, parameters) => {
-    test.skip(options.FIREFOX(parameters));
+  it('should work with a mobile viewport and fullPage', (test, { browserName }) => {
+    test.skip(browserName === 'firefox');
   }, async ({browser, server, golden}) => {
     const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
     const page = await context.newPage();
@@ -217,9 +217,9 @@ describe('page screenshot', (suite, parameters) => {
     expect(screenshot).toMatchImage(golden('screenshot-canvas.png'), { threshold: 0.3 });
   });
 
-  it('should work for webgl', (test, parameters) => {
-    test.fixme(options.FIREFOX(parameters));
-    test.fixme(options.WEBKIT(parameters) && options.LINUX(parameters));
+  it('should work for webgl', (test, { browserName, platform }) => {
+    test.fixme(browserName === 'firefox');
+    test.fixme(browserName === 'webkit' && platform === 'linux');
   }, async ({page, server, golden}) => {
     await page.setViewportSize({width: 640, height: 480});
     await page.goto(server.PREFIX + '/screenshots/webgl.html');

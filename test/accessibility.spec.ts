@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
 it('should work', async ({ page, isFirefox, isChromium }) => {
   await page.setContent(`
@@ -139,8 +139,8 @@ it('should not report text nodes inside controls', async function({page, isFiref
   expect(await page.accessibility.snapshot()).toEqual(golden);
 });
 
-it('rich text editable fields should have children', (test, parameters) => {
-  test.skip(options.WEBKIT(parameters), 'WebKit rich text accessibility is iffy');
+it('rich text editable fields should have children', (test, { browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 }, async function({page, isFirefox}) {
   await page.setContent(`
   <div contenteditable="true">
@@ -172,8 +172,8 @@ it('rich text editable fields should have children', (test, parameters) => {
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-it('rich text editable fields with role should have children', (test, parameters) => {
-  test.skip(options.WEBKIT(parameters), 'WebKit rich text accessibility is iffy');
+it('rich text editable fields with role should have children', (test, { browserName }) => {
+  test.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 }, async function({page, isFirefox}) {
   await page.setContent(`
   <div contenteditable="true" role='textbox'>
@@ -203,9 +203,9 @@ it('rich text editable fields with role should have children', (test, parameters
   expect(snapshot.children[0]).toEqual(golden);
 });
 
-describe('contenteditable', (suite, parameters) => {
-  suite.skip(options.FIREFOX(parameters), 'Firefox does not support contenteditable="plaintext-only"');
-  suite.skip(options.WEBKIT(parameters), 'WebKit rich text accessibility is iffy');
+describe('contenteditable', (suite, { browserName }) => {
+  suite.skip(browserName === 'firefox', 'Firefox does not support contenteditable="plaintext-only"');
+  suite.skip(browserName === 'webkit', 'WebKit rich text accessibility is iffy');
 }, () => {
   it('plain text field with role should not have children', async function({page}) {
     await page.setContent(`

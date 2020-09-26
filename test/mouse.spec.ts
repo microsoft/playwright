@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, xdescribe, options } from './fixtures';
+import { it, expect, xdescribe } from './fixtures';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -27,8 +27,8 @@ function dimensions() {
   };
 }
 
-it('should click the document', (test, parameters) => {
-  test.flaky(options.FIREFOX(parameters) && options.WIN(parameters), 'Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016');
+it('should click the document', (test, { browserName, platform }) => {
+  test.flaky(browserName === 'firefox' && platform === 'win32', 'Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016');
 }, async ({page, server}) => {
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
@@ -165,8 +165,8 @@ it('should tween mouse movement', async ({page, isWebKit}) => {
   ]);
 });
 
-it('should work with mobile viewports and cross process navigations', (test, parameters) => {
-  test.skip(options.FIREFOX(parameters));
+it('should work with mobile viewports and cross process navigations', (test, { browserName }) => {
+  test.skip(browserName === 'firefox');
 }, async ({browser, server}) => {
   // @see https://crbug.com/929806
   const context = await browser.newContext({ viewport: {width: 360, height: 640}, isMobile: true });

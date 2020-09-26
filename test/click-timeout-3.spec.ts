@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
-it('should fail when element jumps during hit testing', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should fail when element jumps during hit testing', (test, { wire }) => {
+  test.skip(wire);
 }, async ({page}) => {
   await page.setContent('<button>Click me</button>');
   let clicked = false;

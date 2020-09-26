@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
 it('should type into a textarea', async ({page}) => {
@@ -83,8 +83,8 @@ it('insertText should only emit input event', async ({page, server}) => {
   expect(await events.jsonValue()).toEqual(['input']);
 });
 
-it('should report shiftKey', (test, parameters) => {
-  test.fail(options.FIREFOX(parameters) && options.MAC(parameters));
+it('should report shiftKey', (test, { browserName, platform }) => {
+  test.fail(browserName === 'firefox' && platform === 'darwin');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
@@ -342,8 +342,8 @@ it('should be able to prevent selectAll', async ({page, server, isMac}) => {
   expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some tex');
 });
 
-it('should support MacOS shortcuts', (test, parameters) => {
-  test.skip(!options.MAC(parameters));
+it('should support MacOS shortcuts', (test, { platform }) => {
+  test.skip(platform !== 'darwin');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   const textarea = await page.$('textarea');
@@ -384,8 +384,8 @@ it('should work after a cross origin navigation', async ({page, server}) => {
 });
 
 // event.keyIdentifier has been removed from all browsers except WebKit
-it('should expose keyIdentifier in webkit', (test, parameters) => {
-  test.skip(!options.WEBKIT(parameters));
+it('should expose keyIdentifier in webkit', (test, { browserName }) => {
+  test.skip(browserName !== 'webkit');
 }, async ({page}) => {
   const lastEvent = await captureLastKeydown(page);
   const keyMap = {

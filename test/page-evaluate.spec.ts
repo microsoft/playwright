@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should work', async ({ page, server }) => {
   const result = await page.evaluate(() => 7 * 3);
@@ -415,8 +415,8 @@ it('should not throw an error when evaluation does a navigation', async ({ page,
   expect(result).toEqual([42]);
 });
 
-it('should not throw an error when evaluation does a synchronous navigation and returns an object', (test, parameters) => {
-  test.fixme(options.WEBKIT(parameters));
+it('should not throw an error when evaluation does a synchronous navigation and returns an object', (test, { browserName }) => {
+  test.fixme(browserName === 'webkit');
 }, async ({ page, server }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
@@ -426,7 +426,7 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toEqual({ a: 42 });
 });
 
-it('should not throw an error when evaluation does a synchronous navigation and returns undefined', async ({ page, server }) => {
+it('should not throw an error when evaluation does a synchronous navigation and returns undefined', async ({ page }) => {
   // It is imporant to be on about:blank for sync reload.
   const result = await page.evaluate(() => {
     window.location.reload();
@@ -435,15 +435,15 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it('should transfer 100Mb of data from page to node.js', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should transfer 100Mb of data from page to node.js', (test, { wire }) => {
+  test.skip(wire);
 }, async ({ page }) => {
   // This is too slow with wire.
   const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));
   expect(a.length).toBe(100 * 1024 * 1024);
 });
 
-it('should throw error with detailed information on exception inside promise ', async ({ page, server }) => {
+it('should throw error with detailed information on exception inside promise ', async ({ page }) => {
   let error = null;
   await page.evaluate(() => new Promise(() => {
     throw new Error('Error in promise');
@@ -482,7 +482,7 @@ it('should work with non-strict expressions', async ({ page, server }) => {
   })).toBe(3.14);
 });
 
-it('should respect use strict expression', async ({ page, server }) => {
+it('should respect use strict expression', async ({ page }) => {
   const error = await page.evaluate(() => {
     'use strict';
     // @ts-ignore
@@ -493,11 +493,11 @@ it('should respect use strict expression', async ({ page, server }) => {
   expect(error.message).toContain('variableY');
 });
 
-it('should not leak utility script', async function({ page, server }) {
+it('should not leak utility script', async function({ page }) {
   expect(await page.evaluate(() => this === window)).toBe(true);
 });
 
-it('should not leak handles', async ({ page, server }) => {
+it('should not leak handles', async ({ page }) => {
   const error = await page.evaluate('handles.length').catch(e => e);
   expect((error as Error).message).toContain(' handles');
 });
@@ -508,7 +508,7 @@ it('should work with CSP', async ({ page, server }) => {
   expect(await page.evaluate(() => 2 + 2)).toBe(4);
 });
 
-it('should evaluate exception', async ({ page, server }) => {
+it('should evaluate exception', async ({ page }) => {
   const error = await page.evaluate(() => {
     return (function functionOnStack() {
       return new Error('error message');
@@ -518,7 +518,7 @@ it('should evaluate exception', async ({ page, server }) => {
   expect(error).toContain('functionOnStack');
 });
 
-it('should evaluate exception', async ({ page, server }) => {
+it('should evaluate exception', async ({ page }) => {
   const error = await page.evaluate(`new Error('error message')`);
   expect(error).toContain('Error: error message');
 });
@@ -545,12 +545,12 @@ it('should jsonValue() date', async ({ page }) => {
   expect(await resultHandle.jsonValue()).toEqual({ date: new Date('2020-05-27T01:31:38.506Z') });
 });
 
-it('should not use toJSON when evaluating', async ({ page, server }) => {
+it('should not use toJSON when evaluating', async ({ page }) => {
   const result = await page.evaluate(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(result).toEqual({ data: 'data', toJSON: {} });
 });
 
-it('should not use toJSON in jsonValue', async ({ page, server }) => {
+it('should not use toJSON in jsonValue', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
 });

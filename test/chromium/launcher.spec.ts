@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, options } from '../fixtures';
+import { it, expect } from '../fixtures';
 
 import path from 'path';
 import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 
-it('should throw with remote-debugging-pipe argument', (test, parameters) => {
-  test.skip(options.WIRE || !options.CHROMIUM(parameters));
+it('should throw with remote-debugging-pipe argument', (test, { browserName, wire }) => {
+  test.skip(wire || browserName !== 'chromium');
 }, async ({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
@@ -27,8 +27,8 @@ it('should throw with remote-debugging-pipe argument', (test, parameters) => {
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it('should not throw with remote-debugging-port argument', (test, parameters) => {
-  test.skip(options.WIRE || !options.CHROMIUM(parameters));
+it('should not throw with remote-debugging-port argument', (test, { browserName, wire }) => {
+  test.skip(wire || browserName !== 'chromium');
 }, async ({browserType, defaultBrowserOptions}) => {
   const options = Object.assign({}, defaultBrowserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
@@ -36,8 +36,8 @@ it('should not throw with remote-debugging-port argument', (test, parameters) =>
   await browser.close();
 });
 
-it('should open devtools when "devtools: true" option is given', (test, parameters) => {
-  test.skip(!options.CHROMIUM(parameters) || options.WIRE || options.WIN(parameters));
+it('should open devtools when "devtools: true" option is given', (test, { wire, browserName, platform}) => {
+  test.skip(browserName !== 'chromium' || wire || platform === 'win32');
 }, async ({browserType, defaultBrowserOptions}) => {
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);
@@ -54,8 +54,8 @@ it('should open devtools when "devtools: true" option is given', (test, paramete
   await browser.close();
 });
 
-it('should return background pages', (test, parameters) => {
-  test.skip(!options.CHROMIUM(parameters));
+it('should return background pages', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
 }, async ({browserType, defaultBrowserOptions, createUserDataDir}) => {
   const userDataDir = await createUserDataDir();
   const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
@@ -77,8 +77,8 @@ it('should return background pages', (test, parameters) => {
   await context.close();
 });
 
-it('should not create pages automatically', (test, parameters) => {
-  test.skip(!options.CHROMIUM(parameters));
+it('should not create pages automatically', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
 }, async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);
   const browserSession = await (browser as ChromiumBrowser).newBrowserCDPSession();
