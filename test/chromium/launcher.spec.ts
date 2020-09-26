@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, options } from '../playwright.fixtures';
+import { it, expect, options } from '../fixtures';
 
 import path from 'path';
 import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';

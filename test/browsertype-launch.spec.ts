@@ -16,7 +16,7 @@
  */
 
 import path from 'path';
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should reject all promises when browser is closed', async ({browserType, defaultBrowserOptions}) => {
   const browser = await browserType.launch(defaultBrowserOptions);

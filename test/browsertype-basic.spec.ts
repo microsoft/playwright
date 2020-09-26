@@ -16,7 +16,7 @@
  */
 
 import fs from 'fs';
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('browserType.executablePath should work', test => {
   test.skip(Boolean(process.env.CRPATH || process.env.FFPATH || process.env.WKPATH));

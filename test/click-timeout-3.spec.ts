@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should fail when element jumps during hit testing', (test, parameters) => {
   test.skip(options.WIRE);

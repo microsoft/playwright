@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as playwrightFixtures } from './upstream.fixtures';
+import { fixtures as playwrightFixtures } from './playwright.fixtures';
 
 type ImplWorkerFixtures = {
   toImpl: (rpcObject: any) => any;

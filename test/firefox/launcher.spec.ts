@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, options } from '../playwright.fixtures';
+import { it, expect, options } from '../fixtures';
 
 it('should pass firefox user preferences', (test, parameters) => {
   test.skip(!options.FIREFOX(parameters));

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, fixtures as playwrightFixtures } from '../playwright.fixtures';
+import { options, fixtures as playwrightFixtures } from '../fixtures';
 const { it, expect, describe, overrideWorkerFixture } = playwrightFixtures;
 
 overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {

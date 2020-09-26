@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('expose binding should work', async ({browser}) => {
   const context = await browser.newContext();

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 import { attachFrame } from './utils';
 
 it('should type into a textarea', async ({page}) => {

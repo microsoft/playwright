@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should return no cookies in pristine browser context', async ({context, page, server}) => {
   expect(await context.cookies()).toEqual([]);

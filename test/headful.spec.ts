@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should have default url when launching browser', async ({browserType, defaultBrowserOptions, createUserDataDir}) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...defaultBrowserOptions, headless: false });

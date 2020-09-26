@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 import url from 'url';
 
 it('page.goBack should work', async ({page, server}) => {

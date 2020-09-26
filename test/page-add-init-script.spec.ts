@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 import path from 'path';
 
 it('should evaluate before anything else on the page', async ({ page, server }) => {

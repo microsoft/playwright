@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('should work with css selector', async ({page, server}) => {
   await page.setContent('<section id="testAttribute">43543</section>');

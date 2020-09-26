@@ -17,7 +17,7 @@
 
 import path from 'path';
 import url from 'url';
-import { expect, it, options } from './playwright.fixtures';
+import { expect, it, options } from './fixtures';
 import { expectedSSLError } from './utils';
 
 it('should work', async ({page, server}) => {

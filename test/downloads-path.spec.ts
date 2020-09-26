@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as baseFixtures } from './playwright.fixtures';
+import { fixtures as baseFixtures } from './fixtures';
 
 import fs from 'fs';
 import type { Browser, BrowserContext } from '..';

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('should work', async ({browser}) => {
   const context = await browser.newContext();
