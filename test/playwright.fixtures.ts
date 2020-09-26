@@ -17,6 +17,7 @@
 import { expect } from '@playwright/test';
 import { config } from '@playwright/test-runner';
 import { fixtures as httpFixtures } from './http.fixtures';
+import { fixtures as platformFixtures, options as platformOptions } from './platform.fixtures';
 import assert from 'assert';
 import childProcess from 'child_process';
 import fs from 'fs';
@@ -34,7 +35,6 @@ const mkdtempAsync = util.promisify(fs.mkdtemp);
 const removeFolderAsync = util.promisify(require('rimraf'));
 
 type PlaywrightParameters = {
-  platform: 'win32' | 'linux' | 'darwin'
   browserName: string;
 };
 
@@ -49,9 +49,6 @@ type PlaywrightWorkerFixtures = {
   isChromium: boolean;
   isFirefox: boolean;
   isWebKit: boolean;
-  isWindows: boolean;
-  isMac: boolean;
-  isLinux: boolean;
   expectedSSLError: string;
 };
 
@@ -65,7 +62,7 @@ type PlaywrightTestFixtures = {
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
 };
 
-const fixtures = httpFixtures
+const fixtures = httpFixtures.union(platformFixtures)
     .declareParameters<PlaywrightParameters>()
     .declareWorkerFixtures<PlaywrightWorkerFixtures>()
     .declareTestFixtures<PlaywrightTestFixtures>();
@@ -87,13 +84,11 @@ export const options = {
   CHROMIUM: (parameters: PlaywrightParameters) => parameters.browserName === 'chromium',
   FIREFOX: (parameters: PlaywrightParameters) => parameters.browserName === 'firefox',
   WEBKIT: (parameters: PlaywrightParameters) => parameters.browserName === 'webkit',
-  MAC: (parameters: PlaywrightParameters) => parameters.platform === 'darwin',
-  LINUX: (parameters: PlaywrightParameters) => parameters.platform === 'linux',
-  WIN: (parameters: PlaywrightParameters) => parameters.platform === 'win32',
   HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
   TRACING: valueFromEnv('TRACING', false),
+  ...platformOptions,
 };
 
 const getExecutablePath = browserName => {
@@ -169,15 +164,9 @@ defineWorkerFixture('browserType', async ({playwright, browserName}, test) => {
 
 defineParameter('browserName', 'Browser type name', '');
 
-defineParameter('platform', 'Operating system', process.platform as ('win32' | 'linux' | 'darwin'));
-
 generateParametrizedTests(
     'browserName',
     process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit', 'firefox']);
-
-generateParametrizedTests(
-    'platform',
-    process.env.PWTESTREPORT ? ['win32', 'darwin', 'linux'] : [process.platform as ('win32' | 'linux' | 'darwin')]);
 
 defineWorkerFixture('isChromium', async ({browserName}, test) => {
   await test(browserName === 'chromium');
@@ -189,18 +178,6 @@ defineWorkerFixture('isFirefox', async ({browserName}, test) => {
 
 defineWorkerFixture('isWebKit', async ({browserName}, test) => {
   await test(browserName === 'webkit');
-});
-
-defineWorkerFixture('isWindows', async ({platform}, test) => {
-  await test(platform === 'win32');
-});
-
-defineWorkerFixture('isMac', async ({platform}, test) => {
-  await test(platform === 'darwin');
-});
-
-defineWorkerFixture('isLinux', async ({platform}, test) => {
-  await test(platform === 'linux');
 });
 
 defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
