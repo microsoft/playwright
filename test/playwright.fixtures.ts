@@ -108,18 +108,13 @@ defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test
   await browser.close();
 });
 
-defineTestFixture('testOutputDir', async ({ testInfo }, runTest) => {
-  const relativePath = path.relative(config.testDir, testInfo.file).replace(/\.spec\.[jt]s/, '');
+defineTestFixture('testOutputDir', async ({ testInfo, browserName }, runTest) => {
+  const relativePath = path.relative(config.testDir, testInfo.file)
+      .replace(/\.spec\.[jt]s/, '')
+      .replace(/\.test\.[jt]s/, '');
   const sanitizedTitle = testInfo.title.replace(/[^\w\d]+/g, '_');
-  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle);
-  await fs.promises.mkdir(testOutputDir, { recursive: true });
+  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle, browserName);
   await runTest(testOutputDir);
-  const files = await fs.promises.readdir(testOutputDir);
-  if (!files.length) {
-    // Do not leave an empty useless directory.
-    // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-    await removeFolderAsync(testOutputDir).catch(e => {});
-  }
 });
 
 defineTestFixture('context', async ({ browser, testOutputDir }, runTest) => {
