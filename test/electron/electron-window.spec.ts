@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options } from '../playwright.fixtures';
+import { options } from '../fixtures';
 import { electronFixtures } from './electron.fixture';
 const { it, expect, describe } = electronFixtures;
 

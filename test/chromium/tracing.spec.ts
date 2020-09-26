@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { options, fixtures as playwrightFixtures } from '../playwright.fixtures';
+import { options, fixtures as playwrightFixtures } from '../fixtures';
 import fs from 'fs';
 import path from 'path';
 import type { ChromiumBrowser } from '../..';

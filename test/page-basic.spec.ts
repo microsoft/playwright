@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should reject all promises when page is closed', async ({context}) => {
   const newPage = await context.newPage();

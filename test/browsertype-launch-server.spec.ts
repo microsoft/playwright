@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './fixtures';
 
 describe('lauch server', suite => {
   suite.skip(options.WIRE);

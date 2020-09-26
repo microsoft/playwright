@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 import type { Frame, Page } from '..';
 import { TestServer } from '../utils/testserver';
 

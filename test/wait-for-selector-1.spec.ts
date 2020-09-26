@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame, detachFrame } from './utils';
 
 async function giveItTimeToLog(frame) {

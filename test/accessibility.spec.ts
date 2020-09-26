@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './fixtures';
 
 it('should work', async ({ page, isFirefox, isChromium }) => {
   await page.setContent(`

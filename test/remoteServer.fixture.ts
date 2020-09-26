@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as baseFixtures } from './playwright.fixtures';
+import { fixtures as baseFixtures } from './fixtures';
 
 import path from 'path';
 import { spawn } from 'child_process';

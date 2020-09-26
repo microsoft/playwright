@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should fire', async ({page, server}) => {
   page.on('dialog', dialog => {

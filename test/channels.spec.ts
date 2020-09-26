@@ -16,7 +16,7 @@
  */
 
 import domain from 'domain';
-import { options, fixtures as baseFixtures } from './playwright.fixtures';
+import { options, fixtures as baseFixtures } from './fixtures';
 import type { ChromiumBrowser } from '..';
 
 type DomainFixtures = {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('should inherit user agent from browser context', async function({browser, server}) {
   const context = await browser.newContext({

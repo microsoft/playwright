@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('should fail without credentials', (test, parameters) => {
   test.fail(options.CHROMIUM(parameters) && !options.HEADLESS);

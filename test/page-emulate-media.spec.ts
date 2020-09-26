@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
 it('should emulate type', async ({page, server}) => {

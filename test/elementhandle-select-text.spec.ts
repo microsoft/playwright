@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('should select textarea', async ({ page, server, isFirefox }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');

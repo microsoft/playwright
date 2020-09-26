@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('query', async ({page, isWebKit}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);

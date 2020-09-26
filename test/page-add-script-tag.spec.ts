@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 import path from 'path';
 
 it('should throw an error if no options are provided', async ({page, server}) => {

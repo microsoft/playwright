@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 import fs from 'fs';
 
 it('should support hasTouch option', async ({server, launchPersistent}) => {

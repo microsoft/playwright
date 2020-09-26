@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './fixtures';
 
 describe('mobile viewport', (suite, parameters) => {
   suite.skip(options.FIREFOX(parameters));

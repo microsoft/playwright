@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './fixtures';
 
 describe('oopif', (suite, parameters) => {
   suite.skip(!options.CHROMIUM(parameters));

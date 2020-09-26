@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 
 it('should require top-level Errors', async ({}) => {
   const Errors = require('../lib/utils/errors.js');

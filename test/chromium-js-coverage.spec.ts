@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './playwright.fixtures';
+import { it, expect, describe, options } from './fixtures';
 
 it('should be missing', (test, parameters) => {
   test.skip(options.CHROMIUM(parameters));

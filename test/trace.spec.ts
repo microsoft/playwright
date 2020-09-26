@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './playwright.fixtures';
+import { it, expect } from './fixtures';
 import type * as trace from '../types/trace';
 import * as path from 'path';
 import * as fs from 'fs';

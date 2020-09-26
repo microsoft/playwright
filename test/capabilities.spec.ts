@@ -15,7 +15,7 @@
  */
 
 import url from 'url';
-import { it, expect, options } from './playwright.fixtures';
+import { it, expect, options } from './fixtures';
 
 it('Web Assembly should work', (test, parameters) => {
   test.fail(options.WEBKIT(parameters) && options.WIN(parameters));
