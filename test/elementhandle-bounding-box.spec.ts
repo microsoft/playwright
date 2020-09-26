@@ -15,11 +15,11 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 
-it('should work', (test, parameters) => {
-  test.fail(options.FIREFOX(parameters) && !options.HEADLESS);
+it('should work', (test, { browserName, headful }) => {
+  test.fail(browserName === 'firefox' && headful);
 }, async ({ page, server }) => {
   await page.setViewportSize({ width: 500, height: 500 });
   await page.goto(server.PREFIX + '/grid.html');
@@ -67,8 +67,8 @@ it('should work with SVG nodes', async ({ page, server }) => {
   expect(pwBoundingBox).toEqual(webBoundingBox);
 });
 
-it('should work with page scale', (test, parameters) => {
-  test.skip(options.FIREFOX(parameters));
+it('should work with page scale', (test, { browserName }) => {
+  test.skip(browserName === 'firefox');
 }, async ({ browser, server }) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame, detachFrame } from './utils';
 import type { Frame } from '../index';
 
@@ -189,8 +189,8 @@ it('should report different frame instance when frame re-attaches', async ({page
   expect(frame1).not.toBe(frame2);
 });
 
-it('should refuse to display x-frame-options:deny iframe', (test, parameters) => {
-  test.fixme(options.FIREFOX(parameters));
+it('should refuse to display x-frame-options:deny iframe', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox');
 }, async ({page, server}) => {
   server.setRoute('/x-frame-options-deny.html', async (req, res) => {
     res.setHeader('Content-Type', 'text/html');

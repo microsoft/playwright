@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame, detachFrame } from './utils';
 
 import type { Frame } from '../src/client/frame';
@@ -44,8 +44,8 @@ function expectContexts(pageImpl, count, isChromium) {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it('should dispose context on navigation', test => {
-  test.skip(options.WIRE);
+it('should dispose context on navigation', (test, { wire }) => {
+  test.skip(wire);
 }, async ({ page, server, toImpl, isChromium }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
@@ -54,8 +54,8 @@ it('should dispose context on navigation', test => {
   expectContexts(toImpl(page), 2, isChromium);
 });
 
-it('should dispose context on cross-origin navigation', (test, parameters) => {
-  test.skip(options.WIRE);
+it('should dispose context on cross-origin navigation', (test, { wire }) => {
+  test.skip(wire);
 }, async ({ page, server, toImpl, isChromium }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
@@ -132,9 +132,9 @@ it('should be isolated between frames', async ({page, server}) => {
   expect(a2).toBe(2);
 });
 
-it('should work in iframes that failed initial navigation', (test, parameters) => {
-  test.fail(options.CHROMIUM(parameters));
-  test.fixme(options.FIREFOX(parameters));
+it('should work in iframes that failed initial navigation', (test, { browserName }) => {
+  test.fail(browserName === 'chromium');
+  test.fixme(browserName === 'firefox');
 }, async ({page}) => {
   // - Firefox does not report domcontentloaded for the iframe.
   // - Chromium and Firefox report empty url.
@@ -156,8 +156,8 @@ it('should work in iframes that failed initial navigation', (test, parameters) =
   expect(await page.frames()[1].$('div')).toBeTruthy();
 });
 
-it('should work in iframes that interrupted initial javascript url navigation', (test, parameters) => {
-  test.fixme(options.CHROMIUM(parameters));
+it('should work in iframes that interrupted initial javascript url navigation', (test, { browserName }) => {
+  test.fixme(browserName === 'chromium');
 }, async ({page, server}) => {
   // Chromium does not report isolated world for the iframe.
   await page.goto(server.EMPTY_PAGE);

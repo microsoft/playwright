@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 import { verifyViewport } from './utils';
 
 import {PNG} from 'pngjs';
@@ -23,7 +23,7 @@ import path from 'path';
 import fs from 'fs';
 
 describe('element screenshot', (suite, parameters) => {
-  suite.skip(parameters.browserName === 'firefox' && !options.HEADLESS);
+  suite.skip(parameters.browserName === 'firefox' && parameters.headful);
 }, () => {
   it('should work', async ({page, server, golden}) => {
     await page.setViewportSize({width: 500, height: 500});
@@ -211,8 +211,8 @@ describe('element screenshot', (suite, parameters) => {
     expect(screenshot).toMatchImage(golden('screenshot-element-fractional.png'));
   });
 
-  it('should work with a mobile viewport', (test, parameters) => {
-    test.skip(options.FIREFOX(parameters));
+  it('should work with a mobile viewport', (test, { browserName }) => {
+    test.skip(browserName === 'firefox');
   }, async ({browser, server, golden}) => {
     const context = await browser.newContext({viewport: { width: 320, height: 480 }, isMobile: true});
     const page = await context.newPage();
@@ -224,8 +224,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should work with device scale factor', (test, parameters) => {
-    test.skip(options.FIREFOX(parameters));
+  it('should work with device scale factor', (test, { browserName }) => {
+    test.skip(browserName === 'firefox');
   }, async ({browser, server, golden}) => {
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, deviceScaleFactor: 2 });
     const page = await context.newPage();
@@ -289,8 +289,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should restore viewport after page screenshot and exception', (test, parameters) => {
-    test.skip(options.WIRE);
+  it('should restore viewport after page screenshot and exception', (test, { wire }) => {
+    test.skip(wire);
   }, async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
@@ -302,8 +302,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should restore viewport after page screenshot and timeout', (test, parameters) => {
-    test.skip(options.WIRE);
+  it('should restore viewport after page screenshot and timeout', (test, { wire }) => {
+    test.skip(wire);
   }, async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
@@ -348,8 +348,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should restore viewport after element screenshot and exception', (test, parameters) => {
-    test.skip(options.WIRE);
+  it('should restore viewport after element screenshot and exception', (test, { wire }) => {
+    test.skip(wire);
   }, async ({browser}) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
@@ -362,8 +362,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should wait for element to stop moving', (test, parameters) => {
-    test.flaky(options.WEBKIT(parameters) && !options.HEADLESS && options.LINUX(parameters));
+  it('should wait for element to stop moving', (test, { browserName, headful, platform }) => {
+    test.flaky(browserName === 'webkit' && headful && platform === 'linux');
   }, async ({ page, server, golden }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');

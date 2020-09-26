@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
-describe('oopif', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('oopif', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should work', async function({browserType, page, server}) {
     await page.coverage.startCSSCoverage();

@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, describe, options } from '../fixtures';
+import { it, expect, describe } from '../fixtures';
 import type { ChromiumBrowserContext, ChromiumBrowser } from '../../types/types';
 
-describe('session', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('session', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should work', async function({page}) {
     const client = await (page.context() as ChromiumBrowserContext).newCDPSession(page);

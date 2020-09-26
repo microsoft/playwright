@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 async function giveItAChanceToFill(page) {
   for (let i = 0; i < 5; i++)
@@ -60,22 +60,22 @@ it('should fill date input after clicking', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02');
 });
 
-it('should throw on incorrect date', (test, parameters) => {
-  test.skip(options.WEBKIT(parameters));
+it('should throw on incorrect date', (test, { browserName }) => {
+  test.skip(browserName === 'webkit');
 }, async ({page}) => {
   await page.setContent('<input type=date>');
   const error = await page.fill('input', '2020-13-05').catch(e => e);
   expect(error.message).toContain('Malformed value');
 });
 
-it('should fill time input', async ({page, server}) => {
+it('should fill time input', async ({page}) => {
   await page.setContent('<input type=time>');
   await page.fill('input', '13:15');
   expect(await page.$eval('input', input => input.value)).toBe('13:15');
 });
 
-it('should throw on incorrect time', (test, parameters) => {
-  test.skip(options.WEBKIT(parameters));
+it('should throw on incorrect time', (test, { browserName }) => {
+  test.skip(browserName === 'webkit');
 }, async ({page}) => {
   await page.setContent('<input type=time>');
   const error = await page.fill('input', '25:05').catch(e => e);
@@ -88,8 +88,8 @@ it('should fill datetime-local input', async ({page, server}) => {
   expect(await page.$eval('input', input => input.value)).toBe('2020-03-02T05:15');
 });
 
-it('should throw on incorrect datetime-local', (test, parameters) => {
-  test.skip(options.WEBKIT(parameters) || options.FIREFOX(parameters));
+it('should throw on incorrect datetime-local', (test, { browserName }) => {
+  test.skip(browserName === 'webkit' || browserName === 'firefox');
 }, async ({page, server}) => {
   await page.setContent('<input type=datetime-local>');
   const error = await page.fill('input', 'abc').catch(e => e);

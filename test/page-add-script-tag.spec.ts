@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import path from 'path';
 
 it('should throw an error if no options are provided', async ({page, server}) => {
@@ -74,8 +74,8 @@ it('should work with a path', async ({page, server}) => {
   expect(await page.evaluate(() => window['__injected'])).toBe(42);
 });
 
-it('should include sourceURL when path is provided', (test, parameters) => {
-  test.skip(options.WEBKIT(parameters));
+it('should include sourceURL when path is provided', (test, { browserName }) => {
+  test.skip(browserName === 'webkit');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.addScriptTag({ path: path.join(__dirname, 'assets/injectedfile.js') });

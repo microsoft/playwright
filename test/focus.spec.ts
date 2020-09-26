@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
-it('should work', (test, parameters) => {
-  test.skip(options.FIREFOX(parameters));
+it('should work', (test, { browserName }) => {
+  test.skip(browserName === 'firefox');
 }, async function({page}) {
   await page.setContent(`<div id=d1 tabIndex=0></div>`);
   expect(await page.evaluate(() => document.activeElement.nodeName)).toBe('BODY');
@@ -78,8 +78,8 @@ it('should traverse focus in all directions', async function({page}) {
   expect(await page.evaluate(() => (document.activeElement as HTMLInputElement).value)).toBe('1');
 });
 
-it('should traverse only form elements', (test, parameters) => {
-  test.skip(!options.MAC(parameters) || !options.WEBKIT(parameters),
+it('should traverse only form elements', (test, { browserName, platform }) => {
+  test.skip(platform !== 'darwin' || browserName !== 'webkit',
       'Chromium and WebKit both have settings for tab traversing all links, but it is only on by default in WebKit.');
 }, async function({page}) {
   await page.setContent(`

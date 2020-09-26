@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should have default url when launching browser', async ({browserType, defaultBrowserOptions, createUserDataDir}) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...defaultBrowserOptions, headless: false });
@@ -23,9 +23,9 @@ it('should have default url when launching browser', async ({browserType, defaul
   await browserContext.close();
 });
 
-it('headless should be able to read cookies written by headful', (test, parameters) => {
-  test.fail(options.WIN(parameters) && options.CHROMIUM(parameters));
-  test.flaky(options.FIREFOX(parameters));
+it('headless should be able to read cookies written by headful', (test, { browserName, platform }) => {
+  test.fail(platform === 'win32' && browserName === 'chromium');
+  test.flaky(browserName === 'firefox');
   test.slow();
 }, async ({browserType, defaultBrowserOptions, server, createUserDataDir}) => {
   // see https://github.com/microsoft/playwright/issues/717
@@ -129,8 +129,8 @@ it('should(not) block third party cookies', async ({browserType, defaultBrowserO
   await browser.close();
 });
 
-it('should not override viewport size when passed null', (test, parameters) => {
-  test.fixme(options.WEBKIT(parameters));
+it('should not override viewport size when passed null', (test, { browserName }) => {
+  test.fixme(browserName === 'webkit');
 }, async function({browserType, defaultBrowserOptions, server}) {
   // Our WebKit embedder does not respect window features.
   const browser = await browserType.launch({...defaultBrowserOptions, headless: false });

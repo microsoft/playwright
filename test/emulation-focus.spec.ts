@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
 it('should think that it is focused by default', async ({page}) => {
@@ -101,8 +101,8 @@ it('should change document.activeElement', async ({page, server}) => {
   expect(active).toEqual(['INPUT', 'TEXTAREA']);
 });
 
-it('should not affect screenshots', (test, parameters) => {
-  test.skip(options.FIREFOX(parameters) && !options.HEADLESS);
+it('should not affect screenshots', (test, { browserName, headful }) => {
+  test.skip(browserName === 'firefox' && headful);
 }, async ({page, server, golden}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();

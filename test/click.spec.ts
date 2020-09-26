@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
 async function giveItAChanceToClick(page) {
@@ -322,8 +322,8 @@ it('should click the button inside an iframe', async ({page, server}) => {
   expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should click the button with fixed position inside an iframe', (test, parameters) => {
-  test.fixme(options.CHROMIUM(parameters) || options.WEBKIT(parameters));
+it('should click the button with fixed position inside an iframe', (test, { browserName }) => {
+  test.fixme(browserName === 'chromium' || browserName === 'webkit');
 }, async ({page, server}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/4110
   // @see https://bugs.chromium.org/p/chromium/issues/detail?id=986390
@@ -403,9 +403,9 @@ it('should click a button in scrolling container with offset', async ({page, ser
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
 });
 
-it('should click the button with offset with page scale', (test, parameters) => {
-  test.skip(options.FIREFOX(parameters));
-}, async ({browser, server, isWebKit, isChromium}) => {
+it('should click the button with offset with page scale', (test, { browserName }) => {
+  test.skip(browserName === 'firefox');
+}, async ({browser, server, isWebKit, isChromium, headful}) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/input/button.html');
@@ -420,7 +420,7 @@ it('should click the button with offset with page scale', (test, parameters) => 
   if (isWebKit) {
     // WebKit rounds up during css -> dip -> css conversion.
     expected = { x: 29, y: 19 };
-  } else if (isChromium && options.HEADLESS) {
+  } else if (isChromium && !headful) {
     // Headless Chromium rounds down during css -> dip -> css conversion.
     expected = { x: 27, y: 18 };
   }

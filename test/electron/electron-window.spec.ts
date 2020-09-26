@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-import { options } from '../fixtures';
 import { electronFixtures } from './electron.fixture';
 const { it, expect, describe } = electronFixtures;
 
-describe('electron window', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('electron window', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should click the button', async ({window, server}) => {
     await window.goto(server.PREFIX + '/input/button.html');

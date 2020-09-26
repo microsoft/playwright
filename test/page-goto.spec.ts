@@ -17,7 +17,7 @@
 
 import path from 'path';
 import url from 'url';
-import { expect, it, options } from './fixtures';
+import { expect, it } from './fixtures';
 import { expectedSSLError } from './utils';
 
 it('should work', async ({page, server}) => {
@@ -25,7 +25,7 @@ it('should work', async ({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({page, server}) => {
+it('should work with file URL', async ({page}) => {
   const fileurl = url.pathToFileURL(path.join(__dirname, 'assets', 'frames', 'two-frames.html')).href;
   await page.goto(fileurl);
   expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());
@@ -360,8 +360,8 @@ it('should not leak listeners during bad navigation', async ({page, server}) => 
   expect(warning).toBe(null);
 });
 
-it('should not leak listeners during navigation of 20 pages', test => {
-  test.flaky(options.TRACING, 'Flakes on tracing');
+it('should not leak listeners during navigation of 20 pages', (test, parameters) => {
+  test.flaky(parameters.trace, 'Flakes on tracing');
   test.slow('We open 20 pages here');
 }, async ({page, context, server}) => {
   let warning = null;

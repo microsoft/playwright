@@ -26,15 +26,15 @@ import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
 import { fixtures as httpFixtures } from './http.fixtures';
 import { fixtures as implFixtures } from './impl.fixtures';
-import { fixtures as platformFixtures, options as platformOptions } from './platform.fixtures';
-import { fixtures as playwrightFixtures, options as playwrightOptions } from './playwright.fixtures';
+import { fixtures as platformFixtures } from './platform.fixtures';
+import { fixtures as playwrightFixtures } from './playwright.fixtures';
 export { expect } from '@playwright/test/out/matcher.fixtures';
 export { config } from '@playwright/test-runner';
 
 const removeFolderAsync = util.promisify(require('rimraf'));
 
 type AllParameters = {
-  browserName: string;
+  wire: boolean;
 };
 
 type AllWorkerFixtures = {
@@ -53,7 +53,6 @@ export const fixtures = playwrightFixtures
     .declareParameters<AllParameters>()
     .declareWorkerFixtures<AllWorkerFixtures>()
     .declareTestFixtures<AllTestFixtures>();
-const { defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
 
 export const it = fixtures.it;
 export const fit = fixtures.fit;
@@ -66,11 +65,7 @@ export const afterEach = fixtures.afterEach;
 export const beforeAll = fixtures.beforeAll;
 export const afterAll = fixtures.afterAll;
 
-export const options = {
-  ...platformOptions,
-  ...playwrightOptions,
-  WIRE: !!process.env.PWWIRE,
-};
+fixtures.defineParameter('wire', 'Wire testing mode', !!process.env.PWWIRE || false);
 
 const getExecutablePath = browserName => {
   if (browserName === 'chromium' && process.env.CRPATH)
@@ -81,23 +76,23 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-overrideWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest) => {
+fixtures.overrideWorkerFixture('defaultBrowserOptions', async ({ browserName, headful, slowMo }, runTest) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
   await runTest({
-    handleSIGINT: false,
-    slowMo: options.SLOW_MO,
-    headless: options.HEADLESS,
     executablePath,
+    handleSIGINT: false,
+    slowMo,
+    headless: !headful,
     artifactsPath: config.outputDir,
   });
 });
 
-overrideWorkerFixture('playwright', async ({browserName, testWorkerIndex, platform}, test) => {
+fixtures.overrideWorkerFixture('playwright', async ({ browserName, testWorkerIndex, platform, wire }, runTest) => {
   assert(platform); // Depend on platform to generate all tests.
   const {coverage, uninstall} = installCoverageHooks(browserName);
-  if (options.WIRE) {
+  if (wire) {
     require('../lib/utils/utils').setUnderTest();
     const connection = new Connection();
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'server.js'), [], {
@@ -113,7 +108,7 @@ overrideWorkerFixture('playwright', async ({browserName, testWorkerIndex, platfo
     connection.onmessage = message => transport.send(JSON.stringify(message));
     transport.onmessage = message => connection.dispatch(JSON.parse(message));
     const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
-    await test(playwrightObject);
+    await runTest(playwrightObject);
     spawnedProcess.removeListener('exit', onExit);
     spawnedProcess.stdin.destroy();
     spawnedProcess.stdout.destroy();
@@ -121,7 +116,7 @@ overrideWorkerFixture('playwright', async ({browserName, testWorkerIndex, platfo
     await teardownCoverage();
   } else {
     const playwright = require('../index');
-    await test(playwright);
+    await runTest(playwright);
     await teardownCoverage();
   }
 
@@ -134,11 +129,11 @@ overrideWorkerFixture('playwright', async ({browserName, testWorkerIndex, platfo
   }
 });
 
-defineWorkerFixture('golden', async ({browserName}, test) => {
+fixtures.defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest) => {
+fixtures.defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest) => {
   let counter = 0;
   const dirs: string[] = [];
   async function createUserDataDir() {
@@ -154,7 +149,7 @@ defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest) => {
   await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => {})));
 });
 
-defineTestFixture('launchPersistent', async ({createUserDataDir, defaultBrowserOptions, browserType}, test) => {
+fixtures.defineTestFixture('launchPersistent', async ({createUserDataDir, defaultBrowserOptions, browserType}, test) => {
   let context;
   async function launchPersistent(options) {
     if (context)

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
-it('should be missing', (test, parameters) => {
-  test.skip(options.CHROMIUM(parameters));
+it('should be missing', (test, { browserName }) => {
+  test.skip(browserName === 'chromium');
 },
 async function({page}) {
   expect(page.coverage).toBe(null);
 });
 
-describe('oopif', (suite, parameters) => {
-  suite.skip(!options.CHROMIUM(parameters));
+describe('oopif', (suite, { browserName }) => {
+  suite.skip(browserName !== 'chromium');
 }, () => {
   it('should work', async function({page, server}) {
     await page.coverage.startJSCoverage();

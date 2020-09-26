@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should reject all promises when page is closed', async ({context}) => {
   const newPage = await context.newPage();
@@ -252,8 +252,8 @@ it('frame.press should work', async ({page, server}) => {
   expect(await frame.evaluate(() => document.querySelector('textarea').value)).toBe('a');
 });
 
-it('frame.focus should work multiple times', (test, parameters) => {
-  test.fail(options.FIREFOX(parameters));
+it('frame.focus should work multiple times', (test, { browserName }) => {
+  test.fail(browserName === 'firefox');
 }, async ({ context, server }) => {
   const page1 = await context.newPage();
   const page2 = await context.newPage();

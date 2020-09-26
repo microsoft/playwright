@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 import { attachFrame } from './utils';
 
 async function checkSlowMo(toImpl, page, task) {
@@ -44,8 +44,8 @@ async function checkPageSlowMo(toImpl, page, task) {
   `);
   await checkSlowMo(toImpl, page, task);
 }
-describe('slowMo', suite => {
-  suite.skip(options.WIRE);
+describe('slowMo', (suite, { wire }) => {
+  suite.skip(wire);
 }, () => {
   it('Page SlowMo $$eval', async ({page, toImpl}) => {
     await checkPageSlowMo(toImpl, page, () => page.$$eval('button', () => void 0));

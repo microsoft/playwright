@@ -31,12 +31,6 @@ export const fixtures = baseFixtures
     .declareWorkerFixtures<PlatformWorkerFixtures>();
 const { defineWorkerFixture, defineParameter, generateParametrizedTests } = fixtures;
 
-export const options = {
-  MAC: (parameters: PlatformParameters) => parameters.platform === 'darwin',
-  LINUX: (parameters: PlatformParameters) => parameters.platform === 'linux',
-  WIN: (parameters: PlatformParameters) => parameters.platform === 'win32',
-};
-
 defineParameter('platform', 'Operating system', process.platform as ('win32' | 'linux' | 'darwin'));
 
 generateParametrizedTests(

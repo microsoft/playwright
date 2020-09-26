@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
 function crash(page, toImpl, browserName) {
   if (browserName === 'chromium')
@@ -26,9 +26,9 @@ function crash(page, toImpl, browserName) {
     toImpl(page)._delegate._session.send('Page.crash', {}).catch(e => {});
 }
 
-describe('', (suite, parameters) => {
-  suite.fixme(options.WIRE);
-  suite.flaky(options.FIREFOX(parameters) && options.WIN(parameters));
+describe('', (suite, { browserName, platform, wire }) => {
+  suite.fixme(wire);
+  suite.flaky(browserName === 'firefox' && platform === 'win32');
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
@@ -63,9 +63,9 @@ describe('', (suite, parameters) => {
     expect(error.message).toContain('Navigation failed because page crashed');
   });
 
-  it('should be able to close context when page crashes', (test, parameters) => {
-    test.fixme(options.WIRE);
-    test.flaky(options.FIREFOX(parameters) && options.WIN(parameters));
+  it('should be able to close context when page crashes', (test, { browserName, platform, wire }) => {
+    test.fixme(wire);
+    test.flaky(browserName === 'firefox' && platform === 'win32');
   }, async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page, toImpl, browserName);

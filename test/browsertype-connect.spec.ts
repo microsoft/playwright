@@ -15,12 +15,11 @@
  * limitations under the License.
  */
 
-import { options } from './fixtures';
 import { serverFixtures } from './remoteServer.fixture';
 const { it, expect, describe } = serverFixtures;
 
-describe('connect', suite => {
-  suite.skip(options.WIRE);
+describe('connect', (suite, { wire }) => {
+  suite.skip(wire);
   suite.slow();
 }, () => {
   it('should be able to reconnect to a browser', async ({browserType, remoteServer, server}) => {

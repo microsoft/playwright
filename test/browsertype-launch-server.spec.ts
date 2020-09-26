@@ -15,10 +15,10 @@
  * limitations under the License.
  */
 
-import { it, expect, describe, options } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
-describe('lauch server', suite => {
-  suite.skip(options.WIRE);
+describe('lauch server', (suite, { wire }) => {
+  suite.skip(wire);
 }, () => {
   it('should work', async ({browserType, defaultBrowserOptions}) => {
     const browserServer = await browserType.launchServer(defaultBrowserOptions);

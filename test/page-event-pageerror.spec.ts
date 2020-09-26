@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, options } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should fire', async ({page, server, isWebKit}) => {
   const [error] = await Promise.all([
@@ -31,8 +31,8 @@ it('should fire', async ({page, server, isWebKit}) => {
   expect(error.stack).toBe(stack);
 });
 
-it('should contain sourceURL', (test, parameters) => {
-  test.fail(options.WEBKIT(parameters));
+it('should contain sourceURL', (test, { browserName }) => {
+  test.fail(browserName === 'webkit');
 }, async ({page, server}) => {
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -57,8 +57,8 @@ it('should handle odd values', async ({page, isFirefox}) => {
   }
 });
 
-it('should handle object', (test, parameters) => {
-  test.fixme(options.FIREFOX(parameters));
+it('should handle object', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox');
 }, async ({page, isChromium}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
@@ -68,8 +68,8 @@ it('should handle object', (test, parameters) => {
   expect(error.message).toBe(isChromium ? 'Object' : '[object Object]');
 });
 
-it('should handle window', (test, parameters) => {
-  test.fixme(options.FIREFOX(parameters));
+it('should handle window', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox');
 }, async ({page, isChromium}) => {
   // Firefox just does not report this error.
   const [error] = await Promise.all([
