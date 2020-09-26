@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, verifyViewport } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { verifyViewport } from './utils';
 
 it('should create new context', async function({browser}) {
   expect(browser.contexts().length).toBe(0);

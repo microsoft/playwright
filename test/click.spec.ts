@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, options, attachFrame } from './playwright.fixtures';
+import { it, expect, options } from './playwright.fixtures';
+import { attachFrame } from './utils';
 
 async function giveItAChanceToClick(page) {
   for (let i = 0; i < 5; i++)

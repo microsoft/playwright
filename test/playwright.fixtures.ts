@@ -14,61 +14,47 @@
  * limitations under the License.
  */
 
-import { expect } from '@playwright/test';
 import { config } from '@playwright/test-runner';
-import { fixtures as httpFixtures } from './http.fixtures';
-import { fixtures as platformFixtures, options as platformOptions } from './platform.fixtures';
 import assert from 'assert';
 import childProcess from 'child_process';
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import util from 'util';
-import type { Browser, BrowserContext, BrowserContextOptions, BrowserServer, BrowserType, Frame, LaunchOptions, Page } from '../index';
+import type { Browser, BrowserContext, BrowserType, Page } from '../index';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-export { expect } from '@playwright/test';
+import { fixtures as httpFixtures } from './http.fixtures';
+import { fixtures as implFixtures } from './impl.fixtures';
+import { fixtures as platformFixtures, options as platformOptions } from './platform.fixtures';
+import { fixtures as playwrightFixtures, options as playwrightOptions, PlaywrightParameters } from './upstream.fixtures';
+export { expect } from '@playwright/test/out/matcher.fixtures';
 export { config } from '@playwright/test-runner';
 
-const mkdtempAsync = util.promisify(fs.mkdtemp);
 const removeFolderAsync = util.promisify(require('rimraf'));
 
-type PlaywrightParameters = {
+type AllParameters = {
   browserName: string;
 };
 
-type PlaywrightWorkerFixtures = {
-  defaultBrowserOptions: LaunchOptions;
+type AllWorkerFixtures = {
   golden: (path: string) => string;
-  playwright: typeof import('../index');
-  browserType: BrowserType<Browser>;
-  browser: Browser;
-  domain: void;
-  toImpl: (rpcObject: any) => any;
-  isChromium: boolean;
-  isFirefox: boolean;
-  isWebKit: boolean;
-  expectedSSLError: string;
 };
 
-type PlaywrightTestFixtures = {
-  context: BrowserContext;
-  page: Page;
-  browserServer: BrowserServer;
-  testOutputDir: string;
-  tmpDir: string;
+type AllTestFixtures = {
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
 };
 
-const fixtures = httpFixtures.union(platformFixtures)
-    .declareParameters<PlaywrightParameters>()
-    .declareWorkerFixtures<PlaywrightWorkerFixtures>()
-    .declareTestFixtures<PlaywrightTestFixtures>();
-const { defineTestFixture, defineWorkerFixture, defineParameter, generateParametrizedTests } = fixtures;
+export const fixtures = playwrightFixtures
+    .union(httpFixtures)
+    .union(platformFixtures)
+    .union(implFixtures)
+    .declareParameters<AllParameters>()
+    .declareWorkerFixtures<AllWorkerFixtures>()
+    .declareTestFixtures<AllTestFixtures>();
+const { defineTestFixture, defineWorkerFixture, overrideWorkerFixture } = fixtures;
 
-export const playwrightFixtures = fixtures;
 export const it = fixtures.it;
 export const fit = fixtures.fit;
 export const xit = fixtures.xit;
@@ -81,14 +67,12 @@ export const beforeAll = fixtures.beforeAll;
 export const afterAll = fixtures.afterAll;
 
 export const options = {
+  ...platformOptions,
+  ...playwrightOptions,
   CHROMIUM: (parameters: PlaywrightParameters) => parameters.browserName === 'chromium',
   FIREFOX: (parameters: PlaywrightParameters) => parameters.browserName === 'firefox',
   WEBKIT: (parameters: PlaywrightParameters) => parameters.browserName === 'webkit',
-  HEADLESS: !!valueFromEnv('HEADLESS', true),
   WIRE: !!process.env.PWWIRE,
-  SLOW_MO: valueFromEnv('SLOW_MO', 0),
-  TRACING: valueFromEnv('TRACING', false),
-  ...platformOptions,
 };
 
 const getExecutablePath = browserName => {
@@ -100,7 +84,7 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-defineWorkerFixture('defaultBrowserOptions', async ({ browserName }, runTest) => {
+overrideWorkerFixture('defaultBrowserOptions', async ({browserName}, runTest) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -113,7 +97,7 @@ defineWorkerFixture('defaultBrowserOptions', async ({ browserName }, runTest) =>
   });
 });
 
-defineWorkerFixture('playwright', async ({browserName, testWorkerIndex, platform}, test) => {
+overrideWorkerFixture('playwright', async ({browserName, testWorkerIndex, platform}, test) => {
   assert(platform); // Depend on platform to generate all tests.
   const {coverage, uninstall} = installCoverageHooks(browserName);
   if (options.WIRE) {
@@ -153,94 +137,8 @@ defineWorkerFixture('playwright', async ({browserName, testWorkerIndex, platform
   }
 });
 
-defineWorkerFixture('toImpl', async ({playwright}, test) => {
-  await test((playwright as any)._toImpl);
-});
-
-defineWorkerFixture('browserType', async ({playwright, browserName}, test) => {
-  const browserType = playwright[browserName];
-  await test(browserType);
-});
-
-defineParameter('browserName', 'Browser type name', '');
-
-generateParametrizedTests(
-    'browserName',
-    process.env.BROWSER ? [process.env.BROWSER] : ['chromium', 'webkit', 'firefox']);
-
-defineWorkerFixture('isChromium', async ({browserName}, test) => {
-  await test(browserName === 'chromium');
-});
-
-defineWorkerFixture('isFirefox', async ({browserName}, test) => {
-  await test(browserName === 'firefox');
-});
-
-defineWorkerFixture('isWebKit', async ({browserName}, test) => {
-  await test(browserName === 'webkit');
-});
-
-defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
-  const browser = await browserType.launch(defaultBrowserOptions);
-  await test(browser);
-  if (browser.contexts().length !== 0) {
-    console.warn(`\nWARNING: test did not close all created contexts! ${new Error().stack}\n`);
-    await Promise.all(browser.contexts().map(context => context.close())).catch(e => void 0);
-  }
-  await browser.close();
-});
-
 defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
-});
-
-defineWorkerFixture('expectedSSLError', async ({ browserName, platform }, runTest) => {
-  let expectedSSLError: string;
-  if (browserName === 'chromium') {
-    expectedSSLError = 'net::ERR_CERT_AUTHORITY_INVALID';
-  } else if (browserName === 'webkit') {
-    if (platform === 'darwin')
-      expectedSSLError = 'The certificate for this server is invalid';
-    else if (platform === 'win32')
-      expectedSSLError = 'SSL peer certificate or SSH remote key was not OK';
-    else
-      expectedSSLError = 'Unacceptable TLS certificate';
-  } else {
-    expectedSSLError = 'SSL_ERROR_UNKNOWN';
-  }
-  await runTest(expectedSSLError);
-});
-
-defineTestFixture('testOutputDir', async ({ testInfo }, runTest) => {
-  const relativePath = path.relative(config.testDir, testInfo.file).replace(/\.spec\.[jt]s/, '');
-  const sanitizedTitle = testInfo.title.replace(/[^\w\d]+/g, '_');
-  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle);
-  await fs.promises.mkdir(testOutputDir, { recursive: true });
-  await runTest(testOutputDir);
-  const files = await fs.promises.readdir(testOutputDir);
-  if (!files.length) {
-    // Do not leave an empty useless directory.
-    // This might throw. See https://github.com/GoogleChrome/puppeteer/issues/2778
-    await removeFolderAsync(testOutputDir).catch(e => {});
-  }
-});
-
-defineTestFixture('context', async ({ browser, testOutputDir }, runTest) => {
-  const contextOptions: BrowserContextOptions = {
-    relativeArtifactsPath: path.relative(config.outputDir, testOutputDir),
-    recordTrace: !!options.TRACING,
-    recordVideos: !!options.TRACING,
-  };
-  const context = await browser.newContext(contextOptions);
-  await runTest(context);
-  await context.close();
-});
-
-defineTestFixture('page', async ({ context, testOutputDir, testInfo }, runTest) => {
-  const page = await context.newPage();
-  await runTest(page);
-  if (testInfo.status === 'failed' || testInfo.status === 'timedOut')
-    await page.screenshot({ timeout: 5000, path: path.join(testOutputDir, 'test-failed.png') });
 });
 
 defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest) => {
@@ -273,40 +171,3 @@ defineTestFixture('launchPersistent', async ({createUserDataDir, defaultBrowserO
   if (context)
     await context.close();
 });
-
-defineTestFixture('tmpDir', async ({}, test) => {
-  const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  await test(tmpDir);
-  await removeFolderAsync(tmpDir).catch(e => {});
-});
-
-function valueFromEnv(name, defaultValue) {
-  if (!(name in process.env))
-    return defaultValue;
-  return JSON.parse(process.env[name]);
-}
-
-export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
-  const handle = await page.evaluateHandle(async ({ frameId, url }) => {
-    const frame = document.createElement('iframe');
-    frame.src = url;
-    frame.id = frameId;
-    document.body.appendChild(frame);
-    await new Promise(x => frame.onload = x);
-    return frame;
-  }, { frameId, url });
-  return handle.asElement().contentFrame();
-}
-
-export async function detachFrame(page: Page, frameId: string) {
-  await page.evaluate(frameId => {
-    document.getElementById(frameId).remove();
-  }, frameId);
-}
-
-export async function verifyViewport(page: Page, width: number, height: number) {
-  expect(page.viewportSize().width).toBe(width);
-  expect(page.viewportSize().height).toBe(height);
-  expect(await page.evaluate('window.innerWidth')).toBe(width);
-  expect(await page.evaluate('window.innerHeight')).toBe(height);
-}

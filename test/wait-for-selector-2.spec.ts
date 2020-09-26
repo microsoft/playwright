@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, attachFrame, detachFrame } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { attachFrame, detachFrame } from './utils';
 
 const addElement = tag => document.body.appendChild(document.createElement(tag));
 

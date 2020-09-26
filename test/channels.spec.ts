@@ -16,10 +16,15 @@
  */
 
 import domain from 'domain';
-import { it, expect, options, playwrightFixtures } from './playwright.fixtures';
+import { options, fixtures as baseFixtures } from './playwright.fixtures';
 import type { ChromiumBrowser } from '..';
 
-playwrightFixtures.defineWorkerFixture('domain', async ({ }, test) => {
+type DomainFixtures = {
+  domain: any;
+};
+
+const fixtures = baseFixtures.declareWorkerFixtures<DomainFixtures>();
+fixtures.defineWorkerFixture('domain', async ({ }, test) => {
   const local = domain.create();
   local.run(() => { });
   let err;
@@ -28,6 +33,8 @@ playwrightFixtures.defineWorkerFixture('domain', async ({ }, test) => {
   if (err)
     throw err;
 });
+
+const { it, expect } = fixtures;
 
 it('should work', async ({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();

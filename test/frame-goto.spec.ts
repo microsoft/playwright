@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, attachFrame } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { attachFrame } from './utils';
 
 it('should navigate subframes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');

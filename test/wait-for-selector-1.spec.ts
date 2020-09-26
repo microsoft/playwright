@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, attachFrame, detachFrame } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { attachFrame, detachFrame } from './utils';
 
 async function giveItTimeToLog(frame) {
   await frame.evaluate(() => new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f))));

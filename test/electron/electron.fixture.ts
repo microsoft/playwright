@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { playwrightFixtures } from '../playwright.fixtures';
+import { fixtures as baseFixtures } from '../playwright.fixtures';
 import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
 import path from 'path';
 
@@ -25,7 +25,7 @@ type TestState = {
   window: ElectronPage;
 };
 
-export const electronFixtures = playwrightFixtures.declareTestFixtures<TestState>();
+export const electronFixtures = baseFixtures.declareTestFixtures<TestState>();
 const { defineTestFixture } = electronFixtures;
 
 declare module '../../index' {

@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { it, expect, attachFrame } from './playwright.fixtures';
+import { it, expect } from './playwright.fixtures';
+import { attachFrame } from './utils';
 
 it('should work', async ({browser, server}) => {
   {
