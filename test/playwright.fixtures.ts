@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
-import util from 'util';
+import { expect } from '@playwright/test';
+import { config } from '@playwright/test-runner';
+import { fixtures as httpFixtures } from './http.fixtures';
+import assert from 'assert';
 import childProcess from 'child_process';
-import type { LaunchOptions, BrowserType, Browser, BrowserContext, Page, Frame, BrowserServer, BrowserContextOptions } from '../index';
-import { TestServer } from '../utils/testserver';
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import util from 'util';
+import type { Browser, BrowserContext, BrowserContextOptions, BrowserServer, BrowserType, Frame, LaunchOptions, Page } from '../index';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-import { fixtures as baseFixtures, config } from '@playwright/test-runner';
-import assert from 'assert';
-import { expect } from '@playwright/test';
 export { expect } from '@playwright/test';
 export { config } from '@playwright/test-runner';
 
@@ -39,13 +39,11 @@ type PlaywrightParameters = {
 };
 
 type PlaywrightWorkerFixtures = {
-  asset: (path: string) => string;
   defaultBrowserOptions: LaunchOptions;
   golden: (path: string) => string;
   playwright: typeof import('../index');
   browserType: BrowserType<Browser>;
   browser: Browser;
-  httpService: {server: TestServer, httpsServer: TestServer}
   domain: void;
   toImpl: (rpcObject: any) => any;
   isChromium: boolean;
@@ -59,9 +57,7 @@ type PlaywrightWorkerFixtures = {
 
 type PlaywrightTestFixtures = {
   context: BrowserContext;
-  server: TestServer;
   page: Page;
-  httpsServer: TestServer;
   browserServer: BrowserServer;
   testOutputDir: string;
   tmpDir: string;
@@ -69,7 +65,7 @@ type PlaywrightTestFixtures = {
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
 };
 
-const fixtures = baseFixtures
+const fixtures = httpFixtures
     .declareParameters<PlaywrightParameters>()
     .declareWorkerFixtures<PlaywrightWorkerFixtures>()
     .declareTestFixtures<PlaywrightTestFixtures>();
@@ -99,26 +95,6 @@ export const options = {
   SLOW_MO: valueFromEnv('SLOW_MO', 0),
   TRACING: valueFromEnv('TRACING', false),
 };
-
-defineWorkerFixture('httpService', async ({ testWorkerIndex }, test) => {
-  const assetsPath = path.join(__dirname, 'assets');
-  const cachedPath = path.join(__dirname, 'assets', 'cached');
-
-  const port = 8907 + testWorkerIndex * 2;
-  const server = await TestServer.create(assetsPath, port);
-  server.enableHTTPCache(cachedPath);
-
-  const httpsPort = port + 1;
-  const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-  httpsServer.enableHTTPCache(cachedPath);
-
-  await test({server, httpsServer});
-
-  await Promise.all([
-    server.stop(),
-    httpsServer.stop(),
-  ]);
-});
 
 const getExecutablePath = browserName => {
   if (browserName === 'chromium' && process.env.CRPATH)
@@ -237,15 +213,11 @@ defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test
   await browser.close();
 });
 
-defineWorkerFixture('asset', async ({}, test) => {
-  await test(p => path.join(__dirname, `assets`, p));
-});
-
 defineWorkerFixture('golden', async ({browserName}, test) => {
   await test(p => path.join(browserName, p));
 });
 
-defineWorkerFixture('expectedSSLError', async ({browserName, platform}, runTest) => {
+defineWorkerFixture('expectedSSLError', async ({ browserName, platform }, runTest) => {
   let expectedSSLError: string;
   if (browserName === 'chromium') {
     expectedSSLError = 'net::ERR_CERT_AUTHORITY_INVALID';
@@ -323,16 +295,6 @@ defineTestFixture('launchPersistent', async ({createUserDataDir, defaultBrowserO
   await test(launchPersistent);
   if (context)
     await context.close();
-});
-
-defineTestFixture('server', async ({httpService}, test) => {
-  httpService.server.reset();
-  await test(httpService.server);
-});
-
-defineTestFixture('httpsServer', async ({httpService}, test) => {
-  httpService.httpsServer.reset();
-  await test(httpService.httpsServer);
 });
 
 defineTestFixture('tmpDir', async ({}, test) => {
