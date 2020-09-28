@@ -57,6 +57,23 @@ it('should work for a redirect', async ({page, server}) => {
   expect(requests[1].url()).toBe(server.PREFIX + '/empty.html');
 });
 
+it('should work for a redirect and interception', async ({page, server}) => {
+  server.setRedirect('/foo.html', '/empty.html');
+  let requests = [];
+  await page.route('**', route => {
+    requests.push(route.request());
+    route.continue();
+  });
+  requests = requests.filter(request => !request.url().includes('favicon'));
+  await page.goto(server.PREFIX + '/foo.html');
+
+  expect(page.url()).toBe(server.PREFIX + '/empty.html');
+
+  expect(requests.length).toBe(2);
+  expect(requests[0].url()).toBe(server.PREFIX + '/foo.html');
+  expect(requests[1].url()).toBe(server.PREFIX + '/empty.html');
+});
+
 it('should return headers', async ({page, server, isChromium, isFirefox, isWebKit}) => {
   const response = await page.goto(server.EMPTY_PAGE);
   if (isChromium)
