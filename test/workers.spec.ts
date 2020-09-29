@@ -16,7 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
-import { attachFrame, detachFrame } from './utils';
+import { attachFrame } from './utils';
 import type { ConsoleMessage } from '..';
 
 it('Page.workers', async function({page, server}) {
