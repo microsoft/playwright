@@ -52,7 +52,7 @@ it('should work with status code 422', async ({page, server}) => {
 
 it('should allow mocking binary responses', (test, { browserName, headful }) => {
   test.skip(browserName === 'firefox' && headful, '// Firefox headful produces a different image.');
-}, async ({page, server, golden}) => {
+}, async ({page, server}) => {
   await page.route('**/*', route => {
     const imageBuffer = fs.readFileSync(path.join(__dirname, 'assets', 'pptr.png'));
     route.fulfill({
@@ -67,12 +67,12 @@ it('should allow mocking binary responses', (test, { browserName, headful }) => 
     return new Promise(fulfill => img.onload = fulfill);
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
+  expect(await img.screenshot()).toMatchImage('mock-binary-response.png');
 });
 
 it('should allow mocking svg with charset', (test, { browserName, headful }) => {
   test.skip(browserName === 'firefox' && headful, '// Firefox headful produces a different image.');
-}, async ({page, server, golden}) => {
+}, async ({page, server}) => {
   // Firefox headful produces a different image.
   await page.route('**/*', route => {
     route.fulfill({
@@ -87,10 +87,10 @@ it('should allow mocking svg with charset', (test, { browserName, headful }) => 
     return new Promise((f, r) => { img.onload = f; img.onerror = r; });
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toMatchImage(golden('mock-svg.png'));
+  expect(await img.screenshot()).toMatchImage('mock-svg.png');
 });
 
-it('should work with file path', async ({page, server, golden}) => {
+it('should work with file path', async ({page, server}) => {
   await page.route('**/*', route => route.fulfill({ contentType: 'shouldBeIgnored', path: path.join(__dirname, 'assets', 'pptr.png') }));
   await page.evaluate(PREFIX => {
     const img = document.createElement('img');
@@ -99,7 +99,7 @@ it('should work with file path', async ({page, server, golden}) => {
     return new Promise(fulfill => img.onload = fulfill);
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toMatchImage(golden('mock-binary-response.png'));
+  expect(await img.screenshot()).toMatchImage('mock-binary-response.png');
 });
 
 it('should stringify intercepted request response headers', async ({page, server}) => {

@@ -26,7 +26,7 @@ type TestState = {
 const fixtures = baseFixtures.declareTestFixtures<TestState>();
 const { it, expect, defineTestFixture } = fixtures;
 
-defineTestFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, testOutputDir}, test) => {
+defineTestFixture('downloadsBrowser', async ({server, browserType, defaultBrowserOptions, testOutputPath}, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
@@ -34,13 +34,13 @@ defineTestFixture('downloadsBrowser', async ({server, browserType, defaultBrowse
   });
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
-    downloadsPath: testOutputDir,
+    downloadsPath: testOutputPath(''),
   });
   await test(browser);
   await browser.close();
 });
 
-defineTestFixture('persistentDownloadsContext', async ({server, launchPersistent, testOutputDir}, test) => {
+defineTestFixture('persistentDownloadsContext', async ({server, launchPersistent, testOutputPath}, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
@@ -48,7 +48,7 @@ defineTestFixture('persistentDownloadsContext', async ({server, launchPersistent
   });
   const { context, page } = await launchPersistent(
       {
-        downloadsPath: testOutputDir,
+        downloadsPath: testOutputPath(''),
         acceptDownloads: true
       }
   );
@@ -57,7 +57,7 @@ defineTestFixture('persistentDownloadsContext', async ({server, launchPersistent
   await context.close();
 });
 
-it('should keep downloadsPath folder', async ({downloadsBrowser, testOutputDir, server})  => {
+it('should keep downloadsPath folder', async ({downloadsBrowser, testOutputPath, server})  => {
   const page = await downloadsBrowser.newPage();
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -69,7 +69,7 @@ it('should keep downloadsPath folder', async ({downloadsBrowser, testOutputDir, 
   await download.path().catch(e => void 0);
   await page.close();
   await downloadsBrowser.close();
-  expect(fs.existsSync(testOutputDir)).toBeTruthy();
+  expect(fs.existsSync(testOutputPath(''))).toBeTruthy();
 });
 
 it('should delete downloads when context closes', async ({downloadsBrowser, server}) => {
@@ -86,7 +86,7 @@ it('should delete downloads when context closes', async ({downloadsBrowser, serv
 
 });
 
-it('should report downloads in downloadsPath folder', async ({downloadsBrowser, testOutputDir, server}) => {
+it('should report downloads in downloadsPath folder', async ({downloadsBrowser, testOutputPath, server}) => {
   const page = await downloadsBrowser.newPage({ acceptDownloads: true });
   await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   const [ download ] = await Promise.all([
@@ -94,11 +94,11 @@ it('should report downloads in downloadsPath folder', async ({downloadsBrowser, 
     page.click('a')
   ]);
   const path = await download.path();
-  expect(path.startsWith(testOutputDir)).toBeTruthy();
+  expect(path.startsWith(testOutputPath(''))).toBeTruthy();
   await page.close();
 });
 
-it('should accept downloads', async ({persistentDownloadsContext, testOutputDir, server})  => {
+it('should accept downloads', async ({persistentDownloadsContext, testOutputPath, server})  => {
   const page = persistentDownloadsContext.pages()[0];
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
@@ -107,7 +107,7 @@ it('should accept downloads', async ({persistentDownloadsContext, testOutputDir,
   expect(download.url()).toBe(`${server.PREFIX}/download`);
   expect(download.suggestedFilename()).toBe(`file.txt`);
   const path = await download.path();
-  expect(path.startsWith(testOutputDir)).toBeTruthy();
+  expect(path.startsWith(testOutputPath(''))).toBeTruthy();
 });
 
 it('should not delete downloads when the context closes', async ({persistentDownloadsContext}) => {

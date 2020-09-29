@@ -26,7 +26,6 @@ import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
 import { fixtures as httpFixtures } from './http.fixtures';
 import { fixtures as implFixtures } from './impl.fixtures';
-import { fixtures as platformFixtures } from './platform.fixtures';
 import { fixtures as playwrightFixtures } from './playwright.fixtures';
 export { expect } from '@playwright/test/out/matcher.fixtures';
 export { config } from '@playwright/test-runner';
@@ -37,10 +36,6 @@ type AllParameters = {
   wire: boolean;
 };
 
-type AllWorkerFixtures = {
-  golden: (path: string) => string;
-};
-
 type AllTestFixtures = {
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
@@ -48,10 +43,8 @@ type AllTestFixtures = {
 
 export const fixtures = playwrightFixtures
     .union(httpFixtures)
-    .union(platformFixtures)
     .union(implFixtures)
     .declareParameters<AllParameters>()
-    .declareWorkerFixtures<AllWorkerFixtures>()
     .declareTestFixtures<AllTestFixtures>();
 
 export const it = fixtures.it;
@@ -66,6 +59,10 @@ export const beforeAll = fixtures.beforeAll;
 export const afterAll = fixtures.afterAll;
 
 fixtures.defineParameter('wire', 'Wire testing mode', !!process.env.PWWIRE || false);
+
+fixtures.generateParametrizedTests(
+    'platform',
+    process.env.PWTESTREPORT ? ['win32', 'darwin', 'linux'] : [process.platform as ('win32' | 'linux' | 'darwin')]);
 
 const getExecutablePath = browserName => {
   if (browserName === 'chromium' && process.env.CRPATH)
@@ -129,15 +126,11 @@ fixtures.overrideWorkerFixture('playwright', async ({ browserName, testWorkerInd
   }
 });
 
-fixtures.defineWorkerFixture('golden', async ({browserName}, test) => {
-  await test(p => path.join(browserName, p));
-});
-
-fixtures.defineTestFixture('createUserDataDir', async ({testOutputDir}, runTest) => {
+fixtures.defineTestFixture('createUserDataDir', async ({testOutputPath}, runTest) => {
   let counter = 0;
   const dirs: string[] = [];
   async function createUserDataDir() {
-    const dir = path.join(testOutputDir, `user-data-dir-${counter++}`);
+    const dir = testOutputPath(`user-data-dir-${counter++}`);
     dirs.push(dir);
     await fs.promises.mkdir(dir, { recursive: true });
     return dir;
@@ -162,4 +155,8 @@ fixtures.defineTestFixture('launchPersistent', async ({createUserDataDir, defaul
   await test(launchPersistent);
   if (context)
     await context.close();
+});
+
+fixtures.overrideTestFixture('testParametersArtifactsPath', async ({ browserName }, runTest) => {
+  await runTest(browserName);
 });

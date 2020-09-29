@@ -41,6 +41,8 @@ type PlaywrightParameters = {
   screenshotOnFailure: boolean;
   // Whether to record the execution trace
   trace: boolean;
+  // Host platform
+  platform: 'win32' | 'linux' | 'darwin';
 };
 
 
@@ -64,6 +66,12 @@ type PlaywrightWorkerFixtures = {
   isFirefox: boolean;
   // True iff browserName is WebKit
   isWebKit: boolean;
+  // True iff running on Windows.
+  isWindows: boolean;
+  // True iff running on Mac.
+  isMac: boolean;
+  // True iff running on Linux.
+  isLinux: boolean;
 };
 
 
@@ -91,6 +99,7 @@ export const fixtures = baseFixtures
 
 fixtures.defineParameter('browserName', 'Browser type name', process.env.BROWSER || 'chromium' as any);
 fixtures.defineParameter('headful', 'Whether to run tests headless or headful', process.env.HEADFUL ? true : false);
+fixtures.defineParameter('platform', 'Operating system', process.platform as ('win32' | 'linux' | 'darwin'));
 fixtures.defineParameter('screenshotOnFailure', 'Generate screenshot on failure', false);
 fixtures.defineParameter('slowMo', 'Slows down Playwright operations by the specified amount of milliseconds', 0);
 fixtures.defineParameter('trace', 'Whether to record the execution trace', !!process.env.TRACING || false);
@@ -99,7 +108,6 @@ fixtures.defineParameter('trace', 'Whether to record the execution trace', !!pro
 fixtures.generateParametrizedTests(
     'browserName',
     process.env.BROWSER ? [process.env.BROWSER] as any : ['chromium', 'webkit', 'firefox']);
-
 
 // Worker fixtures definitions -------------------------------------------------
 
@@ -122,14 +130,6 @@ fixtures.defineWorkerFixture('browserType', async ({playwright, browserName}, ru
   await runTest(browserType);
 });
 
-fixtures.defineWorkerFixture('isFirefox', async ({browserName}, runTest) => {
-  await runTest(browserName === 'firefox');
-});
-
-fixtures.defineWorkerFixture('isWebKit', async ({browserName}, runTest) => {
-  await runTest(browserName === 'webkit');
-});
-
 fixtures.defineWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, runTest) => {
   const browser = await browserType.launch(defaultBrowserOptions);
   await runTest(browser);
@@ -148,17 +148,29 @@ fixtures.defineWorkerFixture('isWebKit', async ({browserName}, runTest) => {
   await runTest(browserName === 'webkit');
 });
 
+fixtures.defineWorkerFixture('isWindows', async ({platform}, test) => {
+  await test(platform === 'win32');
+});
+
+fixtures.defineWorkerFixture('isMac', async ({platform}, test) => {
+  await test(platform === 'darwin');
+});
+
+fixtures.defineWorkerFixture('isLinux', async ({platform}, test) => {
+  await test(platform === 'linux');
+});
+
 // Test fixtures definitions ---------------------------------------------------
 
-fixtures.defineTestFixture('defaultContextOptions', async ({ testOutputDir, trace }, runTest) => {
+fixtures.defineTestFixture('defaultContextOptions', async ({ testRelativeArtifactsPath, trace }, runTest) => {
   await runTest({
-    relativeArtifactsPath: path.relative(config.outputDir, testOutputDir),
+    relativeArtifactsPath: testRelativeArtifactsPath,
     recordTrace: trace,
     recordVideos: trace,
   });
 });
 
-fixtures.defineTestFixture('contextFactory', async ({ browser, defaultContextOptions, testInfo, screenshotOnFailure, testOutputFile }, runTest) => {
+fixtures.defineTestFixture('contextFactory', async ({ browser, defaultContextOptions, testInfo, screenshotOnFailure, testOutputPath }, runTest) => {
   const contexts: BrowserContext[] = [];
   async function contextFactory(options: BrowserContextOptions = {}) {
     const context = await browser.newContext({ ...defaultContextOptions, ...options });
@@ -171,7 +183,7 @@ fixtures.defineTestFixture('contextFactory', async ({ browser, defaultContextOpt
     let ordinal = 0;
     for (const context of contexts) {
       for (const page of context.pages())
-        await page.screenshot({ timeout: 5000, path: await testOutputFile(`test-failed-${++ordinal}.png`) });
+        await page.screenshot({ timeout: 5000, path: testOutputPath + `-test-failed-${++ordinal}.png` });
     }
   }
   for (const context of contexts)
@@ -197,11 +209,6 @@ fixtures.defineTestFixture('tmpDir', async ({ }, runTest) => {
   await removeFolderAsync(tmpDir).catch(e => { });
 });
 
-fixtures.overrideTestFixture('testOutputDir', async ({ testInfo, browserName }, runTest) => {
-  const relativePath = path.relative(config.testDir, testInfo.file)
-      .replace(/\.spec\.[jt]s/, '')
-      .replace(/\.test\.[jt]s/, '');
-  const sanitizedTitle = testInfo.title.replace(/[^\w\d]+/g, '_');
-  const testOutputDir = path.join(config.outputDir, relativePath, sanitizedTitle, browserName);
-  await runTest(testOutputDir);
+fixtures.overrideTestFixture('testParametersArtifactsPath', async ({ browserName, platform }, runTest) => {
+  await runTest(browserName + '-' + platform);
 });

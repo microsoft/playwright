@@ -25,8 +25,8 @@ type TestState = {
 const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
 const { it, expect, describe, defineTestFixture } = fixtures;
 
-defineTestFixture('outputTraceFile', async ({testOutputDir}, test) => {
-  await test(path.join(testOutputDir, `trace.json`));
+defineTestFixture('outputTraceFile', async ({testOutputPath}, test) => {
+  await test(testOutputPath(path.join(`trace.json`)));
 });
 
 describe('oopif', (suite, { browserName }) => {
@@ -39,8 +39,8 @@ describe('oopif', (suite, { browserName }) => {
     expect(fs.existsSync(outputTraceFile)).toBe(true);
   });
 
-  it('should create directories as needed', async ({browser, page, server, testOutputDir}) => {
-    const filePath = path.join(testOutputDir, 'these', 'are', 'directories', 'trace.json');
+  it('should create directories as needed', async ({browser, page, server, testOutputPath}) => {
+    const filePath = testOutputPath(path.join('these', 'are', 'directories', 'trace.json'));
     await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: filePath});
     await page.goto(server.PREFIX + '/grid.html');
     await (browser as ChromiumBrowser).stopTracing();
