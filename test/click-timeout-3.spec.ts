@@ -54,6 +54,7 @@ it('should timeout waiting for hit target', async ({page, server}) => {
   expect(error.message).toContain('elementHandle.click: Timeout 5000ms exceeded.');
   expect(error.message).toContain('<div id="blocker"></div> intercepts pointer events');
   expect(error.message).toContain('retrying click action');
+  expect(error.message).toContain('waiting 500ms');
 });
 
 it('should report wrong hit target subtree', async ({page, server}) => {
