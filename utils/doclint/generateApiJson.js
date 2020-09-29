@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const playwright = require('../../');
+const playwright = require('../..');
 const path = require('path');
 const Source = require('./Source');
 const mdBuilder = require('./check_public_api/MDBuilder');
@@ -26,7 +26,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
   const page = await browser.newPage();
   const { documentation } = await mdBuilder(page, [api]);
   const result = serialize(documentation);
-  console.log(JSON.stringify(result, undefined, 2));
+  console.log(JSON.stringify(result));
   await browser.close();
 })()
 
@@ -47,8 +47,7 @@ function serializeClass(clazz) {
 
 function serializeMember(member) {
   const result = { ...member };
-  delete result.args;
-  delete result.argsArray;
+  sanitize(result);
   result.args = {};
   for (const arg of member.argsArray)
     result.args[arg.name] = serializeProperty(arg);
@@ -59,19 +58,28 @@ function serializeMember(member) {
 
 function serializeProperty(arg) {
   const result = { ...arg };
-  delete result.args;
-  delete result.argsArray;
+  sanitize(result);
   if (arg.type)
     result.type = serializeType(arg.type)
   return result;
 }
 
+function sanitize(result) {
+  delete result.args;
+  delete result.argsArray;
+  delete result.templates;
+  if (result.properties && !Object.keys(result.properties).length)
+    delete result.properties;
+}
+
 function serializeType(type) {
   const result = { ...type };
-  if (type.properties) {
+  if (type.properties && type.properties.length) {
     result.properties = {};
     for (const prop of type.properties)
       result.properties[prop.name] = serializeProperty(prop);
+  } else {
+    delete result.properties;
   }
   return result;
 }

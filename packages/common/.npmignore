@@ -31,7 +31,7 @@ lib/server/injected/
 !LICENSE
 !NOTICE
 # Include protocol and api docs, so that dependent packages can consume them.
-!api.md
+!api.json
 !protocol.yml
 # Include browser descriptors.
 !browsers.json
