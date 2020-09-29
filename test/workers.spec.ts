@@ -121,7 +121,7 @@ it('should attribute network activity for worker inside iframe to the iframe', (
     worker.evaluate(url => fetch(url).then(response => response.text()).then(console.log), url),
   ]);
   expect(request.url()).toBe(url);
-  expect(request.frame()).toBe(frame)
+  expect(request.frame()).toBe(frame);
 });
 
 it('should report network activity', async function({page, server}) {
