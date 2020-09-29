@@ -112,7 +112,7 @@ class FrameData {
 }
 
 class PageAgent {
-  constructor(messageManager, browserChannel, sessionId, frameTree, networkMonitor) {
+  constructor(messageManager, browserChannel, sessionId, frameTree) {
     this._messageManager = messageManager;
     this._browserChannel = browserChannel;
     this._sessionId = sessionId;
@@ -120,7 +120,6 @@ class PageAgent {
     this._browserRuntime = browserChannel.connect(sessionId + 'runtime');
     this._frameTree = frameTree;
     this._runtime = frameTree.runtime();
-    this._networkMonitor = networkMonitor;
 
     this._frameData = new Map();
     this._workerData = new Map();
@@ -146,7 +145,6 @@ class PageAgent {
         navigate: this._navigate.bind(this),
         reload: this._reload.bind(this),
         removeScriptToEvaluateOnNewDocument: this._removeScriptToEvaluateOnNewDocument.bind(this),
-        requestDetails: this._requestDetails.bind(this),
         screenshot: this._screenshot.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setCacheDisabled: this._setCacheDisabled.bind(this),
@@ -168,10 +166,6 @@ class PageAgent {
     this._initialDPPX = docShell.contentViewer.overrideDPPX;
     this._customScrollbars = null;
     this._dataTransfer = null;
-  }
-
-  _requestDetails({channelKey}) {
-    return this._networkMonitor.requestDetails(channelKey);
   }
 
   async _setEmulatedMedia({type, colorScheme}) {

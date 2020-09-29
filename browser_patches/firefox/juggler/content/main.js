@@ -5,19 +5,17 @@
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {FrameTree} = ChromeUtils.import('chrome://juggler/content/content/FrameTree.js');
-const {NetworkMonitor} = ChromeUtils.import('chrome://juggler/content/content/NetworkMonitor.js');
 const {SimpleChannel} = ChromeUtils.import('chrome://juggler/content/SimpleChannel.js');
 const {PageAgent} = ChromeUtils.import('chrome://juggler/content/content/PageAgent.js');
 
 let frameTree;
-let networkMonitor;
 const helper = new Helper();
 const messageManager = this;
 
 const sessions = new Map();
 
 function createContentSession(channel, sessionId) {
-  const pageAgent = new PageAgent(messageManager, channel, sessionId, frameTree, networkMonitor);
+  const pageAgent = new PageAgent(messageManager, channel, sessionId, frameTree);
   sessions.set(sessionId, [pageAgent]);
   pageAgent.enable();
 }
@@ -118,7 +116,6 @@ function initialize() {
     frameTree.addScriptToEvaluateOnNewDocument(script);
   for (const { name, script } of bindings)
     frameTree.addBinding(name, script);
-  networkMonitor = new NetworkMonitor(docShell, frameTree);
 
   const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
 
@@ -180,7 +177,6 @@ function initialize() {
       for (const sessionId of sessions.keys())
         disposeContentSession(sessionId);
 
-      networkMonitor.dispose();
       frameTree.dispose();
     }),
   ];
