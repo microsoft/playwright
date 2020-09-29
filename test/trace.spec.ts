@@ -51,7 +51,7 @@ it('should record trace', async ({browserType, defaultBrowserOptions, server, tm
   expect(gotoEvent.value).toBe(url);
 
   expect(gotoEvent.snapshot).toBeTruthy();
-  expect(fs.existsSync(path.join(tmpDir, '.playwright-shared', gotoEvent.snapshot!.sha1))).toBe(true);
+  expect(fs.existsSync(path.join(tmpDir, 'trace-resources', gotoEvent.snapshot!.sha1))).toBe(true);
 });
 
 it('should require artifactsPath', async ({browserType, defaultBrowserOptions}) => {

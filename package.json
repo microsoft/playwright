@@ -49,8 +49,8 @@
     "ws": "^7.3.1"
   },
   "devDependencies": {
-    "@playwright/test": "^0.9.6",
-    "@playwright/test-runner": "^0.9.15",
+    "@playwright/test": "^0.9.7",
+    "@playwright/test-runner": "^0.9.16",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",
@@ -76,7 +76,7 @@
     "socksv5": "0.0.6",
     "ts-loader": "^8.0.3",
     "typescript": "^4.0.2",
-    "webpack": "^4.44.1",
+    "webpack": "^4.44.2",
     "webpack-cli": "^3.3.12",
     "yaml": "^1.10.0"
   }

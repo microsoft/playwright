@@ -103,7 +103,7 @@ it('should change document.activeElement', async ({page, server}) => {
 
 it('should not affect screenshots', (test, { browserName, headful }) => {
   test.skip(browserName === 'firefox' && headful);
-}, async ({page, server, golden}) => {
+}, async ({page, server}) => {
   // Firefox headful produces a different image.
   const page2 = await page.context().newPage();
   await Promise.all([
@@ -120,8 +120,8 @@ it('should not affect screenshots', (test, { browserName, headful }) => {
     page.screenshot(),
     page2.screenshot(),
   ]);
-  expect(screenshots[0]).toMatchImage(golden('screenshot-sanity.png'));
-  expect(screenshots[1]).toMatchImage(golden('grid-cell-0.png'));
+  expect(screenshots[0]).toMatchImage('screenshot-sanity.png');
+  expect(screenshots[1]).toMatchImage('grid-cell-0.png');
 });
 
 it('should change focused iframe', async ({page, server}) => {

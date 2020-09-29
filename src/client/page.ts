@@ -38,10 +38,14 @@ import { ChromiumCoverage } from './chromiumCoverage';
 import { Waiter } from './waiter';
 
 import * as fs from 'fs';
+import * as path from 'path';
 import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
+
+const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
+const mkdirAsync = util.promisify(fs.mkdir);
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -55,8 +59,6 @@ type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & 
   path?: string,
 };
 type Listener = (...args: any[]) => void;
-
-const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitializer> {
   private _browserContext: BrowserContext;
@@ -581,8 +583,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     }
     const result = await this._channel.pdf(transportOptions);
     const buffer = Buffer.from(result.pdf, 'base64');
-    if (options.path)
+    if (options.path) {
+      await mkdirAsync(path.dirname(options.path), { recursive: true });
       await fsWriteFileAsync(options.path, buffer);
+    }
     return buffer;
   }
 }

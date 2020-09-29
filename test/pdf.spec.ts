@@ -17,13 +17,12 @@
 import { it, expect } from './fixtures';
 
 import fs from 'fs';
-import path from 'path';
 
 
 it('should be able to save file', (test, { browserName, headful }) => {
   test.skip(headful || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
-}, async ({page, testOutputDir}) => {
-  const outputFile = path.join(testOutputDir, 'output.pdf');
+}, async ({page, testOutputPath}) => {
+  const outputFile = testOutputPath('output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });
