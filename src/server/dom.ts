@@ -273,11 +273,22 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _retryPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
     options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    let first = true;
+    let retry = 0;
+    // We progressively wait longer between retries, up to 500ms.
+    const waitTime = [0, 20, 100, 500];
     while (progress.isRunning()) {
-      progress.log(`${first ? 'attempting' : 'retrying'} ${actionName} action`);
+      if (retry) {
+        progress.log(`retrying ${actionName} action, attempt #${retry}`);
+        const timeout = waitTime[Math.min(retry - 1, waitTime.length - 1)];
+        if (timeout) {
+          progress.log(`  waiting ${timeout}ms`);
+          await this._evaluateInUtility(([injected, node, timeout]) => new Promise(f => setTimeout(f, timeout)), timeout);
+        }
+      } else {
+        progress.log(`attempting ${actionName} action`);
+      }
       const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, options);
-      first = false;
+      ++retry;
       if (result === 'error:notvisible') {
         if (options.force)
           throw new Error('Element is not visible');
