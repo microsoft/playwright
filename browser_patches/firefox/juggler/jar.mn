@@ -18,7 +18,6 @@ juggler.jar:
   content/protocol/AccessibilityHandler.js (protocol/AccessibilityHandler.js)
   content/content/main.js (content/main.js)
   content/content/FrameTree.js (content/FrameTree.js)
-  content/content/NetworkMonitor.js (content/NetworkMonitor.js)
   content/content/PageAgent.js (content/PageAgent.js)
   content/content/Runtime.js (content/Runtime.js)
   content/content/WorkerMain.js (content/WorkerMain.js)

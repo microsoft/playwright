@@ -318,7 +318,7 @@ class Frame {
     this._runtime = runtime;
     this._docShell = docShell;
     this._children = new Set();
-    this._frameId = helper.generateId();
+    this._frameId = helper.browsingContextToFrameId(this._docShell.browsingContext);
     this._parentFrame = null;
     this._url = '';
     if (docShell.domWindow && docShell.domWindow.location)

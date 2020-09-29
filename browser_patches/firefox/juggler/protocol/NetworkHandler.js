@@ -16,13 +16,9 @@ const helper = new Helper();
 class NetworkHandler {
   constructor(target, session, contentChannel) {
     this._session = session;
-    this._contentPage = contentChannel.connect(session.sessionId() + 'page');
-    this._httpActivity = new Map();
     this._enabled = false;
     this._pageNetwork = NetworkObserver.instance().pageNetworkForTarget(target);
-    this._requestInterception = false;
     this._eventListeners = [];
-    this._pendingRequstWillBeSentEvents = new Set();
   }
 
   async enable() {
@@ -51,9 +47,6 @@ class NetworkHandler {
       this._pageNetwork.enableRequestInterception();
     else
     this._pageNetwork.disableRequestInterception();
-    // Right after we enable/disable request interception we need to await all pending
-    // requestWillBeSent events before successfully returning from the method.
-    await Promise.all(Array.from(this._pendingRequstWillBeSentEvents));
   }
 
   async resumeInterceptedRequest({requestId, method, headers, postData}) {
@@ -69,89 +62,23 @@ class NetworkHandler {
   }
 
   dispose() {
-    this._contentPage.dispose();
     helper.removeListeners(this._eventListeners);
   }
 
-  _ensureHTTPActivity(requestId) {
-    let activity = this._httpActivity.get(requestId);
-    if (!activity) {
-      activity = {
-        _id: requestId,
-        _lastSentEvent: null,
-        request: null,
-        response: null,
-        complete: null,
-        failed: null,
-      };
-      this._httpActivity.set(requestId, activity);
-    }
-    return activity;
-  }
-
-  _reportHTTPAcitivityEvents(activity) {
-    // State machine - sending network events.
-    if (!activity._lastSentEvent && activity.request) {
-      this._session.emitEvent('Network.requestWillBeSent', activity.request);
-      activity._lastSentEvent = 'requestWillBeSent';
-    }
-    if (activity._lastSentEvent === 'requestWillBeSent' && activity.response) {
-      this._session.emitEvent('Network.responseReceived', activity.response);
-      activity._lastSentEvent = 'responseReceived';
-    }
-    if (activity._lastSentEvent === 'responseReceived' && activity.complete) {
-      this._session.emitEvent('Network.requestFinished', activity.complete);
-      activity._lastSentEvent = 'requestFinished';
-    }
-    if (activity._lastSentEvent && activity.failed) {
-      this._session.emitEvent('Network.requestFailed', activity.failed);
-      activity._lastSentEvent = 'requestFailed';
-    }
-
-    // Clean up if request lifecycle is over.
-    if (activity._lastSentEvent === 'requestFinished' || activity._lastSentEvent === 'requestFailed')
-      this._httpActivity.delete(activity._id);
-  }
-
   async _onRequest(eventDetails, channelKey) {
-    let pendingRequestCallback;
-    let pendingRequestPromise = new Promise(x => pendingRequestCallback = x);
-    this._pendingRequstWillBeSentEvents.add(pendingRequestPromise);
-    let details = null;
-    try {
-      details = await this._contentPage.send('requestDetails', {channelKey});
-    } catch (e) {
-      pendingRequestCallback();
-      this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
-      return;
-    }
-    const frameId = details ? details.frameId : undefined;
-    const activity = this._ensureHTTPActivity(eventDetails.requestId);
-    activity.request = {
-      frameId,
-      ...eventDetails,
-    };
-    this._reportHTTPAcitivityEvents(activity);
-    pendingRequestCallback();
-    this._pendingRequstWillBeSentEvents.delete(pendingRequestPromise);
+    this._session.emitEvent('Network.requestWillBeSent', eventDetails);
   }
 
   async _onResponse(eventDetails) {
-    const activity = this._ensureHTTPActivity(eventDetails.requestId);
-    activity.response = eventDetails;
-    this._reportHTTPAcitivityEvents(activity);
+    this._session.emitEvent('Network.responseReceived', eventDetails);
   }
 
   async _onRequestFinished(eventDetails) {
-    const activity = this._ensureHTTPActivity(eventDetails.requestId);
-    activity.complete = eventDetails;
-    this._reportHTTPAcitivityEvents(activity);
+    this._session.emitEvent('Network.requestFinished', eventDetails);
   }
 
   async _onRequestFailed(eventDetails) {
-    const activity = this._ensureHTTPActivity(eventDetails.requestId);
-    activity.failed = eventDetails;
-    this._reportHTTPAcitivityEvents(activity);
+    this._session.emitEvent('Network.requestFailed', eventDetails);
   }
 }
 
