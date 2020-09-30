@@ -92,7 +92,7 @@ fixtures.overrideWorkerFixture('playwright', async ({ browserName, testWorkerInd
   if (wire) {
     require('../lib/utils/utils').setUnderTest();
     const connection = new Connection();
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'server.js'), [], {
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'driver.js'), ['serve'], {
       stdio: 'pipe',
       detached: true,
     });
