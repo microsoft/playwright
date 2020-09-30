@@ -1583,6 +1583,23 @@ index 318037b12e9ea7b8bad92498950ac48ff936fb3c..44db941025a5253da38572600cd0fc57
                                          int32_t aCurSelfProgress,
                                          int32_t aMaxSelfProgress,
                                          int32_t aCurTotalProgress,
+diff --git a/toolkit/components/windowwatcher/nsWindowWatcher.cpp b/toolkit/components/windowwatcher/nsWindowWatcher.cpp
+index 876b1ae05bbc2bdf725b749687b1c86e63b1f225..eb1bca3ca991e075a5d28253356b37a6bf8129b6 100644
+--- a/toolkit/components/windowwatcher/nsWindowWatcher.cpp
++++ b/toolkit/components/windowwatcher/nsWindowWatcher.cpp
+@@ -1796,6 +1796,12 @@ uint32_t nsWindowWatcher::CalculateChromeFlagsForContent(
+   uint32_t chromeFlags = CalculateChromeFlagsHelper(
+       nsIWebBrowserChrome::CHROME_WINDOW_BORDERS, aFeatures, aSizeSpec);
+ 
++  if (aFeatures.Exists("width") || aFeatures.Exists("height")) {
++    // Noone reads this flag in Firefox, so we are free to use it for
++    // Juggler needs.
++    chromeFlags |= nsIWebBrowserChrome::CHROME_WITH_SIZE;
++  }
++
+   return EnsureFlagsSafeForContent(chromeFlags);
+ }
+ 
 diff --git a/toolkit/mozapps/update/UpdateService.jsm b/toolkit/mozapps/update/UpdateService.jsm
 index 32a9ac1478a20ecfcf5c5fa1cefe8468b122b895..3aaa78c4558019c9d1d76b3c4204beae45f7b70c 100644
 --- a/toolkit/mozapps/update/UpdateService.jsm

@@ -190,11 +190,12 @@ class TargetRegistry {
       },
     });
 
-    const onTabOpenListener = (window, event) => {
+    const onTabOpenListener = (appWindow, window, event) => {
       const tab = event.target;
       const userContextId = tab.userContextId;
       const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-      if (browserContext && browserContext.defaultViewportSize)
+      const hasSpecifiedSize = (appWindow.chromeFlags & Ci.nsIWebBrowserChrome.CHROME_WITH_SIZE) !== 0;
+      if (!hasSpecifiedSize && browserContext && browserContext.defaultViewportSize)
         setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
     };
 
@@ -206,36 +207,46 @@ class TargetRegistry {
           target.dispose();
     };
 
-    Services.wm.addListener({
-      onOpenWindow: async window => {
-        const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
-        if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
-          return;
-        if (domWindow.document.readyState !== 'uninitialized')
-          throw new Error('DOMWindow should not be loaded yet');
-        await new Promise(fulfill => {
-          domWindow.addEventListener('DOMContentLoaded', function listener() {
-            domWindow.removeEventListener('DOMContentLoaded', listener);
-            fulfill();
-          });
-        });
-        if (!domWindow.gBrowser)
-          return;
-        domWindow.gBrowser.tabContainer.addEventListener('TabOpen', event => onTabOpenListener(domWindow, event));
-        domWindow.gBrowser.tabContainer.addEventListener('TabClose', onTabCloseListener);
-      },
-      onCloseWindow: window => {
-        const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
-        if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
-          return;
-        if (!domWindow.gBrowser)
-          return;
-        domWindow.gBrowser.tabContainer.removeEventListener('TabOpen', onTabOpenListener);
-        domWindow.gBrowser.tabContainer.removeEventListener('TabClose', onTabCloseListener);
-        for (const tab of domWindow.gBrowser.tabs)
-          onTabCloseListener({ target: tab });
-      },
-    });
+    const domWindowTabListeners = new Map();
+
+    const onOpenWindow = async (appWindow) => {
+      if (!(appWindow instanceof Ci.nsIAppWindow))
+        return;
+      const domWindow = appWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+      if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
+        return;
+      if (domWindow.document.readyState !== 'uninitialized')
+        throw new Error('DOMWindow should not be loaded yet');
+      await helper.awaitEvent(domWindow, 'DOMContentLoaded');
+
+      if (!domWindow.gBrowser)
+        return;
+      const tabContainer = domWindow.gBrowser.tabContainer;
+      domWindowTabListeners.set(domWindow, [
+        helper.addEventListener(tabContainer, 'TabOpen', event => onTabOpenListener(appWindow, domWindow, event)),
+        helper.addEventListener(tabContainer, 'TabClose', onTabCloseListener),
+      ]);
+      for (const tab of domWindow.gBrowser.tabs)
+        onTabOpenListener(appWindow, domWindow, { target: tab });
+    };
+
+    const onCloseWindow = window => {
+      const domWindow = window.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+      if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
+        return;
+      if (!domWindow.gBrowser)
+        return;
+
+      const listeners = domWindowTabListeners.get(domWindow) || [];
+      domWindowTabListeners.delete(domWindow);
+      helper.removeListeners(listeners);
+      for (const tab of domWindow.gBrowser.tabs)
+        onTabCloseListener({ target: tab });
+    };
+
+    Services.wm.addListener({ onOpenWindow, onCloseWindow });
+    for (const win of Services.wm.getEnumerator(null))
+      onOpenWindow(win);
 
     const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
     extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
@@ -308,7 +319,7 @@ class TargetRegistry {
     const window = Services.ww.openWindow(null, AppConstants.BROWSER_CHROME_URL, '_blank', features, args);
     await waitForWindowReady(window);
     if (window.gBrowser.browsers.length !== 1)
-      throw new Error(`Unexpcted number of tabs in the new window: ${window.gBrowser.browsers.length}`);
+      throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
     const browser = window.gBrowser.browsers[0];
     const target = this._browserToTarget.get(browser) || await new Promise(fulfill => {
       const listener = helper.on(this, TargetRegistry.Events.TargetCreated, ({target}) => {
@@ -318,8 +329,6 @@ class TargetRegistry {
         }
       });
     });
-    if (browserContext && browserContext.defaultViewportSize)
-      setViewportSizeForBrowser(browserContext.defaultViewportSize, browser, window);
     browser.focus();
     if (browserContext.settings.timezoneId) {
       if (await target.hasFailedToOverrideTimezone())
@@ -373,7 +382,6 @@ class PageTarget {
 
     this._disposed = false;
     browserContext.pages.add(this);
-    browserContext._firstPageCallback();
     this._registry._browserToTarget.set(this._linkedBrowser, this);
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
   }
@@ -501,7 +509,6 @@ class BrowserContext {
     this.bindings = [];
     this.settings = {};
     this.pages = new Set();
-    this._firstPagePromise = new Promise(f => this._firstPageCallback = f);
   }
 
   async destroy() {
@@ -545,11 +552,6 @@ class BrowserContext {
 
   async setDefaultViewport(viewport) {
     this.defaultViewportSize = viewport ? viewport.viewportSize : undefined;
-    if (!this.userContextId) {
-      // First page in the default context comes before onTabOpenListener
-      // so we don't set default viewport. Wait for it here and ensure the viewport.
-      await this._firstPagePromise;
-    }
     const promises = Array.from(this.pages).map(async page => {
       // Resize to new default, unless the page has a custom viewport.
       if (!page._viewportSize)
@@ -707,14 +709,8 @@ async function waitForWindowReady(window) {
       }, "browser-delayed-startup-finished");
     }));
   }
-  if (window.document.readyState !== 'complete') {
-    await new Promise(fulfill => {
-      window.addEventListener('load', function listener() {
-        window.removeEventListener('load', listener);
-        fulfill();
-      });
-    });
-  }
+  if (window.document.readyState !== 'complete')
+    await helper.awaitEvent(window, 'load');
 }
 
 function setViewportSizeForBrowser(viewportSize, browser, window) {
