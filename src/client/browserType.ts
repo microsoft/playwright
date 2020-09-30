@@ -29,6 +29,7 @@ import { envObjectToArray } from './clientHelper';
 import { validateHeaders } from './network';
 import { assert, makeWaitForNextTask, headersObjectToArray } from '../utils/utils';
 import { SelectorsOwner, sharedSelectors } from './selectors';
+import { kBrowserClosedError } from '../utils/errors';
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
@@ -127,7 +128,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       connection.onmessage = message => {
         if (ws.readyState !== WebSocket.OPEN) {
           setTimeout(() => {
-            connection.dispatch({ id: (message as any).id, error: serializeError(new Error('Browser has been closed')) });
+            connection.dispatch({ id: (message as any).id, error: serializeError(new Error(kBrowserClosedError)) });
           }, 0);
           return;
         }

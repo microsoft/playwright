@@ -211,4 +211,25 @@ describe('connect', (suite, { wire }) => {
     ]);
     await remote.close();
   });
+
+  it('should not throw on context.close after disconnect', async ({browserType, remoteServer, server}) => {
+    const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    const context = await remote.newContext();
+    await context.newPage();
+    await Promise.all([
+      new Promise(f => remote.on('disconnected', f)),
+      remoteServer.close()
+    ]);
+    await context.close();
+  });
+
+  it('should not throw on page.close after disconnect', async ({browserType, remoteServer, server}) => {
+    const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    const page = await remote.newPage();
+    await Promise.all([
+      new Promise(f => remote.on('disconnected', f)),
+      remoteServer.close()
+    ]);
+    await page.close();
+  });
 });
