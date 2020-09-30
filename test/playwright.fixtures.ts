@@ -15,15 +15,7 @@
  */
 
 import { config, fixtures as baseFixtures } from '@playwright/test-runner';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-import util from 'util';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../index';
-
-const mkdtempAsync = util.promisify(fs.mkdtemp);
-const removeFolderAsync = util.promisify(require('rimraf'));
-
 
 // Parameter declarations ------------------------------------------------------
 
@@ -86,8 +78,6 @@ type PlaywrightTestFixtures = {
   context: BrowserContext;
   // Page instance for test.
   page: Page;
-  // Temporary directory for this test's artifacts.
-  tmpDir: string;
 };
 
 export const fixtures = baseFixtures
@@ -162,12 +152,16 @@ fixtures.defineWorkerFixture('isLinux', async ({platform}, test) => {
 
 // Test fixtures definitions ---------------------------------------------------
 
-fixtures.defineTestFixture('defaultContextOptions', async ({ testRelativeArtifactsPath, trace }, runTest) => {
-  await runTest({
-    relativeArtifactsPath: testRelativeArtifactsPath,
-    recordTrace: trace,
-    recordVideos: trace,
-  });
+fixtures.defineTestFixture('defaultContextOptions', async ({ testRelativeArtifactsPath, trace, testInfo }, runTest) => {
+  if (trace || testInfo.retry) {
+    await runTest({
+      relativeArtifactsPath: testRelativeArtifactsPath,
+      recordTrace: true,
+      recordVideos: true,
+    });
+  } else {
+    await runTest({});
+  }
 });
 
 fixtures.defineTestFixture('contextFactory', async ({ browser, defaultContextOptions, testInfo, screenshotOnFailure, testOutputPath }, runTest) => {
@@ -201,12 +195,6 @@ fixtures.defineTestFixture('page', async ({context}, runTest) => {
   // Always create page off context so that they matched.
   await runTest(await context.newPage());
   // Context fixture is taking care of closing the page.
-});
-
-fixtures.defineTestFixture('tmpDir', async ({ }, runTest) => {
-  const tmpDir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-  await runTest(tmpDir);
-  await removeFolderAsync(tmpDir).catch(e => { });
 });
 
 fixtures.overrideTestFixture('testParametersArtifactsPath', async ({ browserName, platform }, runTest) => {

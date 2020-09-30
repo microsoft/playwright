@@ -19,10 +19,11 @@ import type * as trace from '../types/trace';
 import * as path from 'path';
 import * as fs from 'fs';
 
-it('should record trace', async ({browserType, defaultBrowserOptions, server, tmpDir}) => {
+it('should record trace', async ({browserType, defaultBrowserOptions, server, testOutputPath}) => {
+  const artifactsPath = testOutputPath('trace');
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
-    artifactsPath: tmpDir,
+    artifactsPath,
   });
   const context = await browser.newContext({ recordTrace: true });
   const page = await context.newPage();
@@ -31,7 +32,7 @@ it('should record trace', async ({browserType, defaultBrowserOptions, server, tm
   await context.close();
   await browser.close();
 
-  const traceFile = path.join(tmpDir, 'playwright.trace');
+  const traceFile = path.join(artifactsPath, 'playwright.trace');
   const traceFileContent = await fs.promises.readFile(traceFile, 'utf8');
   const traceEvents = traceFileContent.split('\n').filter(line => !!line).map(line => JSON.parse(line)) as trace.TraceEvent[];
 
@@ -51,7 +52,7 @@ it('should record trace', async ({browserType, defaultBrowserOptions, server, tm
   expect(gotoEvent.value).toBe(url);
 
   expect(gotoEvent.snapshot).toBeTruthy();
-  expect(fs.existsSync(path.join(tmpDir, 'trace-resources', gotoEvent.snapshot!.sha1))).toBe(true);
+  expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', gotoEvent.snapshot!.sha1))).toBe(true);
 });
 
 it('should require artifactsPath', async ({browserType, defaultBrowserOptions}) => {

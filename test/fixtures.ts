@@ -20,6 +20,7 @@ import childProcess from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import util from 'util';
+import os from 'os';
 import type { Browser, BrowserContext, BrowserType, Page } from '../index';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
@@ -31,6 +32,7 @@ export { expect } from '@playwright/test/out/matcher.fixtures';
 export { config } from '@playwright/test-runner';
 
 const removeFolderAsync = util.promisify(require('rimraf'));
+const mkdtempAsync = util.promisify(fs.mkdtemp);
 
 type AllParameters = {
   wire: boolean;
@@ -126,19 +128,20 @@ fixtures.overrideWorkerFixture('playwright', async ({ browserName, testWorkerInd
   }
 });
 
-fixtures.defineTestFixture('createUserDataDir', async ({testOutputPath}, runTest) => {
-  let counter = 0;
+fixtures.defineTestFixture('createUserDataDir', async ({}, runTest) => {
   const dirs: string[] = [];
   async function createUserDataDir() {
-    const dir = testOutputPath(`user-data-dir-${counter++}`);
+    // We do not put user data dir in testOutputPath,
+    // because we do not want to upload them as test result artifacts.
+    //
+    // Additionally, it is impossible to upload user data dir after test run:
+    // - Firefox removes lock file later, repsumably from another watchdog process?
+    // - WebKit has circular symlinks that makes CI go crazy.
+    const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
     dirs.push(dir);
-    await fs.promises.mkdir(dir, { recursive: true });
     return dir;
   }
   await runTest(createUserDataDir);
-  // Remove user data dirs, because we cannot upload them as test result artifacts.
-  // - Firefox removes lock file later, repsumably from another watchdog process?
-  // - WebKit has circular symlinks that makes CI go crazy.
   await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => {})));
 });
 
