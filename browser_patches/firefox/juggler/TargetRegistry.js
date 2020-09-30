@@ -175,6 +175,7 @@ class TargetRegistry {
       if (!browserContext)
         throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
       const target = new PageTarget(this, window, tab, browserContext, openerTarget);
+      target.updateUserAgent();
       if (!hasExplicitSize)
         target.updateViewportSize();
     };
@@ -393,6 +394,10 @@ class PageTarget {
     return this._browserContext;
   }
 
+  updateUserAgent() {
+    this._linkedBrowser.browsingContext.customUserAgent = this._browserContext.defaultUserAgent;
+  }
+
   async updateViewportSize() {
     // Viewport size is defined by three arguments:
     // 1. default size. Could be explicit if set as part of `window.open` call, e.g.
@@ -513,6 +518,7 @@ class BrowserContext {
     this.ignoreHTTPSErrors = undefined;
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
+    this.defaultUserAgent = null;
     this.screencastOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
@@ -557,6 +563,12 @@ class BrowserContext {
     } else {
       certOverrideService.setDisableAllSecurityChecksAndLetAttackersInterceptMyData(false, this.userContextId);
     }
+  }
+
+  async setDefaultUserAgent(userAgent) {
+    this.defaultUserAgent = userAgent;
+    for (const page of this.pages)
+      page.updateUserAgent();
   }
 
   async setDefaultViewport(viewport) {
