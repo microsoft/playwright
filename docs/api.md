@@ -1656,7 +1656,9 @@ await browser.close();
 
 Routing provides the capability to modify network requests that are made by a page.
 
-Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
+Once routing is enabled, every request* matching the url pattern will stall unless it's continued, fulfilled or aborted.
+
+_* The handler will only be called for the first URL if the response is a redirect._
 
 An example of a naïve handler that aborts all image requests:
 
