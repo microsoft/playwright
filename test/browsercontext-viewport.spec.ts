@@ -82,6 +82,14 @@ it('should emulate device height', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(device-height: 500px)').matches)).toBe(true);
 });
 
+it('should emulate availWidth and availHeight', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform !== 'linux', 'Not implemented');
+}, async ({page}) => {
+  await page.setViewportSize({width: 500, height: 600});
+  expect(await page.evaluate(() => window.screen.availWidth)).toBe(500);
+  expect(await page.evaluate(() => window.screen.availHeight)).toBe(600);
+});
+
 it('should not have touch by default', async ({page, server}) => {
   await page.goto(server.PREFIX + '/mobile.html');
   expect(await page.evaluate(() => 'ontouchstart' in window)).toBe(false);
