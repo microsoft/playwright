@@ -16,6 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
+import { attachFrame } from './utils';
 import type { ConsoleMessage } from '..';
 
 it('Page.workers', async function({page, server}) {
@@ -104,6 +105,23 @@ it('should clear upon cross-process navigation', async function({server, page}) 
   await page.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
   expect(destroyed).toBe(true);
   expect(page.workers().length).toBe(0);
+});
+
+it('should attribute network activity for worker inside iframe to the iframe', (test, {browserName}) => {
+  test.fixme(browserName === 'firefox' || browserName === 'chromium');
+}, async function({page, server}) {
+  await page.goto(server.PREFIX + '/empty.html');
+  const [worker, frame] = await Promise.all([
+    page.waitForEvent('worker'),
+    attachFrame(page, 'frame1', server.PREFIX + '/worker/worker.html'),
+  ]);
+  const url = server.PREFIX + '/one-style.css';
+  const [request] = await Promise.all([
+    page.waitForRequest(url),
+    worker.evaluate(url => fetch(url).then(response => response.text()).then(console.log), url),
+  ]);
+  expect(request.url()).toBe(url);
+  expect(request.frame()).toBe(frame);
 });
 
 it('should report network activity', async function({page, server}) {
