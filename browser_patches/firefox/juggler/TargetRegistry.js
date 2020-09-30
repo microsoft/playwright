@@ -195,9 +195,18 @@ class TargetRegistry {
       const domWindow = appWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
       if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
         return;
-      if (domWindow.document.readyState !== 'uninitialized')
-        throw new Error('DOMWindow should not be loaded yet');
-      await helper.awaitEvent(domWindow, 'DOMContentLoaded');
+      // In persistent mode, window might be opened long ago and might be
+      // already initialized.
+      //
+      // In this case, we want to keep this callback synchronous so that we will call
+      // `onTabOpenListener` synchronously and before the sync IPc message `juggler:content-ready`.
+      if (domWindow.document.readyState === 'uninitialized' || domWindow.document.readyState === 'loading') {
+        // For non-initialized windows, DOMContentLoaded initializes gBrowser
+        // and starts tab loading (see //browser/base/content/browser.js), so we
+        // are guaranteed to call `onTabOpenListener` before the sync IPC message
+        // `juggler:content-ready`.
+        await helper.awaitEvent(domWindow, 'DOMContentLoaded');
+      }
 
       if (!domWindow.gBrowser)
         return;
