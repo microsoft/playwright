@@ -141,50 +141,18 @@ class TargetRegistry {
     Services.mm.addMessageListener('juggler:content-ready', {
       receiveMessage: message => {
         const linkedBrowser = message.target;
-        if (this._browserToTarget.has(linkedBrowser))
-          throw new Error(`Internal error: two targets per linkedBrowser`);
-
-        let tab;
-        let gBrowser;
-        const windowsIt = Services.wm.getEnumerator('navigator:browser');
-        let window;
-        while (windowsIt.hasMoreElements()) {
-          window = windowsIt.getNext();
-          // gBrowser is always created before tabs. If gBrowser is not
-          // initialized yet the browser belongs to another window.
-          if (!window.gBrowser)
-            continue;
-          tab = window.gBrowser.getTabForBrowser(linkedBrowser);
-          if (tab) {
-            gBrowser = window.gBrowser;
-            break;
-          }
-        }
-        if (!tab)
+        const target = this._browserToTarget.get(linkedBrowser);
+        if (!target)
           return;
-
-        const { userContextId } = message.data;
-        const openerContext = linkedBrowser.browsingContext.opener;
-        let openerTarget;
-        if (openerContext) {
-          // Popups usually have opener context.
-          openerTarget = this._browserBrowsingContextToTarget.get(openerContext);
-        } else if (tab.openerTab) {
-          // Noopener popups from the same window have opener tab instead.
-          openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
-        }
-        const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-        if (!browserContext)
-          throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
-        const target = new PageTarget(this, window, gBrowser, tab, linkedBrowser, browserContext, openerTarget);
 
         const sessions = [];
         const readyData = { sessions, target };
         this.emit(TargetRegistry.Events.TargetCreated, readyData);
+        target.markAsReported();
         return {
-          scriptsToEvaluateOnNewDocument: browserContext ? browserContext.scriptsToEvaluateOnNewDocument : [],
-          bindings: browserContext ? browserContext.bindings : [],
-          settings: browserContext ? browserContext.settings : {},
+          scriptsToEvaluateOnNewDocument: target.browserContext().scriptsToEvaluateOnNewDocument,
+          bindings: target.browserContext().bindings,
+          settings: target.browserContext().settings,
           sessionIds: sessions.map(session => session.sessionId()),
         };
       },
@@ -195,8 +163,20 @@ class TargetRegistry {
       const userContextId = tab.userContextId;
       const browserContext = this._userContextIdToBrowserContext.get(userContextId);
       const hasExplicitSize = (appWindow.chromeFlags & Ci.nsIWebBrowserChrome.JUGGLER_WINDOW_EXPLICIT_SIZE) !== 0;
-      if (!hasExplicitSize && browserContext && browserContext.defaultViewportSize)
-        setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
+      const openerContext = tab.linkedBrowser.browsingContext.opener;
+      let openerTarget;
+      if (openerContext) {
+        // Popups usually have opener context.
+        openerTarget = this._browserBrowsingContextToTarget.get(openerContext);
+      } else if (tab.openerTab) {
+        // Noopener popups from the same window have opener tab instead.
+        openerTarget = this._browserToTarget.get(tab.openerTab.linkedBrowser);
+      }
+      if (!browserContext)
+        throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
+      const target = new PageTarget(this, window, tab, browserContext, openerTarget);
+      if (!hasExplicitSize)
+        target.updateViewportSize();
     };
 
     const onTabCloseListener = event => {
@@ -215,9 +195,18 @@ class TargetRegistry {
       const domWindow = appWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
       if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
         return;
-      if (domWindow.document.readyState !== 'uninitialized')
-        throw new Error('DOMWindow should not be loaded yet');
-      await helper.awaitEvent(domWindow, 'DOMContentLoaded');
+      // In persistent mode, window might be opened long ago and might be
+      // already initialized.
+      //
+      // In this case, we want to keep this callback synchronous so that we will call
+      // `onTabOpenListener` synchronously and before the sync IPc message `juggler:content-ready`.
+      if (domWindow.document.readyState === 'uninitialized' || domWindow.document.readyState === 'loading') {
+        // For non-initialized windows, DOMContentLoaded initializes gBrowser
+        // and starts tab loading (see //browser/base/content/browser.js), so we
+        // are guaranteed to call `onTabOpenListener` before the sync IPC message
+        // `juggler:content-ready`.
+        await helper.awaitEvent(domWindow, 'DOMContentLoaded');
+      }
 
       if (!domWindow.gBrowser)
         return;
@@ -244,12 +233,12 @@ class TargetRegistry {
         onTabCloseListener({ target: tab });
     };
 
+    const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
+    extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
+
     Services.wm.addListener({ onOpenWindow, onCloseWindow });
     for (const win of Services.wm.getEnumerator(null))
       onOpenWindow(win);
-
-    const extHelperAppSvc = Cc["@mozilla.org/uriloader/external-helper-app-service;1"].getService(Ci.nsIExternalHelperAppService);
-    extHelperAppSvc.setDownloadInterceptor(new DownloadInterceptor(this));
   }
 
   setBrowserProxy(proxy) {
@@ -321,19 +310,13 @@ class TargetRegistry {
     if (window.gBrowser.browsers.length !== 1)
       throw new Error(`Unexpected number of tabs in the new window: ${window.gBrowser.browsers.length}`);
     const browser = window.gBrowser.browsers[0];
-    const target = this._browserToTarget.get(browser) || await new Promise(fulfill => {
-      const listener = helper.on(this, TargetRegistry.Events.TargetCreated, ({target}) => {
-        if (target._linkedBrowser === browser) {
-          helper.removeListeners([listener]);
-          fulfill(target);
-        }
-      });
-    });
+    const target = this._browserToTarget.get(browser);
     browser.focus();
     if (browserContext.settings.timezoneId) {
       if (await target.hasFailedToOverrideTimezone())
         throw new Error('Failed to override timezone');
     }
+    await target.reportedPromise();
     return target.id();
   }
 
@@ -356,15 +339,15 @@ class TargetRegistry {
 }
 
 class PageTarget {
-  constructor(registry, win, gBrowser, tab, linkedBrowser, browserContext, opener) {
+  constructor(registry, win, tab, browserContext, opener) {
     EventEmitter.decorate(this);
 
     this._targetId = helper.generateId();
     this._registry = registry;
     this._window = win;
-    this._gBrowser = gBrowser;
+    this._gBrowser = win.gBrowser;
     this._tab = tab;
-    this._linkedBrowser = linkedBrowser;
+    this._linkedBrowser = tab.linkedBrowser;
     this._browserContext = browserContext;
     this._viewportSize = undefined;
     this._url = 'about:blank';
@@ -380,10 +363,22 @@ class PageTarget {
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
     ];
 
+    this._reportedPromise = new Promise(resolve => {
+      this._reportedCallback = resolve;
+    });
+
     this._disposed = false;
     browserContext.pages.add(this);
     this._registry._browserToTarget.set(this._linkedBrowser, this);
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
+  }
+
+  reportedPromise() {
+    return this._reportedPromise;
+  }
+
+  markAsReported() {
+    this._reportedCallback();
   }
 
   async windowReady() {
@@ -398,13 +393,27 @@ class PageTarget {
     return this._browserContext;
   }
 
-  async setViewportSize(viewportSize) {
-    this._viewportSize = viewportSize;
+  async updateViewportSize() {
+    // Viewport size is defined by three arguments:
+    // 1. default size. Could be explicit if set as part of `window.open` call, e.g.
+    //   `window.open(url, title, 'width=400,height=400')`
+    // 2. page viewport size
+    // 3. browserContext viewport size
+    //
+    // The "default size" (1) is only respected when the page is opened.
+    // Otherwise, explicitly set page viewport prevales over browser context
+    // default viewport.
+    const viewportSize = this._viewportSize || this._browserContext.defaultViewportSize;
     const actualSize = setViewportSizeForBrowser(viewportSize, this._linkedBrowser, this._window);
     await this._channel.connect('').send('awaitViewportDimensions', {
       width: actualSize.width,
       height: actualSize.height
     });
+  }
+
+  async setViewportSize(viewportSize) {
+    this._viewportSize = viewportSize;
+    await this.updateViewportSize();
   }
 
   connectSession(session) {
@@ -552,11 +561,7 @@ class BrowserContext {
 
   async setDefaultViewport(viewport) {
     this.defaultViewportSize = viewport ? viewport.viewportSize : undefined;
-    const promises = Array.from(this.pages).map(async page => {
-      // Resize to new default, unless the page has a custom viewport.
-      if (!page._viewportSize)
-        await page.setViewportSize(this.defaultViewportSize);
-    });
+    const promises = Array.from(this.pages).map(page => page.updateViewportSize());
     await Promise.all([
       this.applySetting('deviceScaleFactor', viewport ? viewport.deviceScaleFactor : undefined),
       ...promises,
