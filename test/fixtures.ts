@@ -135,7 +135,7 @@ fixtures.defineTestFixture('createUserDataDir', async ({}, runTest) => {
     // because we do not want to upload them as test result artifacts.
     //
     // Additionally, it is impossible to upload user data dir after test run:
-    // - Firefox removes lock file later, repsumably from another watchdog process?
+    // - Firefox removes lock file later, presumably from another watchdog process?
     // - WebKit has circular symlinks that makes CI go crazy.
     const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
     dirs.push(dir);
