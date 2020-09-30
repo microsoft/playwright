@@ -24,9 +24,9 @@ class Helper {
 
   awaitEvent(receiver, eventName) {
     return new Promise(resolve => {
-      receiver.addEventListener(eventName, function listener(...args) {
+      receiver.addEventListener(eventName, function listener() {
         receiver.removeEventListener(eventName, listener);
-        resolve(args);
+        resolve();
       });
     });
   }

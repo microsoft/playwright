@@ -194,8 +194,8 @@ class TargetRegistry {
       const tab = event.target;
       const userContextId = tab.userContextId;
       const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-      const hasSpecifiedSize = (appWindow.chromeFlags & Ci.nsIWebBrowserChrome.CHROME_WITH_SIZE) !== 0;
-      if (!hasSpecifiedSize && browserContext && browserContext.defaultViewportSize)
+      const hasExplicitSize = (appWindow.chromeFlags & Ci.nsIWebBrowserChrome.JUGGLER_WINDOW_EXPLICIT_SIZE) !== 0;
+      if (!hasExplicitSize && browserContext && browserContext.defaultViewportSize)
         setViewportSizeForBrowser(browserContext.defaultViewportSize, tab.linkedBrowser, window);
     };
 
