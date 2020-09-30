@@ -22,6 +22,15 @@ class Helper {
     return () => receiver.removeEventListener(eventName, handler);
   }
 
+  awaitEvent(receiver, eventName) {
+    return new Promise(resolve => {
+      receiver.addEventListener(eventName, function listener() {
+        receiver.removeEventListener(eventName, listener);
+        resolve();
+      });
+    });
+  }
+
   on(receiver, eventName, handler) {
     // The toolkit/modules/EventEmitter.jsm dispatches event name as a first argument.
     // Fire event listeners without it for convenience.
