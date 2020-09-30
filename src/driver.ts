@@ -63,3 +63,6 @@ export function runServer() {
   (playwright as any).electron = new Electron();
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
+
+if (process.argv[2] === 'serve')
+  runServer();
