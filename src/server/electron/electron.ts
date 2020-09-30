@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
 import * as os from 'os';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { CRConnection, CRSession } from '../chromium/crConnection';
@@ -77,17 +76,18 @@ export class ElectronApplication extends EventEmitter {
   private async _onPage(page: ElectronPage) {
     // Needs to be sync.
     const windowId = ++this._lastWindowId;
-    // Can be async.
-    const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
-    if (!handle)
-      return;
-    page.browserWindow = handle;
-    page._browserWindowId = windowId;
     page.on(Page.Events.Close, () => {
       page.browserWindow.dispose();
       this._windows.delete(page);
     });
+    page._browserWindowId = windowId;
     this._windows.add(page);
+
+    // Below is async.
+    const handle = await this._nodeElectronHandle!.evaluateHandle(({ BrowserWindow }, windowId) => BrowserWindow.fromId(windowId), windowId).catch(e => {});
+    if (!handle)
+      return;
+    page.browserWindow = handle;
     await runAbortableTask(progress => page.mainFrame()._waitForLoadState(progress, 'domcontentloaded'), page._timeoutSettings.navigationTimeout({})).catch(e => {}); // can happen after detach
     this.emit(ElectronApplication.Events.Window, page);
   }
@@ -126,16 +126,12 @@ export class ElectronApplication extends EventEmitter {
   }
 
   async _init()  {
-    this._nodeSession.once('Runtime.executionContextCreated', event => {
-      this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context));
+    this._nodeSession.on('Runtime.executionContextCreated', (event: any) => {
+      if (event.context.auxData && event.context.auxData.isDefault)
+        this._nodeExecutionContext = new js.ExecutionContext(new CRExecutionContext(this._nodeSession, event.context));
     });
     await this._nodeSession.send('Runtime.enable', {}).catch(e => {});
-    this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, () => {
-      // Resolving the race between the debugger and the boot-time script.
-      if ((global as any)._playwrightRun)
-        return (global as any)._playwrightRun();
-      return new Promise(f => (global as any)._playwrightRunCallback = f);
-    });
+    this._nodeElectronHandle = await js.evaluate(this._nodeExecutionContext!, false /* returnByValue */, `process.mainModule.require('electron')`);
   }
 }
 
@@ -151,7 +147,7 @@ export class Electron  {
     controller.setLogName('browser');
     return controller.run(async progress => {
       let app: ElectronApplication | undefined = undefined;
-      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', '--require', path.join(__dirname, 'electronLoader.js'), ...args];
+      const electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...args];
 
       if (os.platform() === 'linux') {
         const runningAsRoot = process.geteuid && process.geteuid() === 0;
@@ -171,7 +167,7 @@ export class Electron  {
         cwd: options.cwd,
         tempDirectories: [],
         attemptToGracefullyClose: () => app!.close(),
-        onExit: (exitCode, signal) => {},
+        onExit: () => {},
       });
 
       const nodeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/);
