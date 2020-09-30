@@ -92,7 +92,6 @@ export abstract class BrowserType {
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
-      artifactsPath: options.artifactsPath,
       downloadsPath,
       browserProcess,
       proxy: options.proxy,

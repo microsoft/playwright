@@ -234,7 +234,7 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this._ensureArtifactsPath().then(() => {
         return this._browser._connection.send('Browser.setScreencastOptions', {
           ...size,
-          dir: this._artifactsPath!,
+          dir: this._options.artifactsPath!,
           browserContextId: this._browserContextId
         });
       }));

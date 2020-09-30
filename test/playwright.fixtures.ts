@@ -106,7 +106,6 @@ fixtures.defineWorkerFixture('defaultBrowserOptions', async ({ headful, slowMo }
     handleSIGINT: false,
     slowMo,
     headless: !headful,
-    artifactsPath: config.outputDir,
   });
 });
 
@@ -152,13 +151,14 @@ fixtures.defineWorkerFixture('isLinux', async ({platform}, test) => {
 
 // Test fixtures definitions ---------------------------------------------------
 
-fixtures.defineTestFixture('defaultContextOptions', async ({ testRelativeArtifactsPath, trace, testInfo }, runTest) => {
+fixtures.defineTestFixture('defaultContextOptions', async ({ testOutputPath, trace, testInfo }, runTest) => {
   if (trace || testInfo.retry) {
     await runTest({
-      relativeArtifactsPath: testRelativeArtifactsPath,
-      recordTrace: true,
+      _sharedArtifactsPath: config.outputDir,
+      artifactsPath: testOutputPath(''),
+      _recordTrace: true,
       recordVideos: true,
-    });
+    } as any);
   } else {
     await runTest({});
   }

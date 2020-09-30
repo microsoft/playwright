@@ -33,10 +33,9 @@ const fs = require('fs');
 (async () => {
   for (const browserType of success) {
     try {
-      const browser = await playwright[browserType].launch({
-        artifactsPath: __dirname,
-      });
+      const browser = await playwright[browserType].launch({});
       const context = await browser.newContext({
+        artifactsPath: __dirname,
         recordVideos: true,
         videoSize: {width: 320, height: 240},
       });

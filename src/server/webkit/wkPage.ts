@@ -115,7 +115,7 @@ export class WKPage implements PageDelegate {
     }
     if (this._browserContext._options.recordVideos) {
       const size = this._browserContext._options.videoSize || this._browserContext._options.viewport || { width: 1280, height: 720 };
-      const outputFile = path.join(this._browserContext._artifactsPath!, createGuid() + '.webm');
+      const outputFile = path.join(this._browserContext._options.artifactsPath!, createGuid() + '.webm');
       promises.push(this._browserContext._ensureArtifactsPath().then(() => {
         return this.startScreencast({
           ...size,

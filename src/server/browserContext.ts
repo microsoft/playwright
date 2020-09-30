@@ -94,7 +94,6 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   readonly _actionListeners = new Set<ActionListener>();
-  readonly _artifactsPath?: string;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -102,11 +101,6 @@ export abstract class BrowserContext extends EventEmitter {
     this._options = options;
     this._browserContextId = browserContextId;
     this._isPersistentContext = !browserContextId;
-    if (browser._options.artifactsPath) {
-      this._artifactsPath = browser._options.artifactsPath;
-      if (options.relativeArtifactsPath)
-        this._artifactsPath = path.join(this._artifactsPath, options.relativeArtifactsPath);
-    }
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
   }
 
@@ -124,8 +118,8 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _ensureArtifactsPath() {
-    if (this._artifactsPath)
-      await mkdirIfNeeded(path.join(this._artifactsPath, 'dummy'));
+    if (this._options.artifactsPath)
+      await mkdirIfNeeded(path.join(this._options.artifactsPath, 'dummy'));
   }
 
   _browserClosed() {
@@ -299,9 +293,9 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   verifyGeolocation(options.geolocation);
-  if (options.recordTrace && !browserOptions.artifactsPath)
-    throw new Error(`"recordTrace" option requires "artifactsPath" to be specified`);
-  if (options.recordVideos && !browserOptions.artifactsPath)
+  if (options._recordTrace && !options.artifactsPath)
+    throw new Error(`"_recordTrace" option requires "artifactsPath" to be specified`);
+  if (options.recordVideos && !options.artifactsPath)
     throw new Error(`"recordVideos" option requires "artifactsPath" to be specified`);
 }
 

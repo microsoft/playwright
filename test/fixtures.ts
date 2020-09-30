@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { config } from '@playwright/test-runner';
 import assert from 'assert';
 import childProcess from 'child_process';
 import fs from 'fs';
@@ -84,7 +83,6 @@ fixtures.overrideWorkerFixture('defaultBrowserOptions', async ({ browserName, he
     handleSIGINT: false,
     slowMo,
     headless: !headful,
-    artifactsPath: config.outputDir,
   });
 });
 

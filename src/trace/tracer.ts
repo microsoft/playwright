@@ -40,10 +40,10 @@ class Tracer implements ContextListener {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (!context._options.recordTrace)
+    if (!context._options._recordTrace)
       return;
-    const traceStorageDir = path.join(context._browser._options.artifactsPath!, 'trace-resources');
-    const traceFile = path.join(context._artifactsPath!, 'playwright.trace');
+    const traceStorageDir = path.join(context._options._sharedArtifactsPath || context._options.artifactsPath!, 'trace-resources');
+    const traceFile = path.join(context._options.artifactsPath!, 'playwright.trace');
     const contextTracer = new ContextTracer(context, traceStorageDir, traceFile);
     this._contextTracers.set(context, contextTracer);
   }

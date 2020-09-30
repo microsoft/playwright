@@ -143,22 +143,18 @@ function findVideos(videoDir: string) {
 describe('screencast', suite => {
   suite.slow();
 }, () => {
-  it('should require artifactsPath', async ({browserType, defaultBrowserOptions}) => {
-    const browser = await browserType.launch({
-      ...defaultBrowserOptions,
-      artifactsPath: undefined,
-    });
+  it('should require artifactsPath', async ({browser}) => {
     const error = await browser.newContext({ recordVideos: true }).catch(e => e);
     expect(error.message).toContain('"recordVideos" option requires "artifactsPath" to be specified');
-    await browser.close();
   });
 
   it('should capture static page', (test, { browserName }) => {
     test.fixme(browserName === 'firefox', 'Always clips to square');
-  }, async ({browser, testRelativeArtifactsPath, testOutputPath}) => {
+  }, async ({browser, testOutputPath}) => {
+    const artifactsPath = testOutputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
       viewport: size,
       videoSize: size
@@ -169,7 +165,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(testOutputPath(''));
+    const videoFile = findVideo(artifactsPath);
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -187,9 +183,10 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture navigation', async ({browser, server, testRelativeArtifactsPath, testOutputPath}) => {
+  it('should capture navigation', async ({browser, server, testOutputPath}) => {
+    const artifactsPath = testOutputPath('');
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
       videoSize: { width: 1280, height: 720 }
     });
@@ -201,7 +198,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(testOutputPath(''));
+    const videoFile = findVideo(artifactsPath);
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -220,11 +217,12 @@ describe('screencast', suite => {
   it('should capture css transformation', (test, { browserName, platform, headful }) => {
     test.fail(browserName === 'webkit' && platform === 'win32', 'Does not work on WebKit Windows');
     test.fixme(headful, 'Fails on headful');
-  }, async ({browser, server, testRelativeArtifactsPath, testOutputPath}) => {
+  }, async ({browser, server, testOutputPath}) => {
+    const artifactsPath = testOutputPath('');
     const size = { width: 320, height: 240 };
     // Set viewport equal to screencast frame size to avoid scaling.
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
       videoSize: size,
       viewport: size,
@@ -235,7 +233,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(testOutputPath(''));
+    const videoFile = findVideo(artifactsPath);
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -246,9 +244,10 @@ describe('screencast', suite => {
     }
   });
 
-  it('should work for popups', async ({browser, testRelativeArtifactsPath, testOutputPath, server}) => {
+  it('should work for popups', async ({browser, testOutputPath, server}) => {
+    const artifactsPath = testOutputPath('');
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
       videoSize: { width: 320, height: 240 }
     });
@@ -262,15 +261,16 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFiles = findVideos(testOutputPath(''));
+    const videoFiles = findVideos(artifactsPath);
     expect(videoFiles.length).toBe(2);
   });
 
   it('should scale frames down to the requested size ', (test, parameters) => {
     test.fixme(parameters.headful, 'Fails on headful');
-  }, async ({browser, testRelativeArtifactsPath, testOutputPath, server}) => {
+  }, async ({browser, testOutputPath, server}) => {
+    const artifactsPath = testOutputPath('');
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
       viewport: {width: 640, height: 480},
       // Set size to 1/2 of the viewport.
@@ -290,7 +290,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(testOutputPath(''));
+    const videoFile = findVideo(artifactsPath);
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -313,10 +313,11 @@ describe('screencast', suite => {
     }
   });
 
-  it('should use viewport as default size', async ({browser, testRelativeArtifactsPath, testOutputPath}) => {
+  it('should use viewport as default size', async ({browser, testOutputPath}) => {
+    const artifactsPath = testOutputPath('');
     const size = {width: 800, height: 600};
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
       viewport: size,
     });
@@ -325,15 +326,16 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(testOutputPath(''));
+    const videoFile = findVideo(artifactsPath);
     const videoPlayer = new VideoPlayer(videoFile);
     expect(await videoPlayer.videoWidth).toBe(size.width);
     expect(await videoPlayer.videoHeight).toBe(size.height);
   });
 
-  it('should be 1280x720 by default', async ({browser, testRelativeArtifactsPath, testOutputPath}) => {
+  it('should be 1280x720 by default', async ({browser, testOutputPath}) => {
+    const artifactsPath = testOutputPath('');
     const context = await browser.newContext({
-      relativeArtifactsPath: testRelativeArtifactsPath,
+      artifactsPath,
       recordVideos: true,
     });
 
@@ -341,7 +343,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(testOutputPath(''));
+    const videoFile = findVideo(artifactsPath);
     const videoPlayer = new VideoPlayer(videoFile);
     expect(await videoPlayer.videoWidth).toBe(1280);
     expect(await videoPlayer.videoHeight).toBe(720);
