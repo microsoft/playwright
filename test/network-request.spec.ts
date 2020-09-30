@@ -58,6 +58,8 @@ it('should work for a redirect', async ({page, server}) => {
 });
 
 it('should work for a redirect and interception', async ({page, server}) => {
+// https://github.com/microsoft/playwright/issues/3993
+it('should not work for a redirect and interception', async ({page, server}) => {
   server.setRedirect('/foo.html', '/empty.html');
   let requests = [];
   await page.route('**', route => {
@@ -69,9 +71,8 @@ it('should work for a redirect and interception', async ({page, server}) => {
 
   expect(page.url()).toBe(server.PREFIX + '/empty.html');
 
-  expect(requests.length).toBe(2);
+  expect(requests.length).toBe(1);
   expect(requests[0].url()).toBe(server.PREFIX + '/foo.html');
-  expect(requests[1].url()).toBe(server.PREFIX + '/empty.html');
 });
 
 it('should return headers', async ({page, server, isChromium, isFirefox, isWebKit}) => {
