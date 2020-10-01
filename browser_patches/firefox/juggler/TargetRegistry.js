@@ -9,10 +9,6 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm");
 const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
-const {PageHandler} = ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js");
-const {NetworkHandler} = ChromeUtils.import("chrome://juggler/content/protocol/NetworkHandler.js");
-const {RuntimeHandler} = ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js");
-const {AccessibilityHandler} = ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js");
 const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 const helper = new Helper();
@@ -145,15 +141,10 @@ class TargetRegistry {
         if (!target)
           return;
 
-        const sessions = [];
-        const readyData = { sessions, target };
-        target.markAsReported();
-        this.emit(TargetRegistry.Events.TargetCreated, readyData);
         return {
           scriptsToEvaluateOnNewDocument: target.browserContext().scriptsToEvaluateOnNewDocument,
           bindings: target.browserContext().bindings,
           settings: target.browserContext().settings,
-          sessionIds: sessions.map(session => session.sessionId()),
         };
       },
     });
@@ -317,12 +308,11 @@ class TargetRegistry {
       if (await target.hasFailedToOverrideTimezone())
         throw new Error('Failed to override timezone');
     }
-    await target.reportedPromise();
-    return target.id();
+    return target;
   }
 
-  reportedTargets() {
-    return Array.from(this._browserToTarget.values()).filter(pageTarget => pageTarget._isReported);
+  targets() {
+    return Array.from(this._browserToTarget.values());
   }
 
   targetForBrowser(browser) {
@@ -353,6 +343,7 @@ class PageTarget {
     this._viewportSize = undefined;
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
+
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
     this._channelIds = new Set();
 
@@ -364,24 +355,12 @@ class PageTarget {
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
     ];
 
-    this._isReported = false;
-    this._reportedPromise = new Promise(resolve => {
-      this._reportedCallback = resolve;
-    });
-
     this._disposed = false;
     browserContext.pages.add(this);
     this._registry._browserToTarget.set(this._linkedBrowser, this);
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
-  }
 
-  reportedPromise() {
-    return this._reportedPromise;
-  }
-
-  markAsReported() {
-    this._isReported = true;
-    this._reportedCallback();
+    this._registry.emit(TargetRegistry.Events.TargetCreated, this);
   }
 
   async windowReady() {
@@ -423,13 +402,10 @@ class PageTarget {
     await this.updateViewportSize();
   }
 
-  connectSession(session) {
-    this._channel.connect('').send('attach', { sessionId: session.sessionId() });
-  }
-
-  disconnectSession(session) {
-    if (!this._disposed)
-      this._channel.connect('').emit('detach', { sessionId: session.sessionId() });
+  async disconnectSession(session) {
+    if (this._disposed)
+      return;
+    this._channel.connect('').emit('detach', { sessionId: session.sessionId() });
   }
 
   async close(runBeforeUnload = false) {
@@ -438,15 +414,8 @@ class PageTarget {
     });
   }
 
-  initSession(session) {
-    const pageHandler = new PageHandler(this, session, this._channel);
-    const networkHandler = new NetworkHandler(this, session, this._channel);
-    session.registerHandler('Page', pageHandler);
-    session.registerHandler('Network', networkHandler);
-    session.registerHandler('Runtime', new RuntimeHandler(session, this._channel));
-    session.registerHandler('Accessibility', new AccessibilityHandler(session, this._channel));
-    pageHandler.enable();
-    networkHandler.enable();
+  channel() {
+    return this._channel;
   }
 
   id() {
@@ -493,8 +462,7 @@ class PageTarget {
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
     helper.removeListeners(this._eventListeners);
-    if (this._isReported)
-      this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
+    this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
 

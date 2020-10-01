@@ -12,20 +12,7 @@ let frameTree;
 const helper = new Helper();
 const messageManager = this;
 
-const sessions = new Map();
-
-function createContentSession(channel, sessionId) {
-  const pageAgent = new PageAgent(messageManager, channel, sessionId, frameTree);
-  sessions.set(sessionId, [pageAgent]);
-  pageAgent.enable();
-}
-
-function disposeContentSession(sessionId) {
-  const handlers = sessions.get(sessionId);
-  sessions.delete(sessionId);
-  for (const handler of handlers)
-    handler.dispose();
-}
+let pageAgent;
 
 let failedToOverrideTimezone = false;
 
@@ -89,6 +76,8 @@ const applySetting = {
   },
 };
 
+const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
+
 function initialize() {
   const response = sendSyncMessage('juggler:content-ready')[0];
   // If we didn't get a response, then we don't want to do anything
@@ -96,7 +85,6 @@ function initialize() {
   if (!response)
     return;
   const {
-    sessionIds = [],
     scriptsToEvaluateOnNewDocument = [],
     bindings = [],
     settings = {}
@@ -114,18 +102,12 @@ function initialize() {
   for (const { name, script } of bindings)
     frameTree.addBinding(name, script);
 
-  const channel = SimpleChannel.createForMessageManager('content::page', messageManager);
-
-  for (const sessionId of sessionIds)
-    createContentSession(channel, sessionId);
+  pageAgent = new PageAgent(messageManager, channel, frameTree);
+  pageAgent.enable();
 
   channel.register('', {
-    attach({sessionId}) {
-      createContentSession(channel, sessionId);
-    },
-
-    detach({sessionId}) {
-      disposeContentSession(sessionId);
+    detach() {
+      pageAgent.dispose();
     },
 
     addScriptToEvaluateOnNewDocument(script) {
@@ -169,12 +151,9 @@ function initialize() {
   const gListeners = [
     helper.addEventListener(messageManager, 'unload', msg => {
       helper.removeListeners(gListeners);
-      channel.dispose();
-
-      for (const sessionId of sessions.keys())
-        disposeContentSession(sessionId);
-
+      pageAgent.dispose();
       frameTree.dispose();
+      channel.dispose();
     }),
   ];
 }

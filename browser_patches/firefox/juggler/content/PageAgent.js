@@ -20,32 +20,31 @@ const obs = Cc["@mozilla.org/observer-service;1"].getService(
 const helper = new Helper();
 
 class WorkerData {
-  constructor(pageAgent, browserChannel, sessionId, worker) {
-    this._workerRuntime = worker.channel().connect(sessionId + 'runtime');
-    this._browserWorker = browserChannel.connect(sessionId + worker.id());
+  constructor(pageAgent, browserChannel, worker) {
+    this._workerRuntime = worker.channel().connect('runtime');
+    this._browserWorker = browserChannel.connect(worker.id());
     this._worker = worker;
-    this._sessionId = sessionId;
     const emit = name => {
       return (...args) => this._browserWorker.emit(name, ...args);
     };
     this._eventListeners = [
-      worker.channel().register(sessionId + 'runtime', {
+      worker.channel().register('runtime', {
         runtimeConsole: emit('runtimeConsole'),
         runtimeExecutionContextCreated: emit('runtimeExecutionContextCreated'),
         runtimeExecutionContextDestroyed: emit('runtimeExecutionContextDestroyed'),
       }),
-      browserChannel.register(sessionId + worker.id(), {
+      browserChannel.register(worker.id(), {
         evaluate: (options) => this._workerRuntime.send('evaluate', options),
         callFunction: (options) => this._workerRuntime.send('callFunction', options),
         getObjectProperties: (options) => this._workerRuntime.send('getObjectProperties', options),
         disposeObject: (options) =>this._workerRuntime.send('disposeObject', options),
       }),
     ];
-    worker.channel().connect('').emit('attach', {sessionId});
+    worker.channel().connect('').emit('attach');
   }
 
   dispose() {
-    this._worker.channel().connect('').emit('detach', {sessionId: this._sessionId});
+    this._worker.channel().connect('').emit('detach');
     this._workerRuntime.dispose();
     this._browserWorker.dispose();
     helper.removeListeners(this._eventListeners);
@@ -112,12 +111,11 @@ class FrameData {
 }
 
 class PageAgent {
-  constructor(messageManager, browserChannel, sessionId, frameTree) {
+  constructor(messageManager, browserChannel, frameTree) {
     this._messageManager = messageManager;
     this._browserChannel = browserChannel;
-    this._sessionId = sessionId;
-    this._browserPage = browserChannel.connect(sessionId + 'page');
-    this._browserRuntime = browserChannel.connect(sessionId + 'runtime');
+    this._browserPage = browserChannel.connect('page');
+    this._browserRuntime = browserChannel.connect('runtime');
     this._frameTree = frameTree;
     this._runtime = frameTree.runtime();
 
@@ -127,7 +125,7 @@ class PageAgent {
     this._isolatedWorlds = new Map();
 
     this._eventListeners = [
-      browserChannel.register(sessionId + 'page', {
+      browserChannel.register('page', {
         addBinding: ({ name, script }) => this._frameTree.addBinding(name, script),
         addScriptToEvaluateOnNewDocument: this._addScriptToEvaluateOnNewDocument.bind(this),
         adoptNode: this._adoptNode.bind(this),
@@ -152,7 +150,7 @@ class PageAgent {
         setFileInputFiles: this._setFileInputFiles.bind(this),
         setInterceptFileChooserDialog: this._setInterceptFileChooserDialog.bind(this),
       }),
-      browserChannel.register(sessionId + 'runtime', {
+      browserChannel.register('runtime', {
         evaluate: this._runtime.evaluate.bind(this._runtime),
         callFunction: this._runtime.callFunction.bind(this._runtime),
         getObjectProperties: this._runtime.getObjectProperties.bind(this._runtime),
@@ -302,7 +300,7 @@ class PageAgent {
   }
 
   _onWorkerCreated(worker) {
-    const workerData = new WorkerData(this, this._browserChannel, this._sessionId, worker);
+    const workerData = new WorkerData(this, this._browserChannel, worker);
     this._workerData.set(worker.id(), workerData);
     this._browserPage.emit('pageWorkerCreated', {
       workerId: worker.id(),

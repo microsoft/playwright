@@ -14,15 +14,14 @@ const helper = new Helper();
 
 class RuntimeHandler {
   constructor(session, contentChannel) {
-    const sessionId = session.sessionId();
-    this._contentRuntime = contentChannel.connect(sessionId + 'runtime');
+    this._contentRuntime = contentChannel.connect('runtime');
 
     const emitProtocolEvent = eventName => {
       return (...args) => session.emitEvent(eventName, ...args);
     }
 
     this._eventListeners = [
-      contentChannel.register(sessionId + 'runtime', {
+      contentChannel.register('runtime', {
         runtimeConsole: emitProtocolEvent('Runtime.console'),
         runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),

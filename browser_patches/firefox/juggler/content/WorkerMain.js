@@ -6,8 +6,6 @@
 loadSubScript('chrome://juggler/content/content/Runtime.js');
 loadSubScript('chrome://juggler/content/SimpleChannel.js');
 
-const runtimeAgents = new Map();
-
 const channel = new SimpleChannel('worker::worker');
 const eventListener = event => channel._onMessage(JSON.parse(event.data));
 this.addEventListener('message', eventListener);
@@ -34,11 +32,11 @@ const runtime = new Runtime(true /* isWorker */);
 })();
 
 class RuntimeAgent {
-  constructor(runtime, channel, sessionId) {
+  constructor(runtime, channel) {
     this._runtime = runtime;
-    this._browserRuntime = channel.connect(sessionId + 'runtime');
+    this._browserRuntime = channel.connect('runtime');
     this._eventListeners = [
-      channel.register(sessionId + 'runtime', {
+      channel.register('runtime', {
         evaluate: this._runtime.evaluate.bind(this._runtime),
         callFunction: this._runtime.callFunction.bind(this._runtime),
         getObjectProperties: this._runtime.getObjectProperties.bind(this._runtime),
@@ -72,15 +70,14 @@ class RuntimeAgent {
   }
 }
 
+let runtimeAgent;
+
 channel.register('', {
-  attach: ({sessionId}) => {
-    const runtimeAgent = new RuntimeAgent(runtime, channel, sessionId);
-    runtimeAgents.set(sessionId, runtimeAgent);
+  attach: () => {
+    runtimeAgent = new RuntimeAgent(runtime, channel);
   },
 
-  detach: ({sessionId}) => {
-    const runtimeAgent = runtimeAgents.get(sessionId);
-    runtimeAgents.delete(sessionId);
+  detach: () => {
     runtimeAgent.dispose();
   },
 });
