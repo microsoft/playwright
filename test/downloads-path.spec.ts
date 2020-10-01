@@ -52,7 +52,7 @@ defineTestFixture('persistentDownloadsContext', async ({server, launchPersistent
         acceptDownloads: true
       }
   );
-  page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
   await test(context);
   await context.close();
 });

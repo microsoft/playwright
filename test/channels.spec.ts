@@ -163,7 +163,7 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
 });
 
 it('should work with the domain module', async ({ domain, browserType }) => {
-  const browser = await browserType.launch();
+  const browser = await browserType.launch(defaultBrowserOptions);
   const page = await browser.newPage();
   const result = await page.evaluate(() => 1 + 1);
   expect(result).toBe(2);
