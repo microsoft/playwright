@@ -43,6 +43,7 @@ import * as util from 'util';
 import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
+import { isSafeCloseError } from '../utils/errors';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const mkdirAsync = util.promisify(fs.mkdir);
@@ -451,11 +452,17 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async close(options: { runBeforeUnload?: boolean } = {runBeforeUnload: undefined}) {
-    return this._wrapApiCall('page.close', async () => {
-      await this._channel.close(options);
-      if (this._ownedContext)
-        await this._ownedContext.close();
-    });
+    try {
+      await this._wrapApiCall('page.close', async () => {
+        await this._channel.close(options);
+        if (this._ownedContext)
+          await this._ownedContext.close();
+      });
+    } catch (e) {
+      if (isSafeCloseError(e))
+        return;
+      throw e;
+    }
   }
 
   isClosed(): boolean {

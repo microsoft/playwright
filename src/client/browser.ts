@@ -22,6 +22,7 @@ import { Events } from './events';
 import { BrowserContextOptions } from './types';
 import { validateHeaders } from './network';
 import { headersObjectToArray } from '../utils/utils';
+import { isSafeCloseError } from '../utils/errors';
 
 export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> {
   readonly _contexts = new Set<BrowserContext>();
@@ -88,9 +89,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
         await this._closedPromise;
       });
     } catch (e) {
-      if (e.message === 'browser.close: Browser has been closed')
-        return;
-      if (e.message === 'browser.close: Target browser or context has been closed')
+      if (isSafeCloseError(e))
         return;
       throw e;
     }

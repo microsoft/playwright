@@ -20,6 +20,7 @@ import { serializeError } from '../protocol/serializers';
 import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { assert, createGuid, debugAssert, isUnderTest } from '../utils/utils';
 import { tOptional } from '../protocol/validatorPrimitives';
+import { kBrowserOrContextClosedError } from '../utils/errors';
 
 export const dispatcherSymbol = Symbol('dispatcher');
 
@@ -167,7 +168,7 @@ export class DispatcherConnection {
     const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatchers.get(guid);
     if (!dispatcher) {
-      this.onmessage({ id, error: serializeError(new Error('Target browser or context has been closed')) });
+      this.onmessage({ id, error: serializeError(new Error(kBrowserOrContextClosedError)) });
       return;
     }
     if (method === 'debugScopeState') {

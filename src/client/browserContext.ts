@@ -27,6 +27,7 @@ import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions } from './types';
 import { isUnderTest, headersObjectToArray } from '../utils/utils';
+import { isSafeCloseError } from '../utils/errors';
 
 export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
   _pages = new Set<Page>();
@@ -36,7 +37,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   readonly _bindings = new Map<string, frames.FunctionWithSource>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
-  private _isClosedOrClosing = false;
   private _closedPromise: Promise<void>;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -222,19 +222,21 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   }
 
   async _onClose() {
-    this._isClosedOrClosing = true;
     if (this._browser)
       this._browser._contexts.delete(this);
     this.emit(Events.BrowserContext.Close);
   }
 
   async close(): Promise<void> {
-    return this._wrapApiCall('browserContext.close', async () => {
-      if (!this._isClosedOrClosing) {
-        this._isClosedOrClosing = true;
+    try {
+      await this._wrapApiCall('browserContext.close', async () => {
         await this._channel.close();
-      }
-      await this._closedPromise;
-    });
+        await this._closedPromise;
+      });
+    } catch (e) {
+      if (isSafeCloseError(e))
+        return;
+      throw e;
+    }
   }
 }
