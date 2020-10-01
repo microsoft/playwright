@@ -40,7 +40,7 @@ it('should work', async ({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();
 });
 
-it('should scope context handles', async ({browserType, browser, server}) => {
+it('should scope context handles', async ({browser, server}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -129,7 +129,10 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
     objects: [
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
-      { _guid: 'BrowserType', objects: [] },
+      { _guid: 'BrowserType', objects: [
+        { _guid: 'Browser', objects: [] },
+      ]
+      },
       { _guid: 'Playwright', objects: [] },
       { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
@@ -143,6 +146,7 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
     _guid: '',
     objects: [
       { _guid: 'BrowserType', objects: [
+        { _guid: 'Browser', objects: [] },
         {
           _guid: 'Browser', objects: [
             { _guid: 'BrowserContext', objects: [] }
