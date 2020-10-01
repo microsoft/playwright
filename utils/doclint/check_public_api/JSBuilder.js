@@ -306,6 +306,7 @@ function checkSources(sources) {
     for (const innerType of type.types) {
       let innerProps = getTypeProperties(innerType);
       props = props.filter(p => !innerProps.find(e => e.getName() === p.getName()));
+      props = props.filter(p => p.getName() !== '_tracePath' && p.getName() !== '_traceResourcesPath');
       props.push(...innerProps);
     }
     return props;

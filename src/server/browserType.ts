@@ -92,7 +92,6 @@ export abstract class BrowserType {
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,
-      artifactsPath: options.artifactsPath,
       downloadsPath,
       browserProcess,
       proxy: options.proxy,
@@ -132,7 +131,7 @@ export abstract class BrowserType {
       }
       return dir;
     };
-    // TODO: use artifactsPath for downloads.
+    // TODO: add downloadsPath to newContext().
     const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
 
     if (!userDataDir) {

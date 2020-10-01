@@ -47,6 +47,10 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     const logger = options.logger;
     return this._wrapApiCall('browser.newContext', async () => {
+      if (this._isRemote && options.videosPath)
+        throw new Error(`"videosPath" is not supported in connected browser`);
+      if (this._isRemote && options._tracePath)
+        throw new Error(`"_tracePath" is not supported in connected browser`);
       if (options.extraHTTPHeaders)
         validateHeaders(options.extraHTTPHeaders);
       const contextOptions: channels.BrowserNewContextParams = {

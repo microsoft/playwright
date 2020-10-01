@@ -16,6 +16,7 @@
 
 import { config, fixtures as baseFixtures } from '@playwright/test-runner';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../index';
+import * as path from 'path';
 
 // Parameter declarations ------------------------------------------------------
 
@@ -106,7 +107,6 @@ fixtures.defineWorkerFixture('defaultBrowserOptions', async ({ headful, slowMo }
     handleSIGINT: false,
     slowMo,
     headless: !headful,
-    artifactsPath: config.outputDir,
   });
 });
 
@@ -152,13 +152,13 @@ fixtures.defineWorkerFixture('isLinux', async ({platform}, test) => {
 
 // Test fixtures definitions ---------------------------------------------------
 
-fixtures.defineTestFixture('defaultContextOptions', async ({ testRelativeArtifactsPath, trace, testInfo }, runTest) => {
+fixtures.defineTestFixture('defaultContextOptions', async ({ testOutputPath, trace, testInfo }, runTest) => {
   if (trace || testInfo.retry) {
     await runTest({
-      relativeArtifactsPath: testRelativeArtifactsPath,
-      recordTrace: true,
-      recordVideos: true,
-    });
+      _traceResourcesPath: path.join(config.outputDir, 'trace-resources'),
+      _tracePath: testOutputPath('playwright.trace'),
+      videosPath: testOutputPath(''),
+    } as any);
   } else {
     await runTest({});
   }
