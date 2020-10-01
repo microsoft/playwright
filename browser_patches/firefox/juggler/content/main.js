@@ -90,10 +90,11 @@ const applySetting = {
 };
 
 function initialize() {
-  const loadContext = docShell.QueryInterface(Ci.nsILoadContext);
-  const userContextId = loadContext.originAttributes.userContextId;
-
-  const response = sendSyncMessage('juggler:content-ready', { userContextId })[0];
+  const response = sendSyncMessage('juggler:content-ready')[0];
+  // If we didn't get a response, then we don't want to do anything
+  // as a part of this frame script.
+  if (!response)
+    return;
   const {
     sessionIds = [],
     scriptsToEvaluateOnNewDocument = [],
