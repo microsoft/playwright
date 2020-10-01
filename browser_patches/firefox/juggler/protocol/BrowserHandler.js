@@ -29,7 +29,7 @@ class BrowserHandler {
     this._enabled = true;
     this._attachToDefaultContext = attachToDefaultContext;
 
-    for (const target of this._targetRegistry.targets()) {
+    for (const target of this._targetRegistry.reportedTargets()) {
       if (!this._shouldAttachToTarget(target))
         continue;
       const session = this._dispatcher.createSession();

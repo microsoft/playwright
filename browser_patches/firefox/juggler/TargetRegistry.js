@@ -147,8 +147,8 @@ class TargetRegistry {
 
         const sessions = [];
         const readyData = { sessions, target };
-        this.emit(TargetRegistry.Events.TargetCreated, readyData);
         target.markAsReported();
+        this.emit(TargetRegistry.Events.TargetCreated, readyData);
         return {
           scriptsToEvaluateOnNewDocument: target.browserContext().scriptsToEvaluateOnNewDocument,
           bindings: target.browserContext().bindings,
@@ -321,8 +321,8 @@ class TargetRegistry {
     return target.id();
   }
 
-  targets() {
-    return Array.from(this._browserToTarget.values());
+  reportedTargets() {
+    return Array.from(this._browserToTarget.values()).filter(pageTarget => pageTarget._isReported);
   }
 
   targetForBrowser(browser) {
@@ -364,6 +364,7 @@ class PageTarget {
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
     ];
 
+    this._isReported = false;
     this._reportedPromise = new Promise(resolve => {
       this._reportedCallback = resolve;
     });
@@ -379,6 +380,7 @@ class PageTarget {
   }
 
   markAsReported() {
+    this._isReported = true;
     this._reportedCallback();
   }
 
@@ -491,7 +493,8 @@ class PageTarget {
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
     helper.removeListeners(this._eventListeners);
-    this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
+    if (this._isReported)
+      this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
 
