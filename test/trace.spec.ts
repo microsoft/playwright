@@ -20,15 +20,15 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 it('should record trace', async ({browser, testOutputPath, server}) => {
-  const artifactsPath = testOutputPath('trace');
-  const context = await browser.newContext({ artifactsPath, _recordTrace: true } as any);
+  const artifactsPath = testOutputPath('');
+  const tracePath = path.join(artifactsPath, 'playwright.trace');
+  const context = await browser.newContext({ _tracePath: tracePath } as any);
   const page = await context.newPage();
   const url = server.PREFIX + '/snapshot/snapshot-with-css.html';
   await page.goto(url);
   await context.close();
 
-  const traceFile = path.join(artifactsPath, 'playwright.trace');
-  const traceFileContent = await fs.promises.readFile(traceFile, 'utf8');
+  const traceFileContent = await fs.promises.readFile(tracePath, 'utf8');
   const traceEvents = traceFileContent.split('\n').filter(line => !!line).map(line => JSON.parse(line)) as trace.TraceEvent[];
 
   const contextEvent = traceEvents.find(event => event.type === 'context-created') as trace.ContextCreatedTraceEvent;
@@ -48,9 +48,4 @@ it('should record trace', async ({browser, testOutputPath, server}) => {
 
   expect(gotoEvent.snapshot).toBeTruthy();
   expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', gotoEvent.snapshot!.sha1))).toBe(true);
-});
-
-it('should require artifactsPath', async ({browser}) => {
-  const error = await browser.newContext({ _recordTrace: true } as any).catch(e => e);
-  expect(error.message).toContain('"_recordTrace" option requires "artifactsPath" to be specified');
 });

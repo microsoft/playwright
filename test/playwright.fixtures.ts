@@ -16,6 +16,7 @@
 
 import { config, fixtures as baseFixtures } from '@playwright/test-runner';
 import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../index';
+import * as path from 'path';
 
 // Parameter declarations ------------------------------------------------------
 
@@ -154,10 +155,9 @@ fixtures.defineWorkerFixture('isLinux', async ({platform}, test) => {
 fixtures.defineTestFixture('defaultContextOptions', async ({ testOutputPath, trace, testInfo }, runTest) => {
   if (trace || testInfo.retry) {
     await runTest({
-      _sharedArtifactsPath: config.outputDir,
-      artifactsPath: testOutputPath(''),
-      _recordTrace: true,
-      recordVideos: true,
+      _traceResourcesPath: path.join(config.outputDir, 'trace-resources'),
+      _tracePath: testOutputPath('playwright.trace'),
+      videosPath: testOutputPath(''),
     } as any);
   } else {
     await runTest({});

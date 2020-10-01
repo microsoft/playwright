@@ -117,9 +117,9 @@ export abstract class BrowserContext extends EventEmitter {
       await listener.onContextCreated(this);
   }
 
-  async _ensureArtifactsPath() {
-    if (this._options.artifactsPath)
-      await mkdirIfNeeded(path.join(this._options.artifactsPath, 'dummy'));
+  async _ensureVideosPath() {
+    if (this._options.videosPath)
+      await mkdirIfNeeded(path.join(this._options.videosPath, 'dummy'));
   }
 
   _browserClosed() {
@@ -293,10 +293,8 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
   verifyGeolocation(options.geolocation);
-  if (options._recordTrace && !options.artifactsPath)
-    throw new Error(`"_recordTrace" option requires "artifactsPath" to be specified`);
-  if (options.recordVideos && !options.artifactsPath)
-    throw new Error(`"recordVideos" option requires "artifactsPath" to be specified`);
+  if (options.videoSize && !options.videosPath)
+    throw new Error(`"videoSize" option requires "videosPath" to be specified`);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

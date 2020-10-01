@@ -131,7 +131,7 @@ export abstract class BrowserType {
       }
       return dir;
     };
-    // TODO: use artifactsPath for downloads.
+    // TODO: add downloadsPath to newContext().
     const downloadsPath = await ensurePath(DOWNLOADS_FOLDER, options.downloadsPath);
 
     if (!userDataDir) {

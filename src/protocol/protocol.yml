@@ -304,9 +304,14 @@ BrowserType:
           - dark
           - no-preference
         acceptDownloads: boolean?
-        artifactsPath: string?
-        _sharedArtifactsPath: string?
-        _recordTrace: boolean?
+        _traceResourcesPath: string?
+        _tracePath: string?
+        videosPath: string?
+        videoSize:
+          type: object?
+          properties:
+            width: number
+            height: number
       returns:
         context: BrowserContext
 
@@ -368,10 +373,9 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
-        artifactsPath: string?
-        _sharedArtifactsPath: string?
-        _recordTrace: boolean?
-        recordVideos: boolean?
+        _traceResourcesPath: string?
+        _tracePath: string?
+        videosPath: string?
         videoSize:
           type: object?
           properties:

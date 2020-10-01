@@ -458,11 +458,11 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source));
-    if (this._isMainFrame() && this._crPage._browserContext._options.recordVideos) {
+    if (this._isMainFrame() && this._crPage._browserContext._options.videosPath) {
       const size = this._crPage._browserContext._options.videoSize || this._crPage._browserContext._options.viewport || { width: 1280, height: 720 };
       const screencastId = createGuid();
-      const outputFile = path.join(this._crPage._browserContext._options.artifactsPath!, screencastId + '.webm');
-      promises.push(this._crPage._browserContext._ensureArtifactsPath().then(() => {
+      const outputFile = path.join(this._crPage._browserContext._options.videosPath, screencastId + '.webm');
+      promises.push(this._crPage._browserContext._ensureVideosPath().then(() => {
         return this._startScreencast(screencastId, {
           ...size,
           outputFile,

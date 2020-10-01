@@ -220,9 +220,8 @@ Indicates that the browser is connected.
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
-  - `artifactsPath` <[string]> Specifies a folder for artifacts like videos. If not specified, artifacts are not collected. Defaults to `.`.
-  - `recordVideos` <[boolean]> Enables video recording for all pages to the `artifactsPath` folder.
-  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded.
+  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
 - returns: <[Promise]<[BrowserContext]>>
@@ -267,9 +266,8 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
-  - `artifactsPath` <[string]> Specifies a folder for artifacts like videos. If not specified, artifacts are not collected. Defaults to `.`.
-  - `recordVideos` <[boolean]> Enables video recording for all pages to the `artifactsPath` folder.
-  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded.
+  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
 - returns: <[Promise]<[Page]>>
@@ -4246,9 +4244,8 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `username` <[string]>
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
-  - `artifactsPath` <[string]> Specifies a folder for artifacts like videos. If not specified, artifacts are not collected. Defaults to `.`.
-  - `recordVideos` <[boolean]> Enables video recording for all pages to the `artifactsPath` folder.
-  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `recordVideos` is true. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded.
+  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.

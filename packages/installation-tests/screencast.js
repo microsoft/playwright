@@ -27,7 +27,6 @@ if (process.argv[3] === 'all')
   success = ['chromium', 'firefox', 'webkit'];
 
 const playwright = require(requireName);
-const path = require('path');
 const fs = require('fs');
 
 (async () => {
@@ -35,8 +34,7 @@ const fs = require('fs');
     try {
       const browser = await playwright[browserType].launch({});
       const context = await browser.newContext({
-        artifactsPath: __dirname,
-        recordVideos: true,
+        videosPath: __dirname,
         videoSize: {width: 320, height: 240},
       });
       await context.newPage();
