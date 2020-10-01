@@ -27,7 +27,7 @@ function crash(page, toImpl, browserName) {
 }
 
 describe('', (suite, { browserName, platform, wire }) => {
-  suite.fixme(wire);
+  suite.skip(wire && browserName !== 'chromium');
   suite.flaky(browserName === 'firefox' && platform === 'win32');
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
@@ -63,10 +63,7 @@ describe('', (suite, { browserName, platform, wire }) => {
     expect(error.message).toContain('Navigation failed because page crashed');
   });
 
-  it('should be able to close context when page crashes', (test, { browserName, platform, wire }) => {
-    test.fixme(wire);
-    test.flaky(browserName === 'firefox' && platform === 'win32');
-  }, async ({page, browserName, toImpl}) => {
+  it('should be able to close context when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page, toImpl, browserName);
     await page.waitForEvent('crash');
