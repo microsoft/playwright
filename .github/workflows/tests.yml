@@ -39,7 +39,7 @@ jobs:
     # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx test-runner test/ --jobs=1 --timeout=30000 --global-timeout=5400000 --retries=3 --reporter=dot,json && npm run coverage"
       env:
-        DEBUG: *browser*,*protocol*
+        DEBUG: "*browser*,*protocol*"
         BROWSER: ${{ matrix.browser }}
         PWRUNNER_JSON_REPORT: "test-results/report.json"
     - uses: actions/upload-artifact@v1
