@@ -162,8 +162,8 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should work with the domain module', async ({ domain, browserType }) => {
-  const browser = await browserType.launch();
+it('should work with the domain module', async ({ domain, browserType, defaultBrowserOptions }) => {
+  const browser = await browserType.launch(defaultBrowserOptions);
   const page = await browser.newPage();
   const result = await page.evaluate(() => 1 + 1);
   expect(result).toBe(2);
