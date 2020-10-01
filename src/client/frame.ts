@@ -17,7 +17,6 @@
 
 import { assert } from '../utils/utils';
 import * as channels from '../protocol/channels';
-import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
 import { assertMaxArguments, JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
@@ -33,7 +32,6 @@ import { urlMatches } from './clientHelper';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
-export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame }, ...args: any) => any;
 export type WaitForNavigationOptions = {
   timeout?: number,
   waitUntil?: LifecycleEvent,

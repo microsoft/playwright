@@ -26,10 +26,11 @@ import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
-import { serializeResult, parseArgument } from './jsHandleDispatcher';
+import { serializeResult, parseArgument, JSHandleDispatcher } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
+import { JSHandle } from '../server/javascript';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> implements channels.PageChannel {
   private _page: Page;
@@ -81,8 +82,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams): Promise<void> {
-    await this._page.exposeBinding(params.name, (source, ...args) => {
-      const binding = new BindingCallDispatcher(this._scope, params.name, source, args);
+    await this._page.exposeBinding(params.name, !!params.needsHandle, (source, ...args) => {
+      const binding = new BindingCallDispatcher(this._scope, params.name, !!params.needsHandle, source, args);
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
@@ -254,11 +255,12 @@ export class BindingCallDispatcher extends Dispatcher<{}, channels.BindingCallIn
   private _reject: ((error: any) => void) | undefined;
   private _promise: Promise<any>;
 
-  constructor(scope: DispatcherScope, name: string, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
+  constructor(scope: DispatcherScope, name: string, needsHandle: boolean, source: { context: BrowserContext, page: Page, frame: Frame }, args: any[]) {
     super(scope, {}, 'BindingCall', {
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
-      args: args.map(serializeResult),
+      args: needsHandle ? undefined : args.map(serializeResult),
+      handle: needsHandle ? new JSHandleDispatcher(scope, args[0] as JSHandle) : undefined,
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

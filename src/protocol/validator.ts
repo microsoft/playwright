@@ -262,6 +262,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserContextExposeBindingParams = tObject({
     name: tString,
+    needsHandle: tOptional(tBoolean),
   });
   scheme.BrowserContextGrantPermissionsParams = tObject({
     permissions: tArray(tString),
@@ -323,6 +324,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageExposeBindingParams = tObject({
     name: tString,
+    needsHandle: tOptional(tBoolean),
   });
   scheme.PageGoBackParams = tObject({
     timeout: tOptional(tNumber),

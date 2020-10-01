@@ -555,9 +555,10 @@ export type BrowserContextCookiesResult = {
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
+  needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingOptions = {
-
+  needsHandle?: boolean,
 };
 export type BrowserContextExposeBindingResult = void;
 export type BrowserContextGrantPermissionsParams = {
@@ -808,9 +809,10 @@ export type PageEmulateMediaOptions = {
 export type PageEmulateMediaResult = void;
 export type PageExposeBindingParams = {
   name: string,
+  needsHandle?: boolean,
 };
 export type PageExposeBindingOptions = {
-
+  needsHandle?: boolean,
 };
 export type PageExposeBindingResult = void;
 export type PageGoBackParams = {
@@ -2110,7 +2112,8 @@ export interface ConsoleMessageChannel extends Channel {
 export type BindingCallInitializer = {
   frame: FrameChannel,
   name: string,
-  args: SerializedValue[],
+  args?: SerializedValue[],
+  handle?: JSHandleChannel,
 };
 export interface BindingCallChannel extends Channel {
   reject(params: BindingCallRejectParams, metadata?: Metadata): Promise<BindingCallRejectResult>;

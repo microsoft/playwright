@@ -15,8 +15,7 @@
  * limitations under the License.
  */
 
-import * as frames from './frame';
-import { Page, BindingCall } from './page';
+import { Page, BindingCall, FunctionWithSource } from './page';
 import * as network from './network';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
@@ -34,7 +33,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | null = null;
   readonly _browserName: string;
-  readonly _bindings = new Map<string, frames.FunctionWithSource>();
+  readonly _bindings = new Map<string, FunctionWithSource>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
@@ -176,21 +175,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, playwrightBinding: FunctionWithSource, options: { handle?: boolean } = {}): Promise<void> {
     return this._wrapApiCall('browserContext.exposeBinding', async () => {
-      for (const page of this.pages()) {
-        if (page._bindings.has(name))
-          throw new Error(`Function "${name}" has been already registered in one of the pages`);
-      }
-      if (this._bindings.has(name))
-        throw new Error(`Function "${name}" has been already registered`);
+      await this._channel.exposeBinding({ name, needsHandle: options.handle });
       this._bindings.set(name, playwrightBinding);
-      await this._channel.exposeBinding({ name });
     });
   }
 
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
-    await this.exposeBinding(name, (source, ...args) => playwrightFunction(...args));
+    return this._wrapApiCall('browserContext.exposeFunction', async () => {
+      await this._channel.exposeBinding({ name });
+      const binding: FunctionWithSource = (source, ...args) => playwrightFunction(...args);
+      this._bindings.set(name, binding);
+    });
   }
 
   async route(url: URLMatch, handler: network.RouteHandler): Promise<void> {

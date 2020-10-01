@@ -314,7 +314,7 @@ await context.close();
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
-- [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding)
+- [browserContext.exposeBinding(name, playwrightBinding[, options])](#browsercontextexposebindingname-playwrightbinding-options)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
 - [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
@@ -443,9 +443,11 @@ will be closed.
 If no URLs are specified, this method returns all cookies.
 If URLs are specified, only cookies that affect those URLs are returned.
 
-#### browserContext.exposeBinding(name, playwrightBinding)
+#### browserContext.exposeBinding(name, playwrightBinding[, options])
 - `name` <[string]> Name of the function on the window object.
 - `playwrightBinding` <[function]> Callback function that will be called in the Playwright's context.
+- `options` <[Object]>
+  - `handle` <[boolean]> Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is supported. When passing by value, multiple arguments are supported.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in every page in the context.
@@ -455,7 +457,7 @@ If the `playwrightBinding` returns a [Promise], it will be awaited.
 The first argument of the `playwrightBinding` function contains information about the caller:
 `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
 
-See [page.exposeBinding(name, playwrightBinding)](#pageexposebindingname-playwrightbinding) for page-only version.
+See [page.exposeBinding(name, playwrightBinding)](#pageexposebindingname-playwrightbinding-options) for page-only version.
 
 An example of exposing page URL to all frames in all pages in the context:
 ```js
@@ -477,6 +479,20 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   `);
   await page.click('button');
 })();
+```
+
+An example of passing an element handle:
+```js
+await context.exposeBinding('clicked', async (source, element) => {
+  console.log(await element.textContent());
+}, { handle: true });
+await page.setContent(`
+  <script>
+    document.addEventListener('click', event => window.clicked(event.target));
+  </script>
+  <div>Click me</div>
+  <div>Or click me</div>
+`);
 ```
 
 #### browserContext.exposeFunction(name, playwrightFunction)
@@ -735,7 +751,7 @@ page.removeListener('request', logRequest);
 - [page.emulateMedia(options)](#pageemulatemediaoptions)
 - [page.evaluate(pageFunction[, arg])](#pageevaluatepagefunction-arg)
 - [page.evaluateHandle(pageFunction[, arg])](#pageevaluatehandlepagefunction-arg)
-- [page.exposeBinding(name, playwrightBinding)](#pageexposebindingname-playwrightbinding)
+- [page.exposeBinding(name, playwrightBinding[, options])](#pageexposebindingname-playwrightbinding-options)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
 - [page.fill(selector, value[, options])](#pagefillselector-value-options)
 - [page.focus(selector[, options])](#pagefocusselector-options)
@@ -1264,9 +1280,11 @@ console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
 
-#### page.exposeBinding(name, playwrightBinding)
+#### page.exposeBinding(name, playwrightBinding[, options])
 - `name` <[string]> Name of the function on the window object.
 - `playwrightBinding` <[function]> Callback function that will be called in the Playwright's context.
+- `options` <[Object]>
+  - `handle` <[boolean]> Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is supported. When passing by value, multiple arguments are supported.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in this page.
@@ -1276,7 +1294,7 @@ If the `playwrightBinding` returns a [Promise], it will be awaited.
 The first argument of the `playwrightBinding` function contains information about the caller:
 `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
 
-See [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding) for the context-wide version.
+See [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding-options) for the context-wide version.
 
 > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
 
@@ -1300,6 +1318,20 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
   `);
   await page.click('button');
 })();
+```
+
+An example of passing an element handle:
+```js
+await page.exposeBinding('clicked', async (source, element) => {
+  console.log(await element.textContent());
+}, { handle: true });
+await page.setContent(`
+  <script>
+    document.addEventListener('click', event => window.clicked(event.target));
+  </script>
+  <div>Click me</div>
+  <div>Or click me</div>
+`);
 ```
 
 #### page.exposeFunction(name, playwrightFunction)
@@ -4409,7 +4441,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.clearPermissions()](#browsercontextclearpermissions)
 - [browserContext.close()](#browsercontextclose)
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
-- [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding)
+- [browserContext.exposeBinding(name, playwrightBinding[, options])](#browsercontextexposebindingname-playwrightbinding-options)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
 - [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
