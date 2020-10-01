@@ -110,7 +110,7 @@ it('should accept downloads', async ({persistentDownloadsContext, testOutputPath
   expect(path.startsWith(testOutputPath(''))).toBeTruthy();
 });
 
-it('should not delete downloads when the context closes', async ({persistentDownloadsContext}) => {
+it.only('should not delete downloads when the context closes', async ({persistentDownloadsContext}) => {
   const page = persistentDownloadsContext.pages()[0];
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
