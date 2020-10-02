@@ -4,7 +4,7 @@
 
 class AccessibilityHandler {
   constructor(session, contentChannel) {
-    this._contentPage = contentChannel.connect(session.sessionId() + 'page');
+    this._contentPage = contentChannel.connect('page');
   }
 
   async getFullAXTree(params) {

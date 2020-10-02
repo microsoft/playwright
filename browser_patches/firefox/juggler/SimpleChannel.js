@@ -30,6 +30,7 @@ class SimpleChannel {
     this._connectorId = 0;
     this._pendingMessages = new Map();
     this._handlers = new Map();
+    this._bufferedRequests = [];
     this.transport = {
       sendMessage: null,
       dispose: null,
@@ -70,6 +71,14 @@ class SimpleChannel {
     if (this._handlers.has(namespace))
       throw new Error('ERROR: double-register for namespace ' + namespace);
     this._handlers.set(namespace, handler);
+    // Try to re-deliver all pending messages.
+    Promise.resolve().then(() => {
+      const bufferedRequests = this._bufferedRequests;
+      this._bufferedRequests = [];
+      for (const data of bufferedRequests) {
+        this._onMessage(data);
+      }
+    });
     return () => this.unregister(namespace);
   }
 
@@ -107,7 +116,7 @@ class SimpleChannel {
       const namespace = data.namespace;
       const handler = this._handlers.get(namespace);
       if (!handler) {
-        this.transport.sendMessage({responseId: data.requestId, error: `error in channel "${this._name}": No handler for namespace "${namespace}"`});
+        this._bufferedRequests.push(data);
         return;
       }
       const method = handler[data.methodName];

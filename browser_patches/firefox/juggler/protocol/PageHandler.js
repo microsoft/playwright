@@ -17,7 +17,7 @@ const helper = new Helper();
 class WorkerHandler {
   constructor(session, contentChannel, workerId) {
     this._session = session;
-    this._contentWorker = contentChannel.connect(session.sessionId() + workerId);
+    this._contentWorker = contentChannel.connect(workerId);
     this._workerId = workerId;
 
     const emitWrappedProtocolEvent = eventName => {
@@ -30,7 +30,7 @@ class WorkerHandler {
     }
 
     this._eventListeners = [
-      contentChannel.register(session.sessionId() + workerId, {
+      contentChannel.register(workerId, {
         runtimeConsole: emitWrappedProtocolEvent('Runtime.console'),
         runtimeExecutionContextCreated: emitWrappedProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitWrappedProtocolEvent('Runtime.executionContextDestroyed'),
@@ -59,7 +59,7 @@ class PageHandler {
   constructor(target, session, contentChannel) {
     this._session = session;
     this._contentChannel = contentChannel;
-    this._contentPage = contentChannel.connect(session.sessionId() + 'page');
+    this._contentPage = contentChannel.connect('page');
     this._workers = new Map();
 
     const emitProtocolEvent = eventName => {
@@ -67,7 +67,7 @@ class PageHandler {
     }
 
     this._eventListeners = [
-      contentChannel.register(session.sessionId() + 'page', {
+      contentChannel.register('page', {
         pageBindingCalled: emitProtocolEvent('Page.bindingCalled'),
         pageDispatchMessageFromWorker: emitProtocolEvent('Page.dispatchMessageFromWorker'),
         pageEventFired: emitProtocolEvent('Page.eventFired'),

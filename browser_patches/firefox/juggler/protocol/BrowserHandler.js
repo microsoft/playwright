@@ -7,6 +7,10 @@
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
+const {PageHandler} = ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js");
+const {NetworkHandler} = ChromeUtils.import("chrome://juggler/content/protocol/NetworkHandler.js");
+const {RuntimeHandler} = ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js");
+const {AccessibilityHandler} = ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js");
 
 const helper = new Helper();
 
@@ -29,19 +33,6 @@ class BrowserHandler {
     this._enabled = true;
     this._attachToDefaultContext = attachToDefaultContext;
 
-    for (const target of this._targetRegistry.reportedTargets()) {
-      if (!this._shouldAttachToTarget(target))
-        continue;
-      const session = this._dispatcher.createSession();
-      this._attachedSessions.set(target, session);
-      this._session.emitEvent('Browser.attachedToTarget', {
-        sessionId: session.sessionId(),
-        targetInfo: target.info()
-      });
-      target.initSession(session);
-      target.connectSession(session);
-    }
-
     this._eventListeners = [
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetCreated, this._onTargetCreated.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
@@ -54,6 +45,9 @@ class BrowserHandler {
     };
     Services.obs.addObserver(onScreencastStopped, 'juggler-screencast-stopped');
     this._eventListeners.push(() => Services.obs.removeObserver(onScreencastStopped, 'juggler-screencast-stopped'));
+
+    for (const target of this._targetRegistry.targets())
+      this._onTargetCreated(target);
   }
 
   async createBrowserContext({removeOnDetach}) {
@@ -73,10 +67,8 @@ class BrowserHandler {
 
   dispose() {
     helper.removeListeners(this._eventListeners);
-    for (const [target, session] of this._attachedSessions) {
-      target.disconnectSession(session);
+    for (const [target, session] of this._attachedSessions)
       this._dispatcher.destroySession(session);
-    }
     this._attachedSessions.clear();
     for (const browserContextId of this._createdBrowserContextIds) {
       const browserContext = this._targetRegistry.browserContextForId(browserContextId);
@@ -87,24 +79,29 @@ class BrowserHandler {
   }
 
   _shouldAttachToTarget(target) {
-    if (!target._browserContext)
-      return false;
     if (this._createdBrowserContextIds.has(target._browserContext.browserContextId))
       return true;
     return this._attachToDefaultContext && target._browserContext === this._targetRegistry.defaultContext();
   }
 
-  _onTargetCreated({sessions, target}) {
+  _onTargetCreated(target) {
     if (!this._shouldAttachToTarget(target))
       return;
+    const channel = target.channel();
     const session = this._dispatcher.createSession();
     this._attachedSessions.set(target, session);
+    const pageHandler = new PageHandler(target, session, channel);
+    const networkHandler = new NetworkHandler(target, session, channel);
+    session.registerHandler('Page', pageHandler);
+    session.registerHandler('Network', networkHandler);
+    session.registerHandler('Runtime', new RuntimeHandler(session, channel));
+    session.registerHandler('Accessibility', new AccessibilityHandler(session, channel));
+    pageHandler.enable();
+    networkHandler.enable();
     this._session.emitEvent('Browser.attachedToTarget', {
       sessionId: session.sessionId(),
       targetInfo: target.info()
     });
-    target.initSession(session);
-    sessions.push(session);
   }
 
   _onTargetDestroyed(target) {
