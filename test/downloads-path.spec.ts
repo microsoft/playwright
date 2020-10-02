@@ -83,7 +83,6 @@ it('should delete downloads when context closes', async ({downloadsBrowser, serv
   expect(fs.existsSync(path)).toBeTruthy();
   await page.close();
   expect(fs.existsSync(path)).toBeFalsy();
-
 });
 
 it('should report downloads in downloadsPath folder', async ({downloadsBrowser, testOutputPath, server}) => {
@@ -98,7 +97,7 @@ it('should report downloads in downloadsPath folder', async ({downloadsBrowser, 
   await page.close();
 });
 
-it('should accept downloads', async ({persistentDownloadsContext, testOutputPath, server})  => {
+it('should accept downloads in persistent context', async ({persistentDownloadsContext, testOutputPath, server})  => {
   const page = persistentDownloadsContext.pages()[0];
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
@@ -110,13 +109,14 @@ it('should accept downloads', async ({persistentDownloadsContext, testOutputPath
   expect(path.startsWith(testOutputPath(''))).toBeTruthy();
 });
 
-it('should not delete downloads when the context closes', async ({persistentDownloadsContext}) => {
+it('should delete downloads when persistent context closes', async ({persistentDownloadsContext}) => {
   const page = persistentDownloadsContext.pages()[0];
   const [ download ] = await Promise.all([
     page.waitForEvent('download'),
     page.click('a')
   ]);
   const path = await download.path();
-  await persistentDownloadsContext.close();
   expect(fs.existsSync(path)).toBeTruthy();
+  await persistentDownloadsContext.close();
+  expect(fs.existsSync(path)).toBeFalsy();
 });

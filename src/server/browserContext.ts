@@ -265,15 +265,10 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async close() {
-    if (this._isPersistentContext) {
-      // Default context is only created in 'persistent' mode and closing it should close
-      // the browser.
-      await this._browser.close();
-      return;
-    }
     if (this._closedStatus === 'open') {
       this._closedStatus = 'closing';
-      await this._doClose();
+
+      // Collect videos/downloads that we will await.
       const promises: Promise<any>[] = [];
       for (const download of this._downloads)
         promises.push(download.delete());
@@ -281,7 +276,24 @@ export abstract class BrowserContext extends EventEmitter {
         if (video._context === this)
           promises.push(video._finishedPromise);
       }
+
+      if (this._isPersistentContext) {
+        // Close all the pages instead of the context,
+        // because we cannot close the default context.
+        await Promise.all(this.pages().map(page => page.close()));
+      } else {
+        // Close the context.
+        await this._doClose();
+      }
+
+      // Wait for the videos/downloads to finish.
       await Promise.all(promises);
+
+      // Persistent context should also close the browser.
+      if (this._isPersistentContext)
+        await this._browser.close();
+
+      // Bookkeeping.
       for (const listener of contextListeners)
         await listener.onContextDestroyed(this);
       this._didCloseInternal();
