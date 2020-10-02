@@ -322,9 +322,10 @@ class MDOutline {
 /**
  * @param {!Page} page
  * @param {!Array<!Source>} sources
+ * @param {!boolean} copyDocsFromSuperClasses
  * @return {!Promise<{documentation: !Documentation, errors: !Array<string>}>}
  */
-module.exports = async function(page, sources) {
+module.exports = async function(page, sources, copyDocsFromSuperClasses) {
   const classes = [];
   const errors = [];
   for (const source of sources) {
@@ -334,25 +335,26 @@ module.exports = async function(page, sources) {
   }
   const documentation = new Documentation(classes);
 
+  if (copyDocsFromSuperClasses) {
+    // Push base class documentation to derived classes.
+    for (const [name, clazz] of documentation.classes.entries()) {
+      clazz.validateOrder(errors, clazz);
 
-  // Push base class documentation to derived classes.
-  for (const [name, clazz] of documentation.classes.entries()) {
-    clazz.validateOrder(errors, clazz);
+      if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
+        continue;
+      const superClass = documentation.classes.get(clazz.extends);
+      if (!superClass) {
+        errors.push(`Undefined superclass: ${superClass} in ${name}`);
+        continue;
+      }
+      for (const memberName of clazz.members.keys()) {
+        if (superClass.members.has(memberName))
+          errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
+      }
 
-    if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
-      continue;
-    const superClass = documentation.classes.get(clazz.extends);
-    if (!superClass) {
-      errors.push(`Undefined superclass: ${superClass} in ${name}`);
-      continue;
+      clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
+      clazz.index();
     }
-    for (const memberName of clazz.members.keys()) {
-      if (superClass.members.has(memberName))
-        errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
-    }
-
-    clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
-    clazz.index();
   }
   return { documentation, errors };
 };

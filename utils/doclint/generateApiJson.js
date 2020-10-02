@@ -24,7 +24,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
   const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
   const browser = await playwright.chromium.launch();
   const page = await browser.newPage();
-  const { documentation } = await mdBuilder(page, [api]);
+  const { documentation } = await mdBuilder(page, [api], false);
   const result = serialize(documentation);
   console.log(JSON.stringify(result));
   await browser.close();
@@ -39,6 +39,8 @@ function serialize(documentation) {
 
 function serializeClass(clazz) {
   const result = { name: clazz.name };
+  if (clazz.extends)
+    result.extends = clazz.extends;
   result.members = {};
   for (const member of clazz.membersArray)
     result.members[member.name] = serializeMember(member);

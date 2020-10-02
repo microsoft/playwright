@@ -36,7 +36,7 @@ let documentation;
   const browser = await chromium.launch();
   const page = await browser.newPage();
   const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-  const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api]);
+  const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api], true);
   await browser.close();
   const sources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
   const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources);

@@ -63,7 +63,7 @@ async function testMDBuilder(name) {
   it(name, async({page}) => {
     const dirPath = path.join(__dirname, name);
     const sources = await Source.readdir(dirPath, '.md');
-    const {documentation} = await mdBuilder(page, sources);
+    const {documentation} = await mdBuilder(page, sources, true);
     expect(serialize(documentation)).toBe(fs.readFileSync(path.join(dirPath, 'result.txt')).toString());
   });
 }
