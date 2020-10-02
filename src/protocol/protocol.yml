@@ -167,6 +167,15 @@ RemoteBrowser:
     browser: Browser
     selectors: Selectors
 
+  events:
+
+    # Video stream blocks owner context from closing until the stream is closed.
+    # Make sure to close the stream!
+    video:
+      parameters:
+        context: BrowserContext
+        stream: Stream
+
 
 Selectors:
   type: interface

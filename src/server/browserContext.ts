@@ -35,13 +35,24 @@ export class Video {
   readonly _path: string;
   readonly _context: BrowserContext;
   readonly _finishedPromise: Promise<void>;
-  _finishCallback: () => void = () => {};
+  private _finishCallback: () => void = () => {};
+  private _callbackOnFinish?: () => Promise<void>;
 
   constructor(context: BrowserContext, videoId: string, path: string) {
     this._videoId = videoId;
     this._path = path;
     this._context = context;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
+  }
+
+  async _finish() {
+    if (this._callbackOnFinish)
+      await this._callbackOnFinish();
+    this._finishCallback();
+  }
+
+  _waitForCallbackOnFinish(callback: () => Promise<void>) {
+    this._callbackOnFinish = callback;
   }
 }
 
@@ -78,6 +89,7 @@ export abstract class BrowserContext extends EventEmitter {
   static Events = {
     Close: 'close',
     Page: 'page',
+    VideoStarted: 'videostarted',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
