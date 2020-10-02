@@ -153,7 +153,7 @@ class TargetRegistry {
       const tab = event.target;
       const userContextId = tab.userContextId;
       const browserContext = this._userContextIdToBrowserContext.get(userContextId);
-      const hasExplicitSize = (appWindow.chromeFlags & Ci.nsIWebBrowserChrome.JUGGLER_WINDOW_EXPLICIT_SIZE) !== 0;
+      const hasExplicitSize = appWindow && (appWindow.chromeFlags & Ci.nsIWebBrowserChrome.JUGGLER_WINDOW_EXPLICIT_SIZE) !== 0;
       const openerContext = tab.linkedBrowser.browsingContext.opener;
       let openerTarget;
       if (openerContext) {
@@ -182,9 +182,14 @@ class TargetRegistry {
     const domWindowTabListeners = new Map();
 
     const onOpenWindow = async (appWindow) => {
-      if (!(appWindow instanceof Ci.nsIAppWindow))
-        return;
-      const domWindow = appWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+
+      let domWindow;
+      if (appWindow instanceof Ci.nsIAppWindow) {
+        domWindow = appWindow.QueryInterface(Ci.nsIInterfaceRequestor).getInterface(Ci.nsIDOMWindowInternal || Ci.nsIDOMWindow);
+      } else {
+        domWindow = appWindow;
+        appWindow = null;
+      }
       if (!(domWindow instanceof Ci.nsIDOMChromeWindow))
         return;
       // In persistent mode, window might be opened long ago and might be
@@ -389,7 +394,7 @@ class PageTarget {
     // Otherwise, explicitly set page viewport prevales over browser context
     // default viewport.
     const viewportSize = this._viewportSize || this._browserContext.defaultViewportSize;
-    const actualSize = setViewportSizeForBrowser(viewportSize, this._linkedBrowser, this._window);
+    const actualSize = await setViewportSizeForBrowser(viewportSize, this._linkedBrowser, this._window);
     await this._channel.connect('').send('awaitViewportDimensions', {
       width: actualSize.width,
       height: actualSize.height
@@ -694,7 +699,8 @@ async function waitForWindowReady(window) {
     await helper.awaitEvent(window, 'load');
 }
 
-function setViewportSizeForBrowser(viewportSize, browser, window) {
+async function setViewportSizeForBrowser(viewportSize, browser, window) {
+  await waitForWindowReady(window);
   if (viewportSize) {
     const {width, height} = viewportSize;
     const rect = browser.getBoundingClientRect();
