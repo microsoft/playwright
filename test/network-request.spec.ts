@@ -37,12 +37,38 @@ it('should work for subframe navigation request', async ({page, server}) => {
 
 it('should work for fetch requests', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
-  let requests = [];
+  const requests = [];
   page.on('request', request => requests.push(request));
   await page.evaluate(() => fetch('/digits/1.png'));
-  requests = requests.filter(request => !request.url().includes('favicon'));
   expect(requests.length).toBe(1);
   expect(requests[0].frame()).toBe(page.mainFrame());
+});
+
+it('should work for a redirect', async ({page, server}) => {
+  server.setRedirect('/foo.html', '/empty.html');
+  const requests = [];
+  page.on('request', request => requests.push(request));
+  await page.goto(server.PREFIX + '/foo.html');
+
+  expect(requests.length).toBe(2);
+  expect(requests[0].url()).toBe(server.PREFIX + '/foo.html');
+  expect(requests[1].url()).toBe(server.PREFIX + '/empty.html');
+});
+
+// https://github.com/microsoft/playwright/issues/3993
+it('should not work for a redirect and interception', async ({page, server}) => {
+  server.setRedirect('/foo.html', '/empty.html');
+  const requests = [];
+  await page.route('**', route => {
+    requests.push(route.request());
+    route.continue();
+  });
+  await page.goto(server.PREFIX + '/foo.html');
+
+  expect(page.url()).toBe(server.PREFIX + '/empty.html');
+
+  expect(requests.length).toBe(1);
+  expect(requests[0].url()).toBe(server.PREFIX + '/foo.html');
 });
 
 it('should return headers', async ({page, server, isChromium, isFirefox, isWebKit}) => {

@@ -1654,6 +1654,8 @@ Routing provides the capability to modify network requests that are made by a pa
 
 Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
 
+> **NOTE** The handler will only be called for the first url if the response is a redirect.
+
 An example of a naïve handler that aborts all image requests:
 
 ```js
