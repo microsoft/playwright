@@ -122,6 +122,11 @@ playwright.chromium.launch().then(async browser => {
     console.log(content);
   });
 
+  await page.exposeBinding('clicked', async (source, handle) => {
+    await handle.asElement()!.textContent();
+    await source.page.goto('http://example.com');
+  }, { handle: true });
+
   await page.emulateMedia({media: 'screen'});
   await page.pdf({ path: 'page.pdf' });
 

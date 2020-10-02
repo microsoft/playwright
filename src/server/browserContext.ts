@@ -167,14 +167,14 @@ export abstract class BrowserContext extends EventEmitter {
     return this._doSetHTTPCredentials(httpCredentials);
   }
 
-  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource): Promise<void> {
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
     for (const page of this.pages()) {
       if (page._pageBindings.has(name))
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
-    const binding = new PageBinding(name, playwrightBinding);
+    const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     this._doExposeBinding(binding);
   }

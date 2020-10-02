@@ -475,6 +475,7 @@ BrowserContext:
     exposeBinding:
       parameters:
         name: string
+        needsHandle: boolean?
 
     grantPermissions:
       parameters:
@@ -618,6 +619,7 @@ Page:
     exposeBinding:
       parameters:
         name: string
+        needsHandle: boolean?
 
     goBack:
       parameters:
@@ -1780,8 +1782,9 @@ BindingCall:
     frame: Frame
     name: string
     args:
-      type: array
+      type: array?
       items: SerializedValue
+    handle: JSHandle?
 
   commands:
 

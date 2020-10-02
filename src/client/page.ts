@@ -28,9 +28,9 @@ import { Dialog } from './dialog';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
 import { Worker } from './worker';
-import { Frame, FunctionWithSource, verifyLoadState, WaitForNavigationOptions } from './frame';
+import { Frame, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse } from './input';
-import { assertMaxArguments, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
+import { assertMaxArguments, Func1, FuncOn, SmartHandle, serializeArgument, parseResult, JSHandle } from './jsHandle';
 import { Request, Response, Route, RouteHandler, validateHeaders } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
@@ -60,6 +60,7 @@ type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & 
   path?: string,
 };
 type Listener = (...args: any[]) => void;
+export type FunctionWithSource = (source: { context: BrowserContext, page: Page, frame: Frame }, ...args: any) => any;
 
 export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitializer> {
   private _browserContext: BrowserContext;
@@ -280,17 +281,17 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
-    await this.exposeBinding(name, (options, ...args: any) => playwrightFunction(...args));
+    return this._wrapApiCall('page.exposeFunction', async () => {
+      await this._channel.exposeBinding({ name });
+      const binding: FunctionWithSource = (source, ...args) => playwrightFunction(...args);
+      this._bindings.set(name, binding);
+    });
   }
 
-  async exposeBinding(name: string, playwrightBinding: FunctionWithSource) {
+  async exposeBinding(name: string, playwrightBinding: FunctionWithSource, options: { handle?: boolean } = {}) {
     return this._wrapApiCall('page.exposeBinding', async () => {
-      if (this._bindings.has(name))
-        throw new Error(`Function "${name}" has been already registered`);
-      if (this._browserContext._bindings.has(name))
-        throw new Error(`Function "${name}" has been already registered in the browser context`);
+      await this._channel.exposeBinding({ name, needsHandle: options.handle });
       this._bindings.set(name, playwrightBinding);
-      await this._channel.exposeBinding({ name });
     });
   }
 
@@ -615,7 +616,11 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel, chann
         page: frame._page!,
         frame
       };
-      const result = await func(source, ...this._initializer.args.map(parseResult));
+      let result: any;
+      if (this._initializer.handle)
+        result = await func(source, JSHandle.from(this._initializer.handle));
+      else
+        result = await func(source, ...this._initializer.args!.map(parseResult));
       this._channel.resolve({ result: serializeArgument(result) });
     } catch (e) {
       this._channel.reject({ error: serializeError(e) });

@@ -232,12 +232,12 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async exposeBinding(name: string, playwrightBinding: frames.FunctionWithSource) {
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
     if (this._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered`);
     if (this._browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
-    const binding = new PageBinding(name, playwrightBinding);
+    const binding = new PageBinding(name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     await this._delegate.exposeBinding(binding);
   }
@@ -454,11 +454,13 @@ export class PageBinding {
   readonly name: string;
   readonly playwrightFunction: frames.FunctionWithSource;
   readonly source: string;
+  readonly needsHandle: boolean;
 
-  constructor(name: string, playwrightFunction: frames.FunctionWithSource) {
+  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)})`;
+    this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle})`;
+    this.needsHandle = needsHandle;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
@@ -467,13 +469,25 @@ export class PageBinding {
       let binding = page._pageBindings.get(name);
       if (!binding)
         binding = page._browserContext._pageBindings.get(name);
-      const result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
+      let result: any;
+      if (binding!.needsHandle) {
+        const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
+        result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
+      } else {
+        result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
+      }
       context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
     } catch (error) {
       if (isError(error))
         context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
       else
         context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
+    }
+
+    function takeHandle(arg: { name: string, seq: number }) {
+      const handle = (window as any)[arg.name]['handles'].get(arg.seq);
+      (window as any)[arg.name]['handles'].delete(arg.seq);
+      return handle;
     }
 
     function deliverResult(arg: { name: string, seq: number, result: any }) {
@@ -495,12 +509,14 @@ export class PageBinding {
   }
 }
 
-function addPageBinding(bindingName: string) {
+function addPageBinding(bindingName: string, needsHandle: boolean) {
   const binding = (window as any)[bindingName];
   if (binding.__installed)
     return;
   (window as any)[bindingName] = (...args: any[]) => {
     const me = (window as any)[bindingName];
+    if (needsHandle && args.slice(1).some(arg => arg !== undefined))
+      throw new Error(`exposeBindingHandle supports a single argument, ${args.length} received`);
     let callbacks = me['callbacks'];
     if (!callbacks) {
       callbacks = new Map();
@@ -508,8 +524,18 @@ function addPageBinding(bindingName: string) {
     }
     const seq = (me['lastSeq'] || 0) + 1;
     me['lastSeq'] = seq;
+    let handles = me['handles'];
+    if (!handles) {
+      handles = new Map();
+      me['handles'] = handles;
+    }
     const promise = new Promise((resolve, reject) => callbacks.set(seq, {resolve, reject}));
-    binding(JSON.stringify({name: bindingName, seq, args}));
+    if (needsHandle) {
+      handles.set(seq, args[0]);
+      binding(JSON.stringify({name: bindingName, seq}));
+    } else {
+      binding(JSON.stringify({name: bindingName, seq, args}));
+    }
     return promise;
   };
   (window as any)[bindingName].__installed = true;
