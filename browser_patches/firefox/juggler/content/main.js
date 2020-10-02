@@ -106,10 +106,6 @@ function initialize() {
   pageAgent.enable();
 
   channel.register('', {
-    detach() {
-      pageAgent.dispose();
-    },
-
     addScriptToEvaluateOnNewDocument(script) {
       frameTree.addScriptToEvaluateOnNewDocument(script);
     },

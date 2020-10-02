@@ -308,7 +308,7 @@ class TargetRegistry {
       if (await target.hasFailedToOverrideTimezone())
         throw new Error('Failed to override timezone');
     }
-    return target;
+    return target.id();
   }
 
   targets() {
@@ -343,7 +343,6 @@ class PageTarget {
     this._viewportSize = undefined;
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
-
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
     this._channelIds = new Set();
 
@@ -400,12 +399,6 @@ class PageTarget {
   async setViewportSize(viewportSize) {
     this._viewportSize = viewportSize;
     await this.updateViewportSize();
-  }
-
-  async disconnectSession(session) {
-    if (this._disposed)
-      return;
-    this._channel.connect('').emit('detach', { sessionId: session.sessionId() });
   }
 
   async close(runBeforeUnload = false) {

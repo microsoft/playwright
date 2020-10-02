@@ -67,10 +67,8 @@ class BrowserHandler {
 
   dispose() {
     helper.removeListeners(this._eventListeners);
-    for (const [target, session] of this._attachedSessions) {
-      target.disconnectSession(session);
+    for (const [target, session] of this._attachedSessions)
       this._dispatcher.destroySession(session);
-    }
     this._attachedSessions.clear();
     for (const browserContextId of this._createdBrowserContextIds) {
       const browserContext = this._targetRegistry.browserContextForId(browserContextId);
@@ -127,10 +125,8 @@ class BrowserHandler {
   }
 
   async newPage({browserContextId}) {
-    const target = await this._targetRegistry.newPage({browserContextId});
-    if (!target)
-      throw new Error(`Failed to create target in browserContextId = ${browserContextId}!`);
-    return {targetId: target.id()};
+    const targetId = await this._targetRegistry.newPage({browserContextId});
+    return {targetId};
   }
 
   async close() {
