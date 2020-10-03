@@ -16,6 +16,7 @@
  */
 
 import { serverFixtures } from './remoteServer.fixture';
+import * as fs from 'fs';
 const { it, expect, describe } = serverFixtures;
 
 describe('connect', (suite, { wire }) => {
@@ -231,5 +232,21 @@ describe('connect', (suite, { wire }) => {
       remoteServer.close()
     ]);
     await page.close();
+  });
+
+  it('should save videos from remote browser', async ({browserType, remoteServer, testOutputPath}) => {
+    const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    const videosPath = testOutputPath();
+    const context = await remote.newContext({
+      videosPath,
+      videoSize: { width: 320, height: 240 },
+    });
+    const page = await context.newPage();
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await new Promise(r => setTimeout(r, 1000));
+    await context.close();
+
+    const files = fs.readdirSync(videosPath);
+    expect(files.some(file => file.endsWith('webm'))).toBe(true);
   });
 });

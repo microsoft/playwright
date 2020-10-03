@@ -120,7 +120,12 @@ export type RemoteBrowserInitializer = {
   selectors: SelectorsChannel,
 };
 export interface RemoteBrowserChannel extends Channel {
+  on(event: 'video', callback: (params: RemoteBrowserVideoEvent) => void): this;
 }
+export type RemoteBrowserVideoEvent = {
+  context: BrowserContextChannel,
+  stream: StreamChannel,
+};
 
 // ----------- Selectors -----------
 export type SelectorsInitializer = {};

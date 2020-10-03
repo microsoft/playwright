@@ -89,6 +89,7 @@ export abstract class Browser extends EventEmitter {
   _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
     const video = new Video(context, videoId, path);
     this._idToVideo.set(videoId, video);
+    context.emit(BrowserContext.Events.VideoStarted, video);
     pageOrError.then(pageOrError => {
       if (pageOrError instanceof Page)
         pageOrError.emit(Page.Events.VideoStarted, video);
@@ -98,7 +99,7 @@ export abstract class Browser extends EventEmitter {
   _videoFinished(videoId: string) {
     const video = this._idToVideo.get(videoId)!;
     this._idToVideo.delete(videoId);
-    video._finishCallback();
+    video._finish();
   }
 
   _didClose() {
