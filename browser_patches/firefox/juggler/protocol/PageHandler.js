@@ -6,7 +6,6 @@
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
-const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -91,7 +90,6 @@ class PageHandler {
     this._dialogs = new Map();
 
     this._enabled = false;
-    this._videoSessionId = -1;
   }
 
   _onWorkerCreated({workerId, frameId, url}) {
@@ -132,24 +130,23 @@ class PageHandler {
       helper.on(this._pageTarget, 'crashed', () => {
         this._session.emitEvent('Page.crashed', {});
       }),
+      helper.on(this._pageTarget, 'screencastStarted', () => {
+        const info = this._pageTarget.screencastInfo();
+        this._session.emitEvent('Page.screencastStarted', { screencastId: '' + info.videoSessionId, file: info.file });
+      }),
     ]);
 
     const options = this._pageTarget.browserContext().screencastOptions;
-    if (options) {
-      const file = OS.Path.join(options.dir, helper.generateId() + '.webm');
-      // On Mac the window may not yet be visible when TargetCreated and its
-      // NSWindow.windowNumber may be -1, so we wait until the window is known
-      // to be initialized and visible.
-      await this._pageTarget.windowReady();
-      await this.startVideoRecording(Object.assign({file}, options));
-    }
+    if (options)
+      await this._pageTarget.startVideoRecording(options);
   }
 
   async dispose() {
     this._contentPage.dispose();
     helper.removeListeners(this._eventListeners);
-    if (this._videoSessionId !== -1)
-      await this.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
+
+    if (this._pageTarget.screencastInfo())
+      await this._pageTarget.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
   }
 
   async setViewportSize({viewportSize}) {
@@ -303,38 +300,8 @@ class PageHandler {
     return await worker.sendMessage(JSON.parse(message));
   }
 
-  startVideoRecording({file, width, height, scale}) {
-    if (width < 10 || width > 10000 || height < 10 || height > 10000)
-      throw new Error("Invalid size");
-    if (scale && (scale <= 0 || scale > 1))
-      throw new Error("Unsupported scale");
-
-    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
-    const docShell = this._pageTarget._gBrowser.ownerGlobal.docShell;
-    // Exclude address bar and navigation control from the video.
-    const rect = this._pageTarget.linkedBrowser().getBoundingClientRect();
-    const devicePixelRatio = this._pageTarget._window.devicePixelRatio;
-    this._videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
-    this._session.emitEvent('Page.screencastStarted', {screencastId: '' + this._videoSessionId, file});
-  }
-
   async stopVideoRecording() {
-    if (this._videoSessionId === -1)
-      throw new Error('No video recording in progress');
-    const videoSessionId = this._videoSessionId;
-    this._videoSessionId = -1;
-    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
-    const result = new Promise(resolve =>
-      Services.obs.addObserver(function onStopped(subject, topic, data) {
-        if (videoSessionId != data)
-          return;
-
-        Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
-        resolve();
-      }, 'juggler-screencast-stopped')
-    );
-    screencast.stopVideoRecording(videoSessionId);
-    return result;
+    await this._pageTarget.stopVideoRecording();
   }
 }
 

@@ -10,6 +10,7 @@ const {Preferences} = ChromeUtils.import("resource://gre/modules/Preferences.jsm
 const {ContextualIdentityService} = ChromeUtils.import("resource://gre/modules/ContextualIdentityService.jsm");
 const {NetUtil} = ChromeUtils.import('resource://gre/modules/NetUtil.jsm');
 const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
+const {OS} = ChromeUtils.import("resource://gre/modules/osfile.jsm");
 
 const helper = new Helper();
 
@@ -350,6 +351,7 @@ class PageTarget {
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
     this._channelIds = new Set();
+    this._screencastInfo = undefined;
 
     const navigationListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
@@ -452,6 +454,50 @@ class PageTarget {
 
   async hasFailedToOverrideTimezone() {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
+  }
+
+  async startVideoRecording({width, height, scale, dir}) {
+    // On Mac the window may not yet be visible when TargetCreated and its
+    // NSWindow.windowNumber may be -1, so we wait until the window is known
+    // to be initialized and visible.
+    await this.windowReady();
+    const file = OS.Path.join(dir, helper.generateId() + '.webm');
+    if (width < 10 || width > 10000 || height < 10 || height > 10000)
+      throw new Error("Invalid size");
+    if (scale && (scale <= 0 || scale > 1))
+      throw new Error("Unsupported scale");
+
+    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    const docShell = this._gBrowser.ownerGlobal.docShell;
+    // Exclude address bar and navigation control from the video.
+    const rect = this.linkedBrowser().getBoundingClientRect();
+    const devicePixelRatio = this._window.devicePixelRatio;
+    const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
+    this._screencastInfo = { videoSessionId, file };
+    this.emit('screencastStarted');
+  }
+
+  async stopVideoRecording() {
+    if (!this._screencastInfo)
+      throw new Error('No video recording in progress');
+    const screencastInfo = this._screencastInfo;
+    this._screencastInfo = undefined;
+    const screencast = Cc['@mozilla.org/juggler/screencast;1'].getService(Ci.nsIScreencastService);
+    const result = new Promise(resolve =>
+      Services.obs.addObserver(function onStopped(subject, topic, data) {
+        if (screencastInfo.videoSessionId != data)
+          return;
+
+        Services.obs.removeObserver(onStopped, 'juggler-screencast-stopped');
+        resolve();
+      }, 'juggler-screencast-stopped')
+    );
+    screencast.stopVideoRecording(screencastInfo.videoSessionId);
+    return result;
+  }
+
+  screencastInfo() {
+    return this._screencastInfo;
   }
 
   dispose() {
@@ -673,8 +719,14 @@ class BrowserContext {
     return result;
   }
 
-  setScreencastOptions(options) {
+  async setScreencastOptions(options) {
     this.screencastOptions = options;
+    if (!options)
+      return;
+    const promises = [];
+    for (const page of this.pages)
+      promises.push(page.startVideoRecording(options));
+    await Promise.all(promises);
   }
 }
 
