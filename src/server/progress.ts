@@ -58,7 +58,7 @@ export class ProgressController {
   private _state: 'before' | 'running' | 'aborted' | 'finished' = 'before';
   private _deadline: number = 0;
   private _timeout: number = 0;
-  private _logRecordring: string[] = [];
+  private _logRecording: string[] = [];
   private _listener?: (result: ProgressResult) => Promise<void>;
 
   constructor() {
@@ -88,7 +88,7 @@ export class ProgressController {
       aborted: this._abortedPromise,
       log: message => {
         if (this._state === 'running')
-          this._logRecordring.push(message);
+          this._logRecording.push(message);
         debugLogger.log(this._logName, message);
       },
       timeUntilDeadline: () => this._deadline ? this._deadline - monotonicTime() : 2147483647, // 2^31-1 safe setTimeout in Node.
@@ -117,10 +117,10 @@ export class ProgressController {
         await this._listener({
           startTime,
           endTime: monotonicTime(),
-          logs: this._logRecordring,
+          logs: this._logRecording,
         });
       }
-      this._logRecordring = [];
+      this._logRecording = [];
       return result;
     } catch (e) {
       this._aborted();
@@ -131,15 +131,15 @@ export class ProgressController {
         await this._listener({
           startTime,
           endTime: monotonicTime(),
-          logs: this._logRecordring,
+          logs: this._logRecording,
           error: e,
         });
       }
       rewriteErrorMessage(e,
           e.message +
-          formatLogRecording(this._logRecordring) +
+          formatLogRecording(this._logRecording) +
           kLoggingNote);
-      this._logRecordring = [];
+      this._logRecording = [];
       throw e;
     }
   }
