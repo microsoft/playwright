@@ -58,6 +58,45 @@ index f042cc1081850ac60e329b70b5569f8b97d4e4dc..65bcff9b41b9471ef1427e3ea330481c
    /**
     * Return XPCOM wrapper for the internal accessible.
     */
+diff --git a/browser/app/winlauncher/LauncherProcessWin.cpp b/browser/app/winlauncher/LauncherProcessWin.cpp
+index 7a8b4a621dd4056dfde1f200c62cf629415cc6a4..e600b2cb78a769a460d27104e1dcb805dbd11ed7 100644
+--- a/browser/app/winlauncher/LauncherProcessWin.cpp
++++ b/browser/app/winlauncher/LauncherProcessWin.cpp
+@@ -21,6 +21,7 @@
+ #include "mozilla/WinHeaderOnlyUtils.h"
+ #include "nsWindowsHelpers.h"
+ 
++#include <io.h>
+ #include <windows.h>
+ #include <processthreadsapi.h>
+ 
+@@ -322,8 +323,25 @@ Maybe<int> LauncherMain(int& argc, wchar_t* argv[],
+   HANDLE stdHandles[] = {::GetStdHandle(STD_INPUT_HANDLE),
+                          ::GetStdHandle(STD_OUTPUT_HANDLE),
+                          ::GetStdHandle(STD_ERROR_HANDLE)};
+-
+   attrs.AddInheritableHandles(stdHandles);
++  // Playwright pipe installation.
++  bool hasJugglerPipe =
++      mozilla::CheckArg(argc, argv, L"juggler-pipe",
++                        static_cast<const wchar_t**>(nullptr),
++                        mozilla::CheckArgFlag::None) == mozilla::ARG_FOUND;
++  if (hasJugglerPipe && !mozilla::EnvHasValue("PW_PIPE_READ")) {
++    intptr_t stdio3 = _get_osfhandle(3);
++    intptr_t stdio4 = _get_osfhandle(4);
++    CHAR stdio3str[20];
++    CHAR stdio4str[20];
++    itoa(stdio3, stdio3str, 10);
++    itoa(stdio4, stdio4str, 10);
++    SetEnvironmentVariable("PW_PIPE_READ", stdio3str);
++    SetEnvironmentVariable("PW_PIPE_WRITE", stdio4str);
++    HANDLE pipeHandles[] = {reinterpret_cast<HANDLE>(stdio3),
++                            reinterpret_cast<HANDLE>(stdio4)};
++    attrs.AddInheritableHandles(pipeHandles);
++  }
+ 
+   DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
+ 
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
 index 1e583f9fb014129d791d25b64a727021d6848105..6a91ef0bd0796abf99d8fd54ff6aede94aeb0807 100644
 --- a/browser/installer/allowed-dupes.mn
