@@ -16,6 +16,7 @@
 
 import { Readable } from 'stream';
 import * as channels from '../protocol/channels';
+import { parseError } from '../protocol/serializers';
 import { ChannelOwner } from './channelOwner';
 
 export class Stream extends ChannelOwner<channels.StreamChannel, channels.StreamInitializer> {
@@ -38,14 +39,17 @@ class StreamImpl extends Readable {
   constructor(channel: channels.StreamChannel) {
     super();
     this._channel = channel;
+    channel.on('streamError', ({ error }) => this.destroy(parseError(error)));
   }
 
   async _read(size: number) {
     const result = await this._channel.read({ size });
-    if (result.binary)
+    if (result.binary) {
       this.push(Buffer.from(result.binary, 'base64'));
-    else
+    } else {
       this.push(null);
+      this._channel.close().catch(e => null);
+    }
   }
 
   _destroy(error: Error | null, callback: (error: Error | null) => void): void {

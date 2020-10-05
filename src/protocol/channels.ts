@@ -2207,9 +2207,13 @@ export type DownloadDeleteResult = void;
 // ----------- Stream -----------
 export type StreamInitializer = {};
 export interface StreamChannel extends Channel {
+  on(event: 'streamError', callback: (params: StreamStreamErrorEvent) => void): this;
   read(params: StreamReadParams, metadata?: Metadata): Promise<StreamReadResult>;
   close(params?: StreamCloseParams, metadata?: Metadata): Promise<StreamCloseResult>;
 }
+export type StreamStreamErrorEvent = {
+  error: SerializedError,
+};
 export type StreamReadParams = {
   size?: number,
 };

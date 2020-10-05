@@ -1873,6 +1873,12 @@ Stream:
 
     close:
 
+  events:
+
+    streamError:
+      parameters:
+        error: SerializedError
+
 
 CDPSession:
   type: interface

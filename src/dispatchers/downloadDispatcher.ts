@@ -63,17 +63,11 @@ export class DownloadDispatcher extends Dispatcher<Download, channels.DownloadIn
         }
 
         try {
-          const readable = fs.createReadStream(localPath);
-          await new Promise(f => readable.on('readable', f));
-          const stream = new StreamDispatcher(this._scope, readable);
+          const stream = new StreamDispatcher(this._scope, fs.createReadStream(localPath));
           // Resolve with a stream, so that client starts saving the data.
           resolve({ stream });
           // Block the download until the stream is consumed.
-          await new Promise<void>(resolve => {
-            readable.on('close', resolve);
-            readable.on('end', resolve);
-            readable.on('error', resolve);
-          });
+          await stream.waitUntilClosed();
         } catch (e) {
           reject(e);
         }
