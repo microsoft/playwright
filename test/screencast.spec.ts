@@ -341,9 +341,7 @@ describe('screencast', suite => {
     expect(await videoPlayer.videoHeight).toBe(720);
   });
 
-  it('should capture static page in persistent context', test => {
-    test.fixme('We do not wait for the video finish when closing persistent context.');
-  }, async ({launchPersistent, testOutputPath}) => {
+  it('should capture static page in persistent context', async ({launchPersistent, testOutputPath}) => {
     const videosPath = testOutputPath('');
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({
