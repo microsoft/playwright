@@ -150,8 +150,8 @@ describe('screencast', suite => {
 
   it('should capture static page', (test, { browserName }) => {
     test.fixme(browserName === 'firefox', 'Always clips to square');
-  }, async ({browser, testOutputPath}) => {
-    const videosPath = testOutputPath('');
+  }, async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
       videosPath,
@@ -182,8 +182,8 @@ describe('screencast', suite => {
     }
   });
 
-  it('should capture navigation', async ({browser, server, testOutputPath}) => {
-    const videosPath = testOutputPath('');
+  it('should capture navigation', async ({browser, server, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({
       videosPath,
       videoSize: { width: 1280, height: 720 }
@@ -214,8 +214,8 @@ describe('screencast', suite => {
 
   it('should capture css transformation', (test, { browserName, platform, headful }) => {
     test.fixme(headful, 'Fails on headful');
-  }, async ({browser, server, testOutputPath}) => {
-    const videosPath = testOutputPath('');
+  }, async ({browser, server, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     // Set viewport equal to screencast frame size to avoid scaling.
     const context = await browser.newContext({
@@ -240,8 +240,8 @@ describe('screencast', suite => {
     }
   });
 
-  it('should work for popups', async ({browser, testOutputPath, server}) => {
-    const videosPath = testOutputPath('');
+  it('should work for popups', async ({browser, testInfo, server}) => {
+    const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({
       videosPath,
       videoSize: { width: 320, height: 240 }
@@ -262,8 +262,8 @@ describe('screencast', suite => {
 
   it('should scale frames down to the requested size ', (test, parameters) => {
     test.fixme(parameters.headful, 'Fails on headful');
-  }, async ({browser, testOutputPath, server}) => {
-    const videosPath = testOutputPath('');
+  }, async ({browser, testInfo, server}) => {
+    const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({
       videosPath,
       viewport: {width: 640, height: 480},
@@ -307,8 +307,8 @@ describe('screencast', suite => {
     }
   });
 
-  it('should use viewport as default size', async ({browser, testOutputPath}) => {
-    const videosPath = testOutputPath('');
+  it('should use viewport as default size', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
     const size = {width: 800, height: 600};
     const context = await browser.newContext({
       videosPath,
@@ -325,8 +325,8 @@ describe('screencast', suite => {
     expect(await videoPlayer.videoHeight).toBe(size.height);
   });
 
-  it('should be 1280x720 by default', async ({browser, testOutputPath}) => {
-    const videosPath = testOutputPath('');
+  it('should be 1280x720 by default', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({
       videosPath,
     });
@@ -341,8 +341,8 @@ describe('screencast', suite => {
     expect(await videoPlayer.videoHeight).toBe(720);
   });
 
-  it('should capture static page in persistent context', async ({launchPersistent, testOutputPath}) => {
-    const videosPath = testOutputPath('');
+  it('should capture static page in persistent context', async ({launchPersistent, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({
       videosPath,

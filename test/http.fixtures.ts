@@ -29,40 +29,39 @@ type HttpTestFixtures = {
 };
 
 export const fixtures = baseFixtures
-    .declareWorkerFixtures<HttpWorkerFixtures>()
-    .declareTestFixtures<HttpTestFixtures>();
-const { defineTestFixture, defineWorkerFixture } = fixtures;
+    .defineWorkerFixtures<HttpWorkerFixtures>({
+      httpService: async ({ testWorkerIndex }, test) => {
+        const assetsPath = path.join(__dirname, 'assets');
+        const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-defineWorkerFixture('httpService', async ({ testWorkerIndex }, test) => {
-  const assetsPath = path.join(__dirname, 'assets');
-  const cachedPath = path.join(__dirname, 'assets', 'cached');
+        const port = 8907 + testWorkerIndex * 2;
+        const server = await TestServer.create(assetsPath, port);
+        server.enableHTTPCache(cachedPath);
 
-  const port = 8907 + testWorkerIndex * 2;
-  const server = await TestServer.create(assetsPath, port);
-  server.enableHTTPCache(cachedPath);
+        const httpsPort = port + 1;
+        const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+        httpsServer.enableHTTPCache(cachedPath);
 
-  const httpsPort = port + 1;
-  const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-  httpsServer.enableHTTPCache(cachedPath);
+        await test({ server, httpsServer });
 
-  await test({server, httpsServer});
+        await Promise.all([
+          server.stop(),
+          httpsServer.stop(),
+        ]);
+      },
 
-  await Promise.all([
-    server.stop(),
-    httpsServer.stop(),
-  ]);
-});
+      asset: async ({ }, test) => {
+        await test(p => path.join(__dirname, `assets`, p));
+      },
+    })
+    .defineTestFixtures<HttpTestFixtures>({
+      server: async ({ httpService }, test) => {
+        httpService.server.reset();
+        await test(httpService.server);
+      },
 
-defineTestFixture('server', async ({httpService}, test) => {
-  httpService.server.reset();
-  await test(httpService.server);
-});
-
-defineTestFixture('httpsServer', async ({httpService}, test) => {
-  httpService.httpsServer.reset();
-  await test(httpService.httpsServer);
-});
-
-defineWorkerFixture('asset', async ({}, test) => {
-  await test(p => path.join(__dirname, `assets`, p));
-});
+      httpsServer: async ({ httpService }, test) => {
+        httpService.httpsServer.reset();
+        await test(httpService.httpsServer);
+      },
+    });

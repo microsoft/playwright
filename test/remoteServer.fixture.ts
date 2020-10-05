@@ -24,8 +24,22 @@ type ServerFixtures = {
   remoteServer: RemoteServer;
   stallingRemoteServer: RemoteServer;
 };
-export const serverFixtures = baseFixtures.declareTestFixtures<ServerFixtures>();
-const { defineTestFixture } = serverFixtures;
+
+export const serverFixtures = baseFixtures.defineTestFixtures<ServerFixtures>({
+  remoteServer: async ({ browserType, defaultBrowserOptions }, test) => {
+    const remoteServer = new RemoteServer();
+    await remoteServer._start(browserType, defaultBrowserOptions);
+    await test(remoteServer);
+    await remoteServer.close();
+  },
+
+  stallingRemoteServer: async ({ browserType, defaultBrowserOptions }, test) => {
+    const remoteServer = new RemoteServer();
+    await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
+    await test(remoteServer);
+    await remoteServer.close();
+  },
+});
 
 const playwrightPath = path.join(__dirname, '..');
 
@@ -115,17 +129,3 @@ export class RemoteServer {
     return await this.childExitCode();
   }
 }
-
-defineTestFixture('remoteServer', async ({browserType, defaultBrowserOptions}, test) => {
-  const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, defaultBrowserOptions);
-  await test(remoteServer);
-  await remoteServer.close();
-});
-
-defineTestFixture('stallingRemoteServer', async ({browserType, defaultBrowserOptions}, test) => {
-  const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
-  await test(remoteServer);
-  await remoteServer.close();
-});

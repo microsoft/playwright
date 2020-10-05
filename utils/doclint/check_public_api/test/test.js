@@ -22,13 +22,15 @@ const Source = require('../../Source');
 const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
 const { fixtures } = require('@playwright/test-runner');
-const { defineWorkerFixture, describe, it, expect } = fixtures;
+const { defineWorkerFixtures, describe, it, expect } = fixtures;
 
-defineWorkerFixture('page', async({}, test) => {
-  const browser = await playwright.chromium.launch();
-  const page = await browser.newPage();
-  await test(page);
-  await browser.close();
+defineWorkerFixtures({
+  page: async({}, test) => {
+    const browser = await playwright.chromium.launch();
+    const page = await browser.newPage();
+    await test(page);
+    await browser.close();
+  }
 });
 
 describe('checkPublicAPI', function() {
