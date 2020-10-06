@@ -59,12 +59,12 @@ type PlaywrightTestFixtures = {
 };
 
 export const fixtures = baseFixtures
-    .defineParameter<'browserName', 'chromium' | 'firefox' | 'webkit'>('browserName', 'Browser type name', process.env.BROWSER || 'chromium' as any)
-    .defineParameter<'headful', boolean>('headful', 'Whether to run tests headless or headful', process.env.HEADFUL ? true : false)
-    .defineParameter<'platform', 'win32' | 'linux' | 'darwin'>('platform', 'Operating system', process.platform as ('win32' | 'linux' | 'darwin'))
-    .defineParameter<'screenshotOnFailure', boolean>('screenshotOnFailure', 'Generate screenshot on failure', false)
-    .defineParameter<'slowMo', number>('slowMo', 'Slows down Playwright operations by the specified amount of milliseconds', 0)
-    .defineParameter<'trace', boolean>('trace', 'Whether to record the execution trace', !!process.env.TRACING || false)
+    .defineParameter('browserName', 'Browser type name', (process.env.BROWSER || 'chromium') as 'chromium' | 'firefox' | 'webkit')
+    .defineParameter('headful', 'Whether to run tests headless or headful', process.env.HEADFUL ? true : false)
+    .defineParameter('platform', 'Operating system', process.platform as ('win32' | 'linux' | 'darwin'))
+    .defineParameter('screenshotOnFailure', 'Generate screenshot on failure', false)
+    .defineParameter('slowMo', 'Slows down Playwright operations by the specified amount of milliseconds', 0)
+    .defineParameter('trace', 'Whether to record the execution trace', !!process.env.TRACING || false)
     .defineWorkerFixtures<PlaywrightWorkerFixtures>({
       defaultBrowserOptions: async ({ headful, slowMo }, runTest) => {
         await runTest({
@@ -159,16 +159,14 @@ export const fixtures = baseFixtures
         await runTest(await context.newPage());
       // Context fixture is taking care of closing the page.
       },
+    })
+    .overrideTestFixtures({
+      testParametersPathSegment: async ({ browserName, platform }, runTest) => {
+        await runTest(browserName + '-' + platform);
+      }
     });
 
 // If browser is not specified, we are running tests against all three browsers.
 fixtures.generateParametrizedTests(
     'browserName',
     process.env.BROWSER ? [process.env.BROWSER] as any : ['chromium', 'webkit', 'firefox']);
-
-
-fixtures.overrideTestFixtures({
-  testParametersPathSegment: async ({ browserName, platform }, runTest) => {
-    await runTest(browserName + '-' + platform);
-  }
-});
