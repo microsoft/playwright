@@ -15,9 +15,8 @@
  */
 
 import { fixtures as playwrightFixtures } from '../fixtures';
-const { it, expect, describe, overrideWorkerFixtures } = playwrightFixtures;
 
-overrideWorkerFixtures({
+const fixtures = playwrightFixtures.overrideWorkerFixtures({
   browser: async ({browserType, defaultBrowserOptions}, test) => {
     const browser = await browserType.launch({
       ...defaultBrowserOptions,
@@ -27,6 +26,8 @@ overrideWorkerFixtures({
     await browser.close();
   }
 });
+
+const { it, expect, describe } = fixtures;
 
 describe('oopif', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
