@@ -1,6 +1,7 @@
 # Verification
 
 <!-- GEN:toc-top-level -->
+- [Videos](#videos)
 - [Screenshots](#screenshots)
 - [Console logs](#console-logs)
 - [Page errors](#page-errors)
@@ -9,14 +10,38 @@
 
 <br/>
 
+## Videos
+
+Playwright can record videos for all pages in a [browser context](core-concepts.md#browser-contexts).
+
+```js
+// With browser.newContext
+const context = await browser.newContext({ videosPath: 'videos/' });
+
+// With browser.newPage
+const page = await browser.newPage({ videosPath: 'videos/' });
+
+// [Optional] Specify video size; defaults to viewport size
+const context = await browser.newContext({
+    videosPath: 'videos/',
+    videoSize: { width: 1920, height: 1080 }
+});
+```
+
+#### API reference
+
+- [class `BrowserContext`](./api.md#class-browsercontext)
+- [browser.newContext([options])](./api.md#browsernewcontextoptions)
+- [browser.newPage([options])](./api.md#browsernewpageoptions)
+
 ## Screenshots
 
 ```js
 // Save to file
-await page.screenshot({path: 'screenshot.png'});
+await page.screenshot({ path: 'screenshot.png' });
 
 // Capture full page
-await page.screenshot({path: 'screenshot.png', fullPage: true});
+await page.screenshot({ path: 'screenshot.png', fullPage: true });
 
 // Capture into buffer
 const buffer = await page.screenshot();
@@ -53,7 +78,7 @@ const [msg] = await Promise.all([
   page.waitForEvent('console'),
   // Issue console.log inside the page
   page.evaluate(() => {
-    console.log('hello', 42, {foo: 'bar'});
+    console.log('hello', 42, { foo: 'bar' });
   }),
 ]);
 
