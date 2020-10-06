@@ -37,7 +37,7 @@ class Dispatcher {
   _dispose() {
     this._connection.onmessage = null;
     this._connection.onclose = null;
-    this._rootSession.dispose();
+    this._rootSession._dispose();
     this._rootSession = null;
     this._sessions.clear();
   }
