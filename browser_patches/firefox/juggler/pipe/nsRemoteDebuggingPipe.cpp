@@ -25,14 +25,14 @@ namespace {
 
 StaticRefPtr<nsRemoteDebuggingPipe> gPipe;
 
-const int readFD = 3;
-const int writeFD = 4;
-
 const size_t kWritePacketSize = 1 << 16;
 
 #if defined(_WIN32)
 HANDLE readHandle;
 HANDLE writeHandle;
+#else
+const int readFD = 3;
+const int writeFD = 4;
 #endif
 
 size_t ReadBytes(void* buffer, size_t size, bool exact_size)
@@ -107,8 +107,12 @@ nsresult nsRemoteDebuggingPipe::Init(nsIRemoteDebuggingPipeClient* aClient) {
   MOZ_ALWAYS_SUCCEEDS(NS_NewNamedThread("Pipe Writer", getter_AddRefs(mWriterThread)));
 
 #if defined(_WIN32)
-  readHandle = reinterpret_cast<HANDLE>(_get_osfhandle(readFD));
-  writeHandle = reinterpret_cast<HANDLE>(_get_osfhandle(writeFD));
+  CHAR pipeReadStr[20];
+  CHAR pipeWriteStr[20];
+  GetEnvironmentVariable("PW_PIPE_READ", pipeReadStr, 20);
+  GetEnvironmentVariable("PW_PIPE_WRITE", pipeWriteStr, 20);
+  readHandle = reinterpret_cast<HANDLE>(atoi(pipeReadStr));
+  writeHandle = reinterpret_cast<HANDLE>(atoi(pipeWriteStr));
 #endif
 
   MOZ_ALWAYS_SUCCEEDS(mReaderThread->Dispatch(NewRunnableMethod(
