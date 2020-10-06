@@ -127,7 +127,20 @@ class NetworkRequest {
     this._networkObserver = networkObserver;
     this.httpChannel = httpChannel;
     this._networkObserver._channelToRequest.set(this.httpChannel, this);
-    this._frameId = helper.browsingContextToFrameId(this.httpChannel.loadInfo.browsingContext);
+
+    const loadInfo = this.httpChannel.loadInfo;
+    let browsingContext = loadInfo?.frameBrowsingContext || loadInfo?.browsingContext;
+    // TODO: Unfortunately, requests from web workers don't have frameBrowsingContext or
+    // browsingContext.
+    //
+    // We fail to attribute them to the original frames on the browser side, but we
+    // can use load context top frame to attribute them to the top frame at least.
+    if (!browsingContext) {
+      const loadContext = helper.getLoadContext(this.httpChannel);
+      browsingContext = loadContext?.topFrameElement?.browsingContext;
+    }
+
+    this._frameId = helper.browsingContextToFrameId(browsingContext);
 
     this.requestId = httpChannel.channelId + '';
     this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
@@ -490,18 +503,6 @@ class NetworkRequest {
     const loadInfo = this.httpChannel.loadInfo;
     const causeType = loadInfo?.externalContentPolicyType || Ci.nsIContentPolicy.TYPE_OTHER;
     const internalCauseType = loadInfo?.internalContentPolicyType || Ci.nsIContentPolicy.TYPE_OTHER;
-
-    let browsingContext = loadInfo?.frameBrowsingContext || loadInfo?.browsingContext;
-    // TODO: Unfortunately, requests from web workers don't have frameBrowsingContext or
-    // browsingContext.
-    //
-    // We fail to attribute them to the original frames on the browser side, but we
-    // can use load context top frame to attribute them to the top frame at least.
-    if (!browsingContext) {
-      const loadContext = helper.getLoadContext(this.httpChannel);
-      browsingContext = loadContext?.topFrameElement?.browsingContext;
-    }
-
     pageNetwork.emit(PageNetwork.Events.Request, {
       url: this.httpChannel.URI.spec,
       frameId: this._frameId,
