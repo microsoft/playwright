@@ -164,7 +164,7 @@ describe('oopif', (suite, { browserName }) => {
     await page.goto(server.PREFIX + '/dynamic-oopif.html');
     expect(page.frames().length).toBe(2);
     expect(await countOOPIFs(browser)).toBe(1);
-    expect(await page.screenshot()).toMatchImage('screenshot-oopif.png', { threshold: 0.3 });
+    expect(await page.screenshot()).toMatchSnapshot('screenshot-oopif.png', { threshold: 0.3 });
   });
 
   it('should load oopif iframes with subresources and route', async function({browser, page, server, context}) {
