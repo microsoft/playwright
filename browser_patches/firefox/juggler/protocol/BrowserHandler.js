@@ -8,9 +8,6 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {PageHandler} = ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js");
-const {NetworkHandler} = ChromeUtils.import("chrome://juggler/content/protocol/NetworkHandler.js");
-const {RuntimeHandler} = ChromeUtils.import("chrome://juggler/content/protocol/RuntimeHandler.js");
-const {AccessibilityHandler} = ChromeUtils.import("chrome://juggler/content/protocol/AccessibilityHandler.js");
 
 const helper = new Helper();
 
@@ -27,7 +24,7 @@ class BrowserHandler {
     this._onclose = onclose;
   }
 
-  async enable({attachToDefaultContext}) {
+  async ['Browser.enable']({attachToDefaultContext}) {
     if (this._enabled)
       return;
     this._enabled = true;
@@ -50,7 +47,7 @@ class BrowserHandler {
       this._onTargetCreated(target);
   }
 
-  async createBrowserContext({removeOnDetach}) {
+  async ['Browser.createBrowserContext']({removeOnDetach}) {
     if (!this._enabled)
       throw new Error('Browser domain is not enabled');
     const browserContext = this._targetRegistry.createBrowserContext(removeOnDetach);
@@ -58,7 +55,7 @@ class BrowserHandler {
     return {browserContextId: browserContext.browserContextId};
   }
 
-  async removeBrowserContext({browserContextId}) {
+  async ['Browser.removeBrowserContext']({browserContextId}) {
     if (!this._enabled)
       throw new Error('Browser domain is not enabled');
     await this._targetRegistry.browserContextForId(browserContextId).destroy();
@@ -90,18 +87,11 @@ class BrowserHandler {
     const channel = target.channel();
     const session = this._dispatcher.createSession();
     this._attachedSessions.set(target, session);
-    const pageHandler = new PageHandler(target, session, channel);
-    const networkHandler = new NetworkHandler(target, session, channel);
-    session.registerHandler('Page', pageHandler);
-    session.registerHandler('Network', networkHandler);
-    session.registerHandler('Runtime', new RuntimeHandler(session, channel));
-    session.registerHandler('Accessibility', new AccessibilityHandler(session, channel));
-    pageHandler.enable();
-    networkHandler.enable();
     this._session.emitEvent('Browser.attachedToTarget', {
       sessionId: session.sessionId(),
       targetInfo: target.info()
     });
+    session.setHandler(new PageHandler(target, session, channel));
   }
 
   _onTargetDestroyed(target) {
@@ -124,12 +114,12 @@ class BrowserHandler {
     this._session.emitEvent('Browser.downloadFinished', downloadInfo);
   }
 
-  async newPage({browserContextId}) {
+  async ['Browser.newPage']({browserContextId}) {
     const targetId = await this._targetRegistry.newPage({browserContextId});
     return {targetId};
   }
 
-  async close() {
+  async ['Browser.close']() {
     let browserWindow = Services.wm.getMostRecentWindow(
       "navigator:browser"
     );
@@ -140,109 +130,109 @@ class BrowserHandler {
     Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
   }
 
-  async grantPermissions({browserContextId, origin, permissions}) {
+  async ['Browser.grantPermissions']({browserContextId, origin, permissions}) {
     await this._targetRegistry.browserContextForId(browserContextId).grantPermissions(origin, permissions);
   }
 
-  resetPermissions({browserContextId}) {
+  async ['Browser.resetPermissions']({browserContextId}) {
     this._targetRegistry.browserContextForId(browserContextId).resetPermissions();
   }
 
-  setExtraHTTPHeaders({browserContextId, headers}) {
+  ['Browser.setExtraHTTPHeaders']({browserContextId, headers}) {
     this._targetRegistry.browserContextForId(browserContextId).extraHTTPHeaders = headers;
   }
 
-  setHTTPCredentials({browserContextId, credentials}) {
+  ['Browser.setHTTPCredentials']({browserContextId, credentials}) {
     this._targetRegistry.browserContextForId(browserContextId).httpCredentials = nullToUndefined(credentials);
   }
 
-  async setBrowserProxy({type, host, port, bypass, username, password}) {
+  async ['Browser.setBrowserProxy']({type, host, port, bypass, username, password}) {
     this._targetRegistry.setBrowserProxy({ type, host, port, bypass, username, password});
   }
 
-  async setContextProxy({browserContextId, type, host, port, bypass, username, password}) {
+  async ['Browser.setContextProxy']({browserContextId, type, host, port, bypass, username, password}) {
     const browserContext = this._targetRegistry.browserContextForId(browserContextId);
     browserContext.setProxy({ type, host, port, bypass, username, password });
   }
 
-  setRequestInterception({browserContextId, enabled}) {
+  ['Browser.setRequestInterception']({browserContextId, enabled}) {
     this._targetRegistry.browserContextForId(browserContextId).requestInterceptionEnabled = enabled;
   }
 
-  setIgnoreHTTPSErrors({browserContextId, ignoreHTTPSErrors}) {
+  ['Browser.setIgnoreHTTPSErrors']({browserContextId, ignoreHTTPSErrors}) {
     this._targetRegistry.browserContextForId(browserContextId).setIgnoreHTTPSErrors(nullToUndefined(ignoreHTTPSErrors));
   }
 
-  setDownloadOptions({browserContextId, downloadOptions}) {
+  ['Browser.setDownloadOptions']({browserContextId, downloadOptions}) {
     this._targetRegistry.browserContextForId(browserContextId).downloadOptions = nullToUndefined(downloadOptions);
   }
 
-  async setGeolocationOverride({browserContextId, geolocation}) {
+  async ['Browser.setGeolocationOverride']({browserContextId, geolocation}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('geolocation', nullToUndefined(geolocation));
   }
 
-  async setOnlineOverride({browserContextId, override}) {
+  async ['Browser.setOnlineOverride']({browserContextId, override}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('onlineOverride', nullToUndefined(override));
   }
 
-  async setColorScheme({browserContextId, colorScheme}) {
+  async ['Browser.setColorScheme']({browserContextId, colorScheme}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('colorScheme', nullToUndefined(colorScheme));
   }
 
-  async setScreencastOptions({browserContextId, dir, width, height, scale}) {
+  async ['Browser.setScreencastOptions']({browserContextId, dir, width, height, scale}) {
     await this._targetRegistry.browserContextForId(browserContextId).setScreencastOptions({dir, width, height, scale});
   }
 
-  async setUserAgentOverride({browserContextId, userAgent}) {
+  async ['Browser.setUserAgentOverride']({browserContextId, userAgent}) {
     await this._targetRegistry.browserContextForId(browserContextId).setDefaultUserAgent(userAgent);
   }
 
-  async setBypassCSP({browserContextId, bypassCSP}) {
+  async ['Browser.setBypassCSP']({browserContextId, bypassCSP}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('bypassCSP', nullToUndefined(bypassCSP));
   }
 
-  async setJavaScriptDisabled({browserContextId, javaScriptDisabled}) {
+  async ['Browser.setJavaScriptDisabled']({browserContextId, javaScriptDisabled}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('javaScriptDisabled', nullToUndefined(javaScriptDisabled));
   }
 
-  async setLocaleOverride({browserContextId, locale}) {
+  async ['Browser.setLocaleOverride']({browserContextId, locale}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('locale', nullToUndefined(locale));
   }
 
-  async setTimezoneOverride({browserContextId, timezoneId}) {
+  async ['Browser.setTimezoneOverride']({browserContextId, timezoneId}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('timezoneId', nullToUndefined(timezoneId));
   }
 
-  async setTouchOverride({browserContextId, hasTouch}) {
+  async ['Browser.setTouchOverride']({browserContextId, hasTouch}) {
     await this._targetRegistry.browserContextForId(browserContextId).applySetting('hasTouch', nullToUndefined(hasTouch));
   }
 
-  async setDefaultViewport({browserContextId, viewport}) {
+  async ['Browser.setDefaultViewport']({browserContextId, viewport}) {
     await this._targetRegistry.browserContextForId(browserContextId).setDefaultViewport(nullToUndefined(viewport));
   }
 
-  async addScriptToEvaluateOnNewDocument({browserContextId, script}) {
+  async ['Browser.addScriptToEvaluateOnNewDocument']({browserContextId, script}) {
     await this._targetRegistry.browserContextForId(browserContextId).addScriptToEvaluateOnNewDocument(script);
   }
 
-  async addBinding({browserContextId, name, script}) {
+  async ['Browser.addBinding']({browserContextId, name, script}) {
     await this._targetRegistry.browserContextForId(browserContextId).addBinding(name, script);
   }
 
-  setCookies({browserContextId, cookies}) {
+  ['Browser.setCookies']({browserContextId, cookies}) {
     this._targetRegistry.browserContextForId(browserContextId).setCookies(cookies);
   }
 
-  clearCookies({browserContextId}) {
+  ['Browser.clearCookies']({browserContextId}) {
     this._targetRegistry.browserContextForId(browserContextId).clearCookies();
   }
 
-  getCookies({browserContextId}) {
+  ['Browser.getCookies']({browserContextId}) {
     const cookies = this._targetRegistry.browserContextForId(browserContextId).getCookies();
     return {cookies};
   }
 
-  async getInfo() {
+  async ['Browser.getInfo']() {
     const version = Components.classes["@mozilla.org/xre/app-info;1"]
                               .getService(Components.interfaces.nsIXULAppInfo)
                               .version;

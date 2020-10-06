@@ -73,7 +73,7 @@ CommandLineHandler.prototype = {
             if (silent)
               Services.startup.exitLastWindowClosingSurvivalArea();
           });
-          dispatcher.rootSession().registerHandler('Browser', browserHandler);
+          dispatcher.rootSession().setHandler(browserHandler);
         }
       });
       loadFrameScript();
@@ -101,9 +101,9 @@ CommandLineHandler.prototype = {
           pipe.stop();
         });
       });
-      dispatcher.rootSession().registerHandler('Browser', browserHandler);
+      dispatcher.rootSession().setHandler(browserHandler);
       loadFrameScript();
-      dump(`Juggler listening to the pipe\n`);
+      dump(`\nJuggler listening to the pipe\n`);
     }
   },
 

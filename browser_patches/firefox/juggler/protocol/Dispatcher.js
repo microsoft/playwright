@@ -66,7 +66,7 @@ class Dispatcher {
       if (!checkScheme(descriptor.params || {}, params, details))
         throw new Error(`ERROR: failed to call method '${method}' with parameters ${JSON.stringify(params, null, 2)}\n${details.error}`);
 
-      const result = await session.dispatch(domain, methodName, params);
+      const result = await session.dispatch(method, params);
 
       details = {};
       if ((descriptor.returns || result) && !checkScheme(descriptor.returns, result, details))
@@ -97,24 +97,21 @@ class ProtocolSession {
   constructor(dispatcher, sessionId) {
     this._sessionId = sessionId;
     this._dispatcher = dispatcher;
-    this._handlers = new Map();
+    this._handler = null;
   }
 
   sessionId() {
     return this._sessionId;
   }
 
-  registerHandler(domainName, handler) {
-    this._handlers.set(domainName, handler);
+  setHandler(handler) {
+    this._handler = handler;
   }
 
   _dispose() {
-    for (const [domainName, handler] of this._handlers) {
-      if (typeof handler.dispose !== 'function')
-        throw new Error(`Handler for "${domainName}" domain does not define |dispose| method!`);
-      handler.dispose();
-    }
-    this._handlers.clear();
+    if (this._handler)
+      this._handler.dispose();
+    this._handler = null;
     this._dispatcher = null;
   }
 
@@ -124,13 +121,12 @@ class ProtocolSession {
     this._dispatcher._emitEvent(this._sessionId, eventName, params);
   }
 
-  async dispatch(domainName, methodName, params) {
-    const handler = this._handlers.get(domainName);
-    if (!handler)
-      throw new Error(`Domain "${domainName}" does not exist`);
-    if (!handler[methodName])
-      throw new Error(`Handler for domain "${domainName}" does not implement method "${methodName}"`);
-    return await handler[methodName](params);
+  async dispatch(method, params) {
+    if (!this._handler)
+      throw new Error(`Session does not have a handler!`);
+    if (!this._handler[method])
+      throw new Error(`Handler for does not implement method "${method}"`);
+    return await this._handler[method](params);
   }
 }
 
