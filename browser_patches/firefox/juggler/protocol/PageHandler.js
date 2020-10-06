@@ -7,6 +7,7 @@
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {NetworkObserver, PageNetwork} = ChromeUtils.import('chrome://juggler/content/NetworkObserver.js');
+const {PageTarget} = ChromeUtils.import('chrome://juggler/content/TargetRegistry.js');
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -60,12 +61,9 @@ class PageHandler {
     this._session = session;
     this._contentChannel = contentChannel;
     this._contentPage = contentChannel.connect('page');
-    this._contentRuntime = contentChannel.connect('runtime');
     this._workers = new Map();
 
     this._pageTarget = target;
-    this._browser = target.linkedBrowser();
-    this._dialogs = new Map();
     this._pageNetwork = NetworkObserver.instance().pageNetworkForTarget(target);
 
     const emitProtocolEvent = eventName => {
@@ -75,7 +73,23 @@ class PageHandler {
     this._reportedFrameIds = new Set();
     this._networkEventsForUnreportedFrameIds = new Map();
 
+    for (const dialog of this._pageTarget.dialogs())
+      this._onDialogOpened(dialog);
+
+    if (this._pageTarget.screencastInfo())
+      this._onScreencastStarted();
+
     this._eventListeners = [
+      helper.on(this._pageTarget, PageTarget.Events.DialogOpened, this._onDialogOpened.bind(this)),
+      helper.on(this._pageTarget, PageTarget.Events.DialogClosed, this._onDialogClosed.bind(this)),
+      helper.on(this._pageTarget, PageTarget.Events.Crashed, () => {
+        this._session.emitEvent('Page.crashed', {});
+      }),
+      helper.on(this._pageTarget, PageTarget.Events.ScreencastStarted, this._onScreencastStarted.bind(this)),
+      helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
+      helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
+      helper.on(this._pageNetwork, PageNetwork.Events.RequestFinished, this._handleNetworkEvent.bind(this, 'Network.requestFinished')),
+      helper.on(this._pageNetwork, PageNetwork.Events.RequestFailed, this._handleNetworkEvent.bind(this, 'Network.requestFailed')),
       contentChannel.register('page', {
         pageBindingCalled: emitProtocolEvent('Page.bindingCalled'),
         pageDispatchMessageFromWorker: emitProtocolEvent('Page.dispatchMessageFromWorker'),
@@ -93,36 +107,34 @@ class PageHandler {
         pageUncaughtError: emitProtocolEvent('Page.uncaughtError'),
         pageWorkerCreated: this._onWorkerCreated.bind(this),
         pageWorkerDestroyed: this._onWorkerDestroyed.bind(this),
-      }),
-      contentChannel.register('runtime', {
         runtimeConsole: emitProtocolEvent('Runtime.console'),
         runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),
       }),
-      helper.addEventListener(this._browser, 'DOMWillOpenModalDialog', async (event) => {
-        // wait for the dialog to be actually added to DOM.
-        await Promise.resolve();
-        this._updateModalDialogs();
-      }),
-      helper.addEventListener(this._browser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
-      helper.on(this._pageTarget, 'crashed', () => {
-        this._session.emitEvent('Page.crashed', {});
-      }),
-      helper.on(this._pageTarget, 'screencastStarted', () => {
-        const info = this._pageTarget.screencastInfo();
-        this._session.emitEvent('Page.screencastStarted', { screencastId: '' + info.videoSessionId, file: info.file });
-      }),
-      helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
-      helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
-      helper.on(this._pageNetwork, PageNetwork.Events.RequestFinished, this._handleNetworkEvent.bind(this, 'Network.requestFinished')),
-      helper.on(this._pageNetwork, PageNetwork.Events.RequestFailed, this._handleNetworkEvent.bind(this, 'Network.requestFailed')),
-      this._pageNetwork.addSession(),
     ];
+  }
 
-    this._updateModalDialogs();
-    const options = this._pageTarget.browserContext().screencastOptions;
-    if (options)
-      this._pageTarget.startVideoRecording(options);
+  async dispose() {
+    this._contentPage.dispose();
+    helper.removeListeners(this._eventListeners);
+  }
+
+  _onScreencastStarted() {
+    const info = this._pageTarget.screencastInfo();
+    this._session.emitEvent('Page.screencastStarted', { screencastId: '' + info.videoSessionId, file: info.file });
+  }
+
+  _onDialogOpened(dialog) {
+    this._session.emitEvent('Page.dialogOpened', {
+      dialogId: dialog.id(),
+      type: dialog.type(),
+      message: dialog.message(),
+      defaultValue: dialog.defaultValue(),
+    });
+  }
+
+  _onDialogClosed(dialog) {
+    this._session.emitEvent('Page.dialogClosed', { dialogId: dialog.id(), });
   }
 
   _onWorkerCreated({workerId, frameId, url}) {
@@ -169,59 +181,24 @@ class PageHandler {
     });
   }
 
-  async dispose() {
-    this._contentPage.dispose();
-    this._contentRuntime.dispose();
-    helper.removeListeners(this._eventListeners);
-
-    if (this._pageTarget.screencastInfo())
-      await this._pageTarget.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
-  }
-
   async ['Page.setViewportSize']({viewportSize}) {
     await this._pageTarget.setViewportSize(viewportSize === null ? undefined : viewportSize);
   }
 
-  _updateModalDialogs() {
-    const prompts = new Set(this._browser.tabModalPromptBox ? this._browser.tabModalPromptBox.listPrompts() : []);
-    for (const dialog of this._dialogs.values()) {
-      if (!prompts.has(dialog.prompt())) {
-        this._dialogs.delete(dialog.id());
-        this._session.emitEvent('Page.dialogClosed', {
-          dialogId: dialog.id(),
-        });
-      } else {
-        prompts.delete(dialog.prompt());
-      }
-    }
-    for (const prompt of prompts) {
-      const dialog = Dialog.createIfSupported(prompt);
-      if (!dialog)
-        continue;
-      this._dialogs.set(dialog.id(), dialog);
-      this._session.emitEvent('Page.dialogOpened', {
-        dialogId: dialog.id(),
-        type: dialog.type(),
-        message: dialog.message(),
-        defaultValue: dialog.defaultValue(),
-      });
-    }
-  }
-
   async ['Runtime.evaluate'](options) {
-    return await this._contentRuntime.send('evaluate', options);
+    return await this._contentPage.send('evaluate', options);
   }
 
   async ['Runtime.callFunction'](options) {
-    return await this._contentRuntime.send('callFunction', options);
+    return await this._contentPage.send('callFunction', options);
   }
 
   async ['Runtime.getObjectProperties'](options) {
-    return await this._contentRuntime.send('getObjectProperties', options);
+    return await this._contentPage.send('getObjectProperties', options);
   }
 
   async ['Runtime.disposeObject'](options) {
-    return await this._contentRuntime.send('disposeObject', options);
+    return await this._contentPage.send('disposeObject', options);
   }
 
   async ['Network.getResponseBody']({requestId}) {
@@ -291,30 +268,18 @@ class PageHandler {
     return await this._contentPage.send('getContentQuads', options);
   }
 
-  /**
-   * @param {{frameId: string, url: string}} options
-   */
   async ['Page.navigate'](options) {
     return await this._contentPage.send('navigate', options);
   }
 
-  /**
-   * @param {{frameId: string, url: string}} options
-   */
   async ['Page.goBack'](options) {
     return await this._contentPage.send('goBack', options);
   }
 
-  /**
-   * @param {{frameId: string, url: string}} options
-   */
   async ['Page.goForward'](options) {
     return await this._contentPage.send('goForward', options);
   }
 
-  /**
-   * @param {{frameId: string, url: string}} options
-   */
   async ['Page.reload'](options) {
     return await this._contentPage.send('reload', options);
   }
@@ -356,7 +321,7 @@ class PageHandler {
   }
 
   async ['Page.handleDialog']({dialogId, accept, promptText}) {
-    const dialog = this._dialogs.get(dialogId);
+    const dialog = this._pageTarget.dialog(dialogId);
     if (!dialog)
       throw new Error('Failed to find dialog with id = ' + dialogId);
     if (accept)
@@ -378,61 +343,6 @@ class PageHandler {
 
   async ['Page.stopVideoRecording']() {
     await this._pageTarget.stopVideoRecording();
-  }
-}
-
-class Dialog {
-  static createIfSupported(prompt) {
-    const type = prompt.args.promptType;
-    switch (type) {
-      case 'alert':
-      case 'prompt':
-      case 'confirm':
-        return new Dialog(prompt, type);
-      case 'confirmEx':
-        return new Dialog(prompt, 'beforeunload');
-      default:
-        return null;
-    };
-  }
-
-  constructor(prompt, type) {
-    this._id = helper.generateId();
-    this._type = type;
-    this._prompt = prompt;
-  }
-
-  id() {
-    return this._id;
-  }
-
-  message() {
-    return this._prompt.ui.infoBody.textContent;
-  }
-
-  type() {
-    return this._type;
-  }
-
-  prompt() {
-    return this._prompt;
-  }
-
-  dismiss() {
-    if (this._prompt.ui.button1)
-      this._prompt.ui.button1.click();
-    else
-      this._prompt.ui.button0.click();
-  }
-
-  defaultValue() {
-    return this._prompt.ui.loginTextbox.value;
-  }
-
-  accept(promptValue) {
-    if (typeof promptValue === 'string' && this._type === 'prompt')
-      this._prompt.ui.loginTextbox.value = promptValue;
-    this._prompt.ui.button0.click();
   }
 }
 

@@ -72,13 +72,11 @@ class SimpleChannel {
       throw new Error('ERROR: double-register for namespace ' + namespace);
     this._handlers.set(namespace, handler);
     // Try to re-deliver all pending messages.
-    Promise.resolve().then(() => {
-      const bufferedRequests = this._bufferedRequests;
-      this._bufferedRequests = [];
-      for (const data of bufferedRequests) {
-        this._onMessage(data);
-      }
-    });
+    const bufferedRequests = this._bufferedRequests;
+    this._bufferedRequests = [];
+    for (const data of bufferedRequests) {
+      this._onMessage(data);
+    }
     return () => this.unregister(namespace);
   }
 

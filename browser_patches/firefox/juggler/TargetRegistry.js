@@ -117,7 +117,7 @@ class TargetRegistry {
         const target = this._browserToTarget.get(browser);
         if (!target)
           return;
-        target.emit('crashed');
+        target.emit(PageTarget.Events.Crashed);
         target.dispose();
       }
     }, 'oop-frameloader-crashed');
@@ -157,6 +157,8 @@ class TargetRegistry {
       target.updateUserAgent();
       if (!hasExplicitSize)
         target.updateViewportSize();
+      if (browserContext.screencastOptions)
+        target._startVideoRecording(browserContext.screencastOptions);
     };
 
     const onTabCloseListener = event => {
@@ -329,6 +331,7 @@ class PageTarget {
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
     this._screencastInfo = undefined;
+    this._dialogs = new Map();
 
     const navigationListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWebProgressListener, Ci.nsISupportsWeakReference]),
@@ -336,6 +339,12 @@ class PageTarget {
     };
     this._eventListeners = [
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
+      helper.addEventListener(this._linkedBrowser, 'DOMWillOpenModalDialog', async (event) => {
+        // wait for the dialog to be actually added to DOM.
+        await Promise.resolve();
+        this._updateModalDialogs();
+      }),
+      helper.addEventListener(this._linkedBrowser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
     ];
 
     this._disposed = false;
@@ -344,6 +353,14 @@ class PageTarget {
     this._registry._browserBrowsingContextToTarget.set(this._linkedBrowser.browsingContext, this);
 
     this._registry.emit(TargetRegistry.Events.TargetCreated, this);
+  }
+
+  dialog(dialogId) {
+    return this._dialogs.get(dialogId);
+  }
+
+  dialogs() {
+    return [...this._dialogs.values()];
   }
 
   async windowReady() {
@@ -360,6 +377,25 @@ class PageTarget {
 
   updateUserAgent() {
     this._linkedBrowser.browsingContext.customUserAgent = this._browserContext.defaultUserAgent;
+  }
+
+  _updateModalDialogs() {
+    const prompts = new Set(this._linkedBrowser.tabModalPromptBox ? this._linkedBrowser.tabModalPromptBox.listPrompts() : []);
+    for (const dialog of this._dialogs.values()) {
+      if (!prompts.has(dialog.prompt())) {
+        this._dialogs.delete(dialog.id());
+        this.emit(PageTarget.Events.DialogClosed, dialog);
+      } else {
+        prompts.delete(dialog.prompt());
+      }
+    }
+    for (const prompt of prompts) {
+      const dialog = Dialog.createIfSupported(prompt);
+      if (!dialog)
+        continue;
+      this._dialogs.set(dialog.id(), dialog);
+      this.emit(PageTarget.Events.DialogOpened, dialog);
+    }
   }
 
   async updateViewportSize() {
@@ -433,7 +469,7 @@ class PageTarget {
     return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
   }
 
-  async startVideoRecording({width, height, scale, dir}) {
+  async _startVideoRecording({width, height, scale, dir}) {
     // On Mac the window may not yet be visible when TargetCreated and its
     // NSWindow.windowNumber may be -1, so we wait until the window is known
     // to be initialized and visible.
@@ -451,10 +487,10 @@ class PageTarget {
     const devicePixelRatio = this._window.devicePixelRatio;
     const videoSessionId = screencast.startVideoRecording(docShell, file, width, height, scale || 0, devicePixelRatio * rect.top);
     this._screencastInfo = { videoSessionId, file };
-    this.emit('screencastStarted');
+    this.emit(PageTarget.Events.ScreencastStarted);
   }
 
-  async stopVideoRecording() {
+  async _stopVideoRecording() {
     if (!this._screencastInfo)
       throw new Error('No video recording in progress');
     const screencastInfo = this._screencastInfo;
@@ -479,6 +515,8 @@ class PageTarget {
 
   dispose() {
     this._disposed = true;
+    if (this._screencastInfo)
+      this._stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
     this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
@@ -486,6 +524,13 @@ class PageTarget {
     this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
+
+PageTarget.Events = {
+  ScreencastStarted: Symbol('PageTarget.ScreencastStarted'),
+  Crashed: Symbol('PageTarget.Crashed'),
+  DialogOpened: Symbol('PageTarget.DialogOpened'),
+  DialogClosed: Symbol('PageTarget.DialogClosed'),
+};
 
 class BrowserContext {
   constructor(registry, browserContextId, removeOnDetach) {
@@ -702,10 +747,66 @@ class BrowserContext {
       return;
     const promises = [];
     for (const page of this.pages)
-      promises.push(page.startVideoRecording(options));
+      promises.push(page._startVideoRecording(options));
     await Promise.all(promises);
   }
 }
+
+class Dialog {
+  static createIfSupported(prompt) {
+    const type = prompt.args.promptType;
+    switch (type) {
+      case 'alert':
+      case 'prompt':
+      case 'confirm':
+        return new Dialog(prompt, type);
+      case 'confirmEx':
+        return new Dialog(prompt, 'beforeunload');
+      default:
+        return null;
+    };
+  }
+
+  constructor(prompt, type) {
+    this._id = helper.generateId();
+    this._type = type;
+    this._prompt = prompt;
+  }
+
+  id() {
+    return this._id;
+  }
+
+  message() {
+    return this._prompt.ui.infoBody.textContent;
+  }
+
+  type() {
+    return this._type;
+  }
+
+  prompt() {
+    return this._prompt;
+  }
+
+  dismiss() {
+    if (this._prompt.ui.button1)
+      this._prompt.ui.button1.click();
+    else
+      this._prompt.ui.button0.click();
+  }
+
+  defaultValue() {
+    return this._prompt.ui.loginTextbox.value;
+  }
+
+  accept(promptValue) {
+    if (typeof promptValue === 'string' && this._type === 'prompt')
+      this._prompt.ui.loginTextbox.value = promptValue;
+    this._prompt.ui.button0.click();
+  }
+}
+
 
 function dirPath(path) {
   return path.substring(0, path.lastIndexOf('/') + 1);
@@ -755,5 +856,6 @@ TargetRegistry.Events = {
   DownloadFinished: Symbol('TargetRegistry.Events.DownloadFinished'),
 };
 
-var EXPORTED_SYMBOLS = ['TargetRegistry'];
+var EXPORTED_SYMBOLS = ['TargetRegistry', 'PageTarget'];
 this.TargetRegistry = TargetRegistry;
+this.PageTarget = PageTarget;

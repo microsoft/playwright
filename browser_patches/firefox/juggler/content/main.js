@@ -103,7 +103,6 @@ function initialize() {
     frameTree.addBinding(name, script);
 
   pageAgent = new PageAgent(messageManager, channel, frameTree);
-  pageAgent.enable();
 
   channel.register('', {
     addScriptToEvaluateOnNewDocument(script) {

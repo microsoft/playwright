@@ -50,34 +50,12 @@ class PageNetwork {
   constructor(target) {
     EventEmitter.decorate(this);
     this._target = target;
-    this._sessionCount = 0;
     this._extraHTTPHeaders = null;
-    this._responseStorage = null;
+    this._responseStorage = new ResponseStorage(MAX_RESPONSE_STORAGE_SIZE, MAX_RESPONSE_STORAGE_SIZE / 10);
     this._requestInterceptionEnabled = false;
     // This is requestId => NetworkRequest map, only contains requests that are
     // awaiting interception action (abort, resume, fulfill) over the protocol.
     this._interceptedRequests = new Map();
-  }
-
-  addSession() {
-    if (this._sessionCount === 0)
-      this._responseStorage = new ResponseStorage(MAX_RESPONSE_STORAGE_SIZE, MAX_RESPONSE_STORAGE_SIZE / 10);
-    ++this._sessionCount;
-    return () => this._stopTracking();
-  }
-
-  _stopTracking() {
-    --this._sessionCount;
-    if (this._sessionCount === 0) {
-      this._extraHTTPHeaders = null;
-      this._responseStorage = null;
-      this._requestInterceptionEnabled = false;
-      this._interceptedRequests.clear();
-    }
-  }
-
-  _isActive() {
-    return this._sessionCount > 0;
   }
 
   setExtraHTTPHeaders(headers) {
@@ -479,7 +457,7 @@ class NetworkRequest {
   }
 
   _activePageNetwork() {
-    if (!this._maybeInactivePageNetwork || !this._maybeInactivePageNetwork._isActive())
+    if (!this._maybeInactivePageNetwork)
       return undefined;
     return this._maybeInactivePageNetwork;
   }
