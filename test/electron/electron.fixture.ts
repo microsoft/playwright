@@ -15,7 +15,7 @@
  */
 
 import { fixtures as baseFixtures } from '../fixtures';
-import type {ElectronApplication, ElectronLauncher, ElectronPage} from '../../electron-types';
+import type { ElectronApplication, ElectronLauncher, ElectronPage } from '../../electron-types';
 import path from 'path';
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
@@ -25,24 +25,23 @@ type TestState = {
   window: ElectronPage;
 };
 
-export const electronFixtures = baseFixtures.declareTestFixtures<TestState>();
-const { defineTestFixture } = electronFixtures;
+export const electronFixtures = baseFixtures.defineTestFixtures<TestState>({
+  application: async ({ playwright }, test) => {
+    const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
+    const application = await playwright.electron.launch(electronPath, {
+      args: [path.join(__dirname, 'testApp.js')],
+    });
+    await test(application);
+    await application.close();
+  },
+
+  window: async ({ application }, test) => {
+    const page = await application.newBrowserWindow({ width: 800, height: 600 });
+    await test(page);
+    await page.close();
+  },
+});
 
 declare module '../../index' {
   const electron: ElectronLauncher;
 }
-
-defineTestFixture('application', async ({playwright}, test) => {
-  const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-  const application = await playwright.electron.launch(electronPath, {
-    args: [path.join(__dirname, 'testApp.js')],
-  });
-  await test(application);
-  await application.close();
-});
-
-defineTestFixture('window', async ({application}, test) => {
-  const page = await application.newBrowserWindow({ width: 800, height: 600 });
-  await test(page);
-  await page.close();
-});

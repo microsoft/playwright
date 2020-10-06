@@ -15,15 +15,17 @@
  */
 
 import { fixtures as playwrightFixtures } from '../fixtures';
-const { it, expect, describe, overrideWorkerFixture } = playwrightFixtures;
+const { it, expect, describe, overrideWorkerFixtures } = playwrightFixtures;
 
-overrideWorkerFixture('browser', async ({browserType, defaultBrowserOptions}, test) => {
-  const browser = await browserType.launch({
-    ...defaultBrowserOptions,
-    args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
-  });
-  await test(browser);
-  await browser.close();
+overrideWorkerFixtures({
+  browser: async ({browserType, defaultBrowserOptions}, test) => {
+    const browser = await browserType.launch({
+      ...defaultBrowserOptions,
+      args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
+    });
+    await test(browser);
+    await browser.close();
+  }
 });
 
 describe('oopif', (suite, { browserName }) => {

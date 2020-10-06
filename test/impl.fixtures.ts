@@ -21,9 +21,8 @@ type ImplWorkerFixtures = {
 };
 
 export const fixtures = playwrightFixtures
-    .declareWorkerFixtures<ImplWorkerFixtures>();
-const { defineWorkerFixture } = fixtures;
-
-defineWorkerFixture('toImpl', async ({ playwright }, test) => {
-  await test((playwright as any)._toImpl);
-});
+    .defineWorkerFixtures<ImplWorkerFixtures>({
+      toImpl: async ({ playwright }, test) => {
+        await test((playwright as any)._toImpl);
+      }
+    });

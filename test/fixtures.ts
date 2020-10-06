@@ -27,26 +27,53 @@ import { installCoverageHooks } from './coverage';
 import { fixtures as httpFixtures } from './http.fixtures';
 import { fixtures as implFixtures } from './impl.fixtures';
 import { fixtures as playwrightFixtures } from './playwright.fixtures';
-export { expect } from '@playwright/test/out/matcher.fixtures';
-export { config } from '@playwright/test-runner';
+export { expect, config } from '@playwright/test-runner';
 
 const removeFolderAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
 
-type AllParameters = {
-  wire: boolean;
-};
-
 type AllTestFixtures = {
   createUserDataDir: () => Promise<string>;
-  launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{context: BrowserContext, page: Page}>;
+  launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
 };
 
 export const fixtures = playwrightFixtures
     .union(httpFixtures)
     .union(implFixtures)
-    .declareParameters<AllParameters>()
-    .declareTestFixtures<AllTestFixtures>();
+    .defineParameter('wire', 'Wire testing mode', !!process.env.PWWIRE || false)
+    .defineTestFixtures<AllTestFixtures>({
+      createUserDataDir: async ({ }, runTest) => {
+        const dirs: string[] = [];
+        async function createUserDataDir() {
+        // We do not put user data dir in testOutputPath,
+        // because we do not want to upload them as test result artifacts.
+        //
+        // Additionally, it is impossible to upload user data dir after test run:
+        // - Firefox removes lock file later, presumably from another watchdog process?
+        // - WebKit has circular symlinks that makes CI go crazy.
+          const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+          dirs.push(dir);
+          return dir;
+        }
+        await runTest(createUserDataDir);
+        await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => { })));
+      },
+
+      launchPersistent: async ({ createUserDataDir, defaultBrowserOptions, browserType }, test) => {
+        let context;
+        async function launchPersistent(options) {
+          if (context)
+            throw new Error('can only launch one persitent context');
+          const userDataDir = await createUserDataDir();
+          context = await browserType.launchPersistentContext(userDataDir, { ...defaultBrowserOptions, ...options });
+          const page = context.pages()[0];
+          return { context, page };
+        }
+        await test(launchPersistent);
+        if (context)
+          await context.close();
+      },
+    });
 
 export const it = fixtures.it;
 export const fit = fixtures.fit;
@@ -59,7 +86,6 @@ export const afterEach = fixtures.afterEach;
 export const beforeAll = fixtures.beforeAll;
 export const afterAll = fixtures.afterAll;
 
-fixtures.defineParameter('wire', 'Wire testing mode', !!process.env.PWWIRE || false);
 
 fixtures.generateParametrizedTests(
     'platform',
@@ -74,90 +100,62 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-fixtures.overrideWorkerFixture('defaultBrowserOptions', async ({ browserName, headful, slowMo }, runTest) => {
-  const executablePath = getExecutablePath(browserName);
-  if (executablePath)
-    console.error(`Using executable at ${executablePath}`);
-  await runTest({
-    executablePath,
-    handleSIGINT: false,
-    slowMo,
-    headless: !headful,
-  });
-});
-
-fixtures.overrideWorkerFixture('playwright', async ({ browserName, testWorkerIndex, platform, wire }, runTest) => {
-  assert(platform); // Depend on platform to generate all tests.
-  const {coverage, uninstall} = installCoverageHooks(browserName);
-  if (wire) {
-    require('../lib/utils/utils').setUnderTest();
-    const connection = new Connection();
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'driver.js'), ['serve'], {
-      stdio: 'pipe',
-      detached: true,
+fixtures.overrideWorkerFixtures({
+  defaultBrowserOptions: async ({ browserName, headful, slowMo }, runTest) => {
+    const executablePath = getExecutablePath(browserName);
+    if (executablePath)
+      console.error(`Using executable at ${executablePath}`);
+    await runTest({
+      executablePath,
+      handleSIGINT: false,
+      slowMo,
+      headless: !headful,
     });
-    spawnedProcess.unref();
-    const onExit = (exitCode, signal) => {
-      throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
-    };
-    spawnedProcess.on('exit', onExit);
-    const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
-    connection.onmessage = message => transport.send(JSON.stringify(message));
-    transport.onmessage = message => connection.dispatch(JSON.parse(message));
-    const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
-    await runTest(playwrightObject);
-    spawnedProcess.removeListener('exit', onExit);
-    spawnedProcess.stdin.destroy();
-    spawnedProcess.stdout.destroy();
-    spawnedProcess.stderr.destroy();
-    await teardownCoverage();
-  } else {
-    const playwright = require('../index');
-    await runTest(playwright);
-    await teardownCoverage();
-  }
+  },
 
-  async function teardownCoverage() {
-    uninstall();
-    const coveragePath = path.join(__dirname, 'coverage-report', testWorkerIndex + '.json');
-    const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
-    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
-    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-  }
+  playwright: async ({ browserName, testWorkerIndex, platform, wire }, runTest) => {
+    assert(platform); // Depend on platform to generate all tests.
+    const { coverage, uninstall } = installCoverageHooks(browserName);
+    if (wire) {
+      require('../lib/utils/utils').setUnderTest();
+      const connection = new Connection();
+      const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'driver.js'), ['serve'], {
+        stdio: 'pipe',
+        detached: true,
+      });
+      spawnedProcess.unref();
+      const onExit = (exitCode, signal) => {
+        throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+      };
+      spawnedProcess.on('exit', onExit);
+      const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
+      connection.onmessage = message => transport.send(JSON.stringify(message));
+      transport.onmessage = message => connection.dispatch(JSON.parse(message));
+      const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
+      await runTest(playwrightObject);
+      spawnedProcess.removeListener('exit', onExit);
+      spawnedProcess.stdin.destroy();
+      spawnedProcess.stdout.destroy();
+      spawnedProcess.stderr.destroy();
+      await teardownCoverage();
+    } else {
+      const playwright = require('../index');
+      await runTest(playwright);
+      await teardownCoverage();
+    }
+
+    async function teardownCoverage() {
+      uninstall();
+      const coveragePath = path.join(__dirname, 'coverage-report', testWorkerIndex + '.json');
+      const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
+      await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
+      await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
+    }
+  },
 });
 
-fixtures.defineTestFixture('createUserDataDir', async ({}, runTest) => {
-  const dirs: string[] = [];
-  async function createUserDataDir() {
-    // We do not put user data dir in testOutputPath,
-    // because we do not want to upload them as test result artifacts.
-    //
-    // Additionally, it is impossible to upload user data dir after test run:
-    // - Firefox removes lock file later, presumably from another watchdog process?
-    // - WebKit has circular symlinks that makes CI go crazy.
-    const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-    dirs.push(dir);
-    return dir;
+fixtures.overrideTestFixtures({
+  testParametersPathSegment: async ({ browserName }, runTest) => {
+    await runTest(browserName);
   }
-  await runTest(createUserDataDir);
-  await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => {})));
-});
-
-fixtures.defineTestFixture('launchPersistent', async ({createUserDataDir, defaultBrowserOptions, browserType}, test) => {
-  let context;
-  async function launchPersistent(options) {
-    if (context)
-      throw new Error('can only launch one persitent context');
-    const userDataDir = await createUserDataDir();
-    context = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, ...options});
-    const page = context.pages()[0];
-    return {context, page};
-  }
-  await test(launchPersistent);
-  if (context)
-    await context.close();
-});
-
-fixtures.overrideTestFixture('testParametersArtifactsPath', async ({ browserName }, runTest) => {
-  await runTest(browserName);
 });

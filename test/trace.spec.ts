@@ -19,8 +19,8 @@ import type * as trace from '../types/trace';
 import * as path from 'path';
 import * as fs from 'fs';
 
-it('should record trace', async ({browser, testOutputPath, server}) => {
-  const artifactsPath = testOutputPath('');
+it('should record trace', async ({browser, testInfo, server}) => {
+  const artifactsPath = testInfo.outputPath('');
   const tracePath = path.join(artifactsPath, 'playwright.trace');
   const context = await browser.newContext({ _tracePath: tracePath } as any);
   const page = await context.newPage();

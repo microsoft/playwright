@@ -384,12 +384,12 @@ describe('element screenshot', (suite, parameters) => {
     expect(screenshot).toBeInstanceOf(Buffer);
   });
 
-  it('path option should create subdirectories', async ({page, server, testOutputPath}) => {
+  it('path option should create subdirectories', async ({page, server, testInfo}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
     await page.evaluate(() => window.scrollBy(50, 100));
     const elementHandle = await page.$('.box:nth-of-type(3)');
-    const outputPath = testOutputPath(path.join('these', 'are', 'directories', 'screenshot.png'));
+    const outputPath = testInfo.outputPath(path.join('these', 'are', 'directories', 'screenshot.png'));
     await elementHandle.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage('screenshot-element-bounding-box.png');
   });

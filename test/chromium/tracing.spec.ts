@@ -22,12 +22,13 @@ import type { ChromiumBrowser } from '../..';
 type TestState = {
   outputTraceFile: string;
 };
-const fixtures = playwrightFixtures.declareTestFixtures<TestState>();
-const { it, expect, describe, defineTestFixture } = fixtures;
-
-defineTestFixture('outputTraceFile', async ({testOutputPath}, test) => {
-  await test(testOutputPath(path.join(`trace.json`)));
+const fixtures = playwrightFixtures.defineTestFixtures<TestState>({
+  outputTraceFile: async ({ testInfo }, test) => {
+    await test(testInfo.outputPath(path.join(`trace.json`)));
+  }
 });
+
+const { it, expect, describe } = fixtures;
 
 describe('oopif', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
@@ -39,8 +40,8 @@ describe('oopif', (suite, { browserName }) => {
     expect(fs.existsSync(outputTraceFile)).toBe(true);
   });
 
-  it('should create directories as needed', async ({browser, page, server, testOutputPath}) => {
-    const filePath = testOutputPath(path.join('these', 'are', 'directories', 'trace.json'));
+  it('should create directories as needed', async ({browser, page, server, testInfo}) => {
+    const filePath = testInfo.outputPath(path.join('these', 'are', 'directories', 'trace.json'));
     await (browser as ChromiumBrowser).startTracing(page, {screenshots: true, path: filePath});
     await page.goto(server.PREFIX + '/grid.html');
     await (browser as ChromiumBrowser).stopTracing();

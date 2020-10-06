@@ -234,9 +234,11 @@ describe('connect', (suite, { wire }) => {
     await page.close();
   });
 
-  it('should save videos from remote browser', async ({browserType, remoteServer, testOutputPath}) => {
+  it('should save videos from remote browser', (test, {browserName, platform}) => {
+    test.flaky(browserName === 'firefox' && platform === 'win32');
+  }, async ({browserType, remoteServer, testInfo}) => {
     const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-    const videosPath = testOutputPath();
+    const videosPath = testInfo.outputPath();
     const context = await remote.newContext({
       videosPath,
       videoSize: { width: 320, height: 240 },

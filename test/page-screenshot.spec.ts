@@ -217,9 +217,8 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(screenshot).toMatchImage('screenshot-canvas.png', { threshold: 0.3 });
   });
 
-  it('should work for webgl', (test, { browserName, platform }) => {
-    test.fixme(browserName === 'firefox');
-    test.fixme(browserName === 'webkit' && platform === 'linux');
+  it('should work for webgl', (test, { browserName }) => {
+    test.fixme(browserName === 'firefox' || browserName === 'webkit');
   }, async ({page, server}) => {
     await page.setViewportSize({width: 640, height: 480});
     await page.goto(server.PREFIX + '/screenshots/webgl.html');
@@ -262,26 +261,26 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(await page.screenshot()).toMatchImage('screenshot-iframe.png');
   });
 
-  it('path option should work', async ({page, server, testOutputPath}) => {
+  it('path option should work', async ({page, server, testInfo}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
-    const outputPath = testOutputPath('screenshot.png');
+    const outputPath = testInfo.outputPath('screenshot.png');
     await page.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage('screenshot-sanity.png');
   });
 
-  it('path option should create subdirectories', async ({page, server, testOutputPath}) => {
+  it('path option should create subdirectories', async ({page, server, testInfo}) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/grid.html');
-    const outputPath = testOutputPath(path.join('these', 'are', 'directories', 'screenshot.png'));
+    const outputPath = testInfo.outputPath(path.join('these', 'are', 'directories', 'screenshot.png'));
     await page.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage('screenshot-sanity.png');
   });
 
-  it('path option should detect jpeg', async ({page, server, testOutputPath}) => {
+  it('path option should detect jpeg', async ({page, server, testInfo}) => {
     await page.setViewportSize({ width: 100, height: 100 });
     await page.goto(server.EMPTY_PAGE);
-    const outputPath = testOutputPath('screenshot.jpg');
+    const outputPath = testInfo.outputPath('screenshot.jpg');
     const screenshot = await page.screenshot({omitBackground: true, path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchImage('white.jpg');
     expect(screenshot).toMatchImage('white.jpg');

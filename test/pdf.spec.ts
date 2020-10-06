@@ -21,8 +21,8 @@ import fs from 'fs';
 
 it('should be able to save file', (test, { browserName, headful }) => {
   test.skip(headful || browserName !== 'chromium', 'Printing to pdf is currently only supported in headless chromium.');
-}, async ({page, testOutputPath}) => {
-  const outputFile = testOutputPath('output.pdf');
+}, async ({page, testInfo}) => {
+  const outputFile = testInfo.outputPath('output.pdf');
   await page.pdf({path: outputFile});
   expect(fs.readFileSync(outputFile).byteLength).toBeGreaterThan(0);
 });

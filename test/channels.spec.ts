@@ -23,15 +23,16 @@ type DomainFixtures = {
   domain: any;
 };
 
-const fixtures = baseFixtures.declareWorkerFixtures<DomainFixtures>();
-fixtures.defineWorkerFixture('domain', async ({ }, test) => {
-  const local = domain.create();
-  local.run(() => { });
-  let err;
-  local.on('error', e => err = e);
-  await test(null);
-  if (err)
-    throw err;
+const fixtures = baseFixtures.defineWorkerFixtures<DomainFixtures>({
+  domain: async ({ }, test) => {
+    const local = domain.create();
+    local.run(() => { });
+    let err;
+    local.on('error', e => err = e);
+    await test(null);
+    if (err)
+      throw err;
+  }
 });
 
 const { it, expect } = fixtures;
