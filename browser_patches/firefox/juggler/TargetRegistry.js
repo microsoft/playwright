@@ -26,29 +26,16 @@ class DownloadInterceptor {
   constructor(registry) {
     this._registry = registry
     this._handlerToUuid = new Map();
-    helper.addObserver(this._onRequest.bind(this), 'http-on-modify-request');
-  }
-
-  _onRequest(httpChannel, topic) {
-    let loadContext = helper.getLoadContext(httpChannel);
-    if (!loadContext)
-      return;
-    if (!loadContext.topFrameElement)
-      return;
-    const target = this._registry.targetForBrowser(loadContext.topFrameElement);
-    if (!target)
-      return;
-    target._channelIds.add(httpChannel.channelId);
   }
 
   //
   // nsIDownloadInterceptor implementation.
   //
   interceptDownloadRequest(externalAppHandler, request, browsingContext, outFile) {
-    let pageTarget = this._registry._browserBrowsingContextToTarget.get(browsingContext);
-    // New page downloads won't have browsing contex.
-    if (!pageTarget)
-      pageTarget = this._registry._targetForChannel(request);
+    if (!(request instanceof Ci.nsIChannel))
+      return false;
+    const channel = request.QueryInterface(Ci.nsIChannel);
+    let pageTarget = this._registry._browserBrowsingContextToTarget.get(channel.loadInfo.browsingContext);
     if (!pageTarget)
       return false;
 
@@ -324,15 +311,6 @@ class TargetRegistry {
   targetForBrowser(browser) {
     return this._browserToTarget.get(browser);
   }
-
-  _targetForChannel(channel) {
-    const channelId = channel.channelId;
-    for (const target of this._browserToTarget.values()) {
-      if (target._channelIds.has(channelId))
-        return target;
-    }
-    return null;
-  }
 }
 
 class PageTarget {
@@ -350,7 +328,6 @@ class PageTarget {
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
     this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
-    this._channelIds = new Set();
     this._screencastInfo = undefined;
 
     const navigationListener = {

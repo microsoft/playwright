@@ -127,12 +127,12 @@ class NetworkRequest {
     this._networkObserver = networkObserver;
     this.httpChannel = httpChannel;
     this._networkObserver._channelToRequest.set(this.httpChannel, this);
+    this._frameId = helper.browsingContextToFrameId(this.httpChannel.loadInfo.browsingContext);
 
     this.requestId = httpChannel.channelId + '';
     this.navigationId = httpChannel.isMainDocumentChannel ? this.requestId : undefined;
 
     const internalCauseType = this.httpChannel.loadInfo ? this.httpChannel.loadInfo.internalContentPolicyType : Ci.nsIContentPolicy.TYPE_OTHER;
-    this.channelKey = this.httpChannel.channelId + ':' + internalCauseType;
 
     this._redirectedIndex = 0;
     const ignoredRedirect = redirectedFrom && !redirectedFrom._sentOnResponse;
@@ -140,13 +140,11 @@ class NetworkRequest {
       // We just ignore redirect that did not hit the network before being redirected.
       // This happens, for example, for automatic http->https redirects.
       this.navigationId = redirectedFrom.navigationId;
-      this.channelKey = redirectedFrom.channelKey;
     } else if (redirectedFrom) {
       this.redirectedFromId = redirectedFrom.requestId;
       this._redirectedIndex = redirectedFrom._redirectedIndex + 1;
       this.requestId = this.requestId + '-redirect' + this._redirectedIndex;
       this.navigationId = redirectedFrom.navigationId;
-      this.channelKey = redirectedFrom.channelKey;
       // Finish previous request now. Since we inherit the listener, we could in theory
       // use onStopRequest, but that will only happen after the last redirect has finished.
       redirectedFrom._sendOnRequestFinished();
@@ -506,7 +504,7 @@ class NetworkRequest {
 
     pageNetwork.emit(PageNetwork.Events.Request, {
       url: this.httpChannel.URI.spec,
-      frameId: helper.browsingContextToFrameId(browsingContext),
+      frameId: this._frameId,
       isIntercepted,
       requestId: this.requestId,
       redirectedFrom: this.redirectedFromId,
@@ -516,7 +514,7 @@ class NetworkRequest {
       navigationId: this.navigationId,
       cause: causeTypeToString(causeType),
       internalCause: causeTypeToString(internalCauseType),
-    }, this.channelKey);
+    }, this._frameId);
   }
 
   _sendOnResponse(fromCache) {
@@ -563,7 +561,7 @@ class NetworkRequest {
       remotePort,
       status,
       statusText,
-    });
+    }, this._frameId);
   }
 
   _sendOnRequestFailed(error) {
@@ -572,7 +570,7 @@ class NetworkRequest {
       pageNetwork.emit(PageNetwork.Events.RequestFailed, {
         requestId: this.requestId,
         errorCode: helper.getNetworkErrorStatusText(error),
-      });
+      }, this._frameId);
     }
     this._networkObserver._channelToRequest.delete(this.httpChannel);
   }
@@ -582,7 +580,7 @@ class NetworkRequest {
     if (pageNetwork) {
       pageNetwork.emit(PageNetwork.Events.RequestFinished, {
         requestId: this.requestId,
-      });
+      }, this._frameId);
     }
     this._networkObserver._channelToRequest.delete(this.httpChannel);
   }

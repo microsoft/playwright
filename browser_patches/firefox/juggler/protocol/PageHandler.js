@@ -6,6 +6,7 @@
 
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
+const {NetworkObserver, PageNetwork} = ChromeUtils.import('chrome://juggler/content/NetworkObserver.js');
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
@@ -59,11 +60,20 @@ class PageHandler {
     this._session = session;
     this._contentChannel = contentChannel;
     this._contentPage = contentChannel.connect('page');
+    this._contentRuntime = contentChannel.connect('runtime');
     this._workers = new Map();
+
+    this._pageTarget = target;
+    this._browser = target.linkedBrowser();
+    this._dialogs = new Map();
+    this._pageNetwork = NetworkObserver.instance().pageNetworkForTarget(target);
 
     const emitProtocolEvent = eventName => {
       return (...args) => this._session.emitEvent(eventName, ...args);
     }
+
+    this._reportedFrameIds = new Set();
+    this._networkEventsForUnreportedFrameIds = new Map();
 
     this._eventListeners = [
       contentChannel.register('page', {
@@ -71,7 +81,7 @@ class PageHandler {
         pageDispatchMessageFromWorker: emitProtocolEvent('Page.dispatchMessageFromWorker'),
         pageEventFired: emitProtocolEvent('Page.eventFired'),
         pageFileChooserOpened: emitProtocolEvent('Page.fileChooserOpened'),
-        pageFrameAttached: emitProtocolEvent('Page.frameAttached'),
+        pageFrameAttached: this._onFrameAttached.bind(this),
         pageFrameDetached: emitProtocolEvent('Page.frameDetached'),
         pageLinkClicked: emitProtocolEvent('Page.linkClicked'),
         pageWillOpenNewWindowAsynchronously: emitProtocolEvent('Page.willOpenNewWindowAsynchronously'),
@@ -84,12 +94,35 @@ class PageHandler {
         pageWorkerCreated: this._onWorkerCreated.bind(this),
         pageWorkerDestroyed: this._onWorkerDestroyed.bind(this),
       }),
+      contentChannel.register('runtime', {
+        runtimeConsole: emitProtocolEvent('Runtime.console'),
+        runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
+        runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),
+      }),
+      helper.addEventListener(this._browser, 'DOMWillOpenModalDialog', async (event) => {
+        // wait for the dialog to be actually added to DOM.
+        await Promise.resolve();
+        this._updateModalDialogs();
+      }),
+      helper.addEventListener(this._browser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
+      helper.on(this._pageTarget, 'crashed', () => {
+        this._session.emitEvent('Page.crashed', {});
+      }),
+      helper.on(this._pageTarget, 'screencastStarted', () => {
+        const info = this._pageTarget.screencastInfo();
+        this._session.emitEvent('Page.screencastStarted', { screencastId: '' + info.videoSessionId, file: info.file });
+      }),
+      helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
+      helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
+      helper.on(this._pageNetwork, PageNetwork.Events.RequestFinished, this._handleNetworkEvent.bind(this, 'Network.requestFinished')),
+      helper.on(this._pageNetwork, PageNetwork.Events.RequestFailed, this._handleNetworkEvent.bind(this, 'Network.requestFailed')),
+      this._pageNetwork.addSession(),
     ];
-    this._pageTarget = target;
-    this._browser = target.linkedBrowser();
-    this._dialogs = new Map();
 
-    this._enabled = false;
+    this._updateModalDialogs();
+    const options = this._pageTarget.browserContext().screencastOptions;
+    if (options)
+      this._pageTarget.startVideoRecording(options);
   }
 
   _onWorkerCreated({workerId, frameId, url}) {
@@ -107,49 +140,45 @@ class PageHandler {
     this._session.emitEvent('Page.workerDestroyed', {workerId});
   }
 
-  async close({runBeforeUnload}) {
+  _handleNetworkEvent(protocolEventName, eventDetails, frameId) {
+    if (!this._reportedFrameIds.has(frameId)) {
+      let events = this._networkEventsForUnreportedFrameIds.get(frameId);
+      if (!events) {
+        events = [];
+        this._networkEventsForUnreportedFrameIds.set(frameId, events);
+      }
+      events.push({eventName: protocolEventName, eventDetails});
+    } else {
+      this._session.emitEvent(protocolEventName, eventDetails);
+    }
+  }
+
+  _onFrameAttached({frameId, parentFrameId}) {
+    this._session.emitEvent('Page.frameAttached', {frameId, parentFrameId});
+    this._reportedFrameIds.add(frameId);
+    const events = this._networkEventsForUnreportedFrameIds.get(frameId) || [];
+    this._networkEventsForUnreportedFrameIds.delete(frameId);
+    for (const {eventName, eventDetails} of events)
+      this._session.emitEvent(eventName, eventDetails);
+  }
+
+  async ['Page.close']({runBeforeUnload}) {
     // Postpone target close to deliver response in session.
     Services.tm.dispatchToMainThread(() => {
       this._pageTarget.close(runBeforeUnload);
     });
   }
 
-  async enable() {
-    if (this._enabled)
-      return;
-    this._enabled = true;
-    this._updateModalDialogs();
-
-    this._eventListeners.push(...[
-      helper.addEventListener(this._browser, 'DOMWillOpenModalDialog', async (event) => {
-        // wait for the dialog to be actually added to DOM.
-        await Promise.resolve();
-        this._updateModalDialogs();
-      }),
-      helper.addEventListener(this._browser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
-      helper.on(this._pageTarget, 'crashed', () => {
-        this._session.emitEvent('Page.crashed', {});
-      }),
-      helper.on(this._pageTarget, 'screencastStarted', () => {
-        const info = this._pageTarget.screencastInfo();
-        this._session.emitEvent('Page.screencastStarted', { screencastId: '' + info.videoSessionId, file: info.file });
-      }),
-    ]);
-
-    const options = this._pageTarget.browserContext().screencastOptions;
-    if (options)
-      await this._pageTarget.startVideoRecording(options);
-  }
-
   async dispose() {
     this._contentPage.dispose();
+    this._contentRuntime.dispose();
     helper.removeListeners(this._eventListeners);
 
     if (this._pageTarget.screencastInfo())
       await this._pageTarget.stopVideoRecording().catch(e => dump(`stopVideoRecording failed:\n${e}\n`));
   }
 
-  async setViewportSize({viewportSize}) {
+  async ['Page.setViewportSize']({viewportSize}) {
     await this._pageTarget.setViewportSize(viewportSize === null ? undefined : viewportSize);
   }
 
@@ -179,107 +208,154 @@ class PageHandler {
     }
   }
 
-  async setFileInputFiles(options) {
+  async ['Runtime.evaluate'](options) {
+    return await this._contentRuntime.send('evaluate', options);
+  }
+
+  async ['Runtime.callFunction'](options) {
+    return await this._contentRuntime.send('callFunction', options);
+  }
+
+  async ['Runtime.getObjectProperties'](options) {
+    return await this._contentRuntime.send('getObjectProperties', options);
+  }
+
+  async ['Runtime.disposeObject'](options) {
+    return await this._contentRuntime.send('disposeObject', options);
+  }
+
+  async ['Network.getResponseBody']({requestId}) {
+    return this._pageNetwork.getResponseBody(requestId);
+  }
+
+  async ['Network.setExtraHTTPHeaders']({headers}) {
+    this._pageNetwork.setExtraHTTPHeaders(headers);
+  }
+
+  async ['Network.setRequestInterception']({enabled}) {
+    if (enabled)
+      this._pageNetwork.enableRequestInterception();
+    else
+      this._pageNetwork.disableRequestInterception();
+  }
+
+  async ['Network.resumeInterceptedRequest']({requestId, method, headers, postData}) {
+    this._pageNetwork.resumeInterceptedRequest(requestId, method, headers, postData);
+  }
+
+  async ['Network.abortInterceptedRequest']({requestId, errorCode}) {
+    this._pageNetwork.abortInterceptedRequest(requestId, errorCode);
+  }
+
+  async ['Network.fulfillInterceptedRequest']({requestId, status, statusText, headers, base64body}) {
+    this._pageNetwork.fulfillInterceptedRequest(requestId, status, statusText, headers, base64body);
+  }
+
+  async ['Accessibility.getFullAXTree'](params) {
+    return await this._contentPage.send('getFullAXTree', params);
+  }
+
+  async ['Page.setFileInputFiles'](options) {
     return await this._contentPage.send('setFileInputFiles', options);
   }
 
-  async setEmulatedMedia(options) {
+  async ['Page.setEmulatedMedia'](options) {
     return await this._contentPage.send('setEmulatedMedia', options);
   }
 
-  async bringToFront(options) {
+  async ['Page.bringToFront'](options) {
     this._pageTarget._window.focus();
   }
 
-  async setCacheDisabled(options) {
+  async ['Page.setCacheDisabled'](options) {
     return await this._contentPage.send('setCacheDisabled', options);
   }
 
-  async addBinding(options) {
+  async ['Page.addBinding'](options) {
     return await this._contentPage.send('addBinding', options);
   }
 
-  async adoptNode(options) {
+  async ['Page.adoptNode'](options) {
     return await this._contentPage.send('adoptNode', options);
   }
 
-  async screenshot(options) {
+  async ['Page.screenshot'](options) {
     return await this._contentPage.send('screenshot', options);
   }
 
-  async getBoundingBox(options) {
+  async ['Page.getBoundingBox'](options) {
     return await this._contentPage.send('getBoundingBox', options);
   }
 
-  async getContentQuads(options) {
+  async ['Page.getContentQuads'](options) {
     return await this._contentPage.send('getContentQuads', options);
   }
 
   /**
    * @param {{frameId: string, url: string}} options
    */
-  async navigate(options) {
+  async ['Page.navigate'](options) {
     return await this._contentPage.send('navigate', options);
   }
 
   /**
    * @param {{frameId: string, url: string}} options
    */
-  async goBack(options) {
+  async ['Page.goBack'](options) {
     return await this._contentPage.send('goBack', options);
   }
 
   /**
    * @param {{frameId: string, url: string}} options
    */
-  async goForward(options) {
+  async ['Page.goForward'](options) {
     return await this._contentPage.send('goForward', options);
   }
 
   /**
    * @param {{frameId: string, url: string}} options
    */
-  async reload(options) {
+  async ['Page.reload'](options) {
     return await this._contentPage.send('reload', options);
   }
 
-  async describeNode(options) {
+  async ['Page.describeNode'](options) {
     return await this._contentPage.send('describeNode', options);
   }
 
-  async scrollIntoViewIfNeeded(options) {
+  async ['Page.scrollIntoViewIfNeeded'](options) {
     return await this._contentPage.send('scrollIntoViewIfNeeded', options);
   }
 
-  async addScriptToEvaluateOnNewDocument(options) {
+  async ['Page.addScriptToEvaluateOnNewDocument'](options) {
     return await this._contentPage.send('addScriptToEvaluateOnNewDocument', options);
   }
 
-  async removeScriptToEvaluateOnNewDocument(options) {
+  async ['Page.removeScriptToEvaluateOnNewDocument'](options) {
     return await this._contentPage.send('removeScriptToEvaluateOnNewDocument', options);
   }
 
-  async dispatchKeyEvent(options) {
+  async ['Page.dispatchKeyEvent'](options) {
     return await this._contentPage.send('dispatchKeyEvent', options);
   }
 
-  async dispatchTouchEvent(options) {
+  async ['Page.dispatchTouchEvent'](options) {
     return await this._contentPage.send('dispatchTouchEvent', options);
   }
 
-  async dispatchMouseEvent(options) {
+  async ['Page.dispatchMouseEvent'](options) {
     return await this._contentPage.send('dispatchMouseEvent', options);
   }
 
-  async insertText(options) {
+  async ['Page.insertText'](options) {
     return await this._contentPage.send('insertText', options);
   }
 
-  async crash(options) {
+  async ['Page.crash'](options) {
     return await this._contentPage.send('crash', options);
   }
 
-  async handleDialog({dialogId, accept, promptText}) {
+  async ['Page.handleDialog']({dialogId, accept, promptText}) {
     const dialog = this._dialogs.get(dialogId);
     if (!dialog)
       throw new Error('Failed to find dialog with id = ' + dialogId);
@@ -289,18 +365,18 @@ class PageHandler {
       dialog.dismiss();
   }
 
-  async setInterceptFileChooserDialog(options) {
+  async ['Page.setInterceptFileChooserDialog'](options) {
     return await this._contentPage.send('setInterceptFileChooserDialog', options);
   }
 
-  async sendMessageToWorker({workerId, message}) {
+  async ['Page.sendMessageToWorker']({workerId, message}) {
     const worker = this._workers.get(workerId);
     if (!worker)
       throw new Error('ERROR: cannot find worker with id ' + workerId);
     return await worker.sendMessage(JSON.parse(message));
   }
 
-  async stopVideoRecording() {
+  async ['Page.stopVideoRecording']() {
     await this._pageTarget.stopVideoRecording();
   }
 }
