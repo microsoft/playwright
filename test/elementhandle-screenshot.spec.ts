@@ -31,7 +31,7 @@ describe('element screenshot', (suite, parameters) => {
     await page.evaluate(() => window.scrollBy(50, 100));
     const elementHandle = await page.$('.box:nth-of-type(3)');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-bounding-box.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 
   it('should take into account padding and border', async ({page}) => {
@@ -49,7 +49,7 @@ describe('element screenshot', (suite, parameters) => {
     `);
     const elementHandle = await page.$('div#d');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-padding-border.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-padding-border.png');
   });
 
   it('should capture full element when larger than viewport in parallel', async ({page}) => {
@@ -75,7 +75,7 @@ describe('element screenshot', (suite, parameters) => {
     const elementHandles = await page.$$('div.to-screenshot');
     const promises = elementHandles.map(handle => handle.screenshot());
     const screenshots = await Promise.all(promises);
-    expect(screenshots[2]).toMatchImage('screenshot-element-larger-than-viewport.png');
+    expect(screenshots[2]).toMatchSnapshot('screenshot-element-larger-than-viewport.png');
 
     await verifyViewport(page, 500, 500);
   });
@@ -102,7 +102,7 @@ describe('element screenshot', (suite, parameters) => {
     `);
     const elementHandle = await page.$('div.to-screenshot');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-larger-than-viewport.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-larger-than-viewport.png');
 
     await verifyViewport(page, 500, 500);
   });
@@ -128,7 +128,7 @@ describe('element screenshot', (suite, parameters) => {
     `);
     const elementHandle = await page.$('div.to-screenshot');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-scrolled-into-view.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-scrolled-into-view.png');
   });
 
   it('should scroll 15000px into view', async ({page}) => {
@@ -152,7 +152,7 @@ describe('element screenshot', (suite, parameters) => {
     `);
     const elementHandle = await page.$('div.to-screenshot');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-scrolled-into-view.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-scrolled-into-view.png');
   });
 
   it('should work with a rotated element', async ({page}) => {
@@ -166,7 +166,7 @@ describe('element screenshot', (suite, parameters) => {
                                       transform: rotateZ(200deg);">&nbsp;</div>`);
     const elementHandle = await page.$('div');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-rotate.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-rotate.png');
   });
 
   it('should fail to screenshot a detached element', async ({page, server}) => {
@@ -201,14 +201,14 @@ describe('element screenshot', (suite, parameters) => {
     expect(done).toBe(false);
     await elementHandle.evaluate(e => e.style.visibility = 'visible');
     const screenshot = await promise;
-    expect(screenshot).toMatchImage('screenshot-element-bounding-box.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 
   it('should work for an element with fractional dimensions', async ({page}) => {
     await page.setContent('<div style="width:48.51px;height:19.8px;border:1px solid black;"></div>');
     const elementHandle = await page.$('div');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-fractional.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-fractional.png');
   });
 
   it('should work with a mobile viewport', (test, { browserName }) => {
@@ -220,7 +220,7 @@ describe('element screenshot', (suite, parameters) => {
     await page.evaluate(() => window.scrollBy(50, 100));
     const elementHandle = await page.$('.box:nth-of-type(3)');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-mobile.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-mobile.png');
     await context.close();
   });
 
@@ -233,7 +233,7 @@ describe('element screenshot', (suite, parameters) => {
     await page.evaluate(() => window.scrollBy(50, 100));
     const elementHandle = await page.$('.box:nth-of-type(3)');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-mobile-dsf.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-mobile-dsf.png');
     await context.close();
   });
 
@@ -241,7 +241,7 @@ describe('element screenshot', (suite, parameters) => {
     await page.setContent('<div style="position:absolute; top: 10.3px; left: 20.4px;width:50.3px;height:20.2px;border:1px solid black;"></div>');
     const elementHandle = await page.$('div');
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-fractional-offset.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-fractional-offset.png');
   });
 
   it('should take screenshots when default viewport is null', async ({server, browser}) => {
@@ -373,7 +373,7 @@ describe('element screenshot', (suite, parameters) => {
       return new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
     });
     const screenshot = await elementHandle.screenshot();
-    expect(screenshot).toMatchImage('screenshot-element-bounding-box.png');
+    expect(screenshot).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 
   it('should take screenshot of disabled button', async ({page}) => {
@@ -391,6 +391,6 @@ describe('element screenshot', (suite, parameters) => {
     const elementHandle = await page.$('.box:nth-of-type(3)');
     const outputPath = testInfo.outputPath(path.join('these', 'are', 'directories', 'screenshot.png'));
     await elementHandle.screenshot({path: outputPath});
-    expect(await fs.promises.readFile(outputPath)).toMatchImage('screenshot-element-bounding-box.png');
+    expect(await fs.promises.readFile(outputPath)).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
 });

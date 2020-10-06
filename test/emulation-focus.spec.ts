@@ -120,8 +120,8 @@ it('should not affect screenshots', (test, { browserName, headful }) => {
     page.screenshot(),
     page2.screenshot(),
   ]);
-  expect(screenshots[0]).toMatchImage('screenshot-sanity.png');
-  expect(screenshots[1]).toMatchImage('grid-cell-0.png');
+  expect(screenshots[0]).toMatchSnapshot('screenshot-sanity.png');
+  expect(screenshots[1]).toMatchSnapshot('grid-cell-0.png');
 });
 
 it('should change focused iframe', async ({page, server}) => {

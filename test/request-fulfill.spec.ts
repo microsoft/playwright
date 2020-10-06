@@ -67,7 +67,7 @@ it('should allow mocking binary responses', (test, { browserName, headful }) => 
     return new Promise(fulfill => img.onload = fulfill);
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toMatchImage('mock-binary-response.png');
+  expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
 it('should allow mocking svg with charset', (test, { browserName, headful }) => {
@@ -87,7 +87,7 @@ it('should allow mocking svg with charset', (test, { browserName, headful }) => 
     return new Promise((f, r) => { img.onload = f; img.onerror = r; });
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toMatchImage('mock-svg.png');
+  expect(await img.screenshot()).toMatchSnapshot('mock-svg.png');
 });
 
 it('should work with file path', async ({page, server}) => {
@@ -99,7 +99,7 @@ it('should work with file path', async ({page, server}) => {
     return new Promise(fulfill => img.onload = fulfill);
   }, server.PREFIX);
   const img = await page.$('img');
-  expect(await img.screenshot()).toMatchImage('mock-binary-response.png');
+  expect(await img.screenshot()).toMatchSnapshot('mock-binary-response.png');
 });
 
 it('should stringify intercepted request response headers', async ({page, server}) => {
