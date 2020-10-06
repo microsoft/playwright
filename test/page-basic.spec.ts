@@ -54,6 +54,21 @@ it('should run beforeunload if asked for', async ({context, server, isChromium, 
   await pageClosingPromise;
 });
 
+it('should not return from page.close until beforeunload finishes', async ({context, server, isChromium, isWebKit}) => {
+  const newPage = await context.newPage();
+  await newPage.goto(server.PREFIX + '/beforeunload.html');
+  // We have to interact with a page so that 'beforeunload' handlers
+  // fire.
+  await newPage.click('body');
+  let returnedFromClose = false;
+  const pageClosingPromise = newPage.close({ runBeforeUnload: true }).then(() => returnedFromClose = true);
+  const dialog = await newPage.waitForEvent('dialog');
+  expect(dialog.type()).toBe('beforeunload');
+  expect(returnedFromClose).toBe(false);
+  await dialog.accept();
+  await pageClosingPromise;
+});
+
 it('should *not* run beforeunload by default', async ({context, server}) => {
   const newPage = await context.newPage();
   await newPage.goto(server.PREFIX + '/beforeunload.html');

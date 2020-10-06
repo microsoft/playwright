@@ -375,8 +375,7 @@ export class Page extends EventEmitter {
       assert(!this._disconnected, 'Protocol error: Connection closed. Most likely the page has been closed.');
       await this._delegate.closePage(runBeforeUnload);
     }
-    if (!runBeforeUnload)
-      await this._closedPromise;
+    await this._closedPromise;
     if (this._ownedContext)
       await this._ownedContext.close();
   }
