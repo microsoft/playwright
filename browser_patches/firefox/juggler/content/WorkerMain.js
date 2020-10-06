@@ -35,19 +35,21 @@ class RuntimeAgent {
   constructor(runtime, channel) {
     this._runtime = runtime;
     this._browserRuntime = channel.connect('runtime');
+
+    for (const context of this._runtime.executionContexts())
+      this._onExecutionContextCreated(context);
+
     this._eventListeners = [
+      this._runtime.events.onConsoleMessage(msg => this._browserRuntime.emit('runtimeConsole', msg)),
+      this._runtime.events.onExecutionContextCreated(this._onExecutionContextCreated.bind(this)),
+      this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
       channel.register('runtime', {
         evaluate: this._runtime.evaluate.bind(this._runtime),
         callFunction: this._runtime.callFunction.bind(this._runtime),
         getObjectProperties: this._runtime.getObjectProperties.bind(this._runtime),
         disposeObject: this._runtime.disposeObject.bind(this._runtime),
       }),
-      this._runtime.events.onConsoleMessage(msg => this._browserRuntime.emit('runtimeConsole', msg)),
-      this._runtime.events.onExecutionContextCreated(this._onExecutionContextCreated.bind(this)),
-      this._runtime.events.onExecutionContextDestroyed(this._onExecutionContextDestroyed.bind(this)),
     ];
-    for (const context of this._runtime.executionContexts())
-      this._onExecutionContextCreated(context);
   }
 
   _onExecutionContextCreated(executionContext) {
@@ -70,15 +72,5 @@ class RuntimeAgent {
   }
 }
 
-let runtimeAgent;
-
-channel.register('', {
-  attach: () => {
-    runtimeAgent = new RuntimeAgent(runtime, channel);
-  },
-
-  detach: () => {
-    runtimeAgent.dispose();
-  },
-});
+new RuntimeAgent(runtime, channel);
 
