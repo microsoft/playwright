@@ -1107,6 +1107,8 @@ Shortcut for [page.mainFrame().click(selector[, options])](#frameclickselector-o
     page handlers.
 - returns: <[Promise]>
 
+If `runBeforeUnload` is `false` the result will resolve only after the page has been closed.
+If `runBeforeUnload` is `true` the method will **not** wait for the page to close.
 By default, `page.close()` **does not** run beforeunload handlers.
 
 > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
