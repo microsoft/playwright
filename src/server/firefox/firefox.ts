@@ -29,7 +29,8 @@ import * as types from '../types';
 
 export class Firefox extends BrowserType {
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser);
+    const webSocketRegex = /^Juggler listening on (ws:\/\/.*)$/;
+    super(packagePath, browser, { webSocketRegex, stream: 'stdout' });
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
@@ -81,7 +82,7 @@ export class Firefox extends BrowserType {
       firefoxArguments.push('-foreground');
     }
     firefoxArguments.push(`-profile`, userDataDir);
-    firefoxArguments.push('-juggler-pipe');
+    firefoxArguments.push('-juggler', '0');
     firefoxArguments.push(...args);
     if (isPersistent)
       firefoxArguments.push('about:blank');
