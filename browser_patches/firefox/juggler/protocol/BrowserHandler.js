@@ -4,6 +4,7 @@
 
 "use strict";
 
+const {AddonManager} = ChromeUtils.import("resource://gre/modules/AddonManager.jsm");
 const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
@@ -45,6 +46,18 @@ class BrowserHandler {
 
     for (const target of this._targetRegistry.targets())
       this._onTargetCreated(target);
+
+    // Wait to complete initialization of addon manager and search
+    // service before returning from this method. Failing to do so will result
+    // in a broken shutdown sequence and multiple errors in browser STDERR log.
+    //
+    // NOTE: we have to put this here instead of in the `Browser.close` handler
+    // since browser shutdown can be initiated when the last tab is closed, e.g.
+    // with persistent context.
+    await Promise.all([
+      waitForAddonManager(),
+      waitForSearchService(),
+    ]);
   }
 
   async ['Browser.createBrowserContext']({removeOnDetach}) {
@@ -241,6 +254,26 @@ class BrowserHandler {
                                 .userAgent;
     return {version: 'Firefox/' + version, userAgent};
   }
+}
+
+async function waitForSearchService() {
+  const searchService = Components.classes["@mozilla.org/browser/search-service;1"].getService(Components.interfaces.nsISearchService);
+  await searchService.init();
+}
+
+async function waitForAddonManager() {
+  if (AddonManager.isReady)
+    return;
+  await new Promise(resolve => {
+    let listener = {
+      onStartup() {
+        AddonManager.removeManagerListener(listener);
+        resolve();
+      },
+      onShutdown() { },
+    };
+    AddonManager.addManagerListener(listener);
+  });
 }
 
 function nullToUndefined(value) {
