@@ -41,6 +41,10 @@ fi
 OBJ_FOLDER="obj-build-playwright"
 echo "mk_add_options MOZ_OBJDIR=@TOPSRCDIR@/${OBJ_FOLDER}" >> .mozconfig
 
+if ! [[ -f "$HOME/.mozbuild/_virtualenvs/mach/bin/python" ]]; then
+  ./mach create-mach-environment
+fi
+
 if [[ $1 == "--juggler" ]]; then
   ./mach build faster
 else
