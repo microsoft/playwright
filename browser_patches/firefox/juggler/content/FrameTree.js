@@ -196,6 +196,7 @@ class FrameTree {
     const isStart = flag & Ci.nsIWebProgressListener.STATE_START;
     const isTransferring = flag & Ci.nsIWebProgressListener.STATE_TRANSFERRING;
     const isStop = flag & Ci.nsIWebProgressListener.STATE_STOP;
+    const isDocument = flag & Ci.nsIWebProgressListener.STATE_IS_DOCUMENT;
 
     if (isStart) {
       // Starting a new navigation.
@@ -225,6 +226,9 @@ class FrameTree {
       if (frame === this._mainFrame && status !== Cr.NS_BINDING_ABORTED)
         this.forcePageReady();
     }
+
+    if (isStop && isDocument)
+      this.emit(FrameTree.Events.Load, frame);
   }
 
   onFrameLocationChange(progress, request, location, flags) {
@@ -303,6 +307,7 @@ FrameTree.Events = {
   NavigationAborted: 'navigationaborted',
   SameDocumentNavigation: 'samedocumentnavigation',
   PageReady: 'pageready',
+  Load: 'load',
 };
 
 class Frame {
