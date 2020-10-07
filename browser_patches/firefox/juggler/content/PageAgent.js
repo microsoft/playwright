@@ -163,9 +163,9 @@ class PageAgent {
       helper.addObserver(this._onWindowOpenInNewContext.bind(this), 'juggler-window-open-in-new-context'),
       helper.addObserver(this._filePickerShown.bind(this), 'juggler-file-picker-shown'),
       helper.addEventListener(this._messageManager, 'DOMContentLoaded', this._onDOMContentLoaded.bind(this)),
-      helper.addEventListener(this._messageManager, 'pageshow', this._onLoad.bind(this)),
       helper.addObserver(this._onDocumentOpenLoad.bind(this), 'juggler-document-open-loaded'),
       helper.addEventListener(this._messageManager, 'error', this._onError.bind(this)),
+      helper.on(this._frameTree, 'load', this._onLoad.bind(this)),
       helper.on(this._frameTree, 'bindingcalled', this._onBindingCalled.bind(this)),
       helper.on(this._frameTree, 'frameattached', this._onFrameAttached.bind(this)),
       helper.on(this._frameTree, 'framedetached', this._onFrameDetached.bind(this)),
@@ -389,11 +389,7 @@ class PageAgent {
     });
   }
 
-  _onLoad(event) {
-    const docShell = event.target.ownerGlobal.docShell;
-    const frame = this._frameTree.frameForDocShell(docShell);
-    if (!frame)
-      return;
+  _onLoad(frame) {
     this._browserPage.emit('pageEventFired', {
       frameId: frame.id(),
       name: 'load'
