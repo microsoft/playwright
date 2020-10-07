@@ -124,7 +124,7 @@ export class Chromium extends BrowserType {
           '--blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4',
       );
     }
-    if (options.chromiumSandbox === false)
+    if (options.chromiumSandbox !== true)
       chromeArguments.push('--no-sandbox');
     if (proxy) {
       const proxyURL = new URL(proxy.server);

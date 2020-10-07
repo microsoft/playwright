@@ -4206,7 +4206,7 @@ This methods attaches Playwright to an existing browser instance.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
-  - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
+  - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `false`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
