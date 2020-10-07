@@ -167,7 +167,7 @@ class Runtime {
     const consoleObserver = ({wrappedJSObject}, topic, data) => {
       const executionContext = Array.from(this._executionContexts.values()).find(context => {
         const domWindow = context._domWindow;
-        return domWindow && domWindow.windowUtils.currentInnerWindowID === wrappedJSObject.innerID;
+        return domWindow && domWindow.windowGlobalChild.innerWindowId === wrappedJSObject.innerID;
       });
       if (!executionContext)
         return;
