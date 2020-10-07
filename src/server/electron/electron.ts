@@ -163,7 +163,6 @@ export class Electron  {
         handleSIGTERM,
         handleSIGHUP,
         progress,
-        pipe: true,
         cwd: options.cwd,
         tempDirectories: [],
         attemptToGracefullyClose: () => app!.close(),
