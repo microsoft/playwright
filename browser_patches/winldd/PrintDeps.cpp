@@ -76,7 +76,7 @@ const DepsMap getDependencies(const HMODULE hMod)
     {
         LPCSTR dllName = (LPCSTR)((BYTE*)hMod + pImportDesc->Name);
         std::string dllPath = "not found";
-        HMODULE hModDep = LoadLibraryEx(dllName, NULL, DONT_RESOLVE_DLL_REFERENCES);
+        HMODULE hModDep = LoadLibraryEx(dllName, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32);
         if (hModDep != NULL)
         {
             TCHAR pathBuffer[_MAX_PATH];
@@ -96,7 +96,8 @@ const DepsMap getDependencies(const HMODULE hMod)
 
 int printDependencies(const char* library)
 {
-    HMODULE hMod = LoadLibraryEx(library, NULL, DONT_RESOLVE_DLL_REFERENCES);
+    SetDllDirectoryA(".");
+    HMODULE hMod = LoadLibraryEx(library, NULL, DONT_RESOLVE_DLL_REFERENCES | LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32);
     if (hMod == NULL)
     {
         std::cerr << "Failed to load " << library << "  Error: " << getLastErrorString() << std::endl;
