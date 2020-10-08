@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import * as fs from 'fs';
-import * as util from 'util';
 import { installDebugController } from './debug/debugController';
 import { DispatcherConnection } from './dispatchers/dispatcher';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
@@ -26,21 +24,8 @@ import { Playwright } from './server/playwright';
 import { gracefullyCloseAll } from './server/processLauncher';
 import { installTracer } from './trace/tracer';
 
-
-const readFileAsync = util.promisify(fs.readFile);
-const writeFileAsync = util.promisify(fs.writeFile);
-
-export async function copyPrintDeps(destination: string) {
-  const content = await readFileAsync(require.resolve('../bin/PrintDeps.exe'));
-  await writeFileAsync(destination, content);
-}
-
 export async function installWithProgressBar(location: string) {
   await installBrowsersWithProgressBar(location);
-}
-
-export async function apiJson(): Promise<string> {
-  return (await readFileAsync(require.resolve('../docs/api.json'))).toString();
 }
 
 export function runServer() {
@@ -63,6 +48,3 @@ export function runServer() {
   (playwright as any).electron = new Electron();
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
-
-if (process.argv[2] === 'serve')
-  runServer();
