@@ -100,7 +100,7 @@ it('should be able to remove headers', async ({page, server}) => {
   await page.route('**/*', route => {
     const headers = Object.assign({}, route.request().headers(), {
       foo: 'bar',
-      origin: undefined, // remove "origin" header
+      accept: undefined, // remove "accept" header
     });
     route.continue({ headers });
   });
@@ -110,7 +110,7 @@ it('should be able to remove headers', async ({page, server}) => {
     page.goto(server.PREFIX + '/empty.html')
   ]);
 
-  expect(serverRequest.headers.origin).toBe(undefined);
+  expect(serverRequest.headers.accept).toBe(undefined);
 });
 
 it('should contain referer header', async ({page, server}) => {
