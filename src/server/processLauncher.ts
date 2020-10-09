@@ -35,7 +35,6 @@ export type LaunchProcessOptions = {
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  pipe?: boolean,
   pipeStdin?: boolean,
   tempDirectories: string[],
 
@@ -83,7 +82,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   const cleanup = () => helper.removeFolders(options.tempDirectories);
 
   const progress = options.progress;
-  const stdio: ('ignore' | 'pipe')[] = options.pipe ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe'];
+  const stdio: ('ignore' | 'pipe')[] = ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'];
   if (options.pipeStdin)
     stdio[0] = 'pipe';
   progress.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);

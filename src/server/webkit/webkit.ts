@@ -27,7 +27,7 @@ import * as types from '../types';
 
 export class WebKit extends BrowserType {
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser, null /* use pipe not websocket */);
+    super(packagePath, browser);
   }
 
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
