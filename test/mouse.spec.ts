@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, xdescribe } from './fixtures';
+import { it, expect, describe, xdescribe } from './fixtures';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -197,7 +197,7 @@ xdescribe('Drag and Drop', function() {
 });
 
 describe('Mouse.currentState', () => {
-  it('should work', async({server, page}) => {
+  it('should work', async ({server, page}) => {
     await page.mouse.click(30, 40);
     expect(page.mouse.currentState()).toEqual({
       x: 30,

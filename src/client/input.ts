@@ -47,12 +47,23 @@ export class Keyboard {
 
 export class Mouse {
   private _channel: channels.PageChannel;
+  private _x = 0;
+  private _y = 0;
 
   constructor(channel: channels.PageChannel) {
     this._channel = channel;
   }
 
+  currentState(): {x: number, y: number} {
+    return {
+      x: this._x,
+      y: this._y,
+    };
+  }
+
   async move(x: number, y: number, options: { steps?: number } = {}) {
+    this._x = x;
+    this._y = y;
     await this._channel.mouseMove({ x, y, ...options });
   }
 
@@ -65,10 +76,14 @@ export class Mouse {
   }
 
   async click(x: number, y: number, options: channels.PageMouseClickOptions = {}) {
+    this._x = x;
+    this._y = y;
     await this._channel.mouseClick({ x, y, ...options });
   }
 
   async dblclick(x: number, y: number, options: Omit<channels.PageMouseClickOptions, 'clickCount'> = {}) {
+    this._x = x;
+    this._y = y;
     await this.click(x, y, { ...options, clickCount: 2 });
   }
 }
