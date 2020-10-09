@@ -16,7 +16,6 @@
  */
 
 import * as path from 'path';
-import * as os from 'os';
 import { CRBrowser } from './crBrowser';
 import { Env } from '../processLauncher';
 import { kBrowserCloseMessageId } from './crConnection';
