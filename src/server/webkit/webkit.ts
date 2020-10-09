@@ -38,10 +38,6 @@ export class WebKit extends BrowserType {
     return { ...env, CURL_COOKIE_JAR_PATH: path.join(userDataDir, 'cookiejar.db') };
   }
 
-  _amendArguments(browserArguments: string[]): string[] {
-    return browserArguments;
-  }
-
   _rewriteStartupError(error: Error): Error {
     return error;
   }
