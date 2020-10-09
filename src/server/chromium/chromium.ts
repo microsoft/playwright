@@ -80,20 +80,6 @@ export class Chromium extends BrowserType {
     return env;
   }
 
-  _amendArguments(browserArguments: string[]): string[] {
-    // We currently only support Linux.
-    if (os.platform() !== 'linux')
-      return browserArguments;
-
-    // If there's already --no-sandbox passed in, do nothing.
-    if (browserArguments.indexOf('--no-sandbox') !== -1)
-      return browserArguments;
-    const runningAsRoot = process.geteuid && process.geteuid() === 0;
-    if (runningAsRoot)
-      return ['--no-sandbox', ...browserArguments];
-    return browserArguments;
-  }
-
   _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
     const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
     transport.send(message);
