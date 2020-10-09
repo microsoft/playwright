@@ -211,6 +211,42 @@ children, if requested.
     export type getFullAXTreeReturnValue = {
       nodes: AXNode[];
     }
+    /**
+     * Query a DOM node's accessibility subtree for accessible name and role.
+This command computes the name and role for all nodes in the subtree, including those that are
+ignored for accessibility, and returns those that mactch the specified name and role. If no DOM
+node is specified, or the DOM node does not exist, the command returns an error. If neither
+`accessibleName` or `role` is specified, it returns all the accessibility nodes in the subtree.
+     */
+    export type queryAXTreeParameters = {
+      /**
+       * Identifier of the node for the root to query.
+       */
+      nodeId?: DOM.NodeId;
+      /**
+       * Identifier of the backend node for the root to query.
+       */
+      backendNodeId?: DOM.BackendNodeId;
+      /**
+       * JavaScript object id of the node wrapper for the root to query.
+       */
+      objectId?: Runtime.RemoteObjectId;
+      /**
+       * Find nodes with this computed name.
+       */
+      accessibleName?: string;
+      /**
+       * Find nodes with this computed role.
+       */
+      role?: string;
+    }
+    export type queryAXTreeReturnValue = {
+      /**
+       * A list of `Accessibility.AXNode` matching the specified attributes,
+including nodes that are ignored for accessibility.
+       */
+      nodes: AXNode[];
+    }
   }
   
   export module Animation {
@@ -6946,6 +6982,11 @@ If the opcode isn't 1, then payloadData is a base64 encoded string representing 
 module) (0-based).
        */
       lineNumber?: number;
+      /**
+       * Initiator column number, set for Parser type or for Script type (when script is importing
+module) (0-based).
+       */
+      columnNumber?: number;
     }
     /**
      * Cookie object
@@ -7275,6 +7316,34 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
     export interface SecurityIsolationStatus {
       coop: CrossOriginOpenerPolicyStatus;
       coep: CrossOriginEmbedderPolicyStatus;
+    }
+    /**
+     * An object providing the result of a network resource load.
+     */
+    export interface LoadNetworkResourcePageResult {
+      success: boolean;
+      /**
+       * Optional values used for error reporting.
+       */
+      netError?: number;
+      netErrorName?: string;
+      httpStatusCode?: number;
+      /**
+       * If successful, one of the following two fields holds the result.
+       */
+      stream?: IO.StreamHandle;
+      /**
+       * Response headers.
+       */
+      headers?: Network.Headers;
+    }
+    /**
+     * An options object that may be extended later to better support CORS,
+CORB and streaming.
+     */
+    export interface LoadNetworkResourceOptions {
+      disableCache: boolean;
+      includeCredentials: boolean;
     }
     
     /**
@@ -8116,7 +8185,7 @@ default domain and path values of the created cookie.
     }
     export type setCookieReturnValue = {
       /**
-       * True if successfully set cookie.
+       * Always set to true. If an error occurs, the response indicates protocol error.
        */
       success: boolean;
     }
@@ -8215,6 +8284,26 @@ continueInterceptedRequest call.
     }
     export type getSecurityIsolationStatusReturnValue = {
       status: SecurityIsolationStatus;
+    }
+    /**
+     * Fetches the resource and returns the content.
+     */
+    export type loadNetworkResourceParameters = {
+      /**
+       * Frame id to get the resource for.
+       */
+      frameId: Page.FrameId;
+      /**
+       * URL of the resource to get content for.
+       */
+      url: string;
+      /**
+       * Options for the request.
+       */
+      options: LoadNetworkResourceOptions;
+    }
+    export type loadNetworkResourceReturnValue = {
+      resource: LoadNetworkResourcePageResult;
     }
   }
   
@@ -11275,9 +11364,13 @@ supported.
        */
       openerId?: TargetID;
       /**
-       * Whether the opened window has access to the originating window.
+       * Whether the target has access to the originating window.
        */
       canAccessOpener: boolean;
+      /**
+       * Frame id of originating window (is only set if target has an opener).
+       */
+      openerFrameId?: Page.FrameId;
       browserContextId?: Browser.BrowserContextID;
     }
     export interface RemoteLocation {
@@ -11403,6 +11496,9 @@ and eventually retire it. See crbug.com/991325.
       targetId: TargetID;
     }
     export type closeTargetReturnValue = {
+      /**
+       * Always set to true. If an error occurs, the response indicates protocol error.
+       */
       success: boolean;
     }
     /**
@@ -12405,6 +12501,12 @@ API.
        * Defaults to false.
        */
       hasUserVerification?: boolean;
+      /**
+       * If set to true, the authenticator will support the largeBlob extension.
+https://w3c.github.io/webauthn#largeBlob
+Defaults to false.
+       */
+      hasLargeBlob?: boolean;
       /**
        * If set to true, tests of user presence will succeed immediately.
 Otherwise, they will not be resolved. Defaults to true.
@@ -15141,15 +15243,27 @@ Will cancel the termination when the outer-most script execution ends.
      * If executionContextId is empty, adds binding with the given name on the
 global objects of all inspected contexts, including those created later,
 bindings survive reloads.
-If executionContextId is specified, adds binding only on global object of
-given execution context.
 Binding function takes exactly one argument, this argument should be string,
 in case of any other input, function throws an exception.
 Each binding function call produces Runtime.bindingCalled notification.
      */
     export type addBindingParameters = {
       name: string;
+      /**
+       * If specified, the binding would only be exposed to the specified
+execution context. If omitted and `executionContextName` is not set,
+the binding is exposed to all execution contexts of the target.
+This parameter is mutually exclusive with `executionContextName`.
+       */
       executionContextId?: ExecutionContextId;
+      /**
+       * If specified, the binding is exposed to the executionContext with
+matching name, even for contexts created after the binding is added.
+See also `ExecutionContext.name` and `worldName` parameter to
+`Page.addScriptToEvaluateOnNewDocument`.
+This parameter is mutually exclusive with `executionContextId`.
+       */
+      executionContextName?: string;
     }
     export type addBindingReturnValue = {
     }
@@ -15356,6 +15470,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Accessibility.enable": Accessibility.enableParameters;
     "Accessibility.getPartialAXTree": Accessibility.getPartialAXTreeParameters;
     "Accessibility.getFullAXTree": Accessibility.getFullAXTreeParameters;
+    "Accessibility.queryAXTree": Accessibility.queryAXTreeParameters;
     "Animation.disable": Animation.disableParameters;
     "Animation.enable": Animation.enableParameters;
     "Animation.getCurrentTime": Animation.getCurrentTimeParameters;
@@ -15603,6 +15718,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setRequestInterception": Network.setRequestInterceptionParameters;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideParameters;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
+    "Network.loadNetworkResource": Network.loadNetworkResourceParameters;
     "Overlay.disable": Overlay.disableParameters;
     "Overlay.enable": Overlay.enableParameters;
     "Overlay.getHighlightObjectForTest": Overlay.getHighlightObjectForTestParameters;
@@ -15853,6 +15969,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Accessibility.enable": Accessibility.enableReturnValue;
     "Accessibility.getPartialAXTree": Accessibility.getPartialAXTreeReturnValue;
     "Accessibility.getFullAXTree": Accessibility.getFullAXTreeReturnValue;
+    "Accessibility.queryAXTree": Accessibility.queryAXTreeReturnValue;
     "Animation.disable": Animation.disableReturnValue;
     "Animation.enable": Animation.enableReturnValue;
     "Animation.getCurrentTime": Animation.getCurrentTimeReturnValue;
@@ -16100,6 +16217,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.setRequestInterception": Network.setRequestInterceptionReturnValue;
     "Network.setUserAgentOverride": Network.setUserAgentOverrideReturnValue;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
+    "Network.loadNetworkResource": Network.loadNetworkResourceReturnValue;
     "Overlay.disable": Overlay.disableReturnValue;
     "Overlay.enable": Overlay.enableReturnValue;
     "Overlay.getHighlightObjectForTest": Overlay.getHighlightObjectForTestReturnValue;
