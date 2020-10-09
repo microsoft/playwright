@@ -7053,15 +7053,27 @@ index 66bf24df826daa8e7284248fd1b728cb5ebff343..d40f4f4be2bf76fa300cb54a06e81ff5
  
  #if PLATFORM(MAC)
  
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.h b/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.h
+index 06f8f1f762e89686fc5dc3fc890f13e0b363d333..68363fd83bac76b0f879ae48a54a862d715d685f 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.h
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.h
+@@ -30,6 +30,7 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ @class _WKUserContentWorld;
+ @class WKWebView;
++@class WKContentWorld;
+ 
+ typedef NS_ENUM(NSInteger, _WKUserStyleLevel) {
+     _WKUserStyleUserLevel,
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm
-index 0684412b1351f30a5d484f909d7a4b97a71ca426..458635a33f903613eff76923105029f1bafedbfc 100644
+index 0684412b1351f30a5d484f909d7a4b97a71ca426..33daa49f590a614d2122477e4987f58af3b1b8ca 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm
 +++ b/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm
 @@ -33,6 +33,7 @@
  #import "WebKit2Initialize.h"
  #import "WebPageProxy.h"
  #import "_WKUserContentWorldInternal.h"
-+#import <WebKit/WKContentWorld.h>
++#import <WebKit/WKContentWorldInternal.h>
  #import <wtf/cocoa/VectorCocoa.h>
  
  @implementation _WKUserStyleSheet
