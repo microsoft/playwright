@@ -119,7 +119,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         }
         auto context = adoptWK(WKContextCreateWithConfiguration(nullptr));
         auto dataStore = adoptWK(WKWebsiteDataStoreCreateWithConfiguration(configuration.get()));
-        WKContextSetPrimaryDataStore(context.get(), dataStore.get());
         configureDataStore(dataStore.get());
 
         auto* mainWindow = new MainWindow();
