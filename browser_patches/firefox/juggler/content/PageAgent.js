@@ -200,6 +200,7 @@ class PageAgent {
         dispatchKeyEvent: this._dispatchKeyEvent.bind(this),
         dispatchMouseEvent: this._dispatchMouseEvent.bind(this),
         dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
+        dispatchTapEvent: this._dispatchTapEvent.bind(this),
         getBoundingBox: this._getBoundingBox.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
         getFullAXTree: this._getFullAXTree.bind(this),
@@ -706,6 +707,70 @@ class PageAgent {
       touchPoints.length,
       modifiers);
     return {defaultPrevented};
+  }
+
+  async _dispatchTapEvent({x, y, modifiers}) {
+    const {defaultPrevented: startPrevented} = await this._dispatchTouchEvent({
+      type: 'touchstart',
+      modifiers,
+      touchPoints: [{x, y}]
+    });
+    const {defaultPrevented: endPrevented} = await this._dispatchTouchEvent({
+      type: 'touchend',
+      modifiers,
+      touchPoints: [{x, y}]
+    });
+    if (startPrevented || endPrevented)
+      return;
+
+    const frame = this._frameTree.mainFrame();
+    frame.domWindow().windowUtils.sendMouseEvent(
+      'mousemove',
+      x,
+      y,
+      0 /*button*/,
+      0 /*clickCount*/,
+      modifiers,
+      false /*aIgnoreRootScrollFrame*/,
+      undefined /*pressure*/,
+      5 /*inputSource*/,
+      undefined /*isDOMEventSynthesized*/,
+      false /*isWidgetEventSynthesized*/,
+      0 /*buttons*/,
+      undefined /*pointerIdentifier*/,
+      true /*disablePointerEvent*/);
+
+    frame.domWindow().windowUtils.sendMouseEvent(
+      'mousedown',
+      x,
+      y,
+      0 /*button*/,
+      1 /*clickCount*/,
+      modifiers,
+      false /*aIgnoreRootScrollFrame*/,
+      undefined /*pressure*/,
+      5 /*inputSource*/,
+      undefined /*isDOMEventSynthesized*/,
+      false /*isWidgetEventSynthesized*/,
+      1 /*buttons*/,
+      undefined /*pointerIdentifier*/,
+      true /*disablePointerEvent*/);
+
+    frame.domWindow().windowUtils.sendMouseEvent(
+      'mouseup',
+      x,
+      y,
+      0 /*button*/,
+      1 /*clickCount*/,
+      modifiers,
+      false /*aIgnoreRootScrollFrame*/,
+      undefined /*pressure*/,
+      5 /*inputSource*/,
+      undefined /*isDOMEventSynthesized*/,
+      false /*isWidgetEventSynthesized*/,
+      0 /*buttons*/,
+      undefined /*pointerIdentifier*/,
+      true /*disablePointerEvent*/);
   }
 
   _startDragSessionIfNeeded() {
