@@ -20,6 +20,7 @@ import * as os from 'os';
 import { spawn } from 'child_process';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
 import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../utils/browserPaths.js';
+import { printDepsWindowsExecutable } from '../utils/binaryPaths';
 
 const accessAsync = util.promisify(fs.access.bind(fs));
 const checkExecutable = (filePath: string) => accessAsync(filePath, fs.constants.X_OK).then(() => true).catch(e => false);
@@ -190,9 +191,12 @@ async function executablesOrSharedLibraries(directoryPath: string): Promise<stri
 }
 
 async function missingFileDependenciesWindows(filePath: string): Promise<Array<string>> {
+  const executable = printDepsWindowsExecutable();
+  if (!executable)
+    return [];
+
   const dirname = path.dirname(filePath);
-  const printDepsWindowsExecutable = process.env.PW_PRINT_DEPS_WINDOWS_EXECUTABLE || path.join(__dirname, '../../bin/PrintDeps.exe');
-  const {stdout, code} = await spawnAsync(printDepsWindowsExecutable, [filePath], {
+  const {stdout, code} = await spawnAsync(executable, [filePath], {
     cwd: dirname,
     env: {
       ...process.env,

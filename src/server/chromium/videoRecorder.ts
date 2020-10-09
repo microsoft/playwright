@@ -15,8 +15,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import * as os from 'os';
-import * as path from 'path';
+import { ffmpegExecutable } from '../../utils/binaryPaths';
 import { assert } from '../../utils/utils';
 import { launchProcess } from '../processLauncher';
 import { Progress, ProgressController } from '../progress';
@@ -59,16 +58,11 @@ export class VideoRecorder {
     args.push(options.outputFile);
     const progress = this._progress;
 
-    let ffmpegPath = 'ffmpeg';
-    const binPath = path.join(__dirname, '../../../third_party/ffmpeg/');
-    if (os.platform() === 'win32')
-      ffmpegPath = path.join(binPath, os.arch() === 'x64' ? 'ffmpeg-win64.exe' : 'ffmpeg-win32.exe');
-    else if (os.platform() === 'darwin')
-      ffmpegPath = path.join(binPath, 'ffmpeg-mac');
-    else
-      ffmpegPath = path.join(binPath, 'ffmpeg-linux');
+    const executablePath = ffmpegExecutable();
+    if (!executablePath)
+      throw new Error('ffmpeg executable was not found');
     const { launchedProcess, gracefullyClose } = await launchProcess({
-      executablePath: ffmpegPath,
+      executablePath,
       args,
       pipeStdin: true,
       progress,
