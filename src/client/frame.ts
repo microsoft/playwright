@@ -322,6 +322,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async tap(selector: string, options: channels.FrameTapOptions = {}) {
+    return this._wrapApiCall(this._apiName('tap'), async () => {
+      return await this._channel.tap({ selector, ...options });
+    });
+  }
+
   async fill(selector: string, value: string, options: channels.FrameFillOptions = {}) {
     return this._wrapApiCall(this._apiName('fill'), async () => {
       return await this._channel.fill({ selector, value, ...options });

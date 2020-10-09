@@ -49,6 +49,7 @@ export class CRPage implements PageDelegate {
   readonly _page: Page;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
+  readonly rawTouchscreen = {tap() { throw new Error('unimplemented');}};
   readonly _targetId: string;
   readonly _opener: CRPage | null;
   private readonly _pdf: CRPDF;

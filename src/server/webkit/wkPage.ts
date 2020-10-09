@@ -44,6 +44,7 @@ const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
+  readonly rawTouchscreen = {tap() { throw new Error('unimplemented');}};
   _session: WKSession;
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;

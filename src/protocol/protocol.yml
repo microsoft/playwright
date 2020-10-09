@@ -775,6 +775,11 @@ Page:
           - middle
         clickCount: number?
 
+    touchscreenTap:
+      parameters:
+        x: number
+        y: number
+
     accessibilitySnapshot:
       parameters:
         interestingOnly: boolean?
@@ -1230,6 +1235,27 @@ Frame:
         timeout: number?
         noWaitAfter: boolean?
 
+    tap:
+      parameters:
+        selector: string
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position:
+          type: object?
+          properties:
+            x: number
+            y: number
+        timeout: number?
+
     textContent:
       parameters:
         selector: string
@@ -1625,6 +1651,26 @@ ElementHandle:
               buffer: string
         timeout: number?
         noWaitAfter: boolean?
+
+    tap:
+      parameters:
+        force: boolean?
+        noWaitAfter: boolean?
+        modifiers:
+          type: array?
+          items:
+            type: enum
+            literals:
+            - Alt
+            - Control
+            - Meta
+            - Shift
+        position:
+          type: object?
+          properties:
+            x: number
+            y: number
+        timeout: number?
 
     textContent:
       returns:

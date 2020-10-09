@@ -400,6 +400,17 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.dblclick(point.x, point.y, options), options);
   }
 
+  async tap(controller: ProgressController, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}): Promise<void> {
+    return controller.run(async progress => {
+      const result = await this._tap(progress, options);
+      return assertDone(throwRetargetableDOMError(result));
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  _tap(progress: Progress, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
+    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen.tap(point.x, point.y), options);
+  }
+
   async selectOption(controller: ProgressController, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[]> {
     return controller.run(async progress => {
       const result = await this._selectOption(progress, elements, values, options);

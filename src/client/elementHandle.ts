@@ -115,6 +115,12 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
+  async tap(options: channels.ElementHandleTapOptions = {}): Promise<void> {
+    return this._wrapApiCall('elementHandle.tap', async () => {
+      return await this._elementChannel.tap(options);
+    });
+  }
+
   async selectOption(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return this._wrapApiCall('elementHandle.selectOption', async () => {
       const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });

@@ -125,6 +125,12 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     }, { ...metadata, type: 'dblclick', target: params.selector, page: this._frame._page });
   }
 
+  async tap(params: channels.FrameTapParams, metadata?: channels.Metadata): Promise<void> {
+    return runAction(async controller => {
+      return await this._frame.tap(controller, params.selector, params);
+    }, { ...metadata, type: 'tap', target: params.selector, page: this._frame._page });
+  }
+
   async fill(params: channels.FrameFillParams, metadata?: channels.Metadata): Promise<void> {
     return runAction(async controller => {
       return await this._frame.fill(controller, params.selector, params.value, params);

@@ -185,6 +185,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     await this._page.mouse.click(params.x, params.y, params);
   }
 
+  async touchscreenTap(params: channels.PageTouchscreenTapParams): Promise<void> {
+    await this._page.touchscreen.tap(params.x, params.y);
+  }
+
   async accessibilitySnapshot(params: channels.PageAccessibilitySnapshotParams): Promise<channels.PageAccessibilitySnapshotResult> {
     const rootAXNode = await this._page.accessibility.snapshot({
       interestingOnly: params.interestingOnly,

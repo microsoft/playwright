@@ -18,6 +18,7 @@
 - [class: FileChooser](#class-filechooser)
 - [class: Keyboard](#class-keyboard)
 - [class: Mouse](#class-mouse)
+- [class: Touchscreen](#class-touchscreen)
 - [class: Request](#class-request)
 - [class: Response](#class-response)
 - [class: Selectors](#class-selectors)
@@ -782,8 +783,10 @@ page.removeListener('request', logRequest);
 - [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders)
 - [page.setInputFiles(selector, files[, options])](#pagesetinputfilesselector-files-options)
 - [page.setViewportSize(viewportSize)](#pagesetviewportsizeviewportsize)
+- [page.tap(selector[, options])](#pagetapselector-options)
 - [page.textContent(selector[, options])](#pagetextcontentselector-options)
 - [page.title()](#pagetitle)
+- [page.touchscreen](#pagetouchscreen)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
 - [page.unroute(url[, handler])](#pageunrouteurl-handler)
@@ -1833,6 +1836,31 @@ await page.setViewportSize({
 await page.goto('https://example.com');
 ```
 
+#### page.tap(selector[, options])
+- `selector` <[string]> A selector to search for element to tap. If there are multiple elements satisfying the selector, the first will be tapped. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `position` <[Object]> A point to tap relative to the top-left corner of element padding box. If not specified, taps some visible point of the element.
+    - `x` <[number]>
+    - `y` <[number]>
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the tap, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
+  - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully tapped.
+
+This method taps an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.touchscreen](#pagemouse) to tap the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
+
+> **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
+
+Shortcut for [page.mainFrame().tap()](#framename).
+
 #### page.textContent(selector[, options])
 - `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
@@ -1841,13 +1869,14 @@ await page.goto('https://example.com');
 
 Resolves to the `element.textContent`.
 
-
 #### page.title()
 - returns: <[Promise]<[string]>> The page's title.
 
 Shortcut for [page.mainFrame().title()](#frametitle).
 
+#### page.touchscreen
 
+- returns: <[Touchscreen]>
 
 #### page.type(selector, text[, options])
 - `selector` <[string]> A selector of an element to type into. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2154,6 +2183,7 @@ console.log(text);
 - [frame.selectOption(selector, values[, options])](#frameselectoptionselector-values-options)
 - [frame.setContent(html[, options])](#framesetcontenthtml-options)
 - [frame.setInputFiles(selector, files[, options])](#framesetinputfilesselector-files-options)
+- [frame.tap(selector[, options])](#frametapselector-options)
 - [frame.textContent(selector[, options])](#frametextcontentselector-options)
 - [frame.title()](#frametitle)
 - [frame.type(selector, text[, options])](#frametypeselector-text-options)
@@ -2594,6 +2624,29 @@ This method expects `selector` to point to an [input element](https://developer.
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
 
+#### frame.tap(selector[, options])
+- `selector` <[string]> A selector to search for element to tap. If there are multiple elements satisfying the selector, the first will be tapped. See [working with selectors](#working-with-selectors) for more details.
+- `options` <[Object]>
+  - `position` <[Object]> A point to tap relative to the top-left corner of element padding box. If not specified, taps some visible point of the element.
+    - `x` <[number]>
+    - `y` <[number]>
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the tap, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
+  - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully tapped.
+
+This method taps an element matching `selector` by performing the following steps:
+1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+1. Scroll the element into view if needed.
+1. Use [page.touchscreen](#pagemouse) to tap the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
+
+> **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
+
 #### frame.textContent(selector[, options])
 - `selector` <[string]> A selector to search for an element. If there are multiple elements satisfying the selector, the first will be picked. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
@@ -2601,7 +2654,6 @@ Sets the value of the file input to these file paths or files. If some of the `f
 - returns: <[Promise]<[null]|[string]>>
 
 Resolves to the `element.textContent`.
-
 
 #### frame.title()
 - returns: <[Promise]<[string]>> The page's title.
@@ -2800,6 +2852,7 @@ ElementHandle instances can be used as an argument in [`page.$eval()`](#pageeval
 - [elementHandle.selectOption(values[, options])](#elementhandleselectoptionvalues-options)
 - [elementHandle.selectText([options])](#elementhandleselecttextoptions)
 - [elementHandle.setInputFiles(files[, options])](#elementhandlesetinputfilesfiles-options)
+- [elementHandle.tap([options])](#elementhandletapoptions)
 - [elementHandle.textContent()](#elementhandletextcontent)
 - [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
@@ -3118,6 +3171,29 @@ This method waits for [actionability](./actionability.md) checks, then focuses t
 This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For empty array, clears the selected files.
+
+#### elementHandle.tap([options])
+- `options` <[Object]>
+  - `position` <[Object]> A point to tap relative to the top-left corner of element padding box. If not specified, taps some visible point of the element.
+    - `x` <[number]>
+    - `y` <[number]>
+  - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the tap, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
+  - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
+  - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
+  - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]> Promise that resolves when the element is successfully tapped.
+
+This method taps the element by performing the following steps:
+1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
+1. Scroll the element into view if needed.
+1. Use [page.touchscreen](#pagemouse) to tap in the center of the element, or the specified `position`.
+1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+
+If the element is detached from the DOM at any moment during the action, this method rejects.
+
+When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
+
+> **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
 
 #### elementHandle.textContent()
 - returns: <[Promise]<[null]|[string]>> Resolves to the `node.textContent`.
@@ -3701,6 +3777,17 @@ Dispatches a `mousemove` event.
 
 Dispatches a `mouseup` event.
 
+### class: Touchscreen
+
+The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the
+touchscreen can only be used in browser contexts that have been intialized with `hasTouch` set to true.
+
+#### touchscreen.tap(x, y)
+- `x` <[number]>
+- `y` <[number]>
+- returns: <[Promise]>
+
+Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
 
 ### class: Request
 
@@ -4839,6 +4926,7 @@ const { chromium } = require('playwright');
 [Selectors]: #class-selectors  "Selectors"
 [Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
 [TimeoutError]: #class-timeouterror "TimeoutError"
+[Touchscreen]: #class-touchscreen "Touchscreen"
 [UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
 [URL]: https://nodejs.org/api/url.html
 [USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"

@@ -29,7 +29,7 @@ import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
 import { Worker } from './worker';
 import { Frame, verifyLoadState, WaitForNavigationOptions } from './frame';
-import { Keyboard, Mouse } from './input';
+import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, Func1, FuncOn, SmartHandle, serializeArgument, parseResult, JSHandle } from './jsHandle';
 import { Request, Response, Route, RouteHandler, validateHeaders } from './network';
 import { FileChooser } from './fileChooser';
@@ -77,6 +77,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly accessibility: Accessibility;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
+  readonly touchscreen: Touchscreen;
   coverage: ChromiumCoverage | null = null;
   pdf?: (options?: PDFOptions) => Promise<Buffer>;
 
@@ -102,6 +103,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this._channel);
     this.mouse = new Mouse(this._channel);
+    this.touchscreen = new Touchscreen(this._channel);
 
     this._mainFrame = Frame.from(initializer.mainFrame);
     this._mainFrame._page = this;
@@ -488,6 +490,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   async dblclick(selector: string, options?: channels.FrameDblclickOptions) {
     return this._attributeToPage(() => this._mainFrame.dblclick(selector, options));
+  }
+
+  async tap(selector: string, options?: channels.FrameTapOptions) {
+    return this._attributeToPage(() => this._mainFrame.tap(selector, options));
   }
 
   async fill(selector: string, value: string, options?: channels.FrameFillOptions) {

@@ -38,6 +38,7 @@ export class FFPage implements PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts = true;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
+  readonly rawTouchscreen = {tap() { throw new Error('unimplemented');}};
   readonly _session: FFSession;
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;

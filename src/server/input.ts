@@ -293,3 +293,24 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
   }
   return result;
 }
+
+export interface RawTouchscreen {
+  tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>): Promise<void>;
+}
+
+export class Touchscreen {
+  private _raw: RawTouchscreen;
+  private _page: Page;
+
+  constructor(raw: RawTouchscreen, page: Page) {
+    this._raw = raw;
+    this._page = page;
+  }
+
+  async tap(x: number, y: number) {
+    if (!this._page._browserContext._options.hasTouch)
+      throw new Error('hasTouch must be enabled on the browser context before using the touchscreen.');
+    await this._raw.tap(x, y, this._page.keyboard._modifiers());
+    await this._page._doSlowMo();
+  }
+}
