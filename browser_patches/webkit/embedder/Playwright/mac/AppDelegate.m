@@ -237,7 +237,7 @@ const NSActivityOptions ActivityOptions =
         configuration.preferences._requestAnimationFrameEnabled = YES;
         _WKProcessPoolConfiguration *processConfiguration = [[[_WKProcessPoolConfiguration alloc] init] autorelease];
         processConfiguration.forceOverlayScrollbars = YES;
-        configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration AndDataStore:configuration.websiteDataStore] autorelease];
+        configuration.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
     }
     return configuration;
 }
