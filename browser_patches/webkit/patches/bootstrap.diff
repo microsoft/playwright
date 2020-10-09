@@ -7053,6 +7053,18 @@ index 66bf24df826daa8e7284248fd1b728cb5ebff343..d40f4f4be2bf76fa300cb54a06e81ff5
  
  #if PLATFORM(MAC)
  
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm
+index 0684412b1351f30a5d484f909d7a4b97a71ca426..458635a33f903613eff76923105029f1bafedbfc 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKUserStyleSheet.mm
+@@ -33,6 +33,7 @@
+ #import "WebKit2Initialize.h"
+ #import "WebPageProxy.h"
+ #import "_WKUserContentWorldInternal.h"
++#import <WebKit/WKContentWorld.h>
+ #import <wtf/cocoa/VectorCocoa.h>
+ 
+ @implementation _WKUserStyleSheet
 diff --git a/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp b/Source/WebKit/UIProcess/API/glib/WebKitBrowserInspector.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..54529a23f53cebe6f8a96873ca6c2f31f0481ae0
