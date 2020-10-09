@@ -6738,49 +6738,6 @@ index b6388155cd3036e666110f1925616afd37e868ba..c21275123dc4581f51730a2d27deac37
  } WKPageUIClientV14;
  
  #ifdef __cplusplus
-diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
-index e795b3326c76df9d9d840342f8dd14bbbfa107db..e64dad4d6185aa74cd42c60b749aa3b48df93e5f 100644
---- a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
-+++ b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPool.mm
-@@ -47,6 +47,7 @@
- #import "_WKDownloadDelegate.h"
- #import "_WKDownloadInternal.h"
- #import "_WKProcessPoolConfigurationInternal.h"
-+#import "_WKWebsiteDataStoreInternal.h"
- #import <WebCore/CertificateInfo.h>
- #import <WebCore/HTTPCookieAcceptPolicyCocoa.h>
- #import <WebCore/PluginData.h>
-@@ -86,6 +87,18 @@ static WKProcessPool *sharedProcessPool;
-     return self;
- }
- 
-+- (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration AndDataStore:(WKWebsiteDataStore*)dataStore
-+{
-+    if (!(self = [super init]))
-+        return nil;
-+
-+    API::Object::constructInWrapper<WebKit::WebProcessPool>(self, *configuration->_processPoolConfiguration);
-+    _processPool->setPrimaryDataStore(*dataStore->_websiteDataStore);
-+
-+    return self;
-+}
-+
-+
- - (instancetype)init
- {
-     return [self _initWithConfiguration:adoptNS([[_WKProcessPoolConfiguration alloc] init]).get()];
-diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h
-index 21941b2d46070da1ca95fb906f8832f5af04d8ab..2b688d383c8ae1a88dc44a11f53ae724fc13ad1a 100644
---- a/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h
-+++ b/Source/WebKit/UIProcess/API/Cocoa/WKProcessPoolPrivate.h
-@@ -38,6 +38,7 @@
- 
- @interface WKProcessPool ()
- - (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration __attribute__((objc_method_family(init))) NS_DESIGNATED_INITIALIZER;
-+- (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration AndDataStore:(WKWebsiteDataStore *)dataStore __attribute__((objc_method_family(init))) NS_DESIGNATED_INITIALIZER;
- @end
- 
- @interface WKProcessPool (WKPrivate)
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h b/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
 index cad87f3ef2ab93d93a74cec0c34b47c695de6bc6..66145a384638b97ee08516e56e1e86a83713c634 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/WKUIDelegate.h
@@ -8370,10 +8327,10 @@ index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e6fb1922885d4650f6adb1ddd758fe5c7c7ea6f5
+index 0000000000000000000000000000000000000000..3873c71090213157a982c0d20316428de098c77b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
-@@ -0,0 +1,167 @@
+@@ -0,0 +1,168 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -8405,6 +8362,7 @@ index 0000000000000000000000000000000000000000..e6fb1922885d4650f6adb1ddd758fe5c
 +#include "GenericCallback.h"
 +#include "PageClient.h"
 +#include "ScreencastEncoder.h"
++#include "WebPageInspectorController.h"
 +#include "WebPageProxy.h"
 +#include "WebsiteDataStore.h"
 +#include <JavaScriptCore/InspectorFrontendDispatchers.h>
