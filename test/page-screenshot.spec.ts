@@ -19,6 +19,7 @@ import { it, expect, describe } from './fixtures';
 import { verifyViewport } from './utils';
 import path from 'path';
 import fs from 'fs';
+import { PNG } from 'pngjs';
 
 // Firefox headful produces a different image.
 
@@ -289,5 +290,36 @@ describe('page screenshot', (suite, { browserName, headful }) => {
   it('path option should throw for unsupported mime type', async ({page}) => {
     const error = await page.screenshot({ path: 'file.txt' }).catch(e => e);
     expect(error.message).toContain('path: unsupported mime type "text/plain"');
+  });
+
+  it('should work with large size', (test, { browserName }) => {
+    test.fail(browserName === 'chromium', 'Upstream Chromium bug');
+  }, async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.evaluate(() => {
+      document.body.style.margin = '0';
+      document.body.style.padding = '0';
+      document.documentElement.style.margin = '0';
+      document.documentElement.style.padding = '0';
+      const div = document.createElement('div');
+      div.style.width = '1250px';
+      div.style.height = '8440px';
+      div.style.background = 'linear-gradient(red, blue)';
+      document.body.appendChild(div);
+    });
+    const buffer = await page.screenshot({ fullPage: true });
+    const decoded = PNG.sync.read(buffer);
+
+    const pixel = (x: number, y: number) => {
+      const dst = new PNG({ width: 1, height: 1 });
+      PNG.bitblt(decoded, dst, x, y, 1, 1);
+      const pixels = dst.data;
+      return { r: pixels[0], g: pixels[1], b: pixels[2], a: pixels[3] };
+    };
+
+    expect(pixel(0, 0).r).toBeGreaterThan(128);
+    expect(pixel(0, 0).b).toBeLessThan(128);
+    expect(pixel(0, 8339).r).toBeLessThan(128);
+    expect(pixel(0, 8339).b).toBeGreaterThan(128);
   });
 });
