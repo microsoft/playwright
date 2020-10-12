@@ -26,6 +26,9 @@ import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, Launc
 import * as path from 'path';
 export { expect, config } from 'folio';
 
+// Test timeout for e2e tests is 30 seconds.
+config.timeout = 30000;
+
 // Parameters ------------------------------------------------------------------
 // ... these can be used to run tests in different modes.
 
