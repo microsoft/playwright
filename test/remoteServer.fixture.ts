@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as baseFixtures } from './fixtures';
+import { folio as base } from './fixtures';
 
 import path from 'path';
 import { spawn } from 'child_process';
@@ -24,22 +24,23 @@ type ServerFixtures = {
   remoteServer: RemoteServer;
   stallingRemoteServer: RemoteServer;
 };
+const fixtures = base.extend<{}, ServerFixtures>();
 
-export const serverFixtures = baseFixtures.defineTestFixtures<ServerFixtures>({
-  remoteServer: async ({ browserType, defaultBrowserOptions }, test) => {
-    const remoteServer = new RemoteServer();
-    await remoteServer._start(browserType, defaultBrowserOptions);
-    await test(remoteServer);
-    await remoteServer.close();
-  },
-
-  stallingRemoteServer: async ({ browserType, defaultBrowserOptions }, test) => {
-    const remoteServer = new RemoteServer();
-    await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
-    await test(remoteServer);
-    await remoteServer.close();
-  },
+fixtures.remoteServer.initTest(async ({ browserType, defaultBrowserOptions }, run) => {
+  const remoteServer = new RemoteServer();
+  await remoteServer._start(browserType, defaultBrowserOptions);
+  await run(remoteServer);
+  await remoteServer.close();
 });
+
+fixtures.stallingRemoteServer.initTest(async ({ browserType, defaultBrowserOptions }, run) => {
+  const remoteServer = new RemoteServer();
+  await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
+  await run(remoteServer);
+  await remoteServer.close();
+});
+
+export const folio = fixtures.build();
 
 const playwrightPath = path.join(__dirname, '..');
 

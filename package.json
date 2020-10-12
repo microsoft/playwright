@@ -9,15 +9,15 @@
     "node": ">=10.17.0"
   },
   "scripts": {
-    "ctest": "cross-env BROWSER=chromium test-runner test/",
-    "ftest": "cross-env BROWSER=firefox test-runner test/",
-    "wtest": "cross-env BROWSER=webkit test-runner test/",
-    "test": "test-runner test/",
+    "ctest": "cross-env BROWSER=chromium folio test/",
+    "ftest": "cross-env BROWSER=firefox folio test/",
+    "wtest": "cross-env BROWSER=webkit folio test/",
+    "test": "folio test/",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts . || eslint --ext js,ts .",
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
-    "test-infra": "test-runner utils/doclint/check_public_api/test/test.js && test-runner utils/doclint/preprocessor/test.js",
+    "test-infra": "folio utils/doclint/check_public_api/test/test.js && folio utils/doclint/preprocessor/test.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && npm run generate-channels && npm run test-types && npm run test-infra",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",
@@ -50,7 +50,6 @@
     "ws": "^7.3.1"
   },
   "devDependencies": {
-    "@playwright/test-runner": "0.9.22",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",
@@ -69,6 +68,7 @@
     "electron": "^9.2.1",
     "eslint": "^7.7.0",
     "eslint-plugin-notice": "^0.9.10",
+    "folio": "=0.3.6",
     "formidable": "^1.2.2",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.11.3",

@@ -16,26 +16,20 @@
  */
 
 import domain from 'domain';
-import { fixtures as baseFixtures } from './fixtures';
+import { folio } from './fixtures';
 import type { ChromiumBrowser } from '..';
 
-type DomainFixtures = {
-  domain: any;
-};
-
-const fixtures = baseFixtures.defineWorkerFixtures<DomainFixtures>({
-  domain: async ({ }, test) => {
-    const local = domain.create();
-    local.run(() => { });
-    let err;
-    local.on('error', e => err = e);
-    await test(null);
-    if (err)
-      throw err;
-  }
+const fixtures = folio.extend<{ domain: any }, {}>();
+fixtures.domain.initWorker(async ({ }, run) => {
+  const local = domain.create();
+  local.run(() => { });
+  let err;
+  local.on('error', e => err = e);
+  await run(null);
+  if (err)
+    throw err;
 });
-
-const { it, expect } = fixtures;
+const { it, expect } = fixtures.build();
 
 it('should work', async ({browser}) => {
   expect(!!browser['_connection']).toBeTruthy();

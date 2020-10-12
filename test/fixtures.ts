@@ -24,10 +24,9 @@ import type { Browser, BrowserContext, BrowserType, Page } from '../index';
 import { Connection } from '../lib/client/connection';
 import { Transport } from '../lib/protocol/transport';
 import { installCoverageHooks } from './coverage';
-import { fixtures as httpFixtures } from './http.fixtures';
-import { fixtures as implFixtures } from './impl.fixtures';
-import { fixtures as playwrightFixtures } from './playwright.fixtures';
-export { expect, config } from '@playwright/test-runner';
+import { folio as httpFolio } from './http.fixtures';
+import { folio as playwrightFolio } from './playwright.fixtures';
+export { expect, config } from 'folio';
 
 const removeFolderAsync = util.promisify(require('rimraf'));
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -41,118 +40,126 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-type AllTestFixtures = {
+type WireParameters = {
+  wire: boolean;
+};
+type WorkerFixtures = {
+  toImpl: (rpcObject: any) => any;
+};
+type TestFixtures = {
   createUserDataDir: () => Promise<string>;
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
 };
 
-export const fixtures = playwrightFixtures
-    .union(httpFixtures)
-    .union(implFixtures)
-    .defineParameter('wire', 'Wire testing mode', !!process.env.PWWIRE || false)
-    .defineTestFixtures<AllTestFixtures>({
-      createUserDataDir: async ({ }, runTest) => {
-        const dirs: string[] = [];
-        async function createUserDataDir() {
-        // We do not put user data dir in testOutputPath,
-        // because we do not want to upload them as test result artifacts.
-        //
-        // Additionally, it is impossible to upload user data dir after test run:
-        // - Firefox removes lock file later, presumably from another watchdog process?
-        // - WebKit has circular symlinks that makes CI go crazy.
-          const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
-          dirs.push(dir);
-          return dir;
-        }
-        await runTest(createUserDataDir);
-        await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => { })));
-      },
+const fixtures = playwrightFolio.union(httpFolio).extend<WorkerFixtures, TestFixtures, WireParameters>();
 
-      launchPersistent: async ({ createUserDataDir, defaultBrowserOptions, browserType }, test) => {
-        let context;
-        async function launchPersistent(options) {
-          if (context)
-            throw new Error('can only launch one persitent context');
-          const userDataDir = await createUserDataDir();
-          context = await browserType.launchPersistentContext(userDataDir, { ...defaultBrowserOptions, ...options });
-          const page = context.pages()[0];
-          return { context, page };
-        }
-        await test(launchPersistent);
-        if (context)
-          await context.close();
-      },
-    })
-    .overrideWorkerFixtures({
-      defaultBrowserOptions: async ({ browserName, headful, slowMo }, runTest) => {
-        const executablePath = getExecutablePath(browserName);
-        if (executablePath)
-          console.error(`Using executable at ${executablePath}`);
-        await runTest({
-          executablePath,
-          handleSIGINT: false,
-          slowMo,
-          headless: !headful,
-        });
-      },
+fixtures.wire.initParameter('Wire testing mode', !!process.env.PWWIRE);
 
-      playwright: async ({ browserName, testWorkerIndex, platform, wire }, runTest) => {
-        assert(platform); // Depend on platform to generate all tests.
-        const { coverage, uninstall } = installCoverageHooks(browserName);
-        if (wire) {
-          require('../lib/utils/utils').setUnderTest();
-          const connection = new Connection();
-          const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'driver.js'), ['serve'], {
-            stdio: 'pipe',
-            detached: true,
-          });
-          spawnedProcess.unref();
-          const onExit = (exitCode, signal) => {
-            throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
-          };
-          spawnedProcess.on('exit', onExit);
-          const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
-          connection.onmessage = message => transport.send(JSON.stringify(message));
-          transport.onmessage = message => connection.dispatch(JSON.parse(message));
-          const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
-          await runTest(playwrightObject);
-          spawnedProcess.removeListener('exit', onExit);
-          spawnedProcess.stdin.destroy();
-          spawnedProcess.stdout.destroy();
-          spawnedProcess.stderr.destroy();
-          await teardownCoverage();
-        } else {
-          const playwright = require('../index');
-          await runTest(playwright);
-          await teardownCoverage();
-        }
+fixtures.createUserDataDir.initTest(async ({ }, run) => {
+  const dirs: string[] = [];
+  async function createUserDataDir() {
+  // We do not put user data dir in testOutputPath,
+  // because we do not want to upload them as test result artifacts.
+  //
+  // Additionally, it is impossible to upload user data dir after test run:
+  // - Firefox removes lock file later, presumably from another watchdog process?
+  // - WebKit has circular symlinks that makes CI go crazy.
+    const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
+    dirs.push(dir);
+    return dir;
+  }
+  await run(createUserDataDir);
+  await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => { })));
+});
 
-        async function teardownCoverage() {
-          uninstall();
-          const coveragePath = path.join(__dirname, 'coverage-report', testWorkerIndex + '.json');
-          const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
-          await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
-          await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
-        }
-      },
-    })
-    .overrideTestFixtures({
-      testParametersPathSegment: async ({ browserName }, runTest) => {
-        await runTest(browserName);
-      }
+fixtures.launchPersistent.initTest(async ({ createUserDataDir, defaultBrowserOptions, browserType }, run) => {
+  let context;
+  async function launchPersistent(options) {
+    if (context)
+      throw new Error('can only launch one persitent context');
+    const userDataDir = await createUserDataDir();
+    context = await browserType.launchPersistentContext(userDataDir, { ...defaultBrowserOptions, ...options });
+    const page = context.pages()[0];
+    return { context, page };
+  }
+  await run(launchPersistent);
+  if (context)
+    await context.close();
+});
+
+fixtures.defaultBrowserOptions.overrideWorker(async ({ browserName, headful, slowMo }, run) => {
+  const executablePath = getExecutablePath(browserName);
+  if (executablePath)
+    console.error(`Using executable at ${executablePath}`);
+  await run({
+    executablePath,
+    handleSIGINT: false,
+    slowMo,
+    headless: !headful,
+  });
+});
+
+fixtures.playwright.overrideWorker(async ({ browserName, testWorkerIndex, platform, wire }, run) => {
+  assert(platform); // Depend on platform to generate all tests.
+  const { coverage, uninstall } = installCoverageHooks(browserName);
+  if (wire) {
+    require('../lib/utils/utils').setUnderTest();
+    const connection = new Connection();
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'driver.js'), ['serve'], {
+      stdio: 'pipe',
+      detached: true,
     });
+    spawnedProcess.unref();
+    const onExit = (exitCode, signal) => {
+      throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
+    };
+    spawnedProcess.on('exit', onExit);
+    const transport = new Transport(spawnedProcess.stdin, spawnedProcess.stdout);
+    connection.onmessage = message => transport.send(JSON.stringify(message));
+    transport.onmessage = message => connection.dispatch(JSON.parse(message));
+    const playwrightObject = await connection.waitForObjectWithKnownName('Playwright');
+    await run(playwrightObject);
+    spawnedProcess.removeListener('exit', onExit);
+    spawnedProcess.stdin.destroy();
+    spawnedProcess.stdout.destroy();
+    spawnedProcess.stderr.destroy();
+    await teardownCoverage();
+  } else {
+    const playwright = require('../index');
+    await run(playwright);
+    await teardownCoverage();
+  }
 
-fixtures.generateParametrizedTests(
+  async function teardownCoverage() {
+    uninstall();
+    const coveragePath = path.join(__dirname, 'coverage-report', testWorkerIndex + '.json');
+    const coverageJSON = [...coverage.keys()].filter(key => coverage.get(key));
+    await fs.promises.mkdir(path.dirname(coveragePath), { recursive: true });
+    await fs.promises.writeFile(coveragePath, JSON.stringify(coverageJSON, undefined, 2), 'utf8');
+  }
+});
+
+fixtures.toImpl.initWorker(async ({ playwright }, run) => {
+  await run((playwright as any)._toImpl);
+});
+
+fixtures.testParametersPathSegment.overrideTest(async ({ browserName }, run) => {
+  await run(browserName);
+});
+
+export const folio = fixtures.build();
+
+folio.generateParametrizedTests(
     'platform',
     process.env.PWTESTREPORT ? ['win32', 'darwin', 'linux'] : [process.platform as ('win32' | 'linux' | 'darwin')]);
 
-export const it = fixtures.it;
-export const fit = fixtures.fit;
-export const xit = fixtures.xit;
-export const describe = fixtures.describe;
-export const fdescribe = fixtures.fdescribe;
-export const xdescribe = fixtures.xdescribe;
-export const beforeEach = fixtures.beforeEach;
-export const afterEach = fixtures.afterEach;
-export const beforeAll = fixtures.beforeAll;
-export const afterAll = fixtures.afterAll;
+export const it = folio.it;
+export const fit = folio.fit;
+export const xit = folio.xit;
+export const describe = folio.describe;
+export const fdescribe = folio.fdescribe;
+export const xdescribe = folio.xdescribe;
+export const beforeEach = folio.beforeEach;
+export const afterEach = folio.afterEach;
+export const beforeAll = folio.beforeAll;
+export const afterAll = folio.afterAll;

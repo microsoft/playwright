@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as baseFixtures } from '../fixtures';
+import { folio as base } from '../fixtures';
 import type { ElectronApplication, ElectronLauncher, ElectronPage } from '../../electron-types';
 import path from 'path';
 
@@ -24,23 +24,24 @@ type TestState = {
   application: ElectronApplication;
   window: ElectronPage;
 };
+const fixtures = base.extend<{}, TestState>();
 
-export const electronFixtures = baseFixtures.defineTestFixtures<TestState>({
-  application: async ({ playwright }, test) => {
-    const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-    const application = await playwright.electron.launch(electronPath, {
-      args: [path.join(__dirname, 'testApp.js')],
-    });
-    await test(application);
-    await application.close();
-  },
-
-  window: async ({ application }, test) => {
-    const page = await application.newBrowserWindow({ width: 800, height: 600 });
-    await test(page);
-    await page.close();
-  },
+fixtures.application.initTest(async ({ playwright }, run) => {
+  const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
+  const application = await playwright.electron.launch(electronPath, {
+    args: [path.join(__dirname, 'testApp.js')],
+  });
+  await run(application);
+  await application.close();
 });
+
+fixtures.window.initTest(async ({ application }, run) => {
+  const page = await application.newBrowserWindow({ width: 800, height: 600 });
+  await run(page);
+  await page.close();
+});
+
+export const folio = fixtures.build();
 
 declare module '../../index' {
   const electron: ElectronLauncher;

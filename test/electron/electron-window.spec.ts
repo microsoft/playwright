@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { electronFixtures } from './electron.fixture';
-const { it, expect, describe } = electronFixtures;
+import { folio } from './electron.fixture';
+const { it, expect, describe } = folio;
 
 describe('electron window', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');

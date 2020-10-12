@@ -14,20 +14,18 @@
  * limitations under the License.
  */
 
-import { fixtures as playwrightFixtures } from '../fixtures';
+import { folio } from '../fixtures';
 
-const fixtures = playwrightFixtures.overrideWorkerFixtures({
-  browser: async ({browserType, defaultBrowserOptions}, test) => {
-    const browser = await browserType.launch({
-      ...defaultBrowserOptions,
-      args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
-    });
-    await test(browser);
-    await browser.close();
-  }
+const fixtures = folio.extend();
+fixtures.browser.overrideWorker(async ({browserType, defaultBrowserOptions}, run) => {
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
+    args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
+  });
+  await run(browser);
+  await browser.close();
 });
-
-const { it, expect, describe } = fixtures;
+const { it, expect, describe } = fixtures.build();
 
 describe('oopif', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');

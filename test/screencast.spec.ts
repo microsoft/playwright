@@ -14,13 +14,11 @@
  * limitations under the License.
  */
 
-import { fixtures } from './fixtures';
+import { it, expect, describe } from './fixtures';
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
 import { PNG } from 'pngjs';
-
-const { it, expect, describe } = fixtures;
 
 let ffmpegName = '';
 if (process.platform === 'win32')

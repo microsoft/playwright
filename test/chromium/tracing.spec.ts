@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as playwrightFixtures } from '../fixtures';
+import { folio } from '../fixtures';
 import fs from 'fs';
 import path from 'path';
 import type { ChromiumBrowser } from '../..';
@@ -22,13 +22,11 @@ import type { ChromiumBrowser } from '../..';
 type TestState = {
   outputTraceFile: string;
 };
-const fixtures = playwrightFixtures.defineTestFixtures<TestState>({
-  outputTraceFile: async ({ testInfo }, test) => {
-    await test(testInfo.outputPath(path.join(`trace.json`)));
-  }
+const fixtures = folio.extend<{}, TestState>();
+fixtures.outputTraceFile.initTest(async ({ testInfo }, run) => {
+  await run(testInfo.outputPath(path.join(`trace.json`)));
 });
-
-const { it, expect, describe } = fixtures;
+const { it, expect, describe } = fixtures.build();
 
 describe('oopif', (suite, { browserName }) => {
   suite.skip(browserName !== 'chromium');
