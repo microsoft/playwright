@@ -15,35 +15,33 @@
  * limitations under the License.
  */
 
-import { serverFixtures } from './remoteServer.fixture';
+import { folio, RemoteServer } from './remoteServer.fixture';
 import { execSync } from 'child_process';
 import path from 'path';
-import { RemoteServer } from './remoteServer.fixture';
 
-export type FixturesFixtures = {
+type FixturesFixtures = {
   connectedRemoteServer: RemoteServer;
   stallingConnectedRemoteServer: RemoteServer;
 };
+const fixtures = folio.extend<{}, FixturesFixtures>();
 
-const fixturesFixtures = serverFixtures.defineTestFixtures<FixturesFixtures>({
-  connectedRemoteServer: async ({browserType, remoteServer, server}, test) => {
-    const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
-    const page = await browser.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    await test(remoteServer);
-    await browser.close();
-  },
-
-  stallingConnectedRemoteServer: async ({browserType, stallingRemoteServer, server}, test) => {
-    const browser = await browserType.connect({ wsEndpoint: stallingRemoteServer.wsEndpoint() });
-    const page = await browser.newPage();
-    await page.goto(server.EMPTY_PAGE);
-    await test(stallingRemoteServer);
-    await browser.close();
-  },
+fixtures.connectedRemoteServer.initTest(async ({browserType, remoteServer, server}, run) => {
+  const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await run(remoteServer);
+  await browser.close();
 });
 
-const { it, describe, expect } = fixturesFixtures;
+fixtures.stallingConnectedRemoteServer.initTest(async ({browserType, stallingRemoteServer, server}, run) => {
+  const browser = await browserType.connect({ wsEndpoint: stallingRemoteServer.wsEndpoint() });
+  const page = await browser.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  await run(stallingRemoteServer);
+  await browser.close();
+});
+
+const { it, describe, expect } = fixtures.build();
 
 it('should close the browser when the node process closes', test => {
   test.slow();

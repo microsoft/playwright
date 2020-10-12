@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as baseFixtures } from './fixtures';
+import { folio } from './fixtures';
 
 import fs from 'fs';
 import type { Browser, BrowserContext } from '..';
@@ -23,40 +23,40 @@ type TestState = {
   downloadsBrowser: Browser;
   persistentDownloadsContext: BrowserContext;
 };
-const fixtures = baseFixtures.defineTestFixtures<TestState>({
-  downloadsBrowser: async ({ server, browserType, defaultBrowserOptions, testInfo }, test) => {
-    server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-      res.end(`Hello world`);
-    });
-    const browser = await browserType.launch({
-      ...defaultBrowserOptions,
-      downloadsPath: testInfo.outputPath(''),
-    });
-    await test(browser);
-    await browser.close();
-  },
+const fixtures = folio.extend<{}, TestState>();
 
-  persistentDownloadsContext: async ({ server, launchPersistent, testInfo }, test) => {
-    server.setRoute('/download', (req, res) => {
-      res.setHeader('Content-Type', 'application/octet-stream');
-      res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
-      res.end(`Hello world`);
-    });
-    const { context, page } = await launchPersistent(
-        {
-          downloadsPath: testInfo.outputPath(''),
-          acceptDownloads: true
-        }
-    );
-    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
-    await test(context);
-    await context.close();
-  },
+fixtures.downloadsBrowser.initTest(async ({ server, browserType, defaultBrowserOptions, testInfo }, test) => {
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end(`Hello world`);
+  });
+  const browser = await browserType.launch({
+    ...defaultBrowserOptions,
+    downloadsPath: testInfo.outputPath(''),
+  });
+  await test(browser);
+  await browser.close();
 });
 
-const { it, expect } = fixtures;
+fixtures.persistentDownloadsContext.initTest(async ({ server, launchPersistent, testInfo }, test) => {
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
+    res.end(`Hello world`);
+  });
+  const { context, page } = await launchPersistent(
+      {
+        downloadsPath: testInfo.outputPath(''),
+        acceptDownloads: true
+      }
+  );
+  await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  await test(context);
+  await context.close();
+});
+
+const { it, expect } = fixtures.build();
 
 it('should keep downloadsPath folder', async ({downloadsBrowser, testInfo, server})  => {
   const page = await downloadsBrowser.newPage();

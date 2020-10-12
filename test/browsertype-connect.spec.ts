@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
-import { serverFixtures } from './remoteServer.fixture';
+import { folio } from './remoteServer.fixture';
 import * as fs from 'fs';
-const { it, expect, describe } = serverFixtures;
+const { it, expect, describe } = folio;
 
 describe('connect', (suite, { wire }) => {
   suite.skip(wire);

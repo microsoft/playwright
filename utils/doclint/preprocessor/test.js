@@ -16,8 +16,8 @@
 
 const {runCommands} = require('.');
 const Source = require('../Source');
-const { fixtures } = require('@playwright/test-runner');
-const { describe, it, expect } = fixtures;
+const { folio } = require('folio');
+const { describe, it, expect } = folio;
 
 describe('runCommands', function() {
   const OPTIONS_REL = {

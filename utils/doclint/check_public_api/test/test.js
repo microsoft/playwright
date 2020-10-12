@@ -21,17 +21,16 @@ const checkPublicAPI = require('..');
 const Source = require('../../Source');
 const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
-const { fixtures } = require('@playwright/test-runner');
-const { defineWorkerFixtures, describe, it, expect } = fixtures;
+const { folio } = require('folio');
 
-defineWorkerFixtures({
-  page: async({}, test) => {
-    const browser = await playwright.chromium.launch();
-    const page = await browser.newPage();
-    await test(page);
-    await browser.close();
-  }
+const fixtures = folio.extend();
+fixtures.setWorkerFixture('page', async({}, test) => {
+  const browser = await playwright.chromium.launch();
+  const page = await browser.newPage();
+  await test(page);
+  await browser.close();
 });
+const { describe, it, expect } = fixtures.build();
 
 describe('checkPublicAPI', function() {
   testLint('diff-classes');

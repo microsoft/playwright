@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { fixtures as baseFixtures } from '@playwright/test-runner';
+import { folio as base } from 'folio';
 import path from 'path';
 import { TestServer } from '../utils/testserver';
 
@@ -28,40 +28,39 @@ type HttpTestFixtures = {
   httpsServer: TestServer;
 };
 
-export const fixtures = baseFixtures
-    .defineWorkerFixtures<HttpWorkerFixtures>({
-      httpService: async ({ testWorkerIndex }, test) => {
-        const assetsPath = path.join(__dirname, 'assets');
-        const cachedPath = path.join(__dirname, 'assets', 'cached');
+const fixtures = base.extend<HttpWorkerFixtures, HttpTestFixtures>();
+fixtures.httpService.initWorker(async ({ testWorkerIndex }, test) => {
+  const assetsPath = path.join(__dirname, 'assets');
+  const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-        const port = 8907 + testWorkerIndex * 2;
-        const server = await TestServer.create(assetsPath, port);
-        server.enableHTTPCache(cachedPath);
+  const port = 8907 + testWorkerIndex * 2;
+  const server = await TestServer.create(assetsPath, port);
+  server.enableHTTPCache(cachedPath);
 
-        const httpsPort = port + 1;
-        const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
-        httpsServer.enableHTTPCache(cachedPath);
+  const httpsPort = port + 1;
+  const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
+  httpsServer.enableHTTPCache(cachedPath);
 
-        await test({ server, httpsServer });
+  await test({ server, httpsServer });
 
-        await Promise.all([
-          server.stop(),
-          httpsServer.stop(),
-        ]);
-      },
+  await Promise.all([
+    server.stop(),
+    httpsServer.stop(),
+  ]);
+});
 
-      asset: async ({ }, test) => {
-        await test(p => path.join(__dirname, `assets`, p));
-      },
-    })
-    .defineTestFixtures<HttpTestFixtures>({
-      server: async ({ httpService }, test) => {
-        httpService.server.reset();
-        await test(httpService.server);
-      },
+fixtures.asset.initWorker(async ({ }, test) => {
+  await test(p => path.join(__dirname, `assets`, p));
+});
 
-      httpsServer: async ({ httpService }, test) => {
-        httpService.httpsServer.reset();
-        await test(httpService.httpsServer);
-      },
-    });
+fixtures.server.initTest(async ({ httpService }, test) => {
+  httpService.server.reset();
+  await test(httpService.server);
+});
+
+fixtures.httpsServer.initTest(async ({ httpService }, test) => {
+  httpService.httpsServer.reset();
+  await test(httpService.httpsServer);
+});
+
+export const folio = fixtures.build();
