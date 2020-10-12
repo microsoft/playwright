@@ -26,14 +26,14 @@ type ServerFixtures = {
 };
 const fixtures = base.extend<{}, ServerFixtures>();
 
-fixtures.remoteServer.initTest(async ({ browserType, defaultBrowserOptions }, run) => {
+fixtures.remoteServer.init(async ({ browserType, defaultBrowserOptions }, run) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, defaultBrowserOptions);
   await run(remoteServer);
   await remoteServer.close();
 });
 
-fixtures.stallingRemoteServer.initTest(async ({ browserType, defaultBrowserOptions }, run) => {
+fixtures.stallingRemoteServer.init(async ({ browserType, defaultBrowserOptions }, run) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
   await run(remoteServer);

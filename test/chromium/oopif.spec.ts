@@ -17,7 +17,7 @@
 import { folio } from '../fixtures';
 
 const fixtures = folio.extend();
-fixtures.browser.overrideWorker(async ({browserType, defaultBrowserOptions}, run) => {
+fixtures.browser.override(async ({browserType, defaultBrowserOptions}, run) => {
   const browser = await browserType.launch({
     ...defaultBrowserOptions,
     args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])

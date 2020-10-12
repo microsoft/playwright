@@ -24,12 +24,12 @@ const jsBuilder = require('../JSBuilder');
 const { folio } = require('folio');
 
 const fixtures = folio.extend();
-fixtures.setWorkerFixture('page', async({}, test) => {
+fixtures.page.init(async({}, test) => {
   const browser = await playwright.chromium.launch();
   const page = await browser.newPage();
   await test(page);
   await browser.close();
-});
+}, { scope: 'worker' });
 const { describe, it, expect } = fixtures.build();
 
 describe('checkPublicAPI', function() {
