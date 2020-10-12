@@ -19,8 +19,8 @@ import domain from 'domain';
 import { folio } from './fixtures';
 import type { ChromiumBrowser } from '..';
 
-const fixtures = folio.extend<{ domain: any }, {}>();
-fixtures.domain.initWorker(async ({ }, run) => {
+const fixtures = folio.extend<{ domain: any }>();
+fixtures.domain.init(async ({ }, run) => {
   const local = domain.create();
   local.run(() => { });
   let err;
@@ -28,7 +28,7 @@ fixtures.domain.initWorker(async ({ }, run) => {
   await run(null);
   if (err)
     throw err;
-});
+}, { scope: 'worker' });
 const { it, expect } = fixtures.build();
 
 it('should work', async ({browser}) => {

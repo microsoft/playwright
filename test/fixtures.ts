@@ -55,7 +55,7 @@ const fixtures = playwrightFolio.union(httpFolio).extend<WorkerFixtures, TestFix
 
 fixtures.wire.initParameter('Wire testing mode', !!process.env.PWWIRE);
 
-fixtures.createUserDataDir.initTest(async ({ }, run) => {
+fixtures.createUserDataDir.init(async ({ }, run) => {
   const dirs: string[] = [];
   async function createUserDataDir() {
   // We do not put user data dir in testOutputPath,
@@ -72,7 +72,7 @@ fixtures.createUserDataDir.initTest(async ({ }, run) => {
   await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => { })));
 });
 
-fixtures.launchPersistent.initTest(async ({ createUserDataDir, defaultBrowserOptions, browserType }, run) => {
+fixtures.launchPersistent.init(async ({ createUserDataDir, defaultBrowserOptions, browserType }, run) => {
   let context;
   async function launchPersistent(options) {
     if (context)
@@ -87,7 +87,7 @@ fixtures.launchPersistent.initTest(async ({ createUserDataDir, defaultBrowserOpt
     await context.close();
 });
 
-fixtures.defaultBrowserOptions.overrideWorker(async ({ browserName, headful, slowMo }, run) => {
+fixtures.defaultBrowserOptions.override(async ({ browserName, headful, slowMo }, run) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);
@@ -99,7 +99,7 @@ fixtures.defaultBrowserOptions.overrideWorker(async ({ browserName, headful, slo
   });
 });
 
-fixtures.playwright.overrideWorker(async ({ browserName, testWorkerIndex, platform, wire }, run) => {
+fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, wire }, run) => {
   assert(platform); // Depend on platform to generate all tests.
   const { coverage, uninstall } = installCoverageHooks(browserName);
   if (wire) {
@@ -139,11 +139,11 @@ fixtures.playwright.overrideWorker(async ({ browserName, testWorkerIndex, platfo
   }
 });
 
-fixtures.toImpl.initWorker(async ({ playwright }, run) => {
+fixtures.toImpl.init(async ({ playwright }, run) => {
   await run((playwright as any)._toImpl);
-});
+}, { scope: 'worker' });
 
-fixtures.testParametersPathSegment.overrideTest(async ({ browserName }, run) => {
+fixtures.testParametersPathSegment.override(async ({ browserName }, run) => {
   await run(browserName);
 });
 
@@ -155,6 +155,7 @@ folio.generateParametrizedTests(
 
 export const it = folio.it;
 export const fit = folio.fit;
+export const test = folio.test;
 export const xit = folio.xit;
 export const describe = folio.describe;
 export const fdescribe = folio.fdescribe;

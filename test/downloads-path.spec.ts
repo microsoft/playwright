@@ -25,7 +25,7 @@ type TestState = {
 };
 const fixtures = folio.extend<{}, TestState>();
 
-fixtures.downloadsBrowser.initTest(async ({ server, browserType, defaultBrowserOptions, testInfo }, test) => {
+fixtures.downloadsBrowser.init(async ({ server, browserType, defaultBrowserOptions, testInfo }, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
@@ -39,7 +39,7 @@ fixtures.downloadsBrowser.initTest(async ({ server, browserType, defaultBrowserO
   await browser.close();
 });
 
-fixtures.persistentDownloadsContext.initTest(async ({ server, launchPersistent, testInfo }, test) => {
+fixtures.persistentDownloadsContext.init(async ({ server, launchPersistent, testInfo }, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');

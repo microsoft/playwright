@@ -25,7 +25,7 @@ type FixturesFixtures = {
 };
 const fixtures = folio.extend<{}, FixturesFixtures>();
 
-fixtures.connectedRemoteServer.initTest(async ({browserType, remoteServer, server}, run) => {
+fixtures.connectedRemoteServer.init(async ({browserType, remoteServer, server}, run) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -33,7 +33,7 @@ fixtures.connectedRemoteServer.initTest(async ({browserType, remoteServer, serve
   await browser.close();
 });
 
-fixtures.stallingConnectedRemoteServer.initTest(async ({browserType, stallingRemoteServer, server}, run) => {
+fixtures.stallingConnectedRemoteServer.init(async ({browserType, stallingRemoteServer, server}, run) => {
   const browser = await browserType.connect({ wsEndpoint: stallingRemoteServer.wsEndpoint() });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);

@@ -68,7 +68,7 @@
     "electron": "^9.2.1",
     "eslint": "^7.7.0",
     "eslint-plugin-notice": "^0.9.10",
-    "folio": "=0.3.6",
+    "folio": "=0.3.8",
     "formidable": "^1.2.2",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.11.3",

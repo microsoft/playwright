@@ -29,7 +29,7 @@ type HttpTestFixtures = {
 };
 
 const fixtures = base.extend<HttpWorkerFixtures, HttpTestFixtures>();
-fixtures.httpService.initWorker(async ({ testWorkerIndex }, test) => {
+fixtures.httpService.init(async ({ testWorkerIndex }, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
@@ -47,18 +47,18 @@ fixtures.httpService.initWorker(async ({ testWorkerIndex }, test) => {
     server.stop(),
     httpsServer.stop(),
   ]);
-});
+}, { scope: 'worker' });
 
-fixtures.asset.initWorker(async ({ }, test) => {
+fixtures.asset.init(async ({ }, test) => {
   await test(p => path.join(__dirname, `assets`, p));
-});
+}, { scope: 'worker' });
 
-fixtures.server.initTest(async ({ httpService }, test) => {
+fixtures.server.init(async ({ httpService }, test) => {
   httpService.server.reset();
   await test(httpService.server);
 });
 
-fixtures.httpsServer.initTest(async ({ httpService }, test) => {
+fixtures.httpsServer.init(async ({ httpService }, test) => {
   httpService.httpsServer.reset();
   await test(httpService.httpsServer);
 });

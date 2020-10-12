@@ -26,7 +26,7 @@ type TestState = {
 };
 const fixtures = base.extend<{}, TestState>();
 
-fixtures.application.initTest(async ({ playwright }, run) => {
+fixtures.application.init(async ({ playwright }, run) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
   const application = await playwright.electron.launch(electronPath, {
     args: [path.join(__dirname, 'testApp.js')],
@@ -35,7 +35,7 @@ fixtures.application.initTest(async ({ playwright }, run) => {
   await application.close();
 });
 
-fixtures.window.initTest(async ({ application }, run) => {
+fixtures.window.init(async ({ application }, run) => {
   const page = await application.newBrowserWindow({ width: 800, height: 600 });
   await run(page);
   await page.close();
