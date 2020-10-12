@@ -12508,10 +12508,25 @@ index 42145f2c5c04b338ab041fb06d69686c2f579152..07d9076ab5db78c99558d9e6d057928d
      PluginZoomFactorDidChange(double zoomFactor)
  
 diff --git a/Source/WebKit/UIProcess/WebProcessPool.cpp b/Source/WebKit/UIProcess/WebProcessPool.cpp
-index 8d987bb66d14340896128d73930f2a1cadd699a6..dfb1508188f2c5112cfaf53aea749067ce0c0159 100644
+index 8d987bb66d14340896128d73930f2a1cadd699a6..ceda3697d560f76d451319acb484641e6764dd8b 100644
 --- a/Source/WebKit/UIProcess/WebProcessPool.cpp
 +++ b/Source/WebKit/UIProcess/WebProcessPool.cpp
-@@ -745,7 +745,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
+@@ -509,6 +509,14 @@ void WebProcessPool::establishWorkerContextConnectionToNetworkProcess(NetworkPro
+ 
+     // Arbitrarily choose the first process pool to host the service worker process.
+     auto* processPool = processPools()[0];
++    // Playwright begin
++    for (auto& process : websiteDataStore->processes()) {
++        if (process.processPoolIfExists()) {
++            processPool = process.processPoolIfExists();
++            break;
++        }
++    }
++    // Playwright end
+     ASSERT(processPool);
+ 
+     WebProcessProxy* serviceWorkerProcessProxy { nullptr };
+@@ -745,7 +753,10 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
  #endif
  
      parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
