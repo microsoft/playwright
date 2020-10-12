@@ -16,8 +16,7 @@
  */
 import { it, expect } from './fixtures';
 
-it('expose binding should work', async ({browser}) => {
-  const context = await browser.newContext();
+it('expose binding should work', async ({context}) => {
   let bindingSource;
   await context.exposeBinding('add', (source, a, b) => {
     bindingSource = source;
@@ -29,11 +28,9 @@ it('expose binding should work', async ({browser}) => {
   expect(bindingSource.page).toBe(page);
   expect(bindingSource.frame).toBe(page.mainFrame());
   expect(result).toEqual(11);
-  await context.close();
 });
 
-it('should work', async ({browser, server}) => {
-  const context = await browser.newContext();
+it('should work', async ({context, server}) => {
   await context.exposeFunction('add', (a, b) => a + b);
   const page = await context.newPage();
   await page.exposeFunction('mul', (a, b) => a * b);
@@ -44,11 +41,9 @@ it('should work', async ({browser, server}) => {
   });
   const result = await page.evaluate('(async () => ({ mul: await mul(9, 4), add: await add(9, 4), sub: await sub(9, 4), addHandle: await addHandle(5, 6) }))()');
   expect(result).toEqual({ mul: 36, add: 13, sub: 5, addHandle: 11 });
-  await context.close();
 });
 
-it('should throw for duplicate registrations', async ({browser, server}) => {
-  const context = await browser.newContext();
+it('should throw for duplicate registrations', async ({context, server}) => {
   await context.exposeFunction('foo', () => {});
   await context.exposeFunction('bar', () => {});
   let error = await context.exposeFunction('foo', () => {}).catch(e => e);
@@ -59,11 +54,9 @@ it('should throw for duplicate registrations', async ({browser, server}) => {
   await page.exposeFunction('baz', () => {});
   error = await context.exposeFunction('baz', () => {}).catch(e => e);
   expect(error.message).toContain('Function "baz" has been already registered in one of the pages');
-  await context.close();
 });
 
-it('should be callable from-inside addInitScript', async ({browser, server}) => {
-  const context = await browser.newContext();
+it('should be callable from-inside addInitScript', async ({context, server}) => {
   let args = [];
   await context.exposeFunction('woof', function(arg) {
     args.push(arg);
@@ -74,11 +67,9 @@ it('should be callable from-inside addInitScript', async ({browser, server}) => 
   args = [];
   await page.reload();
   expect(args).toEqual(['context', 'page']);
-  await context.close();
 });
 
-it('exposeBindingHandle should work', async ({browser}) => {
-  const context = await browser.newContext();
+it('exposeBindingHandle should work', async ({context}) => {
   let target;
   await context.exposeBinding('logme', (source, t) => {
     target = t;
@@ -90,5 +81,4 @@ it('exposeBindingHandle should work', async ({browser}) => {
   });
   expect(await target.evaluate(x => x.foo)).toBe(42);
   expect(result).toEqual(17);
-  await context.close();
 });
