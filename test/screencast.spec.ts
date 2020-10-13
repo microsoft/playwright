@@ -365,4 +365,32 @@ describe('screencast', suite => {
       expectAll(pixels, almostRed);
     }
   });
+
+  it('should capture static page when closing the browser', async ({browserType, defaultBrowserOptions, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const browser = await browserType.launch(defaultBrowserOptions);
+    const page = await browser.newPage({
+      videosPath,
+      viewport: size,
+      videoSize: size
+    });
+
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await new Promise(r => setTimeout(r, 1000));
+    await browser.close();
+
+    const videoFile = findVideo(videosPath);
+    const videoPlayer = new VideoPlayer(videoFile);
+    const duration = videoPlayer.duration;
+    expect(duration).toBeGreaterThan(0);
+
+    expect(videoPlayer.videoWidth).toBe(320);
+    expect(videoPlayer.videoHeight).toBe(240);
+
+    {
+      const pixels = videoPlayer.seekLastFrame().data;
+      expectAll(pixels, almostRed);
+    }
+  });
 });

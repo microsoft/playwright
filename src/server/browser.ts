@@ -113,6 +113,7 @@ export abstract class Browser extends EventEmitter {
   async close() {
     if (!this._startedClosing) {
       this._startedClosing = true;
+      await Promise.all(this.contexts().map(c => c.close()));
       await this._options.browserProcess.close();
     }
     if (this.isConnected())
