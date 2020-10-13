@@ -17,10 +17,10 @@
 import { folio } from '../fixtures';
 
 const fixtures = folio.extend();
-fixtures.browser.override(async ({browserType, defaultBrowserOptions}, run) => {
+fixtures.browser.override(async ({browserType, browserOptions}, run) => {
   const browser = await browserType.launch({
-    ...defaultBrowserOptions,
-    args: (defaultBrowserOptions.args || []).concat(['--site-per-process'])
+    ...browserOptions,
+    args: (browserOptions.args || []).concat(['--site-per-process'])
   });
   await run(browser);
   await browser.close();
@@ -240,10 +240,10 @@ describe('oopif', (suite, { browserName }) => {
     expect(await page.evaluate(() => window['BUTTON_CLICKED'])).toBe(true);
   });
 
-  it('should report google.com frame with headful', async ({browserType, defaultBrowserOptions, server}) => {
+  it('should report google.com frame with headful', async ({browserType, browserOptions, server}) => {
     // @see https://github.com/GoogleChrome/puppeteer/issues/2548
     // https://google.com is isolated by default in Chromium embedder.
-    const browser = await browserType.launch({...defaultBrowserOptions, headless: false});
+    const browser = await browserType.launch({...browserOptions, headless: false});
     const page = await browser.newPage();
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {

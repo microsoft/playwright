@@ -72,13 +72,13 @@ fixtures.createUserDataDir.init(async ({ }, run) => {
   await Promise.all(dirs.map(dir => removeFolderAsync(dir).catch(e => { })));
 });
 
-fixtures.launchPersistent.init(async ({ createUserDataDir, defaultBrowserOptions, browserType }, run) => {
+fixtures.launchPersistent.init(async ({ createUserDataDir, browserOptions, browserType }, run) => {
   let context;
   async function launchPersistent(options) {
     if (context)
       throw new Error('can only launch one persitent context');
     const userDataDir = await createUserDataDir();
-    context = await browserType.launchPersistentContext(userDataDir, { ...defaultBrowserOptions, ...options });
+    context = await browserType.launchPersistentContext(userDataDir, { ...browserOptions, ...options });
     const page = context.pages()[0];
     return { context, page };
   }
@@ -87,7 +87,7 @@ fixtures.launchPersistent.init(async ({ createUserDataDir, defaultBrowserOptions
     await context.close();
 });
 
-fixtures.defaultBrowserOptions.override(async ({ browserName, headful, slowMo }, run) => {
+fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) => {
   const executablePath = getExecutablePath(browserName);
   if (executablePath)
     console.error(`Using executable at ${executablePath}`);

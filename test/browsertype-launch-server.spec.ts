@@ -20,21 +20,21 @@ import { it, expect, describe } from './fixtures';
 describe('lauch server', (suite, { wire }) => {
   suite.skip(wire);
 }, () => {
-  it('should work', async ({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+  it('should work', async ({browserType, browserOptions}) => {
+    const browserServer = await browserType.launchServer(browserOptions);
     expect(browserServer.wsEndpoint()).not.toBe(null);
     await browserServer.close();
   });
 
-  it('should work with port', async ({browserType, defaultBrowserOptions, testWorkerIndex}) => {
-    const browserServer = await browserType.launchServer({ ...defaultBrowserOptions, port: 8800 + testWorkerIndex });
+  it('should work with port', async ({browserType, browserOptions, testWorkerIndex}) => {
+    const browserServer = await browserType.launchServer({ ...browserOptions, port: 8800 + testWorkerIndex });
     expect(browserServer.wsEndpoint()).toContain(String(8800 + testWorkerIndex));
     await browserServer.close();
   });
 
-  it('should fire "close" event during kill', async ({browserType, defaultBrowserOptions}) => {
+  it('should fire "close" event during kill', async ({browserType, browserOptions}) => {
     const order = [];
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+    const browserServer = await browserType.launchServer(browserOptions);
     const closedPromise = new Promise(f => browserServer.on('close', () => {
       order.push('closed');
       f();
@@ -46,14 +46,14 @@ describe('lauch server', (suite, { wire }) => {
     expect(order).toEqual(['closed', 'killed']);
   });
 
-  it('should return child_process instance', async ({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+  it('should return child_process instance', async ({browserType, browserOptions}) => {
+    const browserServer = await browserType.launchServer(browserOptions);
     expect(browserServer.process().pid).toBeGreaterThan(0);
     await browserServer.close();
   });
 
-  it('should fire close event', async ({browserType, defaultBrowserOptions}) => {
-    const browserServer = await browserType.launchServer(defaultBrowserOptions);
+  it('should fire close event', async ({browserType, browserOptions}) => {
+    const browserServer = await browserType.launchServer(browserOptions);
     const [result] = await Promise.all([
       // @ts-expect-error The signal parameter is not documented.
       new Promise(f => browserServer.on('close', (exitCode, signal) => f({ exitCode, signal }))),

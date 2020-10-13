@@ -186,8 +186,8 @@ jobs:
         name: wire-${{ matrix.browser }}-linux-test-results
         path: test-results
 
-  tracing_linux:
-    name: "Tracing Linux"
+  video_linux:
+    name: "Video Linux"
     strategy:
       fail-fast: false
       matrix:
@@ -207,13 +207,12 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --timeout=60000 --global-timeout=5400000 --retries=3 --reporter=dot,json"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --timeout=60000 --global-timeout=5400000 --retries=3 --reporter=dot,json -p video"
       env:
         BROWSER: ${{ matrix.browser }}
-        TRACING: true
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: tracing-${{ matrix.browser }}-linux-test-results
+        name: video-${{ matrix.browser }}-linux-test-results
         path: test-results
