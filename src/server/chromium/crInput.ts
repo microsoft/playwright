@@ -131,3 +131,27 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 }
+
+export class RawTouchscreenImpl implements input.RawTouchscreen {
+  private _client: CRSession;
+
+  constructor(client: CRSession) {
+    this._client = client;
+  }
+  async tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+    await Promise.all([
+      this._client.send('Input.dispatchTouchEvent', {
+        type: 'touchStart',
+        modifiers: toModifiersMask(modifiers),
+        touchPoints: [{
+          x, y
+        }]
+      }),
+      this._client.send('Input.dispatchTouchEvent', {
+        type: 'touchEnd',
+        modifiers: toModifiersMask(modifiers),
+        touchPoints: []
+      }),
+    ]);
+  }
+}

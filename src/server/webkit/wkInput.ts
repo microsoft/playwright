@@ -127,3 +127,19 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 }
+
+export class RawTouchscreenImpl implements input.RawTouchscreen {
+  private readonly _pageProxySession: WKSession;
+
+  constructor(session: WKSession) {
+    this._pageProxySession = session;
+  }
+
+  async tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+    await this._pageProxySession.send('Input.dispatchTapEvent', {
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
+    });
+  }
+}

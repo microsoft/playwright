@@ -28,7 +28,7 @@ import { toConsoleMessageLocation, exceptionToError, releaseObject } from './crP
 import * as dialog from '../dialog';
 import { PageDelegate } from '../page';
 import * as path from 'path';
-import { RawMouseImpl, RawKeyboardImpl } from './crInput';
+import { RawMouseImpl, RawKeyboardImpl, RawTouchscreenImpl } from './crInput';
 import { getAccessibilityTree } from './crAccessibility';
 import { CRCoverage } from './crCoverage';
 import { CRPDF } from './crPdf';
@@ -49,7 +49,7 @@ export class CRPage implements PageDelegate {
   readonly _page: Page;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
-  readonly rawTouchscreen = {tap() { throw new Error('unimplemented');}};
+  readonly rawTouchscreen: RawTouchscreenImpl;
   readonly _targetId: string;
   readonly _opener: CRPage | null;
   private readonly _pdf: CRPDF;
@@ -70,6 +70,7 @@ export class CRPage implements PageDelegate {
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(client, browserContext._browser._isMac);
     this.rawMouse = new RawMouseImpl(client);
+    this.rawTouchscreen = new RawTouchscreenImpl(client);
     this._pdf = new CRPDF(client);
     this._coverage = new CRCoverage(client);
     this._browserContext = browserContext;

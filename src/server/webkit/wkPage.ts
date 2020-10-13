@@ -33,7 +33,7 @@ import { getAccessibilityTree } from './wkAccessibility';
 import { WKBrowserContext } from './wkBrowser';
 import { WKSession } from './wkConnection';
 import { WKExecutionContext } from './wkExecutionContext';
-import { RawKeyboardImpl, RawMouseImpl } from './wkInput';
+import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
@@ -44,7 +44,7 @@ const BINDING_CALL_MESSAGE = '__playwright_binding_call__';
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
-  readonly rawTouchscreen = {tap() { throw new Error('unimplemented');}};
+  readonly rawTouchscreen: RawTouchscreenImpl;
   _session: WKSession;
   private _provisionalPage: WKProvisionalPage | null = null;
   readonly _page: Page;
@@ -75,6 +75,7 @@ export class WKPage implements PageDelegate {
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(pageProxySession);
     this.rawMouse = new RawMouseImpl(pageProxySession);
+    this.rawTouchscreen = new RawTouchscreenImpl(pageProxySession);
     this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
     this._workers = new WKWorkers(this._page);
