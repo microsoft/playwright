@@ -19,7 +19,7 @@ import domain from 'domain';
 import { folio } from './fixtures';
 import type { ChromiumBrowser } from '..';
 
-const fixtures = folio.extend<{ domain: any }>();
+const fixtures = folio.extend<{}, { domain: any }>();
 fixtures.domain.init(async ({ }, run) => {
   const local = domain.create();
   local.run(() => { });

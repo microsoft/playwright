@@ -22,7 +22,7 @@ import type { ChromiumBrowser } from '../..';
 type TestState = {
   outputTraceFile: string;
 };
-const fixtures = folio.extend<{}, TestState>();
+const fixtures = folio.extend<TestState>();
 fixtures.outputTraceFile.init(async ({ testInfo }, run) => {
   await run(testInfo.outputPath(path.join(`trace.json`)));
 });

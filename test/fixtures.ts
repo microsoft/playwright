@@ -51,7 +51,7 @@ type TestFixtures = {
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
 };
 
-const fixtures = playwrightFolio.union(httpFolio).extend<WorkerFixtures, TestFixtures, WireParameters>();
+const fixtures = playwrightFolio.union(httpFolio).extend<TestFixtures, WorkerFixtures, WireParameters>();
 
 fixtures.wire.initParameter('Wire testing mode', !!process.env.PWWIRE);
 
@@ -158,8 +158,6 @@ export const fit = folio.fit;
 export const test = folio.test;
 export const xit = folio.xit;
 export const describe = folio.describe;
-export const fdescribe = folio.fdescribe;
-export const xdescribe = folio.xdescribe;
 export const beforeEach = folio.beforeEach;
 export const afterEach = folio.afterEach;
 export const beforeAll = folio.beforeAll;

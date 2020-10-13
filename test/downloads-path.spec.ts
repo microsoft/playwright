@@ -23,7 +23,7 @@ type TestState = {
   downloadsBrowser: Browser;
   persistentDownloadsContext: BrowserContext;
 };
-const fixtures = folio.extend<{}, TestState>();
+const fixtures = folio.extend<TestState>();
 
 fixtures.downloadsBrowser.init(async ({ server, browserType, browserOptions, testInfo }, test) => {
   server.setRoute('/download', (req, res) => {

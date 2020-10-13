@@ -28,7 +28,7 @@ type HttpTestFixtures = {
   httpsServer: TestServer;
 };
 
-const fixtures = base.extend<HttpWorkerFixtures, HttpTestFixtures>();
+const fixtures = base.extend<HttpTestFixtures, HttpWorkerFixtures>();
 fixtures.httpService.init(async ({ testWorkerIndex }, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');

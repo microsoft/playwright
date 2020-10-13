@@ -24,7 +24,7 @@ type ServerFixtures = {
   remoteServer: RemoteServer;
   stallingRemoteServer: RemoteServer;
 };
-const fixtures = base.extend<{}, ServerFixtures>();
+const fixtures = base.extend<ServerFixtures>();
 
 fixtures.remoteServer.init(async ({ browserType, browserOptions }, run) => {
   const remoteServer = new RemoteServer();
