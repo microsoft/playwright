@@ -166,7 +166,7 @@ fixtures.contextFactory.init(async ({ browser, defaultContextOptions, testInfo, 
     let ordinal = 0;
     for (const context of contexts) {
       for (const page of context.pages())
-        await page.screenshot({ timeout: 5000, path: testInfo.outputPath + `-test-failed-${++ordinal}.png` });
+        await page.screenshot({ timeout: 5000, path: testInfo.outputPath(`test-failed-${++ordinal}.png`) });
     }
   }
   for (const context of contexts)
