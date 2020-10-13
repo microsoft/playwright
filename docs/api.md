@@ -14,6 +14,7 @@
 - [class: ConsoleMessage](#class-consolemessage)
 - [class: Dialog](#class-dialog)
 - [class: Download](#class-download)
+- [class: Video](#class-video)
 - [class: FileChooser](#class-filechooser)
 - [class: Keyboard](#class-keyboard)
 - [class: Mouse](#class-mouse)
@@ -787,6 +788,7 @@ page.removeListener('request', logRequest);
 - [page.uncheck(selector, [options])](#pageuncheckselector-options)
 - [page.unroute(url[, handler])](#pageunrouteurl-handler)
 - [page.url()](#pageurl)
+- [page.video()](#pagevideo)
 - [page.viewportSize()](#pageviewportsize)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
 - [page.waitForFunction(pageFunction[, arg, options])](#pagewaitforfunctionpagefunction-arg-options)
@@ -1899,6 +1901,11 @@ Removes a route created with [page.route(url, handler)](#pagerouteurl-handler). 
 - returns: <[string]>
 
 This is a shortcut for [page.mainFrame().url()](#frameurl)
+
+#### page.video()
+- returns: <[null]|[Video]>
+
+Video object associated with this page.
 
 #### page.viewportSize()
 - returns: <[null]|[Object]>
@@ -3429,6 +3436,24 @@ Returns suggested filename for this download. It is typically computed by the br
 Returns downloaded url.
 
 
+### class: Video
+
+When browser context is created with the `videosPath` option, each page has a video object associated with it.
+
+```js
+console.log(await page.video().path());
+```
+
+<!-- GEN:toc -->
+- [video.path()](#videopath)
+<!-- GEN:stop -->
+
+#### video.path()
+- returns: <[string]>
+
+Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem upon closing the browser context.
+
+
 ### class: FileChooser
 
 [FileChooser] objects are dispatched by the page in the ['filechooser'](#event-filechooser) event.
@@ -4818,6 +4843,7 @@ const { chromium } = require('playwright');
 [URL]: https://nodejs.org/api/url.html
 [USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"
 [UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
+[Video]: #class-video "Video"
 [WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
 [WebSocket]: #class-websocket "WebSocket"
 [Worker]: #class-worker "Worker"

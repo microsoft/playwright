@@ -33,14 +33,16 @@ import * as path from 'path';
 export class Video {
   readonly _videoId: string;
   readonly _path: string;
+  readonly _relativePath: string;
   readonly _context: BrowserContext;
   readonly _finishedPromise: Promise<void>;
   private _finishCallback: () => void = () => {};
   private _callbackOnFinish?: () => Promise<void>;
 
-  constructor(context: BrowserContext, videoId: string, path: string) {
+  constructor(context: BrowserContext, videoId: string, p: string) {
     this._videoId = videoId;
-    this._path = path;
+    this._path = p;
+    this._relativePath = path.relative(context._options.videosPath!, p);
     this._context = context;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }

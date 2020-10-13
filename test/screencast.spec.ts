@@ -180,6 +180,22 @@ describe('screencast', suite => {
     }
   });
 
+  it('should emit video event', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      videosPath,
+      viewport: size,
+      videoSize: size
+    });
+    const page = await context.newPage();
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await new Promise(r => setTimeout(r, 1000));
+    await context.close();
+    const path = await page.video()!.path();
+    expect(path).toContain(videosPath);
+  });
+
   it('should capture navigation', async ({browser, server, testInfo}) => {
     const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({

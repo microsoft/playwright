@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { BrowserContext, runAction } from '../server/browserContext';
+import { BrowserContext, runAction, Video } from '../server/browserContext';
 import { Frame } from '../server/frames';
 import { Request } from '../server/network';
 import { Page, Worker } from '../server/page';
@@ -66,6 +66,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     }));
     page.on(Page.Events.RequestFinished, request => this._dispatchEvent('requestFinished', { request: RequestDispatcher.from(scope, request) }));
     page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
+    page.on(Page.Events.VideoStarted, (video: Video) => this._dispatchEvent('video', {  relativePath: video._relativePath }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 
