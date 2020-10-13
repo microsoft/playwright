@@ -51,7 +51,7 @@ class BrowserHandler {
     // service before returning from this method. Failing to do so will result
     // in a broken shutdown sequence and multiple errors in browser STDERR log.
     //
-    // NOTE: we have to put this here instead of in the `Browser.close` handler
+    // NOTE: we have to put this here as well as in the `Browser.close` handler
     // since browser shutdown can be initiated when the last tab is closed, e.g.
     // with persistent context.
     await Promise.all([
@@ -139,6 +139,12 @@ class BrowserHandler {
     if (browserWindow && browserWindow.gBrowserInit) {
       await browserWindow.gBrowserInit.idleTasksFinishedPromise;
     }
+    // Try to fully initialize browser before closing.
+    // See comment in `Browser.enable`.
+    await Promise.all([
+      waitForAddonManager(),
+      waitForSearchService(),
+    ]);
     this._onclose();
     Services.startup.quit(Ci.nsIAppStartup.eForceQuit);
   }
