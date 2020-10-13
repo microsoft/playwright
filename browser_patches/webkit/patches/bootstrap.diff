@@ -7766,27 +7766,6 @@ index 27c680d46428d349b0d1119f12da56ff283a60aa..1980aff7d662a1eea450d2db78b41f12
  #include <wpe/WebKitContextMenu.h>
  #include <wpe/WebKitContextMenuActions.h>
  #include <wpe/WebKitContextMenuItem.h>
-diff --git a/Source/WebKit/UIProcess/Automation/WebAutomationSession.h b/Source/WebKit/UIProcess/Automation/WebAutomationSession.h
-index a3989ade59db267be2a8c41c469b8875dcd1c93c..bf153e33d00939d602157024425ee017394b0bac 100644
---- a/Source/WebKit/UIProcess/Automation/WebAutomationSession.h
-+++ b/Source/WebKit/UIProcess/Automation/WebAutomationSession.h
-@@ -218,6 +218,8 @@ public:
- 
-     void didDestroyFrame(WebCore::FrameIdentifier);
- 
-+    static Optional<String> platformGetBase64EncodedPNGData(const ViewSnapshot&);
-+
- private:
-     WebPageProxy* webPageProxyForHandle(const String&);
-     String handleForWebPageProxy(const WebPageProxy&);
-@@ -266,7 +268,6 @@ private:
- 
-     // Get base64-encoded PNG data from a bitmap.
-     static Optional<String> platformGetBase64EncodedPNGData(const ShareableBitmap::Handle&);
--    static Optional<String> platformGetBase64EncodedPNGData(const ViewSnapshot&);
- 
-     // Save base64-encoded file contents to a local file path and return the path.
-     // This reuses the basename of the remote file path so that the filename exposed to DOM API remains the same.
 diff --git a/Source/WebKit/UIProcess/BackingStore.h b/Source/WebKit/UIProcess/BackingStore.h
 index fe3c63e61f778762dc2c2080c74ec53fdf8c2e5f..c43a8226c9be702e248f1712e465efa396ee8969 100644
 --- a/Source/WebKit/UIProcess/BackingStore.h
