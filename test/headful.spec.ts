@@ -16,8 +16,8 @@
 
 import { it, expect } from './fixtures';
 
-it('should have default url when launching browser', async ({browserType, defaultBrowserOptions, createUserDataDir}) => {
-  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...defaultBrowserOptions, headless: false });
+it('should have default url when launching browser', async ({browserType, browserOptions, createUserDataDir}) => {
+  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false });
   const urls = browserContext.pages().map(page => page.url());
   expect(urls).toEqual(['about:blank']);
   await browserContext.close();
@@ -27,17 +27,17 @@ it('headless should be able to read cookies written by headful', (test, { browse
   test.fail(platform === 'win32' && browserName === 'chromium');
   test.flaky(browserName === 'firefox');
   test.slow();
-}, async ({browserType, defaultBrowserOptions, server, createUserDataDir}) => {
+}, async ({browserType, browserOptions, server, createUserDataDir}) => {
   // see https://github.com/microsoft/playwright/issues/717
   const userDataDir = await createUserDataDir();
   // Write a cookie in headful chrome
-  const headfulContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: false});
+  const headfulContext = await browserType.launchPersistentContext(userDataDir, {...browserOptions, headless: false});
   const headfulPage = await headfulContext.newPage();
   await headfulPage.goto(server.EMPTY_PAGE);
   await headfulPage.evaluate(() => document.cookie = 'foo=true; expires=Fri, 31 Dec 9999 23:59:59 GMT');
   await headfulContext.close();
   // Read the cookie from headless chrome
-  const headlessContext = await browserType.launchPersistentContext(userDataDir, {...defaultBrowserOptions, headless: true});
+  const headlessContext = await browserType.launchPersistentContext(userDataDir, {...browserOptions, headless: true});
   const headlessPage = await headlessContext.newPage();
   await headlessPage.goto(server.EMPTY_PAGE);
   const cookie = await headlessPage.evaluate(() => document.cookie);
@@ -47,8 +47,8 @@ it('headless should be able to read cookies written by headful', (test, { browse
 
 it('should close browser with beforeunload page', (test, parameters) => {
   test.slow();
-}, async ({browserType, defaultBrowserOptions, server, createUserDataDir}) => {
-  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...defaultBrowserOptions, headless: false});
+}, async ({browserType, browserOptions, server, createUserDataDir}) => {
+  const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false});
   const page = await browserContext.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');
   // We have to interact with a page so that 'beforeunload' handlers
@@ -57,8 +57,8 @@ it('should close browser with beforeunload page', (test, parameters) => {
   await browserContext.close();
 });
 
-it('should not crash when creating second context', async ({browserType, defaultBrowserOptions}) => {
-  const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+it('should not crash when creating second context', async ({browserType, browserOptions}) => {
+  const browser = await browserType.launch({...browserOptions, headless: false });
   {
     const browserContext = await browser.newContext();
     await browserContext.newPage();
@@ -72,8 +72,8 @@ it('should not crash when creating second context', async ({browserType, default
   await browser.close();
 });
 
-it('should click background tab', async ({browserType, defaultBrowserOptions, server}) => {
-  const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+it('should click background tab', async ({browserType, browserOptions, server}) => {
+  const browser = await browserType.launch({...browserOptions, headless: false });
   const page = await browser.newPage();
   await page.setContent(`<button>Hello</button><a target=_blank href="${server.EMPTY_PAGE}">empty.html</a>`);
   await page.click('a');
@@ -81,16 +81,16 @@ it('should click background tab', async ({browserType, defaultBrowserOptions, se
   await browser.close();
 });
 
-it('should close browser after context menu was triggered', async ({browserType, defaultBrowserOptions, server}) => {
-  const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+it('should close browser after context menu was triggered', async ({browserType, browserOptions, server}) => {
+  const browser = await browserType.launch({...browserOptions, headless: false });
   const page = await browser.newPage();
   await page.goto(server.PREFIX + '/grid.html');
   await page.click('body', {button: 'right'});
   await browser.close();
 });
 
-it('should(not) block third party cookies', async ({browserType, defaultBrowserOptions, server, isChromium, isFirefox}) => {
-  const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+it('should(not) block third party cookies', async ({browserType, browserOptions, server, isChromium, isFirefox}) => {
+  const browser = await browserType.launch({...browserOptions, headless: false });
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(src => {
@@ -131,9 +131,9 @@ it('should(not) block third party cookies', async ({browserType, defaultBrowserO
 
 it('should not override viewport size when passed null', (test, { browserName }) => {
   test.fixme(browserName === 'webkit');
-}, async function({browserType, defaultBrowserOptions, server}) {
+}, async function({browserType, browserOptions, server}) {
   // Our WebKit embedder does not respect window features.
-  const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+  const browser = await browserType.launch({...browserOptions, headless: false });
   const context = await browser.newContext({ viewport: null });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -150,8 +150,8 @@ it('should not override viewport size when passed null', (test, { browserName })
   await browser.close();
 });
 
-it('Page.bringToFront should work', async ({browserType, defaultBrowserOptions}) => {
-  const browser = await browserType.launch({...defaultBrowserOptions, headless: false });
+it('Page.bringToFront should work', async ({browserType, browserOptions}) => {
+  const browser = await browserType.launch({...browserOptions, headless: false });
   const page1 = await browser.newPage();
   await page1.setContent('Page1');
   const page2 = await browser.newPage();

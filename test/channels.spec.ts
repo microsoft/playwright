@@ -118,7 +118,7 @@ it('should scope CDPSession handles', (test, { browserName }) => {
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should scope browser handles', async ({browserType, defaultBrowserOptions}) => {
+it('should scope browser handles', async ({browserType, browserOptions}) => {
   const GOLDEN_PRECONDITION = {
     _guid: '',
     objects: [
@@ -135,7 +135,7 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
   };
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 
-  const browser = await browserType.launch(defaultBrowserOptions);
+  const browser = await browserType.launch(browserOptions);
   await browser.newContext();
   await expectScopeState(browserType, {
     _guid: '',
@@ -161,8 +161,8 @@ it('should scope browser handles', async ({browserType, defaultBrowserOptions}) 
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should work with the domain module', async ({ domain, browserType, defaultBrowserOptions }) => {
-  const browser = await browserType.launch(defaultBrowserOptions);
+it('should work with the domain module', async ({ domain, browserType, browserOptions }) => {
+  const browser = await browserType.launch(browserOptions);
   const page = await browser.newPage();
   const result = await page.evaluate(() => 1 + 1);
   expect(result).toBe(2);

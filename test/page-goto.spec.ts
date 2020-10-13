@@ -361,7 +361,6 @@ it('should not leak listeners during bad navigation', async ({page, server}) => 
 });
 
 it('should not leak listeners during navigation of 20 pages', (test, parameters) => {
-  test.flaky(parameters.trace, 'Flakes on tracing');
   test.slow('We open 20 pages here');
 }, async ({page, context, server}) => {
   let warning = null;

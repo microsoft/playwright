@@ -25,14 +25,14 @@ type TestState = {
 };
 const fixtures = folio.extend<{}, TestState>();
 
-fixtures.downloadsBrowser.init(async ({ server, browserType, defaultBrowserOptions, testInfo }, test) => {
+fixtures.downloadsBrowser.init(async ({ server, browserType, browserOptions, testInfo }, test) => {
   server.setRoute('/download', (req, res) => {
     res.setHeader('Content-Type', 'application/octet-stream');
     res.setHeader('Content-Disposition', 'attachment; filename=file.txt');
     res.end(`Hello world`);
   });
   const browser = await browserType.launch({
-    ...defaultBrowserOptions,
+    ...browserOptions,
     downloadsPath: testInfo.outputPath(''),
   });
   await test(browser);

@@ -344,8 +344,8 @@ describe('download event', () => {
     expect(fs.existsSync(path2)).toBeFalsy();
   });
 
-  it('should delete downloads on browser gone', async ({ server, browserType, defaultBrowserOptions }) => {
-    const browser = await browserType.launch(defaultBrowserOptions);
+  it('should delete downloads on browser gone', async ({ server, browserType, browserOptions }) => {
+    const browser = await browserType.launch(browserOptions);
     const page = await browser.newPage({ acceptDownloads: true });
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [ download1 ] = await Promise.all([

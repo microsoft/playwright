@@ -17,9 +17,9 @@ import { it, expect } from '../fixtures';
 
 it('should pass firefox user preferences', (test, { browserName }) => {
   test.skip(browserName !== 'firefox');
-}, async ({browserType, defaultBrowserOptions}) => {
+}, async ({browserType, browserOptions}) => {
   const browser = await browserType.launch({
-    ...defaultBrowserOptions,
+    ...browserOptions,
     firefoxUserPrefs: {
       'network.proxy.type': 1,
       'network.proxy.http': '127.0.0.1',

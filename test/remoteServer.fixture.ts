@@ -26,16 +26,16 @@ type ServerFixtures = {
 };
 const fixtures = base.extend<{}, ServerFixtures>();
 
-fixtures.remoteServer.init(async ({ browserType, defaultBrowserOptions }, run) => {
+fixtures.remoteServer.init(async ({ browserType, browserOptions }, run) => {
   const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, defaultBrowserOptions);
+  await remoteServer._start(browserType, browserOptions);
   await run(remoteServer);
   await remoteServer.close();
 });
 
-fixtures.stallingRemoteServer.init(async ({ browserType, defaultBrowserOptions }, run) => {
+fixtures.stallingRemoteServer.init(async ({ browserType, browserOptions }, run) => {
   const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, defaultBrowserOptions, { stallOnClose: true });
+  await remoteServer._start(browserType, browserOptions, { stallOnClose: true });
   await run(remoteServer);
   await remoteServer.close();
 });
@@ -55,17 +55,17 @@ export class RemoteServer {
   _didExit: boolean;
   _wsEndpoint: string;
 
-  async _start(browserType: BrowserType<Browser>, defaultBrowserOptions: LaunchOptions, extraOptions?: { stallOnClose: boolean; }) {
+  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, extraOptions?: { stallOnClose: boolean; }) {
     this._output = new Map();
     this._outputCallback = new Map();
     this._didExit = false;
 
     this._browserType = browserType;
-    const launchOptions = {...defaultBrowserOptions,
+    const launchOptions = {...browserOptions,
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,
-      executablePath: defaultBrowserOptions.executablePath || browserType.executablePath(),
+      executablePath: browserOptions.executablePath || browserType.executablePath(),
       logger: undefined,
     };
     const options = {

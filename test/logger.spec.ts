@@ -16,9 +16,9 @@
 
 import { it, expect } from './fixtures';
 
-it('should log', async ({browserType, defaultBrowserOptions}) => {
+it('should log', async ({browserType, browserOptions}) => {
   const log = [];
-  const browser = await browserType.launch({...defaultBrowserOptions, logger: {
+  const browser = await browserType.launch({...browserOptions, logger: {
     log: (name, severity, message) => log.push({name, severity, message}),
     isEnabled: (name, severity) => severity !== 'verbose'
   }});
@@ -30,9 +30,9 @@ it('should log', async ({browserType, defaultBrowserOptions}) => {
   expect(log.filter(item => item.message.includes('browserType.launch succeeded')).length > 0).toBeTruthy();
 });
 
-it('should log context-level', async ({browserType, defaultBrowserOptions}) => {
+it('should log context-level', async ({browserType, browserOptions}) => {
   const log = [];
-  const browser = await browserType.launch(defaultBrowserOptions);
+  const browser = await browserType.launch(browserOptions);
   const context = await browser.newContext({
     logger: {
       log: (name, severity, message) => log.push({name, severity, message}),
