@@ -819,6 +819,13 @@ const Page = {
         defaultPrevented: t.Boolean,
       }
     },
+    'dispatchTapEvent': {
+      params: {
+        x: t.Number,
+        y: t.Number,
+        modifiers: t.Number,
+      }
+    },
     'dispatchMouseEvent': {
       params: {
         type: t.String,

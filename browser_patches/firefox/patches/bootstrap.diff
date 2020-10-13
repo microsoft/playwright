@@ -695,6 +695,91 @@ index 9e898052f8eebd8331b46b105bc8b6eeff3a2e84..994243e99814a3f8882c9fe425ecab52
  
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
+diff --git a/dom/base/nsContentUtils.cpp b/dom/base/nsContentUtils.cpp
+index dbe02dd6082c7fea5d161328d55fd003adbfe853..ba410cdc1677234665d95f6ea984b7af8b9d34d2 100644
+--- a/dom/base/nsContentUtils.cpp
++++ b/dom/base/nsContentUtils.cpp
+@@ -7837,7 +7837,8 @@ nsresult nsContentUtils::SendMouseEvent(
+     bool aIgnoreRootScrollFrame, float aPressure,
+     unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
+     bool* aPreventDefault, bool aIsDOMEventSynthesized,
+-    bool aIsWidgetEventSynthesized) {
++    bool aIsWidgetEventSynthesized,
++    bool convertToPointer) {
+   nsPoint offset;
+   nsCOMPtr<nsIWidget> widget = GetWidget(aPresShell, &offset);
+   if (!widget) return NS_ERROR_FAILURE;
+@@ -7893,6 +7894,7 @@ nsresult nsContentUtils::SendMouseEvent(
+   event.mTime = PR_IntervalNow();
+   event.mFlags.mIsSynthesizedForTests = aIsDOMEventSynthesized;
+   event.mExitFrom = exitFrom;
++  event.convertToPointer = convertToPointer;
+ 
+   nsPresContext* presContext = aPresShell->GetPresContext();
+   if (!presContext) return NS_ERROR_FAILURE;
+diff --git a/dom/base/nsContentUtils.h b/dom/base/nsContentUtils.h
+index f4b25288a8183ceaa92c39ba6f55ae6d91948b96..1c5645c4f4bc81d79e815d9fb0520c0b0410c8b7 100644
+--- a/dom/base/nsContentUtils.h
++++ b/dom/base/nsContentUtils.h
+@@ -2897,7 +2897,7 @@ class nsContentUtils {
+       int32_t aModifiers, bool aIgnoreRootScrollFrame, float aPressure,
+       unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
+       bool* aPreventDefault, bool aIsDOMEventSynthesized,
+-      bool aIsWidgetEventSynthesized);
++      bool aIsWidgetEventSynthesized, bool convertToPointer = true);
+ 
+   static void FirePageShowEventForFrameLoaderSwap(
+       nsIDocShellTreeItem* aItem,
+diff --git a/dom/base/nsDOMWindowUtils.cpp b/dom/base/nsDOMWindowUtils.cpp
+index 657577f2bdfcacbcc2f038080a9c3bf10ed46c24..11b26095373d848862bed1d77f3b8e527de68199 100644
+--- a/dom/base/nsDOMWindowUtils.cpp
++++ b/dom/base/nsDOMWindowUtils.cpp
+@@ -647,7 +647,7 @@ nsDOMWindowUtils::SendMouseEvent(
+     int32_t aClickCount, int32_t aModifiers, bool aIgnoreRootScrollFrame,
+     float aPressure, unsigned short aInputSourceArg,
+     bool aIsDOMEventSynthesized, bool aIsWidgetEventSynthesized,
+-    int32_t aButtons, uint32_t aIdentifier, uint8_t aOptionalArgCount,
++    int32_t aButtons, uint32_t aIdentifier, bool aDisablePointerEvent, uint8_t aOptionalArgCount,
+     bool* aPreventDefault) {
+   return SendMouseEventCommon(
+       aType, aX, aY, aButton, aClickCount, aModifiers, aIgnoreRootScrollFrame,
+@@ -655,7 +655,7 @@ nsDOMWindowUtils::SendMouseEvent(
+       aOptionalArgCount >= 7 ? aIdentifier : DEFAULT_MOUSE_POINTER_ID, false,
+       aPreventDefault, aOptionalArgCount >= 4 ? aIsDOMEventSynthesized : true,
+       aOptionalArgCount >= 5 ? aIsWidgetEventSynthesized : false,
+-      aOptionalArgCount >= 6 ? aButtons : MOUSE_BUTTONS_NOT_SPECIFIED);
++      aOptionalArgCount >= 6 ? aButtons : MOUSE_BUTTONS_NOT_SPECIFIED, !aDisablePointerEvent);
+ }
+ 
+ NS_IMETHODIMP
+@@ -682,12 +682,12 @@ nsDOMWindowUtils::SendMouseEventCommon(
+     int32_t aClickCount, int32_t aModifiers, bool aIgnoreRootScrollFrame,
+     float aPressure, unsigned short aInputSourceArg, uint32_t aPointerId,
+     bool aToWindow, bool* aPreventDefault, bool aIsDOMEventSynthesized,
+-    bool aIsWidgetEventSynthesized, int32_t aButtons) {
++    bool aIsWidgetEventSynthesized, int32_t aButtons, bool aConvertToPointer) {
+   RefPtr<PresShell> presShell = GetPresShell();
+   return nsContentUtils::SendMouseEvent(
+       presShell, aType, aX, aY, aButton, aButtons, aClickCount, aModifiers,
+       aIgnoreRootScrollFrame, aPressure, aInputSourceArg, aPointerId, aToWindow,
+-      aPreventDefault, aIsDOMEventSynthesized, aIsWidgetEventSynthesized);
++      aPreventDefault, aIsDOMEventSynthesized, aIsWidgetEventSynthesized, aConvertToPointer);
+ }
+ 
+ NS_IMETHODIMP
+diff --git a/dom/base/nsDOMWindowUtils.h b/dom/base/nsDOMWindowUtils.h
+index 08e81b1c24a17729ec7b6c9e048c2febe57e18dc..cb09fe30de0a42c89da220e3bf8afe5f05923084 100644
+--- a/dom/base/nsDOMWindowUtils.h
++++ b/dom/base/nsDOMWindowUtils.h
+@@ -93,7 +93,7 @@ class nsDOMWindowUtils final : public nsIDOMWindowUtils,
+       int32_t aClickCount, int32_t aModifiers, bool aIgnoreRootScrollFrame,
+       float aPressure, unsigned short aInputSourceArg, uint32_t aIdentifier,
+       bool aToWindow, bool* aPreventDefault, bool aIsDOMEventSynthesized,
+-      bool aIsWidgetEventSynthesized, int32_t aButtons);
++      bool aIsWidgetEventSynthesized, int32_t aButtons, bool aConvertToPointer = true);
+ 
+   MOZ_CAN_RUN_SCRIPT
+   nsresult SendTouchEventCommon(
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
 index 264b2509a71d85124079f6855c5ac19ce72082ef..3c45db6ad2151bc1454a5b1eb570774c81a2c7d8 100644
 --- a/dom/base/nsFocusManager.cpp
@@ -996,6 +1081,20 @@ index ad9ad3692022c7eb5e38fac5242b41943ee05dee..b2d34d4daa28a1f6ebff083452196820
    if (IsPopupBlocked()) {
      return NS_OK;
    }
+diff --git a/dom/interfaces/base/nsIDOMWindowUtils.idl b/dom/interfaces/base/nsIDOMWindowUtils.idl
+index 6728f7f4e4fbc6ace1a674bebfe179af0da087e1..e1147cb7e810c8fac743145aae10937c7fbc8f4b 100644
+--- a/dom/interfaces/base/nsIDOMWindowUtils.idl
++++ b/dom/interfaces/base/nsIDOMWindowUtils.idl
+@@ -347,7 +347,8 @@ interface nsIDOMWindowUtils : nsISupports {
+                          [optional] in boolean aIsDOMEventSynthesized,
+                          [optional] in boolean aIsWidgetEventSynthesized,
+                          [optional] in long aButtons,
+-                         [optional] in unsigned long aIdentifier);
++                         [optional] in unsigned long aIdentifier,
++                         [optional] in boolean aDisablePointerEvent);
+ 
+   /** Synthesize a touch event. The event types supported are:
+    *    touchstart, touchend, touchmove, and touchcancel
 diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
 index bb336902d2303223d14b07cb7dbc7aba1347490b..ac37b7e8b09683d077d4467c74487b137e541ebb 100644
 --- a/dom/ipc/BrowserChild.cpp
@@ -2197,3 +2296,16 @@ index c375629d4a954f872a2abdd6983ae38dbb98f4ca..1857a4874ac9f8a3d7e402b5707a9ea5
   private:
    ~HeadlessWidget();
    bool mEnabled;
+diff --git a/xpcom/reflect/xptinfo/xptinfo.h b/xpcom/reflect/xptinfo/xptinfo.h
+index 33b1f25411fd6a8d02edca9198054347289a1501..ee6ea48f3986a8d7c0e2f351b6d30b9fb706524e 100644
+--- a/xpcom/reflect/xptinfo/xptinfo.h
++++ b/xpcom/reflect/xptinfo/xptinfo.h
+@@ -513,7 +513,7 @@ static_assert(sizeof(nsXPTMethodInfo) == 8, "wrong size");
+ #if defined(MOZ_THUNDERBIRD) || defined(MOZ_SUITE)
+ #  define PARAM_BUFFER_COUNT 18
+ #else
+-#  define PARAM_BUFFER_COUNT 14
++#  define PARAM_BUFFER_COUNT 15
+ #endif
+ 
+ /**

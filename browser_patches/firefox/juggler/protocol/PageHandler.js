@@ -308,6 +308,10 @@ class PageHandler {
     return await this._contentPage.send('dispatchTouchEvent', options);
   }
 
+  async ['Page.dispatchTapEvent'](options) {
+    return await this._contentPage.send('dispatchTapEvent', options);
+  }
+
   async ['Page.dispatchMouseEvent'](options) {
     return await this._contentPage.send('dispatchMouseEvent', options);
   }
