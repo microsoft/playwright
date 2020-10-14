@@ -1995,7 +1995,7 @@ index c8a849d98d04e3d23d349ede31dad76c20fb17f8..b5dcc6f0cd2a0785ad050e3d8e6ff267
          return false;
  
 diff --git a/Source/WebCore/dom/PointerEvent.cpp b/Source/WebCore/dom/PointerEvent.cpp
-index 3cc7f016fb8414d7385c1189a7595940d1972a4b..e24c885701d593c9f07a966766064f58adba479b 100644
+index 3cc7f016fb8414d7385c1189a7595940d1972a4b..5a7fc02255900a9f9705567e79ee43718436cf2d 100644
 --- a/Source/WebCore/dom/PointerEvent.cpp
 +++ b/Source/WebCore/dom/PointerEvent.cpp
 @@ -129,4 +129,61 @@ EventInterface PointerEvent::eventInterface() const
@@ -2017,6 +2017,8 @@ index 3cc7f016fb8414d7385c1189a7595940d1972a4b..e24c885701d593c9f07a966766064f58
 +        return eventNames().pointerupEvent;
 +    case PlatformTouchPoint::State::TouchCancelled:
 +        return eventNames().pointercancelEvent;
++    case PlatformTouchPoint::State::TouchStateEnd:
++        break;
 +    }
 +    ASSERT_NOT_REACHED();
 +    return nullAtom();
@@ -2052,8 +2054,6 @@ index 3cc7f016fb8414d7385c1189a7595940d1972a4b..e24c885701d593c9f07a966766064f58
 +    , m_pressure(event.touchPoints().at(index).force())
 +    , m_pointerType(PointerEvent::touchPointerType())
 +    , m_isPrimary(isPrimary)
-+    , m_tiltX(0)
-+    , m_tiltY(0)
 +{
 +}
 +
