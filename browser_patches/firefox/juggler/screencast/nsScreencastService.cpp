@@ -12,6 +12,7 @@
 #include "mozilla/StaticPtr.h"
 #include "nsIDocShell.h"
 #include "nsIObserverService.h"
+#include "nsIRandomGenerator.h"
 #include "nsISupportsPrimitives.h"
 #include "nsThreadManager.h"
 #include "nsView.h"
@@ -34,7 +35,7 @@ namespace {
 
 StaticRefPtr<nsScreencastService> gScreencastService;
 
-rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* widget, int sessionId) {
+rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* widget) {
   if (gfxPlatform::IsHeadless()) {
     HeadlessWidget* headlessWidget = static_cast<HeadlessWidget*>(widget);
     return HeadlessWindowCapturer::Create(headlessWidget);
@@ -47,19 +48,35 @@ rtc::scoped_refptr<webrtc::VideoCaptureModule> CreateWindowCapturer(nsIWidget* w
   nsCString windowId;
   windowId.AppendPrintf("%" PRIuPTR, rawWindowId);
   bool captureCursor = false;
-  return webrtc::DesktopCaptureImpl::Create(sessionId, windowId.get(), webrtc::CaptureDeviceType::Window, captureCursor);
+  static int moduleId = 0;
+  return webrtc::DesktopCaptureImpl::Create(++moduleId, windowId.get(), webrtc::CaptureDeviceType::Window, captureCursor);
 }
 
-void NotifyScreencastStopped(int32_t sessionId) {
+void NotifyScreencastStopped(const nsString& sessionId) {
   nsCOMPtr<nsIObserverService> observerService = mozilla::services::GetObserverService();
   if (!observerService) {
     fprintf(stderr, "NotifyScreencastStopped error: no observer service\n");
     return;
   }
 
-  nsString id;
-  id.AppendPrintf("%" PRIi32, sessionId);
-  observerService->NotifyObservers(nullptr, "juggler-screencast-stopped", id.get());
+  observerService->NotifyObservers(nullptr, "juggler-screencast-stopped", sessionId.get());
+}
+
+nsresult generateUid(nsString& uid) {
+  nsresult rv = NS_OK;
+  nsCOMPtr<nsIRandomGenerator> rg = do_GetService("@mozilla.org/security/random-generator;1", &rv);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  uint8_t* buffer;
+  const int kLen = 16;
+  rv = rg->GenerateRandomBytes(kLen, &buffer);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  for (int i = 0; i < kLen; i++) {
+    uid.AppendPrintf("%" PRIx8, buffer[i]);
+  }
+  free(buffer);
+  return rv;
 }
 }
 
@@ -123,9 +140,8 @@ nsScreencastService::nsScreencastService() = default;
 nsScreencastService::~nsScreencastService() {
 }
 
-nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, double scale, int32_t offsetTop, int32_t* sessionId) {
+nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const nsACString& aFileName, uint32_t width, uint32_t height, double scale, int32_t offsetTop, nsAString& sessionId) {
   MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Screencast service must be started on the Main thread.");
-  *sessionId = -1;
 
   PresShell* presShell = aDocShell->GetPresShell();
   if (!presShell)
@@ -138,8 +154,7 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
     return NS_ERROR_UNEXPECTED;
   nsIWidget* widget = view->GetWidget();
 
-  *sessionId = ++mLastSessionId;
-  rtc::scoped_refptr<webrtc::VideoCaptureModule> capturer = CreateWindowCapturer(widget, *sessionId);
+  rtc::scoped_refptr<webrtc::VideoCaptureModule> capturer = CreateWindowCapturer(widget);
   if (!capturer)
     return NS_ERROR_FAILURE;
 
@@ -171,11 +186,17 @@ nsresult nsScreencastService::StartVideoRecording(nsIDocShell* aDocShell, const 
   if (!session->Start())
     return NS_ERROR_FAILURE;
 
-  mIdToSession.emplace(*sessionId, std::move(session));
+  nsString uid;
+  nsresult rv = generateUid(uid);
+  NS_ENSURE_SUCCESS(rv, rv);
+
+  sessionId = uid;
+  mIdToSession.emplace(uid, std::move(session));
   return NS_OK;
 }
 
-nsresult nsScreencastService::StopVideoRecording(int32_t sessionId) {
+nsresult nsScreencastService::StopVideoRecording(const nsAString& aSessionId) {
+  nsString sessionId(aSessionId);
   auto it = mIdToSession.find(sessionId);
   if (it == mIdToSession.end())
     return NS_ERROR_INVALID_ARG;

@@ -121,7 +121,7 @@ class PageHandler {
 
   _onScreencastStarted() {
     const info = this._pageTarget.screencastInfo();
-    this._session.emitEvent('Page.screencastStarted', { screencastId: '' + info.videoSessionId, file: info.file });
+    this._session.emitEvent('Page.screencastStarted', { screencastId: info.videoSessionId, file: info.file });
   }
 
   _onDialogOpened(dialog) {
