@@ -29,7 +29,7 @@ import { TimeoutSettings } from '../utils/timeoutSettings';
 import { ChildProcess } from 'child_process';
 import { envObjectToArray } from './clientHelper';
 import { validateHeaders } from './network';
-import { assert, makeWaitForNextTask, headersObjectToArray, createGuid, mkdirIfNeeded } from '../utils/utils';
+import { assert, makeWaitForNextTask, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { SelectorsOwner, sharedSelectors } from './selectors';
 import { kBrowserClosedError } from '../utils/errors';
 import { Stream } from './stream';
@@ -108,6 +108,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       };
       const result = await this._channel.launchPersistentContext(persistentOptions);
       const context = BrowserContext.from(result.context);
+      context._options = persistentOptions;
       context._logger = logger;
       return context;
     }, logger);
@@ -188,16 +189,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
 export class RemoteBrowser extends ChannelOwner<channels.RemoteBrowserChannel, channels.RemoteBrowserInitializer> {
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.RemoteBrowserInitializer) {
     super(parent, type, guid, initializer);
-    this._channel.on('video', ({ context, stream }) => this._onVideo(BrowserContext.from(context), Stream.from(stream)));
+    this._channel.on('video', ({ context, stream, relativePath }) => this._onVideo(BrowserContext.from(context), Stream.from(stream), relativePath));
   }
 
-  private async _onVideo(context: BrowserContext, stream: Stream) {
-    if (!context._videosPathForRemote) {
-      stream._channel.close().catch(e => null);
-      return;
-    }
-
-    const videoFile = path.join(context._videosPathForRemote, createGuid() + '.webm');
+  private async _onVideo(context: BrowserContext, stream: Stream, relativePath: string) {
+    const videoFile = path.join(context._options.videosPath!, relativePath);
     await mkdirIfNeeded(videoFile);
     stream.stream().pipe(fs.createWriteStream(videoFile));
   }

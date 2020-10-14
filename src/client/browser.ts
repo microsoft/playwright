@@ -58,8 +58,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
         extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
       };
       const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
-      if (this._isRemote)
-        context._videosPathForRemote = options.videosPath;
+      context._options = contextOptions;
       this._contexts.add(context);
       context._logger = logger || this._logger;
       return context;

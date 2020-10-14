@@ -125,6 +125,7 @@ export interface RemoteBrowserChannel extends Channel {
 export type RemoteBrowserVideoEvent = {
   context: BrowserContextChannel,
   stream: StreamChannel,
+  relativePath: string,
 };
 
 // ----------- Selectors -----------
@@ -683,6 +684,7 @@ export interface PageChannel extends Channel {
   on(event: 'requestFinished', callback: (params: PageRequestFinishedEvent) => void): this;
   on(event: 'response', callback: (params: PageResponseEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
+  on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
@@ -764,6 +766,9 @@ export type PageResponseEvent = {
 export type PageRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
+};
+export type PageVideoEvent = {
+  relativePath: string,
 };
 export type PageWorkerEvent = {
   worker: WorkerChannel,

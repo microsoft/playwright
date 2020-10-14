@@ -37,7 +37,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
-  _videosPathForRemote?: string;
+  _options: channels.BrowserNewContextParams = {};
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
