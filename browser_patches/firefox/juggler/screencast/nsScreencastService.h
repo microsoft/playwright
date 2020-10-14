@@ -5,7 +5,7 @@
 #pragma once
 
 #include <memory>
-#include <unordered_map>
+#include <map>
 #include "nsIScreencastService.h"
 
 namespace mozilla {
@@ -23,8 +23,7 @@ class nsScreencastService final : public nsIScreencastService {
   ~nsScreencastService();
 
   class Session;
-  int mLastSessionId = 0;
-  std::unordered_map<int, std::unique_ptr<Session>> mIdToSession;
+  std::map<nsString, std::unique_ptr<Session>> mIdToSession;
 };
 
 }  // namespace mozilla
