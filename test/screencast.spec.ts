@@ -196,6 +196,40 @@ describe('screencast', suite => {
     expect(fs.existsSync(path)).toBeTruthy();
   });
 
+  it('should expose video path blank page', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      videosPath,
+      viewport: size,
+      videoSize: size
+    });
+    const page = await context.newPage();
+    const path = await page.video()!.path();
+    expect(path).toContain(videosPath);
+    await context.close();
+    expect(fs.existsSync(path)).toBeTruthy();
+  });
+
+  it('should expose video path blank popup', async ({browser, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      videosPath,
+      viewport: size,
+      videoSize: size
+    });
+    const page = await context.newPage();
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.evaluate('window.open("about:blank")')
+    ]);
+    const path = await popup.video()!.path();
+    expect(path).toContain(videosPath);
+    await context.close();
+    expect(fs.existsSync(path)).toBeTruthy();
+  });
+
   it('should capture navigation', async ({browser, server, testInfo}) => {
     const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({
