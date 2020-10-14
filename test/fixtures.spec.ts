@@ -23,7 +23,7 @@ type FixturesFixtures = {
   connectedRemoteServer: RemoteServer;
   stallingConnectedRemoteServer: RemoteServer;
 };
-const fixtures = folio.extend<{}, FixturesFixtures>();
+const fixtures = folio.extend<FixturesFixtures>();
 
 fixtures.connectedRemoteServer.init(async ({browserType, remoteServer, server}, run) => {
   const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });

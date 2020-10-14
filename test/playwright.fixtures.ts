@@ -87,7 +87,7 @@ type PlaywrightTestFixtures = {
   page: Page;
 };
 
-const fixtures = baseFolio.extend<PlaywrightWorkerFixtures, PlaywrightTestFixtures, PlaywrightParameters>();
+const fixtures = baseFolio.extend<PlaywrightTestFixtures, PlaywrightWorkerFixtures, PlaywrightParameters>();
 fixtures.browserName.initParameter('Browser type name', (process.env.BROWSER || 'chromium') as 'chromium' | 'firefox' | 'webkit');
 fixtures.headful.initParameter('Whether to run tests headless or headful', process.env.HEADFUL ? true : false);
 fixtures.platform.initParameter('Operating system', process.platform as ('win32' | 'linux' | 'darwin'));
@@ -196,8 +196,6 @@ export const fit = folio.fit;
 export const xit = folio.xit;
 export const test = folio.test;
 export const describe = folio.describe;
-export const fdescribe = folio.fdescribe;
-export const xdescribe = folio.xdescribe;
 export const beforeEach = folio.beforeEach;
 export const afterEach = folio.afterEach;
 export const beforeAll = folio.beforeAll;

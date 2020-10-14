@@ -24,7 +24,7 @@ type TestState = {
   application: ElectronApplication;
   window: ElectronPage;
 };
-const fixtures = base.extend<{}, TestState>();
+const fixtures = base.extend<TestState>();
 
 fixtures.application.init(async ({ playwright }, run) => {
   const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);

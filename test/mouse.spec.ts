@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, xdescribe } from './fixtures';
+import { it, expect, describe } from './fixtures';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
@@ -185,7 +185,7 @@ it('should work with mobile viewports and cross process navigations', (test, { b
   await context.close();
 });
 
-xdescribe('Drag and Drop', function() {
+describe.skip('Drag and Drop', function() {
   it('should work', async ({server, page}) => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.hover('#source');
