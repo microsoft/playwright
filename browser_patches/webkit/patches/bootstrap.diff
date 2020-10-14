@@ -546,10 +546,10 @@ index 0000000000000000000000000000000000000000..3f28f8e41b39c517369c8ca69415486a
 +}
 diff --git a/Source/JavaScriptCore/inspector/protocol/Input.json b/Source/JavaScriptCore/inspector/protocol/Input.json
 new file mode 100644
-index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80cadb2f931d
+index 0000000000000000000000000000000000000000..587287d52fde2735cbae34a27a0f673b7e38e1a7
 --- /dev/null
 +++ b/Source/JavaScriptCore/inspector/protocol/Input.json
-@@ -0,0 +1,165 @@
+@@ -0,0 +1,188 @@
 +{
 +    "domain": "Input",
 +    "availability": ["web"],
@@ -708,6 +708,29 @@ index 0000000000000000000000000000000000000000..34909cce9f6d8d7c74be4c96e40f80ca
 +                {
 +                    "name": "deltaY",
 +                    "description": "Y delta in CSS pixels for mouse wheel event (default: 0).",
++                    "optional": true,
++                    "type": "integer"
++                }
++            ]
++        },
++        {
++            "name": "dispatchTapEvent",
++            "description": "Dispatches a tap event to the page.",
++            "async": true,
++            "parameters": [
++                {
++                    "name": "x",
++                    "description": "X coordinate of the event relative to the main frame's viewport in CSS pixels.",
++                    "type": "integer"
++                },
++                {
++                    "name": "y",
++                    "description": "Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to\nthe top of the viewport and Y increases as it proceeds towards the bottom of the viewport.",
++                    "type": "integer"
++                },
++                {
++                    "name": "modifiers",
++                    "description": "Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8\n(default: 0).",
 +                    "optional": true,
 +                    "type": "integer"
 +                }
@@ -1970,6 +1993,103 @@ index c8a849d98d04e3d23d349ede31dad76c20fb17f8..b5dcc6f0cd2a0785ad050e3d8e6ff267
 +    auto width = frame.page()->screenSize().width();
      if (!computeLength(value, !frame.document()->inQuirksMode(), conversionData, length))
          return false;
+ 
+diff --git a/Source/WebCore/dom/PointerEvent.cpp b/Source/WebCore/dom/PointerEvent.cpp
+index 3cc7f016fb8414d7385c1189a7595940d1972a4b..e24c885701d593c9f07a966766064f58adba479b 100644
+--- a/Source/WebCore/dom/PointerEvent.cpp
++++ b/Source/WebCore/dom/PointerEvent.cpp
+@@ -129,4 +129,61 @@ EventInterface PointerEvent::eventInterface() const
+     return PointerEventInterfaceType;
+ }
+ 
++#if ENABLE(TOUCH_EVENTS) && !PLATFORM(IOS_FAMILY)
++
++static const AtomString& pointerEventType(PlatformTouchPoint::State state)
++{
++    switch (state) {
++    case PlatformTouchPoint::State::TouchPressed:
++        return eventNames().pointerdownEvent;
++    case PlatformTouchPoint::State::TouchMoved:
++        return eventNames().pointermoveEvent;
++    case PlatformTouchPoint::State::TouchStationary:
++        return eventNames().pointermoveEvent;
++    case PlatformTouchPoint::State::TouchReleased:
++        return eventNames().pointerupEvent;
++    case PlatformTouchPoint::State::TouchCancelled:
++        return eventNames().pointercancelEvent;
++    }
++    ASSERT_NOT_REACHED();
++    return nullAtom();
++}
++
++static short buttonForType(const AtomString& type)
++{
++    return type == eventNames().pointermoveEvent ? -1 : 0;
++}
++
++static unsigned short buttonsForType(const AtomString& type)
++{
++    // We have contact with the touch surface for most events except when we've released the touch or canceled it.
++    return (type == eventNames().pointerupEvent || type == eventNames().pointeroutEvent || type == eventNames().pointerleaveEvent || type == eventNames().pointercancelEvent) ? 0 : 1;
++}
++
++Ref<PointerEvent> PointerEvent::create(const PlatformTouchEvent& event, unsigned index, bool isPrimary, Ref<WindowProxy>&& view)
++{
++    const auto& type = pointerEventType(event.touchPoints().at(index).state());
++    return adoptRef(*new PointerEvent(type, event, typeIsCancelable(type), index, isPrimary, WTFMove(view)));
++}
++
++Ref<PointerEvent> PointerEvent::create(const String& type, const PlatformTouchEvent& event, unsigned index, bool isPrimary, Ref<WindowProxy>&& view)
++{
++    return adoptRef(*new PointerEvent(type, event, typeIsCancelable(type), index, isPrimary, WTFMove(view)));
++}
++
++PointerEvent::PointerEvent(const AtomString& type, const PlatformTouchEvent& event, IsCancelable isCancelable, unsigned index, bool isPrimary, Ref<WindowProxy>&& view)
++    : MouseEvent(type, typeCanBubble(type), isCancelable, typeIsComposed(type), event.timestamp().approximateMonotonicTime(), WTFMove(view), 0, event.touchPoints().at(index).pos(), event.touchPoints().at(index).pos(), { }, event.modifiers(), buttonForType(type), buttonsForType(type), nullptr, 0, 0, IsSimulated::No, IsTrusted::Yes)
++    , m_pointerId(2)
++    , m_width(2 * event.touchPoints().at(index).radiusX())
++    , m_height(2 * event.touchPoints().at(index).radiusY())
++    , m_pressure(event.touchPoints().at(index).force())
++    , m_pointerType(PointerEvent::touchPointerType())
++    , m_isPrimary(isPrimary)
++    , m_tiltX(0)
++    , m_tiltY(0)
++{
++}
++
++#endif // ENABLE(TOUCH_EVENTS) && !PLATFORM(IOS_FAMILY)
++
+ } // namespace WebCore
+diff --git a/Source/WebCore/dom/PointerEvent.h b/Source/WebCore/dom/PointerEvent.h
+index 4310f235a12ca941c613794ac3ab572b68a2b4f8..7a8e56455777174c46cb3ea6359025dc5409b8c6 100644
+--- a/Source/WebCore/dom/PointerEvent.h
++++ b/Source/WebCore/dom/PointerEvent.h
+@@ -33,6 +33,8 @@
+ 
+ #if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+ #include "PlatformTouchEventIOS.h"
++#else
++#include "PlatformTouchEvent.h"
+ #endif
+ 
+ namespace WebCore {
+@@ -79,7 +81,7 @@ public:
+     static Ref<PointerEvent> create(const String& type, short button, const MouseEvent&);
+     static Ref<PointerEvent> create(const String& type, PointerID, const String& pointerType, IsPrimary = IsPrimary::No);
+ 
+-#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
++#if ENABLE(TOUCH_EVENTS)
+     static Ref<PointerEvent> create(const PlatformTouchEvent&, unsigned touchIndex, bool isPrimary, Ref<WindowProxy>&&);
+     static Ref<PointerEvent> create(const String& type, const PlatformTouchEvent&, unsigned touchIndex, bool isPrimary, Ref<WindowProxy>&&);
+ #endif
+@@ -123,7 +125,7 @@ private:
+     PointerEvent(const AtomString&, Init&&);
+     PointerEvent(const AtomString& type, short button, const MouseEvent&);
+     PointerEvent(const AtomString& type, PointerID, const String& pointerType, IsPrimary);
+-#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
++#if ENABLE(TOUCH_EVENTS)
+     PointerEvent(const AtomString& type, const PlatformTouchEvent&, IsCancelable isCancelable, unsigned touchIndex, bool isPrimary, Ref<WindowProxy>&&);
+ #endif
  
 diff --git a/Source/WebCore/dom/UserGestureIndicator.cpp b/Source/WebCore/dom/UserGestureIndicator.cpp
 index 76399ab574d94d73c5abc08f8df7901979e58273..8df80e34cda19470e305d5696bf108bd8de5fa8c 100644
@@ -4221,10 +4341,18 @@ index e096732ec5a23a0498298a052eebe50ab14092a8..7ae98a00b9e4dd82e90444a39a9b640b
  
  #if ENABLE(INPUT_TYPE_COLOR)
 diff --git a/Source/WebCore/page/EventHandler.cpp b/Source/WebCore/page/EventHandler.cpp
-index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b805246cfdb4fc 100644
+index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..fadb703c2900655cd122bdb3dc8e145c22a79309 100644
 --- a/Source/WebCore/page/EventHandler.cpp
 +++ b/Source/WebCore/page/EventHandler.cpp
-@@ -828,9 +828,7 @@ bool EventHandler::handleMousePressEvent(const MouseEventWithHitTestResults& eve
+@@ -121,6 +121,7 @@
+ 
+ #if ENABLE(TOUCH_EVENTS) && !ENABLE(IOS_TOUCH_EVENTS)
+ #include "PlatformTouchEvent.h"
++#include "PointerCaptureController.h"
+ #endif
+ 
+ #if ENABLE(MAC_GESTURE_EVENTS)
+@@ -828,9 +829,7 @@ bool EventHandler::handleMousePressEvent(const MouseEventWithHitTestResults& eve
      m_mousePressNode = event.targetNode();
      m_frame.document()->setFocusNavigationStartingNode(event.targetNode());
  
@@ -4234,7 +4362,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  
      m_mousePressed = true;
      m_selectionInitiationState = HaveNotStartedSelection;
-@@ -869,8 +867,6 @@ VisiblePosition EventHandler::selectionExtentRespectingEditingBoundary(const Vis
+@@ -869,8 +868,6 @@ VisiblePosition EventHandler::selectionExtentRespectingEditingBoundary(const Vis
      return targetNode->renderer()->positionForPoint(LayoutPoint(selectionEndPoint), nullptr);
  }
  
@@ -4243,7 +4371,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  #if !PLATFORM(IOS_FAMILY)
  
  bool EventHandler::supportsSelectionUpdatesOnMouseDrag() const
-@@ -892,8 +888,10 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+@@ -892,8 +889,10 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
  
      Ref<Frame> protectedFrame(m_frame);
  
@@ -4254,7 +4382,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  
      Node* targetNode = event.targetNode();
      if (event.event().button() != LeftButton || !targetNode)
-@@ -914,7 +912,9 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+@@ -914,7 +913,9 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
      ASSERT(m_mouseDownMayStartSelect || m_mouseDownMayStartAutoscroll);
  #endif
  
@@ -4264,7 +4392,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  
      if (m_mouseDownMayStartAutoscroll && !panScrollInProgress()) {
          m_autoscrollController->startAutoscrollForSelection(renderer);
-@@ -931,6 +931,8 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+@@ -931,6 +932,8 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
      return true;
  }
      
@@ -4273,7 +4401,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
  {
      // This is a pre-flight check of whether the event might lead to a drag being started.  Be careful
-@@ -962,6 +964,8 @@ bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
+@@ -962,6 +965,8 @@ bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
      return targetElement && page->dragController().draggableElement(&m_frame, targetElement, result.roundedPointInInnerNodeFrame(), state);
  }
  
@@ -4282,7 +4410,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  void EventHandler::updateSelectionForMouseDrag()
  {
      if (!supportsSelectionUpdatesOnMouseDrag())
-@@ -1053,7 +1057,6 @@ void EventHandler::updateSelectionForMouseDrag(const HitTestResult& hitTestResul
+@@ -1053,7 +1058,6 @@ void EventHandler::updateSelectionForMouseDrag(const HitTestResult& hitTestResul
      m_frame.selection().setSelectionByMouseIfDifferent(newSelection, m_frame.selection().granularity(),
          FrameSelection::EndPointsAdjustmentMode::AdjustAtBidiBoundary);
  }
@@ -4290,7 +4418,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  
  void EventHandler::lostMouseCapture()
  {
-@@ -1101,9 +1104,7 @@ bool EventHandler::handleMouseReleaseEvent(const MouseEventWithHitTestResults& e
+@@ -1101,9 +1105,7 @@ bool EventHandler::handleMouseReleaseEvent(const MouseEventWithHitTestResults& e
      // on the selection, the selection goes away.  However, if we are
      // editing, place the caret.
      if (m_mouseDownWasSingleClickInSelection && m_selectionInitiationState != ExtendedSelection
@@ -4300,7 +4428,7 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
              && m_frame.selection().isRange()
              && event.event().button() != RightButton) {
          VisibleSelection newSelection;
-@@ -2064,10 +2065,8 @@ bool EventHandler::handleMouseMoveEvent(const PlatformMouseEvent& platformMouseE
+@@ -2064,10 +2066,8 @@ bool EventHandler::handleMouseMoveEvent(const PlatformMouseEvent& platformMouseE
      
      swallowEvent = !dispatchMouseEvent(eventNames().mousemoveEvent, mouseEvent.targetNode(), 0, platformMouseEvent, FireMouseOverOut::Yes);
  
@@ -4311,6 +4439,26 @@ index 4935b73e2ef615cb5b2f07554eea20d4c06d654b..ea8fbe30b247df9a9556540300b80524
  
      return swallowEvent;
  }
+@@ -4229,7 +4229,8 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+             allTouchReleased = false;
+     }
+ 
+-    for (auto& point : points) {
++    for (unsigned index = 0; index < points.size(); index++) {
++        auto& point = points[index];
+         PlatformTouchPoint::State pointState = point.state();
+         LayoutPoint pagePoint = documentPointForWindowPoint(m_frame, point.pos());
+ 
+@@ -4355,6 +4356,9 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+             changedTouches[pointState].m_touches->append(WTFMove(touch));
+             changedTouches[pointState].m_targets.add(touchTarget);
+         }
++        document.page()->pointerCaptureController().dispatchEventForTouchAtIndex(
++            *touchTarget, event, index, index == 0, *document.windowProxy());
++
+     }
+     m_touchPressed = touches->length() > 0;
+     if (allTouchReleased)
 diff --git a/Source/WebCore/page/EventHandler.h b/Source/WebCore/page/EventHandler.h
 index 171ae47f77a67b3d132f04ce6bebb85344dc1de6..e3889f211bfaac614bab5613c267e4b50e35a332 100644
 --- a/Source/WebCore/page/EventHandler.h
@@ -4391,10 +4539,26 @@ index 757765c3b4872d5a6f92b34e3f2ac67eaaf2dd82..69c4ef67941cee93213ccac1aa04d2cb
      request.setHTTPHeaderField(HTTPHeaderName::Accept, "text/event-stream");
      request.setHTTPHeaderField(HTTPHeaderName::CacheControl, "no-cache");
 diff --git a/Source/WebCore/page/Frame.cpp b/Source/WebCore/page/Frame.cpp
-index bd3497c1a220015656e002045e4e6177c39398b5..4ca17452a5fb377396e8aefcd073dbf76072b9c2 100644
+index bd3497c1a220015656e002045e4e6177c39398b5..eea459157c107ed4a6ad261cf11bfb1f14726df4 100644
 --- a/Source/WebCore/page/Frame.cpp
 +++ b/Source/WebCore/page/Frame.cpp
-@@ -179,6 +179,7 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoa
+@@ -39,6 +39,7 @@
+ #include "CachedResourceLoader.h"
+ #include "Chrome.h"
+ #include "ChromeClient.h"
++#include "ComposedTreeIterator.h"
+ #include "DOMWindow.h"
+ #include "DocumentTimeline.h"
+ #include "DocumentType.h"
+@@ -71,6 +72,7 @@
+ #include "NavigationScheduler.h"
+ #include "Navigator.h"
+ #include "NodeList.h"
++#include "NodeRenderStyle.h"
+ #include "NodeTraversal.h"
+ #include "Page.h"
+ #include "ProcessWarming.h"
+@@ -179,6 +181,7 @@ Frame::Frame(Page& page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoa
  void Frame::init()
  {
      m_loader->init();
@@ -4402,7 +4566,7 @@ index bd3497c1a220015656e002045e4e6177c39398b5..4ca17452a5fb377396e8aefcd073dbf7
  }
  
  Ref<Frame> Frame::create(Page* page, HTMLFrameOwnerElement* ownerElement, UniqueRef<FrameLoaderClient>&& client)
-@@ -338,7 +339,7 @@ void Frame::orientationChanged()
+@@ -338,7 +341,7 @@ void Frame::orientationChanged()
  int Frame::orientation() const
  {
      if (m_page)
@@ -4411,6 +4575,417 @@ index bd3497c1a220015656e002045e4e6177c39398b5..4ca17452a5fb377396e8aefcd073dbf7
      return 0;
  }
  #endif // ENABLE(ORIENTATION_EVENTS)
+@@ -1106,6 +1109,358 @@ TextStream& operator<<(TextStream& ts, const Frame& frame)
+     return ts;
+ }
+ 
++void Frame::betterApproximateNode(const IntPoint& testPoint, const NodeQualifier& nodeQualifierFunction, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect)
++{
++    IntRect candidateRect;
++    constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowVisibleChildFrameContentOnly };
++    auto* candidate = nodeQualifierFunction(eventHandler().hitTestResultAtPoint(testPoint, hitType), failedNode, &candidateRect);
++
++    // Bail if we have no candidate, or the candidate is already equal to our current best node,
++    // or our candidate is the avoidedNode and there is a current best node.
++    if (!candidate || candidate == best)
++        return;
++
++    // The document should never be considered the best alternative.
++    if (candidate->isDocumentNode())
++        return;
++
++    if (best) {
++        IntRect bestIntersect = intersection(testRect, bestRect);
++        IntRect candidateIntersect = intersection(testRect, candidateRect);
++        // if the candidate intersection is smaller than the current best intersection, bail.
++        if (candidateIntersect.width() * candidateIntersect.height() <= bestIntersect.width() * bestIntersect.height())
++            return;
++    }
++
++    // At this point we either don't have a previous best, or our current candidate has a better intersection.
++    best = candidate;
++    bestPoint = testPoint;
++    bestRect = candidateRect;
++}
++
++bool Frame::hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, HitTestResult& hitTestResult, IntPoint& center)
++{
++    if (!m_doc || !m_doc->renderView())
++        return false;
++
++    FrameView* view = m_view.get();
++    if (!view)
++        return false;
++
++    center = view->windowToContents(roundedIntPoint(viewportLocation));
++    constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowVisibleChildFrameContentOnly };
++    hitTestResult = eventHandler().hitTestResultAtPoint(center, hitType);
++    return true;
++}
++ 
++Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier& nodeQualifierFunction, ShouldApproximate shouldApproximate, ShouldFindRootEditableElement shouldFindRootEditableElement)
++{
++    adjustedViewportLocation = viewportLocation;
++
++    IntPoint testCenter;
++    HitTestResult candidateInfo;
++    if (!hitTestResultAtViewportLocation(viewportLocation, candidateInfo, testCenter))
++        return nullptr;
++
++    IntPoint bestPoint = testCenter;
++
++    // We have the candidate node at the location, check whether it or one of its ancestors passes
++    // the qualifier function, which typically checks if the node responds to a particular event type.
++    Node* approximateNode = nodeQualifierFunction(candidateInfo, 0, 0);
++
++    if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode && approximateNode->isContentEditable()) {
++        // If we are in editable content, we look for the root editable element.
++        approximateNode = approximateNode->rootEditableElement();
++        // If we have a focusable node, there is no need to approximate.
++        if (approximateNode)
++            shouldApproximate = ShouldApproximate::No;
++    }
++
++    float scale = page() ? page()->pageScaleFactor() : 1;
++#if PLATFORM(IOS_FAMILY)
++    float ppiFactor = screenPPIFactor();
++#else
++    float ppiFactor = 326; // most popular iPhone PPI
++#endif
++
++    static const float unscaledSearchRadius = 15;
++    int searchRadius = static_cast<int>(unscaledSearchRadius * ppiFactor / scale);
++
++    if (approximateNode && shouldApproximate == ShouldApproximate::Yes) {
++        const float testOffsets[] = {
++            -.3f, -.3f,
++            -.6f, -.6f,
++            +.3f, +.3f,
++            -.9f, -.9f,
++        };
++
++        Node* originalApproximateNode = approximateNode;
++        for (unsigned n = 0; n < WTF_ARRAY_LENGTH(testOffsets); n += 2) {
++            IntSize testOffset(testOffsets[n] * searchRadius, testOffsets[n + 1] * searchRadius);
++            IntPoint testPoint = testCenter + testOffset;
++
++            constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowChildFrameContent };
++            auto candidateInfo = eventHandler().hitTestResultAtPoint(testPoint, hitType);
++            Node* candidateNode = nodeQualifierFunction(candidateInfo, 0, 0);
++            if (candidateNode && candidateNode->isDescendantOf(originalApproximateNode)) {
++                approximateNode = candidateNode;
++                bestPoint = testPoint;
++                break;
++            }
++        }
++    } else if (!approximateNode && shouldApproximate == ShouldApproximate::Yes) {
++        // Grab the closest parent element of our failed candidate node.
++        Node* candidate = candidateInfo.innerNode();
++        Node* failedNode = candidate;
++
++        while (candidate && !candidate->isElementNode())
++            candidate = candidate->parentInComposedTree();
++
++        if (candidate)
++            failedNode = candidate;
++
++        // The center point was tested earlier.
++        const float testOffsets[] = {
++            -.3f, -.3f,
++            +.3f, -.3f,
++            -.3f, +.3f,
++            +.3f, +.3f,
++            -.6f, -.6f,
++            +.6f, -.6f,
++            -.6f, +.6f,
++            +.6f, +.6f,
++            -1.f, 0,
++            +1.f, 0,
++            0, +1.f,
++            0, -1.f,
++        };
++        IntRect bestFrame;
++        IntRect testRect(testCenter, IntSize());
++        testRect.inflate(searchRadius);
++        int currentTestRadius = 0;
++        for (unsigned n = 0; n < WTF_ARRAY_LENGTH(testOffsets); n += 2) {
++            IntSize testOffset(testOffsets[n] * searchRadius, testOffsets[n + 1] * searchRadius);
++            IntPoint testPoint = testCenter + testOffset;
++            int testRadius = std::max(abs(testOffset.width()), abs(testOffset.height()));
++            if (testRadius > currentTestRadius) {
++                // Bail out with the best match within a radius
++                currentTestRadius = testRadius;
++                if (approximateNode)
++                    break;
++            }
++            betterApproximateNode(testPoint, nodeQualifierFunction, approximateNode, failedNode, bestPoint, bestFrame, testRect);
++        }
++    }
++
++    if (approximateNode) {
++        IntPoint p = m_view->contentsToWindow(bestPoint);
++        adjustedViewportLocation = p;
++        if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode->isContentEditable()) {
++            // When in editable content, look for the root editable node again,
++            // since this could be the node found with the approximation.
++            approximateNode = approximateNode->rootEditableElement();
++        }
++    }
++
++    return approximateNode;
++}
++
++Node* Frame::deepestNodeAtLocation(const FloatPoint& viewportLocation)
++{
++    IntPoint center;
++    HitTestResult hitTestResult;
++    if (!hitTestResultAtViewportLocation(viewportLocation, hitTestResult, center))
++        return nullptr;
++
++    return hitTestResult.innerNode();
++}
++
++static bool nodeIsMouseFocusable(Node& node)
++{
++    if (!is<Element>(node))
++        return false;
++
++    auto& element = downcast<Element>(node);
++    if (element.isMouseFocusable())
++        return true;
++
++    if (auto shadowRoot = makeRefPtr(element.shadowRoot())) {
++        if (shadowRoot->delegatesFocus()) {
++            for (auto& node : composedTreeDescendants(element)) {
++                if (is<Element>(node) && downcast<Element>(node).isMouseFocusable())
++                    return true;
++            }
++        }
++    }
++
++    return false;
++}
++
++static bool nodeWillRespondToMouseEvents(Node& node)
++{
++    return node.willRespondToMouseClickEvents() || node.willRespondToMouseMoveEvents() || nodeIsMouseFocusable(node);
++}
++
++Node* Frame::approximateNodeAtViewportLocationLegacy(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
++{
++    // This function is only used for UIWebView.
++    auto&& ancestorRespondingToClickEvents = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
++        bool bodyHasBeenReached = false;
++        bool pointerCursorStillValid = true;
++
++        if (nodeBounds)
++            *nodeBounds = IntRect();
++
++        auto node = hitTestResult.innerNode();
++        if (!node)
++            return nullptr;
++
++        Node* pointerCursorNode = nullptr;
++        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
++            // We only accept pointer nodes before reaching the body tag.
++            if (node->hasTagName(HTMLNames::bodyTag)) {
++                // Make sure we cover the case of an empty editable body.
++                if (!pointerCursorNode && node->isContentEditable())
++                    pointerCursorNode = node;
++                bodyHasBeenReached = true;
++                pointerCursorStillValid = false;
++            }
++
++            // If we already have a pointer, and we reach a table, don't accept it.
++            if (pointerCursorNode && (node->hasTagName(HTMLNames::tableTag) || node->hasTagName(HTMLNames::tbodyTag)))
++                pointerCursorStillValid = false;
++
++            // If we haven't reached the body, and we are still paying attention to pointer cursors, and the node has a pointer cursor.
++            if (pointerCursorStillValid && node->renderStyle() && node->renderStyle()->cursor() == CursorType::Pointer)
++                pointerCursorNode = node;
++            else if (pointerCursorNode) {
++                // We want the lowest unbroken chain of pointer cursors.
++                pointerCursorStillValid = false;
++            }
++
++            if (nodeWillRespondToMouseEvents(*node)) {
++                // If we're at the body or higher, use the pointer cursor node (which may be null).
++                if (bodyHasBeenReached)
++                    node = pointerCursorNode;
++
++                // If we are interested about the frame, use it.
++                if (nodeBounds) {
++                    // This is a check to see whether this node is an area element. The only way this can happen is if this is the first check.
++                    if (node == hitTestResult.innerNode() && node != hitTestResult.innerNonSharedNode() && is<HTMLAreaElement>(*node))
++                        *nodeBounds = snappedIntRect(downcast<HTMLAreaElement>(*node).computeRect(hitTestResult.innerNonSharedNode()->renderer()));
++                    else if (node && node->renderer())
++                        *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
++                }
++
++                return node;
++            }
++        }
++
++        return nullptr;
++    };
++
++    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToClickEvents), ShouldApproximate::Yes);
++}
++
++static inline NodeQualifier ancestorRespondingToClickEventsNodeQualifier(SecurityOrigin* securityOrigin = nullptr)
++{
++    return [securityOrigin](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
++        if (nodeBounds)
++            *nodeBounds = IntRect();
++
++        auto node = hitTestResult.innerNode();
++        if (!node || (securityOrigin && !securityOrigin->isSameOriginAs(node->document().securityOrigin())))
++            return nullptr;
++
++        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
++            if (nodeWillRespondToMouseEvents(*node)) {
++                // If we are interested about the frame, use it.
++                if (nodeBounds) {
++                    // This is a check to see whether this node is an area element. The only way this can happen is if this is the first check.
++                    if (node == hitTestResult.innerNode() && node != hitTestResult.innerNonSharedNode() && is<HTMLAreaElement>(*node))
++                        *nodeBounds = snappedIntRect(downcast<HTMLAreaElement>(*node).computeRect(hitTestResult.innerNonSharedNode()->renderer()));
++                    else if (node && node->renderer())
++                        *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
++                }
++
++                return node;
++            }
++        }
++
++        return nullptr;
++    };
++}
++
++Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* securityOrigin)
++{
++    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, ancestorRespondingToClickEventsNodeQualifier(securityOrigin), ShouldApproximate::Yes);
++}
++
++Node* Frame::nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
++{
++    auto&& ancestorRespondingToDoubleClickEvent = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
++        if (nodeBounds)
++            *nodeBounds = IntRect();
++
++        auto* node = hitTestResult.innerNode();
++        if (!node)
++            return nullptr;
++
++        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
++            if (!node->hasEventListeners(eventNames().dblclickEvent))
++                continue;
++#if ENABLE(TOUCH_EVENTS)
++            if (!node->allowsDoubleTapGesture())
++                continue;
++#endif
++            if (nodeBounds && node->renderer())
++                *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
++            return node;
++        }
++        return nullptr;
++    };
++
++    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToDoubleClickEvent), ShouldApproximate::Yes);
++}
++
++Node* Frame::nodeRespondingToInteraction(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
++{
++    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, ancestorRespondingToClickEventsNodeQualifier(), ShouldApproximate::Yes, ShouldFindRootEditableElement::No);
++}
++
++Node* Frame::nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocation)
++{
++    auto&& ancestorRespondingToScrollWheelEvents = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
++        if (nodeBounds)
++            *nodeBounds = IntRect();
++
++        Node* scrollingAncestor = nullptr;
++        for (Node* node = hitTestResult.innerNode(); node && node != terminationNode && !node->hasTagName(HTMLNames::bodyTag); node = node->parentNode()) {
++            RenderObject* renderer = node->renderer();
++            if (!renderer)
++                continue;
++
++            if ((renderer->isTextField() || renderer->isTextArea()) && downcast<RenderTextControl>(*renderer).canScroll()) {
++                scrollingAncestor = node;
++                continue;
++            }
++
++            auto& style = renderer->style();
++
++            if (renderer->hasOverflowClip()
++                && (style.overflowY() == Overflow::Auto || style.overflowY() == Overflow::Scroll
++                || style.overflowX() == Overflow::Auto || style.overflowX() == Overflow::Scroll)) {
++                scrollingAncestor = node;
++            }
++        }
++
++        return scrollingAncestor;
++    };
++
++    FloatPoint adjustedViewportLocation;
++    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToScrollWheelEvents), ShouldApproximate::No);
++}
++
+ } // namespace WebCore
+ 
+ #undef RELEASE_LOG_ERROR_IF_ALLOWED
+diff --git a/Source/WebCore/page/Frame.h b/Source/WebCore/page/Frame.h
+index 50c65f5e5b0753c1e6d307b213b5200c450aa30a..ff2efc36b1a256767624db9bd47a46d01c8f0392 100644
+--- a/Source/WebCore/page/Frame.h
++++ b/Source/WebCore/page/Frame.h
+@@ -109,8 +109,8 @@ enum {
+ };
+ 
+ enum OverflowScrollAction { DoNotPerformOverflowScroll, PerformOverflowScroll };
+-using NodeQualifier = Function<Node* (const HitTestResult&, Node* terminationNode, IntRect* nodeBounds)>;
+ #endif
++using NodeQualifier = Function<Node* (const HitTestResult&, Node* terminationNode, IntRect* nodeBounds)>;
+ 
+ enum {
+     LayerTreeFlagsIncludeDebugInfo              = 1 << 0,
+@@ -228,10 +228,6 @@ public:
+     NSArray *dataDetectionResults() const { return m_dataDetectionResults.get(); }
+ #endif
+ 
+-#if PLATFORM(IOS_FAMILY)
+-    const ViewportArguments& viewportArguments() const;
+-    WEBCORE_EXPORT void setViewportArguments(const ViewportArguments&);
+-
+     WEBCORE_EXPORT Node* deepestNodeAtLocation(const FloatPoint& viewportLocation);
+     WEBCORE_EXPORT Node* nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* = nullptr);
+     WEBCORE_EXPORT Node* nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
+@@ -239,6 +235,10 @@ public:
+     WEBCORE_EXPORT Node* nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocation);
+     WEBCORE_EXPORT Node* approximateNodeAtViewportLocationLegacy(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
+ 
++#if PLATFORM(IOS_FAMILY)
++    const ViewportArguments& viewportArguments() const;
++    WEBCORE_EXPORT void setViewportArguments(const ViewportArguments&);
++
+     WEBCORE_EXPORT NSArray *wordsInCurrentParagraph() const;
+     WEBCORE_EXPORT CGRect renderRectForPoint(CGPoint, bool* isReplaced, float* fontSize) const;
+ 
+@@ -346,7 +346,6 @@ private:
+ #if ENABLE(DATA_DETECTION)
+     RetainPtr<NSArray> m_dataDetectionResults;
+ #endif
+-#if PLATFORM(IOS_FAMILY)
+     void betterApproximateNode(const IntPoint& testPoint, const NodeQualifier&, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect);
+     bool hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, HitTestResult&, IntPoint& center);
+     
+@@ -354,6 +353,7 @@ private:
+     enum class ShouldFindRootEditableElement : bool { No, Yes };
+     Node* qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier&, ShouldApproximate, ShouldFindRootEditableElement = ShouldFindRootEditableElement::Yes);
+ 
++#if PLATFORM(IOS_FAMILY)
+     void setTimersPausedInternal(bool);
+ 
+     ViewportArguments m_viewportArguments;
 diff --git a/Source/WebCore/page/FrameSnapshotting.cpp b/Source/WebCore/page/FrameSnapshotting.cpp
 index efc6c0ef136a4b6a99a66487e7387f404baf4a3b..81cdfb027f2cc5171756cf9dbe7e9b6907f5625a 100644
 --- a/Source/WebCore/page/FrameSnapshotting.cpp
@@ -4561,6 +5136,50 @@ index a020e881a26ae651f551462015d84cea9725a0a8..89eead8acf91ba2707782fef35346575
  
  #if ENABLE(DEVICE_ORIENTATION) && PLATFORM(IOS_FAMILY)
      RefPtr<DeviceOrientationUpdateProvider> m_deviceOrientationUpdateProvider;
+diff --git a/Source/WebCore/page/PointerCaptureController.cpp b/Source/WebCore/page/PointerCaptureController.cpp
+index d37f5889e219d828e09ae72343d8ebd3fecfb08f..7b0f956fc187f4747b93f6b8d8b7697c889d5361 100644
+--- a/Source/WebCore/page/PointerCaptureController.cpp
++++ b/Source/WebCore/page/PointerCaptureController.cpp
+@@ -181,7 +181,7 @@ bool PointerCaptureController::preventsCompatibilityMouseEventsForIdentifier(Poi
+     return iterator != m_activePointerIdsToCapturingData.end() && iterator->value.preventsCompatibilityMouseEvents;
+ }
+ 
+-#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
++#if ENABLE(TOUCH_EVENTS)
+ static bool hierarchyHasCapturingEventListeners(Element* target, const AtomString& eventName)
+ {
+     for (ContainerNode* curr = target; curr; curr = curr->parentInComposedTree()) {
+@@ -463,7 +463,7 @@ void PointerCaptureController::cancelPointer(PointerID pointerId, const IntPoint
+     capturingData.pendingTargetOverride = nullptr;
+     capturingData.cancelled = true;
+ 
+-#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
++#if ENABLE(TOUCH_EVENTS)
+     capturingData.previousTarget = nullptr;
+ #endif
+ 
+diff --git a/Source/WebCore/page/PointerCaptureController.h b/Source/WebCore/page/PointerCaptureController.h
+index 33bdbd20f4aaca7db33e055bdbea79c69800b3db..e8d329292d4b1fe6e49d74cb07a66339e63accdb 100644
+--- a/Source/WebCore/page/PointerCaptureController.h
++++ b/Source/WebCore/page/PointerCaptureController.h
+@@ -57,7 +57,7 @@ public:
+ 
+     RefPtr<PointerEvent> pointerEventForMouseEvent(const MouseEvent&);
+ 
+-#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
++#if ENABLE(TOUCH_EVENTS)
+     void dispatchEventForTouchAtIndex(EventTarget&, const PlatformTouchEvent&, unsigned, bool isPrimary, WindowProxy&);
+ #endif
+ 
+@@ -72,7 +72,7 @@ private:
+     struct CapturingData {
+         RefPtr<Element> pendingTargetOverride;
+         RefPtr<Element> targetOverride;
+-#if ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
++#if ENABLE(TOUCH_EVENTS)
+         RefPtr<Element> previousTarget;
+ #endif
+         String pointerType;
 diff --git a/Source/WebCore/page/Screen.cpp b/Source/WebCore/page/Screen.cpp
 index b4f7fe0d15ee81dbc7b2b7c9e7c0e6cc42dc8e55..1a40df0eadea4f508b7227590b9d5386bf257687 100644
 --- a/Source/WebCore/page/Screen.cpp
@@ -4635,6 +5254,365 @@ index 37d5c443785f3df52bddb775cb9c1e66e0dd97b6..f2329ad61fd4f4ad006ca89ba2bdc729
      bool isAllowed = true;
      for (auto& policy : m_policies) {
          if (const ContentSecurityPolicyDirective* violatedDirective = (policy.get()->*predicate)(std::forward<Args>(args)...)) {
+diff --git a/Source/WebCore/page/ios/FrameIOS.mm b/Source/WebCore/page/ios/FrameIOS.mm
+index 32d32e59b24265286710a5f3f7053e1816ad9e3b..34f7e01b612710a817debb7f8d25d6bd5f0e9e6d 100644
+--- a/Source/WebCore/page/ios/FrameIOS.mm
++++ b/Source/WebCore/page/ios/FrameIOS.mm
+@@ -225,354 +225,6 @@ CGRect Frame::renderRectForPoint(CGPoint point, bool* isReplaced, float* fontSiz
+     return CGRectZero;
+ }
+ 
+-void Frame::betterApproximateNode(const IntPoint& testPoint, const NodeQualifier& nodeQualifierFunction, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect)
+-{
+-    IntRect candidateRect;
+-    constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowVisibleChildFrameContentOnly };
+-    auto* candidate = nodeQualifierFunction(eventHandler().hitTestResultAtPoint(testPoint, hitType), failedNode, &candidateRect);
+-
+-    // Bail if we have no candidate, or the candidate is already equal to our current best node,
+-    // or our candidate is the avoidedNode and there is a current best node.
+-    if (!candidate || candidate == best)
+-        return;
+-
+-    // The document should never be considered the best alternative.
+-    if (candidate->isDocumentNode())
+-        return;
+-
+-    if (best) {
+-        IntRect bestIntersect = intersection(testRect, bestRect);
+-        IntRect candidateIntersect = intersection(testRect, candidateRect);
+-        // if the candidate intersection is smaller than the current best intersection, bail.
+-        if (candidateIntersect.width() * candidateIntersect.height() <= bestIntersect.width() * bestIntersect.height())
+-            return;
+-    }
+-
+-    // At this point we either don't have a previous best, or our current candidate has a better intersection.
+-    best = candidate;
+-    bestPoint = testPoint;
+-    bestRect = candidateRect;
+-}
+-
+-bool Frame::hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, HitTestResult& hitTestResult, IntPoint& center)
+-{
+-    if (!m_doc || !m_doc->renderView())
+-        return false;
+-
+-    FrameView* view = m_view.get();
+-    if (!view)
+-        return false;
+-
+-    center = view->windowToContents(roundedIntPoint(viewportLocation));
+-    constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowVisibleChildFrameContentOnly };
+-    hitTestResult = eventHandler().hitTestResultAtPoint(center, hitType);
+-    return true;
+-}
+-
+-Node* Frame::qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier& nodeQualifierFunction, ShouldApproximate shouldApproximate, ShouldFindRootEditableElement shouldFindRootEditableElement)
+-{
+-    adjustedViewportLocation = viewportLocation;
+-
+-    IntPoint testCenter;
+-    HitTestResult candidateInfo;
+-    if (!hitTestResultAtViewportLocation(viewportLocation, candidateInfo, testCenter))
+-        return nullptr;
+-
+-    IntPoint bestPoint = testCenter;
+-
+-    // We have the candidate node at the location, check whether it or one of its ancestors passes
+-    // the qualifier function, which typically checks if the node responds to a particular event type.
+-    Node* approximateNode = nodeQualifierFunction(candidateInfo, 0, 0);
+-
+-    if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode && approximateNode->isContentEditable()) {
+-        // If we are in editable content, we look for the root editable element.
+-        approximateNode = approximateNode->rootEditableElement();
+-        // If we have a focusable node, there is no need to approximate.
+-        if (approximateNode)
+-            shouldApproximate = ShouldApproximate::No;
+-    }
+-
+-    float scale = page() ? page()->pageScaleFactor() : 1;
+-    float ppiFactor = screenPPIFactor();
+-
+-    static const float unscaledSearchRadius = 15;
+-    int searchRadius = static_cast<int>(unscaledSearchRadius * ppiFactor / scale);
+-
+-    if (approximateNode && shouldApproximate == ShouldApproximate::Yes) {
+-        const float testOffsets[] = {
+-            -.3f, -.3f,
+-            -.6f, -.6f,
+-            +.3f, +.3f,
+-            -.9f, -.9f,
+-        };
+-
+-        Node* originalApproximateNode = approximateNode;
+-        for (unsigned n = 0; n < WTF_ARRAY_LENGTH(testOffsets); n += 2) {
+-            IntSize testOffset(testOffsets[n] * searchRadius, testOffsets[n + 1] * searchRadius);
+-            IntPoint testPoint = testCenter + testOffset;
+-
+-            constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowChildFrameContent };
+-            auto candidateInfo = eventHandler().hitTestResultAtPoint(testPoint, hitType);
+-            Node* candidateNode = nodeQualifierFunction(candidateInfo, 0, 0);
+-            if (candidateNode && candidateNode->isDescendantOf(originalApproximateNode)) {
+-                approximateNode = candidateNode;
+-                bestPoint = testPoint;
+-                break;
+-            }
+-        }
+-    } else if (!approximateNode && shouldApproximate == ShouldApproximate::Yes) {
+-        // Grab the closest parent element of our failed candidate node.
+-        Node* candidate = candidateInfo.innerNode();
+-        Node* failedNode = candidate;
+-
+-        while (candidate && !candidate->isElementNode())
+-            candidate = candidate->parentInComposedTree();
+-
+-        if (candidate)
+-            failedNode = candidate;
+-
+-        // The center point was tested earlier.
+-        const float testOffsets[] = {
+-            -.3f, -.3f,
+-            +.3f, -.3f,
+-            -.3f, +.3f,
+-            +.3f, +.3f,
+-            -.6f, -.6f,
+-            +.6f, -.6f,
+-            -.6f, +.6f,
+-            +.6f, +.6f,
+-            -1.f, 0,
+-            +1.f, 0,
+-            0, +1.f,
+-            0, -1.f,
+-        };
+-        IntRect bestFrame;
+-        IntRect testRect(testCenter, IntSize());
+-        testRect.inflate(searchRadius);
+-        int currentTestRadius = 0;
+-        for (unsigned n = 0; n < WTF_ARRAY_LENGTH(testOffsets); n += 2) {
+-            IntSize testOffset(testOffsets[n] * searchRadius, testOffsets[n + 1] * searchRadius);
+-            IntPoint testPoint = testCenter + testOffset;
+-            int testRadius = std::max(abs(testOffset.width()), abs(testOffset.height()));
+-            if (testRadius > currentTestRadius) {
+-                // Bail out with the best match within a radius
+-                currentTestRadius = testRadius;
+-                if (approximateNode)
+-                    break;
+-            }
+-            betterApproximateNode(testPoint, nodeQualifierFunction, approximateNode, failedNode, bestPoint, bestFrame, testRect);
+-        }
+-    }
+-
+-    if (approximateNode) {
+-        IntPoint p = m_view->contentsToWindow(bestPoint);
+-        adjustedViewportLocation = p;
+-        if (shouldFindRootEditableElement == ShouldFindRootEditableElement::Yes && approximateNode->isContentEditable()) {
+-            // When in editable content, look for the root editable node again,
+-            // since this could be the node found with the approximation.
+-            approximateNode = approximateNode->rootEditableElement();
+-        }
+-    }
+-
+-    return approximateNode;
+-}
+-
+-Node* Frame::deepestNodeAtLocation(const FloatPoint& viewportLocation)
+-{
+-    IntPoint center;
+-    HitTestResult hitTestResult;
+-    if (!hitTestResultAtViewportLocation(viewportLocation, hitTestResult, center))
+-        return nullptr;
+-
+-    return hitTestResult.innerNode();
+-}
+-
+-static bool nodeIsMouseFocusable(Node& node)
+-{
+-    if (!is<Element>(node))
+-        return false;
+-
+-    auto& element = downcast<Element>(node);
+-    if (element.isMouseFocusable())
+-        return true;
+-
+-    if (auto shadowRoot = makeRefPtr(element.shadowRoot())) {
+-        if (shadowRoot->delegatesFocus()) {
+-            for (auto& node : composedTreeDescendants(element)) {
+-                if (is<Element>(node) && downcast<Element>(node).isMouseFocusable())
+-                    return true;
+-            }
+-        }
+-    }
+-
+-    return false;
+-}
+-
+-static bool nodeWillRespondToMouseEvents(Node& node)
+-{
+-    return node.willRespondToMouseClickEvents() || node.willRespondToMouseMoveEvents() || nodeIsMouseFocusable(node);
+-}
+-
+-Node* Frame::approximateNodeAtViewportLocationLegacy(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
+-{
+-    // This function is only used for UIWebView.
+-    auto&& ancestorRespondingToClickEvents = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+-        bool bodyHasBeenReached = false;
+-        bool pointerCursorStillValid = true;
+-
+-        if (nodeBounds)
+-            *nodeBounds = IntRect();
+-
+-        auto node = hitTestResult.innerNode();
+-        if (!node)
+-            return nullptr;
+-
+-        Node* pointerCursorNode = nullptr;
+-        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
+-            // We only accept pointer nodes before reaching the body tag.
+-            if (node->hasTagName(HTMLNames::bodyTag)) {
+-                // Make sure we cover the case of an empty editable body.
+-                if (!pointerCursorNode && node->isContentEditable())
+-                    pointerCursorNode = node;
+-                bodyHasBeenReached = true;
+-                pointerCursorStillValid = false;
+-            }
+-
+-            // If we already have a pointer, and we reach a table, don't accept it.
+-            if (pointerCursorNode && (node->hasTagName(HTMLNames::tableTag) || node->hasTagName(HTMLNames::tbodyTag)))
+-                pointerCursorStillValid = false;
+-
+-            // If we haven't reached the body, and we are still paying attention to pointer cursors, and the node has a pointer cursor.
+-            if (pointerCursorStillValid && node->renderStyle() && node->renderStyle()->cursor() == CursorType::Pointer)
+-                pointerCursorNode = node;
+-            else if (pointerCursorNode) {
+-                // We want the lowest unbroken chain of pointer cursors.
+-                pointerCursorStillValid = false;
+-            }
+-
+-            if (nodeWillRespondToMouseEvents(*node)) {
+-                // If we're at the body or higher, use the pointer cursor node (which may be null).
+-                if (bodyHasBeenReached)
+-                    node = pointerCursorNode;
+-
+-                // If we are interested about the frame, use it.
+-                if (nodeBounds) {
+-                    // This is a check to see whether this node is an area element. The only way this can happen is if this is the first check.
+-                    if (node == hitTestResult.innerNode() && node != hitTestResult.innerNonSharedNode() && is<HTMLAreaElement>(*node))
+-                        *nodeBounds = snappedIntRect(downcast<HTMLAreaElement>(*node).computeRect(hitTestResult.innerNonSharedNode()->renderer()));
+-                    else if (node && node->renderer())
+-                        *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
+-                }
+-
+-                return node;
+-            }
+-        }
+-
+-        return nullptr;
+-    };
+-
+-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToClickEvents), ShouldApproximate::Yes);
+-}
+-
+-static inline NodeQualifier ancestorRespondingToClickEventsNodeQualifier(SecurityOrigin* securityOrigin = nullptr)
+-{
+-    return [securityOrigin](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+-        if (nodeBounds)
+-            *nodeBounds = IntRect();
+-
+-        auto node = hitTestResult.innerNode();
+-        if (!node || (securityOrigin && !securityOrigin->isSameOriginAs(node->document().securityOrigin())))
+-            return nullptr;
+-
+-        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
+-            if (nodeWillRespondToMouseEvents(*node)) {
+-                // If we are interested about the frame, use it.
+-                if (nodeBounds) {
+-                    // This is a check to see whether this node is an area element. The only way this can happen is if this is the first check.
+-                    if (node == hitTestResult.innerNode() && node != hitTestResult.innerNonSharedNode() && is<HTMLAreaElement>(*node))
+-                        *nodeBounds = snappedIntRect(downcast<HTMLAreaElement>(*node).computeRect(hitTestResult.innerNonSharedNode()->renderer()));
+-                    else if (node && node->renderer())
+-                        *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
+-                }
+-
+-                return node;
+-            }
+-        }
+-
+-        return nullptr;
+-    };
+-}
+-
+-Node* Frame::nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* securityOrigin)
+-{
+-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, ancestorRespondingToClickEventsNodeQualifier(securityOrigin), ShouldApproximate::Yes);
+-}
+-
+-Node* Frame::nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
+-{
+-    auto&& ancestorRespondingToDoubleClickEvent = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+-        if (nodeBounds)
+-            *nodeBounds = IntRect();
+-
+-        auto* node = hitTestResult.innerNode();
+-        if (!node)
+-            return nullptr;
+-
+-        for (; node && node != terminationNode; node = node->parentInComposedTree()) {
+-            if (!node->hasEventListeners(eventNames().dblclickEvent))
+-                continue;
+-#if ENABLE(TOUCH_EVENTS)
+-            if (!node->allowsDoubleTapGesture())
+-                continue;
+-#endif
+-            if (nodeBounds && node->renderer())
+-                *nodeBounds = node->renderer()->absoluteBoundingBoxRect(true);
+-            return node;
+-        }
+-        return nullptr;
+-    };
+-
+-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToDoubleClickEvent), ShouldApproximate::Yes);
+-}
+-
+-Node* Frame::nodeRespondingToInteraction(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation)
+-{
+-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, ancestorRespondingToClickEventsNodeQualifier(), ShouldApproximate::Yes, ShouldFindRootEditableElement::No);
+-}
+-
+-Node* Frame::nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocation)
+-{
+-    auto&& ancestorRespondingToScrollWheelEvents = [](const HitTestResult& hitTestResult, Node* terminationNode, IntRect* nodeBounds) -> Node* {
+-        if (nodeBounds)
+-            *nodeBounds = IntRect();
+-
+-        Node* scrollingAncestor = nullptr;
+-        for (Node* node = hitTestResult.innerNode(); node && node != terminationNode && !node->hasTagName(HTMLNames::bodyTag); node = node->parentNode()) {
+-            RenderObject* renderer = node->renderer();
+-            if (!renderer)
+-                continue;
+-
+-            if ((renderer->isTextField() || renderer->isTextArea()) && downcast<RenderTextControl>(*renderer).canScroll()) {
+-                scrollingAncestor = node;
+-                continue;
+-            }
+-
+-            auto& style = renderer->style();
+-
+-            if (renderer->hasOverflowClip()
+-                && (style.overflowY() == Overflow::Auto || style.overflowY() == Overflow::Scroll
+-                || style.overflowX() == Overflow::Auto || style.overflowX() == Overflow::Scroll)) {
+-                scrollingAncestor = node;
+-            }
+-        }
+-
+-        return scrollingAncestor;
+-    };
+-
+-    FloatPoint adjustedViewportLocation;
+-    return qualifyingNodeAtViewportLocation(viewportLocation, adjustedViewportLocation, WTFMove(ancestorRespondingToScrollWheelEvents), ShouldApproximate::No);
+-}
+-
+ int Frame::preferredHeight() const
+ {
+     Document* document = this->document();
 diff --git a/Source/WebCore/platform/Cairo.cmake b/Source/WebCore/platform/Cairo.cmake
 index fc6c5f3cd046269566822c08a482cc3bd6a883c0..083c03903a3111ee2cb6f9882dd2efe146d7dc35 100644
 --- a/Source/WebCore/platform/Cairo.cmake
@@ -5632,6 +6610,40 @@ index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0
  }
  
  bool PlatformKeyboardEvent::currentCapsLockState()
+diff --git a/Source/WebCore/rendering/RenderTextControl.cpp b/Source/WebCore/rendering/RenderTextControl.cpp
+index 7ac6e023a8cfa1ece6f00f2390743a6225f3229a..aec8586dd04121151df849f631c68e9150c053ce 100644
+--- a/Source/WebCore/rendering/RenderTextControl.cpp
++++ b/Source/WebCore/rendering/RenderTextControl.cpp
+@@ -217,13 +217,13 @@ void RenderTextControl::layoutExcludedChildren(bool relayoutChildren)
+     }
+ }
+ 
+-#if PLATFORM(IOS_FAMILY)
+ bool RenderTextControl::canScroll() const
+ {
+     auto innerText = innerTextElement();
+     return innerText && innerText->renderer() && innerText->renderer()->hasOverflowClip();
+ }
+ 
++#if PLATFORM(IOS_FAMILY)
+ int RenderTextControl::innerLineHeight() const
+ {
+     auto innerText = innerTextElement();
+diff --git a/Source/WebCore/rendering/RenderTextControl.h b/Source/WebCore/rendering/RenderTextControl.h
+index 69b193b1ff28bf2d0e58be6ae3152da8d9229a90..9b8327958cbc21e46a5720f558156b00e1c289a8 100644
+--- a/Source/WebCore/rendering/RenderTextControl.h
++++ b/Source/WebCore/rendering/RenderTextControl.h
+@@ -36,9 +36,9 @@ public:
+ 
+     WEBCORE_EXPORT HTMLTextFormControlElement& textFormControlElement() const;
+ 
+-#if PLATFORM(IOS_FAMILY)
+     bool canScroll() const;
+ 
++#if PLATFORM(IOS_FAMILY)
+     // Returns the line height of the inner renderer.
+     int innerLineHeight() const override;
+ #endif
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 index 3a139c89100eba218cbfffadc2e3dfa86217f163..b2d71bedddb756e87f97f60c2b7bbe531adfa217 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
@@ -11692,10 +12704,10 @@ index 0000000000000000000000000000000000000000..1353851472668b3e77c19db54f224c0c
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..a0013cf99bec3807c316f782693a38f0d04cafd7
+index 0000000000000000000000000000000000000000..5c16e0ef1e1593d8a1d26b149d0415136501ac6d
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.cpp
-@@ -0,0 +1,270 @@
+@@ -0,0 +1,277 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -11729,6 +12741,8 @@ index 0000000000000000000000000000000000000000..a0013cf99bec3807c316f782693a38f0
 +#include "WebPageProxy.h"
 +#include <wtf/MathExtras.h>
 +#include <wtf/HexNumber.h>
++
++#include "WebPageMessages.h"
 +
 +namespace WebKit {
 +
@@ -11965,13 +12979,18 @@ index 0000000000000000000000000000000000000000..a0013cf99bec3807c316f782693a38f0
 +#endif
 +}
 +
++void WebPageInspectorInputAgent::dispatchTapEvent(int x, int y, Optional<int>&& modifiers, Ref<DispatchTapEventCallback>&& callback) {
++    m_page.sendWithAsyncReply(Messages::WebPage::FakeTouchTap(IntPoint(x, y), modifiers ? *modifiers : 0), [callback]() {
++        callback->sendSuccess();
++    });
++}
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..fcefdf670221a1f6002e7dd9ac19d3a2ac3b3f99
+index 0000000000000000000000000000000000000000..05a71c27eae03f2cdf3bcba31a8b108b09b54178
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/WebPageInspectorInputAgent.h
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,84 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12033,6 +13052,7 @@ index 0000000000000000000000000000000000000000..fcefdf670221a1f6002e7dd9ac19d3a2
 +    // Protocol handler
 +    void dispatchKeyEvent(const String& type, Optional<int>&& modifiers, const String& text, const String& unmodifiedText, const String& code, const String& key, Optional<int>&& windowsVirtualKeyCode, Optional<int>&& nativeVirtualKeyCode, Optional<bool>&& autoRepeat, Optional<bool>&& isKeypad, Optional<bool>&& isSystemKey, RefPtr<JSON::Array>&&, Ref<DispatchKeyEventCallback>&& callback) override;
 +    void dispatchMouseEvent(const String& type, int x, int y, Optional<int>&& modifiers, const String& button, Optional<int>&& buttons, Optional<int>&& clickCount, Optional<int>&& deltaX, Optional<int>&& deltaY, Ref<DispatchMouseEventCallback>&& callback) override;
++    void dispatchTapEvent(int x, int y, Optional<int>&& modifiers, Ref<DispatchTapEventCallback>&& callback) override;
 +
 +private:
 +    void platformDispatchKeyEvent(WebKeyboardEvent::Type type, const String& text, const String& unmodifiedText, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, bool isAutoRepeat, bool isKeypad, bool isSystemKey, OptionSet<WebEvent::Modifier> modifiers, Vector<String>& commands, WallTime timestamp);
@@ -14852,7 +15872,7 @@ index f127d64d005ab7b93875591b94a5899205e91579..df0de26e4dc449a0fbf93e7037444df4
      uint64_t m_navigationID;
  };
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.cpp b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
-index 260a0e2acb4be9ea7b3d0f3abcfd0602f51472b5..7ee0709a8664b520011ce1a28df940e5e0b838bb 100644
+index 260a0e2acb4be9ea7b3d0f3abcfd0602f51472b5..cd998b7005dc9cc3ba79a201ce40b2c7b272b8ac 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.cpp
 @@ -799,6 +799,9 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
@@ -14970,7 +15990,112 @@ index 260a0e2acb4be9ea7b3d0f3abcfd0602f51472b5..7ee0709a8664b520011ce1a28df940e5
  }
  
  void WebPage::listenForLayoutMilestones(OptionSet<WebCore::LayoutMilestone> milestones)
-@@ -3146,6 +3155,11 @@ void WebPage::sendMessageToTargetBackend(const String& targetId, const String& m
+@@ -3070,6 +3079,104 @@ void WebPage::touchEvent(const WebTouchEvent& touchEvent)
+ 
+     send(Messages::WebPageProxy::DidReceiveEvent(static_cast<uint32_t>(touchEvent.type()), handled));
+ }
++
++void WebPage::fakeTouchTap(const WebCore::IntPoint& position, uint8_t modifiers, CompletionHandler<void()>&& completionHandler)
++{
++    SetForScope<bool> userIsInteractingChange { m_userIsInteracting, true };
++
++    bool handled = false;
++
++    uint32_t id = 0;
++    float radiusX = 1.0;
++    float radiusY = 1.0;
++    float rotationAngle = 0.0;
++    float force = 1.0;
++    const WebCore::IntSize radius(radiusX,radiusY);
++    const WebCore::IntPoint screenPosition = position;
++    OptionSet<WebEvent::Modifier> eventModifiers;
++    eventModifiers = eventModifiers.fromRaw(modifiers);
++
++    {
++        Vector<WebPlatformTouchPoint> touchPoints;
++        WebPlatformTouchPoint::TouchPointState state = WebPlatformTouchPoint::TouchPointState::TouchPressed;
++        touchPoints.append(WebPlatformTouchPoint(id, state, screenPosition, position, radius, rotationAngle, force));
++
++        WebTouchEvent touchEvent(WebEvent::TouchStart, WTFMove(touchPoints), eventModifiers, WallTime::now());
++
++        CurrentEvent currentEvent(touchEvent);
++        handled = handleTouchEvent(touchEvent, m_page.get());
++    }
++    {
++        Vector<WebPlatformTouchPoint> touchPoints;
++        WebPlatformTouchPoint::TouchPointState state = WebPlatformTouchPoint::TouchPointState::TouchReleased;
++        touchPoints.append(WebPlatformTouchPoint(id, state, screenPosition, position, radius, rotationAngle, force));
++
++        WebTouchEvent touchEvent(WebEvent::TouchEnd, WTFMove(touchPoints), eventModifiers, WallTime::now());
++
++        CurrentEvent currentEvent(touchEvent);
++        handled = handleTouchEvent(touchEvent, m_page.get()) || handled;
++    }
++    if (!handled) {
++        FloatPoint adjustedPoint;
++        Node* nodeRespondingToClick = m_page->mainFrame().nodeRespondingToClickEvents(position, adjustedPoint);
++        Frame* frameRespondingToClick = nodeRespondingToClick ? nodeRespondingToClick->document().frame() : nullptr;
++        IntPoint adjustedIntPoint = roundedIntPoint(adjustedPoint);
++        if (!frameRespondingToClick) {
++            completionHandler();
++            return;
++        }
++        bool shiftKey = eventModifiers.contains(WebEvent::Modifier::ShiftKey);
++        bool ctrlKey = eventModifiers.contains(WebEvent::Modifier::ControlKey);
++        bool altKey = eventModifiers.contains(WebEvent::Modifier::AltKey);
++        bool metaKey = eventModifiers.contains(WebEvent::Modifier::MetaKey);
++        double force = 0.0;
++        SyntheticClickType syntheticClickType = SyntheticClickType::OneFingerTap;
++
++        m_page->mainFrame().eventHandler().mouseMoved(PlatformMouseEvent(
++            adjustedIntPoint,
++            adjustedIntPoint,
++            MouseButton::NoButton,
++            PlatformEvent::Type::MouseMoved,
++            0,
++            shiftKey,
++            ctrlKey,
++            altKey,
++            metaKey,
++            WallTime::now(),
++            force,
++            syntheticClickType
++        ));
++        m_page->mainFrame().eventHandler().handleMousePressEvent(PlatformMouseEvent(
++            adjustedIntPoint,
++            adjustedIntPoint,
++            MouseButton::LeftButton,
++            PlatformEvent::Type::MousePressed,
++            1,
++            shiftKey,
++            ctrlKey,
++            altKey,
++            metaKey,
++            WallTime::now(),
++            force,
++            syntheticClickType
++        ));
++        m_page->mainFrame().eventHandler().handleMouseReleaseEvent(PlatformMouseEvent(
++            adjustedIntPoint,
++            adjustedIntPoint,
++            MouseButton::LeftButton,
++            PlatformEvent::Type::MouseReleased,
++            1,
++            shiftKey,
++            ctrlKey,
++            altKey,
++            metaKey,
++            WallTime::now(),
++            force,
++            syntheticClickType
++        ));
++    }
++    completionHandler();
++}
+ #endif
+ 
+ void WebPage::cancelPointer(WebCore::PointerID pointerId, const WebCore::IntPoint& documentPoint)
+@@ -3146,6 +3253,11 @@ void WebPage::sendMessageToTargetBackend(const String& targetId, const String& m
      m_inspectorTargetController->sendMessageToTargetBackend(targetId, message);
  }
  
@@ -14982,7 +16107,7 @@ index 260a0e2acb4be9ea7b3d0f3abcfd0602f51472b5..7ee0709a8664b520011ce1a28df940e5
  void WebPage::insertNewlineInQuotedContent()
  {
      Frame& frame = m_page->focusController().focusedOrMainFrame();
-@@ -3381,6 +3395,7 @@ void WebPage::didCompletePageTransition()
+@@ -3381,6 +3493,7 @@ void WebPage::didCompletePageTransition()
  void WebPage::show()
  {
      send(Messages::WebPageProxy::ShowPage());
@@ -14990,7 +16115,7 @@ index 260a0e2acb4be9ea7b3d0f3abcfd0602f51472b5..7ee0709a8664b520011ce1a28df940e5
  }
  
  void WebPage::setIsTakingSnapshotsForApplicationSuspension(bool isTakingSnapshotsForApplicationSuspension)
-@@ -6486,6 +6501,9 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
+@@ -6486,6 +6599,9 @@ Ref<DocumentLoader> WebPage::createDocumentLoader(Frame& frame, const ResourceRe
              WebsitePoliciesData::applyToDocumentLoader(WTFMove(*m_pendingWebsitePolicies), documentLoader);
              m_pendingWebsitePolicies = WTF::nullopt;
          }
@@ -15001,7 +16126,7 @@ index 260a0e2acb4be9ea7b3d0f3abcfd0602f51472b5..7ee0709a8664b520011ce1a28df940e5
  
      return documentLoader;
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.h b/Source/WebKit/WebProcess/WebPage/WebPage.h
-index 1ff35fb0936a5c7716aa4c012d26e073b4478e95..8edfabfe9a16ed32d46bcccce5e8bcbd421f6a6b 100644
+index 1ff35fb0936a5c7716aa4c012d26e073b4478e95..7c038bbac087d37a268b8057d0c1eab98cc72604 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.h
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.h
 @@ -1186,6 +1186,7 @@ public:
@@ -15020,7 +16145,15 @@ index 1ff35fb0936a5c7716aa4c012d26e073b4478e95..8edfabfe9a16ed32d46bcccce5e8bcbd
      void loadRequest(LoadParameters&&);
      NO_RETURN void loadRequestWaitingForProcessLaunch(LoadParameters&&, URL&&, WebPageProxyIdentifier, bool);
      void loadData(LoadParameters&&);
-@@ -1616,9 +1618,7 @@ private:
+@@ -1499,6 +1501,7 @@ private:
+     void updatePotentialTapSecurityOrigin(const WebTouchEvent&, bool wasHandled);
+ #elif ENABLE(TOUCH_EVENTS)
+     void touchEvent(const WebTouchEvent&);
++    void fakeTouchTap(const WebCore::IntPoint& position, uint8_t modifiers, CompletionHandler<void()>&& completionHandler);
+ #endif
+ 
+     void cancelPointer(WebCore::PointerID, const WebCore::IntPoint&);
+@@ -1616,9 +1619,7 @@ private:
      void countStringMatches(const String&, OptionSet<FindOptions>, uint32_t maxMatchCount);
      void replaceMatches(const Vector<uint32_t>& matchIndices, const String& replacementText, bool selectionOnly, CallbackID);
  
@@ -15030,7 +16163,7 @@ index 1ff35fb0936a5c7716aa4c012d26e073b4478e95..8edfabfe9a16ed32d46bcccce5e8bcbd
  
      void didChangeSelectedIndexForActivePopupMenu(int32_t newIndex);
      void setTextForActivePopupMenu(int32_t index);
-@@ -2095,6 +2095,7 @@ private:
+@@ -2095,6 +2096,7 @@ private:
      UserActivity m_userActivity;
  
      uint64_t m_pendingNavigationID { 0 };
@@ -15039,7 +16172,7 @@ index 1ff35fb0936a5c7716aa4c012d26e073b4478e95..8edfabfe9a16ed32d46bcccce5e8bcbd
  
      bool m_mainFrameProgressCompleted { false };
 diff --git a/Source/WebKit/WebProcess/WebPage/WebPage.messages.in b/Source/WebKit/WebProcess/WebPage/WebPage.messages.in
-index 0c9d967b6cd644551eae73a389d626ab671ccaab..fa60bd5475e76a02ff4968744e4e753ce8ccaaac 100644
+index 0c9d967b6cd644551eae73a389d626ab671ccaab..5056a7e199f7fb1b9629b94fe96a9f86f379718e 100644
 --- a/Source/WebKit/WebProcess/WebPage/WebPage.messages.in
 +++ b/Source/WebKit/WebProcess/WebPage/WebPage.messages.in
 @@ -132,6 +132,7 @@ GenerateSyntheticEditingCommand(enum:uint8_t WebKit::SyntheticEditingCommandType
@@ -15050,7 +16183,15 @@ index 0c9d967b6cd644551eae73a389d626ab671ccaab..fa60bd5475e76a02ff4968744e4e753c
  
  #if ENABLE(REMOTE_INSPECTOR)
      SetIndicating(bool indicating);
-@@ -177,6 +178,7 @@ GenerateSyntheticEditingCommand(enum:uint8_t WebKit::SyntheticEditingCommandType
+@@ -143,6 +144,7 @@ GenerateSyntheticEditingCommand(enum:uint8_t WebKit::SyntheticEditingCommandType
+ #endif
+ #if !ENABLE(IOS_TOUCH_EVENTS) && ENABLE(TOUCH_EVENTS)
+     TouchEvent(WebKit::WebTouchEvent event)
++    FakeTouchTap(WebCore::IntPoint position, uint8_t modifiers) -> () Async
+ #endif
+ 
+     CancelPointer(WebCore::PointerID pointerId, WebCore::IntPoint documentPoint)
+@@ -177,6 +179,7 @@ GenerateSyntheticEditingCommand(enum:uint8_t WebKit::SyntheticEditingCommandType
      LoadURLInFrame(URL url, String referrer, WebCore::FrameIdentifier frameID)
      LoadDataInFrame(IPC::DataReference data, String MIMEType, String encodingName, URL baseURL, WebCore::FrameIdentifier frameID)
      LoadRequest(struct WebKit::LoadParameters loadParameters)
