@@ -15,7 +15,6 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { time } from 'console';
 import { ffmpegExecutable } from '../../utils/binaryPaths';
 import { assert } from '../../utils/utils';
 import { launchProcess } from '../processLauncher';
