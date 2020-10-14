@@ -180,7 +180,9 @@ describe('screencast', suite => {
     }
   });
 
-  it('should emit video event', async ({browser, testInfo}) => {
+  it('should expose video path', (test, { browserName }) => {
+    test.fixme(browserName === 'chromium')
+  }, async ({browser, testInfo}) => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
@@ -190,10 +192,10 @@ describe('screencast', suite => {
     });
     const page = await context.newPage();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await new Promise(r => setTimeout(r, 1000));
-    await context.close();
     const path = await page.video()!.path();
     expect(path).toContain(videosPath);
+    await context.close();
+    expect(fs.existsSync(path)).toBeTruthy();
   });
 
   it('should capture navigation', async ({browser, server, testInfo}) => {
