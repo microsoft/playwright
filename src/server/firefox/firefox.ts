@@ -63,10 +63,9 @@ export class Firefox extends BrowserType {
       throw new Error('Pass userDataDir parameter instead of specifying -profile argument');
     if (args.find(arg => arg.startsWith('-juggler')))
       throw new Error('Use the port parameter instead of -juggler argument');
-    const firefoxUserPrefs = isPersistent ? undefined : options.firefoxUserPrefs;
-    if (firefoxUserPrefs) {
+    if (options.firefoxUserPrefs) {
       const lines: string[] = [];
-      for (const [name, value] of Object.entries(firefoxUserPrefs))
+      for (const [name, value] of Object.entries(options.firefoxUserPrefs))
         lines.push(`user_pref(${JSON.stringify(name)}, ${JSON.stringify(value)});`);
       fs.writeFileSync(path.join(userDataDir, 'user.js'), lines.join('\n'));
     }
