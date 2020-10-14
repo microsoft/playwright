@@ -32,6 +32,7 @@ export { JSHandle } from './jsHandle';
 export { Request, Response, Route } from './network';
 export { Page } from './page';
 export { Selectors } from './selectors';
+export { Video } from './video';
 export { Worker } from './worker';
 
 export { ChromiumBrowser } from './chromiumBrowser';

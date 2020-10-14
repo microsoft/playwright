@@ -44,6 +44,7 @@ import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOpt
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
+import { Video } from './video';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const mkdirAsync = util.promisify(fs.mkdir);
@@ -82,6 +83,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   readonly _bindings = new Map<string, FunctionWithSource>();
   readonly _timeoutSettings: TimeoutSettings;
   _isPageCall = false;
+  private _video: Video | null = null;
 
   static from(page: channels.PageChannel): Page {
     return (page as any)._object;
@@ -125,6 +127,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('requestFinished', ({ request }) => this.emit(Events.Page.RequestFinished, Request.from(request)));
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
+    this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
     if (this._browserContext._browserName === 'chromium') {
@@ -224,6 +227,15 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   setDefaultTimeout(timeout: number) {
     this._timeoutSettings.setDefaultTimeout(timeout);
     this._channel.setDefaultTimeoutNoReply({ timeout });
+  }
+
+  video(): Video | null {
+    if (this._video)
+      return this._video;
+    if (!this._browserContext._options.videosPath)
+      return null;
+    this._video = new Video(this);
+    return this._video;
   }
 
   private _attributeToPage<T>(func: () => T): T {

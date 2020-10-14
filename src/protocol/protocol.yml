@@ -175,6 +175,7 @@ RemoteBrowser:
       parameters:
         context: BrowserContext
         stream: Stream
+        relativePath: string
 
 
 Selectors:
@@ -926,6 +927,10 @@ Page:
       parameters:
         route: Route
         request: Request
+
+    video:
+      parameters:
+        relativePath: string
 
     worker:
       parameters:

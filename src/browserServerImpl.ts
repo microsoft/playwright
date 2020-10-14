@@ -181,7 +181,11 @@ class ConnectedBrowser extends BrowserDispatcher {
       const readable = fs.createReadStream(video._path);
       await new Promise(f => readable.on('readable', f));
       const stream = new StreamDispatcher(this._remoteBrowser!._scope, readable);
-      this._remoteBrowser!._dispatchEvent('video', { stream, context: contextDispatcher });
+      this._remoteBrowser!._dispatchEvent('video', {
+        stream,
+        context: contextDispatcher,
+        relativePath: video._relativePath
+      });
       await new Promise<void>(resolve => {
         readable.on('close', resolve);
         readable.on('end', resolve);
