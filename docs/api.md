@@ -3449,7 +3449,7 @@ console.log(await page.video().path());
 <!-- GEN:stop -->
 
 #### video.path()
-- returns: <[string]>
+- returns: <[Promise]<[string]>>
 
 Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem upon closing the browser context.
 
