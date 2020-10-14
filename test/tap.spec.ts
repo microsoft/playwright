@@ -14,181 +14,170 @@
  * limitations under the License.
  */
 import { expect, folio } from './fixtures';
-import { Page, ElementHandle } from '..';
+import { ElementHandle } from '..';
 import type { ServerResponse } from 'http';
-const foo = folio.extend();
-foo.page.override(async ({browser}, runTest) => {
+
+const fixtures = folio.extend();
+fixtures.page.override(async ({browser}, runTest) => {
   const page = await browser.newPage({
     hasTouch: true
   });
   await runTest(page);
   await page.close();
 });
-const {it, describe, afterEach, beforeEach, } = foo.build();
+const { it } = fixtures.build();
 
-describe('nope', () => {
-  let page: Page;
-  beforeEach(async ({browser}) => {
-    page = await browser.newPage({
-      hasTouch: true
-    });
-  });
-  afterEach(async () => {
-    await page.close();
-  });
-
-  it.only('should send all of the correct events', async ({page}) => {
-    await page.setContent(`
-    <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
-    <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
-  `);
-    await page.tap('#a');
-    const eventsHandle = await trackEvents(await page.$('#b'));
-    await page.tap('#b');
-    // webkit doesnt send pointerenter or pointerleave or mouseout
-    expect(await eventsHandle.jsonValue()).toEqual([
-      'pointerover',  'pointerenter',
-      'pointerdown',  'touchstart',
-      'pointerup',    'pointerout',
-      'pointerleave', 'touchend',
-      'mouseover',    'mouseenter',
-      'mousemove',    'mousedown',
-      'mouseup',      'click',
-    ]);
-  });
-
-  it('should not send mouse events touchstart is canceled', async () => {
-    await page.setContent('hello world');
-    await page.evaluate(() => {
-    // touchstart is not cancelable unless passive is false
-      document.addEventListener('touchstart', t => t.preventDefault(), {passive: false});
-    });
-    const eventsHandle = await trackEvents(await page.$('body'));
-    await page.tap('body');
-    expect(await eventsHandle.jsonValue()).toEqual([
-      'pointerover',  'pointerenter',
-      'pointerdown',  'touchstart',
-      'pointerup',    'pointerout',
-      'pointerleave', 'touchend',
-    ]);
-  });
-
-  it('should not send mouse events when touchend is canceled', async () => {
-    await page.setContent('hello world');
-    await page.evaluate(() => {
-      document.addEventListener('touchend', t => t.preventDefault());
-    });
-    const eventsHandle = await trackEvents(await page.$('body'));
-    await page.tap('body');
-    expect(await eventsHandle.jsonValue()).toEqual([
-      'pointerover',  'pointerenter',
-      'pointerdown',  'touchstart',
-      'pointerup',    'pointerout',
-      'pointerleave', 'touchend',
-    ]);
-  });
-
-  it('should wait for a navigation caused by a tap', async ({server}) => {
-    await page.goto(server.EMPTY_PAGE);
-    await page.setContent(`
-    <a href="/intercept-this.html">link</a>;
-  `);
-    const responsePromise = new Promise<ServerResponse>(resolve => {
-      server.setRoute('/intercept-this.html', (handler, response) => {
-        resolve(response);
-      });
-    });
-    let resolved = false;
-    const tapPromise = page.tap('a').then(() => resolved = true);
-    const response = await responsePromise;
-    // make sure the tap doesnt resolve too early
-    await new Promise(x => setTimeout(x, 100));
-    expect(resolved).toBe(false);
-
-    response.end('foo');
-
-    await tapPromise;
-    expect(resolved).toBe(true);
-  });
-
-  it('should work with modifiers', async () => {
-    await page.setContent('hello world');
-    const altKeyPromise = page.evaluate(() => new Promise(resolve => {
-      document.addEventListener('touchstart', event => {
-        resolve(event.altKey);
-      }, {passive: false});
-    }));
-    // make sure the evals hit the page
-    await page.evaluate(() => void 0);
-    await page.tap('body', {
-      modifiers: ['Alt']
-    });
-    expect(await altKeyPromise).toBe(true);
-  });
-
-  it('should send well formed touch points', async () => {
-    const promises = Promise.all([
-      page.evaluate(() => new Promise(resolve => {
-        document.addEventListener('touchstart', event => {
-          resolve([...event.touches].map(t => ({
-            identifier: t.identifier,
-            clientX: t.clientX,
-            clientY: t.clientY,
-            pageX: t.pageX,
-            pageY: t.pageY,
-            radiusX: 'radiusX' in t ? t.radiusX : t['webkitRadiusX'],
-            radiusY: 'radiusY' in t ? t.radiusY : t['webkitRadiusY'],
-            rotationAngle: 'rotationAngle' in t ? t.rotationAngle : t['webkitRotationAngle'],
-            force: 'force' in t ? t.force : t['webkitForce'],
-          })));
-        }, false);
-      })),
-      page.evaluate(() => new Promise(resolve => {
-        document.addEventListener('touchend', event => {
-          resolve([...event.touches].map(t => ({
-            identifier: t.identifier,
-            clientX: t.clientX,
-            clientY: t.clientY,
-            pageX: t.pageX,
-            pageY: t.pageY,
-            radiusX: 'radiusX' in t ? t.radiusX : t['webkitRadiusX'],
-            radiusY: 'radiusY' in t ? t.radiusY : t['webkitRadiusY'],
-            rotationAngle: 'rotationAngle' in t ? t.rotationAngle : t['webkitRotationAngle'],
-            force: 'force' in t ? t.force : t['webkitForce'],
-          })));
-        }, false);
-      })),
-    ]);
-    // make sure the evals hit the page
-    await page.evaluate(() => void 0);
-    await page.touchscreen.tap(40, 60);
-    const [touchstart, touchend] = await promises;
-
-    expect(touchstart).toEqual([{
-      clientX: 40,
-      clientY: 60,
-      force: 1,
-      identifier: 0,
-      pageX: 40,
-      pageY: 60,
-      radiusX: 1,
-      radiusY: 1,
-      rotationAngle: 0,
-    }]);
-    expect(touchend).toEqual([]);
-  });
-
-  async function trackEvents(target: ElementHandle) {
-    const eventsHandle = await target.evaluateHandle(target => {
-      const events: string[] = [];
-      for (const event of [
-        'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'click',
-        'pointercancel', 'pointerdown', 'pointerenter', 'pointerleave', 'pointermove', 'pointerout', 'pointerover', 'pointerup',
-        'touchstart', 'touchend', 'touchmove', 'touchcancel',
-      ])
-        target.addEventListener(event, () => events.push(event), false);
-      return events;
-    });
-    return eventsHandle;
-  }
+it('should send all of the correct events', async ({page}) => {
+  await page.setContent(`
+  <div id="a" style="background: lightblue; width: 50px; height: 50px">a</div>
+  <div id="b" style="background: pink; width: 50px; height: 50px">b</div>
+`);
+  await page.tap('#a');
+  const eventsHandle = await trackEvents(await page.$('#b'));
+  await page.tap('#b');
+  // webkit doesnt send pointerenter or pointerleave or mouseout
+  expect(await eventsHandle.jsonValue()).toEqual([
+    'pointerover',  'pointerenter',
+    'pointerdown',  'touchstart',
+    'pointerup',    'pointerout',
+    'pointerleave', 'touchend',
+    'mouseover',    'mouseenter',
+    'mousemove',    'mousedown',
+    'mouseup',      'click',
+  ]);
 });
+
+it('should not send mouse events touchstart is canceled', async ({page}) => {
+  await page.setContent('hello world');
+  await page.evaluate(() => {
+    // touchstart is not cancelable unless passive is false
+    document.addEventListener('touchstart', t => t.preventDefault(), {passive: false});
+  });
+  const eventsHandle = await trackEvents(await page.$('body'));
+  await page.tap('body');
+  expect(await eventsHandle.jsonValue()).toEqual([
+    'pointerover',  'pointerenter',
+    'pointerdown',  'touchstart',
+    'pointerup',    'pointerout',
+    'pointerleave', 'touchend',
+  ]);
+});
+
+it('should not send mouse events when touchend is canceled', async ({page}) => {
+  await page.setContent('hello world');
+  await page.evaluate(() => {
+    document.addEventListener('touchend', t => t.preventDefault());
+  });
+  const eventsHandle = await trackEvents(await page.$('body'));
+  await page.tap('body');
+  expect(await eventsHandle.jsonValue()).toEqual([
+    'pointerover',  'pointerenter',
+    'pointerdown',  'touchstart',
+    'pointerup',    'pointerout',
+    'pointerleave', 'touchend',
+  ]);
+});
+
+it('should wait for a navigation caused by a tap', async ({server, page}) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+  <a href="/intercept-this.html">link</a>;
+`);
+  const responsePromise = new Promise<ServerResponse>(resolve => {
+    server.setRoute('/intercept-this.html', (handler, response) => {
+      resolve(response);
+    });
+  });
+  let resolved = false;
+  const tapPromise = page.tap('a').then(() => resolved = true);
+  const response = await responsePromise;
+  // make sure the tap doesnt resolve too early
+  await new Promise(x => setTimeout(x, 100));
+  expect(resolved).toBe(false);
+
+  response.end('foo');
+
+  await tapPromise;
+  expect(resolved).toBe(true);
+});
+
+it('should work with modifiers', async ({page}) => {
+  await page.setContent('hello world');
+  const altKeyPromise = page.evaluate(() => new Promise(resolve => {
+    document.addEventListener('touchstart', event => {
+      resolve(event.altKey);
+    }, {passive: false});
+  }));
+  // make sure the evals hit the page
+  await page.evaluate(() => void 0);
+  await page.tap('body', {
+    modifiers: ['Alt']
+  });
+  expect(await altKeyPromise).toBe(true);
+});
+
+it('should send well formed touch points', async ({page}) => {
+  const promises = Promise.all([
+    page.evaluate(() => new Promise(resolve => {
+      document.addEventListener('touchstart', event => {
+        resolve([...event.touches].map(t => ({
+          identifier: t.identifier,
+          clientX: t.clientX,
+          clientY: t.clientY,
+          pageX: t.pageX,
+          pageY: t.pageY,
+          radiusX: 'radiusX' in t ? t.radiusX : t['webkitRadiusX'],
+          radiusY: 'radiusY' in t ? t.radiusY : t['webkitRadiusY'],
+          rotationAngle: 'rotationAngle' in t ? t.rotationAngle : t['webkitRotationAngle'],
+          force: 'force' in t ? t.force : t['webkitForce'],
+        })));
+      }, false);
+    })),
+    page.evaluate(() => new Promise(resolve => {
+      document.addEventListener('touchend', event => {
+        resolve([...event.touches].map(t => ({
+          identifier: t.identifier,
+          clientX: t.clientX,
+          clientY: t.clientY,
+          pageX: t.pageX,
+          pageY: t.pageY,
+          radiusX: 'radiusX' in t ? t.radiusX : t['webkitRadiusX'],
+          radiusY: 'radiusY' in t ? t.radiusY : t['webkitRadiusY'],
+          rotationAngle: 'rotationAngle' in t ? t.rotationAngle : t['webkitRotationAngle'],
+          force: 'force' in t ? t.force : t['webkitForce'],
+        })));
+      }, false);
+    })),
+  ]);
+  // make sure the evals hit the page
+  await page.evaluate(() => void 0);
+  await page.touchscreen.tap(40, 60);
+  const [touchstart, touchend] = await promises;
+
+  expect(touchstart).toEqual([{
+    clientX: 40,
+    clientY: 60,
+    force: 1,
+    identifier: 0,
+    pageX: 40,
+    pageY: 60,
+    radiusX: 1,
+    radiusY: 1,
+    rotationAngle: 0,
+  }]);
+  expect(touchend).toEqual([]);
+});
+
+async function trackEvents(target: ElementHandle) {
+  const eventsHandle = await target.evaluateHandle(target => {
+    const events: string[] = [];
+    for (const event of [
+      'mousedown', 'mouseenter', 'mouseleave', 'mousemove', 'mouseout', 'mouseover', 'mouseup', 'click',
+      'pointercancel', 'pointerdown', 'pointerenter', 'pointerleave', 'pointermove', 'pointerout', 'pointerover', 'pointerup',
+      'touchstart', 'touchend', 'touchmove', 'touchcancel',
+    ])
+      target.addEventListener(event, () => events.push(event), false);
+    return events;
+  });
+  return eventsHandle;
+}
