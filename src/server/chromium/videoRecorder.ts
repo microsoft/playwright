@@ -15,6 +15,7 @@
  */
 
 import { ChildProcess } from 'child_process';
+import { time } from 'console';
 import { ffmpegExecutable } from '../../utils/binaryPaths';
 import { assert } from '../../utils/utils';
 import { launchProcess } from '../processLauncher';
@@ -26,7 +27,7 @@ const fps = 25;
 export class VideoRecorder {
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
-  private _lastWritePromise: Promise<void>;
+  private _lastWritePromise: Promise<void> | undefined;
   private _lastFrameTimestamp: number = 0;
   private _lastFrameBuffer: Buffer | null = null;
   private _lastWriteTimestamp: number = 0;
@@ -47,7 +48,6 @@ export class VideoRecorder {
 
   private constructor(progress: Progress) {
     this._progress = progress;
-    this._lastWritePromise = Promise.resolve();
   }
 
   private async _launch(options: types.PageScreencastOptions) {
@@ -89,15 +89,15 @@ export class VideoRecorder {
     assert(this._process);
     if (!this._isRunning())
       return;
-    const repeatCount = this._lastFrameTimestamp ? Math.max(1, Math.round(25 * (timestamp - this._lastFrameTimestamp))) : 1;
-    this._progress.log(`writing ${repeatCount} frame(s)`);
-    this._lastWritePromise = this._flushLastFrame(repeatCount).catch(e => this._progress.log('Error while writing frame: ' + e));
+    this._progress.log(`writing frame ` + timestamp);
+    if (this._lastFrameBuffer)
+      this._lastWritePromise = this._flushLastFrame(timestamp - this._lastFrameTimestamp).catch(e => this._progress.log('Error while writing frame: ' + e));
     this._lastFrameBuffer = frame;
     this._lastFrameTimestamp = timestamp;
     this._lastWriteTimestamp = Date.now();
   }
 
-  private async _flushLastFrame(repeatCount: number): Promise<void> {
+  private async _flushLastFrame(durationSec: number): Promise<void> {
     assert(this._process);
     const frame = this._lastFrameBuffer;
     if (!frame)
@@ -105,6 +105,8 @@ export class VideoRecorder {
     const previousWrites = this._lastWritePromise;
     let finishedWriting: () => void;
     const writePromise = new Promise<void>(fulfill => finishedWriting = fulfill);
+    const repeatCount = Math.max(1, Math.round(fps * durationSec));
+    this._progress.log(`flushing ${repeatCount} frame(s)`);
     await previousWrites;
     for (let i = 0; i < repeatCount; i++) {
       const callFinish = i === (repeatCount - 1);
@@ -124,8 +126,8 @@ export class VideoRecorder {
 
     if (this._lastWriteTimestamp) {
       const durationSec = (Date.now() - this._lastWriteTimestamp) / 1000;
-      if (durationSec > 1 / fps)
-        this.writeFrame(this._lastFrameBuffer!, this._lastFrameTimestamp + durationSec);
+      if (!this._lastWritePromise || durationSec > 1 / fps)
+        this._flushLastFrame(durationSec).catch(e => this._progress.log('Error while writing frame: ' + e));
     }
 
     const close = this._gracefullyClose;
