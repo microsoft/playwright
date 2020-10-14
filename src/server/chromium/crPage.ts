@@ -757,16 +757,19 @@ class FrameSession {
     const videoRecorder = await VideoRecorder.launch(options);
     this._screencastState = 'starting';
     try {
-      await this._client.send('Page.startScreencast', {
-        format: 'jpeg',
-        quality: 90,
-        maxWidth: options.width,
-        maxHeight: options.height,
-      });
       this._screencastState = 'started';
       this._videoRecorder = videoRecorder;
       this._screencastId = screencastId;
       this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
+      await Promise.all([
+        this._client.send('Page.startScreencast', {
+          format: 'jpeg',
+          quality: 90,
+          maxWidth: options.width,
+          maxHeight: options.height,
+        }),
+        new Promise(f => this._client.once('Page.screencastFrame', f))
+      ]);
     } catch (e) {
       videoRecorder.stop().catch(() => {});
       throw e;
