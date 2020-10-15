@@ -575,7 +575,7 @@ index 5102fd30129a96d4a3ac2a9490ec10f31e6ceafc..c30710d04be5ad3bd0fbb946e9bc311b
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index ca16b92d248e1e71caac0d61a8eb194d9fe2abe9..17d52d84846122ef85be9786fd9779aecf0da4c0 100644
+index dd39e33c72269c6eb2b9e09e36bd11b4a3ee5980..d09d6124dd9fb3633d15edd8059f7470471c4e10 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3278,6 +3278,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -796,7 +796,7 @@ index 264b2509a71d85124079f6855c5ac19ce72082ef..3c45db6ad2151bc1454a5b1eb570774c
      // care of lowering the present active window. This happens in
      // a separate runnable to avoid touching multiple windows in
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index dff9613ca5ac0280e0378fcf38abf0513c7c8312..5ad74997a1de9db5e086a20679f9d7d787bcccba 100644
+index 8a671defd79d57d94333ed7f5285f07f1a426269..fa87f7590fd13cdb43a28a6527f9f136a55e42c9 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
 @@ -2463,7 +2463,7 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
