@@ -17042,18 +17042,30 @@ index ddc2a96ac68cd51d5f4efeca78a118db91709aa2..57a78f54e72d264daa27faa53ac2a30c
  
          # WebInspectorUI must come after JavaScriptCore and WebCore but before WebKit and WebKit2
          my $webKitIndex = first { $projects[$_] eq "Source/WebKitLegacy" } 0..$#projects;
-diff --git a/Tools/WebKitTestRunner/CMakeLists.txt b/Tools/WebKitTestRunner/CMakeLists.txt
-index 4364bb8869bde397234a793c0d3c8f93654e893e..95037acf5080e1b6d8bd7f40e20d49f5c8729cf4 100644
---- a/Tools/WebKitTestRunner/CMakeLists.txt
-+++ b/Tools/WebKitTestRunner/CMakeLists.txt
-@@ -24,6 +24,7 @@ set(WebKitTestRunner_LIBRARIES
-     WebCoreTestSupport
-     WebKit::JavaScriptCore
-     WebKit::WebKit
+diff --git a/Tools/WebKitTestRunner/PlatformGTK.cmake b/Tools/WebKitTestRunner/PlatformGTK.cmake
+index 6f8366b63e43eca6b95b67bb47fee9e7a1970cf9..cc8299dfa4380b833e79a870779a222059579d3b 100644
+--- a/Tools/WebKitTestRunner/PlatformGTK.cmake
++++ b/Tools/WebKitTestRunner/PlatformGTK.cmake
+@@ -26,6 +26,7 @@ list(APPEND WebKitTestRunner_LIBRARIES
+     ${GLIB_LIBRARIES}
+     Cairo::Cairo
+     GTK::GTK
 +    stdc++fs
  )
  
- set(WebKitTestRunner_INCLUDE_DIRECTORIES
+ list(APPEND WebKitTestRunnerInjectedBundle_LIBRARIES
+diff --git a/Tools/WebKitTestRunner/PlatformWPE.cmake b/Tools/WebKitTestRunner/PlatformWPE.cmake
+index 775b41868718ea6734efc9082f8161eee2e0015e..68a720c0cb01d534653a259536c481683873680d 100644
+--- a/Tools/WebKitTestRunner/PlatformWPE.cmake
++++ b/Tools/WebKitTestRunner/PlatformWPE.cmake
+@@ -31,6 +31,7 @@ list(APPEND WebKitTestRunner_LIBRARIES
+     ${WPEBACKEND_FDO_LIBRARIES}
+     Cairo::Cairo
+     WPEToolingBackends
++    stdc++fs
+ )
+ 
+ list(APPEND WebKitTestRunnerInjectedBundle_LIBRARIES
 diff --git a/Tools/WebKitTestRunner/TestController.cpp b/Tools/WebKitTestRunner/TestController.cpp
 index 43f6a262432f3a68d1ca12733df373fc38265768..157cd21fdbc2c7a6c16c8e54249c3e17efec02e6 100644
 --- a/Tools/WebKitTestRunner/TestController.cpp
