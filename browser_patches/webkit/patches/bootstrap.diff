@@ -5180,6 +5180,35 @@ index 33bdbd20f4aaca7db33e055bdbea79c69800b3db..e8d329292d4b1fe6e49d74cb07a66339
          RefPtr<Element> previousTarget;
  #endif
          String pointerType;
+diff --git a/Source/WebCore/page/RuntimeEnabledFeatures.cpp b/Source/WebCore/page/RuntimeEnabledFeatures.cpp
+index e9d30c7c06618177cbab04e35b75735dc291ad1f..d0673b66d9c14e4e3f2317faa29438aa0bdc616e 100644
+--- a/Source/WebCore/page/RuntimeEnabledFeatures.cpp
++++ b/Source/WebCore/page/RuntimeEnabledFeatures.cpp
+@@ -56,7 +56,11 @@ RuntimeEnabledFeatures& RuntimeEnabledFeatures::sharedFeatures()
+ #if ENABLE(TOUCH_EVENTS)
+ bool RuntimeEnabledFeatures::touchEventsEnabled() const
+ {
+-    return m_touchEventsEnabled.valueOr(screenHasTouchDevice());
++    return m_touchEventsEnabled.valueOr(platformScreenHasTouchDevice());
++}
++bool RuntimeEnabledFeatures::isTouchPrimaryInputDevice() const
++{
++    return m_touchEventsEnabled.valueOr(platformScreenIsTouchPrimaryInputDevice());
+ }
+ #endif
+ 
+diff --git a/Source/WebCore/page/RuntimeEnabledFeatures.h b/Source/WebCore/page/RuntimeEnabledFeatures.h
+index 06a3ec90655826fbcd91a83b641e27f59e75de60..af1747503380d346929b5db24417e84f8e7edfbc 100644
+--- a/Source/WebCore/page/RuntimeEnabledFeatures.h
++++ b/Source/WebCore/page/RuntimeEnabledFeatures.h
+@@ -222,6 +222,7 @@ public:
+     void setMouseEventsSimulationEnabled(bool isEnabled) { m_mouseEventsSimulationEnabled = isEnabled; }
+     bool touchEventsEnabled() const;
+     void setTouchEventsEnabled(bool isEnabled) { m_touchEventsEnabled = isEnabled; }
++    bool isTouchPrimaryInputDevice() const;
+ #endif
+ 
+     bool pageAtRuleSupportEnabled() const { return m_pageAtRuleSupportEnabled; }
 diff --git a/Source/WebCore/page/Screen.cpp b/Source/WebCore/page/Screen.cpp
 index b4f7fe0d15ee81dbc7b2b7c9e7c0e6cc42dc8e55..1a40df0eadea4f508b7227590b9d5386bf257687 100644
 --- a/Source/WebCore/page/Screen.cpp
@@ -5645,6 +5674,57 @@ index f423a4a1d5399326fc48fe4d4a8a8fb9d4df861e..b4b60162d8b0d34113df052b04a1695d
          static String singleCharacterString(unsigned);
  #endif
  
+diff --git a/Source/WebCore/platform/PlatformScreen.cpp b/Source/WebCore/platform/PlatformScreen.cpp
+index ba50b688ab6d0bae5d199fa0bac4b7e2004baf81..0b83a798b00835635a95a0db22173de094ba4035 100644
+--- a/Source/WebCore/platform/PlatformScreen.cpp
++++ b/Source/WebCore/platform/PlatformScreen.cpp
+@@ -25,6 +25,7 @@
+ 
+ #include "config.h"
+ #include "PlatformScreen.h"
++#include "RuntimeEnabledFeatures.h"
+ 
+ #if PLATFORM(COCOA)
+ 
+@@ -72,3 +73,16 @@ const ScreenData* screenData(PlatformDisplayID screenDisplayID)
+ } // namespace WebCore
+ 
+ #endif // PLATFORM(COCOA)
++
++#if ENABLE(TOUCH_EVENTS)
++namespace WebCore {
++
++bool screenHasTouchDevice() {
++    return RuntimeEnabledFeatures::sharedFeatures().touchEventsEnabled();
++}
++bool screenIsTouchPrimaryInputDevice() {
++    return RuntimeEnabledFeatures::sharedFeatures().isTouchPrimaryInputDevice();
++}
++
++} // namespace WebCore
++#endif
+diff --git a/Source/WebCore/platform/PlatformScreen.h b/Source/WebCore/platform/PlatformScreen.h
+index 92ce4dd6ec1821a0fc5135f38e233a5ccd04d719..3d723401a109f0e7ec8c052766d5f317f42df6a9 100644
+--- a/Source/WebCore/platform/PlatformScreen.h
++++ b/Source/WebCore/platform/PlatformScreen.h
+@@ -151,12 +151,14 @@ WEBCORE_EXPORT float screenScaleFactor(UIScreen * = nullptr);
+ #endif
+ 
+ #if ENABLE(TOUCH_EVENTS)
+-#if PLATFORM(GTK) || PLATFORM(WPE)
+ WEBCORE_EXPORT bool screenHasTouchDevice();
+ WEBCORE_EXPORT bool screenIsTouchPrimaryInputDevice();
++#if PLATFORM(GTK) || PLATFORM(WPE)
++bool platformScreenHasTouchDevice();
++bool platformScreenIsTouchPrimaryInputDevice();
+ #else
+-constexpr bool screenHasTouchDevice() { return true; }
+-constexpr bool screenIsTouchPrimaryInputDevice() { return true; }
++constexpr bool platformScreenHasTouchDevice() { return true; }
++constexpr bool platformScreenIsTouchPrimaryInputDevice() { return true; }
+ #endif
+ #endif
+ 
 diff --git a/Source/WebCore/platform/ScrollableArea.h b/Source/WebCore/platform/ScrollableArea.h
 index 387ad285c20dd8fd5eba27f665eee85183e77c6f..4d44ae6f18064102e13de5221e43042870bade9f 100644
 --- a/Source/WebCore/platform/ScrollableArea.h
@@ -6102,6 +6182,28 @@ index 0516e70973e0078de6ad0216375d34dd9ef51a8d..ffd9a02deb5518e0c8c77b156815c11e
  String PlatformKeyboardEvent::singleCharacterString(unsigned val)
  {
      switch (val) {
+diff --git a/Source/WebCore/platform/gtk/PlatformScreenGtk.cpp b/Source/WebCore/platform/gtk/PlatformScreenGtk.cpp
+index e0e8809d8f39614b2b6bb8c7cf0f02652d574fe7..5d05504ec57869c9d6c6562c4237640099c295cd 100644
+--- a/Source/WebCore/platform/gtk/PlatformScreenGtk.cpp
++++ b/Source/WebCore/platform/gtk/PlatformScreenGtk.cpp
+@@ -218,7 +218,7 @@ bool screenSupportsExtendedColor(Widget*)
+ }
+ 
+ #if ENABLE(TOUCH_EVENTS)
+-bool screenHasTouchDevice()
++bool platformScreenHasTouchDevice()
+ {
+     auto* display = gdk_display_get_default();
+     if (!display)
+@@ -228,7 +228,7 @@ bool screenHasTouchDevice()
+     return seat ? gdk_seat_get_capabilities(seat) & GDK_SEAT_CAPABILITY_TOUCH : true;
+ }
+ 
+-bool screenIsTouchPrimaryInputDevice()
++bool platformScreenIsTouchPrimaryInputDevice()
+ {
+     auto* display = gdk_display_get_default();
+     if (!display)
 diff --git a/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp b/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp
 index a34dc220bbb9a92b40dfb463e8724e81ac745b2c..8ecedd5dae88469366a619b96960598c1232a32d 100644
 --- a/Source/WebCore/platform/libwpe/PlatformKeyboardEventLibWPE.cpp
@@ -6610,6 +6712,25 @@ index 44737686187a06a92c408ea60b63a48ac8481334..c754a763688b52e7ddd47493296ef9b0
  }
  
  bool PlatformKeyboardEvent::currentCapsLockState()
+diff --git a/Source/WebCore/platform/wpe/PlatformScreenWPE.cpp b/Source/WebCore/platform/wpe/PlatformScreenWPE.cpp
+index 6b859de7a16bf05610f70cc561c15358a0f4b6be..6e09d6979042c69729c89c509bc0d9c944efbb5a 100644
+--- a/Source/WebCore/platform/wpe/PlatformScreenWPE.cpp
++++ b/Source/WebCore/platform/wpe/PlatformScreenWPE.cpp
+@@ -87,12 +87,12 @@ bool screenSupportsExtendedColor(Widget*)
+ }
+ 
+ #if ENABLE(TOUCH_EVENTS)
+-bool screenHasTouchDevice()
++bool platformScreenHasTouchDevice()
+ {
+     return true;
+ }
+ 
+-bool screenIsTouchPrimaryInputDevice()
++bool platformScreenIsTouchPrimaryInputDevice()
+ {
+     return true;
+ }
 diff --git a/Source/WebCore/rendering/RenderTextControl.cpp b/Source/WebCore/rendering/RenderTextControl.cpp
 index 7ac6e023a8cfa1ece6f00f2390743a6225f3229a..aec8586dd04121151df849f631c68e9150c053ce 100644
 --- a/Source/WebCore/rendering/RenderTextControl.cpp
