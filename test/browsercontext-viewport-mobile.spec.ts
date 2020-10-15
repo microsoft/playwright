@@ -131,9 +131,7 @@ describe('mobile viewport', (suite, { browserName }) => {
     await context.close();
   });
 
-  it('should emulate the hover media feature', (test, { browserName }) => {
-    test.fail(browserName === 'webkit');
-  }, async ({playwright, browser}) => {
+  it('should emulate the hover media feature', async ({playwright, browser}) => {
     const iPhone = playwright.devices['iPhone 6'];
     const mobilepage = await browser.newPage({ ...iPhone });
     expect(await mobilepage.evaluate(() => matchMedia('(hover: hover)').matches)).toBe(false);

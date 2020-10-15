@@ -4540,6 +4540,27 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     }
     export type dispatchMouseEventReturnValue = {
     }
+    /**
+     * Dispatches a tap event to the page.
+     */
+    export type dispatchTapEventParameters = {
+      /**
+       * X coordinate of the event relative to the main frame's viewport in CSS pixels.
+       */
+      x: number;
+      /**
+       * Y coordinate of the event relative to the main frame's viewport in CSS pixels. 0 refers to
+the top of the viewport and Y increases as it proceeds towards the bottom of the viewport.
+       */
+      y: number;
+      /**
+       * Bit field representing pressed modifier keys. Alt=1, Ctrl=2, Meta/Command=4, Shift=8
+(default: 0).
+       */
+      modifiers?: number;
+    }
+    export type dispatchTapEventReturnValue = {
+    }
   }
   
   export module Inspector {
@@ -8607,6 +8628,7 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "IndexedDB.clearObjectStore": IndexedDB.clearObjectStoreParameters;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventParameters;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventParameters;
+    "Input.dispatchTapEvent": Input.dispatchTapEventParameters;
     "Inspector.enable": Inspector.enableParameters;
     "Inspector.disable": Inspector.disableParameters;
     "Inspector.initialized": Inspector.initializedParameters;
@@ -8890,6 +8912,7 @@ Left=1, Right=2, Middle=4, Back=8, Forward=16, None=0.
     "IndexedDB.clearObjectStore": IndexedDB.clearObjectStoreReturnValue;
     "Input.dispatchKeyEvent": Input.dispatchKeyEventReturnValue;
     "Input.dispatchMouseEvent": Input.dispatchMouseEventReturnValue;
+    "Input.dispatchTapEvent": Input.dispatchTapEventReturnValue;
     "Inspector.enable": Inspector.enableReturnValue;
     "Inspector.disable": Inspector.disableReturnValue;
     "Inspector.initialized": Inspector.initializedReturnValue;
