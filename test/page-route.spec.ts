@@ -96,7 +96,10 @@ it('should work when header manipulation headers with redirect', async ({page, s
   await page.goto(server.PREFIX + '/rrredirect');
 });
 // @see https://github.com/GoogleChrome/puppeteer/issues/4743
-it('should be able to remove headers', async ({page, server}) => {
+it('should be able to remove headers', (test, {browserName}) => {
+  // On WebKit the accept header gets set to "*/*"
+  test.fail(browserName === 'webkit');
+}, async ({page, server}) => {
   await page.route('**/*', route => {
     const headers = Object.assign({}, route.request().headers(), {
       foo: 'bar',
