@@ -31,22 +31,24 @@ export class VideoRecorder {
   private _lastFrameBuffer: Buffer | null = null;
   private _lastWriteTimestamp: number = 0;
   private readonly _progress: Progress;
+  readonly _screencastId: string;
 
-  static async launch(options: types.PageScreencastOptions): Promise<VideoRecorder> {
+  static async launch(screencastId: string, options: types.PageScreencastOptions): Promise<VideoRecorder> {
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
 
     const controller = new ProgressController();
     controller.setLogName('browser');
     return await controller.run(async progress => {
-      const recorder = new VideoRecorder(progress);
+      const recorder = new VideoRecorder(progress, screencastId);
       await recorder._launch(options);
       return recorder;
     });
   }
 
-  private constructor(progress: Progress) {
+  private constructor(progress: Progress, screencastId: string) {
     this._progress = progress;
+    this._screencastId = screencastId;
   }
 
   private async _launch(options: types.PageScreencastOptions) {

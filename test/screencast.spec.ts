@@ -94,9 +94,9 @@ function almostRed(r, g, b, alpha) {
 }
 
 function almostBlack(r, g, b, alpha) {
-  expect(r).toBeLessThan(30);
-  expect(g).toBeLessThan(30);
-  expect(b).toBeLessThan(30);
+  expect(r).toBeLessThan(50);
+  expect(g).toBeLessThan(50);
+  expect(b).toBeLessThan(50);
   expect(alpha).toBe(255);
 }
 

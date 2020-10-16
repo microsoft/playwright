@@ -117,7 +117,7 @@ export class WKPage implements PageDelegate {
       const size = this._browserContext._options.videoSize || this._browserContext._options.viewport || { width: 1280, height: 720 };
       const outputFile = path.join(this._browserContext._options.videosPath, createGuid() + '.webm');
       promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this.startScreencast({
+        return this._startScreencast({
           ...size,
           outputFile,
         });
@@ -700,7 +700,7 @@ export class WKPage implements PageDelegate {
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
     if (this._recordingVideoFile)
-      await this.stopScreencast();
+      await this._stopScreencast();
     await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
@@ -715,7 +715,7 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async startScreencast(options: types.PageScreencastOptions): Promise<void> {
+  async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
     if (this._recordingVideoFile)
       throw new Error('Already recording');
     this._recordingVideoFile = options.outputFile;
@@ -732,7 +732,7 @@ export class WKPage implements PageDelegate {
     }
   }
 
-  async stopScreencast(): Promise<void> {
+  async _stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
       throw new Error('No video recording in progress');
     this._recordingVideoFile = null;
