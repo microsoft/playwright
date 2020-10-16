@@ -781,10 +781,21 @@ index 08e81b1c24a17729ec7b6c9e048c2febe57e18dc..cb09fe30de0a42c89da220e3bf8afe5f
    MOZ_CAN_RUN_SCRIPT
    nsresult SendTouchEventCommon(
 diff --git a/dom/base/nsFocusManager.cpp b/dom/base/nsFocusManager.cpp
-index 264b2509a71d85124079f6855c5ac19ce72082ef..3c45db6ad2151bc1454a5b1eb570774c81a2c7d8 100644
+index 264b2509a71d85124079f6855c5ac19ce72082ef..af73090a37a6d9d2c39b2d0ff74b97a6dd8f75b0 100644
 --- a/dom/base/nsFocusManager.cpp
 +++ b/dom/base/nsFocusManager.cpp
-@@ -2806,7 +2806,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
+@@ -1559,6 +1559,10 @@ void nsFocusManager::SetFocusInner(Element* aNewContent, int32_t aFlags,
+         (GetActiveBrowsingContext() == newRootBrowsingContext);
+   }
+ 
++  // In Playwright, we want to send focus events even if the element
++  // isn't actually in the active window.
++  isElementInActiveWindow = true;
++
+   // Exit fullscreen if a website focuses another window
+   if (StaticPrefs::full_screen_api_exit_on_windowRaise() &&
+       !isElementInActiveWindow &&
+@@ -2806,7 +2810,9 @@ void nsFocusManager::RaiseWindow(nsPIDOMWindowOuter* aWindow,
      }
    }
  
