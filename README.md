@@ -8,9 +8,9 @@ Playwright is a Node.js library to automate [Chromium](https://www.chromium.org/
 
 |          | Linux | macOS | Windows |
 |   :---   | :---: | :---: | :---:   |
-| Chromium <!-- GEN:chromium-version -->88.0.4287.0<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| WebKit 14.0 | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Firefox <!-- GEN:firefox-version -->82.0b9<!-- GEN:stop --> | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Chromium <!-- GEN:chromium-version -->88.0.4287.0<!-- GEN:stop --> | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| WebKit 14.0 | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
+| Firefox <!-- GEN:firefox-version -->82.0b9<!-- GEN:stop --> | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
 
 Headless execution is supported for all the browsers on all platforms. Check out [system requirements](https://playwright.dev/#?path=docs/intro.md&q=system-requirements) for details.
 
