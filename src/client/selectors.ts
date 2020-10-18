@@ -17,12 +17,13 @@
 import { evaluationScript } from './clientHelper';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
+import { SelectorEngine } from './types';
 
 export class Selectors {
   private _channels = new Set<SelectorsOwner>();
   private _registrations: channels.SelectorsRegisterParams[] = [];
 
-  async register(name: string, script: string | Function | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
+  async register(name: string, script: string | (() => SelectorEngine) | { path?: string, content?: string }, options: { contentScript?: boolean } = {}): Promise<void> {
     const source = await evaluationScript(script, undefined, false);
     const params = { ...options, name, source };
     for (const channel of this._channels)
