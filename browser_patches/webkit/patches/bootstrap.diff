@@ -16322,6 +16322,48 @@ index 155f1f4a4a96289e10871f22a5955070ed0ee58d..102de5cf6e9f673003e9179420e33440
      LoadRequestWaitingForProcessLaunch(struct WebKit::LoadParameters loadParameters, URL resourceDirectoryURL, WebKit::WebPageProxyIdentifier pageID, bool checkAssumedReadAccessToResourceURL)
      LoadData(struct WebKit::LoadParameters loadParameters)
      LoadAlternateHTML(struct WebKit::LoadParameters loadParameters)
+diff --git a/Source/WebKit/WebProcess/WebPage/mac/WebPageMac.mm b/Source/WebKit/WebProcess/WebPage/mac/WebPageMac.mm
+index a1729f5c6205d16d7fa998a6536a84c8fa480454..a23b742a0f5ef084f116b2e2c61e84605f63a2a7 100644
+--- a/Source/WebKit/WebProcess/WebPage/mac/WebPageMac.mm
++++ b/Source/WebKit/WebProcess/WebPage/mac/WebPageMac.mm
+@@ -832,21 +832,37 @@ String WebPage::platformUserAgent(const URL&) const
+ 
+ bool WebPage::hoverSupportedByPrimaryPointingDevice() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    return !screenIsTouchPrimaryInputDevice();
++#else
+     return true;
++#endif
+ }
+ 
+ bool WebPage::hoverSupportedByAnyAvailablePointingDevice() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    return !screenHasTouchDevice();
++#else
+     return true;
++#endif
+ }
+ 
+ Optional<PointerCharacteristics> WebPage::pointerCharacteristicsOfPrimaryPointingDevice() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    if (screenIsTouchPrimaryInputDevice())
++        return PointerCharacteristics::Coarse;
++#endif
+     return PointerCharacteristics::Fine;
+ }
+ 
+ OptionSet<PointerCharacteristics> WebPage::pointerCharacteristicsOfAllAvailablePointingDevices() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    if (screenHasTouchDevice())
++        return PointerCharacteristics::Coarse;
++#endif
+     return PointerCharacteristics::Fine;
+ }
+ 
 diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
 index c0832f328dc51c50d3bc8bb245d6f75f0dc6f89f..422086a4b470b246cb1e169d8c96aabfbc4159ed 100644
 --- a/Source/WebKit/WebProcess/WebProcess.cpp
