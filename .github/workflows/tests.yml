@@ -48,13 +48,14 @@ jobs:
         path: test-results
 
   test_mac:
-    name: "macOS"
+    name: ${{ matrix.os }} (${{ matrix.browser }})
     strategy:
       fail-fast: false
       matrix:
+        os: [macos-10.15, macos-11.0]
         browser: [chromium, firefox, webkit]
         shard: ['1', '2']
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
@@ -70,7 +71,7 @@ jobs:
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: ${{ matrix.browser }}-mac-test-results-${{ matrix.shard }}
+        name: ${{ matrix.browser }}-${{ matrix.os }}-test-results
         path: test-results
 
   test_win:
