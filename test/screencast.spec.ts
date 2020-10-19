@@ -88,8 +88,23 @@ export class VideoPlayer {
 }
 
 function almostRed(r, g, b, alpha) {
+  expect(r).toBeGreaterThan(200);
   expect(g).toBeLessThan(50);
   expect(b).toBeLessThan(50);
+  expect(alpha).toBe(255);
+}
+
+function almostGreen(r, g, b, alpha) {
+  expect(r).toBeLessThan(50);
+  expect(g).toBeGreaterThan(200);
+  expect(b).toBeLessThan(50);
+  expect(alpha).toBe(255);
+}
+
+function almostBlue(r, g, b, alpha) {
+  expect(r).toBeLessThan(50);
+  expect(g).toBeLessThan(50);
+  expect(b).toBeGreaterThan(200);
   expect(alpha).toBe(255);
 }
 
@@ -100,7 +115,7 @@ function almostBlack(r, g, b, alpha) {
   expect(alpha).toBe(255);
 }
 
-function almostGrey(r, g, b, alpha) {
+function almostGray(r, g, b, alpha) {
   expect(r).toBeGreaterThan(70);
   expect(g).toBeGreaterThan(70);
   expect(b).toBeGreaterThan(70);
@@ -162,7 +177,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -244,7 +259,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -256,7 +271,7 @@ describe('screencast', suite => {
 
     {
       const pixels = videoPlayer.seekLastFrame().data;
-      expectAll(pixels, almostGrey);
+      expectAll(pixels, almostGray);
     }
   });
 
@@ -277,7 +292,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -332,7 +347,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -343,11 +358,11 @@ describe('screencast', suite => {
     }
     {
       const pixels = videoPlayer.seekLastFrame({x: 300, y: 0}).data;
-      expectAll(pixels, almostGrey);
+      expectAll(pixels, almostGray);
     }
     {
       const pixels = videoPlayer.seekLastFrame({x: 0, y: 200}).data;
-      expectAll(pixels, almostGrey);
+      expectAll(pixels, almostGray);
     }
     {
       const pixels = videoPlayer.seekLastFrame({x: 300, y: 200}).data;
@@ -363,11 +378,11 @@ describe('screencast', suite => {
       viewport: size,
     });
 
-    await context.newPage();
+    const page = await context.newPage();
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     expect(await videoPlayer.videoWidth).toBe(size.width);
     expect(await videoPlayer.videoHeight).toBe(size.height);
@@ -379,11 +394,11 @@ describe('screencast', suite => {
       videosPath,
     });
 
-    await context.newPage();
+    const page = await context.newPage();
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     expect(await videoPlayer.videoWidth).toBe(1280);
     expect(await videoPlayer.videoHeight).toBe(720);
@@ -414,5 +429,41 @@ describe('screencast', suite => {
       const pixels = videoPlayer.seekLastFrame().data;
       expectAll(pixels, almostRed);
     }
+  });
+
+  it('should align with timeline', async ({browser, browserName, testInfo}) => {
+    const videosPath = testInfo.outputPath('');
+    const size = { width: 640, height: 480 };
+    const page = await browser.newPage({
+      videosPath,
+      viewport: size,
+    });
+
+    const [begin, end] = await page.evaluate(async () => {
+      const begin = performance.now();
+      document.body.style.backgroundColor = '#f00'
+      await new Promise(f => setTimeout(f, 500));
+      document.body.style.backgroundColor = '#0f0'
+      await new Promise(f => setTimeout(f, 500));
+      document.body.style.backgroundColor = '#00f'
+      await new Promise(f => setTimeout(f, 500));
+      document.body.style.backgroundColor = '#808080'
+      await new Promise(f => setTimeout(f, 500));
+      const end = performance.now();
+      return [begin, end];
+    });
+    await page.close();
+
+    const videoFile = await page.video().path();
+    const videoPlayer = new VideoPlayer(videoFile);
+    const redFrame = (begin + 250) * 25 / 1000 | 0;
+    const greenFrame = (begin + 750) * 25 / 1000 | 0;
+    const blueFrame = (begin + 1250) * 25 / 1000 | 0;
+    const grayFrame = (begin + 1750) * 25 / 1000 | 0;
+
+    expectAll(videoPlayer.frame(redFrame).data, almostRed);
+    expectAll(videoPlayer.frame(greenFrame).data, almostGreen);
+    expectAll(videoPlayer.frame(blueFrame).data, almostBlue);
+    expectAll(videoPlayer.frame(grayFrame).data, almostGray);
   });
 });
