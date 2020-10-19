@@ -168,6 +168,21 @@ it('should send well formed touch points', async ({page}) => {
   expect(touchend).toEqual([]);
 });
 
+it('should wait until an element is visible to tap it', async ({page}) => {
+  const div = await page.evaluateHandle(() => {
+    const button = document.createElement('button');
+    button.textContent = 'not clicked';
+    document.body.appendChild(button);
+    button.style.display = 'none';
+    return button;
+  });
+  const tapPromise = div.tap();
+  await div.evaluate(div => div.onclick = () => div.textContent = 'clicked');
+  await div.evaluate(div => div.style.display = 'block');
+  await tapPromise;
+  expect(await div.textContent()).toBe('clicked');
+});
+
 async function trackEvents(target: ElementHandle) {
   const eventsHandle = await target.evaluateHandle(target => {
     const events: string[] = [];
