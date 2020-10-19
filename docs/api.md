@@ -3963,7 +3963,7 @@ Whenever a network route is set up with [page.route(url, handler)](#pagerouteurl
 Aborts the route's request.
 
 #### route.continue([overrides])
-- `overrides` <[Object]> Optional request overrides, which can be one of the following:
+- `overrides` <[Object]> Optional request overrides, can override following properties:
   - `method` <[string]> If set changes the request method (e.g. GET or POST)
   - `postData` <[string]|[Buffer]> If set changes the post data of request
   - `headers` <[Object]<[string], [string]>> If set changes the request HTTP headers. Header values will be converted to a string.
