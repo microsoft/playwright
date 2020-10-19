@@ -664,6 +664,7 @@ export type PageInitializer = {
     height: number,
   },
   isClosed: boolean,
+  videoRelativePath?: string,
 };
 export interface PageChannel extends Channel {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;

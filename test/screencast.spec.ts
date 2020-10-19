@@ -128,11 +128,6 @@ function expectAll(pixels: Buffer, rgbaPredicate) {
   }
 }
 
-function findVideo(videoDir: string) {
-  const files = fs.readdirSync(videoDir);
-  return path.join(videoDir, files.find(file => file.endsWith('webm')));
-}
-
 function findVideos(videoDir: string) {
   const files = fs.readdirSync(videoDir);
   return files.filter(file => file.endsWith('webm')).map(file => path.join(videoDir, file));
@@ -146,11 +141,9 @@ describe('screencast', suite => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should capture static page', (test, { browserName }) => {
-    test.fixme(browserName === 'firefox', 'Always clips to square');
-  }, async ({browser, testInfo}) => {
+  it('should capture static page', async ({browser, testInfo}) => {
     const videosPath = testInfo.outputPath('');
-    const size = { width: 320, height: 240 };
+    const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       videosPath,
       viewport: size,
@@ -162,12 +155,12 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
 
-    expect(videoPlayer.videoWidth).toBe(320);
+    expect(videoPlayer.videoWidth).toBe(450);
     expect(videoPlayer.videoHeight).toBe(240);
 
     {
@@ -175,7 +168,7 @@ describe('screencast', suite => {
       expectAll(pixels, almostRed);
     }
     {
-      const pixels = videoPlayer.seekLastFrame({ x: 300, y: 0}).data;
+      const pixels = videoPlayer.seekLastFrame({ x: 430, y: 0}).data;
       expectAll(pixels, almostRed);
     }
   });
@@ -244,7 +237,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -277,7 +270,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -332,7 +325,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);
@@ -363,11 +356,11 @@ describe('screencast', suite => {
       viewport: size,
     });
 
-    await context.newPage();
+    const page = await context.newPage();
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     expect(await videoPlayer.videoWidth).toBe(size.width);
     expect(await videoPlayer.videoHeight).toBe(size.height);
@@ -379,11 +372,11 @@ describe('screencast', suite => {
       videosPath,
     });
 
-    await context.newPage();
+    const page = await context.newPage();
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     expect(await videoPlayer.videoWidth).toBe(1280);
     expect(await videoPlayer.videoHeight).toBe(720);
@@ -402,7 +395,7 @@ describe('screencast', suite => {
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
 
-    const videoFile = findVideo(videosPath);
+    const videoFile = await page.video().path();
     const videoPlayer = new VideoPlayer(videoFile);
     const duration = videoPlayer.duration;
     expect(duration).toBeGreaterThan(0);

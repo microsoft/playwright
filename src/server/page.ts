@@ -23,7 +23,7 @@ import * as network from './network';
 import { Screenshotter } from './screenshotter';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import * as types from './types';
-import { BrowserContext } from './browserContext';
+import { BrowserContext, Video } from './browserContext';
 import { ConsoleMessage } from './console';
 import * as accessibility from './accessibility';
 import { EventEmitter } from 'events';
@@ -143,6 +143,7 @@ export class Page extends EventEmitter {
   private _requestInterceptor?: network.RouteHandler;
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
+  _video: Video | null = null;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -415,6 +416,11 @@ export class Page extends EventEmitter {
 
   async _setFileChooserIntercepted(enabled: boolean): Promise<void> {
     await this._delegate.setFileChooserIntercepted(enabled);
+  }
+
+  videoStarted(video: Video) {
+    this._video = video;
+    this.emit(Page.Events.VideoStarted, video);
   }
 }
 

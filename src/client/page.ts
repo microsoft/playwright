@@ -237,6 +237,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     if (!this._browserContext._options.videosPath)
       return null;
     this._video = new Video(this);
+    // In case of persistent profile, we already have it.
+    if (this._initializer.videoRelativePath)
+      this._video._setRelativePath(this._initializer.videoRelativePath);
     return this._video;
   }
 
