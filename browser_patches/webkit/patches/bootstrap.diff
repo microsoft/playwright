@@ -16364,6 +16364,56 @@ index a1729f5c6205d16d7fa998a6536a84c8fa480454..a23b742a0f5ef084f116b2e2c61e8460
      return PointerCharacteristics::Fine;
  }
  
+diff --git a/Source/WebKit/WebProcess/WebPage/win/WebPageWin.cpp b/Source/WebKit/WebProcess/WebPage/win/WebPageWin.cpp
+index fbfc1fd3ece09dc3dfd9300dc1d67f045942053b..08a671959b8483760771a790ad6793eb124a9495 100644
+--- a/Source/WebKit/WebProcess/WebPage/win/WebPageWin.cpp
++++ b/Source/WebKit/WebProcess/WebPage/win/WebPageWin.cpp
+@@ -43,6 +43,7 @@
+ #include <WebCore/NotImplemented.h>
+ #include <WebCore/Page.h>
+ #include <WebCore/PlatformKeyboardEvent.h>
++#include <WebCore/PlatformScreen.h>
+ #include <WebCore/PointerCharacteristics.h>
+ #include <WebCore/Settings.h>
+ #include <WebCore/SharedBuffer.h>
+@@ -118,21 +119,37 @@ String WebPage::platformUserAgent(const URL&) const
+ 
+ bool WebPage::hoverSupportedByPrimaryPointingDevice() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    return !screenIsTouchPrimaryInputDevice();
++#else
+     return true;
++#endif
+ }
+ 
+ bool WebPage::hoverSupportedByAnyAvailablePointingDevice() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    return !screenHasTouchDevice();
++#else
+     return true;
++#endif
+ }
+ 
+ Optional<PointerCharacteristics> WebPage::pointerCharacteristicsOfPrimaryPointingDevice() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    if (screenIsTouchPrimaryInputDevice())
++        return PointerCharacteristics::Coarse;
++#endif
+     return PointerCharacteristics::Fine;
+ }
+ 
+ OptionSet<PointerCharacteristics> WebPage::pointerCharacteristicsOfAllAvailablePointingDevices() const
+ {
++#if ENABLE(TOUCH_EVENTS)
++    if (screenHasTouchDevice())
++        return PointerCharacteristics::Coarse;
++#endif
+     return PointerCharacteristics::Fine;
+ }
+ 
 diff --git a/Source/WebKit/WebProcess/WebProcess.cpp b/Source/WebKit/WebProcess/WebProcess.cpp
 index dfa57c655ada7cf97189b757c59aa901950aa9e8..56832e0190d11e0894a4c537b3ff3806adf4e473 100644
 --- a/Source/WebKit/WebProcess/WebProcess.cpp
