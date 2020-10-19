@@ -67,6 +67,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
         ['mac10.14', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
         ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
+        ['mac11.0', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
         ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
         ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
       ]).get(platform) :
@@ -76,6 +77,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', '%s/builds/chromium/%s/chromium-mac.zip'],
         ['mac10.14', '%s/builds/chromium/%s/chromium-mac.zip'],
         ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
+        ['mac11.0', '%s/builds/chromium/%s/chromium-mac.zip'],
         ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
         ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
       ]).get(platform);
@@ -90,6 +92,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
+        ['mac11.0', '%s/builds/firefox/%s/firefox-mac.zip'],
         ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
         ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
       ]).get(platform) :
@@ -99,6 +102,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
         ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
         ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['mac11.0', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
         ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
         ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
       ]).get(platform);
@@ -113,6 +117,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', undefined],
         ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
         ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
+        ['mac11.0', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
         ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
         ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
       ]).get(platform) :
@@ -122,6 +127,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', undefined],
         ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
         ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
+        ['mac11.0', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
         ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
         ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
       ]).get(platform);
