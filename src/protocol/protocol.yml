@@ -585,6 +585,7 @@ Page:
         width: number
         height: number
     isClosed: boolean
+    videoRelativePath: string?
 
   commands:
 

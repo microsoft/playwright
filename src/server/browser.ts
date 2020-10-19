@@ -92,7 +92,7 @@ export abstract class Browser extends EventEmitter {
     context.emit(BrowserContext.Events.VideoStarted, video);
     pageOrError.then(pageOrError => {
       if (pageOrError instanceof Page)
-        pageOrError.emit(Page.Events.VideoStarted, video);
+        pageOrError.videoStarted(video);
     });
   }
 

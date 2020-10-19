@@ -40,6 +40,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     // If we split pageCreated and pageReady, there should be no main frame during pageCreated.
     super(scope, page, 'Page', {
       mainFrame: FrameDispatcher.from(scope, page.mainFrame()),
+      videoRelativePath: page._video ? page._video._relativePath : undefined,
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed()
     });
