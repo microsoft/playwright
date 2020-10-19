@@ -27,7 +27,7 @@ import { getAccessibilityTree } from './ffAccessibility';
 import { FFBrowserContext } from './ffBrowser';
 import { FFSession, FFSessionEvents } from './ffConnection';
 import { FFExecutionContext } from './ffExecutionContext';
-import { RawKeyboardImpl, RawMouseImpl } from './ffInput';
+import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
@@ -38,6 +38,7 @@ export class FFPage implements PageDelegate {
   readonly cspErrorsAsynchronousForInlineScipts = true;
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
+  readonly rawTouchscreen: RawTouchscreenImpl;
   readonly _session: FFSession;
   readonly _page: Page;
   readonly _networkManager: FFNetworkManager;
@@ -55,6 +56,7 @@ export class FFPage implements PageDelegate {
     this._opener = opener;
     this.rawKeyboard = new RawKeyboardImpl(session);
     this.rawMouse = new RawMouseImpl(session);
+    this.rawTouchscreen = new RawTouchscreenImpl(session);
     this._contextIdToContext = new Map();
     this._browserContext = browserContext;
     this._page = new Page(this, browserContext);

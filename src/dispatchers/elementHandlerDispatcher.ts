@@ -92,6 +92,12 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     }, { ...metadata, type: 'dblclick', target: this._elementHandle, page: this._elementHandle._page });
   }
 
+  async tap(params: channels.ElementHandleTapParams, metadata?: channels.Metadata): Promise<void> {
+    return runAction(async controller => {
+      return await this._elementHandle.tap(controller, params);
+    }, { ...metadata, type: 'tap', target: this._elementHandle, page: this._elementHandle._page });
+  }
+
   async selectOption(params: channels.ElementHandleSelectOptionParams, metadata?: channels.Metadata): Promise<channels.ElementHandleSelectOptionResult> {
     return runAction(async controller => {
       const elements = (params.elements || []).map(e => (e as ElementHandleDispatcher)._elementHandle);

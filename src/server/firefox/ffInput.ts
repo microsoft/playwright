@@ -141,3 +141,18 @@ export class RawMouseImpl implements input.RawMouse {
     });
   }
 }
+
+export class RawTouchscreenImpl implements input.RawTouchscreen {
+  private _client: FFSession;
+
+  constructor(client: FFSession) {
+    this._client = client;
+  }
+  async tap(x: number, y: number, modifiers: Set<types.KeyboardModifier>) {
+    await this._client.send('Page.dispatchTapEvent', {
+      x,
+      y,
+      modifiers: toModifiersMask(modifiers),
+    });
+  }
+}

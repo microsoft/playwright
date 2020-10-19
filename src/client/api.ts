@@ -27,7 +27,7 @@ export { FileChooser } from './fileChooser';
 export { Logger } from './types';
 export { TimeoutError } from '../utils/errors';
 export { Frame } from './frame';
-export { Keyboard, Mouse } from './input';
+export { Keyboard, Mouse, Touchscreen } from './input';
 export { JSHandle } from './jsHandle';
 export { Request, Response, Route } from './network';
 export { Page } from './page';

@@ -820,6 +820,12 @@ export class Frame extends EventEmitter {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async tap(controller: ProgressController, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
+    return controller.run(async progress => {
+      return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._tap(progress, options)));
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   async fill(controller: ProgressController, selector: string, value: string, options: types.NavigatingActionWaitOptions) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options)));

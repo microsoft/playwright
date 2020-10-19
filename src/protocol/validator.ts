@@ -404,6 +404,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     clickCount: tOptional(tNumber),
   });
+  scheme.PageTouchscreenTapParams = tObject({
+    x: tNumber,
+    y: tNumber,
+  });
   scheme.PageAccessibilitySnapshotParams = tObject({
     interestingOnly: tOptional(tBoolean),
     root: tOptional(tChannel('ElementHandle')),
@@ -589,6 +593,17 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
   });
+  scheme.FrameTapParams = tObject({
+    selector: tString,
+    force: tOptional(tBoolean),
+    noWaitAfter: tOptional(tBoolean),
+    modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+    position: tOptional(tObject({
+      x: tNumber,
+      y: tNumber,
+    })),
+    timeout: tOptional(tNumber),
+  });
   scheme.FrameTextContentParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
@@ -766,6 +781,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
+  });
+  scheme.ElementHandleTapParams = tObject({
+    force: tOptional(tBoolean),
+    noWaitAfter: tOptional(tBoolean),
+    modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
+    position: tOptional(tObject({
+      x: tNumber,
+      y: tNumber,
+    })),
+    timeout: tOptional(tNumber),
   });
   scheme.ElementHandleTextContentParams = tOptional(tObject({}));
   scheme.ElementHandleTypeParams = tObject({

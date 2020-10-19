@@ -72,3 +72,15 @@ export class Mouse {
     await this.click(x, y, { ...options, clickCount: 2 });
   }
 }
+
+export class Touchscreen {
+  private _channel: channels.PageChannel;
+
+  constructor(channel: channels.PageChannel) {
+    this._channel = channel;
+  }
+
+  async tap(x: number, y: number) {
+    await this._channel.touchscreenTap({x, y});
+  }
+}

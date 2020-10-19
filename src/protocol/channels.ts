@@ -710,6 +710,7 @@ export interface PageChannel extends Channel {
   mouseDown(params: PageMouseDownParams, metadata?: Metadata): Promise<PageMouseDownResult>;
   mouseUp(params: PageMouseUpParams, metadata?: Metadata): Promise<PageMouseUpResult>;
   mouseClick(params: PageMouseClickParams, metadata?: Metadata): Promise<PageMouseClickResult>;
+  touchscreenTap(params: PageTouchscreenTapParams, metadata?: Metadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
   pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
   crStartJSCoverage(params: PageCrStartJSCoverageParams, metadata?: Metadata): Promise<PageCrStartJSCoverageResult>;
@@ -996,6 +997,14 @@ export type PageMouseClickOptions = {
   clickCount?: number,
 };
 export type PageMouseClickResult = void;
+export type PageTouchscreenTapParams = {
+  x: number,
+  y: number,
+};
+export type PageTouchscreenTapOptions = {
+
+};
+export type PageTouchscreenTapResult = void;
 export type PageAccessibilitySnapshotParams = {
   interestingOnly?: boolean,
   root?: ElementHandleChannel,
@@ -1133,6 +1142,7 @@ export interface FrameChannel extends Channel {
   selectOption(params: FrameSelectOptionParams, metadata?: Metadata): Promise<FrameSelectOptionResult>;
   setContent(params: FrameSetContentParams, metadata?: Metadata): Promise<FrameSetContentResult>;
   setInputFiles(params: FrameSetInputFilesParams, metadata?: Metadata): Promise<FrameSetInputFilesResult>;
+  tap(params: FrameTapParams, metadata?: Metadata): Promise<FrameTapResult>;
   textContent(params: FrameTextContentParams, metadata?: Metadata): Promise<FrameTextContentResult>;
   title(params?: FrameTitleParams, metadata?: Metadata): Promise<FrameTitleResult>;
   type(params: FrameTypeParams, metadata?: Metadata): Promise<FrameTypeResult>;
@@ -1475,6 +1485,28 @@ export type FrameSetInputFilesOptions = {
   noWaitAfter?: boolean,
 };
 export type FrameSetInputFilesResult = void;
+export type FrameTapParams = {
+  selector: string,
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  timeout?: number,
+};
+export type FrameTapOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  timeout?: number,
+};
+export type FrameTapResult = void;
 export type FrameTextContentParams = {
   selector: string,
   timeout?: number,
@@ -1675,6 +1707,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   selectOption(params: ElementHandleSelectOptionParams, metadata?: Metadata): Promise<ElementHandleSelectOptionResult>;
   selectText(params: ElementHandleSelectTextParams, metadata?: Metadata): Promise<ElementHandleSelectTextResult>;
   setInputFiles(params: ElementHandleSetInputFilesParams, metadata?: Metadata): Promise<ElementHandleSetInputFilesResult>;
+  tap(params: ElementHandleTapParams, metadata?: Metadata): Promise<ElementHandleTapResult>;
   textContent(params?: ElementHandleTextContentParams, metadata?: Metadata): Promise<ElementHandleTextContentResult>;
   type(params: ElementHandleTypeParams, metadata?: Metadata): Promise<ElementHandleTypeResult>;
   uncheck(params: ElementHandleUncheckParams, metadata?: Metadata): Promise<ElementHandleUncheckResult>;
@@ -1944,6 +1977,27 @@ export type ElementHandleSetInputFilesOptions = {
   noWaitAfter?: boolean,
 };
 export type ElementHandleSetInputFilesResult = void;
+export type ElementHandleTapParams = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  timeout?: number,
+};
+export type ElementHandleTapOptions = {
+  force?: boolean,
+  noWaitAfter?: boolean,
+  modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
+  position?: {
+    x: number,
+    y: number,
+  },
+  timeout?: number,
+};
+export type ElementHandleTapResult = void;
 export type ElementHandleTextContentParams = {};
 export type ElementHandleTextContentOptions = {};
 export type ElementHandleTextContentResult = {

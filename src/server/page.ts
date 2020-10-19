@@ -36,6 +36,7 @@ import { Selectors } from './selectors';
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
   readonly rawKeyboard: input.RawKeyboard;
+  readonly rawTouchscreen: input.RawTouchscreen;
 
   opener(): Promise<Page | null>;
 
@@ -127,6 +128,7 @@ export class Page extends EventEmitter {
   readonly _browserContext: BrowserContext;
   readonly keyboard: input.Keyboard;
   readonly mouse: input.Mouse;
+  readonly touchscreen: input.Touchscreen;
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
   readonly _state: PageState;
@@ -161,6 +163,7 @@ export class Page extends EventEmitter {
     this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
+    this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this._timeoutSettings = new TimeoutSettings(browserContext._timeoutSettings);
     this._screenshotter = new Screenshotter(this);
     this._frameManager = new frames.FrameManager(this);
