@@ -21,6 +21,7 @@ namespace mozilla {
 class ScreencastEncoder {
     NS_INLINE_DECL_THREADSAFE_REFCOUNTING(ScreencastEncoder)
 public:
+    static constexpr int fps = 25;
 
     static RefPtr<ScreencastEncoder> create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, const gfx::IntMargin& margin);
 

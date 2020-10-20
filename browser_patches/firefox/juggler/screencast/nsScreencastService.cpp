@@ -92,7 +92,7 @@ class nsScreencastService::Session : public rtc::VideoSinkInterface<webrtc::Vide
     // The size is ignored in fact.
     capability.width = 1280;
     capability.height = 960;
-    capability.maxFPS = 24;
+    capability.maxFPS = ScreencastEncoder::fps;
     capability.videoType = webrtc::VideoType::kI420;
     int error = mCaptureModule->StartCapture(capability);
     if (error) {
