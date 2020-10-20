@@ -501,8 +501,9 @@ it('should work with lazy loading iframes', async ({page, server}) => {
   expect(page.frames().length).toBe(2);
 });
 
-it('should report raw buffer for main resource', (test, { browserName }) => {
+it('should report raw buffer for main resource', (test, { browserName, platform }) => {
   test.fail(browserName === 'chromium', 'Chromium sends main resource as text');
+  test.fail(browserName === 'webkit' && platform === 'win32', 'Same here');
 }, async ({page, server, playwright}) => {
   server.setRoute('/empty.html', (req, res) => {
     res.statusCode = 200;
