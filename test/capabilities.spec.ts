@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import os from 'os';
 import url from 'url';
 import { it, expect } from './fixtures';
 
@@ -51,7 +52,8 @@ it('should respect CSP', async ({page, server}) => {
 });
 
 it('should play video', (test, { browserName, platform }) => {
-  test.fixme(browserName === 'webkit' && (platform !== 'darwin'));
+  test.fixme(browserName === 'webkit' && platform !== 'darwin');
+  test.fixme(browserName === 'webkit' && platform === 'darwin' && os.release() === '20.1.0');
 }, async ({page, asset, isWebKit}) => {
   // TODO: the test passes on Windows locally but fails on GitHub Action bot,
   // apparently due to a Media Pack issue in the Windows Server.
