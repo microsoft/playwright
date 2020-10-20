@@ -43,6 +43,10 @@
 namespace mozilla {
 
 namespace {
+
+// Number of timebase unints per one frame.
+constexpr int timeScale = 1000;
+
 // Defines the dimension of a macro block. This is used to compute the active
 // map for the encoder.
 const int kMacroBlockSize = 16;
@@ -111,8 +115,8 @@ public:
         , m_margin(margin)
     { }
 
-    void setDuration(int duration) { m_duration = duration; }
-    int duration() const { return m_duration; }
+    void setDuration(TimeDuration duration) { m_duration = duration; }
+    TimeDuration duration() const { return m_duration; }
 
     void convertToVpxImage(vpx_image_t* image)
     {
@@ -171,7 +175,7 @@ private:
     rtc::scoped_refptr<webrtc::VideoFrameBuffer> m_frameBuffer;
     Maybe<double> m_scale;
     gfx::IntMargin m_margin;
-    int m_duration = 0;
+    TimeDuration m_duration;
 };
 
 
@@ -202,7 +206,14 @@ public:
         m_encoderQueue->Dispatch(NS_NewRunnableFunction("VPXCodec::encodeFrameAsync", [this, frame = std::move(frame)] {
             memset(m_imageBuffer.get(), 128, m_imageBufferSize);
             frame->convertToVpxImage(m_image.get());
-            encodeFrame(m_image.get(), frame->duration());
+
+            double frameCount = frame->duration().ToSeconds() * fps;
+            // For long duration repeat frame at 1 fps to ensure last frame duration is short enough.
+            // TODO: figure out why simply passing duration doesn't work well.
+            for (;frameCount > 1.5; frameCount -= 1) {
+                encodeFrame(m_image.get(), timeScale);
+            }
+            encodeFrame(m_image.get(), std::max<int>(1, frameCount * timeScale));
         }));
     }
 
@@ -276,8 +287,6 @@ ScreencastEncoder::~ScreencastEncoder()
 {
 }
 
-static constexpr int fps = 24;
-
 RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, const nsCString& filePath, int width, int height, Maybe<double> scale, const gfx::IntMargin& margin)
 {
     vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
@@ -302,7 +311,7 @@ RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, cons
     cfg.g_w = width;
     cfg.g_h = height;
     cfg.g_timebase.num = 1;
-    cfg.g_timebase.den = fps;
+    cfg.g_timebase.den = fps * timeScale;
     cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
 
     vpx_codec_ctx_t codec;
@@ -330,9 +339,7 @@ void ScreencastEncoder::flushLastFrame()
         if (!m_lastFrame)
             return;
 
-        TimeDuration seconds = now - m_lastFrameTimestamp;
-        int duration = 1 + seconds.ToSeconds() * fps; // Duration in timebase units
-        m_lastFrame->setDuration(duration);
+        m_lastFrame->setDuration(now - m_lastFrameTimestamp);
         m_vpxCodec->encodeFrameAsync(std::move(m_lastFrame));
     }
     m_lastFrameTimestamp = now;
