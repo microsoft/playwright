@@ -26,3 +26,20 @@ it('should close page with active dialog', (test, { browserName, platform }) => 
   await page.waitForEvent('dialog');
   await page.close();
 });
+
+it('should access page after beforeunload', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox', 'Only works on WebKit atm');
+  test.fixme(browserName === 'chromium');
+}, async ({context}) => {
+  const page = await context.newPage();
+  await page.evaluate(() => {
+    window.addEventListener('beforeunload', event => {
+      event.preventDefault();
+      event.returnValue = 'Do you want to close page?';
+    });
+  });
+  await page.close({ runBeforeUnload: true });
+  const dialog = await page.waitForEvent('dialog');
+  await dialog.dismiss();
+  await page.evaluate(() => document.title);
+});
