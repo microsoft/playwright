@@ -9439,7 +9439,7 @@ index b0722e7da81e56530deb570b82ed7cfece970362..05ec3e3ea97ba49135a27d7f9b91f14c
  }
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3873c71090213157a982c0d20316428de098c77b
+index 0000000000000000000000000000000000000000..31abb688f09ce933d4eb33f09873ac38d788f1b2
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/InspectorScreencastAgent.cpp
 @@ -0,0 +1,168 @@
@@ -9581,7 +9581,7 @@ index 0000000000000000000000000000000000000000..3873c71090213157a982c0d20316428d
 +    if (!m_encoder)
 +        return;
 +
-+    RunLoop::main().dispatchAfter(Seconds(1.0 / 24), [agent = makeWeakPtr(this)]() mutable {
++    RunLoop::main().dispatchAfter(Seconds(1.0 / ScreencastEncoder::fps), [agent = makeWeakPtr(this)]() mutable {
 +        if (!agent)
 +            return;
 +
@@ -9696,10 +9696,10 @@ index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a4f804673
+index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045633dc0de
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,389 @@
+@@ -0,0 +1,394 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -9750,6 +9750,10 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +namespace WebKit {
 +
 +namespace {
++
++// Number of timebase unints per one frame.
++constexpr int timeScale = 1000;
++
 +// Defines the dimension of a macro block. This is used to compute the active
 +// map for the encoder.
 +const int kMacroBlockSize = 16;
@@ -9825,8 +9829,8 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +    { }
 +#endif
 +
-+    void setDuration(int duration) { m_duration = duration; }
-+    int duration() const { return m_duration; }
++    void setDuration(Seconds duration) { m_duration = duration; }
++    Seconds duration() const { return m_duration; }
 +
 +    void convertToVpxImage(vpx_image_t* image)
 +    {
@@ -9863,7 +9867,7 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +    Optional<double> m_scale;
 +    int m_offsetTop { 0 };
 +#endif
-+    int m_duration = 0;
++    Seconds m_duration;
 +};
 +
 +
@@ -9883,9 +9887,13 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +    {
 +        m_encoderQueue->dispatch([this, frame = WTFMove(frame)] {
 +            frame->convertToVpxImage(m_image.get());
++            double frameCount = frame->duration().seconds() * fps;
++            // For long duration repeat frame at 1 fps to ensure last frame duration is short enough.
 +            // TODO: figure out why simply passing duration doesn't work well.
-+            for (int i = 0; i < frame->duration(); i++)
-+                encodeFrame(m_image.get(), 1);
++            for (;frameCount > 1.5; frameCount -= 1) {
++                encodeFrame(m_image.get(), timeScale);
++            }
++            encodeFrame(m_image.get(), std::max<int>(1, frameCount * timeScale));
 +        });
 +    }
 +
@@ -9962,8 +9970,6 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +{
 +}
 +
-+static constexpr int fps = 24;
-+
 +RefPtr<ScreencastEncoder> ScreencastEncoder::create(String& errorString, const String& filePath, IntSize size, Optional<double> scale)
 +{
 +    vpx_codec_iface_t* codec_interface = vpx_codec_vp8_cx();
@@ -9988,7 +9994,7 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +    cfg.g_w = size.width();
 +    cfg.g_h = size.height();
 +    cfg.g_timebase.num = 1;
-+    cfg.g_timebase.den = fps;
++    cfg.g_timebase.den = fps * timeScale;
 +    cfg.g_error_resilient = VPX_ERROR_RESILIENT_DEFAULT;
 +
 +    vpx_codec_ctx_t codec;
@@ -10017,8 +10023,7 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +            return;
 +
 +        Seconds seconds = now - m_lastFrameTimestamp;
-+        int duration = 1 + seconds.seconds() * fps; // Duration in timebase units
-+        m_lastFrame->setDuration(duration);
++        m_lastFrame->setDuration(seconds);
 +        m_vpxCodec->encodeFrameAsync(WTFMove(m_lastFrame));
 +    }
 +    m_lastFrameTimestamp = now;
@@ -10091,10 +10096,10 @@ index 0000000000000000000000000000000000000000..3e9eb9575bb19486ff9d1cefa3dec19a
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0e2f2d42cf398bee37ab27bda765be978be81f0d
+index 0000000000000000000000000000000000000000..c9ff0442e072d54c089540d291b7963688b6474b
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.h
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,81 @@
 +/*
 + * Copyright (C) 2020 Microsoft Corporation.
 + *
@@ -10141,6 +10146,8 @@ index 0000000000000000000000000000000000000000..0e2f2d42cf398bee37ab27bda765be97
 +    WTF_MAKE_NONCOPYABLE(ScreencastEncoder);
 +    WTF_MAKE_FAST_ALLOCATED;
 +public:
++    static constexpr int fps = 25;
++
 +    static RefPtr<ScreencastEncoder> create(String& errorString, const String& filePath, WebCore::IntSize, Optional<double> scale);
 +
 +    class VPXCodec;
