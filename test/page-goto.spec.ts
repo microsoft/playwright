@@ -500,3 +500,15 @@ it('should work with lazy loading iframes', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/lazy-frame.html');
   expect(page.frames().length).toBe(2);
 });
+
+it('should report raw buffer for main resource', (test, { browserName }) => {
+  test.fail(browserName === 'chromium', 'Chromium sends main resource as text');
+}, async ({page, server, playwright}) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.statusCode = 200;
+    res.end(Buffer.from('Ü (lowercase ü)', 'utf-8'));
+  });
+  const response = await page.goto(server.PREFIX + '/empty.html');
+  const body = await response.body();
+  expect(body.toString()).toBe('Ü (lowercase ü)');
+});
