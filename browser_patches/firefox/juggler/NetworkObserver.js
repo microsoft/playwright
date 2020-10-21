@@ -507,6 +507,17 @@ class NetworkRequest {
       return;
 
     this.httpChannel.QueryInterface(Ci.nsIHttpChannelInternal);
+    this.httpChannel.QueryInterface(Ci.nsITimedChannel);
+    const timing = {
+      startTime: this.httpChannel.channelCreationTime,
+      domainLookupStart: this.httpChannel.domainLookupStartTime,
+      domainLookupEnd: this.httpChannel.domainLookupEndTime,
+      connectStart: this.httpChannel.connectStartTime,
+      secureConnectionStart: this.httpChannel.secureConnectionStartTime,
+      connectEnd: this.httpChannel.connectEndTime,
+      requestStart: this.httpChannel.requestStartTime,
+      responseStart: this.httpChannel.responseStartTime,
+    };
 
     const headers = [];
     let status = 0;
@@ -540,6 +551,7 @@ class NetworkRequest {
       remotePort,
       status,
       statusText,
+      timing,
     }, this._frameId);
   }
 
@@ -559,6 +571,7 @@ class NetworkRequest {
     if (pageNetwork) {
       pageNetwork.emit(PageNetwork.Events.RequestFinished, {
         requestId: this.requestId,
+        responseEndTime: this.httpChannel.responseEndTime,
       }, this._frameId);
     }
     this._networkObserver._channelToRequest.delete(this.httpChannel);
