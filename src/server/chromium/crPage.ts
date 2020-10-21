@@ -128,19 +128,19 @@ export class CRPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateExtraHTTPHeaders());
+    await this._forAllFrameSessions(frame => frame._updateExtraHTTPHeaders(false));
   }
 
   async updateGeolocation(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateGeolocation());
+    await this._forAllFrameSessions(frame => frame._updateGeolocation(false));
   }
 
   async updateOffline(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateOffline());
+    await this._forAllFrameSessions(frame => frame._updateOffline(false));
   }
 
   async updateHttpCredentials(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateHttpCredentials());
+    await this._forAllFrameSessions(frame => frame._updateHttpCredentials(false));
   }
 
   async setViewportSize(viewportSize: types.Size): Promise<void> {
@@ -153,11 +153,11 @@ export class CRPage implements PageDelegate {
   }
 
   async updateEmulateMedia(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateEmulateMedia());
+    await this._forAllFrameSessions(frame => frame._updateEmulateMedia(false));
   }
 
   async updateRequestInterception(): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._updateRequestInterception());
+    await this._forAllFrameSessions(frame => frame._updateRequestInterception(false));
   }
 
   async setFileChooserIntercepted(enabled: boolean) {
@@ -446,12 +446,12 @@ class FrameSession {
       promises.push(emulateLocale(this._client, options.locale));
     if (options.timezoneId)
       promises.push(emulateTimezone(this._client, options.timezoneId));
-    promises.push(this._updateGeolocation());
-    promises.push(this._updateExtraHTTPHeaders());
-    promises.push(this._updateRequestInterception());
-    promises.push(this._updateOffline());
-    promises.push(this._updateHttpCredentials());
-    promises.push(this._updateEmulateMedia());
+    promises.push(this._updateGeolocation(true));
+    promises.push(this._updateExtraHTTPHeaders(true));
+    promises.push(this._updateRequestInterception(true));
+    promises.push(this._updateOffline(true));
+    promises.push(this._updateHttpCredentials(true));
+    promises.push(this._updateEmulateMedia(true));
     for (const binding of this._crPage._browserContext._pageBindings.values())
       promises.push(this._initBinding(binding));
     for (const binding of this._crPage._page._pageBindings.values())
@@ -794,27 +794,31 @@ class FrameSession {
     }
   }
 
-  async _updateExtraHTTPHeaders(): Promise<void> {
+  async _updateExtraHTTPHeaders(initial: boolean): Promise<void> {
     const headers = network.mergeHeaders([
       this._crPage._browserContext._options.extraHTTPHeaders,
       this._page._state.extraHTTPHeaders
     ]);
-    await this._client.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(headers, false /* lowerCase */) });
+    if (!initial || headers.length)
+      await this._client.send('Network.setExtraHTTPHeaders', { headers: headersArrayToObject(headers, false /* lowerCase */) });
   }
 
-  async _updateGeolocation(): Promise<void> {
+  async _updateGeolocation(initial: boolean): Promise<void> {
     const geolocation = this._crPage._browserContext._options.geolocation;
-    await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
+    if (!initial || geolocation)
+      await this._client.send('Emulation.setGeolocationOverride', geolocation || {});
   }
 
-  async _updateOffline(): Promise<void> {
+  async _updateOffline(initial: boolean): Promise<void> {
     const offline = !!this._crPage._browserContext._options.offline;
-    await this._networkManager.setOffline(offline);
+    if (!initial || offline)
+      await this._networkManager.setOffline(offline);
   }
 
-  async _updateHttpCredentials(): Promise<void> {
+  async _updateHttpCredentials(initial: boolean): Promise<void> {
     const credentials = this._crPage._browserContext._options.httpCredentials || null;
-    await this._networkManager.authenticate(credentials);
+    if (!initial || credentials)
+      await this._networkManager.authenticate(credentials);
   }
 
   async _updateViewport(): Promise<void> {
@@ -855,13 +859,13 @@ class FrameSession {
     await Promise.all(promises);
   }
 
-  async _updateEmulateMedia(): Promise<void> {
+  async _updateEmulateMedia(initial: boolean): Promise<void> {
     const colorScheme = this._page._state.colorScheme || this._crPage._browserContext._options.colorScheme || 'light';
     const features = colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [];
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });
   }
 
-  async _updateRequestInterception(): Promise<void> {
+  async _updateRequestInterception(initial: boolean): Promise<void> {
     await this._networkManager.setRequestInterception(this._page._needsRequestInterception());
   }
 

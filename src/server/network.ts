@@ -169,6 +169,10 @@ export class Request {
       return null;
     return new Route(this, this._routeDelegate);
   }
+
+  _updateWithRawHeaders(headers: types.HeadersArray) {
+    this._headers = headers;
+  }
 }
 
 export class Route {
