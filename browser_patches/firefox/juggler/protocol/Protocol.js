@@ -189,6 +189,16 @@ networkTypes.SecurityDetails = {
   validTo: t.Number,
 };
 
+networkTypes.ResourceTiming = {
+  startTime: t.Number,
+  domainLookupStart: t.Number,
+  domainLookupEnd: t.Number,
+  connectStart: t.Number,
+  secureConnectionStart: t.Number,
+  connectEnd: t.Number,
+  requestStart: t.Number,
+  responseStart: t.Number,
+};
 
 const Browser = {
   targets: ['browser'],
@@ -450,9 +460,11 @@ const Network = {
       status: t.Number,
       statusText: t.String,
       headers: t.Array(networkTypes.HTTPHeader),
+      timing: networkTypes.ResourceTiming,
     },
     'requestFinished': {
       requestId: t.String,
+      responseEndTime: t.Number,
     },
     'requestFailed': {
       requestId: t.String,
