@@ -78,6 +78,7 @@ export class Request {
   private _method: string;
   private _postData: Buffer | null;
   private _headers: types.HeadersArray;
+  private _headersMap = new Map<string, string>();
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
@@ -98,6 +99,8 @@ export class Request {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
+    for (const { name, value } of this._headers)
+      this._headersMap.set(name.toLowerCase(), value);
     this._waitForResponsePromise = new Promise(f => this._waitForResponsePromiseCallback = f);
     this._isFavicon = url.endsWith('/favicon.ico');
   }
@@ -125,6 +128,10 @@ export class Request {
 
   headers(): types.HeadersArray {
     return this._headers;
+  }
+
+  headerValue(name: string): string | undefined {
+    return this._headersMap.get(name);
   }
 
   response(): Promise<Response | null> {
@@ -172,6 +179,9 @@ export class Request {
 
   _updateWithRawHeaders(headers: types.HeadersArray) {
     this._headers = headers;
+    this._headersMap.clear();
+    for (const { name, value } of this._headers)
+      this._headersMap.set(name.toLowerCase(), value);
   }
 }
 
@@ -236,6 +246,7 @@ export class Response {
   private _statusText: string;
   private _url: string;
   private _headers: types.HeadersArray;
+  private _headersMap = new Map<string, string>();
   private _getResponseBodyCallback: GetResponseBodyCallback;
   private _timing: ResourceTiming;
 
@@ -246,6 +257,8 @@ export class Response {
     this._statusText = statusText;
     this._url = request.url();
     this._headers = headers;
+    for (const { name, value } of this._headers)
+      this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._finishedPromise = new Promise(f => {
       this._finishedPromiseCallback = f;
@@ -272,6 +285,10 @@ export class Response {
 
   headers(): types.HeadersArray {
     return this._headers;
+  }
+
+  headerValue(name: string): string | undefined {
+    return this._headersMap.get(name);
   }
 
   finished(): Promise<Error | null> {

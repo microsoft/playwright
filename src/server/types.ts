@@ -240,6 +240,10 @@ export type BrowserContextOptions = {
   acceptDownloads?: boolean,
   videosPath?: string,
   videoSize?: Size,
+  recordHar?: {
+    omitContent?: boolean,
+    path: string
+  },
   _tracePath?: string,
   _traceResourcesPath?: string,
 };

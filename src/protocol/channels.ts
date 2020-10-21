@@ -394,6 +394,10 @@ export type BrowserNewContextParams = {
     width: number,
     height: number,
   },
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
+  },
 };
 export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
@@ -433,6 +437,10 @@ export type BrowserNewContextOptions = {
   videoSize?: {
     width: number,
     height: number,
+  },
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
   },
 };
 export type BrowserNewContextResult = {
