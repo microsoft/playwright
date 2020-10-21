@@ -46,6 +46,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   _interceptedCallback: () => void = () => {};
   private _interceptedPromise: Promise<unknown>;
   readonly _allowInterception: boolean;
+  _timestamp: number;
+  _wallTime: number;
 
   constructor(session: WKSession, allowInterception: boolean, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: network.Request | null, documentId: string | undefined) {
     this._session = session;
@@ -53,6 +55,8 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     this._allowInterception = allowInterception;
     const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.resourceType() : 'other');
     let postDataBuffer = null;
+    this._timestamp = event.timestamp;
+    this._wallTime = event.walltime * 1000;
     if (event.request.postData)
       postDataBuffer = Buffer.from(event.request.postData, 'binary');
     this.request = new network.Request(allowInterception ? this : null, frame, redirectedFrom, documentId, event.request.url,
@@ -107,6 +111,31 @@ export class WKInterceptableRequest implements network.RouteDelegate {
       const response = await this._session.send('Network.getResponseBody', { requestId: this._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
-    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), getResponseBody);
+    const timingPayload = responsePayload.timing;
+    const timing: network.ResourceTiming = {
+      startTime: this._wallTime,
+      domainLookupStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupStart) : -1,
+      domainLookupEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.domainLookupEnd) : -1,
+      connectStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectStart) : -1,
+      secureConnectionStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.secureConnectionStart) : -1,
+      connectEnd: timingPayload ? wkMillisToRoundishMillis(timingPayload.connectEnd) : -1,
+      requestStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.requestStart) : -1,
+      responseStart: timingPayload ? wkMillisToRoundishMillis(timingPayload.responseStart) : -1,
+    };
+    return new network.Response(this.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
   }
+}
+
+function wkMillisToRoundishMillis(value: number): number {
+  // WebKit uses -1000 for unavailable.
+  if (value === -1000)
+    return -1;
+
+  // WebKit has a bug, instead of -1 it sends -1000 to be in ms.
+  if (value < 0) {
+    // DNS can start before request start on Mac Network Stack
+    return 0;
+  }
+
+  return ((value * 1000) | 0) / 1000;
 }

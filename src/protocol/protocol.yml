@@ -920,10 +920,12 @@ Page:
       parameters:
         request: Request
         failureText: string?
+        responseEndTiming: number
 
     requestFinished:
       parameters:
         request: Request
+        responseEndTiming: number
 
     response:
       parameters:
@@ -1789,6 +1791,17 @@ Route:
         isBase64: boolean?
 
 
+ResourceTiming:
+  type: object
+  properties:
+    startTime: number
+    domainLookupStart: number
+    domainLookupEnd: number
+    connectStart: number
+    secureConnectionStart: number
+    connectEnd: number
+    requestStart: number
+    responseStart: number
 
 Response:
   type: interface
@@ -1805,6 +1818,8 @@ Response:
         properties:
           name: string
           value: string
+    timing: ResourceTiming
+
 
   commands:
 
@@ -1815,7 +1830,6 @@ Response:
     finished:
       returns:
         error: string?
-
 
 
 ConsoleMessage:

@@ -28,6 +28,7 @@ export class FFNetworkManager {
   private _requests: Map<string, InterceptableRequest>;
   private _page: Page;
   private _eventListeners: RegisteredListener[];
+  private _startTime = 0;
 
   constructor(session: FFSession, page: Page) {
     this._session = session;
@@ -75,7 +76,19 @@ export class FFNetworkManager {
         throw new Error(`Response body for ${request.request.method()} ${request.request.url()} was evicted!`);
       return Buffer.from(response.base64body, 'base64');
     };
-    const response = new network.Response(request.request, event.status, event.statusText, event.headers, getResponseBody);
+
+    this._startTime = event.timing.startTime;
+    const timing = {
+      startTime: this._startTime / 1000,
+      domainLookupStart: this._relativeTiming(event.timing.domainLookupStart),
+      domainLookupEnd: this._relativeTiming(event.timing.domainLookupEnd),
+      connectStart: this._relativeTiming(event.timing.connectStart),
+      secureConnectionStart: this._relativeTiming(event.timing.secureConnectionStart),
+      connectEnd: this._relativeTiming(event.timing.connectEnd),
+      requestStart: this._relativeTiming(event.timing.requestStart),
+      responseStart: this._relativeTiming(event.timing.responseStart),
+    };
+    const response = new network.Response(request.request, event.status, event.statusText, event.headers, timing, getResponseBody);
     this._page._frameManager.requestReceivedResponse(response);
   }
 
@@ -87,10 +100,10 @@ export class FFNetworkManager {
     // Keep redirected requests in the map for future reference as redirectedFrom.
     const isRedirected = response.status() >= 300 && response.status() <= 399;
     if (isRedirected) {
-      response._requestFinished('Response body is unavailable for redirect responses');
+      response._requestFinished(this._relativeTiming(event.responseEndTime), 'Response body is unavailable for redirect responses');
     } else {
       this._requests.delete(request._id);
-      response._requestFinished();
+      response._requestFinished(this._relativeTiming(event.responseEndTime));
     }
     this._page._frameManager.requestFinished(request.request);
   }
@@ -102,9 +115,15 @@ export class FFNetworkManager {
     this._requests.delete(request._id);
     const response = request.request._existingResponse();
     if (response)
-      response._requestFinished();
+      response._requestFinished(-1);
     request.request._setFailureText(event.errorCode);
     this._page._frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');
+  }
+
+  _relativeTiming(time: number): number {
+    if (!time)
+      return -1;
+    return (time - this._startTime) / 1000;
   }
 }
 
@@ -146,7 +165,6 @@ class InterceptableRequest implements network.RouteDelegate {
   constructor(session: FFSession, frame: frames.Frame, redirectedFrom: InterceptableRequest | null, payload: Protocol.Network.requestWillBeSentPayload) {
     this._id = payload.requestId;
     this._session = session;
-
     let postDataBuffer = null;
     if (payload.postData)
       postDataBuffer = Buffer.from(payload.postData, 'base64');

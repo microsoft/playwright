@@ -776,6 +776,16 @@ export module Protocol {
       validFrom: number;
       validTo: number;
     };
+    export type ResourceTiming = {
+      startTime: number;
+      domainLookupStart: number;
+      domainLookupEnd: number;
+      connectStart: number;
+      secureConnectionStart: number;
+      connectEnd: number;
+      requestStart: number;
+      responseStart: number;
+    };
     export type requestWillBeSentPayload = {
       frameId?: string;
       requestId: string;
@@ -810,9 +820,20 @@ export module Protocol {
         name: string;
         value: string;
       }[];
+      timing: {
+        startTime: number;
+        domainLookupStart: number;
+        domainLookupEnd: number;
+        connectStart: number;
+        secureConnectionStart: number;
+        connectEnd: number;
+        requestStart: number;
+        responseStart: number;
+      };
     }
     export type requestFinishedPayload = {
       requestId: string;
+      responseEndTime: number;
     }
     export type requestFailedPayload = {
       requestId: string;

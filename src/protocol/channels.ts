@@ -758,9 +758,11 @@ export type PageRequestEvent = {
 export type PageRequestFailedEvent = {
   request: RequestChannel,
   failureText?: string,
+  responseEndTiming: number,
 };
 export type PageRequestFinishedEvent = {
   request: RequestChannel,
+  responseEndTiming: number,
 };
 export type PageResponseEvent = {
   response: ResponseChannel,
@@ -2133,6 +2135,17 @@ export type RouteFulfillOptions = {
 };
 export type RouteFulfillResult = void;
 
+export type ResourceTiming = {
+  startTime: number,
+  domainLookupStart: number,
+  domainLookupEnd: number,
+  connectStart: number,
+  secureConnectionStart: number,
+  connectEnd: number,
+  requestStart: number,
+  responseStart: number,
+};
+
 // ----------- Response -----------
 export type ResponseInitializer = {
   request: RequestChannel,
@@ -2143,6 +2156,7 @@ export type ResponseInitializer = {
     name: string,
     value: string,
   }[],
+  timing: ResourceTiming,
 };
 export interface ResponseChannel extends Channel {
   body(params?: ResponseBodyParams, metadata?: Metadata): Promise<ResponseBodyResult>;

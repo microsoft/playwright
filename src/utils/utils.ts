@@ -128,7 +128,7 @@ export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean):
 
 export function monotonicTime(): number {
   const [seconds, nanoseconds] = process.hrtime();
-  return seconds * 1000 + (nanoseconds / 1000000 | 0);
+  return seconds * 1000 + (nanoseconds / 1000 | 0) / 1000;
 }
 
 export function calculateSha1(buffer: Buffer): string {

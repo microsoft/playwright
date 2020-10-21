@@ -102,6 +102,14 @@ class Helper {
       progress.cleanupWhenAborted(dispose);
     return { promise, dispose };
   }
+
+  static secondsToRoundishMillis(value: number): number {
+    return ((value * 1000000) | 0) / 1000;
+  }
+
+  static millisToRoundishMillis(value: number): number {
+    return ((value * 1000) | 0) / 1000;
+  }
 }
 
 export const helper = Helper;

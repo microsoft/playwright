@@ -125,8 +125,8 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
     this._channel.on('popup', ({ page }) => this.emit(Events.Page.Popup, Page.from(page)));
     this._channel.on('request', ({ request }) => this.emit(Events.Page.Request, Request.from(request)));
-    this._channel.on('requestFailed', ({ request, failureText }) => this._onRequestFailed(Request.from(request), failureText));
-    this._channel.on('requestFinished', ({ request }) => this.emit(Events.Page.RequestFinished, Request.from(request)));
+    this._channel.on('requestFailed', ({ request, failureText, responseEndTiming }) => this._onRequestFailed(Request.from(request), responseEndTiming, failureText));
+    this._channel.on('requestFinished', ({ request, responseEndTiming }) => this._onRequestFinished(Request.from(request), responseEndTiming));
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
@@ -138,9 +138,17 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     }
   }
 
-  private _onRequestFailed(request: Request, failureText: string | undefined) {
+  private _onRequestFailed(request: Request, responseEndTiming: number, failureText: string | undefined) {
     request._failureText = failureText || null;
+    if (request._timing)
+      request._timing.responseEnd = responseEndTiming;
     this.emit(Events.Page.RequestFailed,  request);
+  }
+
+  private _onRequestFinished(request: Request, responseEndTiming: number) {
+    if (request._timing)
+      request._timing.responseEnd = responseEndTiming;
+    this.emit(Events.Page.RequestFinished, request);
   }
 
   private _onFrameAttached(frame: Frame) {

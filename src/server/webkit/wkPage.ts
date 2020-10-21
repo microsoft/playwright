@@ -878,7 +878,7 @@ export class WKPage implements PageDelegate {
       const request = this._requestIdToRequest.get(event.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
-        this._handleRequestRedirect(request, event.redirectResponse);
+        this._handleRequestRedirect(request, event.redirectResponse, event.timestamp);
         redirectedFrom = request.request;
       }
     }
@@ -893,9 +893,9 @@ export class WKPage implements PageDelegate {
     this._page._frameManager.requestStarted(request.request);
   }
 
-  private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response) {
+  private _handleRequestRedirect(request: WKInterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
     const response = request.createResponse(responsePayload);
-    response._requestFinished('Response body is unavailable for redirect responses');
+    response._requestFinished(responsePayload.timing ? helper.secondsToRoundishMillis(timestamp - request._timestamp) : -1, 'Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestReceivedResponse(response);
     this._page._frameManager.requestFinished(request.request);
@@ -942,7 +942,7 @@ export class WKPage implements PageDelegate {
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
     if (response)
-      response._requestFinished();
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     this._requestIdToRequest.delete(request._requestId);
     this._page._frameManager.requestFinished(request.request);
   }
@@ -955,7 +955,7 @@ export class WKPage implements PageDelegate {
       return;
     const response = request.request._existingResponse();
     if (response)
-      response._requestFinished();
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     this._requestIdToRequest.delete(request._requestId);
     request.request._setFailureText(event.errorText);
     this._page._frameManager.requestFailed(request.request, event.errorText.includes('cancelled'));

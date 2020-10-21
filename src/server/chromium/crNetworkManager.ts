@@ -173,7 +173,7 @@ export class CRNetworkManager {
       const request = this._requestIdToRequest.get(requestWillBeSentEvent.requestId);
       // If we connect late to the target, we could have missed the requestWillBeSent event.
       if (request) {
-        this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse);
+        this._handleRequestRedirect(request, requestWillBeSentEvent.redirectResponse, requestWillBeSentEvent.timestamp);
         redirectedFrom = request.request;
       }
     }
@@ -240,12 +240,37 @@ export class CRNetworkManager {
       const response = await this._client.send('Network.getResponseBody', { requestId: request._requestId });
       return Buffer.from(response.body, response.base64Encoded ? 'base64' : 'utf8');
     };
-    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), getResponseBody);
+    const timingPayload = responsePayload.timing!;
+    let timing: network.ResourceTiming;
+    if (timingPayload) {
+      timing = {
+        startTime: (timingPayload.requestTime - request._timestamp + request._wallTime) * 1000,
+        domainLookupStart: timingPayload.dnsStart,
+        domainLookupEnd: timingPayload.dnsEnd,
+        connectStart: timingPayload.connectStart,
+        secureConnectionStart: timingPayload.sslStart,
+        connectEnd: timingPayload.connectEnd,
+        requestStart: timingPayload.sendStart,
+        responseStart: timingPayload.receiveHeadersEnd,
+      };
+    } else {
+      timing = {
+        startTime: request._wallTime * 1000,
+        domainLookupStart: -1,
+        domainLookupEnd: -1,
+        connectStart: -1,
+        secureConnectionStart: -1,
+        connectEnd: -1,
+        requestStart: -1,
+        responseStart: -1,
+      };
+    }
+    return new network.Response(request.request, responsePayload.status, responsePayload.statusText, headersObjectToArray(responsePayload.headers), timing, getResponseBody);
   }
 
-  _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response) {
+  _handleRequestRedirect(request: InterceptableRequest, responsePayload: Protocol.Network.Response, timestamp: number) {
     const response = this._createResponse(request, responsePayload);
-    response._requestFinished('Response body is unavailable for redirect responses');
+    response._requestFinished((timestamp - request._timestamp) * 1000, 'Response body is unavailable for redirect responses');
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
@@ -275,7 +300,7 @@ export class CRNetworkManager {
     // event from protocol. @see https://crbug.com/883475
     const response = request.request._existingResponse();
     if (response)
-      response._requestFinished();
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
@@ -292,7 +317,7 @@ export class CRNetworkManager {
       return;
     const response = request.request._existingResponse();
     if (response)
-      response._requestFinished();
+      response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));
     this._requestIdToRequest.delete(request._requestId);
     if (request._interceptionId)
       this._attemptedAuthentications.delete(request._interceptionId);
@@ -324,6 +349,8 @@ class InterceptableRequest implements network.RouteDelegate {
   _interceptionId: string | null;
   _documentId: string | undefined;
   private _client: CRSession;
+  _timestamp: number;
+  _wallTime: number;
 
   constructor(options: {
     client: CRSession;
@@ -336,6 +363,8 @@ class InterceptableRequest implements network.RouteDelegate {
   }) {
     const { client, frame, documentId, allowInterception, requestWillBeSentEvent, requestPausedEvent, redirectedFrom } = options;
     this._client = client;
+    this._timestamp = requestWillBeSentEvent.timestamp;
+    this._wallTime = requestWillBeSentEvent.wallTime;
     this._requestId = requestWillBeSentEvent.requestId;
     this._interceptionId = requestPausedEvent && requestPausedEvent.requestId;
     this._documentId = documentId;
