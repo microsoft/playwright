@@ -60,6 +60,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
     npm install -g yarn
 
+# 9. Create the pwuser (we internally create a symlink for the pwuser and the root user)
+RUN adduser pwuser
+
 # === BAKE BROWSERS INTO IMAGE ===
 
 # 1. Add tip-of-tree Playwright package to install its browsers.
@@ -67,7 +70,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
 COPY ./playwright.tar.gz /tmp/playwright.tar.gz
 
 # 2. Install playwright and then delete the installation.
-#    Browsers will remain downloaded in `/root/.cache/ms-playwright`.
-RUN mkdir /tmp/pw && cd /tmp/pw && npm init -y && \
-    npm i /tmp/playwright.tar.gz && \
+#    Browsers will remain downloaded in `/home/pwuser/.cache/ms-playwright`.
+RUN su pwuser -c "mkdir /tmp/pw && cd /tmp/pw && npm init -y && \
+    npm i /tmp/playwright.tar.gz" && \
     rm -rf /tmp/pw && rm /tmp/playwright.tar.gz
+
+# 3. Symlink downloaded browsers for root user
+RUN mkdir /root/.cache/ && \
+    ln -s /home/pwuser/.cache/ms-playwright/ /root/.cache/ms-playwright
