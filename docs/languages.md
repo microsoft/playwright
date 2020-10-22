@@ -41,7 +41,7 @@ dotnet add package PlaywrightSharp
 ```
 
 * [Playwright on NuGet](https://www.nuget.org/packages/PlaywrightSharp/)
-* [GitHub repo](https://github.com/hardkoded/playwright-sharp)
+* [GitHub repo](https://github.com/microsoft/playwright-sharp)
 
 ## Go
 
