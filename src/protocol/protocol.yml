@@ -1811,6 +1811,13 @@ Response:
     url: string
     status: number
     statusText: string
+    requestHeaders:
+      type: array
+      items:
+        type: object
+        properties:
+          name: string
+          value: string
     headers:
       type: array
       items:

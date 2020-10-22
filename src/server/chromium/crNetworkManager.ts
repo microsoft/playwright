@@ -37,6 +37,7 @@ export class CRNetworkManager {
   private _protocolRequestInterceptionEnabled = false;
   private _requestIdToRequestPausedEvent = new Map<string, Protocol.Fetch.requestPausedPayload>();
   private _eventListeners: RegisteredListener[];
+  private _requestIdToExtraInfo = new Map<string, Protocol.Network.requestWillBeSentExtraInfoPayload>();
 
   constructor(client: CRSession, page: Page, parentManager: CRNetworkManager | null) {
     this._client = client;
@@ -50,6 +51,7 @@ export class CRNetworkManager {
       helper.addEventListener(session, 'Fetch.requestPaused', this._onRequestPaused.bind(this, workerFrame)),
       helper.addEventListener(session, 'Fetch.authRequired', this._onAuthRequired.bind(this)),
       helper.addEventListener(session, 'Network.requestWillBeSent', this._onRequestWillBeSent.bind(this, workerFrame)),
+      helper.addEventListener(session, 'Network.requestWillBeSentExtraInfo', this._onRequestWillBeSentExtraInfo.bind(this)),
       helper.addEventListener(session, 'Network.responseReceived', this._onResponseReceived.bind(this)),
       helper.addEventListener(session, 'Network.loadingFinished', this._onLoadingFinished.bind(this)),
       helper.addEventListener(session, 'Network.loadingFailed', this._onLoadingFailed.bind(this)),
@@ -116,9 +118,22 @@ export class CRNetworkManager {
       } else {
         this._requestIdToRequestWillBeSentEvent.set(event.requestId, event);
       }
-      return;
+    } else {
+      this._onRequest(workerFrame, event, null);
     }
-    this._onRequest(workerFrame, event, null);
+    const extraInfo = this._requestIdToExtraInfo.get(event.requestId);
+    if (extraInfo)
+      this._onRequestWillBeSentExtraInfo(extraInfo);
+  }
+
+  _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
+    const request = this._requestIdToRequest.get(event.requestId);
+    if (request) {
+      request.request._updateWithRawHeaders(headersObjectToArray(event.headers));
+      this._requestIdToExtraInfo.delete(event.requestId);
+    } else {
+      this._requestIdToExtraInfo.set(event.requestId, event);
+    }
   }
 
   _onAuthRequired(event: Protocol.Fetch.authRequiredPayload) {

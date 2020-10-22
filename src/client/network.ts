@@ -51,7 +51,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
-  private _headers: Headers;
+  _headers: Headers;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
 
@@ -258,6 +258,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     super(parent, type, guid, initializer);
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._request = Request.from(this._initializer.request);
+    this._request._headers = headersArrayToObject(initializer.requestHeaders, true /* lowerCase */);
     Object.assign(this._request._timing, this._initializer.timing);
   }
 

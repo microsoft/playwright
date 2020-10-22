@@ -2152,6 +2152,10 @@ export type ResponseInitializer = {
   url: string,
   status: number,
   statusText: string,
+  requestHeaders: {
+    name: string,
+    value: string,
+  }[],
   headers: {
     name: string,
     value: string,

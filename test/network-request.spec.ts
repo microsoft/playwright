@@ -82,7 +82,19 @@ it('should return headers', async ({page, server, isChromium, isFirefox, isWebKi
 });
 
 it('should get the same headers as the server', (test, { browserName }) => {
-  test.fail(browserName === 'chromium' || browserName === 'webkit', 'Provisional headers differ from those in network stack');
+  test.fail(browserName === 'webkit', 'Provisional headers differ from those in network stack');
+}, async ({ page, server }) => {
+  let serverRequest;
+  server.setRoute('/empty.html', (request, response) => {
+    serverRequest = request;
+    response.end('done');
+  });
+  const response = await page.goto(server.PREFIX + '/empty.html');
+  expect(response.request().headers()).toEqual(serverRequest.headers);
+});
+
+it('should get the same headers as the server CORP', (test, { browserName }) => {
+  test.fail(browserName === 'webkit', 'Provisional headers differ from those in network stack');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;
@@ -91,14 +103,14 @@ it('should get the same headers as the server', (test, { browserName }) => {
     response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
     response.end('done');
   });
-  const requestPromise = page.waitForEvent('request');
+  const responsePromise = page.waitForEvent('response');
   const text = await page.evaluate(async url => {
     const data = await fetch(url);
     return data.text();
   }, server.CROSS_PROCESS_PREFIX + '/something');
-  const request = await requestPromise;
+  const response = await responsePromise;
   expect(text).toBe('done');
-  expect(request.headers()).toEqual(serverRequest.headers);
+  expect(response.request().headers()).toEqual(serverRequest.headers);
 });
 
 it('should return postData', async ({page, server}) => {
