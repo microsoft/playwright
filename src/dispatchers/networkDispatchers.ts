@@ -59,6 +59,7 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
       status: response.status(),
       statusText: response.statusText(),
       headers: response.headers(),
+      timing: response.timing()
     });
   }
 

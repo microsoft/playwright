@@ -837,6 +837,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
   });
+  scheme.ResourceTiming = tObject({
+    startTime: tNumber,
+    domainLookupStart: tNumber,
+    domainLookupEnd: tNumber,
+    connectStart: tNumber,
+    secureConnectionStart: tNumber,
+    connectEnd: tNumber,
+    requestStart: tNumber,
+    responseStart: tNumber,
+  });
   scheme.ResponseBodyParams = tOptional(tObject({}));
   scheme.ResponseFinishedParams = tOptional(tObject({}));
   scheme.BindingCallRejectParams = tObject({

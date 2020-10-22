@@ -3815,6 +3815,7 @@ If request gets a 'redirect' response, the request is successfully finished with
 - [request.redirectedTo()](#requestredirectedto)
 - [request.resourceType()](#requestresourcetype)
 - [request.response()](#requestresponse)
+- [request.timing()](#requesttiming)
 - [request.url()](#requesturl)
 <!-- GEN:stop -->
 
@@ -3891,6 +3892,29 @@ ResourceType will be one of the following: `document`, `stylesheet`, `image`, `m
 
 #### request.response()
 - returns: <[Promise]<[null]|[Response]>> A matching [Response] object, or `null` if the response was not received due to error.
+
+#### request.timing()
+- returns: <[Object]>
+  - `startTime` <[number]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+  - `domainLookupStart` <[number]> Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `domainLookupEnd` <[number]> Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectStart` <[number]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `secureConnectionStart` <[number]> immediately before the browser starts the handshake process to secure the current connection. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectEnd` <[number]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `requestStart` <[number]> Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseStart` <[number]> immediately after the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseEnd` <[number]> Time immediately after the browser receives the last byte of the resource or immediately before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not available.
+};
+
+Returns resource timing information for given request. Most of the timing values become available upon the response, `responseEnd` becomes available when request finishes. Find more information at [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
+
+```js
+const [request] = await Promise.all([
+  page.waitForEvent('requestfinished'),
+  page.goto(httpsServer.EMPTY_PAGE)
+]);
+console.log(request.timing());
+```
 
 #### request.url()
 - returns: <[string]> URL of the request.

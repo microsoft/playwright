@@ -53,6 +53,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   _failureText: string | null = null;
   private _headers: Headers;
   private _postData: Buffer | null;
+  _timing: ResourceTiming;
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -69,6 +70,17 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
       this._redirectedFrom._redirectedTo = this;
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
     this._postData = initializer.postData ? Buffer.from(initializer.postData, 'base64') : null;
+    this._timing = {
+      startTime: 0,
+      domainLookupStart: -1,
+      domainLookupEnd: -1,
+      connectStart: -1,
+      secureConnectionStart: -1,
+      connectEnd: -1,
+      requestStart: -1,
+      responseStart: -1,
+      responseEnd: -1,
+    };
   }
 
   url(): string {
@@ -143,6 +155,10 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
     };
   }
 
+  timing(): ResourceTiming {
+    return this._timing;
+  }
+
   _finalRequest(): Request {
     return this._redirectedTo ? this._redirectedTo._finalRequest() : this;
   }
@@ -214,8 +230,21 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
 
 export type RouteHandler = (route: Route, request: Request) => void;
 
+export type ResourceTiming = {
+  startTime: number;
+  domainLookupStart: number;
+  domainLookupEnd: number;
+  connectStart: number;
+  secureConnectionStart: number;
+  connectEnd: number;
+  requestStart: number;
+  responseStart: number;
+  responseEnd: number;
+};
+
 export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> {
   private _headers: Headers;
+  private _request: Request;
 
   static from(response: channels.ResponseChannel): Response {
     return (response as any)._object;
@@ -228,6 +257,8 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.ResponseInitializer) {
     super(parent, type, guid, initializer);
     this._headers = headersArrayToObject(initializer.headers, true /* lowerCase */);
+    this._request = Request.from(this._initializer.request);
+    Object.assign(this._request._timing, this._initializer.timing);
   }
 
   url(): string {
@@ -272,11 +303,11 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 
   request(): Request {
-    return Request.from(this._initializer.request);
+    return this._request;
   }
 
   frame(): Frame {
-    return Request.from(this._initializer.request).frame();
+    return this._request.frame();
   }
 }
 

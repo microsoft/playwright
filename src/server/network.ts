@@ -81,6 +81,7 @@ export class Request {
   private _frame: frames.Frame;
   private _waitForResponsePromise: Promise<Response | null>;
   private _waitForResponsePromiseCallback: (value: Response | null) => void = () => {};
+  _responseEndTiming = -1;
 
   constructor(routeDelegate: RouteDelegate | null, frame: frames.Frame, redirectedFrom: Request | null, documentId: string | undefined,
     url: string, resourceType: string, method: string, postData: Buffer | null, headers: types.HeadersArray) {
@@ -211,6 +212,17 @@ export type RouteHandler = (route: Route, request: Request) => void;
 
 type GetResponseBodyCallback = () => Promise<Buffer>;
 
+export type ResourceTiming = {
+  startTime: number;
+  domainLookupStart: number;
+  domainLookupEnd: number;
+  connectStart: number;
+  secureConnectionStart: number;
+  connectEnd: number;
+  requestStart: number;
+  responseStart: number;
+};
+
 export class Response {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
@@ -221,9 +233,11 @@ export class Response {
   private _url: string;
   private _headers: types.HeadersArray;
   private _getResponseBodyCallback: GetResponseBodyCallback;
+  private _timing: ResourceTiming;
 
-  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, getResponseBodyCallback: GetResponseBodyCallback) {
+  constructor(request: Request, status: number, statusText: string, headers: types.HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback) {
     this._request = request;
+    this._timing = timing;
     this._status = status;
     this._statusText = statusText;
     this._url = request.url();
@@ -235,7 +249,8 @@ export class Response {
     this._request._setResponse(this);
   }
 
-  _requestFinished(error?: string) {
+  _requestFinished(responseEndTiming: number, error?: string) {
+    this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
     this._finishedPromiseCallback({ error });
   }
 
@@ -257,6 +272,10 @@ export class Response {
 
   finished(): Promise<Error | null> {
     return this._finishedPromise.then(({ error }) => error ? new Error(error) : null);
+  }
+
+  timing(): ResourceTiming {
+    return this._timing;
   }
 
   body(): Promise<Buffer> {
