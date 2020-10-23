@@ -73,8 +73,8 @@ it('should work for SSL', async ({ browser, httpsServer, isMac, isWebKit }) => {
     expect(timing.connectStart).toBeGreaterThanOrEqual(timing.domainLookupEnd);
     expect(timing.secureConnectionStart).toBeGreaterThan(timing.connectStart);
     expect(timing.connectEnd).toBeGreaterThan(timing.secureConnectionStart);
+    expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   }
-  expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
   expect(timing.responseEnd).toBeLessThan(10000);
