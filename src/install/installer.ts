@@ -33,7 +33,8 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const removeFolderAsync = util.promisify(removeFolder);
 
 export async function installBrowsersWithProgressBar(packagePath: string) {
-  if (getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
+  // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
+  if (!!Number(getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'))) {
     browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
