@@ -23,6 +23,7 @@
 - [class: Response](#class-response)
 - [class: Selectors](#class-selectors)
 - [class: Route](#class-route)
+- [class: WebSocket](#class-websocket)
 - [class: TimeoutError](#class-timeouterror)
 - [class: Accessibility](#class-accessibility)
 - [class: Worker](#class-worker)
@@ -732,6 +733,7 @@ page.removeListener('request', logRequest);
 - [event: 'requestfailed'](#event-requestfailed)
 - [event: 'requestfinished'](#event-requestfinished)
 - [event: 'response'](#event-response)
+- [event: 'websocket'](#event-websocket)
 - [event: 'worker'](#event-worker)
 - [page.$(selector)](#pageselector)
 - [page.$$(selector)](#pageselector-1)
@@ -942,6 +944,11 @@ Emitted when a request finishes successfully after downloading the response body
 - <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+
+#### event: 'websocket'
+- <[WebSocket]> websocket
+
+Emitted when <[WebSocket]> request is sent.
 
 #### event: 'worker'
 - <[Worker]>
@@ -4127,6 +4134,45 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 - returns: <[Request]> A request to be routed.
 
 
+### class: WebSocket
+
+The [WebSocket] class represents websocket connections in the page.
+
+<!-- GEN:toc -->
+- [event: 'close'](#event-close-2)
+- [event: 'framereceived'](#event-framereceived)
+- [event: 'framesent'](#event-framesent)
+- [event: 'socketerror'](#event-socketerror)
+- [webSocket.url()](#websocketurl)
+<!-- GEN:stop -->
+
+#### event: 'close'
+
+Fired when the websocket closes.
+
+#### event: 'framereceived'
+- <[Object]> web socket frame data
+  - `payload` <[string]|[Buffer]> frame payload
+
+Fired when the websocket recieves a frame.
+
+#### event: 'framesent'
+- <[Object]> web socket frame data
+  - `payload` <[string]|[Buffer]> frame payload
+
+Fired when the websocket sends a frame.
+
+#### event: 'socketerror'
+- <[String]> the error message
+
+Fired when the websocket has an error.
+
+#### webSocket.url()
+- returns: <[string]>
+
+Contains the URL of the WebSocket.
+
+
 ### class: TimeoutError
 
 * extends: [Error]
@@ -4227,7 +4273,7 @@ for (const worker of page.workers())
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-2)
+- [event: 'close'](#event-close-3)
 - [worker.evaluate(pageFunction[, arg])](#workerevaluatepagefunction-arg)
 - [worker.evaluateHandle(pageFunction[, arg])](#workerevaluatehandlepagefunction-arg)
 - [worker.url()](#workerurl)
@@ -4263,7 +4309,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 ### class: BrowserServer
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-3)
+- [event: 'close'](#event-close-4)
 - [browserServer.close()](#browserserverclose)
 - [browserServer.kill()](#browserserverkill)
 - [browserServer.process()](#browserserverprocess)

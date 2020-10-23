@@ -181,7 +181,7 @@ class MDOutline {
         const ul = content.querySelector('ul');
         for (const element of content.querySelectorAll('h4 + ul > li')) {
           if (element.matches('li') && element.textContent.trim().startsWith('<')) {
-            returnType = parseProperty(element, false);
+            returnType = parseProperty(element, element.textContent.trim().includes('data'));
           } else if (element.matches('li') && element.firstChild.matches && element.firstChild.matches('code')) {
             const property = parseProperty(element, false);
             property.required = !optionalparams.has(property.name) && !property.name.startsWith('...');

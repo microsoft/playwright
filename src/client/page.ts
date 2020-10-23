@@ -31,7 +31,7 @@ import { Worker } from './worker';
 import { Frame, verifyLoadState, WaitForNavigationOptions } from './frame';
 import { Keyboard, Mouse, Touchscreen } from './input';
 import { assertMaxArguments, Func1, FuncOn, SmartHandle, serializeArgument, parseResult, JSHandle } from './jsHandle';
-import { Request, Response, Route, RouteHandler, validateHeaders } from './network';
+import { Request, Response, Route, RouteHandler, WebSocket, validateHeaders } from './network';
 import { FileChooser } from './fileChooser';
 import { Buffer } from 'buffer';
 import { ChromiumCoverage } from './chromiumCoverage';
@@ -130,6 +130,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
+    this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
     if (this._browserContext._browserName === 'chromium') {

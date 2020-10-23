@@ -25,7 +25,7 @@ import { ConsoleMessageDispatcher } from './consoleMessageDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
-import { RequestDispatcher, ResponseDispatcher, RouteDispatcher } from './networkDispatchers';
+import { RequestDispatcher, ResponseDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { serializeResult, parseArgument, JSHandleDispatcher } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../server/fileChooser';
@@ -72,6 +72,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     }));
     page.on(Page.Events.Response, response => this._dispatchEvent('response', { response: new ResponseDispatcher(this._scope, response) }));
     page.on(Page.Events.VideoStarted, (video: Video) => this._dispatchEvent('video', {  relativePath: video._relativePath }));
+    page.on(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this._scope, webSocket) }));
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 

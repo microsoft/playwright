@@ -69,6 +69,7 @@ export class FrameManager {
   private _mainFrame: Frame;
   readonly _consoleMessageTags = new Map<string, ConsoleTagHandler>();
   readonly _signalBarriers = new Set<SignalBarrier>();
+  private _webSockets = new Map<string, network.WebSocket>();
 
   constructor(page: Page) {
     this._page = page;
@@ -165,6 +166,7 @@ export class FrameManager {
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
     const frame = this._frames.get(frameId)!;
     this.removeChildFramesRecursively(frame);
+    this.clearWebSockets(frame);
     frame._url = url;
     frame._name = name;
 
@@ -327,6 +329,57 @@ export class FrameManager {
     this._consoleMessageTags.delete(tag);
     handler();
     return true;
+  }
+
+  clearWebSockets(frame: Frame) {
+    // TODO: attribute sockets to frames.
+    if (frame.parentFrame())
+      return;
+    this._webSockets.clear();
+  }
+
+  onWebSocketCreated(requestId: string, url: string) {
+    const ws = new network.WebSocket(url);
+    this._webSockets.set(requestId, ws);
+  }
+
+  onWebSocketRequest(requestId: string) {
+    const ws = this._webSockets.get(requestId);
+    if (ws)
+      this._page.emit(Page.Events.WebSocket, ws);
+  }
+
+  onWebSocketResponse(requestId: string, status: number, statusText: string) {
+    const ws = this._webSockets.get(requestId);
+    if (status >= 200 && status < 400)
+      return;
+    if (ws)
+      ws.error(`${statusText}: ${status}`);
+  }
+
+  onWebSocketFrameSent(requestId: string, opcode: number, data: string) {
+    const ws = this._webSockets.get(requestId);
+    if (ws)
+      ws.frameSent(opcode, data);
+  }
+
+  webSocketFrameReceived(requestId: string, opcode: number, data: string) {
+    const ws = this._webSockets.get(requestId);
+    if (ws)
+      ws.frameReceived(opcode, data);
+  }
+
+  webSocketClosed(requestId: string) {
+    const ws = this._webSockets.get(requestId);
+    if (ws)
+      ws.closed();
+    this._webSockets.delete(requestId);
+  }
+
+  webSocketError(requestId: string, errorMessage: string): void {
+    const ws = this._webSockets.get(requestId);
+    if (ws)
+      ws.error(errorMessage);
   }
 }
 

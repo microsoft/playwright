@@ -113,6 +113,7 @@ export class Page extends EventEmitter {
     FrameNavigated: 'framenavigated',
     Load: 'load',
     Popup: 'popup',
+    WebSocket: 'websocket',
     Worker: 'worker',
     VideoStarted: 'videostarted',
   };

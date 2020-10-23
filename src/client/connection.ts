@@ -21,7 +21,7 @@ import { ChannelOwner } from './channelOwner';
 import { ElementHandle } from './elementHandle';
 import { Frame } from './frame';
 import { JSHandle } from './jsHandle';
-import { Request, Response, Route } from './network';
+import { Request, Response, Route, WebSocket } from './network';
 import { Page, BindingCall } from './page';
 import { Worker } from './worker';
 import { ConsoleMessage } from './consoleMessage';
@@ -225,6 +225,9 @@ export class Connection {
         break;
       case 'Selectors':
         result = new SelectorsOwner(parent, type, guid, initializer);
+        break;
+      case 'WebSocket':
+        result = new WebSocket(parent, type, guid, initializer);
         break;
       case 'Worker':
         result = new Worker(parent, type, guid, initializer);

@@ -17,6 +17,7 @@
 import * as frames from './frames';
 import * as types from './types';
 import { assert } from '../utils/utils';
+import { EventEmitter } from 'events';
 
 export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): types.NetworkCookie[] {
   const parsedURLs = urls.map(s => new URL(s));
@@ -299,6 +300,42 @@ export class Response {
 
   frame(): frames.Frame {
     return this._request.frame();
+  }
+}
+
+export class WebSocket extends EventEmitter {
+  private _url: string;
+
+  static Events = {
+    Close: 'close',
+    Error: 'socketerror',
+    FrameReceived: 'framereceived',
+    FrameSent: 'framesent',
+  };
+
+  constructor(url: string) {
+    super();
+    this._url = url;
+  }
+
+  url(): string {
+    return this._url;
+  }
+
+  frameSent(opcode: number, data: string) {
+    this.emit(WebSocket.Events.FrameSent, { opcode, data });
+  }
+
+  frameReceived(opcode: number, data: string) {
+    this.emit(WebSocket.Events.FrameReceived, { opcode, data });
+  }
+
+  error(errorMessage: string) {
+    this.emit(WebSocket.Events.Error, errorMessage);
+  }
+
+  closed() {
+    this.emit(WebSocket.Events.Close);
   }
 }
 

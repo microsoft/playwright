@@ -125,7 +125,9 @@ function classToString(classDesc) {
 function argNameForType(type) {
   if (type === 'void')
     return null;
-  return type[0].toLowerCase() + type.slice(1);
+  if (type.includes('{'))
+    return 'data';
+  return (type[0].toLowerCase() + type.slice(1)).replace(/\|/g, 'Or');
 }
 
 /**

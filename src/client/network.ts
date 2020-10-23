@@ -23,6 +23,7 @@ import * as fs from 'fs';
 import * as mime from 'mime';
 import * as util from 'util';
 import { isString, headersObjectToArray, headersArrayToObject } from '../utils/utils';
+import { Events } from './events';
 
 export type NetworkCookie = {
   name: string,
@@ -309,6 +310,30 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
 
   frame(): Frame {
     return this._request.frame();
+  }
+}
+
+export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.WebSocketInitializer> {
+  static from(webSocket: channels.WebSocketChannel): WebSocket {
+    return (webSocket as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WebSocketInitializer) {
+    super(parent, type, guid, initializer);
+    this._channel.on('frameSent', (event: { opcode: number, data: string }) => {
+      const payload = event.opcode === 2 ? Buffer.from(event.data, 'base64') : event.data;
+      this.emit(Events.WebSocket.FrameSent, { payload });
+    });
+    this._channel.on('frameReceived', (event: { opcode: number, data: string }) => {
+      const payload = event.opcode === 2 ? Buffer.from(event.data, 'base64') : event.data;
+      this.emit(Events.WebSocket.FrameReceived, { payload });
+    });
+    this._channel.on('error', ({ error }) => this.emit(Events.WebSocket.Error, error));
+    this._channel.on('close', () => this.emit(Events.WebSocket.Close));
+  }
+
+  url(): string {
+    return this._initializer.url;
   }
 }
 
