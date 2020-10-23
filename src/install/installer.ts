@@ -22,7 +22,7 @@ import * as removeFolder from 'rimraf';
 import * as lockfile from 'proper-lockfile';
 import * as browserPaths from '../utils/browserPaths';
 import * as browserFetcher from './browserFetcher';
-import { getFromENV } from '../utils/utils';
+import { getAsBooleanFromENV } from '../utils/utils';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
@@ -34,7 +34,7 @@ const removeFolderAsync = util.promisify(removeFolder);
 
 export async function installBrowsersWithProgressBar(packagePath: string) {
   // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
-  if (!!Number(getFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'))) {
+  if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
     browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
     return false;
   }
