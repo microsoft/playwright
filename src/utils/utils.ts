@@ -95,11 +95,19 @@ export function isUnderTest(): boolean {
   return _isUnderTest;
 }
 
-export function getFromENV(name: string) {
+export function getFromENV(name: string): string | undefined {
   let value = process.env[name];
-  value = value || process.env[`npm_config_${name.toLowerCase()}`];
-  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
-  return value;
+  if (value !== undefined)
+    return value;
+  value = process.env[`npm_config_${name.toLowerCase()}`];
+  if (value !== undefined)
+    return value;
+  return process.env[`npm_package_config_${name.toLowerCase()}`];
+}
+
+export function getAsBooleanFromENV(name: string): boolean {
+  const value = getFromENV(name);
+  return !!value && value !== 'false' && value !== '0';
 }
 
 export async function mkdirIfNeeded(filePath: string) {
