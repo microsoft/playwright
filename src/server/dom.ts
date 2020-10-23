@@ -647,10 +647,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return;
       }
       if (state === 'stable') {
-        const rafCount =  this._page._delegate.rafCountForStablePosition();
-        const poll = await this._evaluateHandleInUtility(([injected, node, rafCount]) => {
-          return injected.waitForDisplayedAtStablePosition(node, rafCount, false /* waitForEnabled */);
-        }, rafCount);
+        const rafCount = this._page._delegate.rafCountForStablePosition();
+        const poll = await this._evaluateHandleInUtility(([injected, node, rafOptions]) => {
+          return injected.waitForDisplayedAtStablePosition(node, rafOptions, false /* waitForEnabled */);
+        }, { rafCount, useTimeout: !!process.env.PW_USE_TIMEOUT_FOR_RAF });
         const pollHandler = new InjectedScriptPollHandler(progress, poll);
         assertDone(throwRetargetableDOMError(await pollHandler.finish()));
         return;
@@ -694,10 +694,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       progress.log(`  waiting for element to be visible, enabled and not moving`);
     else
       progress.log(`  waiting for element to be visible and not moving`);
-    const rafCount =  this._page._delegate.rafCountForStablePosition();
-    const poll = this._evaluateHandleInUtility(([injected, node, { rafCount, waitForEnabled }]) => {
-      return injected.waitForDisplayedAtStablePosition(node, rafCount, waitForEnabled);
-    }, { rafCount, waitForEnabled });
+    const rafCount = this._page._delegate.rafCountForStablePosition();
+    const poll = this._evaluateHandleInUtility(([injected, node, { rafOptions, waitForEnabled }]) => {
+      return injected.waitForDisplayedAtStablePosition(node, rafOptions, waitForEnabled);
+    }, { rafOptions: { rafCount, useTimeout: !!process.env.PW_USE_TIMEOUT_FOR_RAF }, waitForEnabled });
     const pollHandler = new InjectedScriptPollHandler(progress, await poll);
     const result = await pollHandler.finish();
     if (waitForEnabled)
