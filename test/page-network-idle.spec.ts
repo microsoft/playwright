@@ -136,3 +136,23 @@ it('should wait for networkidle from the child frame', async ({page, server}) =>
     return page.goto(server.PREFIX + '/networkidle-frame.html', { waitUntil: 'networkidle' });
   });
 });
+
+it('should wait for networkidle from the popup', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox', 'Times out due to inactive layout / raf throttling');
+}, async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`
+    <button id=box1 onclick="window.open('./popup/popup.html')">Button1</button>
+    <button id=box2 onclick="window.open('./popup/popup.html')">Button2</button>
+    <button id=box3 onclick="window.open('./popup/popup.html')">Button3</button>
+    <button id=box4 onclick="window.open('./popup/popup.html')">Button4</button>
+    <button id=box5 onclick="window.open('./popup/popup.html')">Button5</button>
+  `);
+  for (let i = 1; i < 6; ++i) {
+    const [popup] = await Promise.all([
+      page.waitForEvent('popup'),
+      page.click('#box' + i)
+    ]);
+    await popup.waitForLoadState('networkidle');
+  }
+});
