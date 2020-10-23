@@ -40,7 +40,9 @@ export class VideoPlayer {
 
   constructor(fileName: string) {
     this.fileName = fileName;
-    this.output = spawnSync(ffmpeg, ['-i', this.fileName, `${this.fileName}-%03d.png`]).stderr.toString();
+    // Force output frame rate to 25 fps as otherwise it would produce one image per timebase unit
+    // which is 1 / (25 * 1000).
+    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%03d.png`]).stderr.toString();
 
     const lines = this.output.split('\n');
     let framesLine = lines.find(l => l.startsWith('frame='))!;
@@ -123,7 +125,7 @@ function expectAll(pixels: Buffer, rgbaPredicate) {
       checkPixel(i);
   } catch (e) {
     // Log pixel values on failure.
-    e.message += `\n\nActual pixels=[${pixels}]`;
+    e.message += `\n\nActual pixels=[${pixels.join(',')}]`;
     throw e;
   }
 }
