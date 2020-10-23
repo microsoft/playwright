@@ -97,8 +97,8 @@ export function isUnderTest(): boolean {
 
 export function getFromENV(name: string) {
   let value = process.env[name];
-  value = value || process.env[`npm_config_${name.toLowerCase()}`];
-  value = value || process.env[`npm_package_config_${name.toLowerCase()}`];
+  value = typeof value === 'undefined' ? process.env[`npm_config_${name.toLowerCase()}`] : value;
+  value = typeof value === 'undefined' ?  process.env[`npm_package_config_${name.toLowerCase()}`] : value;
   return value;
 }
 
