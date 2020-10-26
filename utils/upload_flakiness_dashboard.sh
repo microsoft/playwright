@@ -44,10 +44,22 @@ export BUILD_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_
 export COMMIT_SHA=$(git rev-parse HEAD)
 export COMMIT_TIMESTAMP=$(git show -s --format=%ct HEAD)
 
+export HOST_OS_NAME="$(uname)"
+export HOST_OS_VERSION=""
+if [[ "$CURRENT_HOST_OS" == "Darwin" ]]; then
+  HOST_OS_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
+elif [[ "$CURRENT_HOST_OS" == "Linux" ]]; then
+  HOST_OS_NAME="$(bash -c 'source /etc/os-release && echo $NAME')"
+  HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
+fi
+
+
 EMBED_METADATA_SCRIPT=$(cat <<EOF
   const json = require('./' + process.argv[1]);
   json.metadata = {
     runURL: process.env.BUILD_URL,
+    osName: process.env.HOST_OS_NAME,
+    osVersion: process.env.HOST_OS_VERSION,
     commitSHA: process.env.COMMIT_SHA,
     commitTimestamp: process.env.COMMIT_TIMESTAMP,
   };
