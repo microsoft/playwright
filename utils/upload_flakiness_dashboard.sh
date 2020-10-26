@@ -46,9 +46,9 @@ export COMMIT_TIMESTAMP=$(git show -s --format=%ct HEAD)
 
 export HOST_OS_NAME="$(uname)"
 export HOST_OS_VERSION=""
-if [[ "$CURRENT_HOST_OS" == "Darwin" ]]; then
+if [[ "$HOST_OS_NAME" == "Darwin" ]]; then
   HOST_OS_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
-elif [[ "$CURRENT_HOST_OS" == "Linux" ]]; then
+elif [[ "$HOST_OS_NAME" == "Linux" ]]; then
   HOST_OS_NAME="$(bash -c 'source /etc/os-release && echo $NAME')"
   HOST_OS_VERSION="$(bash -c 'source /etc/os-release && echo $VERSION_ID')"
 fi
