@@ -41,6 +41,10 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: github.ref == 'refs/heads/master'
+      env:
+        FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
     - uses: actions/upload-artifact@v1
       if: always()
       with:
