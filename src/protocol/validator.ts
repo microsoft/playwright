@@ -229,6 +229,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       width: tNumber,
       height: tNumber,
     })),
+    recordHar: tOptional(tObject({
+      omitContent: tOptional(tBoolean),
+      path: tString,
+    })),
   });
   scheme.BrowserCrNewBrowserCDPSessionParams = tOptional(tObject({}));
   scheme.BrowserCrStartTracingParams = tObject({

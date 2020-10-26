@@ -196,7 +196,7 @@ function classBody(classDesc) {
     if (!hasOwnMethod(classDesc, member.name))
       return '';
     if (member.templates.length)
-      console.error(`expected an override for "${classDesc.name}.${member.name}" becasue it is templated`);
+      console.error(`expected an override for "${classDesc.name}.${member.name}" because it is templated`);
     return `${jsdoc}${member.name}${args}: ${type};`
   }).filter(x => x).join('\n\n'));
   return parts.join('\n');

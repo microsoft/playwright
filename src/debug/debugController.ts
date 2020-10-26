@@ -42,6 +42,6 @@ class DebugController implements ContextListener {
     });
   }
 
-  async onContextDestroyed(context: BrowserContext): Promise<void> {
-  }
+  async onContextWillDestroy(context: BrowserContext): Promise<void> {}
+  async onContextDidDestroy(context: BrowserContext): Promise<void> {}
 }

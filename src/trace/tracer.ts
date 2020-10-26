@@ -47,7 +47,9 @@ class Tracer implements ContextListener {
     this._contextTracers.set(context, contextTracer);
   }
 
-  async onContextDestroyed(context: BrowserContext): Promise<void> {
+  async onContextWillDestroy(context: BrowserContext): Promise<void> {}
+
+  async onContextDidDestroy(context: BrowserContext): Promise<void> {
     const contextTracer = this._contextTracers.get(context);
     if (contextTracer) {
       await contextTracer.dispose().catch(e => {});

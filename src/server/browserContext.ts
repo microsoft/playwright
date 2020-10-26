@@ -82,7 +82,8 @@ export async function runAction<T>(task: (controller: ProgressController) => Pro
 
 export interface ContextListener {
   onContextCreated(context: BrowserContext): Promise<void>;
-  onContextDestroyed(context: BrowserContext): Promise<void>;
+  onContextWillDestroy(context: BrowserContext): Promise<void>;
+  onContextDidDestroy(context: BrowserContext): Promise<void>;
 }
 
 export const contextListeners = new Set<ContextListener>();
@@ -270,6 +271,9 @@ export abstract class BrowserContext extends EventEmitter {
     if (this._closedStatus === 'open') {
       this._closedStatus = 'closing';
 
+      for (const listener of contextListeners)
+        await listener.onContextWillDestroy(this);
+
       // Collect videos/downloads that we will await.
       const promises: Promise<any>[] = [];
       for (const download of this._downloads)
@@ -297,7 +301,7 @@ export abstract class BrowserContext extends EventEmitter {
 
       // Bookkeeping.
       for (const listener of contextListeners)
-        await listener.onContextDestroyed(this);
+        await listener.onContextDidDestroy(this);
       this._didCloseInternal();
     }
     await this._closePromise;
