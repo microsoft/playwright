@@ -6395,6 +6395,23 @@ index a34dc220bbb9a92b40dfb463e8724e81ac745b2c..8ecedd5dae88469366a619b96960598c
  String PlatformKeyboardEvent::singleCharacterString(unsigned val)
  {
      switch (val) {
+diff --git a/Source/WebCore/platform/network/HTTPHeaderMap.cpp b/Source/WebCore/platform/network/HTTPHeaderMap.cpp
+index 39cb560e54bf9efd2dad6e1fb60dd0f609daf6bf..91c132460d4b466f61a8c579f70329fdde3b130f 100644
+--- a/Source/WebCore/platform/network/HTTPHeaderMap.cpp
++++ b/Source/WebCore/platform/network/HTTPHeaderMap.cpp
+@@ -205,8 +205,11 @@ void HTTPHeaderMap::add(HTTPHeaderName name, const String& value)
+     auto index = m_commonHeaders.findMatching([&](auto& header) {
+         return header.key == name;
+     });
++    // Align with Chromium and Firefox, but just for SetCookies where it is critical:
++    // https://bit.ly/2HCa0iq
++    String separator = name == HTTPHeaderName::SetCookie ? "\n " : ", ";
+     if (index != notFound)
+-        m_commonHeaders[index].value = makeString(m_commonHeaders[index].value, ", ", value);
++        m_commonHeaders[index].value = makeString(m_commonHeaders[index].value, separator, value);
+     else
+         m_commonHeaders.append(CommonHeader { name, value });
+ }
 diff --git a/Source/WebCore/platform/network/NetworkStateNotifier.h b/Source/WebCore/platform/network/NetworkStateNotifier.h
 index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b8145bc5f932 100644
 --- a/Source/WebCore/platform/network/NetworkStateNotifier.h
