@@ -27,6 +27,13 @@ build_wpe() {
   WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox MiniBrowser
 }
 
+ensure_linux_deps() {
+  yes | DEBIAN_FRONTEND=noninteractive ./Tools/gtk/install-dependencies
+  yes | DEBIAN_FRONTEND=noninteractive ./Tools/wpe/install-dependencies
+  yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/update-webkitwpe-libs
+  yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/update-webkitgtk-libs
+}
+
 if [[ "$(uname)" == "Darwin" ]]; then
   cd "checkout"
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
@@ -36,6 +43,13 @@ elif [[ "$(uname)" == "Linux" ]]; then
     echo
     echo BUILDING: GTK and WPE
     echo
+    build_wpe
+    build_gtk
+  elif [[ "$1" == "--full" ]]; then
+    echo
+    echo BUILDING: GTK and WPE
+    echo
+    ensure_linux_deps
     build_wpe
     build_gtk
   elif [[ "$1" == "--gtk" ]]; then

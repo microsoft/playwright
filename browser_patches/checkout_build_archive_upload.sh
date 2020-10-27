@@ -109,11 +109,13 @@ elif [[ "$BUILD_FLAVOR" == "firefox-win64" ]]; then
   BUILD_BLOB_NAME="firefox-win64.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-18.04" ]]; then
   BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="18.04"
   BUILD_BLOB_NAME="webkit-ubuntu-18.04.zip"
 elif [[ "$BUILD_FLAVOR" == "webkit-ubuntu-20.04" ]]; then
   BROWSER_NAME="webkit"
+  EXTRA_BUILD_ARGS="--full"
   EXPECTED_HOST_OS="Ubuntu"
   EXPECTED_HOST_OS_VERSION="20.04"
   BUILD_BLOB_NAME="webkit-ubuntu-20.04.zip"
