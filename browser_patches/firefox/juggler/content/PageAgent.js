@@ -157,6 +157,9 @@ class PageAgent {
         this._emitAllEvents(this._frameTree.mainFrame());
     }
 
+    // Prevent unhandled exception.
+    this._messageManager.addEventListener('error', () => {});
+
     this._eventListeners = [
       helper.addObserver(this._linkClicked.bind(this, false), 'juggler-link-click'),
       helper.addObserver(this._linkClicked.bind(this, true), 'juggler-link-click-sync'),
