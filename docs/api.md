@@ -534,7 +534,6 @@ const crypto = require('crypto');
 
 #### browserContext.grantPermissions(permissions[][, options])
 - `permissions` <[Array]<[string]>> A permission or an array of permissions to grant. Permissions can be one of the following values:
-    - `'*'`
     - `'geolocation'`
     - `'midi'`
     - `'midi-sysex'` (system-exclusive midi)
