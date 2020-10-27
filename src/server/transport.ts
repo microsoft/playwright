@@ -99,7 +99,7 @@ export class WebSocketTransport implements ConnectionTransport {
       if (this.onclose)
         this.onclose.call(null);
     });
-    // Silently ignore all errors - we don't know what to do with them.
+    // Prevent Error: read ECONNRESET.
     this._ws.addEventListener('error', () => {});
   }
 
