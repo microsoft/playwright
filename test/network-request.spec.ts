@@ -81,8 +81,8 @@ it('should return headers', async ({page, server, isChromium, isFirefox, isWebKi
     expect(response.request().headers()['user-agent']).toContain('WebKit');
 });
 
-it('should get the same headers as the server', (test, { browserName }) => {
-  test.fail(browserName === 'webkit', 'Provisional headers differ from those in network stack');
+it('should get the same headers as the server', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform !== 'darwin', 'Provisional headers differ from those in network stack');
 }, async ({ page, server }) => {
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {
@@ -93,8 +93,8 @@ it('should get the same headers as the server', (test, { browserName }) => {
   expect(response.request().headers()).toEqual(serverRequest.headers);
 });
 
-it('should get the same headers as the server CORP', (test, { browserName }) => {
-  test.fail(browserName === 'webkit', 'Provisional headers differ from those in network stack');
+it('should get the same headers as the server CORP', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform !== 'darwin', 'Provisional headers differ from those in network stack');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;

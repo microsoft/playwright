@@ -62,7 +62,6 @@ type HarOptions = {
 
 class HarContextTracer {
   private _options: HarOptions;
-  private _browserName: string;
   private _log: har.Log;
   private _pageEntries = new Map<Page, har.Page>();
   private _entries = new Map<network.Request, har.Entry>();
@@ -70,7 +69,6 @@ class HarContextTracer {
   private _barrierPromises = new Map<Promise<void>, Page>();
 
   constructor(context: BrowserContext, options: HarOptions) {
-    this._browserName = context._browser._options.name;
     this._options = options;
     this._log = {
       version: '1.2',
@@ -204,7 +202,7 @@ class HarContextTracer {
       status: response.status(),
       statusText: response.statusText(),
       httpVersion: 'HTTP/1.1',
-      cookies: cookiesForHar(response.headerValue('set-cookie'), this._browserName === 'webkit' ? ',' : '\n'),
+      cookies: cookiesForHar(response.headerValue('set-cookie'), '\n'),
       headers: response.headers().map(header => ({ name: header.name, value: header.value })),
       content: {
         size: -1,

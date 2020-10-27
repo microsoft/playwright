@@ -164,9 +164,7 @@ it('should include form params', async ({ pageWithHar, server }) => {
   });
 });
 
-it('should include cookies', (test, { browserName }) => {
-  test.fail(browserName === 'webkit', 'WebKit is lacking raw headers w/ cookies on WebCore side');
-}, async ({ pageWithHar, server }) => {
+it('should include cookies', async ({ pageWithHar, server }) => {
   const { page, context } = pageWithHar;
   await context.addCookies([
     { name: 'name1', value: '"value1"', domain: 'localhost', path: '/', httpOnly: true },
@@ -184,7 +182,9 @@ it('should include cookies', (test, { browserName }) => {
   ]);
 });
 
-it('should include set-cookies', async ({ pageWithHar, server }) => {
+it('should include set-cookies', (test, { browserName, platform }) => {
+  test.fail(browserName === 'webkit' && platform === 'darwin', 'Does not work yet');
+}, async ({ pageWithHar, server }) => {
   const { page } = pageWithHar;
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [
@@ -202,9 +202,7 @@ it('should include set-cookies', async ({ pageWithHar, server }) => {
   expect(new Date(cookies[2].expires).valueOf()).toBeGreaterThan(Date.now());
 });
 
-it('should include set-cookies with comma', (test, { browserName }) => {
-  test.fail(browserName === 'webkit', 'WebKit concatenates headers poorly');
-}, async ({ pageWithHar, server }) => {
+it('should include set-cookies with comma', async ({ pageWithHar, server }) => {
   const { page } = pageWithHar;
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Set-Cookie', [

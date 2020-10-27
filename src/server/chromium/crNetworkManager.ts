@@ -136,7 +136,7 @@ export class CRNetworkManager {
   _onRequestWillBeSentExtraInfo(event: Protocol.Network.requestWillBeSentExtraInfoPayload) {
     const request = this._requestIdToRequest.get(event.requestId);
     if (request) {
-      request.request._updateWithRawHeaders(headersObjectToArray(event.headers));
+      request.request.updateWithRawHeaders(headersObjectToArray(event.headers));
       this._requestIdToExtraInfo.delete(event.requestId);
     } else {
       this._requestIdToExtraInfo.set(event.requestId, event);
