@@ -2865,7 +2865,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9b108a65b 100644
+index 575382e4390dd31dbf404fc72662b2206071c7e8..d6ec8d26d165b110872dea47fa09a9dfa751f37b 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -2884,7 +2884,16 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
-@@ -490,8 +492,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
+@@ -355,6 +357,8 @@ RefPtr<Protocol::Network::Response> InspectorNetworkAgent::buildObjectForResourc
+         .setSource(responseSource(response.source()))
+         .release();
+ 
++    responseObject->setRequestHeaders(buildObjectForHeaders(response.m_httpRequestHeaderFields));
++
+     if (resourceLoader)
+         responseObject->setTiming(buildObjectForTiming(response.deprecatedNetworkLoadMetricsOrNull(), *resourceLoader));
+ 
+@@ -490,8 +494,14 @@ static InspectorPageAgent::ResourceType resourceTypeForLoadType(InspectorInstrum
  
  void InspectorNetworkAgent::willSendRequest(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, const ResourceResponse& redirectResponse)
  {
@@ -2901,7 +2910,7 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9
  }
  
  void InspectorNetworkAgent::willSendRequestOfType(unsigned long identifier, DocumentLoader* loader, ResourceRequest& request, InspectorInstrumentation::LoadType loadType)
-@@ -1105,8 +1113,7 @@ bool InspectorNetworkAgent::willIntercept(const ResourceRequest& request)
+@@ -1105,8 +1115,7 @@ bool InspectorNetworkAgent::willIntercept(const ResourceRequest& request)
      if (!m_interceptionEnabled)
          return false;
  
@@ -2911,7 +2920,7 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9
  }
  
  bool InspectorNetworkAgent::shouldInterceptRequest(const ResourceRequest& request)
-@@ -1189,6 +1196,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
+@@ -1189,6 +1198,9 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptWithRequest(const
          return makeUnexpected("Missing pending intercept request for given requestId"_s);
  
      auto& loader = *pendingRequest->m_loader;
@@ -2921,7 +2930,7 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9
      ResourceRequest request = loader.request();
      if (!!url)
          request.setURL(URL({ }, url));
-@@ -1292,6 +1302,8 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
+@@ -1292,6 +1304,8 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithRespons
      response.setHTTPHeaderFields(WTFMove(explicitHeaders));
      response.setHTTPHeaderField(HTTPHeaderName::ContentType, response.mimeType());
      loader->didReceiveResponse(response, [loader, buffer = data.releaseNonNull()]() mutable {
@@ -2930,7 +2939,7 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9
          if (buffer->size())
              loader->didReceiveBuffer(WTFMove(buffer), buffer->size(), DataPayloadWholeResource);
          loader->didFinishLoading(NetworkLoadMetrics());
-@@ -1332,6 +1344,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
+@@ -1332,6 +1346,12 @@ Protocol::ErrorStringOr<void> InspectorNetworkAgent::interceptRequestWithError(c
      return { };
  }
  
@@ -2943,7 +2952,7 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..e8d30e12a11b8d24d39c8201375f09b9
  bool InspectorNetworkAgent::shouldTreatAsText(const String& mimeType)
  {
      return startsWithLettersIgnoringASCIICase(mimeType, "text/")
-@@ -1373,6 +1391,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
+@@ -1373,6 +1393,12 @@ Optional<String> InspectorNetworkAgent::textContentForCachedResource(CachedResou
      return WTF::nullopt;
  }
  
@@ -6439,6 +6448,40 @@ index 87930048f4fd18d6098af7de4da25be532df5931..2bb2afcf9473b0d5d97efbe18dd7b814
      Vector<WTF::Function<void(bool)>> m_listeners;
      Timer m_updateStateTimer;
  
+diff --git a/Source/WebCore/platform/network/ResourceResponseBase.h b/Source/WebCore/platform/network/ResourceResponseBase.h
+index ddab08a247db7b194fcc980308e12eb3f9bda697..cae230a8cfd31a633727574ee088c0fae4024e83 100644
+--- a/Source/WebCore/platform/network/ResourceResponseBase.h
++++ b/Source/WebCore/platform/network/ResourceResponseBase.h
+@@ -211,6 +211,8 @@ public:
+ 
+     bool containsInvalidHTTPHeaders() const;
+ 
++    HTTPHeaderMap m_httpRequestHeaderFields;
++
+ protected:
+     enum InitLevel {
+         Uninitialized,
+@@ -293,6 +295,7 @@ void ResourceResponseBase::encode(Encoder& encoder) const
+     encoder << m_httpStatusText;
+     encoder << m_httpVersion;
+     encoder << m_httpHeaderFields;
++    encoder << m_httpRequestHeaderFields;
+ 
+     // We don't want to put the networkLoadMetrics info
+     // into the disk cache, because we will never use the old info.
+@@ -365,6 +368,12 @@ bool ResourceResponseBase::decode(Decoder& decoder, ResourceResponseBase& respon
+         return false;
+     response.m_httpHeaderFields = WTFMove(*httpHeaderFields);
+ 
++    Optional<HTTPHeaderMap> httpRequestHeaderFields;
++    decoder >> httpRequestHeaderFields;
++    if (!httpRequestHeaderFields)
++        return false;
++    response.m_httpRequestHeaderFields = WTFMove(*httpRequestHeaderFields);
++
+     // The networkLoadMetrics info is only send over IPC and not stored in disk cache.
+     if constexpr (Decoder::isIPCDecoder) {
+         Optional<Box<NetworkLoadMetrics>> networkLoadMetrics;
 diff --git a/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h b/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h
 index d677280d2b5e7b053a240c155d64bc881f1737bb..1be949e09982b34366d162e6d45ebc51a76dcfb0 100644
 --- a/Source/WebCore/platform/network/cf/SocketStreamHandleImpl.h
@@ -6856,7 +6899,7 @@ index 5b489cc538f7c071510106c58f5c094ec9a8e1b8..20d0718eb896bcd9f97fd80572844a57
  {
  }
 diff --git a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
-index d765e9fe4e1a68298d99282d18aadcc5832687e2..d2af3d6ede590e3473b33c55cfe8fe2f94c8afef 100644
+index d765e9fe4e1a68298d99282d18aadcc5832687e2..febcf8f0b2260a244a6d269ec03a419ea504e6f5 100644
 --- a/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 +++ b/Source/WebKit/NetworkProcess/cocoa/NetworkSessionCocoa.mm
 @@ -661,7 +661,7 @@ static inline void processServerTrustEvaluation(NetworkSessionCocoa& session, Se
@@ -6868,8 +6911,22 @@ index d765e9fe4e1a68298d99282d18aadcc5832687e2..d2af3d6ede590e3473b33c55cfe8fe2f
              return completionHandler(NSURLSessionAuthChallengeUseCredential, [NSURLCredential credentialForTrust:challenge.protectionSpace.serverTrust]);
  
  #if HAVE(TLS_PROTOCOL_VERSION_T)
+@@ -914,6 +914,13 @@ static inline void processServerTrustEvaluation(NetworkSessionCocoa& session, Se
+         // NetworkLoadMetrics. For example, PerformanceTiming.
+         resourceResponse.setDeprecatedNetworkLoadMetrics(WebCore::copyTimingData([dataTask _timingData]));
+ 
++        __block WebCore::HTTPHeaderMap requestHeaders;
++        NSURLSessionTaskTransactionMetrics *m = dataTask._incompleteTaskMetrics.transactionMetrics.lastObject;
++        [m.request.allHTTPHeaderFields enumerateKeysAndObjectsUsingBlock:^(NSString *name, NSString *value, BOOL *) {
++            requestHeaders.set(String(name), String(value));
++        }];
++        resourceResponse.m_httpRequestHeaderFields = WTFMove(requestHeaders);
++
+         auto completionHandlerCopy = Block_copy(completionHandler);
+         networkDataTask->didReceiveResponse(WTFMove(resourceResponse), negotiatedLegacyTLS, [completionHandlerCopy, taskIdentifier](WebCore::PolicyAction policyAction) {
+ #if !LOG_DISABLED
 diff --git a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
-index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091e94d8d11 100644
+index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..a8a0c6fecd5f4fc816b02dccf276ed92573ad7b2 100644
 --- a/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 +++ b/Source/WebKit/NetworkProcess/curl/NetworkDataTaskCurl.cpp
 @@ -26,9 +26,13 @@
@@ -6904,7 +6961,15 @@ index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091
      m_curlRequest->setStartTime(m_startTime);
      m_curlRequest->start();
  }
-@@ -179,7 +187,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
+@@ -152,6 +160,7 @@ void NetworkDataTaskCurl::curlDidReceiveResponse(CurlRequest& request, CurlRespo
+     m_response = ResourceResponse(receivedResponse);
+     m_response.setCertificateInfo(WTFMove(receivedResponse.certificateInfo));
+     m_response.setDeprecatedNetworkLoadMetrics(Box<NetworkLoadMetrics>::create(WTFMove(receivedResponse.networkLoadMetrics)));
++    m_response.m_httpRequestHeaderFields = request.resourceRequest().httpHeaderFields();
+ 
+     handleCookieHeaders(request.resourceRequest(), receivedResponse);
+ 
+@@ -179,7 +188,12 @@ void NetworkDataTaskCurl::curlDidReceiveBuffer(CurlRequest&, Ref<SharedBuffer>&&
      auto protectedThis = makeRef(*this);
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
@@ -6918,7 +6983,7 @@ index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091
      m_client->didReceiveData(WTFMove(buffer));
  }
  
-@@ -188,6 +201,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
+@@ -188,6 +202,12 @@ void NetworkDataTaskCurl::curlDidComplete(CurlRequest&, NetworkLoadMetrics&& net
      if (state() == State::Canceling || state() == State::Completed || (!m_client && !isDownload()))
          return;
  
@@ -6931,7 +6996,7 @@ index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091
      m_client->didCompleteWithError({ }, WTFMove(networkLoadMetrics));
  }
  
-@@ -201,6 +220,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
+@@ -201,6 +221,13 @@ void NetworkDataTaskCurl::curlDidFailWithError(CurlRequest& request, ResourceErr
          return;
      }
  
@@ -6945,7 +7010,7 @@ index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091
      m_client->didCompleteWithError(resourceError);
  }
  
-@@ -238,6 +264,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
+@@ -238,6 +265,18 @@ void NetworkDataTaskCurl::invokeDidReceiveResponse()
          case PolicyAction::Ignore:
              invalidateAndCancel();
              break;
@@ -6964,7 +7029,7 @@ index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091
          default:
              notImplemented();
              break;
-@@ -320,6 +358,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
+@@ -320,6 +359,8 @@ void NetworkDataTaskCurl::willPerformHTTPRedirection()
              m_curlRequest->setUserPass(m_initialCredential.user(), m_initialCredential.password());
              m_curlRequest->setAuthenticationScheme(ProtectionSpaceAuthenticationSchemeHTTPBasic);
          }
@@ -6973,7 +7038,7 @@ index 27f8ef54e561d6c3e812f8d4dc4cc133634fb4eb..9eb502facc84bec0b1cd5cf27b260091
          m_curlRequest->setStartTime(m_startTime);
          m_curlRequest->start();
  
-@@ -503,4 +543,16 @@ bool NetworkDataTaskCurl::isThirdPartyRequest(const WebCore::ResourceRequest& re
+@@ -503,4 +544,16 @@ bool NetworkDataTaskCurl::isThirdPartyRequest(const WebCore::ResourceRequest& re
      return !WebCore::areRegistrableDomainsEqual(request.url(), request.firstPartyForCookies());
  }
  
@@ -7003,7 +7068,7 @@ index 4c120d6830582861432e5e58fba5707206350cd0..3509c62ac2c970fdcf78db2503c0cc42
      bool isThirdPartyRequest(const WebCore::ResourceRequest&);
      bool shouldBlockCookies(const WebCore::ResourceRequest&);
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
-index c99bcb07366b88ceb0c4f2a8382750f0e2d99b50..8e069a213abfaa4d9be678184eccd293b7f8f94a 100644
+index c99bcb07366b88ceb0c4f2a8382750f0e2d99b50..e7325b8f817cc73bf835b706d6cc382b6acc0ed2 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 +++ b/Source/WebKit/NetworkProcess/soup/NetworkDataTaskSoup.cpp
 @@ -444,6 +444,8 @@ bool NetworkDataTaskSoup::tlsConnectionAcceptCertificate(GTlsCertificate* certif
@@ -7015,6 +7080,14 @@ index c99bcb07366b88ceb0c4f2a8382750f0e2d99b50..8e069a213abfaa4d9be678184eccd293
      auto error = static_cast<NetworkSessionSoup&>(*m_session).soupNetworkSession().checkTLSErrors(url, certificate, tlsErrors);
      if (!error)
          return true;
+@@ -893,6 +895,7 @@ void NetworkDataTaskSoup::didGetHeaders()
+         const char* headerValue;
+         while (soup_message_headers_iter_next(&headersIter, &headerName, &headerValue))
+             requestHeaders.set(String(headerName), String(headerValue));
++        m_response.m_httpRequestHeaderFields = requestHeaders;
+         m_networkLoadMetrics.requestHeaders = WTFMove(requestHeaders);
+     }
+ }
 diff --git a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp b/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
 index 66ff36eec2db1699a9bc2bce8fe0d5124ce19ed2..cc2bda254ce55d574c36b07dbaf95093c782e3a0 100644
 --- a/Source/WebKit/NetworkProcess/soup/NetworkSessionSoup.cpp
