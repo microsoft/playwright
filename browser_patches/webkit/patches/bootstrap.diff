@@ -1761,6 +1761,21 @@ index 4cd4740f422af662f21241215fb34855e0255b5f..3e977dee342697dba8c1c60177a1624c
  #define HAVE_OS_DARK_MODE_SUPPORT 1
  #endif
  
+diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
+index 5e3f1bd26e8eb13fdc63cef4d601e5f7ebb468c7..088416254c0022fe3499ec0cb4965dc994ad4c1f 100644
+--- a/Source/WebCore/DerivedSources.make
++++ b/Source/WebCore/DerivedSources.make
+@@ -760,6 +760,10 @@ JS_BINDING_IDLS = \
+     $(WebCore)/dom/Slotable.idl \
+     $(WebCore)/dom/StaticRange.idl \
+     $(WebCore)/dom/StringCallback.idl \
++    $(WebCore)/dom/Document+Touch.idl \
++    $(WebCore)/dom/Touch.idl \
++    $(WebCore)/dom/TouchEvent.idl \
++    $(WebCore)/dom/TouchList.idl
+     $(WebCore)/dom/Text.idl \
+     $(WebCore)/dom/TextDecoder.idl \
+     $(WebCore)/dom/TextDecoderStream.idl \
 diff --git a/Source/WebCore/Modules/geolocation/Geolocation.cpp b/Source/WebCore/Modules/geolocation/Geolocation.cpp
 index 6d5be9a591a272cd67d6e9d097b30505bdf8ae5e..8f67ba28c380e844c8e4191ee704466559d88f97 100644
 --- a/Source/WebCore/Modules/geolocation/Geolocation.cpp
