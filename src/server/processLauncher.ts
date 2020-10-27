@@ -85,6 +85,10 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
         stdio,
       }
   );
+
+  // Prevent Unhandled 'error' event.
+  spawnedProcess.on('error', () => {});
+
   if (!spawnedProcess.pid) {
     let failed: (e: Error) => void;
     const failedPromise = new Promise<Error>((f, r) => failed = f);
@@ -197,6 +201,7 @@ export function waitForLine(progress: Progress, process: childProcess.ChildProce
       helper.addEventListener(rl, 'line', onLine),
       helper.addEventListener(rl, 'close', reject.bind(null, failError)),
       helper.addEventListener(process, 'exit', reject.bind(null, failError)),
+      // It is Ok to remove error handler because we did not create process and there is another listener.
       helper.addEventListener(process, 'error', reject.bind(null, failError))
     ];
 

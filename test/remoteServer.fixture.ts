@@ -74,7 +74,7 @@ export class RemoteServer {
       launchOptions,
       ...extraOptions,
     };
-    this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)]);
+    this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)], { env: process.env });
     this._child.on('error', (...args) => console.log('ERROR', ...args));
     this._exitPromise = new Promise(resolve => this._child.on('exit', (exitCode, signal) => {
       this._didExit = true;
@@ -93,6 +93,9 @@ export class RemoteServer {
         this._addOutput(key, value);
         outputString = outputString.substring(match.index + match[0].length);
       }
+    });
+    this._child.stderr.on('data', data => {
+      console.log(data.toString());
     });
 
     this._wsEndpoint = await this.out('wsEndpoint');
