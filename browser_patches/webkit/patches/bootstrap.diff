@@ -1762,7 +1762,7 @@ index 4cd4740f422af662f21241215fb34855e0255b5f..3e977dee342697dba8c1c60177a1624c
  #endif
  
 diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
-index 5e3f1bd26e8eb13fdc63cef4d601e5f7ebb468c7..088416254c0022fe3499ec0cb4965dc994ad4c1f 100644
+index 5e3f1bd26e8eb13fdc63cef4d601e5f7ebb468c7..514b713d8291c8faee6a1a83f921658b9fa3dfad 100644
 --- a/Source/WebCore/DerivedSources.make
 +++ b/Source/WebCore/DerivedSources.make
 @@ -760,6 +760,10 @@ JS_BINDING_IDLS = \
@@ -1772,7 +1772,7 @@ index 5e3f1bd26e8eb13fdc63cef4d601e5f7ebb468c7..088416254c0022fe3499ec0cb4965dc9
 +    $(WebCore)/dom/Document+Touch.idl \
 +    $(WebCore)/dom/Touch.idl \
 +    $(WebCore)/dom/TouchEvent.idl \
-+    $(WebCore)/dom/TouchList.idl
++    $(WebCore)/dom/TouchList.idl \
      $(WebCore)/dom/Text.idl \
      $(WebCore)/dom/TextDecoder.idl \
      $(WebCore)/dom/TextDecoderStream.idl \
