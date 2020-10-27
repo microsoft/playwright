@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Request, Response, Route } from '../server/network';
+import { Request, Response, Route, WebSocket } from '../server/network';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -96,5 +96,17 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
 
   async abort(params: channels.RouteAbortParams): Promise<void> {
     await this._object.abort(params.errorCode || 'failed');
+  }
+}
+
+export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocketInitializer> implements channels.WebSocketChannel {
+  constructor(scope: DispatcherScope, webSocket: WebSocket) {
+    super(scope, webSocket, 'WebSocket', {
+      url: webSocket.url(),
+    });
+    webSocket.on(WebSocket.Events.FrameSent, (event: { opcode: number, data: string }) => this._dispatchEvent('frameSent', event));
+    webSocket.on(WebSocket.Events.FrameReceived, (event: { opcode: number, data: string }) => this._dispatchEvent('frameReceived', event));
+    webSocket.on(WebSocket.Events.Error, (error: string) => this._dispatchEvent('error', { error }));
+    webSocket.on(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
   }
 }

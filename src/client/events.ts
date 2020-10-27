@@ -49,7 +49,15 @@ export const Events = {
     FrameNavigated: 'framenavigated',
     Load: 'load',
     Popup: 'popup',
+    WebSocket: 'websocket',
     Worker: 'worker',
+  },
+
+  WebSocket: {
+    Close: 'close',
+    Error: 'socketerror',
+    FrameReceived: 'framereceived',
+    FrameSent: 'framesent',
   },
 
   Worker: {

@@ -694,6 +694,7 @@ export interface PageChannel extends Channel {
   on(event: 'response', callback: (params: PageResponseEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'video', callback: (params: PageVideoEvent) => void): this;
+  on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
@@ -781,6 +782,9 @@ export type PageRouteEvent = {
 };
 export type PageVideoEvent = {
   relativePath: string,
+};
+export type PageWebSocketEvent = {
+  webSocket: WebSocketChannel,
 };
 export type PageWorkerEvent = {
   worker: WorkerChannel,
@@ -2184,6 +2188,31 @@ export type ResponseFinishedOptions = {};
 export type ResponseFinishedResult = {
   error?: string,
 };
+
+// ----------- WebSocket -----------
+export type WebSocketInitializer = {
+  url: string,
+};
+export interface WebSocketChannel extends Channel {
+  on(event: 'open', callback: (params: WebSocketOpenEvent) => void): this;
+  on(event: 'frameSent', callback: (params: WebSocketFrameSentEvent) => void): this;
+  on(event: 'frameReceived', callback: (params: WebSocketFrameReceivedEvent) => void): this;
+  on(event: 'error', callback: (params: WebSocketErrorEvent) => void): this;
+  on(event: 'close', callback: (params: WebSocketCloseEvent) => void): this;
+}
+export type WebSocketOpenEvent = {};
+export type WebSocketFrameSentEvent = {
+  opcode: number,
+  data: string,
+};
+export type WebSocketFrameReceivedEvent = {
+  opcode: number,
+  data: string,
+};
+export type WebSocketErrorEvent = {
+  error: string,
+};
+export type WebSocketCloseEvent = {};
 
 // ----------- ConsoleMessage -----------
 export type ConsoleMessageInitializer = {

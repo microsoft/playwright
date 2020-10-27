@@ -945,6 +945,10 @@ Page:
       parameters:
         relativePath: string
 
+    webSocket:
+      parameters:
+        webSocket: WebSocket
+
     worker:
       parameters:
         worker: Worker
@@ -1842,6 +1846,32 @@ Response:
     finished:
       returns:
         error: string?
+
+
+WebSocket:
+  type: interface
+
+  initializer:
+    url: string
+
+  events:
+    open:
+
+    frameSent:
+      parameters:
+        opcode: number
+        data: string
+
+    frameReceived:
+      parameters:
+        opcode: number
+        data: string
+
+    error:
+      parameters:
+        error: string
+
+    close:
 
 
 ConsoleMessage:
