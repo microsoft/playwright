@@ -13,6 +13,7 @@ on:
 env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
+  FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
 
 jobs:
   test_linux:
@@ -42,9 +43,7 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
-      if: github.ref == 'refs/heads/master'
-      env:
-        FLAKINESS_CONNECTION_STRING: ${{ secrets.FLAKINESS_CONNECTION_STRING }}
+      if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: always()
       with:
@@ -72,6 +71,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -101,6 +102,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -153,6 +156,8 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         HEADLESS: "false"
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -185,6 +190,8 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         PWWIRE: true
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
@@ -216,6 +223,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
