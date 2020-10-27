@@ -23,7 +23,6 @@ it('browserType.executablePath should work', test => {
 }, async ({browserType}) => {
   const executablePath = browserType.executablePath();
   expect(fs.existsSync(executablePath)).toBe(true);
-  expect(fs.realpathSync(executablePath)).toBe(executablePath);
 });
 
 it('browserType.name should work', async ({browserType, isChromium, isFirefox, isWebKit}) => {
