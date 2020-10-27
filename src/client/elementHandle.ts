@@ -179,8 +179,10 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
 
   async screenshot(options: channels.ElementHandleScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('elementHandle.screenshot', async () => {
-      const type = determineScreenshotType(options);
-      const result = await this._elementChannel.screenshot({ ...options, type });
+      const copy = { ...options };
+      if (!copy.type)
+        copy.type = determineScreenshotType(options);
+      const result = await this._elementChannel.screenshot(copy);
       const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);

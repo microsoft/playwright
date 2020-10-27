@@ -443,8 +443,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
 
   async screenshot(options: channels.PageScreenshotOptions & { path?: string } = {}): Promise<Buffer> {
     return this._wrapApiCall('page.screenshot', async () => {
-      const type = determineScreenshotType(options);
-      const result = await this._channel.screenshot({ ...options, type });
+      const copy = { ...options };
+      if (!copy.type)
+        copy.type = determineScreenshotType(options);
+      const result = await this._channel.screenshot(copy);
       const buffer = Buffer.from(result.binary, 'base64');
       if (options.path) {
         await mkdirIfNeeded(options.path);

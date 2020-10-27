@@ -292,6 +292,11 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(error.message).toContain('path: unsupported mime type "text/plain"');
   });
 
+  it('should prefer type over extension', async ({page}) => {
+    const buffer = await page.screenshot({ path: 'file.png', type: 'jpeg' });
+    expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
+  });
+
   it('should work with large size', (test, { browserName }) => {
     test.fail(browserName === 'chromium', 'Upstream Chromium bug');
   }, async ({ page }) => {

@@ -393,4 +393,13 @@ describe('element screenshot', (suite, parameters) => {
     await elementHandle.screenshot({path: outputPath});
     expect(await fs.promises.readFile(outputPath)).toMatchSnapshot('screenshot-element-bounding-box.png');
   });
+
+  it('should prefer type over extension', async ({page, server}) => {
+    await page.setViewportSize({width: 500, height: 500});
+    await page.goto(server.PREFIX + '/grid.html');
+    await page.evaluate(() => window.scrollBy(50, 100));
+    const elementHandle = await page.$('.box:nth-of-type(3)');
+    const buffer = await elementHandle.screenshot({ path: 'file.png', type: 'jpeg' });
+    expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
+  });
 });
