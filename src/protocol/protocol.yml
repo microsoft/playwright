@@ -1243,7 +1243,7 @@ Frame:
             properties:
               name: string
               mimeType: string
-              buffer: string
+              buffer: binary
         timeout: number?
         noWaitAfter: boolean?
 
@@ -1660,7 +1660,7 @@ ElementHandle:
             properties:
               name: string
               mimeType: string
-              buffer: string
+              buffer: binary
         timeout: number?
         noWaitAfter: boolean?
 

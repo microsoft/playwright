@@ -592,7 +592,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     files: tArray(tObject({
       name: tString,
       mimeType: tString,
-      buffer: tString,
+      buffer: tBinary,
     })),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
@@ -781,7 +781,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     files: tArray(tObject({
       name: tString,
       mimeType: tString,
-      buffer: tString,
+      buffer: tBinary,
     })),
     timeout: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),

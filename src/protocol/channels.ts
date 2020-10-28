@@ -1490,7 +1490,7 @@ export type FrameSetInputFilesParams = {
   files: {
     name: string,
     mimeType: string,
-    buffer: string,
+    buffer: Binary,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
@@ -1982,7 +1982,7 @@ export type ElementHandleSetInputFilesParams = {
   files: {
     name: string,
     mimeType: string,
-    buffer: string,
+    buffer: Binary,
   }[],
   timeout?: number,
   noWaitAfter?: boolean,
