@@ -178,7 +178,7 @@ export class Request {
     return new Route(this, this._routeDelegate);
   }
 
-  _updateWithRawHeaders(headers: types.HeadersArray) {
+  updateWithRawHeaders(headers: types.HeadersArray) {
     this._headers = headers;
     this._headersMap.clear();
     for (const { name, value } of this._headers)

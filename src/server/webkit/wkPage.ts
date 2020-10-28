@@ -18,7 +18,7 @@
 import * as jpeg from 'jpeg-js';
 import * as path from 'path';
 import * as png from 'pngjs';
-import { assert, createGuid, debugAssert, headersArrayToObject } from '../../utils/utils';
+import { assert, createGuid, debugAssert, headersArrayToObject, headersObjectToArray } from '../../utils/utils';
 import * as accessibility from '../accessibility';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -927,6 +927,8 @@ export class WKPage implements PageDelegate {
     if (!request)
       return;
     const response = request.createResponse(event.response);
+    if (event.response.requestHeaders && Object.keys(event.response.requestHeaders).length)
+      request.request.updateWithRawHeaders(headersObjectToArray(event.response.requestHeaders));
     this._page._frameManager.requestReceivedResponse(response);
 
     if (response.status() === 204) {
