@@ -23,8 +23,8 @@ XPCOM_MANIFESTS += [
 LOCAL_INCLUDES += [
     '/dom/media/systemservices',
     '/media/libyuv/libyuv/include',
-    '/media/webrtc/trunk',
-    '/media/webrtc/trunk/webrtc',
+    '/third_party/libwebrtc',
+    '/third_party/libwebrtc/webrtc',
 ]
 
 LOCAL_INCLUDES += [
@@ -43,7 +43,7 @@ SOURCES += [
     'WebMFileWriter.cpp',
 ]
 
-include('/media/webrtc/webrtc.mozbuild')
+include('/dom/media/webrtc/third_party_build/webrtc.mozbuild')
 include('/ipc/chromium/chromium-config.mozbuild')
 
 FINAL_LIBRARY = 'xul'

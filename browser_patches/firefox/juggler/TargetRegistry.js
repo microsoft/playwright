@@ -338,12 +338,8 @@ class PageTarget {
       onLocationChange: (aWebProgress, aRequest, aLocation) => this._onNavigated(aLocation),
     };
     this._eventListeners = [
+      helper.addObserver(this._updateModalDialogs.bind(this), 'tabmodal-dialog-loaded'),
       helper.addProgressListener(tab.linkedBrowser, navigationListener, Ci.nsIWebProgress.NOTIFY_LOCATION),
-      helper.addEventListener(this._linkedBrowser, 'DOMWillOpenModalDialog', async (event) => {
-        // wait for the dialog to be actually added to DOM.
-        await Promise.resolve();
-        this._updateModalDialogs();
-      }),
       helper.addEventListener(this._linkedBrowser, 'DOMModalDialogClosed', event => this._updateModalDialogs()),
     ];
 
