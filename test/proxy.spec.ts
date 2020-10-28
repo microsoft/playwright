@@ -128,7 +128,7 @@ it('should authenticate', async ({browserType, browserOptions, server}) => {
 });
 
 it('should exclude patterns', (test, { browserName, headful }) => {
-  test.flaky(browserName === 'chromium' && headful, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
+  test.fixme(browserName === 'chromium' && headful, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
 }, async ({browserType, browserOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     res.end('<html><title>Served by the proxy</title></html>');
