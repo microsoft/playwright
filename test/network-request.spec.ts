@@ -82,7 +82,7 @@ it('should return headers', async ({page, server, isChromium, isFirefox, isWebKi
 });
 
 it('should get the same headers as the server', (test, { browserName, platform }) => {
-  test.fail(browserName === 'webkit' && platform !== 'darwin', 'Provisional headers differ from those in network stack');
+  test.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 }, async ({ page, server }) => {
   let serverRequest;
   server.setRoute('/empty.html', (request, response) => {
@@ -94,7 +94,7 @@ it('should get the same headers as the server', (test, { browserName, platform }
 });
 
 it('should get the same headers as the server CORP', (test, { browserName, platform }) => {
-  test.fail(browserName === 'webkit' && platform !== 'darwin', 'Provisional headers differ from those in network stack');
+  test.fail(browserName === 'webkit' && platform === 'win32', 'Curl does not show accept-encoding and accept-language');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
   let serverRequest;

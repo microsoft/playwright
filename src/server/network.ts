@@ -183,6 +183,11 @@ export class Request {
     this._headersMap.clear();
     for (const { name, value } of this._headers)
       this._headersMap.set(name.toLowerCase(), value);
+    if (!this._headersMap.has('host')) {
+      const host = new URL(this._url).host;
+      this._headers.push({ name: 'host', value: host });
+      this._headersMap.set('host', host);
+    }
   }
 }
 
