@@ -6565,6 +6565,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       data: string;
     }
     /**
+     * Overrides screen size exposed to DOM and used in media queries for testing with provided values.
+     */
+    export type setScreenSizeOverrideParameters = {
+      /**
+       * Screen width
+       */
+      width?: number;
+      /**
+       * Screen height
+       */
+      height?: number;
+    }
+    export type setScreenSizeOverrideReturnValue = {
+    }
+    /**
      * Insert text into the current selection of the page.
      */
     export type insertTextParameters = {
@@ -6640,15 +6655,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type crashParameters = {
     }
     export type crashReturnValue = {
-    }
-    /**
-     * Overrides screen size with provided values.
-     */
-    export type setScreenSizeOverrideParameters = {
-      width: number;
-      height: number;
-    }
-    export type setScreenSizeOverrideReturnValue = {
     }
     /**
      * Overrides window.orientation with provided value.
@@ -8682,6 +8688,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.snapshotNode": Page.snapshotNodeParameters;
     "Page.snapshotRect": Page.snapshotRectParameters;
     "Page.archive": Page.archiveParameters;
+    "Page.setScreenSizeOverride": Page.setScreenSizeOverrideParameters;
     "Page.insertText": Page.insertTextParameters;
     "Page.accessibilitySnapshot": Page.accessibilitySnapshotParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
@@ -8689,7 +8696,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.createUserWorld": Page.createUserWorldParameters;
     "Page.setBypassCSP": Page.setBypassCSPParameters;
     "Page.crash": Page.crashParameters;
-    "Page.setScreenSizeOverride": Page.setScreenSizeOverrideParameters;
     "Page.setOrientationOverride": Page.setOrientationOverrideParameters;
     "Playwright.enable": Playwright.enableParameters;
     "Playwright.disable": Playwright.disableParameters;
@@ -8966,6 +8972,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.snapshotNode": Page.snapshotNodeReturnValue;
     "Page.snapshotRect": Page.snapshotRectReturnValue;
     "Page.archive": Page.archiveReturnValue;
+    "Page.setScreenSizeOverride": Page.setScreenSizeOverrideReturnValue;
     "Page.insertText": Page.insertTextReturnValue;
     "Page.accessibilitySnapshot": Page.accessibilitySnapshotReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
@@ -8973,7 +8980,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.createUserWorld": Page.createUserWorldReturnValue;
     "Page.setBypassCSP": Page.setBypassCSPReturnValue;
     "Page.crash": Page.crashReturnValue;
-    "Page.setScreenSizeOverride": Page.setScreenSizeOverrideReturnValue;
     "Page.setOrientationOverride": Page.setOrientationOverrideReturnValue;
     "Playwright.enable": Playwright.enableReturnValue;
     "Playwright.disable": Playwright.disableReturnValue;

@@ -3844,8 +3844,7 @@ export interface BrowserContext {
 
   /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if specified.
-   * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values:  - `'*'`
-   *  - `'geolocation'`
+   * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values:  - `'geolocation'`
    *  - `'midi'`
    *  - `'midi-sysex'` (system-exclusive midi)
    *  - `'notifications'`
@@ -5138,6 +5137,21 @@ export interface BrowserType<Browser> {
        */
       height: number;
     };
+
+    /**
+     * Enables HAR recording for all the pages into `har.path` file. If not specified, HAR is not recorded. Make sure to await `page.close` for HAR to be saved.
+     */
+    recordHar?: {
+      /**
+       * Optional setting to control whether to omit request content from the HAR. Defaults to false.
+       */
+      omitContent?: boolean;
+
+      /**
+       * path on the filesystem to write the HAR file to
+       */
+      path: string;
+    };
   }): Promise<BrowserContext>;
 
   /**
@@ -5689,6 +5703,21 @@ export interface Browser extends EventEmitter {
        * Video frame height.
        */
       height: number;
+    };
+
+    /**
+     * Enables HAR recording for all pages into `har.path` file. If not specified, the HAR is not recorded. Make sure to await `page.close` for the HAR to be saved.
+     */
+    recordHar?: {
+      /**
+       * Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
+       */
+      omitContent?: boolean;
+
+      /**
+       * path on the filesystem to write the HAR file to
+       */
+      path: string;
     };
   }): Promise<Page>;
 
@@ -7236,6 +7265,21 @@ export interface BrowserContextOptions {
      * Video frame height.
      */
     height: number;
+  };
+
+  /**
+   * Enables HAR recording for all pages into `har.path` file. If not specified, the HAR is not recorded. Make sure to await `browserContext.close` for the HAR to be saved.
+   */
+  recordHar?: {
+    /**
+     * Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
+     */
+    omitContent?: boolean;
+
+    /**
+     * path on the filesystem to write the HAR file to.
+     */
+    path: string;
   };
 }
 
