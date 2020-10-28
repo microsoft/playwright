@@ -82,8 +82,8 @@ it('should emulate device height', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(device-height: 500px)').matches)).toBe(true);
 });
 
-it('should emulate availWidth and availHeight', (test, { browserName, platform }) => {
-  test.fail(browserName === 'webkit' && platform !== 'linux', 'Not implemented');
+it('should emulate availWidth and availHeight', (test, { browserName, platform, headful }) => {
+  test.fail(browserName === 'webkit' && (platform !== 'linux' || headful), 'Not implemented');
 }, async ({page}) => {
   await page.setViewportSize({width: 500, height: 600});
   expect(await page.evaluate(() => window.screen.availWidth)).toBe(500);
