@@ -48,7 +48,7 @@ it('should work for subresource', async ({ page, server, isWindows, isWebKit }) 
     expect(timing.secureConnectionStart).toBe(-1);
     expect(timing.connectEnd).toBeGreaterThan(timing.secureConnectionStart);
   } else {
-    expect(timing.domainLookupStart).toBe(-1);
+    expect(timing.domainLookupStart === 0 || timing.domainLookupStart === -1).toBeTruthy();
     expect(timing.domainLookupEnd).toBe(-1);
     expect(timing.connectStart).toBe(-1);
     expect(timing.secureConnectionStart).toBe(-1);
