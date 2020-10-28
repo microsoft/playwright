@@ -44,6 +44,8 @@ SOFTWARE.
 
 #include <windows.h>
 #include <Dbghelp.h>
+#include "PrintDeps.h"
+#include <vector>
 
 using DepsMap = std::map<std::string, std::string>;
 
@@ -114,7 +116,17 @@ int printDependencies(const char* library)
 
 int printUsage()
 {
-    std::cout << "Version: r" << BUILD_NUMBER << " Usage:\n  PrintDeps FILE..." << std::endl;
+    DWORD dummy;
+    const char* fileName = TEXT("PrintDeps.exe");
+    DWORD dwSize = GetFileVersionInfoSize(fileName, &dummy);
+    std::vector<BYTE> data(dwSize);
+    GetFileVersionInfo(TEXT("PrintDeps.exe"), NULL, dwSize, &data[0]);
+    LPVOID pvProductVersion = NULL;
+    unsigned int iProductVersionLen = 0;
+    VerQueryValue(&data[0], TEXT("\\StringFileInfo\\040904b0\\ProductVersion"), &pvProductVersion, &iProductVersionLen);
+    char* version = (char*)pvProductVersion;
+
+    std::cout << "Version: r" << version << " Usage:\n  PrintDeps FILE..." << std::endl;
     return -1;
 }
 
