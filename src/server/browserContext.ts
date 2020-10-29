@@ -241,7 +241,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   protected _authenticateProxyViaHeader() {
-    const proxy = this._browser._options.proxy || { username: undefined, password: undefined };
+    const proxy = this._options.proxy || this._browser._options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
       this._options.httpCredentials = { username, password: password! };
@@ -254,7 +254,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   protected _authenticateProxyViaCredentials() {
-    const proxy = this._browser._options.proxy;
+    const proxy = this._options.proxy || this._browser._options.proxy;
     if (!proxy)
       return;
     const { username, password } = proxy;
@@ -322,6 +322,11 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     throw new Error(`"isMobile" option is not supported with null "viewport"`);
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
+  if (options.proxy) {
+    if (!browserOptions.proxy)
+      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-proxy' } })"`);
+    options.proxy = normalizeProxySettings(options.proxy);
+  }
   verifyGeolocation(options.geolocation);
   if (options.videoSize && !options.videosPath)
     throw new Error(`"videoSize" option requires "videosPath" to be specified`);

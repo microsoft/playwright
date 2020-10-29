@@ -16,11 +16,13 @@
 
 import { folio as base } from 'folio';
 import path from 'path';
+import socks from 'socksv5';
 import { TestServer } from '../utils/testserver';
 
 type HttpWorkerFixtures = {
   asset: (path: string) => string;
   httpService: { server: TestServer, httpsServer: TestServer };
+  socksPort: number,
 };
 
 type HttpTestFixtures = {
@@ -62,5 +64,29 @@ fixtures.httpsServer.init(async ({ httpService }, test) => {
   httpService.httpsServer.reset();
   await test(httpService.httpsServer);
 });
+
+fixtures.socksPort.init(async ({ testWorkerIndex }, run) => {
+  const server = socks.createServer((info, accept, deny) => {
+    let socket;
+    if ((socket = accept(true))) {
+      // Catch and ignore ECONNRESET errors.
+      socket.on('error', () => {});
+      const body = '<html><title>Served by the SOCKS proxy</title></html>';
+      socket.end([
+        'HTTP/1.1 200 OK',
+        'Connection: close',
+        'Content-Type: text/html',
+        'Content-Length: ' + Buffer.byteLength(body),
+        '',
+        body
+      ].join('\r\n'));
+    }
+  });
+  const socksPort = 9107 + testWorkerIndex * 2;
+  server.listen(socksPort, 'localhost');
+  server.useAuth(socks.auth.None());
+  await run(socksPort);
+  server.close();
+}, { scope: 'worker' });
 
 export const folio = fixtures.build();
