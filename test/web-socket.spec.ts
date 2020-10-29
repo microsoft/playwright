@@ -18,7 +18,6 @@
 import { it, describe, expect } from './fixtures';
 
 describe('web socket', (test, { browserName }) => {
-  test.fixme(browserName === 'firefox');
 }, () => {
   it('should work', async ({ page, server }) => {
     const value = await page.evaluate(port => {
@@ -47,7 +46,7 @@ describe('web socket', (test, { browserName }) => {
     expect(log.join(':')).toBe(`open<ws://localhost:${server.PORT}/ws>:close`);
   });
 
-  it('should emit frame events', async ({ page, server }) => {
+  it('should emit frame events', async ({ page, server, isFirefox }) => {
     let socketClosed;
     const socketClosePromise = new Promise(f => socketClosed = f);
     const log = [];
@@ -63,7 +62,10 @@ describe('web socket', (test, { browserName }) => {
       ws.addEventListener('message', () => { ws.close(); });
     }, server.PORT);
     await socketClosePromise;
-    expect(log.join(':')).toBe('open:sent<outgoing>:received<incoming>:close');
+    if (isFirefox)
+      expect(log.join(':')).toBe('open:received<incoming>:sent<outgoing>:close');
+    else
+      expect(log.join(':')).toBe('open:sent<outgoing>:received<incoming>:close');
   });
 
   it('should emit binary frame events', async ({ page, server }) => {
@@ -91,7 +93,7 @@ describe('web socket', (test, { browserName }) => {
       expect(sent[1][i]).toBe(i);
   });
 
-  it('should emit error', async ({page, server}) => {
+  it('should emit error', async ({page, server, isFirefox}) => {
     let callback;
     const result = new Promise(f => callback = f);
     page.on('websocket', ws => ws.on('socketerror', callback));
@@ -99,6 +101,9 @@ describe('web socket', (test, { browserName }) => {
       new WebSocket('ws://localhost:' + port + '/bogus-ws');
     }, server.PORT);
     const message = await result;
-    expect(message).toContain(': 400');
+    if (isFirefox)
+      expect(message).toBe('CLOSE_ABNORMAL');
+    else
+      expect(message).toContain(': 400');
   });
 });

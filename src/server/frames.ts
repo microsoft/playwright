@@ -357,6 +357,12 @@ export class FrameManager {
       ws.error(`${statusText}: ${status}`);
   }
 
+  onWebSocketError(requestId: string, error: string) {
+    const ws = this._webSockets.get(requestId);
+    if (ws)
+      ws.error(error);
+  }
+
   onWebSocketFrameSent(requestId: string, opcode: number, data: string) {
     const ws = this._webSockets.get(requestId);
     if (ws)
