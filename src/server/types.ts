@@ -244,6 +244,7 @@ export type BrowserContextOptions = {
     omitContent?: boolean,
     path: string
   },
+  proxy?: ProxySettings,
   _tracePath?: string,
   _traceResourcesPath?: string,
 };

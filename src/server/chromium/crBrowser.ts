@@ -99,7 +99,11 @@ export class CRBrowser extends Browser {
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
     validateBrowserContextOptions(options, this._options);
-    const { browserContextId } = await this._session.send('Target.createBrowserContext', { disposeOnDetach: true });
+    const { browserContextId } = await this._session.send('Target.createBrowserContext', {
+      disposeOnDetach: true,
+      proxyServer: options.proxy ? options.proxy.server : undefined,
+      proxyBypassList: options.proxy ? options.proxy.bypass : undefined,
+    });
     const context = new CRBrowserContext(this, browserContextId, options);
     await context._initialize();
     this._contexts.set(browserContextId, context);

@@ -223,6 +223,11 @@ Indicates that the browser is connected.
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
+  - `proxy` <[Object]> Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: { server: 'per-proxy' } })`.
+    - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+    - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+    - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
+    - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
   - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
@@ -272,6 +277,11 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
+  - `proxy` <[Object]> Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example `launch({ proxy: { server: 'per-proxy' } })`.
+    - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
+    - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+    - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
+    - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
   - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.

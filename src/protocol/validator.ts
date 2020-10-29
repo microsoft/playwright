@@ -233,6 +233,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       omitContent: tOptional(tBoolean),
       path: tString,
     })),
+    proxy: tOptional(tObject({
+      server: tString,
+      bypass: tOptional(tString),
+      username: tOptional(tString),
+      password: tOptional(tString),
+    })),
   });
   scheme.BrowserCrNewBrowserCDPSessionParams = tOptional(tObject({}));
   scheme.BrowserCrStartTracingParams = tObject({

@@ -398,6 +398,12 @@ export type BrowserNewContextParams = {
     omitContent?: boolean,
     path: string,
   },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
 };
 export type BrowserNewContextOptions = {
   noDefaultViewport?: boolean,
@@ -441,6 +447,12 @@ export type BrowserNewContextOptions = {
   recordHar?: {
     omitContent?: boolean,
     path: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
   },
 };
 export type BrowserNewContextResult = {

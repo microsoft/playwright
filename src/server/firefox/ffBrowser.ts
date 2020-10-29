@@ -18,7 +18,6 @@
 import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
-import { helper, RegisteredListener } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
 import { ConnectionTransport } from '../transport';
@@ -31,7 +30,6 @@ export class FFBrowser extends Browser {
   _connection: FFConnection;
   readonly _ffPages: Map<string, FFPage>;
   readonly _contexts: Map<string, FFBrowserContext>;
-  private _eventListeners: RegisteredListener[];
   private _version = '';
 
   static async connect(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
@@ -45,31 +43,8 @@ export class FFBrowser extends Browser {
       browser._defaultContext = new FFBrowserContext(browser, undefined, options.persistent);
       promises.push((browser._defaultContext as FFBrowserContext)._initialize());
     }
-    if (options.proxy) {
-      const proxyServer = new URL(options.proxy.server);
-      let proxyPort = parseInt(proxyServer.port, 10);
-      let aType: 'http'|'https'|'socks'|'socks4' = 'http';
-      if (proxyServer.protocol === 'socks5:')
-        aType = 'socks';
-      else if (proxyServer.protocol === 'socks4:')
-        aType = 'socks4';
-      else if (proxyServer.protocol === 'https:')
-        aType = 'https';
-      if (proxyServer.port === '') {
-        if (proxyServer.protocol === 'http:')
-          proxyPort = 80;
-        else if (proxyServer.protocol === 'https:')
-          proxyPort = 443;
-      }
-      promises.push(browser._connection.send('Browser.setBrowserProxy', {
-        type: aType,
-        bypass: options.proxy.bypass ? options.proxy.bypass.split(',').map(domain => domain.trim()) : [],
-        host: proxyServer.hostname,
-        port: proxyPort,
-        username: options.proxy.username,
-        password: options.proxy.password,
-      }));
-    }
+    if (options.proxy)
+      promises.push(browser._connection.send('Browser.setBrowserProxy', toJugglerProxyOptions(options.proxy)));
     await Promise.all(promises);
     return browser;
   }
@@ -80,13 +55,11 @@ export class FFBrowser extends Browser {
     this._ffPages = new Map();
     this._contexts = new Map();
     this._connection.on(ConnectionEvents.Disconnected, () => this._didClose());
-    this._eventListeners = [
-      helper.addEventListener(this._connection, 'Browser.attachedToTarget', this._onAttachedToTarget.bind(this)),
-      helper.addEventListener(this._connection, 'Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this)),
-      helper.addEventListener(this._connection, 'Browser.downloadCreated', this._onDownloadCreated.bind(this)),
-      helper.addEventListener(this._connection, 'Browser.downloadFinished', this._onDownloadFinished.bind(this)),
-      helper.addEventListener(this._connection, 'Browser.screencastFinished', this._onScreencastFinished.bind(this)),
-    ];
+    this._connection.on('Browser.attachedToTarget', this._onAttachedToTarget.bind(this));
+    this._connection.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
+    this._connection.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
+    this._connection.on('Browser.downloadFinished', this._onDownloadFinished.bind(this));
+    this._connection.on('Browser.screencastFinished', this._onScreencastFinished.bind(this));
   }
 
   async _initVersion() {
@@ -239,6 +212,12 @@ export class FFBrowserContext extends BrowserContext {
         });
       }));
     }
+    if (this._options.proxy) {
+      promises.push(this._browser._connection.send('Browser.setContextProxy', {
+        browserContextId: this._browserContextId,
+        ...toJugglerProxyOptions(this._options.proxy)
+      }));
+    }
 
     await Promise.all(promises);
   }
@@ -349,4 +328,30 @@ export class FFBrowserContext extends BrowserContext {
     await this._browser._connection.send('Browser.removeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
   }
+}
+
+function toJugglerProxyOptions(proxy: types.ProxySettings) {
+  const proxyServer = new URL(proxy.server);
+  let port = parseInt(proxyServer.port, 10);
+  let type: 'http' | 'https' | 'socks' | 'socks4' = 'http';
+  if (proxyServer.protocol === 'socks5:')
+    type = 'socks';
+  else if (proxyServer.protocol === 'socks4:')
+    type = 'socks4';
+  else if (proxyServer.protocol === 'https:')
+    type = 'https';
+  if (proxyServer.port === '') {
+    if (proxyServer.protocol === 'http:')
+      port = 80;
+    else if (proxyServer.protocol === 'https:')
+      port = 443;
+  }
+  return {
+    type,
+    bypass: proxy.bypass ? proxy.bypass.split(',').map(domain => domain.trim()) : [],
+    host: proxyServer.hostname,
+    port,
+    username: proxy.username,
+    password: proxy.password
+  };
 }
