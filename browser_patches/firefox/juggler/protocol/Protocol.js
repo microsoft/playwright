@@ -668,6 +668,34 @@ const Page = {
       screencastId: t.String,
       file: t.String,
     },
+    'webSocketCreated': {
+      frameId: t.String,
+      wsid: t.String,
+      requestURL: t.String,
+    },
+    'webSocketOpened': {
+      frameId: t.String,
+      requestId: t.String,
+      wsid: t.String,
+      effectiveURL: t.String,
+    },
+    'webSocketClosed': {
+      frameId: t.String,
+      wsid: t.String,
+      error: t.String,
+    },
+    'webSocketFrameSent': {
+      frameId: t.String,
+      wsid: t.String,
+      opcode: t.Number,
+      data: t.String,
+    },
+    'webSocketFrameReceived': {
+      frameId: t.String,
+      wsid: t.String,
+      opcode: t.Number,
+      data: t.String,
+    },
   },
 
   methods: {

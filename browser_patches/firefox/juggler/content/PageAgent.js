@@ -177,6 +177,11 @@ class PageAgent {
       helper.on(this._frameTree, 'pageready', () => this._browserPage.emit('pageReady', {})),
       helper.on(this._frameTree, 'workercreated', this._onWorkerCreated.bind(this)),
       helper.on(this._frameTree, 'workerdestroyed', this._onWorkerDestroyed.bind(this)),
+      helper.on(this._frameTree, 'websocketcreated', event => this._browserPage.emit('webSocketCreated', event)),
+      helper.on(this._frameTree, 'websocketopened', event => this._browserPage.emit('webSocketOpened', event)),
+      helper.on(this._frameTree, 'websocketframesent', event => this._browserPage.emit('webSocketFrameSent', event)),
+      helper.on(this._frameTree, 'websocketframereceived', event => this._browserPage.emit('webSocketFrameReceived', event)),
+      helper.on(this._frameTree, 'websocketclosed', event => this._browserPage.emit('webSocketClosed', event)),
       helper.addObserver(this._onWindowOpen.bind(this), 'webNavigation-createdNavigationTarget-from-js'),
       this._runtime.events.onErrorFromWorker((domWindow, message, stack) => {
         const frame = this._frameTree.frameForDocShell(domWindow.docShell);
