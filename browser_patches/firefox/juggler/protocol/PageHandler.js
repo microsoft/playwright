@@ -110,6 +110,12 @@ class PageHandler {
         runtimeConsole: emitProtocolEvent('Runtime.console'),
         runtimeExecutionContextCreated: emitProtocolEvent('Runtime.executionContextCreated'),
         runtimeExecutionContextDestroyed: emitProtocolEvent('Runtime.executionContextDestroyed'),
+
+        webSocketCreated: emitProtocolEvent('Page.webSocketCreated'),
+        webSocketOpened: emitProtocolEvent('Page.webSocketOpened'),
+        webSocketClosed: emitProtocolEvent('Page.webSocketClosed'),
+        webSocketFrameReceived: emitProtocolEvent('Page.webSocketFrameReceived'),
+        webSocketFrameSent: emitProtocolEvent('Page.webSocketFrameSent'),
       }),
     ];
   }
