@@ -188,6 +188,8 @@ export class FFSession extends EventEmitter {
   }
 
   dispatchMessage(object: ProtocolResponse) {
+    if (this._disposed)
+      return;
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
