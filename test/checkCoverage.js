@@ -34,16 +34,6 @@ if (browserName !== 'chromium') {
   api.delete('cDPSession.detach');
 }
 
-if (browserName === 'firefox') {
-  // WebSockets on FF are work in progress.
-  api.delete('webSocket.url');
-  api.delete('webSocket.emit("close")');
-  api.delete('webSocket.emit("socketerror")');
-  api.delete('webSocket.emit("framereceived")');
-  api.delete('webSocket.emit("framesent")');
-  api.delete('page.emit("websocket")');
-}
-
 // Some permissions tests are disabled in webkit. See permissions.jest.js
 if (browserName === 'webkit')
   api.delete('browserContext.clearPermissions');
