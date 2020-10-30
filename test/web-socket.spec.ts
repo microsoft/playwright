@@ -62,10 +62,10 @@ describe('web socket', (test, { browserName }) => {
       ws.addEventListener('message', () => { ws.close(); });
     }, server.PORT);
     await socketClosePromise;
-    if (isFirefox)
-      expect(log.join(':')).toBe('open:received<incoming>:sent<outgoing>:close');
-    else
-      expect(log.join(':')).toBe('open:sent<outgoing>:received<incoming>:close');
+    expect(log[0]).toBe('open');
+    expect(log[3]).toBe('close');
+    log.sort();
+    expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
   });
 
   it('should emit binary frame events', async ({ page, server }) => {
