@@ -94,6 +94,7 @@ class TargetRegistry {
 
     this._browserContextIdToBrowserContext = new Map();
     this._userContextIdToBrowserContext = new Map();
+    /** @type {Map<any, PageTarget>} */
     this._browserToTarget = new Map();
     this._browserBrowsingContextToTarget = new Map();
 
@@ -128,7 +129,7 @@ class TargetRegistry {
         const target = this._browserToTarget.get(linkedBrowser);
         if (!target)
           return;
-
+        target.contentIsReadyCallback();
         return {
           scriptsToEvaluateOnNewDocument: target.browserContext().scriptsToEvaluateOnNewDocument,
           bindings: target.browserContext().bindings,
@@ -329,7 +330,9 @@ class PageTarget {
     this._viewportSize = undefined;
     this._url = 'about:blank';
     this._openerId = opener ? opener.id() : undefined;
-    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager);
+    this._channel = SimpleChannel.createForMessageManager(`browser::page[${this._targetId}]`, this._linkedBrowser.messageManager, new Promise(x => {
+      this.contentIsReadyCallback = x;
+    }));
     this._screencastInfo = undefined;
     this._dialogs = new Map();
 

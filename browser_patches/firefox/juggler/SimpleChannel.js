@@ -9,7 +9,7 @@
 const SIMPLE_CHANNEL_MESSAGE_NAME = 'juggler:simplechannel';
 
 class SimpleChannel {
-  static createForMessageManager(name, mm) {
+  static createForMessageManager(name, mm, readyPromise = Promise.resolve()) {
     const channel = new SimpleChannel(name);
 
     const messageListener = {
@@ -17,7 +17,13 @@ class SimpleChannel {
     };
     mm.addMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
 
-    channel.transport.sendMessage = obj => mm.sendAsyncMessage(SIMPLE_CHANNEL_MESSAGE_NAME, obj);
+    channel.transport.sendMessage = async obj => {
+      // When we are the parent, we have to wait for some signal that
+      // the child connection has been set up. Otherwise messages
+      // can be dropped.
+      await readyPromise;
+      return mm.sendAsyncMessage(SIMPLE_CHANNEL_MESSAGE_NAME, obj);
+    }
     channel.transport.dispose = () => {
       mm.removeMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
     };
