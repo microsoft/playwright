@@ -12593,6 +12593,27 @@ index 0000000000000000000000000000000000000000..6d04f9290135069359ce6bf872654648
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm
+index 4dc97e89390e85aaa55ede4ef2801e1b678b3dde..32e3ef06caed295b74a890a031465c82ab81462c 100644
+--- a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm
++++ b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm
+@@ -140,14 +140,14 @@ static Optional<Vector<Ref<AuthenticatorAssertionResponse>>> getExistingCredenti
+         }
+         auto& responseMap = decodedResponse->getMap();
+ 
+-        auto it = responseMap.find(CBOR(kEntityIdMapKey));
++        auto it = responseMap.find(CBOR(fido::kEntityIdMapKey));
+         if (it == responseMap.end() || !it->second.isByteString()) {
+             ASSERT_NOT_REACHED();
+             return WTF::nullopt;
+         }
+         auto& userHandle = it->second.getByteString();
+ 
+-        it = responseMap.find(CBOR(kEntityNameMapKey));
++        it = responseMap.find(CBOR(fido::kEntityNameMapKey));
+         if (it == responseMap.end() || !it->second.isString()) {
+             ASSERT_NOT_REACHED();
+             return WTF::nullopt;
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h b/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
 index ff90d3de4349c9a3385c20c059729b8e22ebe2e5..d5c4f2cd715551ddef6f5af93ada65cbe78ad213 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
