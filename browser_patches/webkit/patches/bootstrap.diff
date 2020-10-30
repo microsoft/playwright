@@ -12594,7 +12594,7 @@ index 0000000000000000000000000000000000000000..6d04f9290135069359ce6bf872654648
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm
-index 4dc97e89390e85aaa55ede4ef2801e1b678b3dde..32e3ef06caed295b74a890a031465c82ab81462c 100644
+index 4dc97e89390e85aaa55ede4ef2801e1b678b3dde..b522b3b792ae4e04beb6fbb3567913ed29f59f79 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm
 +++ b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm
 @@ -140,14 +140,14 @@ static Optional<Vector<Ref<AuthenticatorAssertionResponse>>> getExistingCredenti
@@ -12614,6 +12614,17 @@ index 4dc97e89390e85aaa55ede4ef2801e1b678b3dde..32e3ef06caed295b74a890a031465c82
          if (it == responseMap.end() || !it->second.isString()) {
              ASSERT_NOT_REACHED();
              return WTF::nullopt;
+@@ -291,8 +291,8 @@ void LocalAuthenticator::continueMakeCredentialAfterUserVerification(SecAccessCo
+     const auto& secAttrLabel = creationOptions.rp.id;
+ 
+     cbor::CBORValue::MapValue userEntityMap;
+-    userEntityMap[cbor::CBORValue(kEntityIdMapKey)] = cbor::CBORValue(creationOptions.user.idVector);
+-    userEntityMap[cbor::CBORValue(kEntityNameMapKey)] = cbor::CBORValue(creationOptions.user.name);
++    userEntityMap[cbor::CBORValue(fido::kEntityIdMapKey)] = cbor::CBORValue(creationOptions.user.idVector);
++    userEntityMap[cbor::CBORValue(fido::kEntityNameMapKey)] = cbor::CBORValue(creationOptions.user.name);
+     auto userEntity = cbor::CBORWriter::write(cbor::CBORValue(WTFMove(userEntityMap)));
+     ASSERT(userEntity);
+     auto secAttrApplicationTag = toNSData(*userEntity);
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h b/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
 index ff90d3de4349c9a3385c20c059729b8e22ebe2e5..d5c4f2cd715551ddef6f5af93ada65cbe78ad213 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
