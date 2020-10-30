@@ -28,7 +28,7 @@ const USAGE = `
 
   Examples:
     ${SCRIPT_NAME} v1.0.0
-    ${SCRIPT_NAME} v1.0.0-post
+    ${SCRIPT_NAME} v1.0.0-next
     ${SCRIPT_NAME} --next
 `;
 
@@ -46,13 +46,10 @@ let version = process.argv[2];
 if (version === '--next') {
   const packageJSON = require('../package.json');
   version = packageJSON.version;
-  const dashIndex = version.indexOf('-');
-  if (dashIndex !== -1)
-    version = version.substring(0, dashIndex);
-  version += '-next.' + Date.now();
+  version += '.' + Date.now();
   console.log('Setting version to ' + version);
 } else {
-  if (!version || !version.match(/^v\d+\.\d+\.\d+(-post)?$/)) {
+  if (!version || !version.match(/^v\d+\.\d+\.\d+(-next)?$/)) {
     console.error(`Malformed version "${version}". Use --help for details.`);
     process.exit(1);
   }
