@@ -44,7 +44,7 @@ export class FFPage implements PageDelegate {
   readonly _networkManager: FFNetworkManager;
   readonly _browserContext: FFBrowserContext;
   private _pagePromise: Promise<Page | Error>;
-  _pageCallback: (pageOrError: Page | Error) => void = () => {};
+  _pageCallback!: (pageOrError: Page|Error) => void;
   _initializedPage: Page | null = null;
   readonly _opener: FFPage | null;
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
@@ -90,15 +90,17 @@ export class FFPage implements PageDelegate {
       helper.addEventListener(this._session, 'Page.webSocketFrameReceived', this._onWebSocketFrameReceived.bind(this)),
       helper.addEventListener(this._session, 'Page.webSocketFrameSent', this._onWebSocketFrameSent.bind(this)),
     ];
-    this._pagePromise = new Promise(f => this._pageCallback = f);
+    this._pagePromise = Promise.all([
+      new Promise<Page|Error>(f => this._pageCallback = f),
+      // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
+      // Therefore, we can end up with an initialized page without utility world, although very unlikely.
+      this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }),
+    ]).then(x => x[0]).catch(error => error);
     session.once(FFSessionEvents.Disconnected, () => this._page._didDisconnect());
     this._session.once('Page.ready', () => {
       this._pageCallback(this._page);
       this._initializedPage = this._page;
     });
-    // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
-    // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this._session.send('Page.addScriptToEvaluateOnNewDocument', { script: '', worldName: UTILITY_WORLD_NAME }).catch(this._pageCallback);
   }
 
   async pageOrError(): Promise<Page | Error> {
