@@ -112,7 +112,7 @@ export class FFPage implements PageDelegate {
 
   _onWebSocketClosed(event: Protocol.Page.webSocketClosedPayload) {
     if (event.error)
-      this._page._frameManager.onWebSocketError(webSocketId(event.frameId, event.wsid), event.error);
+      this._page._frameManager.webSocketError(webSocketId(event.frameId, event.wsid), event.error);
     this._page._frameManager.webSocketClosed(webSocketId(event.frameId, event.wsid));
   }
 
