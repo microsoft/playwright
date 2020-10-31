@@ -4158,7 +4158,9 @@ The [WebSocket] class represents websocket connections in the page.
 - [event: 'framereceived'](#event-framereceived)
 - [event: 'framesent'](#event-framesent)
 - [event: 'socketerror'](#event-socketerror)
+- [webSocket.isClosed()](#websocketisclosed)
 - [webSocket.url()](#websocketurl)
+- [webSocket.waitForEvent(event[, optionsOrPredicate])](#websocketwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
 #### event: 'close'
@@ -4182,11 +4184,25 @@ Fired when the websocket sends a frame.
 
 Fired when the websocket has an error.
 
+#### webSocket.isClosed()
+- returns: <[boolean]>
+
+Indicates that the web socket has been closed.
+
 #### webSocket.url()
 - returns: <[string]>
 
 Contains the URL of the WebSocket.
 
+#### webSocket.waitForEvent(event[, optionsOrPredicate])
+- `event` <[string]> Event name, same one would pass into `webSocket.on(event)`.
+- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
+  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+- returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
+
+Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy value. Will throw an error if the webSocket is closed before the event
+is fired.
 
 ### class: TimeoutError
 

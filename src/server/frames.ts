@@ -352,7 +352,7 @@ export class FrameManager {
 
   onWebSocketResponse(requestId: string, status: number, statusText: string) {
     const ws = this._webSockets.get(requestId);
-    if (status >= 200 && status < 400)
+    if (status < 400)
       return;
     if (ws)
       ws.error(`${statusText}: ${status}`);
