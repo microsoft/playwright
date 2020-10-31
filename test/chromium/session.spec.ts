@@ -75,7 +75,7 @@ describe('session', (suite, { browserName }) => {
     } catch (e) {
       error = e;
     }
-    expect(error.message).toContain('Target browser or context has been closed');
+    expect(error.message).toContain('Target page, context or browser has been closed');
   });
 
   it('should throw nice errors', async function({page}) {

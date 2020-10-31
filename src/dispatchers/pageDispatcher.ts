@@ -43,14 +43,17 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
       videoRelativePath: page._video ? page._video._relativePath : undefined,
       viewportSize: page.viewportSize() || undefined,
       isClosed: page.isClosed()
-    });
+    }, true);
     this._page = page;
-    page.on(Page.Events.Close, () => this._dispatchEvent('close'));
+    page.on(Page.Events.Close, () => {
+      this._dispatchEvent('close');
+      this._dispose();
+    });
     page.on(Page.Events.Console, message => this._dispatchEvent('console', { message: new ConsoleMessageDispatcher(this._scope, message) }));
     page.on(Page.Events.Crash, () => this._dispatchEvent('crash'));
     page.on(Page.Events.DOMContentLoaded, () => this._dispatchEvent('domcontentloaded'));
     page.on(Page.Events.Dialog, dialog => this._dispatchEvent('dialog', { dialog: new DialogDispatcher(this._scope, dialog) }));
-    page.on(Page.Events.Download, download => this._dispatchEvent('download', { download: new DownloadDispatcher(this._scope, download) }));
+    page.on(Page.Events.Download, download => this._dispatchEvent('download', { download: new DownloadDispatcher(scope, download) }));
     this._page.on(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: new ElementHandleDispatcher(this._scope, fileChooser.element()),
       isMultiple: fileChooser.isMultiple()

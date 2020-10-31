@@ -73,7 +73,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
 
     (object as any)[dispatcherSymbol] = this;
     if (this._parent)
-      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid }, !!isScope);
+      this._connection.sendMessageToClient(this._parent._guid, '__create__', { type, initializer, guid });
   }
 
   _dispatchEvent(method: string, params: Dispatcher<any, any> | any = {}) {
@@ -126,9 +126,8 @@ export class DispatcherConnection {
   private _validateParams: (type: string, method: string, params: any) => any;
   private _validateMetadata: (metadata: any) => any;
 
-  sendMessageToClient(guid: string, method: string, params: any, disallowDispatchers?: boolean) {
-    const allowDispatchers = !disallowDispatchers;
-    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params, allowDispatchers) });
+  sendMessageToClient(guid: string, method: string, params: any) {
+    this.onmessage({ guid, method, params: this._replaceDispatchersWithGuids(params) });
   }
 
   constructor() {
@@ -178,26 +177,23 @@ export class DispatcherConnection {
     try {
       const validated = this._validateParams(dispatcher._type, method, params);
       const result = await (dispatcher as any)[method](validated, this._validateMetadata(metadata));
-      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result, true) });
+      this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
       this.onmessage({ id, error: serializeError(e) });
     }
   }
 
-  private _replaceDispatchersWithGuids(payload: any, allowDispatchers: boolean): any {
+  private _replaceDispatchersWithGuids(payload: any): any {
     if (!payload)
       return payload;
-    if (payload instanceof Dispatcher) {
-      if (!allowDispatchers)
-        throw new Error(`Channels are not allowed in the scope's initialzier`);
+    if (payload instanceof Dispatcher)
       return { guid: payload._guid };
-    }
     if (Array.isArray(payload))
-      return payload.map(p => this._replaceDispatchersWithGuids(p, allowDispatchers));
+      return payload.map(p => this._replaceDispatchersWithGuids(p));
     if (typeof payload === 'object') {
       const result: any = {};
       for (const key of Object.keys(payload))
-        result[key] = this._replaceDispatchersWithGuids(payload[key], allowDispatchers);
+        result[key] = this._replaceDispatchersWithGuids(payload[key]);
       return result;
     }
     return payload;
