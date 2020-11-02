@@ -18,7 +18,7 @@ import { folio as baseFolio } from './fixtures';
 
 const fixtures = baseFolio.extend();
 fixtures.browserOptions.override(async ({ browserOptions }, run) => {
-  await run({ ...browserOptions, proxy: { server: 'per-proxy' } });
+  await run({ ...browserOptions, proxy: { server: 'per-context' } });
 });
 
 const { it, expect } = fixtures.build();
