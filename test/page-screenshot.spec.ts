@@ -292,8 +292,8 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(error.message).toContain('path: unsupported mime type "text/plain"');
   });
 
-  it('should prefer type over extension', async ({page}) => {
-    const buffer = await page.screenshot({ path: 'file.png', type: 'jpeg' });
+  it('should prefer type over extension', async ({page, testInfo}) => {
+    const buffer = await page.screenshot({ path: testInfo.outputPath('file.png'), type: 'jpeg' });
     expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
   });
 
