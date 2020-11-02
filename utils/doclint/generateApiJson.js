@@ -41,9 +41,24 @@ function serializeClass(clazz) {
   const result = { name: clazz.name };
   if (clazz.extends)
     result.extends = clazz.extends;
-  result.members = {};
-  for (const member of clazz.membersArray)
-    result.members[member.name] = serializeMember(member);
+  if (clazz.comment)
+    result.comment = clazz.comment;
+  result.methods = {};
+  result.events = {};
+  result.properties = {};
+  for (const member of clazz.membersArray) {
+    let map;
+    if (member.kind === 'event') {
+      map = result.events;
+    } else if (member.kind === 'method') {
+      map = result.methods;
+    } else if (member.kind === 'property') {
+      map = result.properties;
+    } else {
+      throw new Error('Unexpected member kind: ' + member.kind + ' ' + member.name + ' ' + member.type);
+    }
+    map[member.name] = serializeMember(member);
+  }
   return result;
 }
 
@@ -67,11 +82,16 @@ function serializeProperty(arg) {
 }
 
 function sanitize(result) {
+  delete result.kind;
   delete result.args;
   delete result.argsArray;
   delete result.templates;
   if (result.properties && !Object.keys(result.properties).length)
     delete result.properties;
+  if (result.comment === '')
+    delete result.comment;
+  if (result.returnComment === '')
+    delete result.returnComment;
 }
 
 function serializeType(type) {
