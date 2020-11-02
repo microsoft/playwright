@@ -63,9 +63,10 @@ it('should scope context handles', async ({browser, server}) => {
         { _guid: 'Browser', objects: [
           { _guid: 'BrowserContext', objects: [
             { _guid: 'Frame', objects: [] },
-            { _guid: 'Page', objects: [] },
-            { _guid: 'Request', objects: [] },
-            { _guid: 'Response', objects: [] },
+            { _guid: 'Page', objects: [
+              { _guid: 'Request', objects: [] },
+              { _guid: 'Response', objects: [] },
+            ]},
           ]},
         ] },
       ] },

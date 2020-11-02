@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it } from './fixtures';
+import { it, expect } from './fixtures';
 
 it('should close page with active dialog', (test, { browserName, platform }) => {
   test.fixme(browserName === 'webkit' && platform === 'darwin', 'WebKit hangs on a Mac');
@@ -42,4 +42,14 @@ it('should access page after beforeunload', (test, { browserName }) => {
   const dialog = await page.waitForEvent('dialog');
   await dialog.dismiss();
   await page.evaluate(() => document.title);
+});
+
+it('should not accept after close', (test, { browserName, platform }) => {
+  test.fixme(browserName === 'webkit' && platform === 'darwin', 'WebKit hangs on a Mac');
+}, async ({page}) => {
+  page.evaluate(() => alert()).catch(() => {});
+  const dialog = await page.waitForEvent('dialog');
+  await page.close();
+  const e = await dialog.dismiss().catch(e => e);
+  expect(e.message).toContain('Target page, context or browser has been closed');
 });

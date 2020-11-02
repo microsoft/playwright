@@ -296,7 +296,8 @@ export class FrameManager {
     this.removeChildFramesRecursively(frame);
     frame._onDetached();
     this._frames.delete(frame._id);
-    this._page.emit(Page.Events.FrameDetached, frame);
+    if (!this._page.isClosed())
+      this._page.emit(Page.Events.FrameDetached, frame);
   }
 
   private _inflightRequestFinished(request: network.Request) {
