@@ -243,7 +243,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   video(): Video | null {
     if (this._video)
       return this._video;
-    if (!this._browserContext._options.videosPath)
+    if (!this._browserContext._options.recordVideos)
       return null;
     this._video = new Video(this);
     // In case of persistent profile, we already have it.

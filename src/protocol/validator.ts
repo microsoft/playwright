@@ -183,10 +183,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     acceptDownloads: tOptional(tBoolean),
     _traceResourcesPath: tOptional(tString),
     _tracePath: tOptional(tString),
-    videosPath: tOptional(tString),
-    videoSize: tOptional(tObject({
-      width: tNumber,
-      height: tNumber,
+    recordVideos: tOptional(tObject({
+      path: tString,
+      size: tOptional(tObject({
+        width: tNumber,
+        height: tNumber,
+      })),
     })),
   });
   scheme.BrowserCloseParams = tOptional(tObject({}));
@@ -224,10 +226,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     acceptDownloads: tOptional(tBoolean),
     _traceResourcesPath: tOptional(tString),
     _tracePath: tOptional(tString),
-    videosPath: tOptional(tString),
-    videoSize: tOptional(tObject({
-      width: tNumber,
-      height: tNumber,
+    recordVideos: tOptional(tObject({
+      path: tString,
+      size: tOptional(tObject({
+        width: tNumber,
+        height: tNumber,
+      })),
     })),
     recordHar: tOptional(tObject({
       omitContent: tOptional(tBoolean),

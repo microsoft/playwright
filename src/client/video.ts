@@ -28,7 +28,7 @@ export class Video {
   }
 
   _setRelativePath(relativePath: string) {
-    this._pathCallback!(path.join(this._page.context()._options.videosPath!, relativePath));
+    this._pathCallback!(path.join(this._page.context()._options.recordVideos!.path, relativePath));
   }
 
   path(): Promise<string> {

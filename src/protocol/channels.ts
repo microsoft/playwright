@@ -265,10 +265,12 @@ export type BrowserTypeLaunchPersistentContextParams = {
   acceptDownloads?: boolean,
   _traceResourcesPath?: string,
   _tracePath?: string,
-  videosPath?: string,
-  videoSize?: {
-    width: number,
-    height: number,
+  recordVideos?: {
+    path: string,
+    size?: {
+      width: number,
+      height: number,
+    },
   },
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
@@ -328,10 +330,12 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   acceptDownloads?: boolean,
   _traceResourcesPath?: string,
   _tracePath?: string,
-  videosPath?: string,
-  videoSize?: {
-    width: number,
-    height: number,
+  recordVideos?: {
+    path: string,
+    size?: {
+      width: number,
+      height: number,
+    },
   },
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -389,10 +393,12 @@ export type BrowserNewContextParams = {
   acceptDownloads?: boolean,
   _traceResourcesPath?: string,
   _tracePath?: string,
-  videosPath?: string,
-  videoSize?: {
-    width: number,
-    height: number,
+  recordVideos?: {
+    path: string,
+    size?: {
+      width: number,
+      height: number,
+    },
   },
   recordHar?: {
     omitContent?: boolean,
@@ -439,10 +445,12 @@ export type BrowserNewContextOptions = {
   acceptDownloads?: boolean,
   _traceResourcesPath?: string,
   _tracePath?: string,
-  videosPath?: string,
-  videoSize?: {
-    width: number,
-    height: number,
+  recordVideos?: {
+    path: string,
+    size?: {
+      width: number,
+      height: number,
+    },
   },
   recordHar?: {
     omitContent?: boolean,

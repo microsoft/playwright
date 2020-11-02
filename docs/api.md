@@ -228,13 +228,18 @@ Indicates that the browser is connected.
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
-  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> **NOTE** Use `recordVideos` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+  - `videoSize` <[Object]> **NOTE** Use `recordVideos` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
-  - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `har.path` file. If not specified, the HAR is not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for the HAR to be saved.
+  - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not specified, the HAR is not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for the HAR to be saved.
     - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
     - `path` <[string]> Path on the filesystem to write the HAR file to.
+  - `recordVideos` <[Object]> Enables video recording for all pages into `recordVideos.path` folder. If not specified videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+    - `path` <[string]> Path on the filesystem to write the videos to.
+    - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
+      - `width` <[number]> Video frame width.
+      - `height` <[number]> Video frame height.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -282,13 +287,18 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
-  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> **NOTE** Use `recordVideos` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
+  - `videoSize` <[Object]> **NOTE** Use `recordVideos` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
-  - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `har.path` file. If not specified, the HAR is not recorded. Make sure to await [`page.close`](#pagecontext) for the HAR to be saved.
+  - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not specified, the HAR is not recorded. Make sure to await [`page.close`](#pagecloseoptions) for the HAR to be saved.
     - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
     - `path` <[string]> Path on the filesystem to write the HAR file to.
+  - `recordVideos` <[Object]> Enables video recording for all pages into `recordVideos.path` folder. If not specified videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
+    - `path` <[string]> Path on the filesystem to write the videos to.
+    - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
+      - `width` <[number]> Video frame width.
+      - `height` <[number]> Video frame height.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -4493,13 +4503,18 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `username` <[string]>
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
-  - `videosPath` <[string]> Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
-  - `videoSize` <[Object]> Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> **NOTE** Use `recordVideos` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+  - `videoSize` <[Object]> **NOTE** Use `recordVideos` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
-  - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all the pages into `har.path` file. If not specified, HAR is not recorded. Make sure to await [`page.close`](#pagecontext) for HAR to be saved.
+  - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all the pages into `recordHar.path` file. If not specified, HAR is not recorded. Make sure to await [`page.close`](#pagecontext) for HAR to be saved.
     - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to false.
     - `path` <[string]> Path on the filesystem to write the HAR file to.
+  - `recordVideos` <[Object]> Enables video recording for all pages into `recordVideos.path` folder. If not specified videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+    - `path` <[string]> Path on the filesystem to write the videos to.
+    - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
+      - `width` <[number]> Video frame width.
+      - `height` <[number]> Video frame height.
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.

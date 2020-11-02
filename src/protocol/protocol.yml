@@ -316,12 +316,15 @@ BrowserType:
         acceptDownloads: boolean?
         _traceResourcesPath: string?
         _tracePath: string?
-        videosPath: string?
-        videoSize:
+        recordVideos:
           type: object?
           properties:
-            width: number
-            height: number
+            path: string
+            size:
+              type: object?
+              properties:
+                width: number
+                height: number
       returns:
         context: BrowserContext
 
@@ -385,12 +388,15 @@ Browser:
         acceptDownloads: boolean?
         _traceResourcesPath: string?
         _tracePath: string?
-        videosPath: string?
-        videoSize:
+        recordVideos:
           type: object?
           properties:
-            width: number
-            height: number
+            path: string
+            size:
+              type: object?
+              properties:
+                width: number
+                height: number
         recordHar:
           type: object?
           properties:
