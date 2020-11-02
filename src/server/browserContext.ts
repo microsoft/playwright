@@ -324,7 +324,7 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.viewport = { width: 1280, height: 720 };
   if (options.proxy) {
     if (!browserOptions.proxy)
-      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-proxy' } })"`);
+      throw new Error(`Browser needs to be launched with the global proxy. If all contexts override the proxy, global proxy will be never used and can be any string, for example "launch({ proxy: { server: 'per-context' } })"`);
     options.proxy = normalizeProxySettings(options.proxy);
   }
   verifyGeolocation(options.geolocation);
