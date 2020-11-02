@@ -297,9 +297,7 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
   });
 
-  it('should work with large size', (test, { browserName }) => {
-    test.fail(browserName === 'chromium', 'Upstream Chromium bug');
-  }, async ({ page }) => {
+  it('should work with large size', async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => {
       document.body.style.margin = '0';
