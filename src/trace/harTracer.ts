@@ -46,13 +46,7 @@ class HarTracer implements ContextListener {
     }
   }
 
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {
-    const contextTracer = this._contextTracers.get(context);
-    if (contextTracer) {
-      this._contextTracers.delete(context);
-      await contextTracer.flush();
-    }
-  }
+  async onContextDidDestroy(context: BrowserContext): Promise<void> { }
 }
 
 type HarOptions = {
@@ -66,7 +60,7 @@ class HarContextTracer {
   private _pageEntries = new Map<Page, har.Page>();
   private _entries = new Map<network.Request, har.Entry>();
   private _lastPage = 0;
-  private _barrierPromises = new Map<Promise<void>, Page>();
+  private _barrierPromises = new Set<Promise<void>>();
 
   constructor(context: BrowserContext, options: HarOptions) {
     this._options = options;
@@ -135,7 +129,7 @@ class HarContextTracer {
       })),
       promise
     ]) as Promise<void>;
-    this._barrierPromises.set(race, page);
+    this._barrierPromises.add(race);
   }
 
   private _onRequest(page: Page, request: network.Request) {
@@ -233,7 +227,7 @@ class HarContextTracer {
   }
 
   async flush() {
-    await Promise.all(this._barrierPromises.keys());
+    await Promise.all(this._barrierPromises);
     for (const pageEntry of this._log.pages) {
       if (pageEntry.pageTimings.onContentLoad >= 0)
         pageEntry.pageTimings.onContentLoad -= pageEntry.startedDateTime.valueOf();
