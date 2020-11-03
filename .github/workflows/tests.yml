@@ -42,6 +42,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "pw:browser*"
+        DEBUG_FILE: "test-results/browsers.log"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
@@ -51,7 +53,7 @@ jobs:
         path: test-results
 
   test_mac:
-    name: ${{ matrix.os }} (${{ matrix.browser }})
+    name: ${{ matrix.os }} (${{ matrix.browser }}) ${{matrix.shard}}/2
     strategy:
       fail-fast: false
       matrix:
@@ -71,6 +73,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "pw:browser*"
+        DEBUG_FILE: "test-results/browsers.log"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
@@ -102,6 +106,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "pw:browser*"
+        DEBUG_FILE: "test-results/browsers.log"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
@@ -156,6 +162,8 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         HEADFUL: 1
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "pw:browser*"
+        DEBUG_FILE: "test-results/browsers.log"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
@@ -190,6 +198,8 @@ jobs:
         BROWSER: ${{ matrix.browser }}
         PWWIRE: true
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "pw:browser*"
+        DEBUG_FILE: "test-results/browsers.log"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
@@ -223,6 +233,8 @@ jobs:
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "pw:browser*"
+        DEBUG_FILE: "test-results/browsers.log"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
