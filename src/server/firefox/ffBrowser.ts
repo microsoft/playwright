@@ -202,12 +202,12 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.setOffline(this._options.offline));
     if (this._options.colorScheme)
       promises.push(this._browser._connection.send('Browser.setColorScheme', { browserContextId, colorScheme: this._options.colorScheme }));
-    if (this._options.recordVideos) {
-      const size = this._options.recordVideos.size || this._options.viewport || { width: 1280, height: 720 };
+    if (this._options.recordVideo) {
+      const size = this._options.recordVideo.size || this._options.viewport || { width: 1280, height: 720 };
       promises.push(this._ensureVideosPath().then(() => {
         return this._browser._connection.send('Browser.setScreencastOptions', {
           ...size,
-          dir: this._options.recordVideos!.path,
+          dir: this._options.recordVideo!.dir,
           browserContextId: this._browserContextId
         });
       }));

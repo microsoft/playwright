@@ -146,7 +146,7 @@ fixtures.isLinux.init(async ({ platform }, run) => {
 fixtures.contextOptions.init(async ({ video, testInfo }, run) => {
   if (video) {
     await run({
-      recordVideos: { path: testInfo.outputPath('') },
+      recordVideo: { dir: testInfo.outputPath('') },
     });
   } else {
     await run({});

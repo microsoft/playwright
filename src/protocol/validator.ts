@@ -183,8 +183,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     acceptDownloads: tOptional(tBoolean),
     _traceResourcesPath: tOptional(tString),
     _tracePath: tOptional(tString),
-    recordVideos: tOptional(tObject({
-      path: tString,
+    recordVideo: tOptional(tObject({
+      dir: tString,
       size: tOptional(tObject({
         width: tNumber,
         height: tNumber,
@@ -226,8 +226,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     acceptDownloads: tOptional(tBoolean),
     _traceResourcesPath: tOptional(tString),
     _tracePath: tOptional(tString),
-    recordVideos: tOptional(tObject({
-      path: tString,
+    recordVideo: tOptional(tObject({
+      dir: tString,
       size: tOptional(tObject({
         width: tNumber,
         height: tNumber,

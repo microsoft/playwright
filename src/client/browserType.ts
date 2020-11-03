@@ -187,7 +187,7 @@ export class RemoteBrowser extends ChannelOwner<channels.RemoteBrowserChannel, c
   }
 
   private async _onVideo(context: BrowserContext, stream: Stream, relativePath: string) {
-    const videoFile = path.join(context._options.recordVideos!.path, relativePath);
+    const videoFile = path.join(context._options.recordVideo!.dir, relativePath);
     await mkdirIfNeeded(videoFile);
     stream.stream().pipe(fs.createWriteStream(videoFile));
   }

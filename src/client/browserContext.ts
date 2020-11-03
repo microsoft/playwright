@@ -250,9 +250,9 @@ export function validateBrowserContextOptions(options: BrowserContextOptions): c
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
   };
-  if (!contextOptions.recordVideos && options.videosPath) {
-    contextOptions.recordVideos = {
-      path: options.videosPath,
+  if (!contextOptions.recordVideo && options.videosPath) {
+    contextOptions.recordVideo = {
+      dir: options.videosPath,
       size: options.videoSize
     };
   }

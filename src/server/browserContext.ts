@@ -42,7 +42,7 @@ export class Video {
   constructor(context: BrowserContext, videoId: string, p: string) {
     this._videoId = videoId;
     this._path = p;
-    this._relativePath = path.relative(context._options.recordVideos!.path, p);
+    this._relativePath = path.relative(context._options.recordVideo!.dir, p);
     this._context = context;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
@@ -133,8 +133,8 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _ensureVideosPath() {
-    if (this._options.recordVideos)
-      await mkdirIfNeeded(path.join(this._options.recordVideos.path, 'dummy'));
+    if (this._options.recordVideo)
+      await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
   }
 
   _browserClosed() {

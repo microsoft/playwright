@@ -166,16 +166,16 @@ describe('screencast', suite => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
-  it('should throw without recordVideos.path', async ({ browser }) => {
-    const error = await browser.newContext({ recordVideos: {} as any }).catch(e => e);
-    expect(error.message).toContain('recordVideos.path: expected string, got undefined');
+  it('should throw without recordVideo.dir', async ({ browser }) => {
+    const error = await browser.newContext({ recordVideo: {} as any }).catch(e => e);
+    expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
   });
 
   it('should capture static page', async ({browser, testInfo}) => {
     const size = { width: 450, height: 240 };
     const context = await browser.newContext({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
         size
       },
       viewport: size,
@@ -208,8 +208,8 @@ describe('screencast', suite => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
-      recordVideos: {
-        path: videosPath,
+      recordVideo: {
+        dir: videosPath,
         size
       },
       viewport: size,
@@ -226,8 +226,8 @@ describe('screencast', suite => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
-      recordVideos: {
-        path: videosPath,
+      recordVideo: {
+        dir: videosPath,
         size
       },
       viewport: size,
@@ -243,8 +243,8 @@ describe('screencast', suite => {
     const videosPath = testInfo.outputPath('');
     const size = { width: 320, height: 240 };
     const context = await browser.newContext({
-      recordVideos: {
-        path: videosPath,
+      recordVideo: {
+        dir: videosPath,
         size
       },
       viewport: size,
@@ -262,8 +262,8 @@ describe('screencast', suite => {
 
   it('should capture navigation', async ({browser, server, testInfo}) => {
     const context = await browser.newContext({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
         size: { width: 1280, height: 720 }
       },
     });
@@ -297,8 +297,8 @@ describe('screencast', suite => {
     const size = { width: 320, height: 240 };
     // Set viewport equal to screencast frame size to avoid scaling.
     const context = await browser.newContext({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
         size,
       },
       viewport: size,
@@ -323,8 +323,8 @@ describe('screencast', suite => {
   it('should work for popups', async ({browser, testInfo, server}) => {
     const videosPath = testInfo.outputPath('');
     const context = await browser.newContext({
-      recordVideos: {
-        path: videosPath,
+      recordVideo: {
+        dir: videosPath,
         size: { width: 320, height: 240 }
       },
     });
@@ -346,8 +346,8 @@ describe('screencast', suite => {
     test.fixme(parameters.headful, 'Fails on headful');
   }, async ({browser, testInfo, server}) => {
     const context = await browser.newContext({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
         // Set size to 1/2 of the viewport.
         size: { width: 320, height: 240 },
       },
@@ -393,8 +393,8 @@ describe('screencast', suite => {
   it('should use viewport as default size', async ({browser, testInfo}) => {
     const size = {width: 800, height: 600};
     const context = await browser.newContext({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
       },
       viewport: size,
     });
@@ -411,8 +411,8 @@ describe('screencast', suite => {
 
   it('should be 1280x720 by default', async ({browser, testInfo}) => {
     const context = await browser.newContext({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
       },
     });
 
@@ -429,8 +429,8 @@ describe('screencast', suite => {
   it('should capture static page in persistent context', async ({launchPersistent, testInfo}) => {
     const size = { width: 320, height: 240 };
     const { context, page } = await launchPersistent({
-      recordVideos: {
-        path: testInfo.outputPath(''),
+      recordVideo: {
+        dir: testInfo.outputPath(''),
         size,
       },
       viewport: size,

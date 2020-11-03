@@ -34,7 +34,7 @@ const fs = require('fs');
     try {
       const browser = await playwright[browserType].launch({});
       const context = await browser.newContext({
-        recordVideos: { path: __dirname, size: {width: 320, height: 240} },
+        recordVideo: { dir: __dirname, size: {width: 320, height: 240} },
       });
       await context.newPage();
       // Wait fo 1 second to actually record something.

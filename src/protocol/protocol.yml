@@ -316,10 +316,10 @@ BrowserType:
         acceptDownloads: boolean?
         _traceResourcesPath: string?
         _tracePath: string?
-        recordVideos:
+        recordVideo:
           type: object?
           properties:
-            path: string
+            dir: string
             size:
               type: object?
               properties:
@@ -388,10 +388,10 @@ Browser:
         acceptDownloads: boolean?
         _traceResourcesPath: string?
         _tracePath: string?
-        recordVideos:
+        recordVideo:
           type: object?
           properties:
-            path: string
+            dir: string
             size:
               type: object?
               properties:

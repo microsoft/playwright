@@ -228,15 +228,15 @@ Indicates that the browser is connected.
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `videosPath` <[string]> **NOTE** Use `recordVideos` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
-  - `videoSize` <[Object]> **NOTE** Use `recordVideos` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` directory. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+  - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not specified, the HAR is not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for the HAR to be saved.
     - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
     - `path` <[string]> Path on the filesystem to write the HAR file to.
-  - `recordVideos` <[Object]> Enables video recording for all pages into `recordVideos.path` folder. If not specified videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
-    - `path` <[string]> Path on the filesystem to write the videos to.
+  - `recordVideo` <[Object]> Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+    - `dir` <[string]> Path to the directory to put videos into.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
@@ -287,15 +287,15 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `videosPath` <[string]> **NOTE** Use `recordVideos` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
-  - `videoSize` <[Object]> **NOTE** Use `recordVideos` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` directory. If not specified, videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
+  - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not specified, the HAR is not recorded. Make sure to await [`page.close`](#pagecloseoptions) for the HAR to be saved.
     - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
     - `path` <[string]> Path on the filesystem to write the HAR file to.
-  - `recordVideos` <[Object]> Enables video recording for all pages into `recordVideos.path` folder. If not specified videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
-    - `path` <[string]> Path on the filesystem to write the videos to.
+  - `recordVideo` <[Object]> Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make sure to await [`page.close`](#pagecloseoptions) for videos to be saved.
+    - `dir` <[string]> Path to the directory to put videos into.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
@@ -421,7 +421,7 @@ Math.random = () => 42;
 ```
 
 ```js
-// In your playwright script, assuming the preload.js file is in same folder.
+// In your playwright script, assuming the preload.js file is in same directory.
 await browserContext.addInitScript({
   path: 'preload.js'
 });
@@ -1052,7 +1052,7 @@ An example of overriding `Math.random` before the page loads:
 // preload.js
 Math.random = () => 42;
 
-// In your playwright script, assuming the preload.js file is in same folder
+// In your playwright script, assuming the preload.js file is in same directory
 const preloadFile = fs.readFileSync('./preload.js', 'utf8');
 await page.addInitScript(preloadFile);
 ```
@@ -4428,7 +4428,7 @@ This methods attaches Playwright to an existing browser instance.
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
+  - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `false`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -4470,7 +4470,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
   - `acceptDownloads` <[boolean]> Whether to automatically download all the attachments. Defaults to `false` where all the downloads are canceled.
-  - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
+  - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
@@ -4503,15 +4503,15 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `username` <[string]>
     - `password` <[string]>
   - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
-  - `videosPath` <[string]> **NOTE** Use `recordVideos` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` folder. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
-  - `videoSize` <[Object]> **NOTE** Use `recordVideos` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
+  - `videosPath` <[string]> **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` directory. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+  - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
     - `height` <[number]> Video frame height.
   - `recordHar` <[Object]> Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all the pages into `recordHar.path` file. If not specified, HAR is not recorded. Make sure to await [`page.close`](#pagecontext) for HAR to be saved.
     - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to false.
     - `path` <[string]> Path on the filesystem to write the HAR file to.
-  - `recordVideos` <[Object]> Enables video recording for all pages into `recordVideos.path` folder. If not specified videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
-    - `path` <[string]> Path on the filesystem to write the videos to.
+  - `recordVideo` <[Object]> Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+    - `dir` <[string]> Path to the directory to put videos into.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
@@ -4531,7 +4531,7 @@ Launches browser that uses persistent storage located at `userDataDir` and retur
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this folder. Otherwise, temporary folder is created and is deleted when browser is closed.
+  - `downloadsPath` <[string]> If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is deleted when browser is closed.
   - `chromiumSandbox` <[boolean]> Enable Chromium sandboxing. Defaults to `true`.
   - `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>> Firefox user preferences. Learn more about the Firefox user preferences at [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
   - `handleSIGINT` <[boolean]> Close the browser process on Ctrl-C. Defaults to `true`.
@@ -4915,7 +4915,7 @@ If Playwright doesn't find them in the environment, a lowercased variant of thes
   - `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST` - host to specify Chromium downloads
   - `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` - host to specify Firefox downloads
   - `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` - host to specify Webkit downloads
-- `PLAYWRIGHT_BROWSERS_PATH` - specify a shared folder that playwright will use to download browsers and to look for browsers when launching browser instances.
+- `PLAYWRIGHT_BROWSERS_PATH` - specify a shared directory that playwright will use to download browsers and to look for browsers when launching browser instances.
 - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` - set to non-empty value to skip browser downloads altogether.
 
 ```sh

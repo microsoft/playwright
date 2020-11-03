@@ -16,19 +16,19 @@ Playwright can record videos for all pages in a [browser context](core-concepts.
 
 ```js
 // With browser.newContext()
-const context = await browser.newContext({ recordVideos: { path: 'videos/' } });
+const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
 // Make sure to await close, so that videos are saved.
 await context.close();
 
 // With browser.newPage()
-const page = await browser.newPage({ recordVideos: { path: 'videos/' } });
+const page = await browser.newPage({ recordVideo: { dir: 'videos/' } });
 // Make sure to await close, so that videos are saved.
 await page.close();
 
 // [Optional] Specify video size; defaults to viewport size
 const context = await browser.newContext({
-  recordVideos: {
-    path: 'videos/',
+  recordVideo: {
+    dir: 'videos/',
     size: { width: 800, height: 600 },
   }
 });
