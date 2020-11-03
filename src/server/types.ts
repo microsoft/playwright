@@ -238,8 +238,10 @@ export type BrowserContextOptions = {
   hasTouch?: boolean,
   colorScheme?: ColorScheme,
   acceptDownloads?: boolean,
-  videosPath?: string,
-  videoSize?: Size,
+  recordVideo?: {
+    dir: string,
+    size?: Size,
+  },
   recordHar?: {
     omitContent?: boolean,
     path: string

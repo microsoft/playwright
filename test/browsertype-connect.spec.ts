@@ -240,8 +240,7 @@ describe('connect', (suite, { wire }) => {
     const remote = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
     const videosPath = testInfo.outputPath();
     const context = await remote.newContext({
-      videosPath,
-      videoSize: { width: 320, height: 240 },
+      recordVideo: { dir: videosPath, size: { width: 320, height: 240 } },
     });
     const page = await context.newPage();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');

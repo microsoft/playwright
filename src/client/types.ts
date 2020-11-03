@@ -44,6 +44,8 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   viewport?: Size | null,
   extraHTTPHeaders?: Headers,
   logger?: Logger,
+  videosPath?: string,
+  videoSize?: Size,
 };
 
 type LaunchOverrides = {

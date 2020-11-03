@@ -148,9 +148,9 @@ class ConnectedBrowser extends BrowserDispatcher {
   }
 
   async newContext(params: channels.BrowserNewContextParams): Promise<{ context: channels.BrowserContextChannel }> {
-    if (params.videosPath) {
+    if (params.recordVideo) {
       // TODO: we should create a separate temp directory or accept a launchServer parameter.
-      params.videosPath = this._object._options.downloadsPath;
+      params.recordVideo.dir = this._object._options.downloadsPath!;
     }
     const result = await super.newContext(params);
     const dispatcher = result.context as BrowserContextDispatcher;

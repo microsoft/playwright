@@ -42,7 +42,7 @@ export class Video {
   constructor(context: BrowserContext, videoId: string, p: string) {
     this._videoId = videoId;
     this._path = p;
-    this._relativePath = path.relative(context._options.videosPath!, p);
+    this._relativePath = path.relative(context._options.recordVideo!.dir, p);
     this._context = context;
     this._finishedPromise = new Promise(fulfill => this._finishCallback = fulfill);
   }
@@ -133,8 +133,8 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async _ensureVideosPath() {
-    if (this._options.videosPath)
-      await mkdirIfNeeded(path.join(this._options.videosPath, 'dummy'));
+    if (this._options.recordVideo)
+      await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
   }
 
   _browserClosed() {
@@ -328,8 +328,6 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.proxy = normalizeProxySettings(options.proxy);
   }
   verifyGeolocation(options.geolocation);
-  if (options.videoSize && !options.videosPath)
-    throw new Error(`"videoSize" option requires "videosPath" to be specified`);
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation) {

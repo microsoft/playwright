@@ -115,9 +115,9 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         this._grantPermissions(key, value);
     }
-    if (this._browserContext._options.videosPath) {
-      const size = this._browserContext._options.videoSize || this._browserContext._options.viewport || { width: 1280, height: 720 };
-      const outputFile = path.join(this._browserContext._options.videosPath, createGuid() + '.webm');
+    if (this._browserContext._options.recordVideo) {
+      const size = this._browserContext._options.recordVideo.size || this._browserContext._options.viewport || { width: 1280, height: 720 };
+      const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
       promises.push(this._browserContext._ensureVideosPath().then(() => {
         return this.startScreencast({
           ...size,

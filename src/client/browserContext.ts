@@ -24,7 +24,7 @@ import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
-import { URLMatch, Headers, WaitForEventOptions } from './types';
+import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions } from './types';
 import { isUnderTest, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 
@@ -237,4 +237,24 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       throw e;
     }
   }
+}
+
+export function validateBrowserContextOptions(options: BrowserContextOptions): channels.BrowserNewContextOptions {
+  if (options.videoSize && !options.videosPath)
+    throw new Error(`"videoSize" option requires "videosPath" to be specified`);
+  if (options.extraHTTPHeaders)
+    network.validateHeaders(options.extraHTTPHeaders);
+  const contextOptions: channels.BrowserNewContextParams = {
+    ...options,
+    viewport: options.viewport === null ? undefined : options.viewport,
+    noDefaultViewport: options.viewport === null,
+    extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
+  };
+  if (!contextOptions.recordVideo && options.videosPath) {
+    contextOptions.recordVideo = {
+      dir: options.videosPath,
+      size: options.videoSize
+    };
+  }
+  return contextOptions;
 }
