@@ -1417,6 +1417,29 @@ index f51cb02ee88d86c997a2332c5cc0d01b4641be1c..342ad6b5402afaa7883e3656d1564166
      String canonical;
  
      Vector<UChar, 32> buffer;
+diff --git a/Source/JavaScriptCore/runtime/JSDateMath.cpp b/Source/JavaScriptCore/runtime/JSDateMath.cpp
+index 509aed3b93418c5edecbc7fcdad2b972382f692d..f8c267b01b50e0274703434b7b84098a376a667c 100644
+--- a/Source/JavaScriptCore/runtime/JSDateMath.cpp
++++ b/Source/JavaScriptCore/runtime/JSDateMath.cpp
+@@ -75,6 +75,7 @@
+ #include "ExceptionHelpers.h"
+ #include "VM.h"
+ #include <limits>
++#include <wtf/DateMath.h>
+ 
+ // icu::TimeZone and icu::BasicTimeZone features are only available in ICU C++ APIs.
+ // We use these C++ APIs as an exception.
+@@ -195,7 +196,9 @@ void DateCache::timeZoneCacheSlow()
+ {
+     // Do not use icu::TimeZone::createDefault. ICU internally has a cache for timezone and createDefault returns this cached value.
+     ASSERT(!m_timeZoneCache);
+-    m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(icu::TimeZone::detectHostTimeZone()));
++    String override = WTF::timeZoneForAutomation();
++    auto* timezone = override.isEmpty() ? icu::TimeZone::detectHostTimeZone() : icu::TimeZone::createTimeZone(override.utf8().data());
++    m_timeZoneCache = std::unique_ptr<OpaqueICUTimeZone, OpaqueICUTimeZoneDeleter>(bitwise_cast<OpaqueICUTimeZone*>(timezone));
+ }
+ 
+ void DateCache::reset()
 diff --git a/Source/ThirdParty/libwebrtc/CMakeLists.txt b/Source/ThirdParty/libwebrtc/CMakeLists.txt
 index 5d216b16f31c0f7bd095f9e9f6e0eac0ead90d2f..61a48cd9a06dffd8e3397570c32fb1e18157f385 100644
 --- a/Source/ThirdParty/libwebrtc/CMakeLists.txt
