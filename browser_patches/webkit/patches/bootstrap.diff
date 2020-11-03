@@ -13946,10 +13946,10 @@ index 31d29091985f34a65134a2b0e7cb3ace1dae441d..571ceac8a4b291fa6e91eb8b17065c0a
  };
 diff --git a/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..09cbc4f3abbeb329c0b396b946b77614a911e8b0
+index 0000000000000000000000000000000000000000..31a4e32d4cf8442049f0bea04c817a40b801c1f7
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/glib/InspectorPlaywrightAgentClientGLib.cpp
-@@ -0,0 +1,146 @@
+@@ -0,0 +1,147 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -14017,6 +14017,7 @@ index 0000000000000000000000000000000000000000..09cbc4f3abbeb329c0b396b946b77614
 +            protectTokens.append(WTFMove(cstr));
 +        }
 +    }
++    ignoreHosts.append(nullptr);
 +    return parseRawProxySettings(proxyServer, ignoreHosts.data());
 +}
 +
