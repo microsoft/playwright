@@ -29,7 +29,6 @@ it('should close browser with beforeunload page', (test, {browserName}) => {
 });
 
 it('should close browsercontext with beforeunload page', (test, {browserName}) => {
-  test.fixme(browserName === 'firefox');
 }, async ({server, contextFactory }) => {
   const browserContext = await contextFactory();
   const page = await browserContext.newPage();
@@ -75,7 +74,6 @@ it('should run beforeunload if asked for', async ({context, server, isChromium, 
 
 it('should access page after beforeunload', (test, { browserName }) => {
   test.fixme(browserName === 'chromium');
-  test.fixme(browserName === 'firefox');
 }, async ({contextFactory, server}) => {
   const context = await contextFactory();
   const page = await context.newPage();
