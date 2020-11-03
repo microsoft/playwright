@@ -46,6 +46,11 @@ builder.pageWithHar.init(async ({ contextFactory, testInfo }, run) => {
 
 const { expect, it } = builder.build();
 
+it('should throw without path', async ({ browser }) => {
+  const error = await browser.newContext({ recordHar: {} as any }).catch(e => e);
+  expect(error.message).toContain('recordHar.path: expected string, got undefined');
+});
+
 it('should have version and creator', async ({ pageWithHar, server }) => {
   const { page } = pageWithHar;
   await page.goto(server.EMPTY_PAGE);
@@ -76,6 +81,20 @@ it('should have pages', async ({ pageWithHar, server }) => {
   expect(new Date(pageEntry.startedDateTime).valueOf()).toBeGreaterThan(Date.now() - 3600 * 1000);
   expect(pageEntry.pageTimings.onContentLoad).toBeGreaterThan(0);
   expect(pageEntry.pageTimings.onLoad).toBeGreaterThan(0);
+});
+
+it('should have pages in persistent context', async ({ launchPersistent, testInfo }) => {
+  const harPath = testInfo.outputPath('test.har');
+  const { context, page } = await launchPersistent({ recordHar: { path: harPath } });
+  await page.goto('data:text/html,<title>Hello</title>');
+  // For data: load comes before domcontentloaded...
+  await page.waitForLoadState('domcontentloaded');
+  await context.close();
+  const log = JSON.parse(fs.readFileSync(harPath).toString())['log'];
+  expect(log.pages.length).toBe(1);
+  const pageEntry = log.pages[0];
+  expect(pageEntry.id).toBe('page_0');
+  expect(pageEntry.title).toBe('Hello');
 });
 
 it('should include request', async ({ pageWithHar, server }) => {

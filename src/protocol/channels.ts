@@ -272,6 +272,10 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
   },
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
+  },
 };
 export type BrowserTypeLaunchPersistentContextOptions = {
   executablePath?: string,
@@ -336,6 +340,10 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       width: number,
       height: number,
     },
+  },
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
   },
 };
 export type BrowserTypeLaunchPersistentContextResult = {
