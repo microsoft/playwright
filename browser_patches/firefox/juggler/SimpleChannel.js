@@ -17,10 +17,11 @@ class SimpleChannel {
     };
     mm.addMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
 
-    channel.transport.sendMessage = obj => mm.sendAsyncMessage(SIMPLE_CHANNEL_MESSAGE_NAME, obj);
-    channel.transport.dispose = () => {
-      mm.removeMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener);
-    };
+    channel.setTransport({
+      sendMessage: obj => mm.sendAsyncMessage(SIMPLE_CHANNEL_MESSAGE_NAME, obj),
+      dispose: () => mm.removeMessageListener(SIMPLE_CHANNEL_MESSAGE_NAME, messageListener),
+    });
+
     return channel;
   }
 
@@ -30,12 +31,37 @@ class SimpleChannel {
     this._connectorId = 0;
     this._pendingMessages = new Map();
     this._handlers = new Map();
-    this._bufferedRequests = [];
+    this._bufferedIncomingMessages = [];
+    this._bufferedOutgoingMessages = [];
     this.transport = {
       sendMessage: null,
       dispose: null,
     };
+    this._ready = false;
     this._disposed = false;
+  }
+
+  setTransport(transport) {
+    this.transport = transport;
+    // connection handshake:
+    // 1. There are two channel ends in different processes.
+    // 2. Both ends start in the `ready = false` state, meaning that they will
+    //    not send any messages over transport.
+    // 3. Once channel end is created, it sends `READY` message to the other end.
+    // 4. Eventually, at least one of the ends receives `READY` message and responds with
+    //    `READY_ACK`. We assume at least one of the ends will receive "READY" event from the other, since
+    //    channel ends have a "parent-child" relation, i.e. one end is always created before the other one.
+    // 5. Once channel end receives either `READY` or `READY_ACK`, it transitions to `ready` state.
+    this.transport.sendMessage('READY');
+  }
+
+  _markAsReady() {
+    if (this._ready)
+      return;
+    this._ready = true;
+    for (const msg of this._bufferedOutgoingMessages)
+      this.transport.sendMessage(msg);
+    this._bufferedOutgoingMessages = [];
   }
 
   dispose() {
@@ -72,8 +98,8 @@ class SimpleChannel {
       throw new Error('ERROR: double-register for namespace ' + namespace);
     this._handlers.set(namespace, handler);
     // Try to re-deliver all pending messages.
-    const bufferedRequests = this._bufferedRequests;
-    this._bufferedRequests = [];
+    const bufferedRequests = this._bufferedIncomingMessages;
+    this._bufferedIncomingMessages = [];
     for (const data of bufferedRequests) {
       this._onMessage(data);
     }
@@ -98,11 +124,24 @@ class SimpleChannel {
     const promise = new Promise((resolve, reject) => {
       this._pendingMessages.set(id, {connectorId, resolve, reject, methodName, namespace});
     });
-    this.transport.sendMessage({requestId: id, methodName, params, namespace});
+    const message = {requestId: id, methodName, params, namespace};
+    if (this._ready)
+      this.transport.sendMessage(message);
+    else
+      this._bufferedOutgoingMessages.push(message);
     return promise;
   }
 
   async _onMessage(data) {
+    if (data === 'READY') {
+      this.transport.sendMessage('READY_ACK');
+      this._markAsReady();
+      return;
+    }
+    if (data === 'READY_ACK') {
+      this._markAsReady();
+      return;
+    }
     if (data.responseId) {
       const {resolve, reject} = this._pendingMessages.get(data.responseId);
       this._pendingMessages.delete(data.responseId);
@@ -114,7 +153,7 @@ class SimpleChannel {
       const namespace = data.namespace;
       const handler = this._handlers.get(namespace);
       if (!handler) {
-        this._bufferedRequests.push(data);
+        this._bufferedIncomingMessages.push(data);
         return;
       }
       const method = handler[data.methodName];
