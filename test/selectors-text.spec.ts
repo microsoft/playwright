@@ -94,6 +94,16 @@ it('query', async ({page, isWebKit}) => {
   });
   expect(await page.$eval(`text=lowo`, e => e.outerHTML)).toBe('<div>helloworld</div>');
   expect(await page.$$eval(`text=lowo`, els => els.map(e => e.outerHTML).join(''))).toBe('<div>helloworld</div><span>helloworld</span>');
+
+  await page.setContent(`<span>Sign&nbsp;in</span><span>Hello\n \nworld</span>`);
+  expect(await page.$eval(`text=Sign in`, e => e.outerHTML)).toBe('<span>Sign&nbsp;in</span>');
+  expect((await page.$$(`text=Sign \tin`)).length).toBe(1);
+  expect(await page.$(`text="Sign in"`)).toBe(null);
+  expect((await page.$$(`text="Sign in"`)).length).toBe(0);
+  expect(await page.$eval(`text=lo wo`, e => e.outerHTML)).toBe('<span>Hello\n \nworld</span>');
+  expect(await page.$(`text="lo wo"`)).toBe(null);
+  expect((await page.$$(`text=lo \nwo`)).length).toBe(1);
+  expect((await page.$$(`text="lo wo"`)).length).toBe(0);
 });
 
 it('create', async ({page}) => {

@@ -76,8 +76,8 @@ function createMatcher(selector: string): Matcher {
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
     return text => re.test(text);
   }
-  selector = selector.trim().toLowerCase();
-  return text => text.toLowerCase().includes(selector);
+  selector = selector.trim().toLowerCase().replace(/\s+/g, ' ');
+  return text => text.toLowerCase().replace(/\s+/g, ' ').includes(selector);
 }
 
 // Skips <head>, <script> and <style> elements and all their children.
