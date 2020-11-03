@@ -42,6 +42,9 @@ fi
 
 export BUILD_URL="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
 export COMMIT_SHA=$(git rev-parse HEAD)
+export COMMIT_TITLE=$(git show -s --format=%s HEAD)
+export COMMIT_AUTHOR_NAME=$(git show -s --format=%an HEAD)
+export COMMIT_AUTHOR_EMAIL=$(git show -s --format=%ae HEAD)
 export COMMIT_TIMESTAMP=$(git show -s --format=%ct HEAD)
 
 export HOST_OS_NAME="$(uname)"
@@ -62,6 +65,9 @@ EMBED_METADATA_SCRIPT=$(cat <<EOF
     osVersion: process.env.HOST_OS_VERSION,
     commitSHA: process.env.COMMIT_SHA,
     commitTimestamp: process.env.COMMIT_TIMESTAMP,
+    commitTitle: process.env.COMMIT_TITLE,
+    commitAuthorName: process.env.COMMIT_AUTHOR_NAME,
+    commitAuthorEmail: process.env.COMMIT_AUTHOR_EMAIL,
   };
   console.log(JSON.stringify(json));
 EOF
