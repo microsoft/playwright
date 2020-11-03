@@ -417,8 +417,8 @@ class PageTarget {
     await this.updateViewportSize();
   }
 
-  async close(runBeforeUnload = false) {
-    await this._gBrowser.removeTab(this._tab, {
+  close(runBeforeUnload = false) {
+    this._gBrowser.removeTab(this._tab, {
       skipPermitUnload: !runBeforeUnload,
     });
   }
@@ -562,7 +562,8 @@ class BrowserContext {
   async destroy() {
     if (this.userContextId !== 0) {
       ContextualIdentityService.remove(this.userContextId);
-      ContextualIdentityService.closeContainerTabs(this.userContextId);
+      for (const page of this.pages)
+        page.close();
       if (this.pages.size) {
         await new Promise(f => {
           const listener = helper.on(this._registry, TargetRegistry.Events.TargetDestroyed, () => {
