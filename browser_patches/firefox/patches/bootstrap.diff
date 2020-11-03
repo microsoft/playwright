@@ -696,10 +696,10 @@ index 9e898052f8eebd8331b46b105bc8b6eeff3a2e84..994243e99814a3f8882c9fe425ecab52
    dom::MediaCapabilities* MediaCapabilities();
    dom::MediaSession* MediaSession();
 diff --git a/dom/base/nsContentUtils.cpp b/dom/base/nsContentUtils.cpp
-index 5cb9ef05c6a987694078d47204dd11a3edb987a1..9d4121a19dec6aee36603c6608fc104266f3b9a0 100644
+index 8db11a79fbea4cdf2a614531312c992fe36211b9..ae3f79ac23cbbd9ab2cfdbfa7b1d9e53199e2bfc 100644
 --- a/dom/base/nsContentUtils.cpp
 +++ b/dom/base/nsContentUtils.cpp
-@@ -7895,7 +7895,8 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -7896,7 +7896,8 @@ nsresult nsContentUtils::SendMouseEvent(
      bool aIgnoreRootScrollFrame, float aPressure,
      unsigned short aInputSourceArg, uint32_t aIdentifier, bool aToWindow,
      bool* aPreventDefault, bool aIsDOMEventSynthesized,
@@ -709,7 +709,7 @@ index 5cb9ef05c6a987694078d47204dd11a3edb987a1..9d4121a19dec6aee36603c6608fc1042
    nsPoint offset;
    nsCOMPtr<nsIWidget> widget = GetWidget(aPresShell, &offset);
    if (!widget) return NS_ERROR_FAILURE;
-@@ -7951,6 +7952,7 @@ nsresult nsContentUtils::SendMouseEvent(
+@@ -7952,6 +7953,7 @@ nsresult nsContentUtils::SendMouseEvent(
    event.mTime = PR_IntervalNow();
    event.mFlags.mIsSynthesizedForTests = aIsDOMEventSynthesized;
    event.mExitFrom = exitFrom;
