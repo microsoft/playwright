@@ -527,10 +527,10 @@ class Worker {
     workerDebugger.initialize('chrome://juggler/content/content/WorkerMain.js');
 
     this._channel = new SimpleChannel(`content::worker[${this._workerId}]`);
-    this._channel.transport = {
+    this._channel.setTransport({
       sendMessage: obj => workerDebugger.postMessage(JSON.stringify(obj)),
       dispose: () => {},
-    };
+    });
     this._workerDebuggerListener = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIWorkerDebuggerListener]),
       onMessage: msg => void this._channel._onMessage(JSON.parse(msg)),
