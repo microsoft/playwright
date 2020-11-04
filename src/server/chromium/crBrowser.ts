@@ -164,8 +164,13 @@ export class CRBrowser extends Browser {
       this._crPages.set(targetInfo.targetId, crPage);
       crPage.pageOrError().then(pageOrError => {
         const page = crPage._page;
-        if (pageOrError instanceof Error)
+        if (pageOrError instanceof Error) {
+          // Initialization error could have happened because of
+          // context/browser closure. Just ignore the page.
+          if (context!.isClosingOrClosed())
+            return;
           page._setIsError();
+        }
         context!.emit(BrowserContext.Events.Page, page);
         if (opener) {
           opener.pageOrError().then(openerPage => {

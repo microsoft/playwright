@@ -156,8 +156,13 @@ export class WKBrowser extends Browser {
 
     wkPage.pageOrError().then(async pageOrError => {
       const page = wkPage._page;
-      if (pageOrError instanceof Error)
+      if (pageOrError instanceof Error) {
+        // Initialization error could have happened because of
+        // context/browser closure. Just ignore the page.
+        if (context!.isClosingOrClosed())
+          return;
         page._setIsError();
+      }
       context!.emit(BrowserContext.Events.Page, page);
       if (!opener)
         return;
