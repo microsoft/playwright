@@ -1785,7 +1785,7 @@ index b9ce2042ff73fb427897e3d2d9cbf816d0e16bb8..2076f889cd553d207bacff2f1ff4daf8
  #endif
  
 diff --git a/Source/WebCore/DerivedSources.make b/Source/WebCore/DerivedSources.make
-index 4cfce5b3bff69b658e049f9b3686840f2b3c2258..eb8aed4bd335473f8a9698d3afca20913a0f60b5 100644
+index 4cfce5b3bff69b658e049f9b3686840f2b3c2258..2e757cb8de7bf7c741cf23a3059a591a94225067 100644
 --- a/Source/WebCore/DerivedSources.make
 +++ b/Source/WebCore/DerivedSources.make
 @@ -760,6 +760,10 @@ JS_BINDING_IDLS := \
@@ -1799,6 +1799,16 @@ index 4cfce5b3bff69b658e049f9b3686840f2b3c2258..eb8aed4bd335473f8a9698d3afca2091
      $(WebCore)/dom/Text.idl \
      $(WebCore)/dom/TextDecoder.idl \
      $(WebCore)/dom/TextDecoderStream.idl \
+@@ -1283,9 +1287,6 @@ JS_BINDING_IDLS := \
+ ADDITIONAL_BINDING_IDLS = \
+     DocumentTouch.idl \
+     GestureEvent.idl \
+-    Touch.idl \
+-    TouchEvent.idl \
+-    TouchList.idl \
+ #
+ 
+ vpath %.in $(WEBKITADDITIONS_HEADER_SEARCH_PATHS)
 diff --git a/Source/WebCore/Modules/geolocation/Geolocation.cpp b/Source/WebCore/Modules/geolocation/Geolocation.cpp
 index 6d5be9a591a272cd67d6e9d097b30505bdf8ae5e..8f67ba28c380e844c8e4191ee704466559d88f97 100644
 --- a/Source/WebCore/Modules/geolocation/Geolocation.cpp
