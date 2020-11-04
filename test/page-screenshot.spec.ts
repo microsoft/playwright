@@ -215,7 +215,7 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     await page.setViewportSize({width: 500, height: 500});
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.3 });
+    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { threshold: 0.4 });
   });
 
   it('should work for webgl', (test, { browserName }) => {
@@ -298,7 +298,9 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
   });
 
-  it('should work with large size', async ({ page }) => {
+  it('should work with large size', test => {
+    test.slow('Large screenshot is slow');
+  }, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => {
       document.body.style.margin = '0';
