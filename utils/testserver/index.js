@@ -90,15 +90,14 @@ class TestServer {
     this.PREFIX = `${protocol}://localhost:${port}`;
     this.CROSS_PROCESS_PREFIX = `${protocol}://127.0.0.1:${port}`;
     this.EMPTY_PAGE = `${protocol}://localhost:${port}/empty.html`;
-
   }
 
   _onSocket(socket) {
     this._sockets.add(socket);
-    // ECONNRESET is a legit error given
-    // that tab closing simply kills process.
+    // ECONNRESET and HPE_INVALID_EOF_STATE are legit errors given
+    // that tab closing aborts outgoing connections to the server.
     socket.on('error', error => {
-      if (error.code !== 'ECONNRESET')
+      if (error.code !== 'ECONNRESET' && error.code !== 'HPE_INVALID_EOF_STATE')
         throw error;
     });
     socket.once('close', () => this._sockets.delete(socket));

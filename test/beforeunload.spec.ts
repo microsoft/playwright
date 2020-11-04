@@ -72,9 +72,7 @@ it('should run beforeunload if asked for', async ({context, server, isChromium, 
   ]);
 });
 
-it('should access page after beforeunload', (test, { browserName }) => {
-  test.fixme(browserName === 'chromium');
-}, async ({contextFactory, server}) => {
+it('should access page after beforeunload', async ({contextFactory, server}) => {
   const context = await contextFactory();
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/beforeunload.html');

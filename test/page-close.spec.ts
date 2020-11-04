@@ -17,9 +17,7 @@
 
 import { it, expect } from './fixtures';
 
-it('should close page with active dialog', (test, { browserName, platform }) => {
-  test.fixme(browserName === 'webkit' && platform === 'darwin', 'WebKit hangs on a Mac');
-}, async ({context}) => {
+it('should close page with active dialog', async ({context}) => {
   const page = await context.newPage();
   await page.setContent(`<button onclick="setTimeout(() => alert(1))">alert</button>`);
   page.click('button');
@@ -27,9 +25,7 @@ it('should close page with active dialog', (test, { browserName, platform }) => 
   await page.close();
 });
 
-it('should not accept after close', (test, { browserName, platform }) => {
-  test.fixme(browserName === 'webkit' && platform === 'darwin', 'WebKit hangs on a Mac');
-}, async ({page}) => {
+it('should not accept after close', async ({page}) => {
   page.evaluate(() => alert()).catch(() => {});
   const dialog = await page.waitForEvent('dialog');
   await page.close();

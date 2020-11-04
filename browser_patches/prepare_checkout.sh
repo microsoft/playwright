@@ -124,12 +124,24 @@ git apply --index --whitespace=nowarn $PATCHES_PATH/*
 
 if [[ ! -z "${WEBKIT_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding WebKit embedders"
-  cp -r "${WEBKIT_EXTRA_FOLDER_PATH}" ./Tools/Playwright
-  git add Tools/Playwright
+  EMBEDDER_DIR="$PWD/Tools/Playwright"
+  # git status does not show empty directories, check it separately.
+  if [[ -d $EMBEDDER_DIR ]]; then
+    echo "ERROR: $EMBEDDER_DIR already exists! Remove it and re-run the script."
+    exit 1
+  fi
+  cp -r "${WEBKIT_EXTRA_FOLDER_PATH}" $EMBEDDER_DIR
+  git add $EMBEDDER_DIR
 elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding juggler"
-  cp -r "${FIREFOX_EXTRA_FOLDER_PATH}" ./juggler
-  git add juggler
+  EMBEDDER_DIR="$PWD/juggler"
+  # git status does not show empty directories, check it separately.
+  if [[ -d $EMBEDDER_DIR ]]; then
+    echo "ERROR: $EMBEDDER_DIR already exists! Remove it and re-run the script."
+    exit 1
+  fi
+  cp -r "${FIREFOX_EXTRA_FOLDER_PATH}" $EMBEDDER_DIR
+  git add $EMBEDDER_DIR
 fi
 
 git commit -a --author="playwright-devops <devops@playwright.dev>" -m "chore: bootstrap build #$BUILD_NUMBER"
