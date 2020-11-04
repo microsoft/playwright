@@ -68,7 +68,8 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._server = new ws.Server({ port });
     const address = this._server.address();
     this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
-    this._process = browser._options.browserProcess?.process;
+    if (browser._options.browserProcess)
+      this._process = browser._options.browserProcess.process;
 
     this._server.on('connection', (socket: ws, req) => {
       if (req.url !== '/' + token) {
@@ -95,11 +96,13 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 
   async close(): Promise<void> {
-    await this._browser._options.browserProcess?.close();
+    if (this._browser._options.browserProcess)
+      await this._browser._options.browserProcess.close();
   }
 
   async kill(): Promise<void> {
-    await this._browser._options.browserProcess?.kill();
+    if (this._browser._options.browserProcess)
+      await this._browser._options.browserProcess.kill();
   }
 
   private _clientAttached(socket: ws) {
