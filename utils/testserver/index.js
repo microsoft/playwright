@@ -61,7 +61,7 @@ class TestServer {
       this._server = https.createServer(sslOptions, this._onRequest.bind(this));
     else
       this._server = http.createServer(this._onRequest.bind(this));
-    this._server.on('upgrade', this._onRequest.bind(this));
+    this._server.on('upgrade', this._onUpgrade.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
     this._wsServer = new WebSocketServer({server: this._server, path: '/ws'});
     this._wsServer.on('connection', this._onWebSocketConnection.bind(this));
@@ -230,6 +230,18 @@ class TestServer {
     } else {
       this.serveFile(request, response);
     }
+  }
+
+  /**
+   * @param {http.IncomingMessage} request
+   * @param {http.ServerResponse} response
+   */
+  _onUpgrade(request, response) {
+    const pathName = url.parse(request.url).path;
+    this.debugServer(`upgrade ${request.method} ${pathName}`);
+    const handler = this._routes.get(pathName);
+    if (handler)
+      handler.call(null, request, response);
   }
 
   /**
