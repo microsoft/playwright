@@ -2,7 +2,7 @@
 
 <!-- GEN:toc-top-level -->
 - [Text input](#text-input)
-- [Checkboxes](#checkboxes)
+- [Checkboxes and radio buttons](#checkboxes-and-radio-buttons)
 - [Select options](#select-options)
 - [Mouse click](#mouse-click)
 - [Type characters](#type-characters)
@@ -15,7 +15,7 @@
 
 ## Text input
 
-This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>` and `[contenteditable]` elements.
+This is the easiest way to fill out the form fields. It focuses the element and triggers an `input` event with the entered text. It works for `<input>`, `<textarea>`, `[contenteditable]` and `<label>` associated with an input or textarea.
 
 ```js
 // Text input
@@ -29,6 +29,9 @@ await page.fill('#time', '13-15');
 
 // Local datetime input
 await page.fill('#local', '2020-03-02T05:15');
+
+// Input through label
+await page.fill('text=First Name', 'Peter');
 ```
 
 #### API reference
@@ -39,9 +42,9 @@ await page.fill('#local', '2020-03-02T05:15');
 
 <br/>
 
-## Checkboxes
+## Checkboxes and radio buttons
 
-This is the easiest way to check and uncheck a checkbox. This method can be used on the `input[type=checkbox]` and on the `label` associated with that input.
+This is the easiest way to check and uncheck a checkbox or a radio button. This method can be used with `input[type=checkbox]`, `input[type=radio]`, `[role=checkbox]` or `label` associated with checkbox or radio button.
 
 ```js
 // Check the checkbox
@@ -49,6 +52,9 @@ await page.check('#agree');
 
 // Uncheck by input <label>.
 await page.uncheck('#subscribe-label');
+
+// Select the radio button
+await page.check('text=XL');
 ```
 
 #### API reference

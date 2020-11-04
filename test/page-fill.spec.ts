@@ -34,6 +34,24 @@ it('should fill input', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'])).toBe('some value');
 });
 
+it('should fill input with label', async ({page}) => {
+  await page.setContent(`<label for=target>Fill me</label><input id=target>`);
+  await page.fill('text=Fill me', 'some value');
+  expect(await page.$eval('input', input => input.value)).toBe('some value');
+});
+
+it('should fill input with label 2', async ({page}) => {
+  await page.setContent(`<label>Fill me<input id=target></label>`);
+  await page.fill('text=Fill me', 'some value');
+  expect(await page.$eval('input', input => input.value)).toBe('some value');
+});
+
+it('should fill textarea with label', async ({page}) => {
+  await page.setContent(`<label for=target>Fill me</label><textarea id=target>hey</textarea>`);
+  await page.fill('text=Fill me', 'some value');
+  expect(await page.$eval('textarea', textarea => textarea.value)).toBe('some value');
+});
+
 it('should throw on unsupported inputs', async ({page, server}) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   for (const type of ['color', 'file']) {
