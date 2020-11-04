@@ -61,6 +61,7 @@ class TestServer {
       this._server = https.createServer(sslOptions, this._onRequest.bind(this));
     else
       this._server = http.createServer(this._onRequest.bind(this));
+    this._server.on('upgrade', this._onRequest.bind(this));
     this._server.on('connection', socket => this._onSocket(socket));
     this._wsServer = new WebSocketServer({server: this._server, path: '/ws'});
     this._wsServer.on('connection', this._onWebSocketConnection.bind(this));
@@ -89,7 +90,7 @@ class TestServer {
     this.PREFIX = `${protocol}://localhost:${port}`;
     this.CROSS_PROCESS_PREFIX = `${protocol}://127.0.0.1:${port}`;
     this.EMPTY_PAGE = `${protocol}://localhost:${port}/empty.html`;
-  
+
   }
 
   _onSocket(socket) {

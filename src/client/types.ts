@@ -68,6 +68,7 @@ export type ConnectOptions = {
 };
 export type LaunchServerOptions = {
   executablePath?: string,
+  cdpWebsocketEndpoint?: string,
   args?: string[],
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,

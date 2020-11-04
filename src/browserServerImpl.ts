@@ -56,7 +56,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   private _browserType: BrowserType;
   private _browser: Browser;
   private _wsEndpoint: string;
-  private _process: ChildProcess;
+  private _process?: ChildProcess;
 
   constructor(browserType: BrowserType, browser: Browser, port: number = 0) {
     super();
@@ -68,7 +68,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._server = new ws.Server({ port });
     const address = this._server.address();
     this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
-    this._process = browser._options.browserProcess.process;
+    this._process = browser._options.browserProcess?.process;
 
     this._server.on('connection', (socket: ws, req) => {
       if (req.url !== '/' + token) {
@@ -78,13 +78,15 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
       this._clientAttached(socket);
     });
 
-    browser._options.browserProcess.onclose = (exitCode, signal) => {
-      this._server.close();
-      this.emit('close', exitCode, signal);
-    };
+    if (browser._options.browserProcess) {
+      browser._options.browserProcess.onclose = (exitCode, signal) => {
+        this._server.close();
+        this.emit('close', exitCode, signal);
+      };
+    }
   }
 
-  process(): ChildProcess {
+  process(): ChildProcess | undefined {
     return this._process;
   }
 
@@ -93,11 +95,11 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 
   async close(): Promise<void> {
-    await this._browser._options.browserProcess.close();
+    await this._browser._options.browserProcess?.close();
   }
 
   async kill(): Promise<void> {
-    await this._browser._options.browserProcess.kill();
+    await this._browser._options.browserProcess?.kill();
   }
 
   private _clientAttached(socket: ws) {

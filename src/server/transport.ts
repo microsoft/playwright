@@ -18,6 +18,7 @@
 import * as WebSocket from 'ws';
 import { Progress } from './progress';
 import { makeWaitForNextTask } from '../utils/utils';
+const packageVersion = require('../../package.json').version;
 
 export type ProtocolRequest = {
   id: number;
@@ -79,6 +80,7 @@ export class WebSocketTransport implements ConnectionTransport {
       perMessageDeflate: false,
       maxPayload: 256 * 1024 * 1024, // 256Mb,
       handshakeTimeout: progress.timeUntilDeadline(),
+      headers: { 'user-agent': `playwright/${packageVersion}` },
     });
     this._progress = progress;
     // The 'ws' module in node sometimes sends us multiple messages in a single task.

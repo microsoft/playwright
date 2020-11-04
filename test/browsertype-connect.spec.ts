@@ -250,4 +250,15 @@ describe('connect', (suite, { wire }) => {
     const files = fs.readdirSync(videosPath);
     expect(files.some(file => file.endsWith('webm'))).toBe(true);
   });
+
+  it('should add user-agent to websocket request', async ({ browserType, server}) => {
+    const getUserAgent = () => new Promise(async resolve => {
+      server.setRoute('/websocket', async (req, res) => {
+        resolve(req.headers['user-agent']);
+      });
+      browserType.connect({ wsEndpoint: server.PREFIX + '/websocket', });
+    });
+    const ua = await getUserAgent();
+    expect(ua).toContain('playwright/');
+  });
 });

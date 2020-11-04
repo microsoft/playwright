@@ -34,7 +34,7 @@ export type BrowserOptions = types.UIOptions & {
   downloadsPath?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
-  browserProcess: BrowserProcess,
+  browserProcess?: BrowserProcess,
   proxy?: ProxySettings,
 };
 
@@ -113,7 +113,7 @@ export abstract class Browser extends EventEmitter {
   async close() {
     if (!this._startedClosing) {
       this._startedClosing = true;
-      await this._options.browserProcess.close();
+      await this._options.browserProcess?.close();
     }
     if (this.isConnected())
       await new Promise(x => this.once(Browser.Events.Disconnected, x));

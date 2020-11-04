@@ -255,6 +255,7 @@ export type EnvArray = { name: string, value: string }[];
 
 type LaunchOptionsBase = {
   executablePath?: string,
+  cdpWebsocketEndpoint?: string,
   args?: string[],
   ignoreDefaultArgs?: string[],
   ignoreAllDefaultArgs?: boolean,

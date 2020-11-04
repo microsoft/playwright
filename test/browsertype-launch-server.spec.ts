@@ -17,7 +17,7 @@
 
 import { it, expect, describe } from './fixtures';
 
-describe('lauch server', (suite, { wire }) => {
+describe('launch server', (suite, { wire }) => {
   suite.skip(wire);
 }, () => {
   it('should work', async ({browserType, browserOptions}) => {
@@ -61,5 +61,18 @@ describe('lauch server', (suite, { wire }) => {
     ]);
     expect(result['exitCode']).toBe(0);
     expect(result['signal']).toBe(null);
+  });
+
+  it('should allow using an existing cdp endpoint', async ({ browserType, server}) => {
+    const getUserAgent = () => new Promise(async resolve => {
+      server.setRoute('/websocket', async (req, res) => {
+        resolve(req.headers['user-agent']);
+      });
+      browserType.launchServer({
+        cdpWebsocketEndpoint: server.PREFIX + '/websocket'
+      });
+    });
+    const ua = await getUserAgent();
+    expect(ua).toContain('playwright/');
   });
 });

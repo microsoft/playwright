@@ -32,13 +32,14 @@ import { assert, makeWaitForNextTask, mkdirIfNeeded } from '../utils/utils';
 import { SelectorsOwner, sharedSelectors } from './selectors';
 import { kBrowserClosedError } from '../utils/errors';
 import { Stream } from './stream';
+const packageVersion = require('../../package.json').version;
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
 }
 
 export interface BrowserServer {
-  process(): ChildProcess;
+  process(): ChildProcess | undefined;
   wsEndpoint(): string;
   close(): Promise<void>;
   kill(): Promise<void>;
@@ -117,6 +118,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
         handshakeTimeout: this._timeoutSettings.timeout(options),
+        headers: { 'user-agent': `playwright/${packageVersion}` },
       });
 
       // The 'ws' module in node sometimes sends us multiple messages in a single task.

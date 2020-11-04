@@ -83,6 +83,10 @@ export abstract class BrowserType {
   }
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
+    if (options.cdpWebsocketEndpoint) {
+      const transport = await WebSocketTransport.connect(progress, options.cdpWebsocketEndpoint);
+      return this._connectToTransport(transport, options as BrowserOptions);
+    }
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
