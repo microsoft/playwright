@@ -16,7 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
-import type { Frame, Page } from '..';
+import type { Frame } from '..';
 import { TestServer } from '../utils/testserver';
 
 it('should navigate to empty page with networkidle', async ({page, server}) => {
@@ -25,22 +25,19 @@ it('should navigate to empty page with networkidle', async ({page, server}) => {
 });
 
 async function networkIdleTest(frame: Frame, server: TestServer, action: () => Promise<any>, isSetContent?: boolean) {
-  const finishResponse = response => {
-    response.statusCode = 404;
-    response.end(`File not found`);
-  };
-  const waitForRequest = suffix => {
+  const waitForRequest = (suffix: string) => {
     return Promise.all([
       server.waitForRequest(suffix),
-      (frame['_page'] as Page).waitForRequest(server.PREFIX + suffix),
+      frame.page().waitForRequest(server.PREFIX + suffix),
     ]);
   };
-  const responses = {};
+
+  let responseA, responseB;
   // Hold on to a bunch of requests without answering.
-  server.setRoute('/fetch-request-a.js', (req, res) => responses['a'] = res);
+  server.setRoute('/fetch-request-a.js', (req, res) => responseA = res);
   const firstFetchResourceRequested = waitForRequest('/fetch-request-a.js');
-  server.setRoute('/fetch-request-d.js', (req, res) => responses['d'] = res);
-  const secondFetchResourceRequested = waitForRequest('/fetch-request-d.js');
+  server.setRoute('/fetch-request-b.js', (req, res) => responseB = res);
+  const secondFetchResourceRequested = waitForRequest('/fetch-request-b.js');
 
   const waitForLoadPromise = isSetContent ? Promise.resolve() : frame.waitForNavigation({ waitUntil: 'load' });
 
@@ -60,17 +57,21 @@ async function networkIdleTest(frame: Frame, server: TestServer, action: () => P
   await firstFetchResourceRequested;
   expect(actionFinished).toBe(false);
 
-  expect(responses['a']).toBeTruthy();
-  // Finishing response should trigger the second round.
-  finishResponse(responses['a']);
+  // Trigger the second request.
+  await frame.page().evaluate(() => window['fetchSecond']());
+  // Finish the first request.
+  responseA.statusCode = 404;
+  responseA.end(`File not found`);
 
   // Wait for the second round to be requested.
   await secondFetchResourceRequested;
   expect(actionFinished).toBe(false);
-  // Finishing the last response should trigger networkidle.
+
+  // Finishing the second response should trigger networkidle.
   let timerTriggered = false;
   const timer = setTimeout(() => timerTriggered = true, 500);
-  finishResponse(responses['d']);
+  responseB.statusCode = 404;
+  responseB.end(`File not found`);
 
   const response = await actionPromise;
   clearTimeout(timer);
