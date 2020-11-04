@@ -325,6 +325,7 @@ BrowserType:
               properties:
                 width: number
                 height: number
+        captureWebSocketFrames: boolean?
         recordHar:
           type: object?
           properties:
@@ -402,6 +403,7 @@ Browser:
               properties:
                 width: number
                 height: number
+        captureWebSocketFrames: boolean?
         recordHar:
           type: object?
           properties:

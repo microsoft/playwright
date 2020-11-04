@@ -190,6 +190,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
+    captureWebSocketFrames: tOptional(tBoolean),
     recordHar: tOptional(tObject({
       omitContent: tOptional(tBoolean),
       path: tString,
@@ -237,6 +238,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
         height: tNumber,
       })),
     })),
+    captureWebSocketFrames: tOptional(tBoolean),
     recordHar: tOptional(tObject({
       omitContent: tOptional(tBoolean),
       path: tString,

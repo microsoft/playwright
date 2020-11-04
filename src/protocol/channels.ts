@@ -272,6 +272,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
   },
+  captureWebSocketFrames?: boolean,
   recordHar?: {
     omitContent?: boolean,
     path: string,
@@ -341,6 +342,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       height: number,
     },
   },
+  captureWebSocketFrames?: boolean,
   recordHar?: {
     omitContent?: boolean,
     path: string,
@@ -408,6 +410,7 @@ export type BrowserNewContextParams = {
       height: number,
     },
   },
+  captureWebSocketFrames?: boolean,
   recordHar?: {
     omitContent?: boolean,
     path: string,
@@ -460,6 +463,7 @@ export type BrowserNewContextOptions = {
       height: number,
     },
   },
+  captureWebSocketFrames?: boolean,
   recordHar?: {
     omitContent?: boolean,
     path: string,

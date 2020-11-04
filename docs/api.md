@@ -240,6 +240,7 @@ Indicates that the browser is connected.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
+  - `captureWebSocketFrames` <[boolean]> Whether to capture [`WebSocket`](#class-websocket) frames and emit [`framereceived`](#event-framereceived) and [`framesent`](#event-framesent) events. Capturing WebSocket frames incurs significant overhead, use with caution.
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -299,6 +300,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
+  - `captureWebSocketFrames` <[boolean]> Whether to capture [`WebSocket`](#class-websocket) frames and emit [`framereceived`](#event-framereceived) and [`framesent`](#event-framesent) events. Capturing WebSocket frames incurs significant overhead, use with caution.
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -4181,13 +4183,13 @@ Fired when the websocket closes.
 - <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
-Fired when the websocket recieves a frame.
+Fired when the websocket recieves a frame. Requires [`captureWebSocketFrames`] option of the browser context be set to true. See [`browser.newContext([options])`](#browsernewcontextoptions).
 
 #### event: 'framesent'
 - <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
-Fired when the websocket sends a frame.
+Fired when the websocket sends a frame. Requires [`captureWebSocketFrames`] option of the browser context be set to true. See [`browser.newContext([options])`](#browsernewcontextoptions).
 
 #### event: 'socketerror'
 - <[String]> the error message
@@ -4515,6 +4517,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
+  - `captureWebSocketFrames` <[boolean]> Whether to capture [`WebSocket`](#class-websocket) frames and emit [`framereceived`](#event-framereceived) and [`framesent`](#event-framesent) events. Capturing WebSocket frames incurs significant overhead, use with caution.
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.

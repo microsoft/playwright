@@ -246,6 +246,7 @@ export type BrowserContextOptions = {
     omitContent?: boolean,
     path: string
   },
+  captureWebSocketFrames?: boolean,
   proxy?: ProxySettings,
   _tracePath?: string,
   _traceResourcesPath?: string,
