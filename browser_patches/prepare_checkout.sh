@@ -124,11 +124,11 @@ git apply --index --whitespace=nowarn $PATCHES_PATH/*
 
 if [[ ! -z "${WEBKIT_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding WebKit embedders"
-  cp -r "${WEBKIT_EXTRA_FOLDER_PATH}" ./Tools/Playwright
+  cp -r "${WEBKIT_EXTRA_FOLDER_PATH}/" ./Tools/Playwright
   git add Tools/Playwright
 elif [[ ! -z "${FIREFOX_EXTRA_FOLDER_PATH}" ]]; then
   echo "-- adding juggler"
-  cp -r "${FIREFOX_EXTRA_FOLDER_PATH}" ./juggler
+  cp -r "${FIREFOX_EXTRA_FOLDER_PATH}/" ./juggler
   git add juggler
 fi
 

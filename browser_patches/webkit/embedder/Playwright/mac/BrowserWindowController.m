@@ -418,6 +418,7 @@ static BOOL areEssentiallyEqual(double a, double b)
 }
 
 - (void)webViewDidClose:(WKWebView *)webView {
+    [self webView:webView handleJavaScriptDialog:false value:nil];
     [self.window close];
 }
 
