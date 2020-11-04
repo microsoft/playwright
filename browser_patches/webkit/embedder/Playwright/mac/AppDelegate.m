@@ -358,6 +358,7 @@ const NSActivityOptions ActivityOptions =
 #pragma mark WKUIDelegate
 
 - (void)webViewDidClose:(WKWebView *)webView {
+    [self webView:webView handleJavaScriptDialog:false value:nil];
     for (NSWindow *window in _headlessWindows) {
         if (webView.window != window)
             continue;
