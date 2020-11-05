@@ -1,17 +1,20 @@
-name: tests
+name: browser builds
 
 on:
   push:
     branches:
       - master
+    paths:
+      - '.github/workflows/build_webkit.yml'
+      - 'browser_patches/webkit/BUILD_NUMBER'
 
 jobs:
-  build_mac:
+  build_webkit_mac:
     name: build webkit @ ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11.0]
+        os: [macos-11.0]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -23,6 +26,5 @@ jobs:
       run: |
         git config --global user.name github-actions
         git config --global user.email github-actions@github.com
-    - run: ./browser_patches/prepare_checkout.sh webkit
-    - run: ./browser_patches/webkit/build.sh
+    - run: ./browser_patches/checkout_build_archive_upload.sh webkit-mac-11.0
 
