@@ -983,6 +983,38 @@ index dd1bc7262365f55531c22200c2bb359abebf18e1..552e1ec925c3eb2eb863ec0e99f5bbba
    static void ResetTimeZone();
  
    static bool DumpEnabled();
+diff --git a/dom/canvas/WebGLContext.cpp b/dom/canvas/WebGLContext.cpp
+index a505c44829b7c871cdf1ab4a5128989075467b60..da81d8820709eb34db176be8454ee5b6b93b0627 100644
+--- a/dom/canvas/WebGLContext.cpp
++++ b/dom/canvas/WebGLContext.cpp
+@@ -247,15 +247,18 @@ bool WebGLContext::CreateAndInitGL(
+     bool forceEnabled, std::vector<FailureReason>* const out_failReasons) {
+   const FuncScope funcScope(*this, "<Create>");
+ 
+-  // Can't use WebGL in headless mode.
+-  if (gfxPlatform::IsHeadless()) {
+-    FailureReason reason;
+-    reason.info =
+-        "Can't use WebGL in headless mode (https://bugzil.la/1375585).";
+-    out_failReasons->push_back(reason);
+-    GenerateWarning("%s", reason.info.BeginReading());
+-    return false;
+-  }
++  // Playwright: It looks like we can comment this out
++  // with minimal side effects. See https://bugzilla.mozilla.org/show_bug.cgi?id=1375585#c30
++  //
++  // // Can't use WebGL in headless mode.
++  // if (gfxPlatform::IsHeadless()) {
++  //   FailureReason reason;
++  //   reason.info =
++  //       "Can't use WebGL in headless mode (https://bugzil.la/1375585).";
++  //   out_failReasons->push_back(reason);
++  //   GenerateWarning("%s", reason.info.BeginReading());
++  //   return false;
++  // }
+ 
+   // WebGL2 is separately blocked:
+   if (IsWebGL2() && !forceEnabled) {
 diff --git a/dom/geolocation/Geolocation.cpp b/dom/geolocation/Geolocation.cpp
 index e1b1075e6318d63c7b7d6d60b419d5fe6b630652..c02ae426052f22997fa8513f20bc3dc05b14726a 100644
 --- a/dom/geolocation/Geolocation.cpp
