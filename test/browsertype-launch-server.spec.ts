@@ -16,6 +16,7 @@
  */
 
 import { it, expect, describe } from './fixtures';
+import http from 'http';
 
 describe('launch server', (suite, { wire }) => {
   suite.skip(wire);
@@ -63,7 +64,7 @@ describe('launch server', (suite, { wire }) => {
     expect(result['signal']).toBe(null);
   });
 
-  it('should allow using an existing cdp endpoint', async ({ browserType, server}) => {
+  it('should add user-agent to websocket request', async ({ browserType, server}) => {
     const getUserAgent = () => new Promise(async resolve => {
       server.setRoute('/websocket', async (req, res) => {
         resolve(req.headers['user-agent']);
@@ -74,5 +75,30 @@ describe('launch server', (suite, { wire }) => {
     });
     const ua = await getUserAgent();
     expect(ua).toContain('playwright/');
+  });
+
+  it('should allow using an existing cdp endpoint', async ({ testWorkerIndex, browserType, server}) => {
+    const fetchUrl = (url: string): Promise<string> => new Promise((resolve, reject) => {
+      http.get(url, resp => {
+        let data = '';
+        resp.on('data', chunk => { data += chunk; });
+        resp.on('end', () => { resolve(data); });
+      }).on('error', (err: Error) => { reject(err); });
+    });
+    const debuggingPort = 8100 + testWorkerIndex;
+    await browserType.launchServer({
+      args: [`--remote-debugging-port=${debuggingPort}`]
+    });
+    const version = await fetchUrl(`http://localhost:${debuggingPort}/json/version`);
+    const cdpWebsocketEndpoint = JSON.parse(version).webSocketDebuggerUrl;
+    const browserServer = await browserType.launchServer({ cdpWebsocketEndpoint });
+    const wsEndpoint = browserServer.wsEndpoint();
+    const browser = await browserType.connect({ wsEndpoint });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    expect(page.url()).toContain('empty.html');
+    const answer = await page.evaluate(() => 6 * 7);
+    expect(answer).toBe(42);
   });
 });
