@@ -213,6 +213,18 @@ export abstract class BrowserType {
     return { browserProcess, downloadsPath, transport };
   }
 
+  async connect(options: types.ConnectOptions = {}): Promise<Browser> {
+    if (!options.cdpWebsocketEndpoint)
+      throw new Error(`No cdpWebsocketEndpoint url is specified.`);
+    const controller = new ProgressController();
+    controller.setLogName('browser');
+    const browser = await controller.run(async progress => {
+      const transport = await WebSocketTransport.connect(progress, options.cdpWebsocketEndpoint as string);
+      return this._connectToTransport(transport, options as BrowserOptions);
+    }, TimeoutSettings.timeout(options));
+    return browser;
+  }
+
   abstract _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[];
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;

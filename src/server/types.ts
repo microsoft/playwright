@@ -276,6 +276,12 @@ export type LaunchOptions = LaunchOptionsBase & UIOptions & {
 };
 export type LaunchPersistentOptions = LaunchOptionsBase & BrowserContextOptions;
 
+export type ConnectOptions = {
+  cdpWebsocketEndpoint?: string,
+  timeout?: number,
+  port?: number,
+};
+
 export type SerializedAXNode = {
   role: string,
   name: string,

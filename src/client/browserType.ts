@@ -18,7 +18,7 @@ import * as channels from '../protocol/channels';
 import { Browser } from './browser';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
-import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
+import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions, ConnectServerOptions } from './types';
 import * as WebSocket from 'ws';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -36,10 +36,11 @@ const packageVersion = require('../../package.json').version;
 
 export interface BrowserServerLauncher {
   launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
+  connectServer(options?: ConnectServerOptions): Promise<BrowserServer>;
 }
 
 export interface BrowserServer {
-  process(): ChildProcess | undefined;
+  process(): ChildProcess;
   wsEndpoint(): string;
   close(): Promise<void>;
   kill(): Promise<void>;
@@ -88,6 +89,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
     return this._serverLauncher.launchServer(options);
+  }
+
+  async connectServer(options: ConnectServerOptions = {}): Promise<BrowserServer> {
+    if (!this._serverLauncher)
+      throw new Error('Launching server is not supported');
+    return this._serverLauncher.connectServer(options);
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {

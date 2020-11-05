@@ -90,6 +90,12 @@ export type LaunchServerOptions = {
   logger?: Logger,
 } & FirefoxUserPrefs;
 
+export type ConnectServerOptions = {
+  cdpWebsocketEndpoint?: string,
+  timeout?: number,
+  port?: number,
+};
+
 export type SelectorEngine = {
   /**
    * Creates a selector that matches given target when queried at the root.

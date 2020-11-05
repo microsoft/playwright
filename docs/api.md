@@ -4397,6 +4397,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 <!-- GEN:toc -->
 - [browserType.connect(options)](#browsertypeconnectoptions)
+- [browserType.connectServer([options])](#browsertypeconnectserveroptions)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
 - [browserType.launchPersistentContext(userDataDir, [options])](#browsertypelaunchpersistentcontextuserdatadir-options)
@@ -4413,6 +4414,15 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - returns: <[Promise]<[Browser]>>
 
 This methods attaches Playwright to an existing browser instance.
+
+#### browserType.connectServer([options])
+- `options` <[Object]> Set of configurable options to set on the browser. Can have the following fields:
+  - `cdpWebsocketEndpoint` <[string]> Existing CDP websocket endpoint to use.-
+  - `port` <[number]> Port to use for the web socket. Defaults to 0 that picks any available port.
+  - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+- returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
+
+Launches browser server that client can connect to. Will connect to an existing CDP websocket endpoint instead of launching a browser process.
 
 #### browserType.executablePath()
 - returns: <[string]> A path where Playwright expects to find a bundled browser executable.
@@ -4558,7 +4568,6 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
   await browserServer.close();
 })();
 ```
-
 
 #### browserType.name()
 - returns: <[string]>

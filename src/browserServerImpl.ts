@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { LaunchServerOptions } from './client/types';
+import { LaunchServerOptions, ConnectServerOptions } from './client/types';
 import { BrowserType } from './server/browserType';
 import * as ws from 'ws';
 import * as fs from 'fs';
@@ -47,6 +47,11 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     });
+    return new BrowserServerImpl(this._browserType, browser, options.port);
+  }
+
+  async connectServer(options: ConnectServerOptions = {}): Promise<BrowserServerImpl> {
+    const browser = await this._browserType.connect(options);
     return new BrowserServerImpl(this._browserType, browser, options.port);
   }
 }
@@ -87,7 +92,9 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     }
   }
 
-  process(): ChildProcess | undefined {
+  process(): ChildProcess {
+    if (!this._process)
+      throw new Error('Process not available.');
     return this._process;
   }
 
