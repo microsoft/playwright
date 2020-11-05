@@ -89,7 +89,7 @@ type PlaywrightTestFixtures = {
 
 const fixtures = baseFolio.extend<PlaywrightTestFixtures, PlaywrightWorkerFixtures, PlaywrightParameters>();
 fixtures.browserName.initParameter('Browser type name', (process.env.BROWSER || 'chromium') as 'chromium' | 'firefox' | 'webkit');
-fixtures.headful.initParameter('Whether to run tests headless or headful', process.env.HEADFUL ? true : false);
+fixtures.headful.initParameter('Whether to run tests headless or headful', (process.env.HEADLESS && process.env.HEADLESS === 'false' || process.env.HEADFUL) ? true : false);
 fixtures.platform.initParameter('Operating system', process.platform as ('win32' | 'linux' | 'darwin'));
 fixtures.screenshotOnFailure.initParameter('Generate screenshot on failure', false);
 fixtures.slowMo.initParameter('Slows down Playwright operations by the specified amount of milliseconds', 0);
