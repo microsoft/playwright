@@ -23,13 +23,15 @@ import { Page } from '../page';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { WebSocketTransport } from '../transport';
 import * as types from '../types';
-import { launchProcess, waitForLine, envArrayToObject } from '../processLauncher';
+import { launchProcess, envArrayToObject } from '../processLauncher';
 import { BrowserContext } from '../browserContext';
 import type {BrowserWindow} from 'electron';
-import { ProgressController, runAbortableTask } from '../progress';
+import { Progress, ProgressController, runAbortableTask } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
 import { BrowserProcess } from '../browser';
+import * as childProcess from 'child_process';
+import * as readline from 'readline';
 
 export type ElectronLaunchOptionsBase = {
   args?: string[],
@@ -163,18 +165,18 @@ export class Electron  {
         handleSIGTERM,
         handleSIGHUP,
         progress,
-        pipe: true,
+        stdio: 'pipe',
         cwd: options.cwd,
         tempDirectories: [],
         attemptToGracefullyClose: () => app!.close(),
         onExit: () => {},
       });
 
-      const nodeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^Debugger listening on (ws:\/\/.*)$/);
+      const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
       const nodeConnection = new CRConnection(nodeTransport);
 
-      const chromeMatch = await waitForLine(progress, launchedProcess, launchedProcess.stderr, /^DevTools listening on (ws:\/\/.*)$/);
+      const chromeMatch = await waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
       const browserProcess: BrowserProcess = {
         onclose: undefined,
@@ -188,4 +190,32 @@ export class Electron  {
       return app;
     }, TimeoutSettings.timeout(options));
   }
+}
+
+function waitForLine(progress: Progress, process: childProcess.ChildProcess, regex: RegExp): Promise<RegExpMatchArray> {
+  return new Promise((resolve, reject) => {
+    const rl = readline.createInterface({ input: process.stderr });
+    const failError = new Error('Process failed to launch!');
+    const listeners = [
+      helper.addEventListener(rl, 'line', onLine),
+      helper.addEventListener(rl, 'close', reject.bind(null, failError)),
+      helper.addEventListener(process, 'exit', reject.bind(null, failError)),
+      // It is Ok to remove error handler because we did not create process and there is another listener.
+      helper.addEventListener(process, 'error', reject.bind(null, failError))
+    ];
+
+    progress.cleanupWhenAborted(cleanup);
+
+    function onLine(line: string) {
+      const match = line.match(regex);
+      if (!match)
+        return;
+      cleanup();
+      resolve(match);
+    }
+
+    function cleanup() {
+      helper.removeEventListeners(listeners);
+    }
+  });
 }

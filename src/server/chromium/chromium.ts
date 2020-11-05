@@ -26,22 +26,13 @@ import type { BrowserDescriptor } from '../../utils/browserPaths';
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions } from '../browser';
 import * as types from '../types';
-import { isDebugMode, getFromENV } from '../../utils/utils';
+import { isDebugMode } from '../../utils/utils';
 
 export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
-  private _debugPort: number | undefined;
 
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    const debugPortStr = getFromENV('PLAYWRIGHT_CHROMIUM_DEBUG_PORT');
-    const debugPort: number | undefined = debugPortStr ? +debugPortStr : undefined;
-    if (debugPort !== undefined) {
-      if (Number.isNaN(debugPort))
-        throw new Error(`PLAYWRIGHT_CHROMIUM_DEBUG_PORT must be a number, but is set to "${debugPortStr}"`);
-    }
-
-    super(packagePath, browser, debugPort ? { webSocketRegex: /^DevTools listening on (ws:\/\/.*)$/, stream: 'stderr' } : null);
-    this._debugPort = debugPort;
+    super(packagePath, browser);
     if (isDebugMode())
       this._devtools = this._createDevTools();
   }
@@ -95,10 +86,7 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...DEFAULT_ARGS];
     chromeArguments.push(`--user-data-dir=${userDataDir}`);
-    if (this._debugPort !== undefined)
-      chromeArguments.push('--remote-debugging-port=' + this._debugPort);
-    else
-      chromeArguments.push('--remote-debugging-pipe');
+    chromeArguments.push('--remote-debugging-pipe');
     if (options.devtools)
       chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
