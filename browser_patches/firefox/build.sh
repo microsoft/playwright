@@ -38,7 +38,7 @@ elif [[ "$(uname)" == MINGW* ]]; then
   fi
   WIN32_REDIST_DIR=$(dirname "$(cat $TMPFILE)")
   if ! [[ -d $WIN32_REDIST_DIR ]]; then
-    echo "Error: cannot find MS VS C++ redistributable $WIN32_REDIST_DIR"
+    echo "ERROR: cannot find MS VS C++ redistributable $WIN32_REDIST_DIR"
     exit 1;
   fi
   echo "export WIN32_REDIST_DIR=\"$WIN32_REDIST_DIR\"" >> .mozconfig

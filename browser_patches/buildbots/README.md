@@ -120,19 +120,6 @@ The `core.longpaths` is needed for webkit since it has some very long layout pat
 
 Run `c:\mozilla-build\start-shell.bat` and checkout Playwright repo to `/c/playwright`.
 
-### 7. Create a c:\WEBKIT_WIN64_LIBS\ directory with win64 dlls
-
-
-Create a new `c:\WEBKIT_WIN64_LIBS` folder and copy the following libraries from `C:\Windows\System32` into it:
-- `msvcp140.dll`
-- `msvcp140_2.dll`
-- `vcruntime140.dll`
-- `vcruntime140_1.dll`
-
-> **NOTE**: these libraries are expected by `//browser_patches/webkit/archive.sh`. 
-
-This is necessary since mingw is a 32-bit application and cannot access the `C:\Windows\System32` folder due to [Windows FileSystem Redirector](https://docs.microsoft.com/en-us/windows/win32/winprog64/file-system-redirector?redirectedfrom=MSDN). ([StackOverflow question](https://stackoverflow.com/questions/18982551/is-mingw-caching-windows-directory-contents)) 
-
 ## Running Build Loop
 
 1. Launch `c:\mozilla-build/start-shell.bat`
