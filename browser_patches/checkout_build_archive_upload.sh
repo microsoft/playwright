@@ -133,6 +133,11 @@ elif [[ "$BUILD_FLAVOR" == "webkit-mac-10.15" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
   BUILD_BLOB_NAME="webkit-mac-10.15.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-11.0" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="11.0"
+  BUILD_BLOB_NAME="webkit-mac-11.0.zip"
 else
   echo ERROR: unknown build flavor - "$BUILD_FLAVOR"
   exit 1
