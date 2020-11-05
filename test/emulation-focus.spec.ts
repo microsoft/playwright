@@ -171,3 +171,15 @@ it('should change focused iframe', async ({page, server}) => {
     expect(focused).toEqual([false, true]);
   }
 });
+
+// @see https://github.com/microsoft/playwright/issues/3476
+it('should focus with more than one page/context', async ({browser}) => {
+  const page1 = await (await browser.newContext()).newPage();
+  const page2 = await (await browser.newContext()).newPage();
+  await page1.setContent(`<button id="foo" onfocus="window.gotFocus=true">foo</button>`);
+  await page2.setContent(`<button id="foo" onfocus="window.gotFocus=true">foo</button>`);
+  await page1.focus('#foo');
+  await page2.focus('#foo');
+  expect(await page1.evaluate(() => !!window['gotFocus'])).toBe(true);
+  expect(await page2.evaluate(() => !!window['gotFocus'])).toBe(true);
+});
