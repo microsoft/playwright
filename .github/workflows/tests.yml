@@ -55,9 +55,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-10.15, macos-11.0]
-        browser: [chromium, firefox, webkit]
-        shard: ['1', '2']
+        os: [macos-11.0]
+        browser: [webkit]
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
@@ -67,10 +66,11 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json --shard=${{ matrix.shard }}/2
+    - run: npx folio test/ --workers=1 --global-timeout=5400000 --reporter=dot,json
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        DEBUG: "*browser*"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1

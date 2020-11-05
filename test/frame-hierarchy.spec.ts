@@ -35,7 +35,7 @@ function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   return result;
 }
 
-it('should handle nested frames', async ({page, server}) => {
+it.only('should handle nested frames', async ({page, server}) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   expect(dumpFrames(page.mainFrame())).toEqual([
     'http://localhost:<PORT>/frames/nested-frames.html',
@@ -46,7 +46,7 @@ it('should handle nested frames', async ({page, server}) => {
   ]);
 });
 
-it('should send events when frames are manipulated dynamically', async ({page, server}) => {
+it.only('should send events when frames are manipulated dynamically', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   // validate frameattached events
   const attachedFrames = [];
