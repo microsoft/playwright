@@ -7650,6 +7650,23 @@ index e40a6e172bfd2b75076fd4053da643ebab9eb81f..2516655bbc9e5bc863537a554c5faac0
  
 -#endif // ENABLE(TOUCH_EVENTS)
 +#endif // ENABLE(TOUCH_EVENTS) && PLATFORM(IOS_FAMILY)
+diff --git a/Source/WebKit/Shared/mac/AuxiliaryProcessMac.mm b/Source/WebKit/Shared/mac/AuxiliaryProcessMac.mm
+index 22c0b189aafc69405083c36004b4d4de4f3bbfd1..1d883c903018a2bb33db8f1458adda8b04a089bc 100644
+--- a/Source/WebKit/Shared/mac/AuxiliaryProcessMac.mm
++++ b/Source/WebKit/Shared/mac/AuxiliaryProcessMac.mm
+@@ -63,7 +63,11 @@
+ #endif
+ 
+ #if PLATFORM(MAC)
+-#define USE_CACHE_COMPILED_SANDBOX 1
++// Playwright begin
++// Disable compiled sandbox since it doesn't work on BigSUr.
++// #define USE_CACHE_COMPILED_SANDBOX 1
++#define USE_CACHE_COMPILED_SANDBOX 0
++// Playwright end
+ #else
+ #define USE_CACHE_COMPILED_SANDBOX 0
+ #endif
 diff --git a/Source/WebKit/Shared/win/WebEventFactory.cpp b/Source/WebKit/Shared/win/WebEventFactory.cpp
 index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3e6384de5 100644
 --- a/Source/WebKit/Shared/win/WebEventFactory.cpp
