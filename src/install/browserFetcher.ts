@@ -127,7 +127,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.13', undefined],
         ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
         ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
-        ['mac11.0', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
+        ['mac11.0', '%s/builds/webkit/%s/webkit-mac-11.0.zip'],
         ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
         ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
       ]).get(platform);
