@@ -58,6 +58,23 @@ it('should check the box inside label w/o id', async ({page}) => {
   expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
 });
 
+it('should check the box outside shadow dom label', async ({page}) => {
+  await page.setContent('<div></div>');
+  await page.$eval('div', div => {
+    const root = div.attachShadow({ mode: 'open' });
+    const label = document.createElement('label');
+    label.setAttribute('for', 'target');
+    label.textContent = 'Click me';
+    root.appendChild(label);
+    const input = document.createElement('input');
+    input.setAttribute('type', 'checkbox');
+    input.setAttribute('id', 'target');
+    root.appendChild(input);
+  });
+  await page.check('label');
+  expect(await page.$eval('input', input => input.checked)).toBe(true);
+});
+
 it('should check radio', async ({page}) => {
   await page.setContent(`
     <input type='radio'>one</input>

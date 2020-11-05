@@ -261,10 +261,10 @@ export class InjectedScript {
     return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
-      const element = node as Element;
-      if (!element.isConnected)
+      const element = this.findLabelTarget(node as Element);
+      if (element && !element.isConnected)
         return 'error:notconnected';
-      if (!this.isVisible(element)) {
+      if (!element || !this.isVisible(element)) {
         progress.logRepeating('    element is not visible - waiting...');
         return continuePolling;
       }
@@ -438,27 +438,22 @@ export class InjectedScript {
     return 'done';
   }
 
+  findLabelTarget(element: Element): Element | undefined {
+    return element.nodeName === 'LABEL' ? (element as HTMLLabelElement).control || undefined : element;
+  }
+
   isCheckboxChecked(node: Node) {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw new Error('Not a checkbox or radio button');
-
-    let element: Element | undefined = node as Element;
+    const element = node as Element;
     if (element.getAttribute('role') === 'checkbox')
       return element.getAttribute('aria-checked') === 'true';
-
-    if (element.nodeName === 'LABEL') {
-      const forId = element.getAttribute('for');
-      if (forId && element.ownerDocument)
-        element = element.ownerDocument.querySelector(`input[id="${forId}"]`) || undefined;
-      else
-        element = element.querySelector('input[type=checkbox],input[type=radio]') || undefined;
-    }
-    if (element && element.nodeName === 'INPUT') {
-      const type = element.getAttribute('type');
-      if (type && (type.toLowerCase() === 'checkbox' || type.toLowerCase() === 'radio'))
-        return (element as HTMLInputElement).checked;
-    }
-    throw new Error('Not a checkbox');
+    const input = this.findLabelTarget(element);
+    if (!input || input.nodeName !== 'INPUT')
+      throw new Error('Not a checkbox or radio button');
+    if (!['radio', 'checkbox'].includes((input as HTMLInputElement).type.toLowerCase()))
+      throw new Error('Not a checkbox or radio button');
+    return (input as HTMLInputElement).checked;
   }
 
   setInputFiles(node: Node, payloads: { name: string, mimeType: string, buffer: string }[]) {
