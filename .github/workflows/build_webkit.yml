@@ -1,0 +1,28 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build_mac:
+    name: build webkit @ ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-10.15, macos-11.0]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 14
+    - uses: microsoft/playwright-github-action@v1
+    - name: setup git credentials
+      run: |
+        git config --global user.name github-actions
+        git config --global user.email github-actions@github.com
+    - run: ./browser_patches/prepare_checkout.sh webkit
+    - run: ./browser_patches/webkit/build.sh
+
