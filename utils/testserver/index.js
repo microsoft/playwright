@@ -281,8 +281,14 @@ class TestServer {
     });
   }
 
+  /**
+   * @param {!import('ws')} ws
+   */
   _onWebSocketConnection(ws) {
     ws.send('incoming');
+    ws.onmessage = e => {
+      ws.send(Buffer.from(e.data).toString() + '-echo')
+    };
   }
 }
 
