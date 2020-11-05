@@ -267,6 +267,10 @@ export abstract class BrowserContext extends EventEmitter {
     await this._doUpdateRequestInterception();
   }
 
+  isClosingOrClosed() {
+    return this._closedStatus !== 'open';
+  }
+
   async close() {
     if (this._closedStatus === 'open') {
       this._closedStatus = 'closing';
