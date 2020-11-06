@@ -73,7 +73,7 @@ nsresult generateUid(nsString& uid) {
   NS_ENSURE_SUCCESS(rv, rv);
 
   for (int i = 0; i < kLen; i++) {
-    uid.AppendPrintf("%" PRIx8, buffer[i]);
+    uid.AppendPrintf("%02x", buffer[i]);
   }
   free(buffer);
   return rv;
