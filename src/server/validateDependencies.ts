@@ -36,7 +36,7 @@ export async function validateHostRequirements(browserPath: string, browser: Bro
 
 const DL_OPEN_LIBRARIES = {
   chromium: [],
-  webkit: ['libGLESv2.so.2', 'libx264.so'],
+  webkit: ['libGLESv2.so.2', 'libx264.so', 'libharfbuzz-icu.so'],
   firefox: [],
 };
 
@@ -116,6 +116,7 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
   }
   for (const dep of (await missingDLOPENLibraries(browser)))
     missingDeps.add(dep);
+
   if (!missingDeps.size)
     return;
   // Check Ubuntu version.
@@ -139,6 +140,10 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
     }
   }
 
+  const defaultPackages = defaultRequirements[ubuntuVersion] && defaultRequirements[ubuntuVersion][browser.name];
+  if (defaultPackages)
+    defaultPackages.forEach(v => missingPackages.add(v));
+
   let missingPackagesMessage = '';
   if (missingPackages.size) {
     missingPackagesMessage = [
@@ -148,7 +153,6 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
       ``,
     ].join('\n');
   }
-
   let missingDependenciesMessage = '';
   if (missingDeps.size) {
     const header = missingPackages.size ? `Missing libraries we didn't find packages for:` : `Missing libraries are:`;
@@ -431,4 +435,90 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
   // and if it's missing recommend installing missing gstreamer lib.
   // gstreamer1.0-libav -> libavcodec57 -> libx264-152
   'libx264.so': 'gstreamer1.0-libav',
+};
+
+
+// This map should be in sync with the Dockerfiles.
+const defaultRequirements: { [s: string]: { [s: string]: string[]} } = {
+  '18.04': {
+    'chromium': [
+      'libnss3',
+      'libxss1',
+      'libasound2',
+      'fonts-noto-color-emoji',
+      'libxtst6',
+    ],
+    'firefox': [
+      'libdbus-glib-1-2',
+      'libxt6',
+      'ffmpeg',
+    ],
+    'webkit': [
+      'libwoff1',
+      'libopus0',
+      'libwebp6',
+      'libwebpdemux2',
+      'libenchant1c2a',
+      'libgudev-1.0-0',
+      'libsecret-1-0',
+      'libhyphen0',
+      'libgdk-pixbuf2.0-0',
+      'libegl1',
+      'libnotify4',
+      'libxslt1.1',
+      'libevent-2.1-7',
+      'libgles2',
+      'libxcomposite1',
+      'libatk1.0-0',
+      'libatk-bridge2.0-0',
+      'libepoxy0',
+      'libgtk-3-0',
+      'libharfbuzz-icu0',
+      'libgstreamer-gl1.0-0',
+      'libgstreamer-plugins-bad1.0-0',
+      'gstreamer1.0-plugins-good',
+      'gstreamer1.0-libav',
+    ]
+  },
+  '20.04': {
+    'chromium': [
+      'libnss3',
+      'libxss1',
+      'libasound2',
+      'fonts-noto-color-emoji',
+      'libxtst6',
+    ],
+    'firefox': [
+      'libdbus-glib-1-2',
+      'libxt6',
+      'ffmpeg',
+    ],
+    'webkit': [
+      'libwoff1',
+      'libopus0',
+      'libwebp6',
+      'libwebpdemux2',
+      'libenchant1c2a',
+      'libgudev-1.0-0',
+      'libsecret-1-0',
+      'libhyphen0',
+      'libgdk-pixbuf2.0-0',
+      'libegl1',
+      'libnotify4',
+      'libxslt1.1',
+      'libevent-2.1-6',
+      'libgles2',
+      'libvpx5',
+      'libxcomposite1',
+      'libatk1.0-0',
+      'libatk-bridge2.0-0',
+      'libepoxy0',
+      'libgtk-3-0',
+      'libharfbuzz-icu0',
+      'libgstreamer-gl1.0-0',
+      'libgstreamer-plugins-bad1.0-0',
+      'gstreamer1.0-plugins-good',
+      'gstreamer1.0-libav',
+    ]
+  }
 };
