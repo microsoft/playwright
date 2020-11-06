@@ -135,6 +135,24 @@ function findVideos(videoDir: string) {
   return files.filter(file => file.endsWith('webm')).map(file => path.join(videoDir, file));
 }
 
+function expectRedFrames(videoFile: string, size: { width: number, height: number }) {
+  const videoPlayer = new VideoPlayer(videoFile);
+  const duration = videoPlayer.duration;
+  expect(duration).toBeGreaterThan(0);
+
+  expect(videoPlayer.videoWidth).toBe(size.width);
+  expect(videoPlayer.videoHeight).toBe(size.height);
+
+  {
+    const pixels = videoPlayer.seekLastFrame().data;
+    expectAll(pixels, almostRed);
+  }
+  {
+    const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: 0 }).data;
+    expectAll(pixels, almostRed);
+  }
+}
+
 describe('screencast', suite => {
   suite.slow();
 }, () => {
@@ -158,12 +176,7 @@ describe('screencast', suite => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
-    const duration = videoPlayer.duration;
-    expect(duration).toBeGreaterThan(0);
-
-    expect(videoPlayer.videoWidth).toBe(450);
-    expect(videoPlayer.videoHeight).toBe(240);
+    expectRedFrames(videoFile, size);
   });
 
   it('should throw without recordVideo.dir', async ({ browser }) => {
@@ -187,21 +200,7 @@ describe('screencast', suite => {
     await context.close();
 
     const videoFile = await page.video().path();
-    const videoPlayer = new VideoPlayer(videoFile);
-    const duration = videoPlayer.duration;
-    expect(duration).toBeGreaterThan(0);
-
-    expect(videoPlayer.videoWidth).toBe(450);
-    expect(videoPlayer.videoHeight).toBe(240);
-
-    {
-      const pixels = videoPlayer.seekLastFrame().data;
-      expectAll(pixels, almostRed);
-    }
-    {
-      const pixels = videoPlayer.seekLastFrame({ x: 430, y: 0}).data;
-      expectAll(pixels, almostRed);
-    }
+    expectRedFrames(videoFile, size);
   });
 
   it('should expose video path', async ({browser, testInfo}) => {
@@ -322,21 +321,29 @@ describe('screencast', suite => {
 
   it('should work for popups', async ({browser, testInfo, server}) => {
     const videosPath = testInfo.outputPath('');
+    const size = { width: 450, height: 240 };
     const context = await browser.newContext({
       recordVideo: {
         dir: videosPath,
-        size: { width: 320, height: 240 }
+        size,
       },
+      viewport: size,
     });
 
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await Promise.all([
+    const [popup] = await Promise.all([
       page.waitForEvent('popup'),
       page.evaluate(() => { window.open('about:blank'); }),
     ]);
+    await popup.evaluate(() => document.body.style.backgroundColor = 'red');
     await new Promise(r => setTimeout(r, 1000));
     await context.close();
+
+    const pageVideoFile = await page.video().path();
+    const popupVideoFile = await popup.video().path();
+    expect(pageVideoFile).not.toEqual(popupVideoFile);
+    expectRedFrames(popupVideoFile, size);
 
     const videoFiles = findVideos(videosPath);
     expect(videoFiles.length).toBe(2);
