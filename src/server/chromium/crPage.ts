@@ -380,7 +380,9 @@ class FrameSession {
   }
 
   async _initialize(hasUIWindow: boolean) {
-    if (hasUIWindow && !this._crPage._browserContext._options.noDefaultViewport) {
+    if (hasUIWindow &&
+        !this._crPage._browserContext._browser.isClank() &&
+        !this._crPage._browserContext._options.noDefaultViewport) {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }
@@ -825,6 +827,8 @@ class FrameSession {
   }
 
   async _updateViewport(): Promise<void> {
+    if (this._crPage._browserContext._browser.isClank())
+      return;
     assert(this._isMainFrame());
     const options = this._crPage._browserContext._options;
     const viewportSize = this._page._state.viewportSize;
@@ -863,6 +867,8 @@ class FrameSession {
   }
 
   async _updateEmulateMedia(initial: boolean): Promise<void> {
+    if (this._crPage._browserContext._browser.isClank())
+      return;
     const colorScheme = this._page._state.colorScheme || this._crPage._browserContext._options.colorScheme || 'light';
     const features = colorScheme ? [{ name: 'prefers-color-scheme', value: colorScheme }] : [];
     await this._client.send('Emulation.setEmulatedMedia', { media: this._page._state.mediaType || '', features });

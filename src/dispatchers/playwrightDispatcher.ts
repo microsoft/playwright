@@ -30,6 +30,7 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
+      clank: new BrowserTypeDispatcher(scope, playwright.clank),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
       electron: electron ? new ElectronDispatcher(scope, electron) : undefined,

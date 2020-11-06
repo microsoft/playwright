@@ -92,6 +92,7 @@ export type SerializedError = {
 // ----------- Playwright -----------
 export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
+  clank: BrowserTypeChannel,
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
   electron?: ElectronChannel,
