@@ -73,9 +73,8 @@ createZipForLinux() {
 
 # see https://docs.microsoft.com/en-us/visualstudio/install/tools-for-managing-visual-studio-instances?view=vs-2019
 printMSVCRedistDir() {
-  local tmpfile=$(mktemp)
-  "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll' > $tmpfile
-  local redist_dir=$(dirname "$(cat $tmpfile)")
+  local dll_file=$("$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
+  local redist_dir=$(dirname "$dll_file")
   if ! [[ -d $redist_dir ]]; then
     echo "ERROR: cannot find MS VS C++ redistributable $redist_dir"
     exit 1;

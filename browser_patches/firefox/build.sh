@@ -26,17 +26,17 @@ elif [[ "$(uname)" == "Linux" ]]; then
   echo "-- building on Linux"
   echo "ac_add_options --disable-av1" > .mozconfig
 elif [[ "$(uname)" == MINGW* ]]; then
-  TMPFILE=$(mktemp)
+  DLL_FILE=""
   if [[ $1 == "--win64" ]]; then
     echo "-- building win64 build on MINGW"
     echo "ac_add_options --target=x86_64-pc-mingw32" > .mozconfig
     echo "ac_add_options --host=x86_64-pc-mingw32" >> .mozconfig
-    "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll' > $TMPFILE
+    DLL_FILE=$("$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
   else
     echo "-- building win32 build on MINGW"
-    "$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x86\**\vcruntime140.dll' > $TMPFILE
+    DLL_FILE=$("$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x86\**\vcruntime140.dll')
   fi
-  WIN32_REDIST_DIR=$(dirname "$(cat $TMPFILE)")
+  WIN32_REDIST_DIR=$(dirname "$DLL_FILE")
   if ! [[ -d $WIN32_REDIST_DIR ]]; then
     echo "ERROR: cannot find MS VS C++ redistributable $WIN32_REDIST_DIR"
     exit 1;
