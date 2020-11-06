@@ -92,6 +92,7 @@ function initialize() {
 
   // Enforce focused state for all top level documents.
   docShell.overrideHasFocus = true;
+  docShell.forceActiveState = true;
   frameTree = new FrameTree(docShell);
   for (const [name, value] of Object.entries(settings)) {
     if (value !== undefined)

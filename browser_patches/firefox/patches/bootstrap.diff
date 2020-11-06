@@ -178,7 +178,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336a1baf2e4 100644
+index 665db419cb4909d34cdd3963d922aed12cf2c8ac..feadde48633ee78a5910c776d34d42864bf0e682 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -226,19 +226,20 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
  #include "nsNetCID.h"
  #include "nsNetUtil.h"
  #include "nsObjectLoadingContent.h"
-@@ -391,6 +401,11 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
+@@ -391,6 +401,12 @@ nsDocShell::nsDocShell(BrowsingContext* aBrowsingContext,
        mAllowDNSPrefetch(true),
        mAllowWindowControl(true),
        mCSSErrorReportingEnabled(false),
 +      mFileInputInterceptionEnabled(false),
 +      mOverrideHasFocus(false),
 +      mBypassCSPEnabled(false),
++      mForceActiveState(false),
 +      mOnlineOverride(nsIDocShell::ONLINE_OVERRIDE_NONE),
 +      mColorSchemeOverride(COLOR_SCHEME_OVERRIDE_NONE),
        mAllowAuth(mItemType == typeContent),
        mAllowKeywordFixup(false),
        mIsOffScreenBrowser(false),
-@@ -1418,6 +1433,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
+@@ -1418,6 +1434,7 @@ bool nsDocShell::SetCurrentURI(nsIURI* aURI, nsIRequest* aRequest,
      }
    }
  
@@ -246,7 +247,7 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
    if (!isSubFrame && !isRoot) {
      /*
       * We don't want to send OnLocationChange notifications when
-@@ -3214,6 +3230,189 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
+@@ -3214,6 +3231,204 @@ nsDocShell::GetMessageManager(ContentFrameMessageManager** aMessageManager) {
    return NS_OK;
  }
  
@@ -269,6 +270,21 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
 +NS_IMETHODIMP
 +nsDocShell::SetBypassCSPEnabled(bool aEnabled) {
 +  mBypassCSPEnabled = aEnabled;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::GetForceActiveState(bool* aEnabled) {
++  MOZ_ASSERT(aEnabled);
++  *aEnabled = mForceActiveState;
++  return NS_OK;
++}
++
++NS_IMETHODIMP
++nsDocShell::SetForceActiveState(bool aEnabled) {
++  mForceActiveState = aEnabled;
++  if (aEnabled)
++    SetIsActive(true);
 +  return NS_OK;
 +}
 +
@@ -436,7 +452,17 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
  NS_IMETHODIMP
  nsDocShell::GetIsNavigating(bool* aOut) {
    *aOut = mIsNavigating;
-@@ -8526,6 +8725,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -4821,6 +5036,9 @@ nsDocShell::GetSuspendMediaWhenInactive(bool* aSuspendMediaWhenInactive) {
+ 
+ NS_IMETHODIMP
+ nsDocShell::SetIsActive(bool aIsActive) {
++  if (mForceActiveState && !aIsActive)
++    return NS_OK;
++
+   // Keep track ourselves.
+   // Changing the activeness on a discarded browsing context has no effect.
+   Unused << mBrowsingContext->SetIsActive(aIsActive);
+@@ -8526,6 +8744,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -449,7 +475,7 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
        return rv;
      }
  
-@@ -12413,6 +12618,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12413,6 +12637,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -459,7 +485,7 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
      return NS_OK;
    }
  
-@@ -12498,6 +12706,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12498,6 +12725,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -469,7 +495,7 @@ index 665db419cb4909d34cdd3963d922aed12cf2c8ac..9323dade18a7780802275fa6fcebe336
  }
  
 diff --git a/docshell/base/nsDocShell.h b/docshell/base/nsDocShell.h
-index 0d3594f977ac28595f830cbc5e310a8af284d777..7e3222a0cafc3f38e335c9dc8654019a067a7a39 100644
+index 0d3594f977ac28595f830cbc5e310a8af284d777..0149141757abef2787a09bba20d98714fd50d50d 100644
 --- a/docshell/base/nsDocShell.h
 +++ b/docshell/base/nsDocShell.h
 @@ -13,6 +13,7 @@
@@ -513,13 +539,14 @@ index 0d3594f977ac28595f830cbc5e310a8af284d777..7e3222a0cafc3f38e335c9dc8654019a
    // Handles retrieval of subframe session history for nsDocShell::LoadURI. If a
    // load is requested in a subframe of the current DocShell, the subframe
    // loadType may need to reflect the loadType of the parent document, or in
-@@ -1264,6 +1277,14 @@ class nsDocShell final : public nsDocLoader,
+@@ -1264,6 +1277,15 @@ class nsDocShell final : public nsDocLoader,
    bool mAllowDNSPrefetch : 1;
    bool mAllowWindowControl : 1;
    bool mCSSErrorReportingEnabled : 1;
 +  bool mFileInputInterceptionEnabled: 1;
 +  bool mOverrideHasFocus : 1;
 +  bool mBypassCSPEnabled : 1;
++  bool mForceActiveState : 1;
 +  nsString mLanguageOverride;
 +  RefPtr<nsGeolocationService> mGeolocationServiceOverride;
 +  OnlineOverride mOnlineOverride;
@@ -529,7 +556,7 @@ index 0d3594f977ac28595f830cbc5e310a8af284d777..7e3222a0cafc3f38e335c9dc8654019a
    bool mAllowKeywordFixup : 1;
    bool mIsOffScreenBrowser : 1;
 diff --git a/docshell/base/nsIDocShell.idl b/docshell/base/nsIDocShell.idl
-index 605de327047b338a0abde638e3b3a9fc5a617815..773511a4ae35b14262afeb3d005b437d30d96c0a 100644
+index 605de327047b338a0abde638e3b3a9fc5a617815..4e16debccf367a72c07660fb92015c5fb5de9b34 100644
 --- a/docshell/base/nsIDocShell.idl
 +++ b/docshell/base/nsIDocShell.idl
 @@ -44,6 +44,7 @@ interface nsIURI;
@@ -540,7 +567,7 @@ index 605de327047b338a0abde638e3b3a9fc5a617815..773511a4ae35b14262afeb3d005b437d
  interface nsIDocShellLoadInfo;
  interface nsIEditor;
  interface nsIEditingSession;
-@@ -923,6 +924,33 @@ interface nsIDocShell : nsIDocShellTreeItem
+@@ -923,6 +924,35 @@ interface nsIDocShell : nsIDocShellTreeItem
     */
    void synchronizeLayoutHistoryState();
  
@@ -549,6 +576,8 @@ index 605de327047b338a0abde638e3b3a9fc5a617815..773511a4ae35b14262afeb3d005b437d
 +  attribute boolean overrideHasFocus;
 +
 +  attribute boolean bypassCSPEnabled;
++
++  attribute boolean forceActiveState;
 +
 +  attribute AString languageOverride;
 +
