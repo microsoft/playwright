@@ -727,6 +727,7 @@ export interface PageChannel extends Channel {
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
   setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams, metadata?: Metadata): Promise<PageSetFileChooserInterceptedNoReplyResult>;
+  setWebSocketFramesReportingEnabledNoReply(params: PageSetWebSocketFramesReportingEnabledNoReplyParams, metadata?: Metadata): Promise<PageSetWebSocketFramesReportingEnabledNoReplyResult>;
   addInitScript(params: PageAddInitScriptParams, metadata?: Metadata): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, metadata?: Metadata): Promise<PageCloseResult>;
   emulateMedia(params: PageEmulateMediaParams, metadata?: Metadata): Promise<PageEmulateMediaResult>;
@@ -838,6 +839,13 @@ export type PageSetFileChooserInterceptedNoReplyOptions = {
 
 };
 export type PageSetFileChooserInterceptedNoReplyResult = void;
+export type PageSetWebSocketFramesReportingEnabledNoReplyParams = {
+  enabled: boolean,
+};
+export type PageSetWebSocketFramesReportingEnabledNoReplyOptions = {
+
+};
+export type PageSetWebSocketFramesReportingEnabledNoReplyResult = void;
 export type PageAddInitScriptParams = {
   source: string,
 };

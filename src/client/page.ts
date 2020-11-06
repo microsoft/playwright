@@ -577,19 +577,19 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   on(event: string | symbol, listener: Listener): this {
-    if (event === Events.Page.FileChooser) {
-      if (!this.listenerCount(event))
-        this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
-    }
+    if (event === Events.Page.FileChooser && !this.listenerCount(event))
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
+    if (event === Events.Page.WebSocket && !this.listenerCount(event))
+      this._channel.setWebSocketFramesReportingEnabledNoReply({ enabled: true });
     super.on(event, listener);
     return this;
   }
 
   addListener(event: string | symbol, listener: Listener): this {
-    if (event === Events.Page.FileChooser) {
-      if (!this.listenerCount(event))
-        this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
-    }
+    if (event === Events.Page.FileChooser && !this.listenerCount(event))
+      this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
+    if (event === Events.Page.WebSocket && !this.listenerCount(event))
+      this._channel.setWebSocketFramesReportingEnabledNoReply({ enabled: true });
     super.addListener(event, listener);
     return this;
   }
@@ -598,6 +598,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     super.off(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
+    // Note: we do not stop reporting web socket frames, since
+    // user might not listen to 'websocket' anymore, but still have
+    // a functioning WebSocket object.
     return this;
   }
 
@@ -605,6 +608,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     super.removeListener(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
+    // Note: we do not stop reporting web socket frames, since
+    // user might not listen to 'websocket' anymore, but still have
+    // a functioning WebSocket object.
     return this;
   }
 
