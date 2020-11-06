@@ -110,10 +110,11 @@ DEPS['src/server/common/'] = [];
 // Strict dependencies for injected code.
 DEPS['src/server/injected/'] = ['src/server/common/'];
 
-// Electron uses chromium internally.
+// Electron and Clank use chromium internally.
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
+DEPS['src/server/clank/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
-DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/'];
+DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/clank/'];
 DEPS['src/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 // Tracing is a client/server plugin, nothing should depend on it.

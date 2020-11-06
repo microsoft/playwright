@@ -16,3 +16,6 @@ lib/
 jest-report.json
 drivers/
 /docs/api.json
+.key/adbkey
+.key/adbkey.pub
+.profile

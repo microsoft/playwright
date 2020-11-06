@@ -38,6 +38,7 @@ const DL_OPEN_LIBRARIES = {
   chromium: [],
   webkit: ['libGLESv2.so.2', 'libx264.so'],
   firefox: [],
+  clank: [],
 };
 
 async function validateDependencies(browserPath: string, browser: BrowserDescriptor) {

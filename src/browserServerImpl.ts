@@ -47,28 +47,26 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
     });
-    return new BrowserServerImpl(this._browserType, browser, options.port);
+    return new BrowserServerImpl(browser, options.port);
   }
 }
 
 export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   private _server: ws.Server;
-  private _browserType: BrowserType;
   private _browser: Browser;
   private _wsEndpoint: string;
   private _process: ChildProcess;
 
-  constructor(browserType: BrowserType, browser: Browser, port: number = 0) {
+  constructor(browser: Browser, port: number = 0) {
     super();
 
-    this._browserType = browserType;
     this._browser = browser;
 
     const token = createGuid();
     this._server = new ws.Server({ port });
     const address = this._server.address();
     this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
-    this._process = browser._options.browserProcess.process;
+    this._process = browser._options.browserProcess.process!;
 
     this._server.on('connection', (socket: ws, req) => {
       if (req.url !== '/' + token) {

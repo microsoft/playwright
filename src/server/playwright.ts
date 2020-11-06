@@ -15,6 +15,7 @@
  */
 
 import { Chromium } from './chromium/chromium';
+import { Clank } from './clank/clank';
 import { WebKit } from './webkit/webkit';
 import { Firefox } from './firefox/firefox';
 import * as browserPaths from '../utils/browserPaths';
@@ -23,6 +24,7 @@ import { serverSelectors } from './selectors';
 export class Playwright {
   readonly selectors = serverSelectors;
   readonly chromium: Chromium;
+  readonly clank: Clank;
   readonly firefox: Firefox;
   readonly webkit: WebKit;
 
@@ -35,5 +37,11 @@ export class Playwright {
 
     const webkit = browsers.find(browser => browser.name === 'webkit');
     this.webkit = new WebKit(packagePath, webkit!);
+
+    this.clank = new Clank(packagePath, {
+      name: 'clank',
+      revision: '0',
+      download: false
+    });
   }
 }

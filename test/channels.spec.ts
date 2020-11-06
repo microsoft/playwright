@@ -44,6 +44,7 @@ it('should scope context handles', async ({browser, server}) => {
       ] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
       { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
@@ -57,6 +58,7 @@ it('should scope context handles', async ({browser, server}) => {
   await expectScopeState(browser, {
     _guid: '',
     objects: [
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [
@@ -91,6 +93,7 @@ it('should scope CDPSession handles', (test, { browserName }) => {
       ] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
       { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
@@ -107,6 +110,7 @@ it('should scope CDPSession handles', (test, { browserName }) => {
           { _guid: 'CDPSession', objects: [] },
         ] },
       ] },
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
@@ -129,6 +133,7 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
         { _guid: 'Browser', objects: [] },
       ]
       },
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
       { _guid: 'Selectors', objects: [] },
       { _guid: 'Electron', objects: [] },
@@ -150,6 +155,7 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
         },
       ]
       },
+      { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'BrowserType', objects: [] },
       { _guid: 'Playwright', objects: [] },
