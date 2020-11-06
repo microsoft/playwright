@@ -138,7 +138,7 @@ it('should wait for networkidle from the child frame', async ({page, server}) =>
   });
 });
 
-it.only('should wait for networkidle from the popup', async ({page, server}) => {
+it('should wait for networkidle from the popup', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
     <button id=box1 onclick="window.open('./popup/popup.html')">Button1</button>
