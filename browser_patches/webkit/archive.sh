@@ -71,6 +71,17 @@ createZipForLinux() {
   rm -rf $tmpdir
 }
 
+# see https://docs.microsoft.com/en-us/visualstudio/install/tools-for-managing-visual-studio-instances?view=vs-2019
+printMSVCRedistDir() {
+  local dll_file=$("$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
+  local redist_dir=$(dirname "$dll_file")
+  if ! [[ -d $redist_dir ]]; then
+    echo "ERROR: cannot find MS VS C++ redistributable $redist_dir"
+    exit 1;
+  fi
+  echo "$redist_dir"
+}
+
 createZipForWindows() {
   # create a TMP directory to copy all necessary files
   local tmpdir="/tmp/webkit-deploy-$(date +%s)"
@@ -82,7 +93,7 @@ createZipForWindows() {
   cp -t $tmpdir JavaScriptCore.dll PlaywrightLib.dll WTF.dll WebKit2.dll libEGL.dll libGLESv2.dll
   cp -t $tmpdir Playwright.exe WebKitNetworkProcess.exe WebKitWebProcess.exe
   cd -
-  cd /c/WEBKIT_WIN64_LIBS
+  cd "$(printMSVCRedistDir)"
   cp -t $tmpdir msvcp140.dll vcruntime140.dll vcruntime140_1.dll msvcp140_2.dll
   cd -
 
