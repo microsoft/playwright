@@ -159,7 +159,6 @@ class TargetRegistry {
         target.updateViewportSize();
       if (browserContext.screencastOptions)
         target._startVideoRecording(browserContext.screencastOptions);
-
     };
 
     const onTabCloseListener = event => {
