@@ -20,17 +20,27 @@ export type ParsedSelector = {
   parts: {
     name: string,
     body: string,
+    index?: number,
   }[],
   capture?: number,
 };
 
 export function parseSelector(selector: string): ParsedSelector {
-  let index = 0;
-  let quote: string | undefined;
-  let start = 0;
-  const result: ParsedSelector = { parts: [] };
-  const append = () => {
-    const part = selector.substring(start, index).trim();
+  const parsePart = (part: string): { name: string, body: string, capture?: boolean, index?: number } => {
+    part = part.trim();
+
+    let index: number | undefined;
+    if (part.length && part[part.length - 1] === '}') {
+      const open = part.lastIndexOf('{');
+      if (open === -1)
+        throw new Error(`Unrecognized modifier while parsing selector "${selector}"`);
+      const modifier = part.substring(open + 1, part.length - 1);
+      index = Number(modifier);
+      if (!Number.isInteger(index) || index < 1)
+        throw new Error(`Unrecognized modifier "{${modifier}}" while parsing selector "${selector}"`);
+      part = part.substring(0, open).trim();
+    }
+
     const eqIndex = part.indexOf('=');
     let name: string;
     let body: string;
@@ -58,13 +68,25 @@ export function parseSelector(selector: string): ParsedSelector {
       capture = true;
       name = name.substring(1);
     }
-    result.parts.push({ name, body });
-    if (capture) {
+    return { name, body, capture, index };
+  };
+
+  let index = 0;
+  let quote: string | undefined;
+  let start = 0;
+  const result: ParsedSelector = { parts: [] };
+
+  const append = () => {
+    const part = selector.substring(start, index);
+    const parsed = parsePart(part);
+    result.parts.push({ name: parsed.name, body: parsed.body, index: parsed.index });
+    if (parsed.capture) {
       if (result.capture !== undefined)
         throw new Error(`Only one of the selectors can capture using * modifier`);
       result.capture = result.parts.length - 1;
     }
   };
+
   while (index < selector.length) {
     const c = selector[index];
     if (c === '\\' && index + 1 < selector.length) {

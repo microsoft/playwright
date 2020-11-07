@@ -83,6 +83,55 @@ it('should support >> syntax', async ({page, server}) => {
   expect(element).toBeTruthy();
 });
 
+it('should support {index} syntax', async ({page, server}) => {
+  await page.setContent(`
+    <div>div1<a>a1</a><a>a2</a></div>
+    <div>div2<span>span1</span><span>span2</span></div>
+    <div attr="{}">attr</div>
+    <div>{}</div>
+    <div>hello</div><div id=second>hello</div>
+    <div><span>span3</span><span>span4</span></div>
+  `);
+  expect(await page.$eval('div{1}', e => e.textContent)).toBe('div1a1a2');
+  expect(await page.$eval('div{2}', e => e.textContent)).toBe('div2span1span2');
+  expect(await page.$eval('span{4}', e => e.textContent)).toBe('span4');
+  expect(await page.$('span{5}')).toBe(null);
+  expect(await page.$eval('div > span{3}', e => e.textContent)).toBe('span3');
+  expect(await page.$('div >> span{3}')).toBe(null);
+  expect(await page.$eval('div{2} >> span{1}', e => e.textContent)).toBe('span1');
+  expect(await page.$eval('div{2} >> span{2}', e => e.textContent)).toBe('span2');
+  expect(await page.$eval('css=div{2} >> span', e => e.textContent)).toBe('span1');
+  expect(await page.$eval('*css=div{2} >> span', e => e.textContent)).toBe('div2span1span2');
+  expect(await page.$eval('div >> css=a { 2}', e => e.textContent)).toBe('a2');
+  expect(await page.$eval('div >> css=a {2   }', e => e.textContent)).toBe('a2');
+  expect(await page.$eval('div >> css=a{  2   }  ', e => e.textContent)).toBe('a2');
+  expect(await page.$eval('a{001}  ', e => e.textContent)).toBe('a1');
+  expect(await page.$eval('text="{}"', e => e.textContent)).toBe('{}');
+  expect(await page.$eval('text=hello{2}', e => e.id)).toBe('second');
+
+  expect(await page.$$eval('div{2}', es => es.map(e => e.textContent).join(','))).toBe('div2span1span2');
+  expect(await page.$$eval('*css=div{2} >> span{2}', es => es.map(e => e.textContent).join(','))).toBe('div2span1span2');
+  expect(await page.$$eval('*css=div{2} >> span{3}', es => es.map(e => e.textContent).join(','))).toBe('');
+  expect(await page.$$eval('div{2} >> *css=span', es => es.map(e => e.textContent).join(','))).toBe('span1,span2');
+  expect(await page.$$eval('div >> *css=span{2}', es => es.map(e => e.textContent).join(','))).toBe('span2,span4');
+  expect(await page.$$eval('div{2} >> span{2}', es => es.map(e => e.textContent).join(','))).toBe('span2');
+  expect(await page.$$eval('div{2} >> *css=span{2}', es => es.map(e => e.textContent).join(','))).toBe('span2');
+  expect(await page.$$eval('div{2} >> span', es => es.map(e => e.textContent).join(','))).toBe('span1,span2');
+  expect(await page.$$eval('div >> span{2}', es => es.map(e => e.textContent).join(','))).toBe('span2,span4');
+
+  expect((await page.$('a{0 1}').catch(e => e)).message).toContain(`Unrecognized modifier "{0 1}" while parsing selector "a{0 1}"`);
+  expect((await page.$('a{0}').catch(e => e)).message).toContain(`Unrecognized modifier "{0}" while parsing selector "a{0}"`);
+  expect((await page.$('a{foo}').catch(e => e)).message).toContain(`Unrecognized modifier "{foo}" while parsing selector "a{foo}"`);
+  expect((await page.$('a{}}').catch(e => e)).message).toContain(`Unrecognized modifier "{}}" while parsing selector "a{}}"`);
+  expect((await page.$('a{}').catch(e => e)).message).toContain(`Unrecognized modifier "{}" while parsing selector "a{}"`);
+  expect((await page.$('a}').catch(e => e)).message).toContain(`Unrecognized modifier while parsing selector "a}"`);
+  expect((await page.$('text={}').catch(e => e)).message).toContain(`Unrecognized modifier "{}" while parsing selector "text={}"`);
+
+  // Errors below are browser-specific.
+  expect((await page.$('a{{2}').catch(e => e)).message).toContain(`page.$`);
+  expect((await page.$('a{3}{2}').catch(e => e)).message).toContain(`page.$`);
+});
+
 it('should query existing elements', async ({page, server}) => {
   await page.setContent('<div>A</div><br/><div>B</div>');
   const elements = await page.$$('div');

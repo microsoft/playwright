@@ -161,6 +161,11 @@ await page.click('text=Hello w');
 ```
 
 ```js
+// Click the third button
+await page.click('button {3}');
+```
+
+```js
 // Explicit CSS and XPath notation
 await page.click('css=div');
 await page.click('xpath=//html/body/div');

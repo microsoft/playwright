@@ -74,10 +74,18 @@ export class InjectedScript {
   }
 
   private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
+    if (index === selector.parts.length)
+      return root as Element;
+
     const current = selector.parts[index];
-    if (index === selector.parts.length - 1)
+
+    // Optimization for the common "match first element" case.
+    if (index === selector.parts.length - 1 && current.index === undefined)
       return this.engines.get(current.name)!.query(root, current.body);
-    const all = this.engines.get(current.name)!.queryAll(root, current.body);
+
+    let all = this.engines.get(current.name)!.queryAll(root, current.body);
+    if (current.index !== undefined)
+      all = current.index <= all.length ? [all[current.index - 1]] : [];
     for (const next of all) {
       const result = this._querySelectorRecursively(next, selector, index + 1);
       if (result)
@@ -90,14 +98,17 @@ export class InjectedScript {
       throw new Error('Node is not queryable.');
     const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
     // Query all elements up to the capture.
-    const partsToQuerAll = selector.parts.slice(0, capture + 1);
+    const partsToQueryAll = selector.parts.slice(0, capture + 1);
     // Check they have a descendant matching everything after the capture.
     const partsToCheckOne = selector.parts.slice(capture + 1);
     let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-    for (const { name, body } of partsToQuerAll) {
+    for (const { name, body, index } of partsToQueryAll) {
       const newSet = new Set<Element>();
       for (const prev of set) {
-        for (const next of this.engines.get(name)!.queryAll(prev, body)) {
+        let all = this.engines.get(name)!.queryAll(prev, body);
+        if (index !== undefined)
+          all = index <= all.length ? [all[index - 1]] : [];
+        for (const next of all) {
           if (newSet.has(next))
             continue;
           newSet.add(next);

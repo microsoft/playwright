@@ -10,7 +10,7 @@ Selectors query elements on the web page for interactions, like [page.click](api
 <!-- GEN:stop -->
 
 ## Syntax
-Selectors are defined by selector engine name and selector body, `engine=body`. 
+Selectors are defined by selector engine name and selector body, `engine=body`.
 
 * `engine` refers to one of the [supported engines](#selector-engines)
   * Built-in selector engines: [css], [text], [xpath] and [id selectors][id]
@@ -46,6 +46,11 @@ document
 ```
 
 If a selector needs to include `>>` in the body, it should be escaped inside a string to not be confused with chaining separator, e.g. `text="some >> text"`.
+
+### Indexed matches
+By default, selectors resolve to the first matching element, according to the DOM traversal order. A selector can be followed by `{n}` to match the n-th element instead.
+
+For example, `text=list item {3}` matches the third element with the text `list item`. Similarly, `article {2} >> .show-button` matches the `.show-button` element in the second `article`.
 
 ### Intermediate matches
 By default, chained selectors resolve to an element queried by the last selector. A selector can be prefixed with `*` to capture elements that are queried by an intermediate selector.
