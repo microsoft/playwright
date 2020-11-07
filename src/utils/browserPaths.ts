@@ -21,7 +21,7 @@ import * as path from 'path';
 import { getUbuntuVersionSync } from './ubuntuVersion';
 import { getFromENV } from './utils';
 
-export type BrowserName = 'chromium'|'webkit'|'firefox';
+export type BrowserName = 'chromium'|'webkit'|'firefox'|'clank';
 export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11.0'|'ubuntu18.04'|'ubuntu20.04';
 export type BrowserDescriptor = {
   name: BrowserName,

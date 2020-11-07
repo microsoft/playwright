@@ -130,6 +130,7 @@ Playwright:
 
   initializer:
     chromium: BrowserType
+    clank: BrowserType
     firefox: BrowserType
     webkit: BrowserType
     electron: Electron?

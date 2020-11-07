@@ -118,6 +118,10 @@ export class CRBrowser extends Browser {
     return this._version;
   }
 
+  isClank(): boolean {
+    return this._options.name === 'clank';
+  }
+
   _onAttachedToTarget({targetInfo, sessionId, waitingForDebugger}: Protocol.Target.attachedToTargetPayload) {
     if (targetInfo.type === 'browser')
       return;
