@@ -50,6 +50,8 @@ it('should report console logs', async function({page}) {
     page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], {type: 'application/javascript'})))),
   ]);
   expect(message.text()).toBe('1');
+  // Firefox's juggler had an issue that reported worker blob urls as frame urls.
+  expect(page.url()).not.toContain('blob');
 });
 
 it('should have JSHandles for console logs', async function({page}) {
