@@ -197,6 +197,12 @@ class FrameTree {
       return;
     }
 
+    if (!channel.isDocument) {
+      // Somehow, we can get worker requests here,
+      // while we are only interested in frame documents.
+      return;
+    }
+
     const isStart = flag & Ci.nsIWebProgressListener.STATE_START;
     const isTransferring = flag & Ci.nsIWebProgressListener.STATE_TRANSFERRING;
     const isStop = flag & Ci.nsIWebProgressListener.STATE_STOP;
