@@ -36,7 +36,24 @@ export async function validateHostRequirements(browserPath: string, browser: Bro
 
 const DL_OPEN_LIBRARIES = {
   chromium: [],
-  webkit: ['libGLESv2.so.2', 'libx264.so', 'libharfbuzz-icu.so'],
+  webkit: [
+    'libGLESv2.so.2',
+    'libx264.so',
+    'libharfbuzz-icu.so.0',
+    'libatk-1.0.so.0',
+    'libxkbcommon.so.0',
+    'libwayland-server.so.0',
+    'libwayland-egl.so.1',
+    'libwayland-client.so.0',
+    'libatk-bridge-2.0.so.0',
+    'libepoxy.so.0',
+    'libsoup-2.4.so.1',
+    'libxslt.so.1',
+    'libwoff2dec.so.1.0.2',
+    'libgstgl-1.0.so.0',
+    'libgstcodecparsers-1.0.so.0',
+    'libwebpdemux.so.2'
+  ],
   firefox: [],
 };
 
@@ -116,7 +133,6 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
   }
   for (const dep of (await missingDLOPENLibraries(browser)))
     missingDeps.add(dep);
-
   if (!missingDeps.size)
     return;
   // Check Ubuntu version.
@@ -139,10 +155,6 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
       }
     }
   }
-
-  const defaultPackages = defaultRequirements[ubuntuVersion] && defaultRequirements[ubuntuVersion][browser.name];
-  if (defaultPackages)
-    defaultPackages.forEach(v => missingPackages.add(v));
 
   let missingPackagesMessage = '';
   if (missingPackages.size) {
@@ -224,7 +236,7 @@ async function missingFileDependencies(filePath: string): Promise<Array<string>>
   });
   if (code !== 0)
     return [];
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim().toLowerCase());
+  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
   return missingDeps;
 }
 
@@ -272,6 +284,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libEGL.so.1': 'libegl1',
   'libenchant.so.1': 'libenchant1c2a',
   'libepoxy.so.0': 'libepoxy0',
+  'libevent-2.1.so.6': 'libevent-2.1-6',
   'libfontconfig.so.1': 'libfontconfig1',
   'libfreetype.so.6': 'libfreetype6',
   'libgbm.so.1': 'libgbm1',
@@ -300,8 +313,10 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libharfbuzz-icu.so.0': 'libharfbuzz-icu0',
   'libharfbuzz.so.0': 'libharfbuzz0b',
   'libhyphen.so.0': 'libhyphen0',
+  'libicudata.so.60': 'libicu60',
   'libicui18n.so.60': 'libicu60',
   'libicuuc.so.60': 'libicu60',
+  'libjavascriptcoregtk-4.0.so.18': 'libjavascriptcoregtk-4.0-18',
   'libjpeg.so.8': 'libjpeg-turbo8',
   'libnotify.so.4': 'libnotify4',
   'libnspr4.so': 'libnspr4',
@@ -315,16 +330,17 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libpng16.so.16': 'libpng16-16',
   'libsecret-1.so.0': 'libsecret-1-0',
   'libsmime3.so': 'libnss3',
+  'libsoup-2.4.so.1': 'libsoup2.4-1',
   'libvpx.so.5': 'libvpx5',
   'libwayland-client.so.0': 'libwayland-client0',
   'libwayland-egl.so.1': 'libwayland-egl1',
   'libwayland-server.so.0': 'libwayland-server0',
+  'libwebkit2gtk-4.0.so.37': 'libwebkit2gtk-4.0-37',
   'libwebp.so.6': 'libwebp6',
   'libwebpdemux.so.2': 'libwebpdemux2',
   'libwoff2dec.so.1.0.2': 'libwoff1',
   'libX11-xcb.so.1': 'libx11-xcb1',
   'libX11.so.6': 'libx11-6',
-  'libxcb-dri3.so.0': 'libxcb-dri3-0',
   'libxcb-shm.so.0': 'libxcb-shm0',
   'libxcb.so.1': 'libxcb1',
   'libXcomposite.so.1': 'libxcomposite1',
@@ -339,7 +355,6 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libXrender.so.1': 'libxrender1',
   'libxslt.so.1': 'libxslt1.1',
   'libXt.so.6': 'libxt6',
-  'libXtst.so.6': 'libxtst6',
 };
 
 // This list is generted with the following program:
@@ -388,6 +403,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
   'libhyphen.so.0': 'libhyphen0',
   'libicui18n.so.66': 'libicu66',
   'libicuuc.so.66': 'libicu66',
+  'libjavascriptcoregtk-4.0.so.18': 'libjavascriptcoregtk-4.0-18',
   'libjpeg.so.8': 'libjpeg-turbo8',
   'libnotify.so.4': 'libnotify4',
   'libnspr4.so': 'libnspr4',
@@ -406,12 +422,15 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
   'libwayland-client.so.0': 'libwayland-client0',
   'libwayland-egl.so.1': 'libwayland-egl1',
   'libwayland-server.so.0': 'libwayland-server0',
+  'libwebkit2gtk-4.0.so.37': 'libwebkit2gtk-4.0-37',
   'libwebp.so.6': 'libwebp6',
   'libwebpdemux.so.2': 'libwebpdemux2',
   'libwoff2dec.so.1.0.2': 'libwoff1',
+  'libwpe-1.0.so.1': 'libwpe-1.0-1',
+  'libWPEBackend-fdo-1.0.so.1': 'libwpebackend-fdo-1.0-1',
+  'libWPEWebKit-1.0.so.3': 'libwpewebkit-1.0-3',
   'libX11-xcb.so.1': 'libx11-xcb1',
   'libX11.so.6': 'libx11-6',
-  'libxcb-dri3.so.0': 'libxcb-dri3-0',
   'libxcb-shm.so.0': 'libxcb-shm0',
   'libxcb.so.1': 'libxcb1',
   'libXcomposite.so.1': 'libxcomposite1',
@@ -426,7 +445,6 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_20_04: { [s: string]: string} = {
   'libXrender.so.1': 'libxrender1',
   'libxslt.so.1': 'libxslt1.1',
   'libXt.so.6': 'libxt6',
-  'libXtst.so.6': 'libxtst6',
 };
 
 const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
@@ -435,90 +453,4 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
   // and if it's missing recommend installing missing gstreamer lib.
   // gstreamer1.0-libav -> libavcodec57 -> libx264-152
   'libx264.so': 'gstreamer1.0-libav',
-};
-
-
-// This map should be in sync with the Dockerfiles.
-const defaultRequirements: { [s: string]: { [s: string]: string[]} } = {
-  '18.04': {
-    'chromium': [
-      'libnss3',
-      'libxss1',
-      'libasound2',
-      'fonts-noto-color-emoji',
-      'libxtst6',
-    ],
-    'firefox': [
-      'libdbus-glib-1-2',
-      'libxt6',
-      'ffmpeg',
-    ],
-    'webkit': [
-      'libwoff1',
-      'libopus0',
-      'libwebp6',
-      'libwebpdemux2',
-      'libenchant1c2a',
-      'libgudev-1.0-0',
-      'libsecret-1-0',
-      'libhyphen0',
-      'libgdk-pixbuf2.0-0',
-      'libegl1',
-      'libnotify4',
-      'libxslt1.1',
-      'libevent-2.1-7',
-      'libgles2',
-      'libxcomposite1',
-      'libatk1.0-0',
-      'libatk-bridge2.0-0',
-      'libepoxy0',
-      'libgtk-3-0',
-      'libharfbuzz-icu0',
-      'libgstreamer-gl1.0-0',
-      'libgstreamer-plugins-bad1.0-0',
-      'gstreamer1.0-plugins-good',
-      'gstreamer1.0-libav',
-    ]
-  },
-  '20.04': {
-    'chromium': [
-      'libnss3',
-      'libxss1',
-      'libasound2',
-      'fonts-noto-color-emoji',
-      'libxtst6',
-    ],
-    'firefox': [
-      'libdbus-glib-1-2',
-      'libxt6',
-      'ffmpeg',
-    ],
-    'webkit': [
-      'libwoff1',
-      'libopus0',
-      'libwebp6',
-      'libwebpdemux2',
-      'libenchant1c2a',
-      'libgudev-1.0-0',
-      'libsecret-1-0',
-      'libhyphen0',
-      'libgdk-pixbuf2.0-0',
-      'libegl1',
-      'libnotify4',
-      'libxslt1.1',
-      'libevent-2.1-6',
-      'libgles2',
-      'libvpx5',
-      'libxcomposite1',
-      'libatk1.0-0',
-      'libatk-bridge2.0-0',
-      'libepoxy0',
-      'libgtk-3-0',
-      'libharfbuzz-icu0',
-      'libgstreamer-gl1.0-0',
-      'libgstreamer-plugins-bad1.0-0',
-      'gstreamer1.0-plugins-good',
-      'gstreamer1.0-libav',
-    ]
-  }
 };

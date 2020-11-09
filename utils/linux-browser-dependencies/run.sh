@@ -28,6 +28,8 @@ function cleanup() {
 trap "cleanup; cd $(pwd -P)" EXIT
 cd "$(dirname "$0")"
 
+npm run build
+
 # We rely on `./playwright.tar.gz` to download browsers into the docker image.
 node ../../packages/build_package.js playwright ./playwright.tar.gz
 
