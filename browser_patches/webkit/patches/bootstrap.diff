@@ -16543,6 +16543,52 @@ index 36dcac26e1b1c0b76071a8ff02feacbb8973e590..212220ceb975857a8519d6ca35c1d842
  }
  
  void WebProcess::initializeConnection(IPC::Connection* connection)
+diff --git a/Source/WebKit/WebProcess/com.apple.WebProcess.sb.in b/Source/WebKit/WebProcess/com.apple.WebProcess.sb.in
+index 2ca17abc2067c6cb454008adbccb25522c2a2f31..fb053eefa24dcafda25f6865d75725b82b137f5b 100644
+--- a/Source/WebKit/WebProcess/com.apple.WebProcess.sb.in
++++ b/Source/WebKit/WebProcess/com.apple.WebProcess.sb.in
+@@ -1418,21 +1418,26 @@
+ #include <WebKitAdditions/WebContentSandboxAdditionsMac.sb>
+ #endif
+ 
+-(when (defined? 'mach-bootstrap)
+-    (allow mach-bootstrap
+-        (apply-message-filter
+-            (allow xpc-message-send (with telemetry))
+-            (allow xpc-message-send (message-number
+-                204
+-                207
+-                301
+-                800
+-                804
+-                )
+-            )
+-        )
+-    )
+-)
++;;; Playwright: This requires an entitlement
++;;; that only exists in builds signed by Apple.
++;;; It looks like we can disable it for now
++;;; without side effects
++;;;
++;;; (when (defined? 'mach-bootstrap)
++;;;    (allow mach-bootstrap
++;;;        (apply-message-filter
++;;;            (allow xpc-message-send (with telemetry))
++;;;            (allow xpc-message-send (message-number
++;;;                204
++;;;                207
++;;;                301
++;;;                800
++;;;                804
++;;;                )
++;;;            )
++;;;        )
++;;;    )
++;;; )
+ 
+ (when (defined? 'mach-kernel-endpoint)
+     (allow mach-kernel-endpoint
 diff --git a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
 index 89bc159df35910abe133c68d71057cdfe1995cbb..aba8e9110a3ec4c59e9888b148e1e908d477cbe4 100644
 --- a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
