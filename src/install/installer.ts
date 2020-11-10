@@ -41,6 +41,7 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
 
   const browsersPath = browserPaths.browsersPath(packagePath);
   await fsMkdirAsync(browsersPath, { recursive: true });
+  const lockfilePath = path.join(browsersPath, '__dirlock');
   const releaseLock = await lockfile.lock(browsersPath, {
     retries: {
       retries: 10,
@@ -49,7 +50,10 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
       // See documentation at: https://www.npmjs.com/package/retry#retrytimeoutsoptions
       factor: 1.27579,
     },
-    lockfilePath: path.join(browsersPath, '__dirlock'),
+    onCompromised: (err: Error) => {
+      throw new Error(`${err.message} Path: ${lockfilePath}`);
+    },
+    lockfilePath,
   });
   const linksDir = path.join(browsersPath, '.links');
 
