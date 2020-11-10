@@ -109,7 +109,7 @@ async function validateDependenciesLinux(browserPath: string, browser: BrowserDe
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath)));
+  const allMissingDeps = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, directoryPaths)));
   const missingDeps: Set<string> = new Set();
   for (const deps of allMissingDeps) {
     for (const dep of deps)
@@ -210,18 +210,21 @@ async function missingFileDependenciesWindows(filePath: string): Promise<Array<s
   return missingDeps;
 }
 
-async function missingFileDependencies(filePath: string): Promise<Array<string>> {
+async function missingFileDependencies(filePath: string, extraLDPaths: string[]): Promise<Array<string>> {
   const dirname = path.dirname(filePath);
+  let LD_LIBRARY_PATH = extraLDPaths.join(':');
+  if (process.env.LD_LIBRARY_PATH)
+    LD_LIBRARY_PATH = `${process.env.LD_LIBRARY_PATH}:${LD_LIBRARY_PATH}`;
   const {stdout, code} = await spawnAsync('ldd', [filePath], {
     cwd: dirname,
     env: {
       ...process.env,
-      LD_LIBRARY_PATH: process.env.LD_LIBRARY_PATH ? `${process.env.LD_LIBRARY_PATH}:${dirname}` : dirname,
+      LD_LIBRARY_PATH,
     },
   });
   if (code !== 0)
     return [];
-  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim().toLowerCase());
+  const missingDeps = stdout.split('\n').map(line => line.trim()).filter(line => line.endsWith('not found') && line.includes('=>')).map(line => line.split('=>')[0].trim());
   return missingDeps;
 }
 
@@ -269,6 +272,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libEGL.so.1': 'libegl1',
   'libenchant.so.1': 'libenchant1c2a',
   'libepoxy.so.0': 'libepoxy0',
+  'libevent-2.1.so.6': 'libevent-2.1-6',
   'libfontconfig.so.1': 'libfontconfig1',
   'libfreetype.so.6': 'libfreetype6',
   'libgbm.so.1': 'libgbm1',
@@ -297,6 +301,7 @@ const LIBRARY_TO_PACKAGE_NAME_UBUNTU_18_04: { [s: string]: string} = {
   'libharfbuzz-icu.so.0': 'libharfbuzz-icu0',
   'libharfbuzz.so.0': 'libharfbuzz0b',
   'libhyphen.so.0': 'libhyphen0',
+  'libicudata.so.60': 'libicu60',
   'libicui18n.so.60': 'libicu60',
   'libicuuc.so.60': 'libicu60',
   'libjpeg.so.8': 'libjpeg-turbo8',

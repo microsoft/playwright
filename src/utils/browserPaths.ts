@@ -56,7 +56,11 @@ export function linuxLddDirectories(browserPath: string, browser: BrowserDescrip
   if (browser.name === 'webkit') {
     return [
       path.join(browserPath, 'minibrowser-gtk'),
+      path.join(browserPath, 'minibrowser-gtk', 'bin'),
+      path.join(browserPath, 'minibrowser-gtk', 'lib'),
       path.join(browserPath, 'minibrowser-wpe'),
+      path.join(browserPath, 'minibrowser-wpe', 'bin'),
+      path.join(browserPath, 'minibrowser-wpe', 'lib'),
     ];
   }
   return [];
