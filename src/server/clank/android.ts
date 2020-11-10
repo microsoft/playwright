@@ -18,7 +18,7 @@ import * as debug from 'debug';
 import { EventEmitter } from 'events';
 import * as stream from 'stream';
 import * as ws from 'ws';
-import { makeWaitForNextTask } from '../../utils/utils';
+import { createGuid, makeWaitForNextTask } from '../../utils/utils';
 
 export interface Backend {
   devices(): Promise<DeviceBackend[]>;
@@ -69,20 +69,13 @@ export class AndroidDevice {
   async launchBrowser(packageName: string): Promise<AndroidBrowser> {
     debug('pw:android')('Force-stopping', packageName);
     await this.backend.runCommand(`shell:am force-stop ${packageName}`);
-    const hasDefaultSocket = !!(await this.backend.runCommand(`shell:cat /proc/net/unix | grep chrome_devtools_remote$`));
-    debug('pw:android')('Starting', packageName);
+
+    const socketName = createGuid();
+    const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
+    debug('pw:android')('Starting', packageName, commandLine);
+    await this.backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
     await this.backend.runCommand(`shell:am start -n ${packageName}/com.google.android.apps.chrome.Main about:blank`);
-    let pid = 0;
-    debug('pw:android')('Polling pid for', packageName);
-    while (!pid) {
-      const ps = (await this.backend.runCommand(`shell:ps -A | grep ${packageName}`)).split('\n');
-      const proc = ps.find(line => line.endsWith(packageName));
-      if (proc)
-        pid = +proc.replace(/\s+/g, ' ').split(' ')[1];
-      await new Promise(f => setTimeout(f, 100));
-    }
-    debug('pw:android')('PID=' + pid);
-    const socketName = hasDefaultSocket ? `chrome_devtools_remote_${pid}` : 'chrome_devtools_remote';
+
     debug('pw:android')('Polling for socket', socketName);
     while (true) {
       const net = await this.backend.runCommand(`shell:cat /proc/net/unix | grep ${socketName}$`);
@@ -91,7 +84,7 @@ export class AndroidDevice {
       await new Promise(f => setTimeout(f, 100));
     }
     debug('pw:android')('Got the socket, connecting');
-    const browser = new AndroidBrowser(this, packageName, socketName, pid);
+    const browser = new AndroidBrowser(this, packageName, socketName);
     await browser._open();
     return browser;
   }
@@ -104,7 +97,6 @@ export class AndroidDevice {
 export class AndroidBrowser extends EventEmitter {
   readonly device: AndroidDevice;
   readonly socketName: string;
-  readonly pid: number;
   private _socket: SocketBackend | undefined;
   private _receiver: stream.Writable;
   private _waitForNextTask = makeWaitForNextTask();
@@ -112,12 +104,11 @@ export class AndroidBrowser extends EventEmitter {
   onclose?: () => void;
   private _packageName: string;
 
-  constructor(device: AndroidDevice, packageName: string, socketName: string, pid: number) {
+  constructor(device: AndroidDevice, packageName: string, socketName: string) {
     super();
     this._packageName = packageName;
     this.device = device;
     this.socketName = socketName;
-    this.pid = pid;
     this._receiver = new (ws as any).Receiver() as stream.Writable;
     this._receiver.on('message', message => {
       this._waitForNextTask(() => {
