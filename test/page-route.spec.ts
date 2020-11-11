@@ -414,7 +414,7 @@ it('should create a redirect', async ({page, server}) => {
   expect(text).toBe('');
 });
 
-it('should create a redirect', (test, { browserName }) => {
+it('should follow created redirect', (test, { browserName }) => {
   test.fail(browserName === 'webkit');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
