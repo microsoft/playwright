@@ -154,6 +154,30 @@ it('should work with binary post data and interception', async ({page, server}) 
     expect(buffer[i]).toBe(i);
 });
 
+it('should override post data content type', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox', 'Always reports application/octet-stream');
+}, async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  let request = null;
+  server.setRoute('/post', (req, res) => {
+    request = req;
+    res.end();
+  });
+  await page.route('**/post', (route, request) => {
+    const headers = request.headers();
+    headers['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
+    route.continue({
+      headers,
+      postData: request.postData()
+    });
+  });
+  await page.evaluate(async () => {
+    await fetch('./post', { method: 'POST', body: 'foo=bar' });
+  });
+  expect(request).toBeTruthy();
+  expect(request.headers['content-type']).toBe('application/x-www-form-urlencoded; charset=UTF-8');
+});
+
 it('should be |undefined| when there is no post data', async ({page, server}) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.request().postData()).toBe(null);
