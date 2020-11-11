@@ -29,6 +29,7 @@ import * as types from './types';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
 import { isDebugMode } from '../utils/utils';
+import { helper } from './helper';
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -62,7 +63,7 @@ export abstract class BrowserType {
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      return this._innerLaunch(progress, options, undefined, protocolLogger).catch(e => { throw this._rewriteStartupError(e); });
+      return this._innerLaunch(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser;
   }
@@ -73,12 +74,12 @@ export abstract class BrowserType {
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      return this._innerLaunch(progress, options, persistent, undefined, userDataDir).catch(e => { throw this._rewriteStartupError(e); });
+      return this._innerLaunch(progress, options, persistent, helper.debugProtocolLogger(), userDataDir).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger | undefined, userDataDir?: string): Promise<Browser> {
+  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)

@@ -20,6 +20,7 @@ import * as removeFolder from 'rimraf';
 import * as util from 'util';
 import * as types from './types';
 import { Progress } from './progress';
+import { debugLogger } from '../utils/debugLogger';
 
 const removeFolderAsync = util.promisify(removeFolder);
 
@@ -109,6 +110,15 @@ class Helper {
 
   static millisToRoundishMillis(value: number): number {
     return ((value * 1000) | 0) / 1000;
+  }
+
+  static debugProtocolLogger(protocolLogger?: types.ProtocolLogger): types.ProtocolLogger {
+    return (direction: 'send' | 'receive', message: object) => {
+      if (protocolLogger)
+        protocolLogger(direction, message);
+      if (debugLogger.isEnabled('protocol'))
+        debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message));
+    };
   }
 }
 

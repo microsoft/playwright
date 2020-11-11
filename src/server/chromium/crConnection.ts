@@ -35,11 +35,11 @@ export class CRConnection extends EventEmitter {
   private _lastId = 0;
   private readonly _transport: ConnectionTransport;
   private readonly _sessions = new Map<string, CRSession>();
-  private readonly _protocolLogger: ProtocolLogger | undefined;
+  private readonly _protocolLogger: ProtocolLogger;
   readonly rootSession: CRSession;
   _closed = false;
 
-  constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger | undefined) {
+  constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger) {
     super();
     this._transport = transport;
     this._protocolLogger = protocolLogger;
@@ -62,19 +62,13 @@ export class CRConnection extends EventEmitter {
     const message: ProtocolRequest = { id, method, params };
     if (sessionId)
       message.sessionId = sessionId;
-    if (this._protocolLogger)
-      this._protocolLogger('send', message);
-    if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', 'SEND ► ' + JSON.stringify(message));
+    this._protocolLogger('send', message);
     this._transport.send(message);
     return id;
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (this._protocolLogger)
-      this._protocolLogger('receive', message);
-    if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', '◀ RECV ' + JSON.stringify(message));
+    this._protocolLogger('receive', message);
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.method === 'Target.attachedToTarget') {
