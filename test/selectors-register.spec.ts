@@ -41,12 +41,10 @@ it('should work', async ({playwright, browser}) => {
   const page = await context.newPage();
   await page.setContent('<div><span></span></div><div></div>');
 
-  expect(await (await page.$('div') as any)._createSelectorForTest('tag')).toBe('DIV');
   expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
 
-  expect(await (await page.$('div') as any)._createSelectorForTest('tag2')).toBe('DIV');
   expect(await page.$eval('tag2=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag2=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag2=DIV', es => es.length)).toBe(2);
@@ -71,7 +69,7 @@ it('should work in main and isolated world', async ({playwright, page}) => {
       return window['__answer'];
     },
     queryAll(root, selector) {
-      return [document.body, document.documentElement, window['__answer']];
+      return [window['__answer'], window['__answer']];
     }
   });
   await playwright.selectors.register('main', createDummySelector);
@@ -81,14 +79,14 @@ it('should work in main and isolated world', async ({playwright, page}) => {
   // Works in main if asked.
   expect(await page.$eval('main=ignored', e => e.nodeName)).toBe('SPAN');
   expect(await page.$eval('css=div >> main=ignored', e => e.nodeName)).toBe('SPAN');
-  expect(await page.$$eval('main=ignored', es => window['__answer'] !== undefined)).toBe(true);
-  expect(await page.$$eval('main=ignored', es => es.filter(e => e).length)).toBe(3);
+  expect(await page.$$eval('main=ignored', es => es[0] === es[1])).toBe(true);
+  expect(await page.$$eval('main=ignored', es => es.filter(e => e).length)).toBe(2);
   // Works in isolated by default.
   expect(await page.$('isolated=ignored')).toBe(null);
   expect(await page.$('css=div >> isolated=ignored')).toBe(null);
   // $$eval always works in main, to avoid adopting nodes one by one.
-  expect(await page.$$eval('isolated=ignored', es => window['__answer'] !== undefined)).toBe(true);
-  expect(await page.$$eval('isolated=ignored', es => es.filter(e => e).length)).toBe(3);
+  expect(await page.$$eval('isolated=ignored', es => es[0] === es[1])).toBe(true);
+  expect(await page.$$eval('isolated=ignored', es => es.filter(e => e).length)).toBe(2);
   // At least one engine in main forces all to be in main.
   expect(await page.$eval('main=ignored >> isolated=ignored', e => e.nodeName)).toBe('SPAN');
   expect(await page.$eval('isolated=ignored >> main=ignored', e => e.nodeName)).toBe('SPAN');

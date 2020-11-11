@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { LegacySelectorEngine, SelectorRoot } from './selectorEngine';
 
-export function createAttributeEngine(attribute: string, shadow: boolean): SelectorEngine {
-  const engine: SelectorEngine = {
+export function createAttributeEngine(attribute: string, shadow: boolean): LegacySelectorEngine {
+  const engine: LegacySelectorEngine = {
     create(root: SelectorRoot, target: Element): string | undefined {
       const value = target.getAttribute(attribute);
       if (!value)

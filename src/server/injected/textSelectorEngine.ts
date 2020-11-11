@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
+import { LegacySelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
 
-export function createTextSelector(shadow: boolean): SelectorEngine {
-  const engine: SelectorEngine = {
+export function createTextSelector(shadow: boolean): LegacySelectorEngine {
+  const engine: LegacySelectorEngine = {
     create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
       const document = root instanceof Document ? root : root.ownerDocument;
       if (!document)

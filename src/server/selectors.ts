@@ -18,20 +18,20 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { ParsedSelector, parseSelector } from './common/selectorParser';
+import { Selector, parseSelector, visitSelector } from './common/selectorParser';
 
 export type SelectorInfo = {
-  parsed: ParsedSelector,
+  parsed: Selector,
   world: types.World,
-  selector: string,
 };
 
 export class Selectors {
   readonly _builtinEngines: Set<string>;
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
+  readonly _builtinFilters: Set<string>;
+  readonly _filters: Map<string, { source: string, contentScript: boolean }>;
 
   constructor() {
-    // Note: keep in sync with SelectorEvaluator class.
     this._builtinEngines = new Set([
       'css', 'css:light',
       'xpath', 'xpath:light',
@@ -42,6 +42,8 @@ export class Selectors {
       'data-test', 'data-test:light'
     ]);
     this._engines = new Map();
+    this._builtinFilters = new Set();
+    this._filters = new Map();
   }
 
   async register(name: string, source: string, contentScript: boolean = false): Promise<void> {
@@ -60,7 +62,7 @@ export class Selectors {
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const handle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelector(parsed, scope || document);
+      return injected.querySelector(parsed, scope || document)[0];
     }, { parsed: info.parsed, scope });
     const elementHandle = handle.asElement() as dom.ElementHandle<Element> | null;
     if (!elementHandle) {
@@ -76,7 +78,7 @@ export class Selectors {
     const context = await frame._mainContext();
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document);
+      return injected.querySelector(parsed, scope || document);
     }, { parsed: info.parsed, scope });
     return arrayHandle;
   }
@@ -86,7 +88,7 @@ export class Selectors {
     const context = await frame._context(info.world);
     const injectedScript = await context.injectedScript();
     const arrayHandle = await injectedScript.evaluateHandle((injected, { parsed, scope }) => {
-      return injected.querySelectorAll(parsed, scope || document);
+      return injected.querySelector(parsed, scope || document);
     }, { parsed: info.parsed, scope });
 
     const properties = await arrayHandle.getProperties();
@@ -114,27 +116,26 @@ export class Selectors {
     return adopted;
   }
 
-  async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
-    const mainContext = await handle._page.mainFrame()._mainContext();
-    const injectedScript = await mainContext.injectedScript();
-    return injectedScript.evaluate((injected, { target, name }) => {
-      return injected.engines.get(name)!.create(document.documentElement, target);
-    }, { target: handle, name });
-  }
-
   _parseSelector(selector: string): SelectorInfo {
     const parsed = parseSelector(selector);
-    for (const {name} of parsed.parts) {
+    const { engines, filters } = visitSelector(parsed);
+    let needsMainWorld = false;
+    for (const name of engines) {
       if (!this._builtinEngines.has(name) && !this._engines.has(name))
         throw new Error(`Unknown engine "${name}" while parsing selector ${selector}`);
-    }
-    const needsMainWorld = parsed.parts.some(({name}) => {
       const custom = this._engines.get(name);
-      return custom ? !custom.contentScript : false;
-    });
+      if (custom && !custom.contentScript)
+        needsMainWorld = true;
+    }
+    for (const name of filters) {
+      if (!this._builtinFilters.has(name) && !this._filters.has(name))
+        throw new Error(`Unknown filter "${name}" while parsing selector ${selector}`);
+      const custom = this._filters.get(name);
+      if (custom && !custom.contentScript)
+        needsMainWorld = true;
+    }
     return {
       parsed,
-      selector,
       world: needsMainWorld ? 'main' : 'utility',
     };
   }

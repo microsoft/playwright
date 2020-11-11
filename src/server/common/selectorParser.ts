@@ -16,19 +16,38 @@
 
 // This file can't have dependencies, it is a part of the utility script.
 
-export type ParsedSelector = {
-  parts: {
-    name: string,
-    body: string,
-  }[],
-  capture?: number,
-};
+export type SelectorArgument = { selector: Selector } | { value: any };
+type QuerySelector = { name: string, arguments: SelectorArgument[] };
+type FilterSelector = { selector: Selector, name: string, arguments: SelectorArgument[] };
+type RelativeSelector = { parent: Selector, child: Selector, kind: 'descendant' | 'child' | 'hasDescendant' | 'hasChild' };
+export type Selector = { query: QuerySelector } | { filter: FilterSelector } | { relative: RelativeSelector };
 
-export function parseSelector(selector: string): ParsedSelector {
+export function visitSelector(selector: Selector): { engines: Set<string>, filters: Set<string> } {
+  const engines = new Set<string>();
+  const filters = new Set<string>();
+  const visit = (selector: Selector) => {
+    if ('query' in selector) {
+      engines.add(selector.query.name);
+    } else if ('relative' in selector) {
+      visit(selector.relative.parent);
+      visit(selector.relative.child);
+    } else {
+      filters.add(selector.filter.name);
+      visit(selector.filter.selector);
+    }
+  };
+  visit(selector);
+  return { engines, filters };
+}
+
+export function parseSelector(selector: string): Selector {
   let index = 0;
   let quote: string | undefined;
   let start = 0;
-  const result: ParsedSelector = { parts: [] };
+
+  const parts: Selector[] = [];
+  let captureIndex: number | undefined;
+
   const append = () => {
     const part = selector.substring(start, index).trim();
     const eqIndex = part.indexOf('=');
@@ -58,13 +77,14 @@ export function parseSelector(selector: string): ParsedSelector {
       capture = true;
       name = name.substring(1);
     }
-    result.parts.push({ name, body });
+    parts.push({ query: { name, arguments: [{ value: body }] } });
     if (capture) {
-      if (result.capture !== undefined)
+      if (captureIndex !== undefined)
         throw new Error(`Only one of the selectors can capture using * modifier`);
-      result.capture = result.parts.length - 1;
+      captureIndex = parts.length - 1;
     }
   };
+
   while (index < selector.length) {
     const c = selector[index];
     if (c === '\\' && index + 1 < selector.length) {
@@ -84,5 +104,16 @@ export function parseSelector(selector: string): ParsedSelector {
     }
   }
   append();
+
+  let result: Selector = parts[0];
+  const actualCaptureIndex = captureIndex === undefined ? parts.length - 1 : captureIndex;
+  for (let i = 1; i <= actualCaptureIndex; i++)
+    result = { relative: { parent: result, child: parts[i], kind: 'descendant' }};
+  if (actualCaptureIndex + 1 < parts.length) {
+    let has: Selector = parts[actualCaptureIndex + 1];
+    for (let i = actualCaptureIndex + 2; i < parts.length; i++)
+      has = { relative: { parent: has, child: parts[i], kind: 'descendant' }};
+    result = { relative: { parent: result, child: has, kind: 'hasDescendant' }};
+  }
   return result;
 }

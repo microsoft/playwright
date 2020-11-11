@@ -1750,12 +1750,6 @@ ElementHandle:
       returns:
         element: ElementHandle?
 
-    createSelectorForTest:
-      parameters:
-        name: string
-      returns:
-        value: string?
-
 
 Request:
   type: interface

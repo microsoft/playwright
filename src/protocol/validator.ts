@@ -834,9 +834,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });
-  scheme.ElementHandleCreateSelectorForTestParams = tObject({
-    name: tString,
-  });
   scheme.RequestResponseParams = tOptional(tObject({}));
   scheme.RouteAbortParams = tObject({
     errorCode: tOptional(tString),

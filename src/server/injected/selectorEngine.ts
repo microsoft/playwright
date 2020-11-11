@@ -17,8 +17,16 @@
 export type SelectorType = 'default' | 'notext';
 export type SelectorRoot = Element | ShadowRoot | Document;
 
-export interface SelectorEngine {
+export interface LegacySelectorEngine {
   create(root: SelectorRoot, target: Element, type?: SelectorType): string | undefined;
   query(root: SelectorRoot, selector: string): Element | undefined;
   queryAll(root: SelectorRoot, selector: string): Element[];
+}
+
+export interface SelectorEngine {
+  evaluate(root: SelectorRoot, ...args: any[]): Element[];
+}
+
+export interface SelectorFilter {
+  filter(elements: Element[], ...args: any[]): Element[];
 }

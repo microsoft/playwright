@@ -16,10 +16,10 @@
 
 import { createAttributeEngine } from './attributeSelectorEngine';
 import { createCSSEngine } from './cssSelectorEngine';
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { LegacySelectorEngine, SelectorEngine, SelectorFilter, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector, parseSelector } from '../common/selectorParser';
+import { parseSelector, Selector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
@@ -39,77 +39,105 @@ export type InjectedScriptPoll<T> = {
   cancel: () => void,
 };
 
+function wrapLegacyEngine(engine: LegacySelectorEngine): SelectorEngine {
+  return {
+    evaluate: (root: SelectorRoot, ...args: any[]) => {
+      return engine.queryAll(root, args[0] as string);
+    },
+  };
+}
+
 export class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
+  readonly filters: Map<string, SelectorFilter>;
 
-  constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
+  constructor(
+    customLegacyEngines: { name: string, engine: LegacySelectorEngine }[],
+    customEngines: { name: string, engine: SelectorEngine }[],
+    customFilters: { name: string, filter: SelectorFilter }[]) {
     this.engines = new Map();
-    // Note: keep predefined names in sync with Selectors class.
-    this.engines.set('css', createCSSEngine(true));
-    this.engines.set('css:light', createCSSEngine(false));
-    this.engines.set('xpath', XPathEngine);
-    this.engines.set('xpath:light', XPathEngine);
-    this.engines.set('text', createTextSelector(true));
-    this.engines.set('text:light', createTextSelector(false));
-    this.engines.set('id', createAttributeEngine('id', true));
-    this.engines.set('id:light', createAttributeEngine('id', false));
-    this.engines.set('data-testid', createAttributeEngine('data-testid', true));
-    this.engines.set('data-testid:light', createAttributeEngine('data-testid', false));
-    this.engines.set('data-test-id', createAttributeEngine('data-test-id', true));
-    this.engines.set('data-test-id:light', createAttributeEngine('data-test-id', false));
-    this.engines.set('data-test', createAttributeEngine('data-test', true));
-    this.engines.set('data-test:light', createAttributeEngine('data-test', false));
-    for (const {name, engine} of customEngines)
+    this.engines.set('css', wrapLegacyEngine(createCSSEngine(true)));
+    this.engines.set('css:light', wrapLegacyEngine(createCSSEngine(false)));
+    this.engines.set('xpath', wrapLegacyEngine(XPathEngine));
+    this.engines.set('xpath:light', wrapLegacyEngine(XPathEngine));
+    this.engines.set('text', wrapLegacyEngine(createTextSelector(true)));
+    this.engines.set('text:light', wrapLegacyEngine(createTextSelector(false)));
+    this.engines.set('id', wrapLegacyEngine(createAttributeEngine('id', true)));
+    this.engines.set('id:light', wrapLegacyEngine(createAttributeEngine('id', false)));
+    this.engines.set('data-testid', wrapLegacyEngine(createAttributeEngine('data-testid', true)));
+    this.engines.set('data-testid:light', wrapLegacyEngine(createAttributeEngine('data-testid', false)));
+    this.engines.set('data-test-id', wrapLegacyEngine(createAttributeEngine('data-test-id', true)));
+    this.engines.set('data-test-id:light', wrapLegacyEngine(createAttributeEngine('data-test-id', false)));
+    this.engines.set('data-test', wrapLegacyEngine(createAttributeEngine('data-test', true)));
+    this.engines.set('data-test:light', wrapLegacyEngine(createAttributeEngine('data-test', false)));
+    for (const { name, engine } of customLegacyEngines)
+      this.engines.set(name, wrapLegacyEngine(engine));
+    for (const { name, engine } of customEngines)
       this.engines.set(name, engine);
+
+    this.filters = new Map();
+    for (const { name, filter } of customFilters)
+      this.filters.set(name, filter);
   }
 
-  parseSelector(selector: string): ParsedSelector {
+  parseSelector(selector: string): Selector {
     return parseSelector(selector);
   }
 
-  querySelector(selector: ParsedSelector, root: Node): Element | undefined {
+  querySelector(selector: Selector, root: Node): Element[] {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
-  }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
-    const current = selector.parts[index];
-    if (index === selector.parts.length - 1)
-      return this.engines.get(current.name)!.query(root, current.body);
-    const all = this.engines.get(current.name)!.queryAll(root, current.body);
-    for (const next of all) {
-      const result = this._querySelectorRecursively(next, selector, index + 1);
-      if (result)
-        return selector.capture === index ? next : result;
+    if ('query' in selector) {
+      const engine = this.engines.get(selector.query.name)!;
+      const args = selector.query.arguments.map(arg => {
+        if ('selector' in arg)
+          return this.querySelector(arg.selector, root);
+        return arg.value;
+      });
+      return engine.evaluate(root as SelectorRoot, ...args);
     }
-  }
 
-  querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
-    if (!(root as any)['querySelectorAll'])
-      throw new Error('Node is not queryable.');
-    const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
-    // Query all elements up to the capture.
-    const partsToQuerAll = selector.parts.slice(0, capture + 1);
-    // Check they have a descendant matching everything after the capture.
-    const partsToCheckOne = selector.parts.slice(capture + 1);
-    let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-    for (const { name, body } of partsToQuerAll) {
-      const newSet = new Set<Element>();
-      for (const prev of set) {
-        for (const next of this.engines.get(name)!.queryAll(prev, body)) {
-          if (newSet.has(next))
-            continue;
-          newSet.add(next);
+    if ('filter' in selector) {
+      const elements = this.querySelector(selector.filter.selector, root);
+      const filter = this.filters.get(selector.filter.name)!;
+      const args = selector.filter.arguments.map(arg => {
+        if ('selector' in arg)
+          return this.querySelector(arg.selector, root);
+        return arg.value;
+      });
+      return filter.filter(elements, ...args);
+    }
+
+    const set = new Set<Element>();
+    for (const element of this.querySelector(selector.relative.parent, root)) {
+      const elements = this.querySelector(selector.relative.child, element);
+      switch (selector.relative.kind) {
+        case 'hasDescendant': {
+          if (elements.length)
+            set.add(element);
+          break;
+        }
+        case 'hasChild': {
+          if (elements.find(e => this._parentElementOrShadowHost(e) === element))
+            set.add(element);
+          break;
+        }
+        case 'descendant': {
+          for (const next of elements)
+            set.add(next);
+          break;
+        }
+        case 'child': {
+          for (const next of elements) {
+            if (this._parentElementOrShadowHost(next) === element)
+              set.add(next);
+          }
+          break;
         }
       }
-      set = newSet;
     }
-    const candidates = Array.from(set) as Element[];
-    if (!partsToCheckOne.length)
-      return candidates;
-    const partial = { parts: partsToCheckOne };
-    return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+    return Array.from(set);
   }
 
   extend(source: string, params: any): any {

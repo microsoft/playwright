@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorRoot } from './selectorEngine';
+import { LegacySelectorEngine, SelectorRoot } from './selectorEngine';
 
-export function createCSSEngine(shadow: boolean): SelectorEngine {
-  const engine: SelectorEngine = {
+export function createCSSEngine(shadow: boolean): LegacySelectorEngine {
+  const engine: LegacySelectorEngine = {
     create(root: SelectorRoot, targetElement: Element): string | undefined {
       if (shadow)
         return;
@@ -177,8 +177,10 @@ function queryShadowAllInternal(boundary: SelectorRoot, root: SelectorRoot, sele
         if (!element.matches(parts[0]))
           continue;
         // If there is a single part, there are no ancestors to match.
-        if (parts.length === 1 || ancestorsMatch(element, parts, boundary))
+        if (parts.length === 1 || ancestorsMatch(element, parts, boundary)) {
           result.push(element);
+          break;
+        }
       }
     }
   }
@@ -277,7 +279,7 @@ function split(selector: string): string[][] {
   return result.filter(parts => !!parts.length).map(parts => parts.reverse());
 }
 
-function test(engine: SelectorEngine) {
+function test(engine: LegacySelectorEngine) {
   let id = 0;
 
   function createShadow(level: number): Element {

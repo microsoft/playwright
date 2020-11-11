@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
+import { LegacySelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
 
 const maxTextLength = 80;
 const minMeaningfulSelectorLegth = 100;
 
-export const XPathEngine: SelectorEngine = {
+export const XPathEngine: LegacySelectorEngine = {
   create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
     const maybeDocument = root instanceof Document ? root : root.ownerDocument;
     if (!maybeDocument)
