@@ -138,10 +138,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
 
   async setNetworkInterceptionEnabled(params: channels.PageSetNetworkInterceptionEnabledParams): Promise<void> {
     if (!params.enabled) {
-      await this._page._setRequestInterceptor(undefined);
+      await this._page._setClientRequestInterceptor(undefined);
       return;
     }
-    this._page._setRequestInterceptor((route, request) => {
+    this._page._setClientRequestInterceptor((route, request) => {
       this._dispatchEvent('route', { route: new RouteDispatcher(this._scope, route), request: RequestDispatcher.from(this._scope, request) });
     });
   }

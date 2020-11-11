@@ -143,7 +143,8 @@ export class Page extends EventEmitter {
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options?: types.PDFOptions) => Promise<Buffer>) | undefined;
   readonly coverage: any;
-  private _requestInterceptor?: network.RouteHandler;
+  private _clientRequestInterceptor: network.RouteHandler | undefined;
+  private _serverRequestInterceptor: network.RouteHandler | undefined;
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
   _video: Video | null = null;
@@ -363,11 +364,16 @@ export class Page extends EventEmitter {
   }
 
   _needsRequestInterception(): boolean {
-    return !!this._requestInterceptor || !!this._browserContext._requestInterceptor;
+    return !!this._clientRequestInterceptor || !!this._serverRequestInterceptor || !!this._browserContext._requestInterceptor;
   }
 
-  async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
-    this._requestInterceptor = handler;
+  async _setClientRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+    this._clientRequestInterceptor = handler;
+    await this._delegate.updateRequestInterception();
+  }
+
+  async _setServerRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
+    this._serverRequestInterceptor = handler;
     await this._delegate.updateRequestInterception();
   }
 
@@ -376,8 +382,12 @@ export class Page extends EventEmitter {
     const route = request._route();
     if (!route)
       return;
-    if (this._requestInterceptor) {
-      this._requestInterceptor(route, request);
+    if (this._serverRequestInterceptor) {
+      this._serverRequestInterceptor(route, request);
+      return;
+    }
+    if (this._clientRequestInterceptor) {
+      this._clientRequestInterceptor(route, request);
       return;
     }
     if (this._browserContext._requestInterceptor) {
@@ -448,6 +458,14 @@ export class Page extends EventEmitter {
   videoStarted(video: Video) {
     this._video = video;
     this.emit(Page.Events.VideoStarted, video);
+  }
+
+  frameNavigated(frame: frames.Frame) {
+    this.emit(Page.Events.FrameNavigated, frame);
+    const url = frame.url();
+    if (!url.startsWith('http'))
+      return;
+    this._browserContext.addVisitedOrigin(new URL(url).origin);
   }
 }
 

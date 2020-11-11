@@ -109,6 +109,7 @@ export abstract class BrowserContext extends EventEmitter {
   readonly _browserContextId: string | undefined;
   private _selectors?: Selectors;
   readonly _actionListeners = new Set<ActionListener>();
+  private _origins = new Set<string>();
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super();
@@ -320,6 +321,56 @@ export abstract class BrowserContext extends EventEmitter {
       return pageOrError;
     }
     throw pageOrError;
+  }
+
+  addVisitedOrigin(origin: string) {
+    this._origins.add(origin);
+  }
+
+  async storageState(): Promise<types.StorageState> {
+    const result: types.StorageState = {
+      cookies: (await this.cookies()).filter(c => c.value !== ''),
+      origins: []
+    };
+    if (this._origins.size)  {
+      const page = await this.newPage();
+      await page._setServerRequestInterceptor(handler => {
+        handler.fulfill({ body: '<html></html>' }).catch(() => {});
+      });
+      for (const origin of this._origins) {
+        const originStorage: types.OriginStorage = { origin, localStorage: [] };
+        result.origins.push(originStorage);
+        const frame = page.mainFrame();
+        await frame.goto(new ProgressController(), origin);
+        const storage = await frame._evaluateExpression(`({
+          localStorage: Object.keys(localStorage).map(name => ({ name, value: localStorage.getItem(name) })),
+        })`, false, undefined, 'utility');
+        originStorage.localStorage = storage.localStorage;
+      }
+      await page.close();
+    }
+    return result;
+  }
+
+  async setStorageState(state: types.SetStorageState) {
+    if (state.cookies)
+      await this.addCookies(state.cookies);
+    if (state.origins && state.origins.length)  {
+      const page = await this.newPage();
+      await page._setServerRequestInterceptor(handler => {
+        handler.fulfill({ body: '<html></html>' }).catch(() => {});
+      });
+      for (const originState of state.origins) {
+        const frame = page.mainFrame();
+        await frame.goto(new ProgressController(), originState.origin);
+        await frame._evaluateExpression(`
+          originState => {
+            for (const { name, value } of (originState.localStorage || []))
+              localStorage.setItem(name, value);
+          }`, true, originState, 'utility');
+      }
+      await page.close();
+    }
   }
 }
 

@@ -36,6 +36,14 @@ export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | numbe
 export type SelectOption = { value?: string, label?: string, index?: number };
 export type SelectOptionOptions = { timeout?: number, noWaitAfter?: boolean };
 export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
+export type StorageState = {
+  cookies: channels.NetworkCookie[],
+  origins: channels.OriginStorage[]
+};
+export type SetStorageState = {
+  cookies?: channels.SetNetworkCookie[],
+  origins?: channels.OriginStorage[]
+};
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
@@ -58,7 +66,7 @@ type FirefoxUserPrefs = {
 };
 type LaunchOptionsBase = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDefaultArgs' | 'ignoreDefaultArgs' | 'env' | 'firefoxUserPrefs'> & LaunchOverrides;
 export type LaunchOptions = LaunchOptionsBase & FirefoxUserPrefs;
-export type LaunchPersistentContextOptions = LaunchOptionsBase & BrowserContextOptions;
+export type LaunchPersistentContextOptions = Omit<LaunchOptionsBase & BrowserContextOptions, 'storageState'>;
 
 export type ConnectOptions = {
   wsEndpoint: string,

@@ -113,6 +113,59 @@ AXNode:
       items: AXNode
 
 
+SetNetworkCookie:
+  type: object
+  properties:
+    name: string
+    value: string
+    url: string?
+    domain: string?
+    path: string?
+    expires: number?
+    httpOnly: boolean?
+    secure: boolean?
+    sameSite:
+      type: enum?
+      literals:
+      - Strict
+      - Lax
+      - None
+
+
+NetworkCookie:
+  type: object
+  properties:
+    name: string
+    value: string
+    domain: string
+    path: string
+    expires: number
+    httpOnly: boolean
+    secure: boolean
+    sameSite:
+      type: enum
+      literals:
+      - Strict
+      - Lax
+      - None
+
+
+NameValue:
+  type: object
+  properties:
+    name: string
+    value: string
+
+
+OriginStorage:
+  type: object
+  properties:
+    origin: string
+    localStorage:
+      type: array
+      items: NameValue
+
+
 SerializedError:
   type: object
   properties:
@@ -216,11 +269,7 @@ BrowserType:
         timeout: number?
         env:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         headless: boolean?
         devtools: boolean?
         proxy:
@@ -254,11 +303,7 @@ BrowserType:
         timeout: number?
         env:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         headless: boolean?
         devtools: boolean?
         proxy:
@@ -294,11 +339,7 @@ BrowserType:
           items: string
         extraHTTPHeaders:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         offline: boolean?
         httpCredentials:
           type: object?
@@ -371,11 +412,7 @@ Browser:
           items: string
         extraHTTPHeaders:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         offline: boolean?
         httpCredentials:
           type: object?
@@ -415,6 +452,15 @@ Browser:
             bypass: string?
             username: string?
             password: string?
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: OriginStorage
       returns:
         context: BrowserContext
 
@@ -453,23 +499,7 @@ BrowserContext:
       parameters:
         cookies:
           type: array
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
-              url: string?
-              domain: string?
-              path: string?
-              expires: number?
-              httpOnly: boolean?
-              secure: boolean?
-              sameSite:
-                type: enum?
-                literals:
-                - Strict
-                - Lax
-                - None
+          items: SetNetworkCookie
 
     addInitScript:
       parameters:
@@ -489,22 +519,7 @@ BrowserContext:
       returns:
         cookies:
           type: array
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
-              domain: string
-              path: string
-              expires: number
-              httpOnly: boolean
-              secure: boolean
-              sameSite:
-                type: enum
-                literals:
-                - Strict
-                - Lax
-                - None
+          items: NetworkCookie
 
     exposeBinding:
       parameters:
@@ -534,11 +549,7 @@ BrowserContext:
       parameters:
         headers:
           type: array
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
 
     setGeolocation:
       parameters:
@@ -564,6 +575,15 @@ BrowserContext:
     setOffline:
       parameters:
         offline: boolean
+
+    storageState:
+      returns:
+        cookies:
+          type: array
+          items: NetworkCookie
+        origins:
+          type: array
+          items: OriginStorage
 
     crNewCDPSession:
       parameters:
@@ -725,11 +745,7 @@ Page:
       parameters:
         headers:
           type: array
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
 
     setNetworkInterceptionEnabled:
       parameters:
@@ -1801,11 +1817,7 @@ Route:
         method: string?
         headers:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         postData: binary?
 
     fulfill:
@@ -1814,11 +1826,7 @@ Route:
         status: number?
         headers:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         body: string?
         isBase64: boolean?
 
@@ -2042,11 +2050,7 @@ Electron:
         cwd: string?
         env:
           type: array?
-          items:
-            type: object
-            properties:
-              name: string
-              value: string
+          items: NameValue
         handleSIGINT: boolean?
         handleSIGTERM: boolean?
         handleSIGHUP: boolean?
