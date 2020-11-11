@@ -414,6 +414,25 @@ it('should create a redirect', async ({page, server}) => {
   expect(text).toBe('');
 });
 
+it.only('should create a redirect', (test, { browserName }) => {
+  test.fail(browserName === 'webkit');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/empty.html');
+  await page.route('**/*', async (route, request) => {
+    if (request.url() !== server.PREFIX + '/redirect_this')
+      return route.continue();
+    await route.fulfill({
+      status: 301,
+      headers: {
+        'location': '/global-var.html',
+      }
+    });
+  });
+
+  await page.evaluate(async url => location.href = url, server.PREFIX + '/redirect_this');
+  expect(await page.evaluate(() => window['globalVar'])).toBe(123);
+});
+
 it('should support cors with GET', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.route('**/cars*', async (route, request) => {
