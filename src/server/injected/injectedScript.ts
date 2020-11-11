@@ -16,10 +16,10 @@
 
 import { createAttributeEngine } from './attributeSelectorEngine';
 import { createCSSEngine } from './cssSelectorEngine';
-import { LegacySelectorEngine, SelectorEngine, SelectorFilter, SelectorRoot } from './selectorEngine';
+import { LegacySelectorEngine, SelectorEngine, SelectorEvaluator, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { parseSelector, Selector } from '../common/selectorParser';
+import { ParsedSelector, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
@@ -39,105 +39,145 @@ export type InjectedScriptPoll<T> = {
   cancel: () => void,
 };
 
-function wrapLegacyEngine(engine: LegacySelectorEngine): SelectorEngine {
+function wrapLegacyEngine(name: string, engine: LegacySelectorEngine): SelectorEngine {
   return {
-    evaluate: (root: SelectorRoot, ...args: any[]) => {
+    query(evaluator: SelectorEvaluator, root: SelectorRoot, ...args: any[]): Element[] {
+      if (args.length !== 1 || typeof args[0] !== 'string')
+        throw new Error(`"${name}" engine: expected one string argument`);
       return engine.queryAll(root, args[0] as string);
     },
   };
 }
 
+const $Engine: SelectorEngine = {
+  query(evaluator: SelectorEvaluator, root: SelectorRoot, ...args: any[]): Element[] {
+    if (args.length !== 2)
+      throw new Error(`"$" engine: expected two arguments`);
+    const set = new Set<Element>();
+    for (const element of evaluator.evaluate(root, args[0])) {
+      const elements = evaluator.evaluate(element, args[1]);
+      for (const next of elements)
+        set.add(next);
+    }
+    return Array.from(set);
+  }
+};
+
+const hasEngine: SelectorEngine = {
+  query(evaluator: SelectorEvaluator, root: SelectorRoot, ...args: any[]): Element[] {
+    if (args.length !== 2)
+      throw new Error(`"has" engine: expected two arguments`);
+    const set = new Set<Element>();
+    for (const element of evaluator.evaluate(root, args[0])) {
+      const elements = evaluator.evaluate(element, args[1]);
+      if (elements.length)
+        set.add(element);
+    }
+    return Array.from(set);
+  }
+};
+
+const cssEngine = createCSSEngine(true);
+
 export class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
-  readonly filters: Map<string, SelectorFilter>;
+  private readonly _evaluator: SelectorEvaluator;
 
   constructor(
-    customLegacyEngines: { name: string, engine: LegacySelectorEngine }[],
-    customEngines: { name: string, engine: SelectorEngine }[],
-    customFilters: { name: string, filter: SelectorFilter }[]) {
+    customLegacyEngines: { name: string, engine: LegacySelectorEngine }[]) {
     this.engines = new Map();
-    this.engines.set('css', wrapLegacyEngine(createCSSEngine(true)));
-    this.engines.set('css:light', wrapLegacyEngine(createCSSEngine(false)));
-    this.engines.set('xpath', wrapLegacyEngine(XPathEngine));
-    this.engines.set('xpath:light', wrapLegacyEngine(XPathEngine));
-    this.engines.set('text', wrapLegacyEngine(createTextSelector(true)));
-    this.engines.set('text:light', wrapLegacyEngine(createTextSelector(false)));
-    this.engines.set('id', wrapLegacyEngine(createAttributeEngine('id', true)));
-    this.engines.set('id:light', wrapLegacyEngine(createAttributeEngine('id', false)));
-    this.engines.set('data-testid', wrapLegacyEngine(createAttributeEngine('data-testid', true)));
-    this.engines.set('data-testid:light', wrapLegacyEngine(createAttributeEngine('data-testid', false)));
-    this.engines.set('data-test-id', wrapLegacyEngine(createAttributeEngine('data-test-id', true)));
-    this.engines.set('data-test-id:light', wrapLegacyEngine(createAttributeEngine('data-test-id', false)));
-    this.engines.set('data-test', wrapLegacyEngine(createAttributeEngine('data-test', true)));
-    this.engines.set('data-test:light', wrapLegacyEngine(createAttributeEngine('data-test', false)));
     for (const { name, engine } of customLegacyEngines)
-      this.engines.set(name, wrapLegacyEngine(engine));
-    for (const { name, engine } of customEngines)
-      this.engines.set(name, engine);
+      this.engines.set(name, wrapLegacyEngine(name, engine));
+    this.engines.set('css', wrapLegacyEngine('css', cssEngine));
+    this.engines.set('css:light', wrapLegacyEngine('css:light', createCSSEngine(false)));
+    this.engines.set('xpath', wrapLegacyEngine('xpath', XPathEngine));
+    this.engines.set('xpath:light', wrapLegacyEngine('xpath:light', XPathEngine));
+    this.engines.set('text', wrapLegacyEngine('text', createTextSelector(true)));
+    this.engines.set('text:light', wrapLegacyEngine('text:light', createTextSelector(false)));
+    this.engines.set('id', wrapLegacyEngine('id', createAttributeEngine('id', true)));
+    this.engines.set('id:light', wrapLegacyEngine('id:light', createAttributeEngine('id', false)));
+    this.engines.set('data-testid', wrapLegacyEngine('data-testid', createAttributeEngine('data-testid', true)));
+    this.engines.set('data-testid:light', wrapLegacyEngine('data-testid:light', createAttributeEngine('data-testid', false)));
+    this.engines.set('data-test-id', wrapLegacyEngine('data-test-id', createAttributeEngine('data-test-id', true)));
+    this.engines.set('data-test-id:light', wrapLegacyEngine('data-test-id:light', createAttributeEngine('data-test-id', false)));
+    this.engines.set('data-test', wrapLegacyEngine('data-test', createAttributeEngine('data-test', true)));
+    this.engines.set('data-test:light', wrapLegacyEngine('data-test:light', createAttributeEngine('data-test', false)));    this.engines.set('$', $Engine);
+    this.engines.set('$', $Engine);
+    this.engines.set('has', hasEngine);
 
-    this.filters = new Map();
-    for (const { name, filter } of customFilters)
-      this.filters.set(name, filter);
+    this._evaluator = {
+      evaluate: (root: SelectorRoot, selector: any): Element[] => this._evaluate(root, selector)
+    };
   }
 
-  parseSelector(selector: string): Selector {
+  parseSelector(selector: string): { parsed: ParsedSelector, names: string[] } {
     return parseSelector(selector);
   }
 
-  querySelector(selector: Selector, root: Node): Element[] {
+  querySelector(selector: ParsedSelector, root: Node): Element | undefined {
+    if (!(root as any)['querySelector'])
+      throw new Error('Node is not queryable.');
+    if (typeof selector === 'string') {
+      // Fast-path optimization for css querySelector.
+      const { name, body } = this._parseTextSelector(selector);
+      if (name === 'css')
+        return cssEngine.query(root as SelectorRoot, body);
+    }
+    return this._evaluate(root as SelectorRoot, selector)[0];
+  }
+
+  querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
+    if (!(root as any)['querySelector'])
+      throw new Error('Node is not queryable.');
+    return this._evaluate(root as SelectorRoot, selector);
+  }
+
+  private _parseTextSelector(selector: string): { name: string, body: string } {
+    selector = selector.trim();
+    const eqIndex = selector.indexOf('=');
+    let name: string;
+    let body: string;
+    if (eqIndex !== -1 && selector.substring(0, eqIndex).trim().match(/^[a-zA-Z_0-9-+:*]+$/)) {
+      name = selector.substring(0, eqIndex).trim();
+      body = selector.substring(eqIndex + 1);
+    } else if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
+      name = 'text';
+      body = selector;
+    } else if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
+      name = 'text';
+      body = selector;
+    } else if (/^\(*\/\//.test(selector) || selector.startsWith('..')) {
+      // If selector starts with '//' or '//' prefixed with multiple opening
+      // parenthesis, consider xpath. @see https://github.com/microsoft/playwright/issues/817
+      // If selector starts with '..', consider xpath as well.
+      name = 'xpath';
+      body = selector;
+    } else {
+      name = 'css';
+      body = selector;
+    }
+    return { name, body };
+  }
+
+  private _evaluate(root: SelectorRoot, selector: any): Element[] {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
 
-    if ('query' in selector) {
-      const engine = this.engines.get(selector.query.name)!;
-      const args = selector.query.arguments.map(arg => {
-        if ('selector' in arg)
-          return this.querySelector(arg.selector, root);
-        return arg.value;
-      });
-      return engine.evaluate(root as SelectorRoot, ...args);
+    if (typeof selector === 'string') {
+      const { name, body } = this._parseTextSelector(selector);
+      const engine = this.engines.get(name);
+      if (!engine)
+        throw new Error(`Unknown engine "${name}" while parsing selector "${selector}"`);
+      return engine.query(this._evaluator, root, body);
     }
 
-    if ('filter' in selector) {
-      const elements = this.querySelector(selector.filter.selector, root);
-      const filter = this.filters.get(selector.filter.name)!;
-      const args = selector.filter.arguments.map(arg => {
-        if ('selector' in arg)
-          return this.querySelector(arg.selector, root);
-        return arg.value;
-      });
-      return filter.filter(elements, ...args);
-    }
-
-    const set = new Set<Element>();
-    for (const element of this.querySelector(selector.relative.parent, root)) {
-      const elements = this.querySelector(selector.relative.child, element);
-      switch (selector.relative.kind) {
-        case 'hasDescendant': {
-          if (elements.length)
-            set.add(element);
-          break;
-        }
-        case 'hasChild': {
-          if (elements.find(e => this._parentElementOrShadowHost(e) === element))
-            set.add(element);
-          break;
-        }
-        case 'descendant': {
-          for (const next of elements)
-            set.add(next);
-          break;
-        }
-        case 'child': {
-          for (const next of elements) {
-            if (this._parentElementOrShadowHost(next) === element)
-              set.add(next);
-          }
-          break;
-        }
-      }
-    }
-    return Array.from(set);
+    if (!Array.isArray(selector))
+      throw new Error(`Malformed selector "${selector}" of type "${typeof selector}"`);
+    const [name, ...args] = selector;
+    const engine = this.engines.get(name);
+    if (!engine)
+      throw new Error(`Unknown engine "${name}"`);
+    return engine.query(this._evaluator, root, ...args);
   }
 
   extend(source: string, params: any): any {
@@ -576,7 +616,7 @@ export class InjectedScript {
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== element) {
       hitParents.push(hitElement);
-      hitElement = this._parentElementOrShadowHost(hitElement);
+      hitElement = parentElementOrShadowHost(hitElement);
     }
     if (hitElement === element)
       return 'done';
@@ -592,7 +632,7 @@ export class InjectedScript {
           rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
         break;
       }
-      element = this._parentElementOrShadowHost(element);
+      element = parentElementOrShadowHost(element);
     }
     if (rootHitTargetDescription)
       return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
@@ -617,15 +657,6 @@ export class InjectedScript {
   private _isElementDisabled(element: Element): boolean {
     const elementOrButton = element.closest('button, [role=button]') || element;
     return ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
-  }
-
-  private _parentElementOrShadowHost(element: Element): Element | undefined {
-    if (element.parentElement)
-      return element.parentElement;
-    if (!element.parentNode)
-      return;
-    if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
-      return (element.parentNode as ShadowRoot).host;
   }
 
   deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
@@ -733,5 +764,14 @@ const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'
   ['dragexit', 'drag'],
   ['drop', 'drag'],
 ]);
+
+function parentElementOrShadowHost(element: Element): Element | undefined {
+  if (element.parentElement)
+    return element.parentElement;
+  if (!element.parentNode)
+    return;
+  if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
+    return (element.parentNode as ShadowRoot).host;
+}
 
 export default InjectedScript;

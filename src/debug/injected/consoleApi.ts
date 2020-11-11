@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Selector, parseSelector, visitSelector } from '../../server/common/selectorParser';
+import { parseSelector } from '../../server/common/selectorParser';
 import type InjectedScript from '../../server/injected/injectedScript';
 
 export class ConsoleAPI {
@@ -29,34 +29,18 @@ export class ConsoleAPI {
     };
   }
 
-  private _checkSelector(parsed: Selector) {
-    const { engines, filters } = visitSelector(parsed);
-    for (const name of engines) {
-      if (!this._injectedScript.engines.has(name))
-        throw new Error(`Unknown engine "${name}"`);
-    }
-    for (const name of filters) {
-      if (!this._injectedScript.filters.has(name))
-        throw new Error(`Unknown filter "${name}"`);
-    }
-  }
-
   _querySelector(selector: string): (Element | undefined) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
-    const parsed = parseSelector(selector);
-    this._checkSelector(parsed);
-    const elements = this._injectedScript.querySelector(parsed, document);
-    return elements[0];
+    const { parsed } = parseSelector(selector);
+    return this._injectedScript.querySelector(parsed, document);
   }
 
   _querySelectorAll(selector: string): Element[] {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.$$('Playwright >> selector').`);
-    const parsed = parseSelector(selector);
-    this._checkSelector(parsed);
-    const elements = this._injectedScript.querySelector(parsed, document);
-    return elements;
+    const { parsed } = parseSelector(selector);
+    return this._injectedScript.querySelectorAll(parsed, document);
   }
 
   _inspect(selector: string) {

@@ -23,10 +23,10 @@ export interface LegacySelectorEngine {
   queryAll(root: SelectorRoot, selector: string): Element[];
 }
 
-export interface SelectorEngine {
-  evaluate(root: SelectorRoot, ...args: any[]): Element[];
+export interface SelectorEvaluator {
+  evaluate(root: SelectorRoot, selector: any): Element[];
 }
 
-export interface SelectorFilter {
-  filter(elements: Element[], ...args: any[]): Element[];
+export interface SelectorEngine {
+  query(evaluator: SelectorEvaluator, root: SelectorRoot, ...args: any[]): Element[];
 }

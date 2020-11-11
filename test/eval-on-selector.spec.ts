@@ -141,7 +141,7 @@ it('should throw on multiple * captures', async ({page, server}) => {
 
 it('should throw on malformed * capture', async ({page, server}) => {
   const error = await page.$eval('*=div', e => e.outerHTML).catch(e => e);
-  expect(error.message).toContain('Unknown engine "" while parsing selector *=div');
+  expect(error.message).toContain('Unknown engine "*" while parsing selector "*=div"');
 });
 
 it('should work with spaces in css attributes', async ({page, server}) => {

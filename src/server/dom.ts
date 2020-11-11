@@ -83,7 +83,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
       const source = `
         new (${injectedScriptSource.source})([
           ${custom.join(',\n')}
-        ], [], [])
+        ])
       `;
       this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
@@ -851,7 +851,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
     let lastElement: Element | undefined;
 
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, root || document)[0];
+      const element = injected.querySelector(parsed, root || document);
       const visible = element ? injected.isVisible(element) : false;
 
       if (lastElement !== element) {
@@ -879,7 +879,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
 export function dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): SchedulableTask<undefined> {
   return injectedScript => injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document)[0];
+      const element = injected.querySelector(parsed, document);
       if (!element)
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
@@ -891,7 +891,7 @@ export function dispatchEventTask(selector: SelectorInfo, type: string, eventIni
 export function textContentTask(selector: SelectorInfo): SchedulableTask<string | null> {
   return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document)[0];
+      const element = injected.querySelector(parsed, document);
       if (!element)
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
@@ -903,7 +903,7 @@ export function textContentTask(selector: SelectorInfo): SchedulableTask<string 
 export function innerTextTask(selector: SelectorInfo): SchedulableTask<'error:nothtmlelement' | { innerText: string }> {
   return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document)[0];
+      const element = injected.querySelector(parsed, document);
       if (!element)
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
@@ -917,7 +917,7 @@ export function innerTextTask(selector: SelectorInfo): SchedulableTask<'error:no
 export function innerHTMLTask(selector: SelectorInfo): SchedulableTask<string> {
   return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document)[0];
+      const element = injected.querySelector(parsed, document);
       if (!element)
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
@@ -929,7 +929,7 @@ export function innerHTMLTask(selector: SelectorInfo): SchedulableTask<string> {
 export function getAttributeTask(selector: SelectorInfo, name: string): SchedulableTask<string | null> {
   return injectedScript => injectedScript.evaluateHandle((injected, { parsed, name }) => {
     return injected.pollRaf((progress, continuePolling) => {
-      const element = injected.querySelector(parsed, document)[0];
+      const element = injected.querySelector(parsed, document);
       if (!element)
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);

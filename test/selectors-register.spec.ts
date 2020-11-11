@@ -51,7 +51,7 @@ it('should work', async ({playwright, browser}) => {
 
   // Selector names are case-sensitive.
   const error = await page.$('tAG=DIV').catch(e => e);
-  expect(error.message).toContain('Unknown engine "tAG" while parsing selector tAG=DIV');
+  expect(error.message).toContain('Unknown engine "tAG" while parsing selector "tAG=DIV"');
 
   await context.close();
 });
@@ -96,7 +96,7 @@ it('should work in main and isolated world', async ({playwright, page}) => {
 
 it('should handle errors', async ({playwright, page}) => {
   let error = await page.$('neverregister=ignored').catch(e => e);
-  expect(error.message).toContain('Unknown engine "neverregister" while parsing selector neverregister=ignored');
+  expect(error.message).toContain('Unknown engine "neverregister" while parsing selector "neverregister=ignored"');
 
   const createDummySelector = () => ({
     create(root, target) {
