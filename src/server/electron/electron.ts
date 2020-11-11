@@ -29,7 +29,7 @@ import type {BrowserWindow} from 'electron';
 import { Progress, ProgressController, runAbortableTask } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
-import { BrowserProcess } from '../browser';
+import { BrowserOptions, BrowserProcess } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 
@@ -174,7 +174,7 @@ export class Electron  {
 
       const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-      const nodeConnection = new CRConnection(nodeTransport);
+      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger());
 
       const chromeMatch = await waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
@@ -184,7 +184,14 @@ export class Electron  {
         close: gracefullyClose,
         kill
       };
-      const browser = await CRBrowser.connect(chromeTransport, { name: 'electron', headful: true, persistent: { noDefaultViewport: true }, browserProcess });
+      const browserOptions: BrowserOptions = {
+        name: 'electron',
+        headful: true,
+        persistent: { noDefaultViewport: true },
+        browserProcess,
+        protocolLogger: helper.debugProtocolLogger(),
+      };
+      const browser = await CRBrowser.connect(chromeTransport, browserOptions);
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;

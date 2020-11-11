@@ -62,4 +62,22 @@ describe('lauch server', (suite, { wire }) => {
     expect(result['exitCode']).toBe(0);
     expect(result['signal']).toBe(null);
   });
+
+  it('should log protocol', async ({browserType, browserOptions}) => {
+    const logs: string[] = [];
+    const logger = {
+      isEnabled(name: string) {
+        return true;
+      },
+      log(name: string, severity: string, message: string) {
+        logs.push(`${name}:${severity}:${message}`);
+      }
+    };
+
+    const browserServer = await browserType.launchServer({ ...browserOptions, logger });
+    await browserServer.close();
+
+    expect(logs.some(log => log.startsWith('protocol:verbose:SEND ►'))).toBe(true);
+    expect(logs.some(log => log.startsWith('protocol:verbose:◀ RECV'))).toBe(true);
+  });
 });

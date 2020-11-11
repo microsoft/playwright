@@ -21,6 +21,7 @@ import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../trans
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
+import { ProtocolLogger } from '../types';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -34,15 +35,17 @@ export type PageProxyMessageReceivedPayload = { pageProxyId: string, message: an
 export class WKConnection {
   private readonly _transport: ConnectionTransport;
   private readonly _onDisconnect: () => void;
+  private readonly _protocolLogger: ProtocolLogger;
   private _lastId = 0;
   private _closed = false;
   readonly browserSession: WKSession;
 
-  constructor(transport: ConnectionTransport, onDisconnect: () => void) {
+  constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger) {
     this._transport = transport;
     this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this._onDisconnect = onDisconnect;
+    this._protocolLogger = protocolLogger;
     this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
       this.rawSend(message);
     });
@@ -53,14 +56,12 @@ export class WKConnection {
   }
 
   rawSend(message: ProtocolRequest) {
-    if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', 'SEND ► ' + JSON.stringify(message));
+    this._protocolLogger('send', message);
     this._transport.send(message);
   }
 
   private _dispatchMessage(message: ProtocolResponse) {
-    if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', '◀ RECV ' + JSON.stringify(message));
+    this._protocolLogger('receive', message);
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.pageProxyId) {

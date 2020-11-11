@@ -27,7 +27,7 @@ import { AndroidBrowser, AndroidClient, AndroidDevice } from './android';
 import { AdbBackend } from './backendAdb';
 
 export class Clank extends BrowserType {
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
+  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
@@ -47,6 +47,7 @@ export class Clank extends BrowserType {
       downloadsPath: undefined,
       browserProcess: new ClankBrowserProcess(device, adbBrowser),
       proxy: options.proxy,
+      protocolLogger,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);

@@ -21,6 +21,7 @@ import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../trans
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
+import { ProtocolLogger } from '../types';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -34,6 +35,7 @@ export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
+  private readonly _protocolLogger: ProtocolLogger;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
@@ -43,9 +45,10 @@ export class FFConnection extends EventEmitter {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(transport: ConnectionTransport) {
+  constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger) {
     super();
     this._transport = transport;
+    this._protocolLogger = protocolLogger;
     this._lastId = 0;
     this._callbacks = new Map();
 
@@ -77,14 +80,12 @@ export class FFConnection extends EventEmitter {
   }
 
   _rawSend(message: ProtocolRequest) {
-    if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', 'SEND ► ' + JSON.stringify(message));
+    this._protocolLogger('send', message);
     this._transport.send(message);
   }
 
   async _onMessage(message: ProtocolResponse) {
-    if (debugLogger.isEnabled('protocol'))
-      debugLogger.log('protocol', '◀ RECV ' + JSON.stringify(message));
+    this._protocolLogger('receive', message);
     if (message.id === kBrowserCloseMessageId)
       return;
     if (message.sessionId) {
