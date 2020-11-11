@@ -36,6 +36,7 @@ export type BrowserOptions = types.UIOptions & {
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.
   browserProcess: BrowserProcess,
   proxy?: ProxySettings,
+  protocolLogger?: types.ProtocolLogger,
 };
 
 export abstract class Browser extends EventEmitter {

@@ -275,6 +275,8 @@ export type LaunchOptions = LaunchOptionsBase & UIOptions & {
 };
 export type LaunchPersistentOptions = LaunchOptionsBase & BrowserContextOptions;
 
+export type ProtocolLogger = (direction: 'send' | 'receive', message: object) => void;
+
 export type SerializedAXNode = {
   role: string,
   name: string,

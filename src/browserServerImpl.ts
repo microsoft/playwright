@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { LaunchServerOptions } from './client/types';
+import { LaunchServerOptions, Logger } from './client/types';
 import { BrowserType } from './server/browserType';
 import * as ws from 'ws';
 import * as fs from 'fs';
@@ -32,6 +32,7 @@ import { SelectorsDispatcher } from './dispatchers/selectorsDispatcher';
 import { Selectors } from './server/selectors';
 import { BrowserContext, Video } from './server/browserContext';
 import { StreamDispatcher } from './dispatchers/streamDispatcher';
+import { ProtocolLogger } from './server/types';
 
 export class BrowserServerLauncherImpl implements BrowserServerLauncher {
   private _browserType: BrowserType;
@@ -46,7 +47,7 @@ export class BrowserServerLauncherImpl implements BrowserServerLauncher {
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
-    });
+    }, toProtocolLogger(options.logger));
     return new BrowserServerImpl(browser, options.port);
   }
 }
@@ -191,4 +192,11 @@ class ConnectedBrowser extends BrowserDispatcher {
       });
     });
   }
+}
+
+function toProtocolLogger(logger: Logger | undefined): ProtocolLogger | undefined {
+  return logger ? (direction: 'send' | 'receive', message: object) => {
+    if (logger.isEnabled('protocol', 'verbose'))
+      logger.log('protocol', 'verbose', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message), [], {});
+  } : undefined;
 }

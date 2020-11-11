@@ -57,12 +57,12 @@ export abstract class BrowserType {
     return this._name;
   }
 
-  async launch(options: types.LaunchOptions = {}): Promise<Browser> {
+  async launch(options: types.LaunchOptions, protocolLogger?: types.ProtocolLogger): Promise<Browser> {
     options = validateLaunchOptions(options);
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      return this._innerLaunch(progress, options, undefined).catch(e => { throw this._rewriteStartupError(e); });
+      return this._innerLaunch(progress, options, undefined, protocolLogger).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser;
   }
@@ -73,12 +73,12 @@ export abstract class BrowserType {
     const controller = new ProgressController();
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
-      return this._innerLaunch(progress, options, persistent, userDataDir).catch(e => { throw this._rewriteStartupError(e); });
+      return this._innerLaunch(progress, options, persistent, undefined, userDataDir).catch(e => { throw this._rewriteStartupError(e); });
     }, TimeoutSettings.timeout(options));
     return browser._defaultContext!;
   }
 
-  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, userDataDir?: string): Promise<Browser> {
+  async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger | undefined, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
@@ -91,6 +91,7 @@ export abstract class BrowserType {
       downloadsPath,
       browserProcess,
       proxy: options.proxy,
+      protocolLogger,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
