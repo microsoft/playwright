@@ -227,14 +227,14 @@ export class InjectedScript {
   }
 
   selectOptions(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | FatalDOMError {
-    if (node.nodeName.toLowerCase() !== 'select')
-      return 'error:notselect';
-    if (!node.isConnected)
+    const element = this.findLabelTarget(node as Element);
+    if (!element || !element.isConnected)
       return 'error:notconnected';
-    const element = node as HTMLSelectElement;
-
-    const options = Array.from(element.options);
-    element.value = undefined as any;
+    if (element.nodeName.toLowerCase() !== 'select')
+      return 'error:notselect';
+    const select = element as HTMLSelectElement;
+    const options = Array.from(select.options);
+    select.value = undefined as any;
     for (let index = 0; index < options.length; index++) {
       const option = options[index];
       option.selected = optionsToSelect.some(optionToSelect => {
@@ -249,11 +249,11 @@ export class InjectedScript {
           matches = matches && optionToSelect.index === index;
         return matches;
       });
-      if (option.selected && !element.multiple)
+      if (option.selected && !select.multiple)
         break;
     }
-    element.dispatchEvent(new Event('input', { 'bubbles': true }));
-    element.dispatchEvent(new Event('change', { 'bubbles': true }));
+    select.dispatchEvent(new Event('input', { 'bubbles': true }));
+    select.dispatchEvent(new Event('change', { 'bubbles': true }));
     return options.filter(option => option.selected).map(option => option.value);
   }
 
