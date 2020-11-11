@@ -195,7 +195,7 @@ function downloadFile(url: string, destinationPath: string, progressCallback: On
   let downloadedBytes = 0;
   let totalBytes = 0;
 
-  const promise = new Promise<any>((x, y) => { fulfill = x; reject = y; });
+  const promise = new Promise<void>((x, y) => { fulfill = x; reject = y; });
 
   const request = httpRequest(url, 'GET', response => {
     if (response.statusCode !== 200) {
