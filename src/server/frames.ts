@@ -232,22 +232,6 @@ export class FrameManager {
     frame.emit(Frame.Events.Navigation, navigationEvent);
   }
 
-  takeParentForSwappingOutFrame(targetId: string) {
-    for (const [id, frame] of this._frames) {
-      if (frame._swappingOutChildFrames.delete(targetId))
-        return id;
-    }
-    return null;
-  }
-
-  frameMaybeSwappingOut(frameId: string) {
-    const frame = this._frames.get(frameId);
-    if (!frame) return;
-    const parent = frame.parentFrame();
-    if (!parent) return;
-    parent._swappingOutChildFrames.add(frameId);
-  }
-
   frameDetached(frameId: string) {
     const frame = this._frames.get(frameId);
     if (frame)
@@ -428,7 +412,6 @@ export class Frame extends EventEmitter {
   private _setContentCounter = 0;
   readonly _detachedPromise: Promise<void>;
   private _detachedCallback = () => {};
-  _swappingOutChildFrames = new Set<string>();
 
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super();
