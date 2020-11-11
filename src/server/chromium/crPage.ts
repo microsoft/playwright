@@ -548,6 +548,7 @@ class FrameSession {
       // We already got a new target and handled frame reattach - nothing to do here.
       return;
     }
+    this._page._frameManager.frameMaybeSwappingOut(frameId);
     this._page._frameManager.frameDetached(frameId);
   }
 
@@ -584,7 +585,15 @@ class FrameSession {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
       const frame = this._page._frameManager.frame(targetId)!;
-      this._page._frameManager.removeChildFramesRecursively(frame);
+      if (frame) {
+        this._page._frameManager.removeChildFramesRecursively(frame);
+      } else {
+        // There is a race between Page.frameDetached and Target.attachedToTarget. If the frame
+        // has already been detached we look up its last parent frame.
+        const parentFrameId = this._page._frameManager.takeParentForSwappingOutFrame(targetId);
+        assert(parentFrameId, 'Cannot find parent for iframe: ' + targetId);
+        this._page._frameManager.frameAttached(targetId, parentFrameId);
+      }
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
       frameSession._initialize(false).catch(e => e);
