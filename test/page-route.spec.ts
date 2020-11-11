@@ -414,7 +414,7 @@ it('should create a redirect', async ({page, server}) => {
   expect(text).toBe('');
 });
 
-it.only('should create a redirect', (test, { browserName }) => {
+it('should create a redirect', (test, { browserName }) => {
   test.fail(browserName === 'webkit');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
@@ -429,7 +429,7 @@ it.only('should create a redirect', (test, { browserName }) => {
     });
   });
 
-  await page.evaluate(async url => location.href = url, server.PREFIX + '/redirect_this');
+  await page.evaluate(url => location.href = url, server.PREFIX + '/redirect_this');
   expect(await page.evaluate(() => window['globalVar'])).toBe(123);
 });
 
