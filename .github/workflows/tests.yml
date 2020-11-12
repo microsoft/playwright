@@ -104,6 +104,7 @@ jobs:
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
+      shell: bash
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
