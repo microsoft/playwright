@@ -556,9 +556,11 @@ class FrameSession {
 
   private _frameMaybeSwappingOut(frameId: string) {
     const frame = this._page._frameManager.frame(frameId);
-    if (!frame) return;
+    if (!frame)
+      return;
     const parent = frame.parentFrame() as any;
-    if (!parent) return;
+    if (!parent)
+      return;
     if (!parent[swappingOutChildFrames])
       parent[swappingOutChildFrames] = new Set<string>();
     parent[swappingOutChildFrames].add(frameId);
@@ -606,7 +608,7 @@ class FrameSession {
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
-      const frame = this._page._frameManager.frame(targetId)!;
+      const frame = this._page._frameManager.frame(targetId);
       if (frame) {
         this._page._frameManager.removeChildFramesRecursively(frame);
       } else {
