@@ -46,7 +46,7 @@ let version = process.argv[2];
 if (version === '--next') {
   const packageJSON = require('../package.json');
   version = packageJSON.version;
-  version += '.' + Date.now();
+  version += (version.includes('-') ? '.' : '-') + Date.now();
   console.log('Setting version to ' + version);
 } else {
   if (!version || !version.match(/^v\d+\.\d+\.\d+(-next)?$/)) {
