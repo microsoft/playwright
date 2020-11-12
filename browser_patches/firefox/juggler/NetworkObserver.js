@@ -238,9 +238,20 @@ class NetworkRequest {
       const synthesized = Cc["@mozilla.org/io/string-input-stream;1"].createInstance(Ci.nsIStringInputStream);
       const body = atob(postData);
       synthesized.setData(body, body.length);
+
+      const overridenHeader = (lowerCaseName, defaultValue) => {
+        if (headers) {
+          for (const header of headers) {
+            if (header.name.toLowerCase() === lowerCaseName) {
+              return header.value;
+            }
+          }
+        }
+        return defaultValue;
+      }
       // Clear content-length, so that upload stream resets it.
-      this.httpChannel.setRequestHeader('content-length', '', false /* merge */);
-      this.httpChannel.explicitSetUploadStream(synthesized, 'application/octet-stream', -1, this.httpChannel.requestMethod, false);
+      this.httpChannel.setRequestHeader('content-length', overridenHeader('content-length', ''), false /* merge */);
+      this.httpChannel.explicitSetUploadStream(synthesized, overridenHeader('content-type', 'application/octet-stream'), -1, this.httpChannel.requestMethod, false);
     }
   }
 
