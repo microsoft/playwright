@@ -358,9 +358,8 @@ class FrameSession {
     return this._targetId === this._crPage._targetId;
   }
 
-  private _addSessionListeners() {
-    this._eventListeners = [
-      helper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
+  private _addRendererListeners() {
+    this._eventListeners.push(...[
       helper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
       helper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
@@ -370,9 +369,6 @@ class FrameSession {
       helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
       helper.addEventListener(this._client, 'Page.javascriptDialogOpening', event => this._onDialog(event)),
       helper.addEventListener(this._client, 'Page.navigatedWithinDocument', event => this._onFrameNavigatedWithinDocument(event.frameId, event.url)),
-      helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
-      helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
-      helper.addEventListener(this._client, 'Page.screencastFrame', event => this._onScreencastFrame(event)),
       helper.addEventListener(this._client, 'Runtime.bindingCalled', event => this._onBindingCalled(event)),
       helper.addEventListener(this._client, 'Runtime.consoleAPICalled', event => this._onConsoleAPI(event)),
       helper.addEventListener(this._client, 'Runtime.exceptionThrown', exception => this._handleException(exception.exceptionDetails)),
@@ -381,8 +377,17 @@ class FrameSession {
       helper.addEventListener(this._client, 'Runtime.executionContextsCleared', event => this._onExecutionContextsCleared()),
       helper.addEventListener(this._client, 'Target.attachedToTarget', event => this._onAttachedToTarget(event)),
       helper.addEventListener(this._client, 'Target.detachedFromTarget', event => this._onDetachedFromTarget(event)),
+    ]);
+  }
+
+  private _addBrowserListeners() {
+    this._eventListeners.push(...[
+      helper.addEventListener(this._client, 'Inspector.targetCrashed', event => this._onTargetCrashed()),
+      helper.addEventListener(this._client, 'Page.downloadWillBegin', event => this._onDownloadWillBegin(event)),
+      helper.addEventListener(this._client, 'Page.downloadProgress', event => this._onDownloadProgress(event)),
+      helper.addEventListener(this._client, 'Page.screencastFrame', event => this._onScreencastFrame(event)),
       helper.addEventListener(this._client, 'Page.windowOpen', event => this._onWindowOpen(event)),
-    ];
+    ]);
   }
 
   async _initialize(hasUIWindow: boolean) {
@@ -395,13 +400,14 @@ class FrameSession {
 
     let isInitialLifecycle = true;
     if (!this._isMainFrame())
-      this._addSessionListeners();
+      this._addRendererListeners();
+    this._addBrowserListeners();
     const promises: Promise<any>[] = [
       this._client.send('Page.enable'),
       this._client.send('Page.getFrameTree').then(({frameTree}) => {
         if (this._isMainFrame()) {
           this._handleFrameTree(frameTree);
-          this._addSessionListeners();
+          this._addRendererListeners();
         }
         const localFrames = this._isMainFrame() ? this._page.frames() : [ this._page._frameManager.frame(this._targetId)! ];
         for (const frame of localFrames) {
