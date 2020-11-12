@@ -397,8 +397,7 @@ class FrameSession {
       const { windowId } = await this._client.send('Browser.getWindowForTarget');
       this._windowId = windowId;
     }
-
-    let isInitialLifecycle = true;
+    let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
       this._addRendererListeners();
     this._addBrowserListeners();
@@ -421,22 +420,20 @@ class FrameSession {
             frame._evaluateExpression(binding.source, false, {}).catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
-        if (!isInitialEmptyPage)
-          this._firstNonInitialNavigationCommittedFulfill();
-        this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => {
+        if (isInitialEmptyPage) {
           // Ignore lifecycle events for the initial empty page. It is never the final page
           // hence we are going to get more lifecycle updates after the actual navigation has
           // started (even if the target url is about:blank).
-          // Note: isInitialLifecycle is reset after the Page.setLifecycleEventsEnabled response.
-          const ignoreLifecycle = isInitialLifecycle && isInitialEmptyPage;
-          if (!ignoreLifecycle)
-            this._onLifecycleEvent(event);
-        }));
+          lifecycleEventsEnabled.then(() => {
+            this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+          });
+        } else {
+          this._firstNonInitialNavigationCommittedFulfill();
+          this._eventListeners.push(helper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
+        }
       }),
       this._client.send('Log.enable', {}),
-      this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }).then(() => {
-        isInitialLifecycle = true;
-      }),
+      lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: sourceMap.generateSourceUrl(),
