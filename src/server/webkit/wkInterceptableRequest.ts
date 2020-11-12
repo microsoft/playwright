@@ -132,9 +132,9 @@ function wkMillisToRoundishMillis(value: number): number {
     return -1;
 
   // WebKit has a bug, instead of -1 it sends -1000 to be in ms.
-  if (value < 0) {
+  if (value <= 0) {
     // DNS can start before request start on Mac Network Stack
-    return 0;
+    return -1;
   }
 
   return ((value * 1000) | 0) / 1000;
