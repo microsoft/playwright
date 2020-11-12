@@ -113,6 +113,10 @@ export class CRPage implements PageDelegate {
     return this._pagePromise;
   }
 
+  openerDelegate(): PageDelegate | null {
+    return this._opener;
+  }
+
   didClose() {
     for (const session of this._sessions.values())
       session.dispose();

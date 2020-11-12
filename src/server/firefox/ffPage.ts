@@ -105,6 +105,10 @@ export class FFPage implements PageDelegate {
     return this._pagePromise;
   }
 
+  openerDelegate(): PageDelegate | null {
+    return this._opener;
+  }
+
   _onWebSocketCreated(event: Protocol.Page.webSocketCreatedPayload) {
     this._page._frameManager.onWebSocketCreated(webSocketId(event.frameId, event.wsid), event.requestURL);
     this._page._frameManager.onWebSocketRequest(webSocketId(event.frameId, event.wsid));

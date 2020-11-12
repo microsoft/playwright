@@ -46,6 +46,8 @@ export interface PageDelegate {
   exposeBinding(binding: PageBinding): Promise<void>;
   evaluateOnNewDocument(source: string): Promise<void>;
   closePage(runBeforeUnload: boolean): Promise<void>;
+  pageOrError(): Promise<Page | Error>;
+  openerDelegate(): PageDelegate | null;
 
   navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult>;
 
@@ -174,6 +176,25 @@ export class Page extends EventEmitter {
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
     this.selectors = browserContext.selectors();
+  }
+
+  async reportAsNew() {
+    const pageOrError = await this._delegate.pageOrError();
+    if (pageOrError instanceof Error) {
+      // Initialization error could have happened because of
+      // context/browser closure. Just ignore the page.
+      if (this._browserContext.isClosingOrClosed())
+        return;
+      this._setIsError();
+    }
+    this._browserContext.emit(BrowserContext.Events.Page, this);
+    const openerDelegate = this._delegate.openerDelegate();
+    if (openerDelegate) {
+      openerDelegate.pageOrError().then(openerPage => {
+        if (openerPage instanceof Page && !openerPage.isClosed())
+          openerPage.emit(Page.Events.Popup, this);
+      });
+    }
   }
 
   async _doSlowMo() {
@@ -387,7 +408,7 @@ export class Page extends EventEmitter {
       await this._ownedContext.close();
   }
 
-  _setIsError() {
+  private _setIsError() {
     if (!this._frameManager.mainFrame())
       this._frameManager.frameAttached('<dummy>', null);
   }

@@ -19,7 +19,7 @@ import { assert } from '../../utils/utils';
 import { Browser, BrowserOptions } from '../browser';
 import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextOptions, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
-import { Page, PageBinding } from '../page';
+import { Page, PageBinding, PageDelegate } from '../page';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { ConnectionEvents, FFConnection } from './ffConnection';
@@ -105,23 +105,7 @@ export class FFBrowser extends Browser {
     const opener = openerId ? this._ffPages.get(openerId)! : null;
     const ffPage = new FFPage(session, context, opener);
     this._ffPages.set(targetId, ffPage);
-
-    ffPage.pageOrError().then(async pageOrError => {
-      const page = ffPage._page;
-      if (pageOrError instanceof Error) {
-        // Initialization error could have happened because of
-        // context/browser closure. Just ignore the page.
-        if (context.isClosingOrClosed())
-          return;
-        page._setIsError();
-      }
-      context.emit(BrowserContext.Events.Page, page);
-      if (!opener)
-        return;
-      const openerPage = await opener.pageOrError();
-      if (openerPage instanceof Page && !openerPage.isClosed())
-        openerPage.emit(Page.Events.Popup, page);
-    });
+    ffPage._page.reportAsNew();
   }
 
   _onDownloadCreated(payload: Protocol.Browser.downloadCreatedPayload) {
@@ -235,7 +219,7 @@ export class FFBrowserContext extends BrowserContext {
     return this._ffPages().map(ffPage => ffPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
-  async newPage(): Promise<Page> {
+  async newPageDelegate(): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
     const { targetId } = await this._browser._connection.send('Browser.newPage', {
       browserContextId: this._browserContextId
@@ -244,14 +228,7 @@ export class FFBrowserContext extends BrowserContext {
         throw new Error(`Invalid timezone ID: ${this._options.timezoneId}`);
       throw e;
     });
-    const ffPage = this._browser._ffPages.get(targetId)!;
-    const pageOrError = await ffPage.pageOrError();
-    if (pageOrError instanceof Page) {
-      if (pageOrError.isClosed())
-        throw new Error('Page has been closed.');
-      return pageOrError;
-    }
-    throw pageOrError;
+    return this._browser._ffPages.get(targetId)!;
   }
 
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {
