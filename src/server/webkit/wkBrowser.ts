@@ -20,7 +20,7 @@ import { assertBrowserContextIsNotOwned, BrowserContext, validateBrowserContextO
 import { helper, RegisteredListener } from '../helper';
 import { assert } from '../../utils/utils';
 import * as network from '../network';
-import { Page, PageBinding } from '../page';
+import { Page, PageBinding, PageDelegate } from '../page';
 import { ConnectionTransport } from '../transport';
 import * as types from '../types';
 import { Protocol } from './protocol';
@@ -153,24 +153,7 @@ export class WKBrowser extends Browser {
     const opener = event.openerId ? this._wkPages.get(event.openerId) : undefined;
     const wkPage = new WKPage(context, pageProxySession, opener || null);
     this._wkPages.set(pageProxyId, wkPage);
-
-    wkPage.pageOrError().then(async pageOrError => {
-      const page = wkPage._page;
-      if (pageOrError instanceof Error) {
-        // Initialization error could have happened because of
-        // context/browser closure. Just ignore the page.
-        if (context!.isClosingOrClosed())
-          return;
-        page._setIsError();
-      }
-      context!.emit(BrowserContext.Events.Page, page);
-      if (!opener)
-        return;
-      await opener.pageOrError();
-      const openerPage = opener._page;
-      if (!openerPage.isClosed())
-        openerPage.emit(Page.Events.Popup, page);
-    });
+    wkPage._page.reportAsNew();
   }
 
   _onPageProxyDestroyed(event: Protocol.Playwright.pageProxyDestroyedPayload) {
@@ -255,16 +238,10 @@ export class WKBrowserContext extends BrowserContext {
     return this._wkPages().map(wkPage => wkPage._initializedPage).filter(pageOrNull => !!pageOrNull) as Page[];
   }
 
-  async newPage(): Promise<Page> {
+  async newPageDelegate(): Promise<PageDelegate> {
     assertBrowserContextIsNotOwned(this);
     const { pageProxyId } = await this._browser._browserSession.send('Playwright.createPage', { browserContextId: this._browserContextId });
-    const wkPage = this._browser._wkPages.get(pageProxyId)!;
-    const result = await wkPage.pageOrError();
-    if (!(result instanceof Page))
-      throw result;
-    if (result.isClosed())
-      throw new Error('Page has been closed.');
-    return result;
+    return this._browser._wkPages.get(pageProxyId)!;
   }
 
   async _doCookies(urls: string[]): Promise<types.NetworkCookie[]> {

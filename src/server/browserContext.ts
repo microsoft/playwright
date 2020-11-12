@@ -24,7 +24,7 @@ import { Download } from './download';
 import * as frames from './frames';
 import { helper } from './helper';
 import * as network from './network';
-import { Page, PageBinding } from './page';
+import { Page, PageBinding, PageDelegate } from './page';
 import { Progress, ProgressController, ProgressResult } from './progress';
 import { Selectors, serverSelectors } from './selectors';
 import * as types from './types';
@@ -157,7 +157,7 @@ export abstract class BrowserContext extends EventEmitter {
 
   // BrowserContext methods.
   abstract pages(): Page[];
-  abstract newPage(): Promise<Page>;
+  abstract newPageDelegate(): Promise<PageDelegate>;
   abstract _doCookies(urls: string[]): Promise<types.NetworkCookie[]>;
   abstract addCookies(cookies: types.SetNetworkCookieParam[]): Promise<void>;
   abstract clearCookies(): Promise<void>;
@@ -309,6 +309,17 @@ export abstract class BrowserContext extends EventEmitter {
       this._didCloseInternal();
     }
     await this._closePromise;
+  }
+
+  async newPage(): Promise<Page> {
+    const pageDelegate = await this.newPageDelegate();
+    const pageOrError = await pageDelegate.pageOrError();
+    if (pageOrError instanceof Page) {
+      if (pageOrError.isClosed())
+        throw new Error('Page has been closed.');
+      return pageOrError;
+    }
+    throw pageOrError;
   }
 }
 
