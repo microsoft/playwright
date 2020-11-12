@@ -43,6 +43,8 @@ import { VideoRecorder } from './videoRecorder';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
+const swappingOutChildFrames = Symbol('swappingOutChildFrames');
+
 export class CRPage implements PageDelegate {
   readonly _mainFrameSession: FrameSession;
   readonly _sessions = new Map<Protocol.Target.TargetID, FrameSession>();
@@ -542,12 +544,35 @@ class FrameSession {
     this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
+  private _takeParentForSwappingOutFrame(targetId: string) {
+    for (const frame of this._page.frames()) {
+      if (!(frame as any)[swappingOutChildFrames])
+        continue;
+      if ((frame as any)[swappingOutChildFrames].delete(targetId))
+        return frame._id;
+    }
+    return null;
+  }
+
+  private _frameMaybeSwappingOut(frameId: string) {
+    const frame = this._page._frameManager.frame(frameId);
+    if (!frame)
+      return;
+    const parent = frame.parentFrame() as any;
+    if (!parent)
+      return;
+    if (!parent[swappingOutChildFrames])
+      parent[swappingOutChildFrames] = new Set<string>();
+    parent[swappingOutChildFrames].add(frameId);
+  }
+
   _onFrameDetached(frameId: string) {
     if (this._crPage._sessions.has(frameId)) {
       // This is a local -> remote frame transtion.
       // We already got a new target and handled frame reattach - nothing to do here.
       return;
     }
+    this._frameMaybeSwappingOut(frameId);
     this._page._frameManager.frameDetached(frameId);
   }
 
@@ -583,8 +608,16 @@ class FrameSession {
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
-      const frame = this._page._frameManager.frame(targetId)!;
-      this._page._frameManager.removeChildFramesRecursively(frame);
+      const frame = this._page._frameManager.frame(targetId);
+      if (frame) {
+        this._page._frameManager.removeChildFramesRecursively(frame);
+      } else {
+        // There is a race between Page.frameDetached and Target.attachedToTarget. If the frame
+        // has already been detached we look up its last parent frame.
+        const parentFrameId = this._takeParentForSwappingOutFrame(targetId);
+        assert(parentFrameId, 'Cannot find parent for iframe: ' + targetId);
+        this._page._frameManager.frameAttached(targetId, parentFrameId);
+      }
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
       frameSession._initialize(false).catch(e => e);
