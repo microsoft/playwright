@@ -16,8 +16,12 @@
  */
 
 import { expect, it } from './fixtures';
+import * as os from 'os';
 
-it('should work', async ({ page, server }) => {
+it('should work', (test, { browserName, platform }) => {
+  const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
+  test.fail(isBigSur && browserName === 'webkit', 'Resource timing is -1 on BigSur');
+}, async ({ page, server }) => {
   const [request] = await Promise.all([
     page.waitForEvent('requestfinished'),
     page.goto(server.EMPTY_PAGE)
