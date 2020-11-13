@@ -154,9 +154,7 @@ it('should work with binary post data and interception', async ({page, server}) 
     expect(buffer[i]).toBe(i);
 });
 
-it('should override post data content type', (test, { browserName }) => {
-  test.fixme(browserName === 'firefox', 'Always reports application/octet-stream');
-}, async ({page, server}) => {
+it('should override post data content type', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   let request = null;
   server.setRoute('/post', (req, res) => {
