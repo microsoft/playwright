@@ -221,9 +221,10 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
     });
   }
 
-  async continue(overrides: { method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
+  async continue(overrides: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
     const postDataBuffer = isString(overrides.postData) ? Buffer.from(overrides.postData, 'utf8') : overrides.postData;
     await this._channel.continue({
+      url: overrides.url,
       method: overrides.method,
       headers: overrides.headers ? headersObjectToArray(overrides.headers) : undefined,
       postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,

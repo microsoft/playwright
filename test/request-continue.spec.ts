@@ -49,6 +49,42 @@ it('should amend method', async ({page, server}) => {
   expect((await sRequest).method).toBe('POST');
 });
 
+it('should override request url', async ({page, server}) => {
+  const request = server.waitForRequest('/empty.html');
+  await page.route('**/foo', route => {
+    route.continue({ url: server.EMPTY_PAGE });
+  });
+  await page.goto(server.PREFIX + '/foo');
+  expect((await request).method).toBe('GET');
+});
+
+it('should not allow changing protocol when overriding url', async ({page, server}) => {
+  let error: Error | undefined;
+  await page.route('**/*', async route => {
+    try {
+      await route.continue({ url: 'file:///tmp/foo' });
+    } catch (e) {
+      error = e;
+      await route.continue();
+    }
+  });
+  await page.goto(server.EMPTY_PAGE);
+  expect(error).toBeTruthy();
+  expect(error.message).toContain('New URL must have same protocol as overriden URL');
+});
+
+it('should override method along with url', async ({page, server}) => {
+  const request = server.waitForRequest('/empty.html');
+  await page.route('**/foo', route => {
+    route.continue({
+      url: server.EMPTY_PAGE,
+      method: 'POST'
+    });
+  });
+  await page.goto(server.PREFIX + '/foo');
+  expect((await request).method).toBe('POST');
+});
+
 it('should amend method on main request', async ({page, server}) => {
   const request = server.waitForRequest('/empty.html');
   await page.route('**/*', route => route.continue({ method: 'POST' }));

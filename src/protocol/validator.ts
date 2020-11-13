@@ -845,6 +845,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     errorCode: tOptional(tString),
   });
   scheme.RouteContinueParams = tObject({
+    url: tOptional(tString),
     method: tOptional(tString),
     headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),

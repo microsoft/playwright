@@ -224,6 +224,12 @@ export class Route {
 
   async continue(overrides: types.NormalizedContinueOverrides = {}) {
     assert(!this._handled, 'Route is already handled!');
+    if (overrides.url) {
+      const newUrl = new URL(overrides.url);
+      const oldUrl = new URL(this._request.url());
+      if (oldUrl.protocol !== newUrl.protocol)
+        throw new Error('New URL must have same protocol as overriden URL');
+    }
     await this._delegate.continue(overrides);
   }
 }

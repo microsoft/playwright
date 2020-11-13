@@ -410,6 +410,7 @@ class InterceptableRequest implements network.RouteDelegate {
     // or the page was closed. We should tolerate these errors.
     await this._client._sendMayFail('Fetch.continueRequest', {
       requestId: this._interceptionId!,
+      url: overrides.url,
       headers: overrides.headers,
       method: overrides.method,
       postData: overrides.postData ? overrides.postData.toString('base64') : undefined
