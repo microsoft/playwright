@@ -31,7 +31,7 @@ describe('', (suite, { browserName, platform, wire }) => {
   suite.skip(wire && browserName !== 'chromium');
   suite.flaky(browserName === 'firefox' && platform === 'win32');
   const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
-  suite.fail(isBigSur && browserName === 'webkit', 'Stopped working after roll');
+  suite.skip(isBigSur && browserName === 'webkit', 'Timing out after roll');
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
