@@ -58,15 +58,6 @@ describe('oopif', (suite, { browserName }) => {
     expect(coverage.length).toBe(2);
   });
 
-  it('should ignore playwright internal scripts if reportAnonymousScripts is true', async function({page, server}) {
-    await page.coverage.startJSCoverage({reportAnonymousScripts: true});
-    await page.goto(server.EMPTY_PAGE);
-    await page.evaluate('console.log("foo")');
-    await page.evaluate(() => console.log('bar'));
-    const coverage = await page.coverage.stopJSCoverage();
-    expect(coverage.length).toBe(0);
-  });
-
   it('should report multiple scripts', async function({page, server}) {
     await page.coverage.startJSCoverage();
     await page.goto(server.PREFIX + '/jscoverage/multiple.html');

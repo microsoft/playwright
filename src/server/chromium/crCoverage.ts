@@ -19,7 +19,6 @@ import { CRSession } from './crConnection';
 import { helper, RegisteredListener } from '../helper';
 import { Protocol } from './protocol';
 import * as types from '../types';
-import * as sourceMap from '../../utils/sourceMap';
 import { assert } from '../../utils/utils';
 
 export class CRCoverage {
@@ -102,9 +101,6 @@ class JSCoverage {
   }
 
   async _onScriptParsed(event: Protocol.Debugger.scriptParsedPayload) {
-    // Ignore playwright-injected scripts
-    if (sourceMap.isPlaywrightSourceUrl(event.url))
-      return;
     this._scriptIds.add(event.scriptId);
     // Ignore other anonymous scripts unless the reportAnonymousScripts option is true.
     if (!event.url && !this._reportAnonymousScripts)
