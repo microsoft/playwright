@@ -8,6 +8,7 @@
 interface nsIRemoteDebuggingPipeClient : nsISupports
 {
   void receiveMessage(in AString message);
+  void disconnected();
 };
 
 [scriptable, uuid(b7bfb66b-fd46-4aa2-b4ad-396177186d94)]

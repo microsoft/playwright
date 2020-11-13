@@ -151,8 +151,13 @@ void nsRemoteDebuggingPipe::ReaderLoop() {
   std::vector<char> line;
   while (!m_terminated) {
     size_t size = ReadBytes(buffer.data(), bufSize, false);
-    if (!size)
+    if (!size) {
+      nsCOMPtr<nsIRunnable> runnable = NewRunnableMethod<>(
+          "nsRemoteDebuggingPipe::Disconnected",
+          this, &nsRemoteDebuggingPipe::Disconnected);
+      NS_DispatchToMainThread(runnable.forget());
       break;
+    }
     size_t start = 0;
     size_t end = line.size();
     line.insert(line.end(), buffer.begin(), buffer.begin() + size);
@@ -189,6 +194,12 @@ void nsRemoteDebuggingPipe::ReceiveMessage(const nsCString& aMessage) {
     NS_ConvertUTF8toUTF16 utf16(aMessage);
     mClient->ReceiveMessage(utf16);
   }
+}
+
+void nsRemoteDebuggingPipe::Disconnected() {
+  MOZ_RELEASE_ASSERT(NS_IsMainThread(), "Remote debugging pipe must be used on the Main thread.");
+  if (mClient)
+    mClient->Disconnected();
 }
 
 nsresult nsRemoteDebuggingPipe::SendMessage(const nsAString& aMessage) {
