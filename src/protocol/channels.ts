@@ -80,6 +80,39 @@ export type AXNode = {
   children?: AXNode[],
 };
 
+export type SetNetworkCookie = {
+  name: string,
+  value: string,
+  url?: string,
+  domain?: string,
+  path?: string,
+  expires?: number,
+  httpOnly?: boolean,
+  secure?: boolean,
+  sameSite?: 'Strict' | 'Lax' | 'None',
+};
+
+export type NetworkCookie = {
+  name: string,
+  value: string,
+  domain: string,
+  path: string,
+  expires: number,
+  httpOnly: boolean,
+  secure: boolean,
+  sameSite: 'Strict' | 'Lax' | 'None',
+};
+
+export type NameValue = {
+  name: string,
+  value: string,
+};
+
+export type OriginStorage = {
+  origin: string,
+  localStorage: NameValue[],
+};
+
 export type SerializedError = {
   error?: {
     message: string,
@@ -162,10 +195,7 @@ export type BrowserTypeLaunchParams = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  env?: {
-    name: string,
-    value: string,
-  }[],
+  env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
   proxy?: {
@@ -188,10 +218,7 @@ export type BrowserTypeLaunchOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  env?: {
-    name: string,
-    value: string,
-  }[],
+  env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
   proxy?: {
@@ -218,10 +245,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  env?: {
-    name: string,
-    value: string,
-  }[],
+  env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
   proxy?: {
@@ -250,10 +274,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     accuracy?: number,
   },
   permissions?: string[],
-  extraHTTPHeaders?: {
-    name: string,
-    value: string,
-  }[],
+  extraHTTPHeaders?: NameValue[],
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -287,10 +308,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
   timeout?: number,
-  env?: {
-    name: string,
-    value: string,
-  }[],
+  env?: NameValue[],
   headless?: boolean,
   devtools?: boolean,
   proxy?: {
@@ -319,10 +337,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     accuracy?: number,
   },
   permissions?: string[],
-  extraHTTPHeaders?: {
-    name: string,
-    value: string,
-  }[],
+  extraHTTPHeaders?: NameValue[],
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -386,10 +401,7 @@ export type BrowserNewContextParams = {
     accuracy?: number,
   },
   permissions?: string[],
-  extraHTTPHeaders?: {
-    name: string,
-    value: string,
-  }[],
+  extraHTTPHeaders?: NameValue[],
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -418,6 +430,10 @@ export type BrowserNewContextParams = {
     bypass?: string,
     username?: string,
     password?: string,
+  },
+  storageState?: {
+    cookies?: SetNetworkCookie[],
+    origins?: OriginStorage[],
   },
 };
 export type BrowserNewContextOptions = {
@@ -438,10 +454,7 @@ export type BrowserNewContextOptions = {
     accuracy?: number,
   },
   permissions?: string[],
-  extraHTTPHeaders?: {
-    name: string,
-    value: string,
-  }[],
+  extraHTTPHeaders?: NameValue[],
   offline?: boolean,
   httpCredentials?: {
     username: string,
@@ -470,6 +483,10 @@ export type BrowserNewContextOptions = {
     bypass?: string,
     username?: string,
     password?: string,
+  },
+  storageState?: {
+    cookies?: SetNetworkCookie[],
+    origins?: OriginStorage[],
   },
 };
 export type BrowserNewContextResult = {
@@ -526,6 +543,7 @@ export interface BrowserContextChannel extends Channel {
   setHTTPCredentials(params: BrowserContextSetHTTPCredentialsParams, metadata?: Metadata): Promise<BrowserContextSetHTTPCredentialsResult>;
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
+  storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -546,17 +564,7 @@ export type BrowserContextCrServiceWorkerEvent = {
   worker: WorkerChannel,
 };
 export type BrowserContextAddCookiesParams = {
-  cookies: {
-    name: string,
-    value: string,
-    url?: string,
-    domain?: string,
-    path?: string,
-    expires?: number,
-    httpOnly?: boolean,
-    secure?: boolean,
-    sameSite?: 'Strict' | 'Lax' | 'None',
-  }[],
+  cookies: SetNetworkCookie[],
 };
 export type BrowserContextAddCookiesOptions = {
 
@@ -585,16 +593,7 @@ export type BrowserContextCookiesOptions = {
 
 };
 export type BrowserContextCookiesResult = {
-  cookies: {
-    name: string,
-    value: string,
-    domain: string,
-    path: string,
-    expires: number,
-    httpOnly: boolean,
-    secure: boolean,
-    sameSite: 'Strict' | 'Lax' | 'None',
-  }[],
+  cookies: NetworkCookie[],
 };
 export type BrowserContextExposeBindingParams = {
   name: string,
@@ -632,10 +631,7 @@ export type BrowserContextSetDefaultTimeoutNoReplyOptions = {
 };
 export type BrowserContextSetDefaultTimeoutNoReplyResult = void;
 export type BrowserContextSetExtraHTTPHeadersParams = {
-  headers: {
-    name: string,
-    value: string,
-  }[],
+  headers: NameValue[],
 };
 export type BrowserContextSetExtraHTTPHeadersOptions = {
 
@@ -683,6 +679,12 @@ export type BrowserContextSetOfflineOptions = {
 
 };
 export type BrowserContextSetOfflineResult = void;
+export type BrowserContextStorageStateParams = {};
+export type BrowserContextStorageStateOptions = {};
+export type BrowserContextStorageStateResult = {
+  cookies: NetworkCookie[],
+  origins: OriginStorage[],
+};
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };
@@ -938,10 +940,7 @@ export type PageScreenshotResult = {
   binary: Binary,
 };
 export type PageSetExtraHTTPHeadersParams = {
-  headers: {
-    name: string,
-    value: string,
-  }[],
+  headers: NameValue[],
 };
 export type PageSetExtraHTTPHeadersOptions = {
 
@@ -2141,36 +2140,24 @@ export type RouteAbortOptions = {
 export type RouteAbortResult = void;
 export type RouteContinueParams = {
   method?: string,
-  headers?: {
-    name: string,
-    value: string,
-  }[],
+  headers?: NameValue[],
   postData?: Binary,
 };
 export type RouteContinueOptions = {
   method?: string,
-  headers?: {
-    name: string,
-    value: string,
-  }[],
+  headers?: NameValue[],
   postData?: Binary,
 };
 export type RouteContinueResult = void;
 export type RouteFulfillParams = {
   status?: number,
-  headers?: {
-    name: string,
-    value: string,
-  }[],
+  headers?: NameValue[],
   body?: string,
   isBase64?: boolean,
 };
 export type RouteFulfillOptions = {
   status?: number,
-  headers?: {
-    name: string,
-    value: string,
-  }[],
+  headers?: NameValue[],
   body?: string,
   isBase64?: boolean,
 };
@@ -2401,10 +2388,7 @@ export type ElectronLaunchParams = {
   executablePath: string,
   args?: string[],
   cwd?: string,
-  env?: {
-    name: string,
-    value: string,
-  }[],
+  env?: NameValue[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
@@ -2413,10 +2397,7 @@ export type ElectronLaunchParams = {
 export type ElectronLaunchOptions = {
   args?: string[],
   cwd?: string,
-  env?: {
-    name: string,
-    value: string,
-  }[],
+  env?: NameValue[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,

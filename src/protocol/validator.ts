@@ -86,6 +86,35 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     orientation: tOptional(tString),
     children: tOptional(tArray(tType('AXNode'))),
   });
+  scheme.SetNetworkCookie = tObject({
+    name: tString,
+    value: tString,
+    url: tOptional(tString),
+    domain: tOptional(tString),
+    path: tOptional(tString),
+    expires: tOptional(tNumber),
+    httpOnly: tOptional(tBoolean),
+    secure: tOptional(tBoolean),
+    sameSite: tOptional(tEnum(['Strict', 'Lax', 'None'])),
+  });
+  scheme.NetworkCookie = tObject({
+    name: tString,
+    value: tString,
+    domain: tString,
+    path: tString,
+    expires: tNumber,
+    httpOnly: tBoolean,
+    secure: tBoolean,
+    sameSite: tEnum(['Strict', 'Lax', 'None']),
+  });
+  scheme.NameValue = tObject({
+    name: tString,
+    value: tString,
+  });
+  scheme.OriginStorage = tObject({
+    origin: tString,
+    localStorage: tArray(tType('NameValue')),
+  });
   scheme.SerializedError = tObject({
     error: tOptional(tObject({
       message: tString,
@@ -108,10 +137,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     handleSIGTERM: tOptional(tBoolean),
     handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
-    env: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    env: tOptional(tArray(tType('NameValue'))),
     headless: tOptional(tBoolean),
     devtools: tOptional(tBoolean),
     proxy: tOptional(tObject({
@@ -135,10 +161,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     handleSIGTERM: tOptional(tBoolean),
     handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
-    env: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    env: tOptional(tArray(tType('NameValue'))),
     headless: tOptional(tBoolean),
     devtools: tOptional(tBoolean),
     proxy: tOptional(tObject({
@@ -167,10 +190,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       accuracy: tOptional(tNumber),
     })),
     permissions: tOptional(tArray(tString)),
-    extraHTTPHeaders: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
     offline: tOptional(tBoolean),
     httpCredentials: tOptional(tObject({
       username: tString,
@@ -214,10 +234,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       accuracy: tOptional(tNumber),
     })),
     permissions: tOptional(tArray(tString)),
-    extraHTTPHeaders: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    extraHTTPHeaders: tOptional(tArray(tType('NameValue'))),
     offline: tOptional(tBoolean),
     httpCredentials: tOptional(tObject({
       username: tString,
@@ -247,6 +264,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       username: tOptional(tString),
       password: tOptional(tString),
     })),
+    storageState: tOptional(tObject({
+      cookies: tOptional(tArray(tType('SetNetworkCookie'))),
+      origins: tOptional(tArray(tType('OriginStorage'))),
+    })),
   });
   scheme.BrowserCrNewBrowserCDPSessionParams = tOptional(tObject({}));
   scheme.BrowserCrStartTracingParams = tObject({
@@ -257,17 +278,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.BrowserCrStopTracingParams = tOptional(tObject({}));
   scheme.BrowserContextAddCookiesParams = tObject({
-    cookies: tArray(tObject({
-      name: tString,
-      value: tString,
-      url: tOptional(tString),
-      domain: tOptional(tString),
-      path: tOptional(tString),
-      expires: tOptional(tNumber),
-      httpOnly: tOptional(tBoolean),
-      secure: tOptional(tBoolean),
-      sameSite: tOptional(tEnum(['Strict', 'Lax', 'None'])),
-    })),
+    cookies: tArray(tType('SetNetworkCookie')),
   });
   scheme.BrowserContextAddInitScriptParams = tObject({
     source: tString,
@@ -294,10 +305,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tNumber,
   });
   scheme.BrowserContextSetExtraHTTPHeadersParams = tObject({
-    headers: tArray(tObject({
-      name: tString,
-      value: tString,
-    })),
+    headers: tArray(tType('NameValue')),
   });
   scheme.BrowserContextSetGeolocationParams = tObject({
     geolocation: tOptional(tObject({
@@ -318,6 +326,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.BrowserContextSetOfflineParams = tObject({
     offline: tBoolean,
   });
+  scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });
@@ -371,10 +380,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     })),
   });
   scheme.PageSetExtraHTTPHeadersParams = tObject({
-    headers: tArray(tObject({
-      name: tString,
-      value: tString,
-    })),
+    headers: tArray(tType('NameValue')),
   });
   scheme.PageSetNetworkInterceptionEnabledParams = tObject({
     enabled: tBoolean,
@@ -840,18 +846,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.RouteContinueParams = tObject({
     method: tOptional(tString),
-    headers: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    headers: tOptional(tArray(tType('NameValue'))),
     postData: tOptional(tBinary),
   });
   scheme.RouteFulfillParams = tObject({
     status: tOptional(tNumber),
-    headers: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    headers: tOptional(tArray(tType('NameValue'))),
     body: tOptional(tString),
     isBase64: tOptional(tBoolean),
   });
@@ -898,10 +898,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     executablePath: tString,
     args: tOptional(tArray(tString)),
     cwd: tOptional(tString),
-    env: tOptional(tArray(tObject({
-      name: tString,
-      value: tString,
-    }))),
+    env: tOptional(tArray(tType('NameValue'))),
     handleSIGINT: tOptional(tBoolean),
     handleSIGTERM: tOptional(tBoolean),
     handleSIGHUP: tOptional(tBoolean),

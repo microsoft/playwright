@@ -328,3 +328,23 @@ export type Error = {
 export type UIOptions = {
   slowMo?: number;
 };
+
+export type NameValueList = {
+  name: string;
+  value: string;
+}[];
+
+export type OriginStorage = {
+  origin: string;
+  localStorage: NameValueList;
+};
+
+export type StorageState = {
+  cookies: NetworkCookie[],
+  origins: OriginStorage[]
+}
+
+export type SetStorageState = {
+  cookies?: SetNetworkCookieParam[],
+  origins?: OriginStorage[]
+}

@@ -240,6 +240,22 @@ Indicates that the browser is connected.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
+  - `storageState` <[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState()](#browsercontextstoragestate).
+    - `cookies` <[Array]<[Object]>> Optional cookies to set for context
+      - `name` <[string]> **required**
+      - `value` <[string]> **required**
+      - `url` <[string]> Optional either url or domain / path are required
+      - `domain` <[string]> Optional either url or domain / path are required
+      - `path` <[string]> Optional either url or domain / path are required
+      - `expires` <[number]> Optional Unix time in seconds.
+      - `httpOnly` <[boolean]> Optional httpOnly flag
+      - `secure` <[boolean]> Optional secure flag
+      - `sameSite` <"Strict"|"Lax"|"None"> Optional sameSite flag
+    - `origins` <[Array]<[Object]>> Optional localStorage to set for context
+      - `origin` <[string]>
+      - `localStorage` <[Array]<[Object]>>
+        - `name` <[string]>
+        - `value` <[string]>
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -299,6 +315,22 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
+  - `storageState` <[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState()](#browsercontextstoragestate).
+    - `cookies` <[Array]<[Object]>> Optional cookies to set for context
+      - `name` <[string]> **required**
+      - `value` <[string]> **required**
+      - `url` <[string]> Optional either url or domain / path are required
+      - `domain` <[string]> Optional either url or domain / path are required
+      - `path` <[string]> Optional either url or domain / path are required
+      - `expires` <[number]> Optional Unix time in seconds.
+      - `httpOnly` <[boolean]> Optional httpOnly flag
+      - `secure` <[boolean]> Optional secure flag
+      - `sameSite` <"Strict"|"Lax"|"None"> Optional sameSite flag
+    - `origins` <[Array]<[Object]>> Optional localStorage to set for context
+      - `origin` <[string]>
+      - `localStorage` <[Array]<[Object]>>
+        - `name` <[string]>
+        - `value` <[string]>
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -355,6 +387,7 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
+- [browserContext.storageState()](#browsercontextstoragestate)
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
@@ -679,6 +712,25 @@ Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-U
 #### browserContext.setOffline(offline)
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]>
+
+#### browserContext.storageState()
+- returns: <[Promise]<[Object]>>
+  - `cookies` <[Array]<[Object]>>
+    - `name` <[string]>
+    - `value` <[string]>
+    - `domain` <[string]>
+    - `path` <[string]>
+    - `expires` <[number]> Unix time in seconds.
+    - `httpOnly` <[boolean]>
+    - `secure` <[boolean]>
+    - `sameSite` <"Strict"|"Lax"|"None">
+  - `origins` <[Array]<[Object]>>
+    - `origin` <[string]>
+    - `localStorage` <[Array]<[Object]>>
+      - `name` <[string]>
+      - `value` <[string]>
+
+Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
 #### browserContext.unroute(url[, handler])
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
@@ -4686,6 +4738,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
+- [browserContext.storageState()](#browsercontextstoragestate)
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->

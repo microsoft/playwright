@@ -24,7 +24,7 @@ import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
-import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions } from './types';
+import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState } from './types';
 import { isUnderTest, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 
@@ -217,6 +217,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     const result = await waiter.waitForEvent(this, event, predicate as any);
     waiter.dispose();
     return result;
+  }
+
+  async storageState(): Promise<StorageState> {
+    return await this._wrapApiCall('browserContext.storageState', async () => {
+      return await this._channel.storageState();
+    });
   }
 
   async _onClose() {
