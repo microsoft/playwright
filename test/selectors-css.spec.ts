@@ -125,3 +125,9 @@ it('should not match root after >>', async ({page, server}) => {
   const element = await page.$('css=section >> css=section');
   expect(element).toBe(null);
 });
+
+it('should work with numerical id', async ({page, server}) => {
+  await page.setContent('<section id="123"></section>');
+  const element = await page.$('#\\31\\32\\33');
+  expect(element).toBeTruthy();
+});
