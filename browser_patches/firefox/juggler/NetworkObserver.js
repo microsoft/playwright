@@ -73,8 +73,8 @@ class PageNetwork {
     this._interceptedRequests.clear();
   }
 
-  resumeInterceptedRequest(requestId, method, headers, postData) {
-    this._takeIntercepted(requestId).resume(method, headers, postData);
+  resumeInterceptedRequest(requestId, url, method, headers, postData) {
+    this._takeIntercepted(requestId).resume(url, method, headers, postData);
   }
 
   fulfillInterceptedRequest(requestId, status, statusText, headers, base64body) {
@@ -180,9 +180,10 @@ class NetworkRequest {
   }
 
   // Public interception API.
-  resume(method, headers, postData) {
+  resume(url, method, headers, postData) {
     this._expectingResumedRequest = { method, headers, postData };
-    this._interceptedChannel.resetInterception();
+    const newUri = url ? Services.io.newURI(url) : null;
+    this._interceptedChannel.resetInterceptionWithURI(newUri);
     this._interceptedChannel = undefined;
   }
 
