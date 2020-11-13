@@ -79,6 +79,8 @@ CommandLineHandler.prototype = {
       loadFrameScript();
       dump(`Juggler listening on ws://127.0.0.1:${this._server.port}/${token}\n`);
     } else if (jugglerPipeFlag) {
+      let browserHandler;
+      let pipeStopped = false;
       const pipe = Cc['@mozilla.org/juggler/remotedebuggingpipe;1'].getService(Ci.nsIRemoteDebuggingPipe);
       const connection = {
         QueryInterface: ChromeUtils.generateQI([Ci.nsIRemoteDebuggingPipeClient]),
@@ -86,20 +88,28 @@ CommandLineHandler.prototype = {
           if (this.onmessage)
             this.onmessage({ data: message });
         },
+        disconnected() {
+          if (browserHandler)
+            browserHandler['Browser.close']();
+        },
         send(message) {
+          if (pipeStopped) {
+            // We are missing the response to Browser.close,
+            // but everything works fine. Once we actually need it,
+            // we have to stop the pipe after the response is sent.
+            return;
+          }
           pipe.sendMessage(message);
         },
       };
       pipe.init(connection);
       const dispatcher = new Dispatcher(connection);
-      const browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, () => {
+      browserHandler = new BrowserHandler(dispatcher.rootSession(), dispatcher, targetRegistry, () => {
         if (silent)
           Services.startup.exitLastWindowClosingSurvivalArea();
-        // Send response to the Browser.close, and then stop in the next microtask.
-        Promise.resolve().then(() => {
-          connection.onclose();
-          pipe.stop();
-        });
+        connection.onclose();
+        pipe.stop();
+        pipeStopped = true;
       });
       dispatcher.rootSession().setHandler(browserHandler);
       loadFrameScript();

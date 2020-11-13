@@ -22,6 +22,7 @@ class nsRemoteDebuggingPipe final : public nsIRemoteDebuggingPipe {
  private:
   void ReaderLoop();
   void ReceiveMessage(const nsCString& aMessage);
+  void Disconnected();
   ~nsRemoteDebuggingPipe();
 
   RefPtr<nsIRemoteDebuggingPipeClient> mClient;
