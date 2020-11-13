@@ -109,7 +109,7 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
   }
 
   async kill(): Promise<void> {
-    await this._browser._options.browserProcess.kill();
+    await this._browser._options.browserProcess.close();
   }
 
   private _clientAttached(socket: ws) {

@@ -19,7 +19,6 @@ import * as os from 'os';
 import * as fs from 'fs';
 import * as path from 'path';
 import { FFBrowser } from './ffBrowser';
-import { kBrowserCloseMessageId } from './ffConnection';
 import { BrowserType } from '../browserType';
 import { Env } from '../processLauncher';
 import { ConnectionTransport } from '../transport';
@@ -41,11 +40,6 @@ export class Firefox extends BrowserType {
       // On linux Juggler ships the libstdc++ it was linked against.
       LD_LIBRARY_PATH: `${path.dirname(executable)}:${process.env.LD_LIBRARY_PATH}`,
     } : env;
-  }
-
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-    const message = { method: 'Browser.close', params: {}, id: kBrowserCloseMessageId };
-    transport.send(message);
   }
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {

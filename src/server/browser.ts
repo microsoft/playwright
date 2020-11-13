@@ -25,7 +25,6 @@ import { ChildProcess } from 'child_process';
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
   process?: ChildProcess;
-  kill(): Promise<void>;
   close(): Promise<void>;
 }
 

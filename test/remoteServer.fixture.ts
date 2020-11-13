@@ -22,7 +22,6 @@ import type { BrowserType, Browser, LaunchOptions } from '..';
 
 type ServerFixtures = {
   remoteServer: RemoteServer;
-  stallingRemoteServer: RemoteServer;
   clusterRemoteServer: RemoteServer;
 };
 const fixtures = base.extend<ServerFixtures>();
@@ -30,13 +29,6 @@ const fixtures = base.extend<ServerFixtures>();
 fixtures.remoteServer.init(async ({ browserType, browserOptions }, run) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, browserOptions);
-  await run(remoteServer);
-  await remoteServer.close();
-});
-
-fixtures.stallingRemoteServer.init(async ({ browserType, browserOptions }, run) => {
-  const remoteServer = new RemoteServer();
-  await remoteServer._start(browserType, browserOptions, { stallOnClose: true });
   await run(remoteServer);
   await remoteServer.close();
 });
@@ -53,22 +45,20 @@ export const folio = fixtures.build();
 const playwrightPath = path.join(__dirname, '..');
 
 export class RemoteServer {
-  _output: Map<any, any>;
-  _outputCallback: Map<any, any>;
-  _browserType: BrowserType<Browser>;
-  _child: import('child_process').ChildProcess;
-  _exitPromise: Promise<unknown>;
-  _exitAndDisconnectPromise: Promise<any>;
-  _browser: Browser;
-  _didExit: boolean;
-  _wsEndpoint: string;
+  private _output: Map<string, string>;
+  private _outputCallback: Map<string, () => void>;
+  private _child: import('child_process').ChildProcess;
+  private _exitPromise: Promise<{ exitCode: number | null, signal: string | null }>;
+  private _didExit: boolean;
+  private _wsEndpoint: string;
+  private _browserPid: number;
+  private _watchdogPid: number;
 
-  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, extraOptions?: { stallOnClose?: boolean; inCluster?: boolean }) {
+  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, extraOptions?: any) {
     this._output = new Map();
     this._outputCallback = new Map();
     this._didExit = false;
 
-    this._browserType = browserType;
     const launchOptions = {...browserOptions,
       handleSIGINT: true,
       handleSIGTERM: true,
@@ -80,13 +70,12 @@ export class RemoteServer {
       playwrightPath,
       browserTypeName: browserType.name(),
       launchOptions,
-      ...extraOptions,
     };
     this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)], { env: process.env });
     this._child.on('error', (...args) => console.log('ERROR', ...args));
     this._exitPromise = new Promise(resolve => this._child.on('exit', (exitCode, signal) => {
       this._didExit = true;
-      resolve(exitCode);
+      resolve({ exitCode, signal });
     }));
 
     let outputString = '';
@@ -94,7 +83,7 @@ export class RemoteServer {
       outputString += data.toString();
       // Uncomment to debug.
       // console.log(data.toString());
-      let match;
+      let match: RegExpMatchArray | null;
       while ((match = outputString.match(/\(([^()]+)=>([^()]+)\)/))) {
         const key = match[1];
         const value = match[2];
@@ -107,9 +96,11 @@ export class RemoteServer {
     });
 
     this._wsEndpoint = await this.out('wsEndpoint');
+    this._browserPid = Number(await this.out('pid'));
+    this._watchdogPid = Number(await this.out('watchdogPid'));
   }
 
-  _addOutput(key, value) {
+  _addOutput(key: string, value: string) {
     this._output.set(key, value);
     const cb = this._outputCallback.get(key);
     this._outputCallback.delete(key);
@@ -117,27 +108,35 @@ export class RemoteServer {
       cb();
   }
 
-  async out(key) {
+  async out(key: string): Promise<string> {
     if (!this._output.has(key))
       await new Promise(f => this._outputCallback.set(key, f));
-    return this._output.get(key);
+    return this._output.get(key)!;
   }
 
   wsEndpoint() {
     return this._wsEndpoint;
   }
 
+  browserPid() {
+    return this._browserPid;
+  }
+
+  watchdogPid() {
+    return this._watchdogPid;
+  }
+
   child() {
     return this._child;
   }
 
-  async childExitCode() {
+  async childExitStatus() {
     return await this._exitPromise;
   }
 
   async close() {
     if (!this._didExit)
       this._child.kill();
-    return await this.childExitCode();
+    await this.childExitStatus();
   }
 }

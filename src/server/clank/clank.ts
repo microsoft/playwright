@@ -74,9 +74,6 @@ export class Clank extends BrowserType {
   _rewriteStartupError(error: Error): Error {
     return error;
   }
-
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-  }
 }
 
 class ClankBrowserProcess implements BrowserProcess {
@@ -89,9 +86,6 @@ class ClankBrowserProcess implements BrowserProcess {
   }
 
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
-
-  async kill(): Promise<void> {
-  }
 
   async close(): Promise<void> {
     await this._browser.close();

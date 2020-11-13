@@ -18,7 +18,6 @@
 import { WKBrowser } from '../webkit/wkBrowser';
 import { Env } from '../processLauncher';
 import * as path from 'path';
-import { kBrowserCloseMessageId } from './wkConnection';
 import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
@@ -35,10 +34,6 @@ export class WebKit extends BrowserType {
 
   _rewriteStartupError(error: Error): Error {
     return error;
-  }
-
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-    transport.send({method: 'Playwright.close', params: {}, id: kBrowserCloseMessageId});
   }
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {

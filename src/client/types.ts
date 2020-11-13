@@ -60,6 +60,9 @@ type LaunchOverrides = {
   ignoreDefaultArgs?: boolean | string[],
   env?: Env,
   logger?: Logger,
+  handleSIGINT?: boolean,
+  handleSIGTERM?: boolean,
+  handleSIGHUP?: boolean,
 };
 type FirefoxUserPrefs = {
   firefoxUserPrefs?: { [key: string]: string | number | boolean },

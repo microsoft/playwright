@@ -23,10 +23,6 @@ import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { debugLogger } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
 
-// WKPlaywright uses this special id to issue Browser.close command which we
-// should ignore.
-export const kBrowserCloseMessageId = -9999;
-
 // We emulate kPageProxyMessageReceived message to unify it with Browser.pageProxyCreated
 // and Browser.pageProxyDestroyed for easier management.
 export const kPageProxyMessageReceived = 'kPageProxyMessageReceived';
@@ -62,8 +58,6 @@ export class WKConnection {
 
   private _dispatchMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
-      return;
     if (message.pageProxyId) {
       const payload: PageProxyMessageReceivedPayload = { message: message, pageProxyId: message.pageProxyId };
       this.browserSession.dispatchMessage({ method: kPageProxyMessageReceived, params: payload });

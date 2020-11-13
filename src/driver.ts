@@ -23,7 +23,6 @@ import { installBrowsersWithProgressBar } from './install/installer';
 import { Transport } from './protocol/transport';
 import { Electron } from './server/electron/electron';
 import { Playwright } from './server/playwright';
-import { gracefullyCloseAll } from './server/processLauncher';
 import { installHarTracer } from './trace/harTracer';
 import { installTracer } from './trace/tracer';
 
@@ -52,10 +51,6 @@ export function runServer() {
   const dispatcherConnection = new DispatcherConnection();
   const transport = new Transport(process.stdout, process.stdin);
   transport.onclose = async () => {
-    // Force exit after 30 seconds.
-    setTimeout(() => process.exit(0), 30000);
-    // Meanwhile, try to gracefully close all browsers.
-    await gracefullyCloseAll();
     process.exit(0);
   };
   transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));

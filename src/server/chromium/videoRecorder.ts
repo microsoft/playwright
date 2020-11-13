@@ -61,19 +61,15 @@ export class VideoRecorder {
     const executablePath = ffmpegExecutable();
     if (!executablePath)
       throw new Error('ffmpeg executable was not found');
-    const { launchedProcess, gracefullyClose } = await launchProcess({
+    const { launchedProcess, close } = await launchProcess({
       executablePath,
       args,
       stdio: 'stdin',
       progress,
       tempDirectories: [],
-      attemptToGracefullyClose: async () => {
-        progress.log('Closing stdin...');
-        launchedProcess.stdin.end();
-      },
-      onExit: (exitCode, signal) => {
-        progress.log(`ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
-      },
+    });
+    launchedProcess.once('exit', (exitCode, signal) => {
+      progress.log(`ffmpeg onkill exitCode=${exitCode} signal=${signal}`);
     });
     launchedProcess.stdin.on('finish', () => {
       progress.log('ffmpeg finished input.');
@@ -82,7 +78,7 @@ export class VideoRecorder {
       progress.log('ffmpeg error.');
     });
     this._process = launchedProcess;
-    this._gracefullyClose = gracefullyClose;
+    this._gracefullyClose = close;
   }
 
   writeFrame(frame: Buffer, timestamp: number) {

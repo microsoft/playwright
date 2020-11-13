@@ -18,10 +18,9 @@
 import * as path from 'path';
 import { CRBrowser } from './crBrowser';
 import { Env } from '../processLauncher';
-import { kBrowserCloseMessageId } from './crConnection';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { BrowserType } from '../browserType';
-import { ConnectionTransport, ProtocolRequest } from '../transport';
+import { ConnectionTransport } from '../transport';
 import type { BrowserDescriptor } from '../../utils/browserPaths';
 import { CRDevTools } from './crDevTools';
 import { BrowserOptions } from '../browser';
@@ -68,11 +67,6 @@ export class Chromium extends BrowserType {
 
   _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env {
     return env;
-  }
-
-  _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
-    const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
-    transport.send(message);
   }
 
   _defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): string[] {

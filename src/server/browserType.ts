@@ -110,9 +110,6 @@ export abstract class BrowserType {
       ignoreAllDefaultArgs,
       args = [],
       executablePath = null,
-      handleSIGINT = true,
-      handleSIGTERM = true,
-      handleSIGHUP = true,
     } = options;
 
     const env = options.env ? envArrayToObject(options.env) : process.env;
@@ -161,43 +158,27 @@ export abstract class BrowserType {
       await validateHostRequirements(this._browserPath, this._browserDescriptor);
     }
 
-    // Note: it is important to define these variables before launchProcess, so that we don't get
-    // "Cannot access 'browserServer' before initialization" if something went wrong.
-    let transport: ConnectionTransport | undefined = undefined;
-    let browserProcess: BrowserProcess | undefined = undefined;
-    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
+    const { launchedProcess, close } = await launchProcess({
       executablePath: executable,
       args: browserArguments,
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
-      handleSIGINT,
-      handleSIGTERM,
-      handleSIGHUP,
       progress,
       stdio: 'pipe',
       tempDirectories,
-      attemptToGracefullyClose: async () => {
-        if ((options as any).__testHookGracefullyClose)
-          await (options as any).__testHookGracefullyClose();
-        // We try to gracefully close to prevent crash reporting and core dumps.
-        // Note that it's fine to reuse the pipe transport, since
-        // our connection ignores kBrowserCloseMessageId.
-        this._attemptToGracefullyCloseBrowser(transport!);
-      },
-      onExit: (exitCode, signal) => {
-        if (browserProcess && browserProcess.onclose)
-          browserProcess.onclose(exitCode, signal);
-      },
     });
-    browserProcess = {
+    const browserProcess: BrowserProcess = {
       onclose: undefined,
       process: launchedProcess,
-      close: gracefullyClose,
-      kill
+      close,
     };
-    progress.cleanupWhenAborted(() => browserProcess && closeOrKill(browserProcess, progress.timeUntilDeadline()));
+    launchedProcess.once('exit', (exitCode, signal) => {
+      if (browserProcess.onclose)
+        browserProcess.onclose(exitCode, signal);
+    });
+    progress.cleanupWhenAborted(close);
 
     const stdio = launchedProcess.stdio as unknown as [NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
-    transport = new PipeTransport(stdio[3], stdio[4]);
+    const transport = new PipeTransport(stdio[3], stdio[4]);
     return { browserProcess, downloadsPath, transport };
   }
 
@@ -205,7 +186,6 @@ export abstract class BrowserType {
   abstract _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<Browser>;
   abstract _amendEnvironment(env: Env, userDataDir: string, executable: string, browserArguments: string[]): Env;
   abstract _rewriteStartupError(error: Error): Error;
-  abstract _attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
 
 function copyTestHooks(from: object, to: object) {
@@ -218,18 +198,4 @@ function copyTestHooks(from: object, to: object) {
 function validateLaunchOptions<Options extends types.LaunchOptions>(options: Options): Options {
   const { devtools = false, headless = !isDebugMode() && !devtools } = options;
   return { ...options, devtools, headless };
-}
-
-async function closeOrKill(browserProcess: BrowserProcess, timeout: number): Promise<void> {
-  let timer: NodeJS.Timer;
-  try {
-    await Promise.race([
-      browserProcess.close(),
-      new Promise((resolve, reject) => timer = setTimeout(reject, timeout)),
-    ]);
-  } catch (ignored) {
-    await browserProcess.kill().catch(ignored => {}); // Make sure to await actual process exit.
-  } finally {
-    clearTimeout(timer!);
-  }
 }

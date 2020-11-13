@@ -27,10 +27,6 @@ export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
 };
 
-// FFPlaywright uses this special id to issue Browser.close command which we
-// should ignore.
-export const kBrowserCloseMessageId = -9999;
-
 export class FFConnection extends EventEmitter {
   private _lastId: number;
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
@@ -86,8 +82,6 @@ export class FFConnection extends EventEmitter {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
-    if (message.id === kBrowserCloseMessageId)
-      return;
     if (message.sessionId) {
       const session = this._sessions.get(message.sessionId);
       if (session)

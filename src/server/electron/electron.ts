@@ -37,9 +37,6 @@ export type ElectronLaunchOptionsBase = {
   args?: string[],
   cwd?: string,
   env?: types.EnvArray,
-  handleSIGINT?: boolean,
-  handleSIGTERM?: boolean,
-  handleSIGHUP?: boolean,
   timeout?: number,
 };
 
@@ -141,9 +138,6 @@ export class Electron  {
   async launch(executablePath: string, options: ElectronLaunchOptionsBase = {}): Promise<ElectronApplication> {
     const {
       args = [],
-      handleSIGINT = true,
-      handleSIGTERM = true,
-      handleSIGHUP = true,
     } = options;
     const controller = new ProgressController();
     controller.setLogName('browser');
@@ -157,20 +151,19 @@ export class Electron  {
           electronArguments.push('--no-sandbox');
       }
 
-      const { launchedProcess, gracefullyClose, kill } = await launchProcess({
+      const { launchedProcess } = await launchProcess({
         executablePath,
         args: electronArguments,
         env: options.env ? envArrayToObject(options.env) : process.env,
-        handleSIGINT,
-        handleSIGTERM,
-        handleSIGHUP,
         progress,
         stdio: 'pipe',
         cwd: options.cwd,
         tempDirectories: [],
-        attemptToGracefullyClose: () => app!.close(),
-        onExit: () => {},
       });
+
+      const gracefullyClose = async () => {
+        await app!.close();
+      };
 
       const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
@@ -182,7 +175,6 @@ export class Electron  {
         onclose: undefined,
         process: launchedProcess,
         close: gracefullyClose,
-        kill
       };
       const browserOptions: BrowserOptions = {
         name: 'electron',

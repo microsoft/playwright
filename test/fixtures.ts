@@ -94,7 +94,6 @@ fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) =
     console.error(`Using executable at ${executablePath}`);
   await run({
     executablePath,
-    handleSIGINT: false,
     slowMo,
     headless: !headful,
   });
@@ -110,7 +109,6 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
       stdio: 'pipe',
       detached: true,
     });
-    spawnedProcess.unref();
     const onExit = (exitCode, signal) => {
       throw new Error(`Server closed with exitCode=${exitCode} signal=${signal}`);
     };
