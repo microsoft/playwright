@@ -330,9 +330,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.PageSetFileChooserInterceptedNoReplyParams = tObject({
     intercepted: tBoolean,
   });
-  scheme.PageSetWebSocketFramesReportingEnabledNoReplyParams = tObject({
-    enabled: tBoolean,
-  });
   scheme.PageAddInitScriptParams = tObject({
     source: tString,
   });

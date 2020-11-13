@@ -625,10 +625,6 @@ Page:
       parameters:
         intercepted: boolean
 
-    setWebSocketFramesReportingEnabledNoReply:
-      parameters:
-        enabled: boolean
-
     addInitScript:
       parameters:
         source: string

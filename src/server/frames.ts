@@ -359,16 +359,12 @@ export class FrameManager {
   }
 
   onWebSocketFrameSent(requestId: string, opcode: number, data: string) {
-    if (!this._page._webSocketFramesReportingEnabled)
-      return;
     const ws = this._webSockets.get(requestId);
     if (ws)
       ws.frameSent(opcode, data);
   }
 
   webSocketFrameReceived(requestId: string, opcode: number, data: string) {
-    if (!this._page._webSocketFramesReportingEnabled)
-      return;
     const ws = this._webSockets.get(requestId);
     if (ws)
       ws.frameReceived(opcode, data);
