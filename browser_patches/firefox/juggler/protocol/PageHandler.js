@@ -106,7 +106,7 @@ class PageHandler {
         pageNavigationAborted: emitProtocolEvent('Page.navigationAborted'),
         pageNavigationCommitted: emitProtocolEvent('Page.navigationCommitted'),
         pageNavigationStarted: emitProtocolEvent('Page.navigationStarted'),
-        pageReady: this._onPageReady.bind(this), 
+        pageReady: this._onPageReady.bind(this),
         pageSameDocumentNavigation: emitProtocolEvent('Page.sameDocumentNavigation'),
         pageUncaughtError: emitProtocolEvent('Page.uncaughtError'),
         pageWorkerCreated: this._onWorkerCreated.bind(this),
@@ -237,8 +237,8 @@ class PageHandler {
       this._pageNetwork.disableRequestInterception();
   }
 
-  async ['Network.resumeInterceptedRequest']({requestId, method, headers, postData}) {
-    this._pageNetwork.resumeInterceptedRequest(requestId, method, headers, postData);
+  async ['Network.resumeInterceptedRequest']({requestId, url, method, headers, postData}) {
+    this._pageNetwork.resumeInterceptedRequest(requestId, url, method, headers, postData);
   }
 
   async ['Network.abortInterceptedRequest']({requestId, errorCode}) {

@@ -491,6 +491,7 @@ const Network = {
     'resumeInterceptedRequest': {
       params: {
         requestId: t.String,
+        url: t.Optional(t.String),
         method: t.Optional(t.String),
         headers: t.Optional(t.Array(networkTypes.HTTPHeader)),
         postData: t.Optional(t.String),

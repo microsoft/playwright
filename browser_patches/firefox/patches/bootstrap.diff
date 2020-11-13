@@ -1595,6 +1595,37 @@ index 25c5b01fc54c8d45da8ceb7cf6ba163bee3c5361..490c5ce49cd9b5f804df59abbfb0450f
    void updateTimeZone();
  
    void internalResyncICUDefaultTimeZone();
+diff --git a/netwerk/base/nsINetworkInterceptController.idl b/netwerk/base/nsINetworkInterceptController.idl
+index 64a4a71b03b28872f376aac8eee12805bebd1bd8..f6fa7d731f3b0c7c4fcb26babad3fc2cdb29aec1 100644
+--- a/netwerk/base/nsINetworkInterceptController.idl
++++ b/netwerk/base/nsINetworkInterceptController.idl
+@@ -56,6 +56,7 @@ interface nsIInterceptedChannel : nsISupports
+      * network request.
+      */
+     void resetInterception();
++    void resetInterceptionWithURI(in nsIURI aURI);
+ 
+     /**
+      * Set the status and reason for the forthcoming synthesized response.
+diff --git a/netwerk/protocol/http/InterceptedHttpChannel.cpp b/netwerk/protocol/http/InterceptedHttpChannel.cpp
+index 86dfc4c832ab53b2dab6ac2ca7c63bd9ef326d4a..b004db5e5effd9bbcb0c4c530c13d33120a9da44 100644
+--- a/netwerk/protocol/http/InterceptedHttpChannel.cpp
++++ b/netwerk/protocol/http/InterceptedHttpChannel.cpp
+@@ -601,6 +601,14 @@ void InterceptedHttpChannel::DoAsyncAbort(nsresult aStatus) {
+   Unused << AsyncAbort(aStatus);
+ }
+ 
++NS_IMETHODIMP
++InterceptedHttpChannel::ResetInterceptionWithURI(nsIURI* aURI) {
++  if (aURI) {
++    mURI = aURI;
++  }
++  return ResetInterception();
++}
++
+ NS_IMETHODIMP
+ InterceptedHttpChannel::ResetInterception(void) {
+   if (mCanceled) {
 diff --git a/parser/html/nsHtml5TreeOpExecutor.cpp b/parser/html/nsHtml5TreeOpExecutor.cpp
 index 1296a8b380f1ae1bb53ee25d1b2374dbf060fbb6..c1bea93fc8e7e9459f6f358bc91da820702197d2 100644
 --- a/parser/html/nsHtml5TreeOpExecutor.cpp
