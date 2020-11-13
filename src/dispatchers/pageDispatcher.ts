@@ -158,10 +158,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     await this._page._setFileChooserIntercepted(params.intercepted);
   }
 
-  async setWebSocketFramesReportingEnabledNoReply(params: channels.PageSetWebSocketFramesReportingEnabledNoReplyParams): Promise<void> {
-    this._page._setWebSocketFramesReportingEnabled(params.enabled);
-  }
-
   async keyboardDown(params: channels.PageKeyboardDownParams): Promise<void> {
     await this._page.keyboard.down(params.key);
   }

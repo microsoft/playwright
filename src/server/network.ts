@@ -327,6 +327,7 @@ export class Response {
 
 export class WebSocket extends EventEmitter {
   private _url: string;
+  private _framesReportingEnabled = true;
 
   static Events = {
     Close: 'close',
@@ -345,11 +346,13 @@ export class WebSocket extends EventEmitter {
   }
 
   frameSent(opcode: number, data: string) {
-    this.emit(WebSocket.Events.FrameSent, { opcode, data });
+    if (this._framesReportingEnabled)
+      this.emit(WebSocket.Events.FrameSent, { opcode, data });
   }
 
   frameReceived(opcode: number, data: string) {
-    this.emit(WebSocket.Events.FrameReceived, { opcode, data });
+    if (this._framesReportingEnabled)
+      this.emit(WebSocket.Events.FrameReceived, { opcode, data });
   }
 
   error(errorMessage: string) {
@@ -358,6 +361,10 @@ export class WebSocket extends EventEmitter {
 
   closed() {
     this.emit(WebSocket.Events.Close);
+  }
+
+  setFramesReportingEnabled(enabled: boolean) {
+    this._framesReportingEnabled = enabled;
   }
 }
 

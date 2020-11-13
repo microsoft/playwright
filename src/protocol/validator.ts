@@ -330,9 +330,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.PageSetFileChooserInterceptedNoReplyParams = tObject({
     intercepted: tBoolean,
   });
-  scheme.PageSetWebSocketFramesReportingEnabledNoReplyParams = tObject({
-    enabled: tBoolean,
-  });
   scheme.PageAddInitScriptParams = tObject({
     source: tString,
   });
@@ -870,6 +867,9 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ResponseBodyParams = tOptional(tObject({}));
   scheme.ResponseFinishedParams = tOptional(tObject({}));
+  scheme.WebSocketSetFramesReportingEnabledNoReplyParams = tObject({
+    enabled: tBoolean,
+  });
   scheme.BindingCallRejectParams = tObject({
     error: tType('SerializedError'),
   });

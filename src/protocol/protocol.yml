@@ -625,10 +625,6 @@ Page:
       parameters:
         intercepted: boolean
 
-    setWebSocketFramesReportingEnabledNoReply:
-      parameters:
-        enabled: boolean
-
     addInitScript:
       parameters:
         source: string
@@ -1876,6 +1872,13 @@ WebSocket:
 
   initializer:
     url: string
+
+  commands:
+
+    # Frames reporting is enabled by default.
+    setFramesReportingEnabledNoReply:
+      parameters:
+        enabled: boolean
 
   events:
     open:

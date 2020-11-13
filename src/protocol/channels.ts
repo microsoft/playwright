@@ -728,7 +728,6 @@ export interface PageChannel extends Channel {
   setDefaultNavigationTimeoutNoReply(params: PageSetDefaultNavigationTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultNavigationTimeoutNoReplyResult>;
   setDefaultTimeoutNoReply(params: PageSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<PageSetDefaultTimeoutNoReplyResult>;
   setFileChooserInterceptedNoReply(params: PageSetFileChooserInterceptedNoReplyParams, metadata?: Metadata): Promise<PageSetFileChooserInterceptedNoReplyResult>;
-  setWebSocketFramesReportingEnabledNoReply(params: PageSetWebSocketFramesReportingEnabledNoReplyParams, metadata?: Metadata): Promise<PageSetWebSocketFramesReportingEnabledNoReplyResult>;
   addInitScript(params: PageAddInitScriptParams, metadata?: Metadata): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, metadata?: Metadata): Promise<PageCloseResult>;
   emulateMedia(params: PageEmulateMediaParams, metadata?: Metadata): Promise<PageEmulateMediaResult>;
@@ -840,13 +839,6 @@ export type PageSetFileChooserInterceptedNoReplyOptions = {
 
 };
 export type PageSetFileChooserInterceptedNoReplyResult = void;
-export type PageSetWebSocketFramesReportingEnabledNoReplyParams = {
-  enabled: boolean,
-};
-export type PageSetWebSocketFramesReportingEnabledNoReplyOptions = {
-
-};
-export type PageSetWebSocketFramesReportingEnabledNoReplyResult = void;
 export type PageAddInitScriptParams = {
   source: string,
 };
@@ -2236,6 +2228,7 @@ export interface WebSocketChannel extends Channel {
   on(event: 'frameReceived', callback: (params: WebSocketFrameReceivedEvent) => void): this;
   on(event: 'error', callback: (params: WebSocketErrorEvent) => void): this;
   on(event: 'close', callback: (params: WebSocketCloseEvent) => void): this;
+  setFramesReportingEnabledNoReply(params: WebSocketSetFramesReportingEnabledNoReplyParams, metadata?: Metadata): Promise<WebSocketSetFramesReportingEnabledNoReplyResult>;
 }
 export type WebSocketOpenEvent = {};
 export type WebSocketFrameSentEvent = {
@@ -2250,6 +2243,13 @@ export type WebSocketErrorEvent = {
   error: string,
 };
 export type WebSocketCloseEvent = {};
+export type WebSocketSetFramesReportingEnabledNoReplyParams = {
+  enabled: boolean,
+};
+export type WebSocketSetFramesReportingEnabledNoReplyOptions = {
+
+};
+export type WebSocketSetFramesReportingEnabledNoReplyResult = void;
 
 // ----------- ConsoleMessage -----------
 export type ConsoleMessageInitializer = {

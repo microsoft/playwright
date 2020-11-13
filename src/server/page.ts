@@ -147,7 +147,6 @@ export class Page extends EventEmitter {
   _ownedContext: BrowserContext | undefined;
   readonly selectors: Selectors;
   _video: Video | null = null;
-  _webSocketFramesReportingEnabled = false;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
@@ -439,10 +438,6 @@ export class Page extends EventEmitter {
 
   async _setFileChooserIntercepted(enabled: boolean): Promise<void> {
     await this._delegate.setFileChooserIntercepted(enabled);
-  }
-
-  _setWebSocketFramesReportingEnabled(enabled: boolean) {
-    this._webSocketFramesReportingEnabled = enabled;
   }
 
   videoStarted(video: Video) {

@@ -109,4 +109,8 @@ export class WebSocketDispatcher extends Dispatcher<WebSocket, channels.WebSocke
     webSocket.on(WebSocket.Events.Error, (error: string) => this._dispatchEvent('error', { error }));
     webSocket.on(WebSocket.Events.Close, () => this._dispatchEvent('close', {}));
   }
+
+  async setFramesReportingEnabledNoReply(params: channels.WebSocketSetFramesReportingEnabledNoReplyParams): Promise<void> {
+    this._object.setFramesReportingEnabled(params.enabled);
+  }
 }

@@ -130,7 +130,14 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('response', ({ response }) => this.emit(Events.Page.Response, Response.from(response)));
     this._channel.on('route', ({ route, request }) => this._onRoute(Route.from(route), Request.from(request)));
     this._channel.on('video', ({ relativePath }) => this.video()!._setRelativePath(relativePath));
-    this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
+    this._channel.on('webSocket', ({ webSocket }) => {
+      if (!this.listenerCount(Events.Page.WebSocket)) {
+        // Noone is listening for this WebSocket - do not unnecessary send
+        // large WebSocket frames over protocol.
+        webSocket.setFramesReportingEnabledNoReply({ enabled: false }).catch(e => {});
+      }
+      this.emit(Events.Page.WebSocket, WebSocket.from(webSocket));
+    });
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
     if (this._browserContext._browserName === 'chromium') {
@@ -579,8 +586,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   on(event: string | symbol, listener: Listener): this {
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
-    if (event === Events.Page.WebSocket && !this.listenerCount(event))
-      this._channel.setWebSocketFramesReportingEnabledNoReply({ enabled: true });
     super.on(event, listener);
     return this;
   }
@@ -588,8 +593,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   addListener(event: string | symbol, listener: Listener): this {
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._channel.setFileChooserInterceptedNoReply({ intercepted: true });
-    if (event === Events.Page.WebSocket && !this.listenerCount(event))
-      this._channel.setWebSocketFramesReportingEnabledNoReply({ enabled: true });
     super.addListener(event, listener);
     return this;
   }
@@ -598,9 +601,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     super.off(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
-    // Note: we do not stop reporting web socket frames, since
-    // user might not listen to 'websocket' anymore, but still have
-    // a functioning WebSocket object.
     return this;
   }
 
@@ -608,9 +608,6 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     super.removeListener(event, listener);
     if (event === Events.Page.FileChooser && !this.listenerCount(event))
       this._channel.setFileChooserInterceptedNoReply({ intercepted: false });
-    // Note: we do not stop reporting web socket frames, since
-    // user might not listen to 'websocket' anymore, but still have
-    // a functioning WebSocket object.
     return this;
   }
 
