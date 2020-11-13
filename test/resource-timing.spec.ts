@@ -23,58 +23,35 @@ it('should work', async ({ page, server }) => {
     page.goto(server.EMPTY_PAGE)
   ]);
   const timing = request.timing();
-  expect(timing.domainLookupStart).toBeGreaterThanOrEqual(0);
-  expect(timing.domainLookupEnd).toBeGreaterThanOrEqual(timing.domainLookupStart);
-  expect(timing.connectStart).toBeGreaterThanOrEqual(timing.domainLookupEnd);
-  expect(timing.secureConnectionStart).toBe(-1);
-  expect(timing.connectEnd).toBeGreaterThan(timing.secureConnectionStart);
+  verifyConnectionTimingConsistency(timing);
   expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
-  expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
+  expect(timing.responseStart).toBeGreaterThanOrEqual(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
   expect(timing.responseEnd).toBeLessThan(10000);
 });
 
-it('should work for subresource', async ({ page, server, isWindows, isWebKit }) => {
+it('should work for subresource', async ({ page, server }) => {
   const requests = [];
   page.on('requestfinished', request => requests.push(request));
   await page.goto(server.PREFIX + '/one-style.html');
   expect(requests.length).toBe(2);
   const timing = requests[1].timing();
-  if (isWebKit && isWindows) {
-    // Curl does not reuse connections.
-    expect(timing.domainLookupStart).toBeGreaterThanOrEqual(0);
-    expect(timing.domainLookupEnd).toBeGreaterThanOrEqual(timing.domainLookupStart);
-    expect(timing.connectStart).toBeGreaterThanOrEqual(timing.domainLookupEnd);
-    expect(timing.secureConnectionStart).toBe(-1);
-    expect(timing.connectEnd).toBeGreaterThan(timing.secureConnectionStart);
-  } else {
-    expect(timing.domainLookupStart === 0 || timing.domainLookupStart === -1).toBeTruthy();
-    expect(timing.domainLookupEnd).toBe(-1);
-    expect(timing.connectStart).toBe(-1);
-    expect(timing.secureConnectionStart).toBe(-1);
-    expect(timing.connectEnd).toBe(-1);
-  }
+  verifyConnectionTimingConsistency(timing);
   expect(timing.requestStart).toBeGreaterThanOrEqual(0);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
   expect(timing.responseEnd).toBeLessThan(10000);
 });
 
-it('should work for SSL', async ({ browser, httpsServer, isMac, isWebKit }) => {
+it('should work for SSL', async ({ browser, httpsServer }) => {
   const page = await browser.newPage({ ignoreHTTPSErrors: true });
   const [request] = await Promise.all([
     page.waitForEvent('requestfinished'),
     page.goto(httpsServer.EMPTY_PAGE)
   ]);
   const timing = request.timing();
-  if (!(isWebKit && isMac)) {
-    expect(timing.domainLookupStart).toBeGreaterThanOrEqual(0);
-    expect(timing.domainLookupEnd).toBeGreaterThanOrEqual(timing.domainLookupStart);
-    expect(timing.connectStart).toBeGreaterThanOrEqual(timing.domainLookupEnd);
-    expect(timing.secureConnectionStart).toBeGreaterThan(timing.connectStart);
-    expect(timing.connectEnd).toBeGreaterThan(timing.secureConnectionStart);
-    expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
-  }
+  verifyConnectionTimingConsistency(timing);
+  expect(timing.requestStart).toBeGreaterThanOrEqual(timing.connectEnd);
   expect(timing.responseStart).toBeGreaterThan(timing.requestStart);
   expect(timing.responseEnd).toBeGreaterThanOrEqual(timing.responseStart);
   expect(timing.responseEnd).toBeLessThan(10000);
@@ -95,24 +72,28 @@ it('should work for redirect', (test, { browserName }) => {
   expect(responses[1].url()).toBe(server.PREFIX + '/empty.html');
 
   const timing1 = responses[0].request().timing();
-  expect(timing1.domainLookupStart).toBeGreaterThanOrEqual(0);
-  expect(timing1.domainLookupEnd).toBeGreaterThanOrEqual(timing1.domainLookupStart);
-  expect(timing1.connectStart).toBeGreaterThanOrEqual(timing1.domainLookupEnd);
-  expect(timing1.secureConnectionStart).toBe(-1);
-  expect(timing1.connectEnd).toBeGreaterThan(timing1.secureConnectionStart);
+  verifyConnectionTimingConsistency(timing1);
   expect(timing1.requestStart).toBeGreaterThanOrEqual(timing1.connectEnd);
   expect(timing1.responseStart).toBeGreaterThan(timing1.requestStart);
   expect(timing1.responseEnd).toBeGreaterThanOrEqual(timing1.responseStart);
   expect(timing1.responseEnd).toBeLessThan(10000);
 
   const timing2 = responses[1].request().timing();
-  expect(timing2.domainLookupStart).toBe(-1);
-  expect(timing2.domainLookupEnd).toBe(-1);
-  expect(timing2.connectStart).toBe(-1);
-  expect(timing2.secureConnectionStart).toBe(-1);
-  expect(timing2.connectEnd).toBe(-1);
+  verifyConnectionTimingConsistency(timing2);
   expect(timing2.requestStart).toBeGreaterThanOrEqual(0);
   expect(timing2.responseStart).toBeGreaterThan(timing2.requestStart);
   expect(timing2.responseEnd).toBeGreaterThanOrEqual(timing2.responseStart);
   expect(timing2.responseEnd).toBeLessThan(10000);
 });
+
+function verifyTimingValue(value: number, previous: number) {
+  expect(value === -1 || value > 0 && value >= previous);
+}
+
+function verifyConnectionTimingConsistency(timing) {
+  verifyTimingValue(timing.domainLookupStart, -1);
+  verifyTimingValue(timing.domainLookupEnd, timing.domainLookupStart);
+  verifyTimingValue(timing.connectStart, timing.domainLookupEnd);
+  verifyTimingValue(timing.secureConnectionStart, timing.connectStart);
+  verifyTimingValue(timing.connectEnd, timing.secureConnectionStart);
+}
