@@ -16,6 +16,7 @@
  */
 
 import { it, expect, describe } from './fixtures';
+import * as os from 'os';
 
 function crash(page, toImpl, browserName) {
   if (browserName === 'chromium')
@@ -29,6 +30,8 @@ function crash(page, toImpl, browserName) {
 describe('', (suite, { browserName, platform, wire }) => {
   suite.skip(wire && browserName !== 'chromium');
   suite.flaky(browserName === 'firefox' && platform === 'win32');
+  const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
+  suite.fixme(isBigSur && browserName === 'webkit', 'Timing out after roll');
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);

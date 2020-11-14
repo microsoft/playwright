@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect, describe } from './fixtures';
+import * as os from 'os';
 
 it('should work', async ({page, server}) => {
   await page.route('**/*', route => route.continue());
@@ -55,70 +56,75 @@ it('should amend method on main request', async ({page, server}) => {
   expect((await request).method).toBe('POST');
 });
 
-it('should amend post data', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE);
-  await page.route('**/*', route => {
-    route.continue({ postData: 'doggo' });
+describe('', (suite, { browserName, platform, wire }) => {
+  const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
+  suite.flaky(isBigSur && browserName === 'webkit', 'Flaky after roll');
+}, () => {
+  it('should amend post data', async ({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/*', route => {
+      route.continue({ postData: 'doggo' });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+    ]);
+    expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
   });
-  const [serverRequest] = await Promise.all([
-    server.waitForRequest('/sleep.zzz'),
-    page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
-  ]);
-  expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
-});
 
-it('should amend method and post data', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE);
-  await page.route('**/*', route => {
-    route.continue({ method: 'POST', postData: 'doggo' });
+  it('should amend method and post data', async ({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/*', route => {
+      route.continue({ method: 'POST', postData: 'doggo' });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'GET' }))
+    ]);
+    expect(serverRequest.method).toBe('POST');
+    expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
   });
-  const [serverRequest] = await Promise.all([
-    server.waitForRequest('/sleep.zzz'),
-    page.evaluate(() => fetch('/sleep.zzz', { method: 'GET' }))
-  ]);
-  expect(serverRequest.method).toBe('POST');
-  expect((await serverRequest.postBody).toString('utf8')).toBe('doggo');
-});
 
-it('should amend utf8 post data', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE);
-  await page.route('**/*', route => {
-    route.continue({ postData: 'пушкин' });
+  it('should amend utf8 post data', async ({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/*', route => {
+      route.continue({ postData: 'пушкин' });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+    ]);
+    expect(serverRequest.method).toBe('POST');
+    expect((await serverRequest.postBody).toString('utf8')).toBe('пушкин');
   });
-  const [serverRequest] = await Promise.all([
-    server.waitForRequest('/sleep.zzz'),
-    page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
-  ]);
-  expect(serverRequest.method).toBe('POST');
-  expect((await serverRequest.postBody).toString('utf8')).toBe('пушкин');
-});
 
-it('should amend longer post data', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE);
-  await page.route('**/*', route => {
-    route.continue({ postData: 'doggo-is-longer-than-birdy' });
+  it('should amend longer post data', async ({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.route('**/*', route => {
+      route.continue({ postData: 'doggo-is-longer-than-birdy' });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+    ]);
+    expect(serverRequest.method).toBe('POST');
+    expect((await serverRequest.postBody).toString('utf8')).toBe('doggo-is-longer-than-birdy');
   });
-  const [serverRequest] = await Promise.all([
-    server.waitForRequest('/sleep.zzz'),
-    page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
-  ]);
-  expect(serverRequest.method).toBe('POST');
-  expect((await serverRequest.postBody).toString('utf8')).toBe('doggo-is-longer-than-birdy');
-});
 
-it('should amend binary post data', async ({page, server}) => {
-  await page.goto(server.EMPTY_PAGE);
-  const arr = Array.from(Array(256).keys());
-  await page.route('**/*', route => {
-    route.continue({ postData: Buffer.from(arr) });
+  it('should amend binary post data', async ({page, server}) => {
+    await page.goto(server.EMPTY_PAGE);
+    const arr = Array.from(Array(256).keys());
+    await page.route('**/*', route => {
+      route.continue({ postData: Buffer.from(arr) });
+    });
+    const [serverRequest] = await Promise.all([
+      server.waitForRequest('/sleep.zzz'),
+      page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
+    ]);
+    expect(serverRequest.method).toBe('POST');
+    const buffer = await serverRequest.postBody;
+    expect(buffer.length).toBe(arr.length);
+    for (let i = 0; i < arr.length; ++i)
+      expect(arr[i]).toBe(buffer[i]);
   });
-  const [serverRequest] = await Promise.all([
-    server.waitForRequest('/sleep.zzz'),
-    page.evaluate(() => fetch('/sleep.zzz', { method: 'POST', body: 'birdy' }))
-  ]);
-  expect(serverRequest.method).toBe('POST');
-  const buffer = await serverRequest.postBody;
-  expect(buffer.length).toBe(arr.length);
-  for (let i = 0; i < arr.length; ++i)
-    expect(arr[i]).toBe(buffer[i]);
 });

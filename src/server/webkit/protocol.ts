@@ -1415,7 +1415,7 @@ export module Protocol {
     /**
      * Channels for different types of log messages.
      */
-    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"ad-click-attribution"|"other";
+    export type ChannelSource = "xml"|"javascript"|"network"|"console-api"|"storage"|"appcache"|"rendering"|"css"|"security"|"content-blocker"|"media"|"mediasource"|"webrtc"|"itp-debug"|"private-click-measurement"|"other";
     /**
      * Level of logging.
      */
@@ -5826,7 +5826,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     /**
      * List of settings able to be overridden by WebInspector.
      */
-    export type Setting = "AdClickAttributionDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebRTCEncryptionEnabled"|"WebSecurityEnabled";
+    export type Setting = "PrivateClickMeasurementDebugModeEnabled"|"AuthorAndUserStylesEnabled"|"ICECandidateFilteringEnabled"|"ITPDebugModeEnabled"|"ImagesEnabled"|"MediaCaptureRequiresSecureConnection"|"MockCaptureDevicesEnabled"|"NeedsSiteSpecificQuirks"|"ScriptEnabled"|"ShowDebugBorders"|"ShowRepaintCounter"|"WebRTCEncryptionEnabled"|"WebSecurityEnabled";
     /**
      * Resource type as it was perceived by the rendering engine.
      */
