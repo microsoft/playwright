@@ -22,7 +22,7 @@ import { Browser } from './server/browser';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'ws';
 import { Dispatcher, DispatcherScope, DispatcherConnection } from './dispatchers/dispatcher';
-import { BrowserDispatcher } from './dispatchers/browserDispatcher';
+import { BrowserDispatcher } from './dispatchers/playwrightDispatcher';
 import { BrowserContextDispatcher } from './dispatchers/browserContextDispatcher';
 import * as channels from './protocol/channels';
 import { BrowserServerLauncher, BrowserServer } from './client/browserType';

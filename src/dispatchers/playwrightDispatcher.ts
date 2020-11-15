@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
-import { Playwright } from '../server/playwright';
 import * as channels from '../protocol/channels';
-import { BrowserTypeDispatcher } from './browserTypeDispatcher';
-import { Dispatcher, DispatcherScope } from './dispatcher';
-import { Electron } from '../server/electron/electron';
-import { ElectronDispatcher } from './electronDispatcher';
+import { Browser } from '../server/browser';
+import { BrowserType } from '../server/browserType';
+import { CRBrowser } from '../server/chromium/crBrowser';
 import { DeviceDescriptors } from '../server/deviceDescriptors';
+import { Electron } from '../server/electron/electron';
+import { Playwright } from '../server/playwright';
+import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { Dispatcher, DispatcherScope } from './dispatcher';
+import { ElectronDispatcher } from './electronDispatcher';
+import { PageDispatcher } from './pageDispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
@@ -37,5 +42,69 @@ export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.Playwr
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, playwright.selectors),
     }, false, 'Playwright');
+  }
+}
+
+class BrowserTypeDispatcher extends Dispatcher<BrowserType, channels.BrowserTypeInitializer> implements channels.BrowserTypeChannel {
+  constructor(scope: DispatcherScope, browserType: BrowserType) {
+    super(scope, browserType, 'BrowserType', {
+      executablePath: browserType.executablePath(),
+      name: browserType.name()
+    }, true);
+  }
+
+  async launch(params: channels.BrowserTypeLaunchParams): Promise<channels.BrowserTypeLaunchResult> {
+    const browser = await this._object.launch(params);
+    return { browser: new BrowserDispatcher(this._scope, browser) };
+  }
+
+  async launchPersistentContext(params: channels.BrowserTypeLaunchPersistentContextParams): Promise<channels.BrowserTypeLaunchPersistentContextResult> {
+    const browserContext = await this._object.launchPersistentContext(params.userDataDir, params);
+    return { context: new BrowserContextDispatcher(this._scope, browserContext) };
+  }
+}
+
+export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserInitializer> implements channels.BrowserChannel {
+  constructor(scope: DispatcherScope, browser: Browser) {
+    super(scope, browser, 'Browser', { version: browser.version(), name: browser._options.name }, true);
+    browser.on(Browser.Events.Disconnected, () => this._didClose());
+  }
+
+  _didClose() {
+    this._dispatchEvent('close');
+    this._dispose();
+  }
+
+  async newContext(params: channels.BrowserNewContextParams): Promise<channels.BrowserNewContextResult> {
+    const context = await this._object.newContext(params);
+    if (params.storageState)
+      await context.setStorageState(params.storageState);
+    return { context: new BrowserContextDispatcher(this._scope, context) };
+  }
+
+  async close(): Promise<void> {
+    await this._object.close();
+  }
+
+  async crNewBrowserCDPSession(): Promise<channels.BrowserCrNewBrowserCDPSessionResult> {
+    if (this._object._options.name !== 'chromium')
+      throw new Error(`CDP session is only available in Chromium`);
+    const crBrowser = this._object as CRBrowser;
+    return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
+  }
+
+  async crStartTracing(params: channels.BrowserCrStartTracingParams): Promise<void> {
+    if (this._object._options.name !== 'chromium')
+      throw new Error(`Tracing is only available in Chromium`);
+    const crBrowser = this._object as CRBrowser;
+    await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
+  }
+
+  async crStopTracing(): Promise<channels.BrowserCrStopTracingResult> {
+    if (this._object._options.name !== 'chromium')
+      throw new Error(`Tracing is only available in Chromium`);
+    const crBrowser = this._object as CRBrowser;
+    const buffer = await crBrowser.stopTracing();
+    return { binary: buffer.toString('base64') };
   }
 }
