@@ -715,6 +715,14 @@ class PageAgent {
   }
 
   async _dispatchTapEvent({x, y, modifiers}) {
+    // Force a layout at the point in question, because touch events
+    // do not seem to trigger one like mouse events.
+    this._frameTree.mainFrame().domWindow().windowUtils.elementFromPoint(
+      x,
+      y,
+      false /* aIgnoreRootScrollFrame */,
+      true /* aFlushLayout */);
+
     const {defaultPrevented: startPrevented} = await this._dispatchTouchEvent({
       type: 'touchstart',
       modifiers,
