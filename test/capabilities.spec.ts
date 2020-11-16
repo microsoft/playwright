@@ -72,16 +72,17 @@ it('should play video', (test, { browserName, platform }) => {
 it('should support webgl', (test, {browserName, headful}) => {
   test.fixme(browserName === 'firefox' && !headful);
 }, async ({page}) => {
-  const hasWebGL2 = await page.evaluate(() => {
+  const hasWebGL = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     return !!canvas.getContext('webgl');
   });
-  expect(hasWebGL2).toBe(true);
+  expect(hasWebGL).toBe(true);
 });
 
 it('should support webgl 2', (test, {browserName, headful}) => {
   test.skip(browserName === 'webkit', 'Webkit doesn\'t have webgl2 enabled yet upstream.');
   test.fixme(browserName === 'firefox' && !headful);
+  test.fixme(browserName === 'chromium' && headful, 'chromium doesn\'t like webgl2 when running under xvfb');
 }, async ({page}) => {
   const hasWebGL2 = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
