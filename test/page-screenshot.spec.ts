@@ -298,8 +298,9 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect([buffer[0], buffer[1], buffer[2]]).toEqual([0xFF, 0xD8, 0xFF]);
   });
 
-  it('should work with large size', test => {
+  it('should work with large size', (test, { browserName, headful }) => {
     test.slow('Large screenshot is slow');
+    test.flaky(browserName === 'chromium' && headful, 'Gets a protocol error "Unable to capture screenshot"');
   }, async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 800 });
     await page.evaluate(() => {
