@@ -191,6 +191,7 @@ export type NormalizedFulfillResponse = {
 };
 
 export type NormalizedContinueOverrides = {
+  url?: string,
   method?: string,
   headers?: HeadersArray,
   postData?: Buffer,

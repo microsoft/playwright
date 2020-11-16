@@ -100,6 +100,7 @@ export class WKInterceptableRequest implements network.RouteDelegate {
     // or the page was closed. We should tolerate these errors.
     await this._session.sendMayFail('Network.interceptWithRequest', {
       requestId: this._requestId,
+      url: overrides.url,
       method: overrides.method,
       headers: overrides.headers ? headersArrayToObject(overrides.headers, false /* lowerCase */) : undefined,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined

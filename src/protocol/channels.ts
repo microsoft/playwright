@@ -2139,11 +2139,13 @@ export type RouteAbortOptions = {
 };
 export type RouteAbortResult = void;
 export type RouteContinueParams = {
+  url?: string,
   method?: string,
   headers?: NameValue[],
   postData?: Binary,
 };
 export type RouteContinueOptions = {
+  url?: string,
   method?: string,
   headers?: NameValue[],
   postData?: Binary,

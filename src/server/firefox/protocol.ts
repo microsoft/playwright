@@ -885,6 +885,7 @@ export module Protocol {
     export type abortInterceptedRequestReturnValue = void;
     export type resumeInterceptedRequestParameters = {
       requestId: string;
+      url?: string;
       method?: string;
       headers?: {
         name: string;

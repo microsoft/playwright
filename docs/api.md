@@ -4159,6 +4159,7 @@ Aborts the route's request.
 
 #### route.continue([overrides])
 - `overrides` <[Object]> Optional request overrides, can override following properties:
+  - `url` <[string]> If set changes the request URL. New URL must have same protocol as original one.
   - `method` <[string]> If set changes the request method (e.g. GET or POST)
   - `postData` <[string]|[Buffer]> If set changes the post data of request
   - `headers` <[Object]<[string], [string]>> If set changes the request HTTP headers. Header values will be converted to a string.

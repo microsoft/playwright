@@ -175,6 +175,7 @@ class InterceptableRequest implements network.RouteDelegate {
   async continue(overrides: types.NormalizedContinueOverrides) {
     await this._session.sendMayFail('Network.resumeInterceptedRequest', {
       requestId: this._id,
+      url: overrides.url,
       method: overrides.method,
       headers: overrides.headers,
       postData: overrides.postData ? Buffer.from(overrides.postData).toString('base64') : undefined

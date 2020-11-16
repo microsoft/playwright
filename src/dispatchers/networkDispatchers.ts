@@ -84,6 +84,7 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteInitializer
 
   async continue(params: channels.RouteContinueParams): Promise<void> {
     await this._object.continue({
+      url: params.url,
       method: params.method,
       headers: params.headers,
       postData: params.postData ? Buffer.from(params.postData, 'base64') : undefined,
