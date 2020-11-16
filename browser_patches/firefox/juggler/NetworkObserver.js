@@ -800,7 +800,7 @@ class ResponseStorage {
 
   addResponseBody(request, body) {
     if (body.length > this._maxResponseSize) {
-      this._responses.set(requestId, {
+      this._responses.set(request.requestId, {
         evicted: true,
         body: '',
       });
