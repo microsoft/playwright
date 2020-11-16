@@ -183,6 +183,7 @@ export class InjectedScript {
   private _runAbortableTask<T>(task: (progess: InjectedScriptProgress) => Promise<T>): InjectedScriptPoll<T> {
     let unsentLogs: string[] = [];
     let takeNextLogsCallback: ((logs: string[]) => void) | undefined;
+    let taskFinished = false;
     const logReady = () => {
       if (!takeNextLogsCallback)
         return;
@@ -193,7 +194,7 @@ export class InjectedScript {
 
     const takeNextLogs = () => new Promise<string[]>(fulfill => {
       takeNextLogsCallback = fulfill;
-      if (unsentLogs.length)
+      if (unsentLogs.length || taskFinished)
         logReady();
     });
 
@@ -211,9 +212,19 @@ export class InjectedScript {
       },
     };
 
+    const result = task(progress);
+
+    // After the task has finished, there should be no more logs.
+    // Release any pending `takeNextLogs` call, and do not block any future ones.
+    // This prevents non-finished protocol evaluation calls and memory leaks.
+    result.finally(() => {
+      taskFinished = true;
+      logReady();
+    });
+
     return {
       takeNextLogs,
-      result: task(progress),
+      result,
       cancel: () => { progress.aborted = true; },
       takeLastLogs: () => unsentLogs,
     };
