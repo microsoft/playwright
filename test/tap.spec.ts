@@ -48,13 +48,13 @@ it('should send all of the correct events', async ({page}) => {
 });
 
 it('should not send mouse events touchstart is canceled', async ({page}) => {
-  await page.setContent('hello world');
+  await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {
     // touchstart is not cancelable unless passive is false
     document.addEventListener('touchstart', t => t.preventDefault(), {passive: false});
   });
-  const eventsHandle = await trackEvents(await page.$('body'));
-  await page.tap('body');
+  const eventsHandle = await trackEvents(await page.$('div'));
+  await page.tap('div');
   expect(await eventsHandle.jsonValue()).toEqual([
     'pointerover',  'pointerenter',
     'pointerdown',  'touchstart',
@@ -64,12 +64,12 @@ it('should not send mouse events touchstart is canceled', async ({page}) => {
 });
 
 it('should not send mouse events when touchend is canceled', async ({page}) => {
-  await page.setContent('hello world');
+  await page.setContent(`<div style="width: 50px; height: 50px; background: red">`);
   await page.evaluate(() => {
     document.addEventListener('touchend', t => t.preventDefault());
   });
-  const eventsHandle = await trackEvents(await page.$('body'));
-  await page.tap('body');
+  const eventsHandle = await trackEvents(await page.$('div'));
+  await page.tap('div');
   expect(await eventsHandle.jsonValue()).toEqual([
     'pointerover',  'pointerenter',
     'pointerdown',  'touchstart',
