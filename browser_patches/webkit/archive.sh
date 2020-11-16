@@ -118,7 +118,6 @@ createZipForMac() {
   ditto {./WebKitBuild/Release,$tmpdir}/libwebrtc.dylib
   ditto {./WebKitBuild/Release,$tmpdir}/Playwright.app
   ditto {./WebKitBuild/Release,$tmpdir}/PluginProcessShim.dylib
-  ditto {./WebKitBuild/Release,$tmpdir}/SecItemShim.dylib
   ditto {./WebKitBuild/Release,$tmpdir}/WebCore.framework
   ditto {./WebKitBuild/Release,$tmpdir}/WebInspectorUI.framework
   ditto {./WebKitBuild/Release,$tmpdir}/WebKit.framework
