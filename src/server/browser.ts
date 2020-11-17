@@ -47,6 +47,7 @@ export abstract class Browser extends EventEmitter {
   readonly _options: BrowserOptions;
   private _downloads = new Map<string, Download>();
   _defaultContext: BrowserContext | null = null;
+  _isMac = false;
   private _startedClosing = false;
   readonly _idToVideo = new Map<string, Video>();
 

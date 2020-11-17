@@ -65,6 +65,8 @@ export class WKBrowser extends Browser {
       helper.addEventListener(this._browserSession, 'Playwright.screencastFinished', this._onScreencastFinished.bind(this)),
       helper.addEventListener(this._browserSession, kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this)),
     ];
+    // Always pretend to be a mac for webkit.
+    this._isMac = true;
   }
 
   _onDisconnect() {

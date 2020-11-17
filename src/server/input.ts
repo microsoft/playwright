@@ -29,6 +29,7 @@ type KeyDescription = {
   code: string,
   location: number,
   shifted?: KeyDescription;
+  alternate?: KeyDescription;
 };
 
 const kModifiers: types.KeyboardModifier[] = ['Alt', 'Control', 'Meta', 'Shift'];
@@ -64,11 +65,15 @@ export class Keyboard {
   private _keyDescriptionForString(keyString: string): KeyDescription {
     let description = usKeyboardLayout.get(keyString);
     assert(description, `Unknown key: "${keyString}"`);
+    const isMac = this._page._browserContext._browser._isMac;
+    if (isMac && this._pressedModifiers.has('Alt') && description.alternate)
+      description = description.alternate;
     const shift = this._pressedModifiers.has('Shift');
     description = shift && description.shifted ? description.shifted : description;
 
-    // if any modifiers besides shift are pressed, no text should be sent
-    if (this._pressedModifiers.size > 1 || (!this._pressedModifiers.has('Shift') && this._pressedModifiers.size === 1))
+    if (this._pressedModifiers.has('Control') ||
+        this._pressedModifiers.has('Meta') ||
+        (!isMac && this._pressedModifiers.has('Alt')))
       return { ...description, text: '' };
     return description;
   }
@@ -270,8 +275,22 @@ function buildLayoutClosure(layout: keyboardLayout.KeyboardLayout): Map<string, 
         shiftedDescription.keyCode = definition.shiftKeyCode;
     }
 
+    // Generate alternate definition.
+    let alternateDescription: KeyDescription | undefined;
+    if (definition.altKey) {
+      assert(definition.altKey.length === 1);
+      alternateDescription = { ...description };
+      alternateDescription.key = definition.altKey;
+      alternateDescription.text = definition.altKey;
+      if (definition.altShiftKey) {
+        alternateDescription.shifted = { ...description };
+        alternateDescription.shifted.key = definition.altShiftKey;
+        alternateDescription.shifted.text = definition.altShiftKey;
+      }
+    }
+
     // Map from code: Digit3 -> { ... descrption, shifted }
-    result.set(code, { ...description, shifted: shiftedDescription });
+    result.set(code, { ...description, shifted: shiftedDescription, alternate: alternateDescription });
 
     // Map from aliases: Shift -> non-shiftable definition
     if (aliases.has(code)) {

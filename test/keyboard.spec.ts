@@ -83,9 +83,7 @@ it('insertText should only emit input event', async ({page, server}) => {
   expect(await events.jsonValue()).toEqual(['input']);
 });
 
-it('should report shiftKey', (test, { browserName, platform }) => {
-  test.fail(browserName === 'firefox' && platform === 'darwin');
-}, async ({page, server}) => {
+it('should report shiftKey', async ({page, server, platform, isWebKit}) => {
   await page.goto(server.PREFIX + '/input/keyboard.html');
   const keyboard = page.keyboard;
   const codeForKey = {'Shift': 16, 'Alt': 18, 'Control': 17};
@@ -93,8 +91,9 @@ it('should report shiftKey', (test, { browserName, platform }) => {
     await keyboard.down(modifierKey);
     expect(await page.evaluate('getResult()')).toBe('Keydown: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' [' + modifierKey + ']');
     await keyboard.down('!');
-    // Shift+! will generate a keypress
-    if (modifierKey === 'Shift')
+    // Shift+! will generate a keypress, As will Alt+! on a mac
+    const isMacLike = platform === 'darwin' || isWebKit;
+    if (modifierKey === 'Shift' || (modifierKey === 'Alt' && isMacLike))
       expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']\nKeypress: ! Digit1 33 33 [' + modifierKey + ']');
     else
       expect(await page.evaluate('getResult()')).toBe('Keydown: ! Digit1 49 [' + modifierKey + ']');
@@ -104,6 +103,21 @@ it('should report shiftKey', (test, { browserName, platform }) => {
     await keyboard.up(modifierKey);
     expect(await page.evaluate('getResult()')).toBe('Keyup: ' + modifierKey + ' ' + modifierKey + 'Left ' + codeForKey[modifierKey] + ' []');
   }
+});
+
+it('should send alternate keys on mac', async ({page, server, platform, isWebKit}) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.keyboard.down('Alt');
+  await page.press('textarea', 'KeyA');
+  await page.keyboard.down('Shift');
+  await page.press('textarea', 'KeyA');
+  await page.keyboard.up('Shift');
+  await page.keyboard.up('Alt');
+  const isMacLike = platform === 'darwin' || (isWebKit && platform === 'win32');
+  if (isMacLike)
+    expect(await page.$eval('textarea', t => t.value)).toBe('åÅ');
+  else
+    expect(await page.$eval('textarea', t => t.value)).toBe('');
 });
 
 it('should report multiple modifiers', async ({page, server}) => {

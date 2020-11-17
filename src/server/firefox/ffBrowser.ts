@@ -64,6 +64,7 @@ export class FFBrowser extends Browser {
 
   async _initVersion() {
     const result = await this._connection.send('Browser.getInfo');
+    this._isMac = result.userAgent.includes('Macintosh');
     this._version = result.version.substring(result.version.indexOf('/') + 1);
   }
 
