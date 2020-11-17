@@ -175,13 +175,9 @@ void MainWindow::rescaleToolbar()
 
 bool MainWindow::init(HINSTANCE hInstance, WKPageConfigurationRef conf)
 {
-    auto pageGroup = adoptWK(WKPageGroupCreateWithIdentifier(createWKString("WinPlaywright").get()));
     auto prefs = adoptWK(WKPreferencesCreate());
 
-    WKPageConfigurationSetPageGroup(conf, pageGroup.get());
     WKPageConfigurationSetPreferences(conf, prefs.get());
-    WKPageGroupSetPreferences(pageGroup.get(), prefs.get());
-
     WKPreferencesSetMediaCapabilitiesEnabled(prefs.get(), false);
     WKPreferencesSetDeveloperExtrasEnabled(prefs.get(), true);
 
