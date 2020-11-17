@@ -1041,7 +1041,7 @@ Note that userVisibleOnly = true is the only currently supported type.
     /**
      * Browser command ids used by executeBrowserCommand.
      */
-    export type BrowserCommandId = "openTabSearch";
+    export type BrowserCommandId = "openTabSearch"|"closeTabSearch";
     /**
      * Chrome histogram bucket.
      */
@@ -6866,12 +6866,13 @@ passed by the developer (e.g. via "fetch") as understood by the backend.
     export type ServiceWorkerResponseSource = "cache-storage"|"http-cache"|"fallback-code"|"network";
     /**
      * Determines what type of Trust Token operation is executed and
-depending on the type, some additional parameters.
+depending on the type, some additional parameters. The values
+are specified in third_party/blink/renderer/core/fetch/trust_token.idl.
      */
     export interface TrustTokenParams {
       type: TrustTokenOperationType;
       /**
-       * Only set for "srr-token-redemption" type and determine whether
+       * Only set for "token-redemption" type and determine whether
 to request a fresh SRR or use a still valid cached SRR.
        */
       refreshPolicy: "UseCached"|"Refresh";
@@ -7410,8 +7411,8 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
       reportOnlyReportingEndpoint?: string;
     }
     export interface SecurityIsolationStatus {
-      coop: CrossOriginOpenerPolicyStatus;
-      coep: CrossOriginEmbedderPolicyStatus;
+      coop?: CrossOriginOpenerPolicyStatus;
+      coep?: CrossOriginEmbedderPolicyStatus;
     }
     /**
      * An object providing the result of a network resource load.
@@ -8510,6 +8511,36 @@ continueInterceptedRequest call.
       gridBackgroundColor?: DOM.RGBA;
     }
     /**
+     * Configuration data for the highlighting of Flex container elements.
+     */
+    export interface FlexContainerHighlightConfig {
+      /**
+       * The style of the container border
+       */
+      containerBorder?: LineStyle;
+      /**
+       * The style of the separator between lines
+       */
+      lineSeparator?: LineStyle;
+      /**
+       * The style of the separator between items
+       */
+      itemSeparator?: LineStyle;
+    }
+    /**
+     * Style information for drawing a line.
+     */
+    export interface LineStyle {
+      /**
+       * The color of the line (default: transparent)
+       */
+      color?: DOM.RGBA;
+      /**
+       * The line pattern (default: solid)
+       */
+      pattern?: "dashed"|"dotted";
+    }
+    /**
      * Configuration data for the highlighting of page elements.
      */
     export interface HighlightConfig {
@@ -8573,6 +8604,10 @@ continueInterceptedRequest call.
        * The grid layout highlight configuration (default: all transparent).
        */
       gridHighlightConfig?: GridHighlightConfig;
+      /**
+       * The flex container highlight configuration (default: all transparent).
+       */
+      flexContainerHighlightConfig?: FlexContainerHighlightConfig;
     }
     export type ColorFormat = "rgb"|"hsl"|"hex";
     /**
@@ -8997,6 +9032,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
      * Indicates whether the frame is cross-origin isolated and why it is the case.
      */
     export type CrossOriginIsolatedContextType = "Isolated"|"NotIsolated"|"NotIsolatedFeatureDisabled";
+    export type GatedAPIFeatures = "SharedArrayBuffers"|"SharedArrayBuffersTransferAllowed"|"PerformanceMeasureMemory"|"PerformanceProfile";
     /**
      * Information about the Frame on the page.
      */
@@ -9056,6 +9092,10 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Indicates whether this is a cross origin isolated context.
        */
       crossOriginIsolatedContextType: CrossOriginIsolatedContextType;
+      /**
+       * Indicated which gated APIs / features are available.
+       */
+      gatedAPIFeatures: GatedAPIFeatures[];
     }
     /**
      * Information about the Resource on the page.
@@ -9433,6 +9473,7 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        * Id of the frame that has been detached.
        */
       frameId: FrameId;
+      reason: "remove"|"swap";
     }
     /**
      * Fired once navigation of the frame has completed. Frame is now associated with the new loader.
