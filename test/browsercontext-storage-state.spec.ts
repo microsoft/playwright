@@ -17,9 +17,7 @@
 
 import { it, expect } from './fixtures';
 
-it('should capture local storage', (test, { browserName, platform }) => {
-  test.fixme(browserName === 'webkit' && platform === 'win32');
-}, async ({ context }) => {
+it('should capture local storage', async ({ context }) => {
   const page1 = await context.newPage();
   await page1.route('**/*', route => {
     route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -48,9 +46,7 @@ it('should capture local storage', (test, { browserName, platform }) => {
   }]);
 });
 
-it('should set local storage', (test, { browserName, platform }) => {
-  test.fixme(browserName === 'webkit' && platform === 'win32');
-}, async ({ browser }) => {
+it('should set local storage', async ({ browser }) => {
   const context = await browser.newContext({
     storageState: {
       origins: [
