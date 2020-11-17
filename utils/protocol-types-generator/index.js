@@ -16,10 +16,8 @@ async function generateProtocol(name, executablePath) {
 
 async function generateChromiumProtocol(executablePath) {
   const outputPath = path.join(__dirname, '../../src/server/chromium/protocol.ts');
-  process.env.PLAYWRIGHT_CHROMIUM_DEBUG_PORT = '9339';
   const playwright = require('../../index').chromium;
-  const browser = await playwright.launch({ executablePath });
-  delete process.env.PLAYWRIGHT_CHROMIUM_DEBUG_PORT;
+  const browser = await playwright.launch({ executablePath, args: ['--remote-debugging-port=9339'] });
   const page = await browser.newPage();
   await page.goto(`http://localhost:9339/json/protocol`);
   const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));

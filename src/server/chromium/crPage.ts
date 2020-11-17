@@ -43,8 +43,6 @@ import { VideoRecorder } from './videoRecorder';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-const swappingOutChildFrames = Symbol('swappingOutChildFrames');
-
 export class CRPage implements PageDelegate {
   readonly _mainFrameSession: FrameSession;
   readonly _sessions = new Map<Protocol.Target.TargetID, FrameSession>();
@@ -363,7 +361,7 @@ class FrameSession {
       helper.addEventListener(this._client, 'Log.entryAdded', event => this._onLogEntryAdded(event)),
       helper.addEventListener(this._client, 'Page.fileChooserOpened', event => this._onFileChooserOpened(event)),
       helper.addEventListener(this._client, 'Page.frameAttached', event => this._onFrameAttached(event.frameId, event.parentFrameId)),
-      helper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId)),
+      helper.addEventListener(this._client, 'Page.frameDetached', event => this._onFrameDetached(event.frameId, event.reason)),
       helper.addEventListener(this._client, 'Page.frameNavigated', event => this._onFrameNavigated(event.frame, false)),
       helper.addEventListener(this._client, 'Page.frameRequestedNavigation', event => this._onFrameRequestedNavigation(event)),
       helper.addEventListener(this._client, 'Page.frameStoppedLoading', event => this._onFrameStoppedLoading(event.frameId)),
@@ -551,35 +549,23 @@ class FrameSession {
     this._page._frameManager.frameCommittedSameDocumentNavigation(frameId, url);
   }
 
-  private _takeParentForSwappingOutFrame(targetId: string) {
-    for (const frame of this._page.frames()) {
-      if (!(frame as any)[swappingOutChildFrames])
-        continue;
-      if ((frame as any)[swappingOutChildFrames].delete(targetId))
-        return frame._id;
-    }
-    return null;
-  }
-
-  private _frameMaybeSwappingOut(frameId: string) {
-    const frame = this._page._frameManager.frame(frameId);
-    if (!frame)
-      return;
-    const parent = frame.parentFrame() as any;
-    if (!parent)
-      return;
-    if (!parent[swappingOutChildFrames])
-      parent[swappingOutChildFrames] = new Set<string>();
-    parent[swappingOutChildFrames].add(frameId);
-  }
-
-  _onFrameDetached(frameId: string) {
+  _onFrameDetached(frameId: string, reason: 'remove' | 'swap') {
     if (this._crPage._sessions.has(frameId)) {
-      // This is a local -> remote frame transtion.
-      // We already got a new target and handled frame reattach - nothing to do here.
+      // This is a local -> remote frame transtion, where
+      // Page.frameDetached arrives after Target.attachedToTarget.
+      // We've already handled the new target and frame reattach - nothing to do here.
       return;
     }
-    this._frameMaybeSwappingOut(frameId);
+    if (reason === 'swap') {
+      // This is a local -> remote frame transtion, where
+      // Page.frameDetached arrives before Target.attachedToTarget.
+      // We should keep the frame in the tree, and it will be used for the new target.
+      const frame = this._page._frameManager.frame(frameId);
+      if (frame)
+        this._page._frameManager.removeChildFramesRecursively(frame);
+      return;
+    }
+    // Just a regular frame detach.
     this._page._frameManager.frameDetached(frameId);
   }
 
@@ -615,16 +601,8 @@ class FrameSession {
     if (event.targetInfo.type === 'iframe') {
       // Frame id equals target id.
       const targetId = event.targetInfo.targetId;
-      const frame = this._page._frameManager.frame(targetId);
-      if (frame) {
-        this._page._frameManager.removeChildFramesRecursively(frame);
-      } else {
-        // There is a race between Page.frameDetached and Target.attachedToTarget. If the frame
-        // has already been detached we look up its last parent frame.
-        const parentFrameId = this._takeParentForSwappingOutFrame(targetId);
-        assert(parentFrameId, 'Cannot find parent for iframe: ' + targetId);
-        this._page._frameManager.frameAttached(targetId, parentFrameId);
-      }
+      const frame = this._page._frameManager.frame(targetId)!;
+      this._page._frameManager.removeChildFramesRecursively(frame);
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
       frameSession._initialize(false).catch(e => e);
