@@ -62,10 +62,6 @@ const applySetting = {
     docShell.allowJavascript = !javaScriptDisabled;
   },
 
-  hasTouch: (hasTouch) => {
-    docShell.touchEventsOverride = hasTouch ? Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_ENABLED : Ci.nsIDocShell.TOUCHEVENTS_OVERRIDE_NONE;
-  },
-
   colorScheme: (colorScheme) => {
     frameTree.setColorScheme(colorScheme);
   },

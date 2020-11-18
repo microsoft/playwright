@@ -155,6 +155,7 @@ class TargetRegistry {
         throw new Error(`Internal error: cannot find context for userContextId=${userContextId}`);
       const target = new PageTarget(this, window, tab, browserContext, openerTarget);
       target.updateUserAgent();
+      target.updateTouchOverride();
       if (!hasExplicitSize)
         target.updateViewportSize();
       if (browserContext.screencastOptions)
@@ -371,6 +372,10 @@ class PageTarget {
     return this._browserContext;
   }
 
+  updateTouchOverride() {
+    this._linkedBrowser.browsingContext.touchEventsOverride = this._browserContext.touchOverride ? 'enabled' : 'none';
+  }
+
   updateUserAgent() {
     this._linkedBrowser.browsingContext.customUserAgent = this._browserContext.defaultUserAgent;
   }
@@ -552,6 +557,7 @@ class BrowserContext {
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
     this.defaultUserAgent = null;
+    this.touchOverride = false;
     this.screencastOptions = undefined;
     this.scriptsToEvaluateOnNewDocument = [];
     this.bindings = [];
@@ -603,6 +609,12 @@ class BrowserContext {
     this.defaultUserAgent = userAgent;
     for (const page of this.pages)
       page.updateUserAgent();
+  }
+
+  setTouchOverride(touchOverride) {
+    this.touchOverride = touchOverride;
+    for (const page of this.pages)
+      page.updateTouchOverride();
   }
 
   async setDefaultViewport(viewport) {

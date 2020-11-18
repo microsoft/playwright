@@ -223,7 +223,7 @@ class BrowserHandler {
   }
 
   async ['Browser.setTouchOverride']({browserContextId, hasTouch}) {
-    await this._targetRegistry.browserContextForId(browserContextId).applySetting('hasTouch', nullToUndefined(hasTouch));
+    await this._targetRegistry.browserContextForId(browserContextId).setTouchOverride(nullToUndefined(hasTouch));
   }
 
   async ['Browser.setDefaultViewport']({browserContextId, viewport}) {
