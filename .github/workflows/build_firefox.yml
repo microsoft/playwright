@@ -16,7 +16,7 @@ env:
 jobs:
   ubuntu_18_04:
     name: Ubuntu 18.04
-    runs-on: [self-hosted, ubuntu-18.04]
+    runs-on: [self-hosted, fast-ubuntu-18.04]
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
