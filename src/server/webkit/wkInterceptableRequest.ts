@@ -74,6 +74,9 @@ export class WKInterceptableRequest implements network.RouteDelegate {
   }
 
   async fulfill(response: types.NormalizedFulfillResponse) {
+    if (300 <= response.status && response.status < 400)
+      throw new Error('Cannot fulfill with redirect status: ' + response.status);
+
     await this._interceptedPromise;
 
     // In certain cases, protocol will return error if the request was already canceled

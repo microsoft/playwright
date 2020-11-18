@@ -50,11 +50,16 @@ it('should amend method', async ({page, server}) => {
 });
 
 it('should override request url', async ({page, server}) => {
-  const request = server.waitForRequest('/empty.html');
+  const request = server.waitForRequest('/global-var.html');
   await page.route('**/foo', route => {
-    route.continue({ url: server.EMPTY_PAGE });
+    route.continue({ url: server.PREFIX + '/global-var.html' });
   });
-  await page.goto(server.PREFIX + '/foo');
+  const [response] = await Promise.all([
+    page.waitForEvent('response'),
+    page.goto(server.PREFIX + '/foo'),
+  ]);
+  expect(response.url()).toBe(server.PREFIX + '/foo');
+  expect(await page.evaluate(() => window['globalVar'])).toBe(123);
   expect((await request).method).toBe('GET');
 });
 

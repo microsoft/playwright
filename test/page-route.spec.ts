@@ -394,15 +394,17 @@ it('should intercept main resource during cross-process navigation', async ({pag
   expect(intercepted).toBe(true);
 });
 
-it('should create a redirect', async ({page, server}) => {
-  await page.goto(server.PREFIX + '/empty.html');
+it('should fulfill with redirect status', (test, { browserName, headful}) => {
+  test.fixme(browserName === 'webkit', 'in WebKit the redirects are handled by the network stack and we intercept before');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/title.html');
   await page.route('**/*', async (route, request) => {
     if (request.url() !== server.PREFIX + '/redirect_this')
       return route.continue();
     await route.fulfill({
       status: 301,
       headers: {
-        'location': '/empty.html',
+        'location': '/title.html',
       }
     });
   });
@@ -411,7 +413,41 @@ it('should create a redirect', async ({page, server}) => {
     const data = await fetch(url);
     return data.text();
   }, server.PREFIX + '/redirect_this');
-  expect(text).toBe('');
+  expect(text).toBe('<title>Woof-Woof</title>\n');
+});
+
+it('should not fulfill with redirect status', (test, { browserName, headful}) => {
+  test.skip(browserName !== 'webkit', 'we should support fulfill with redirect in webkit and delete this test');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/empty.html');
+
+  let status;
+  let fulfill;
+  let reject;
+  await page.route('**/*', async (route, request) => {
+    if (request.url() !== server.PREFIX + '/redirect_this')
+      return route.continue();
+    try {
+      await route.fulfill({
+        status,
+        headers: {
+          'location': '/empty.html',
+        }
+      });
+      reject('fullfill didn\'t throw');
+    } catch (e) {
+      fulfill(e);
+    }
+  });
+
+  for (status = 300; status < 310; status++) {
+    const exception = await Promise.race([
+      page.evaluate(url => location.href = url, server.PREFIX + '/redirect_this'),
+      new Promise((f, r) => {fulfill = f; reject = r;})
+    ]) as any;
+    expect(exception).toBeTruthy();
+    expect(exception.message.includes('Cannot fulfill with redirect status')).toBe(true);
+  }
 });
 
 it('should support cors with GET', async ({page, server}) => {
