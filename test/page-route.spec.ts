@@ -159,7 +159,7 @@ it('should work with redirect inside sync XHR', async ({page, server}) => {
   expect(status).toBe(200);
 });
 
-it.only('should pause intercepted XHR until continue', (test, { browserName}) => {
+it('should pause intercepted XHR until continue', (test, { browserName}) => {
   test.fixme(browserName === 'webkit', 'Redirected request is not paused in WebKit');
 }, async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
@@ -187,7 +187,7 @@ it.only('should pause intercepted XHR until continue', (test, { browserName}) =>
   expect(status).toBe(200);
 });
 
-it.only('should pause intercepted fetch request until continue', async ({page, server}) => {
+it('should pause intercepted fetch request until continue', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   let resolveRoute;
   const routePromise = new Promise(r => resolveRoute = r);
