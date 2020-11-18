@@ -192,18 +192,18 @@ it('should pause intercepted fetch request until continue', async ({page, server
   let resolveRoute;
   const routePromise = new Promise(r => resolveRoute = r);
   await page.route('**/global-var.html', async route => resolveRoute(route));
-  let xhrFinished = false;
+  let fetchFinished = false;
   const statusPromise = page.evaluate(async () => {
     const response = await fetch('/global-var.html');
     return response.status;
   }).then(r => {
-    xhrFinished = true;
+    fetchFinished = true;
     return r;
   });
   const route = await routePromise;
   // Check that intercepted request is actually paused.
   await new Promise(r => setTimeout(r, 100));
-  expect(xhrFinished).toBe(false);
+  expect(fetchFinished).toBe(false);
   const [status] = await Promise.all([
     statusPromise,
     (route as any).continue()
