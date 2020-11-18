@@ -1,0 +1,11 @@
+{
+    "bindings": [
+        {
+            "type": "blobTrigger",
+            "direction": "in",
+            "name": "newBlob",
+            "path": "uploads/{name}",
+            "connection": ""
+        }
+    ]
+}
