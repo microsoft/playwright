@@ -417,7 +417,7 @@ it('should fulfill with redirect status', (test, { browserName, headful}) => {
 });
 
 it.only('should not fulfill with redirect status', (test, { browserName, headful}) => {
-  test.skip(browserName !== 'webkit');
+  test.skip(browserName !== 'webkit', 'in WebKit the redirects are handled by the network stack and we intercept before');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
 
