@@ -395,7 +395,7 @@ it('should intercept main resource during cross-process navigation', async ({pag
 });
 
 it('should fulfill with redirect status', (test, { browserName, headful}) => {
-  test.skip(browserName === 'webkit');
+  test.fixme(browserName === 'webkit', 'in WebKit the redirects are handled by the network stack and we intercept before');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/title.html');
   await page.route('**/*', async (route, request) => {
@@ -416,8 +416,8 @@ it('should fulfill with redirect status', (test, { browserName, headful}) => {
   expect(text).toBe('<title>Woof-Woof</title>\n');
 });
 
-it.only('should not fulfill with redirect status', (test, { browserName, headful}) => {
-  test.skip(browserName !== 'webkit', 'in WebKit the redirects are handled by the network stack and we intercept before');
+it('should not fulfill with redirect status', (test, { browserName, headful}) => {
+  test.skip(browserName !== 'webkit', 'we should support fulfill with redirect in webkit and delete this test');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/empty.html');
 
