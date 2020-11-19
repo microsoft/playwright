@@ -178,7 +178,7 @@ it('should pause intercepted XHR until continue', (test, { browserName}) => {
   });
   const route = await routePromise;
   // Check that intercepted request is actually paused.
-  await new Promise(r => setTimeout(r, 100));
+  await new Promise(r => setTimeout(r, 500));
   expect(xhrFinished).toBe(false);
   const [status] = await Promise.all([
     statusPromise,
@@ -202,7 +202,7 @@ it('should pause intercepted fetch request until continue', async ({page, server
   });
   const route = await routePromise;
   // Check that intercepted request is actually paused.
-  await new Promise(r => setTimeout(r, 100));
+  await new Promise(r => setTimeout(r, 500));
   expect(fetchFinished).toBe(false);
   const [status] = await Promise.all([
     statusPromise,
