@@ -11171,10 +11171,10 @@ index 0000000000000000000000000000000000000000..d0e11ed81a6257c011df23d5870da740
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..04d06589d224df007a9a1c3b3ffcf3d56b1744a3
+index 0000000000000000000000000000000000000000..4463301d7cbe4831ee35f91664fe0ec2e8288fe6
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.cpp
-@@ -0,0 +1,882 @@
+@@ -0,0 +1,894 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -11448,7 +11448,8 @@ index 0000000000000000000000000000000000000000..04d06589d224df007a9a1c3b3ffcf3d5
 +
 +void InspectorPlaywrightAgent::disconnectFrontend()
 +{
-+    ASSERT(m_frontendChannel);
++    if (!m_frontendChannel)
++        return;
 +
 +    disable();
 +
@@ -11457,6 +11458,8 @@ index 0000000000000000000000000000000000000000..04d06589d224df007a9a1c3b3ffcf3d5
 +
 +    WebPageInspectorController::setObserver(nullptr);
 +    m_frontendChannel = nullptr;
++
++    closeImpl([](String error){});
 +}
 +
 +void InspectorPlaywrightAgent::dispatchMessageFromFrontend(const String& message)
@@ -11646,6 +11649,18 @@ index 0000000000000000000000000000000000000000..04d06589d224df007a9a1c3b3ffcf3d5
 +
 +void InspectorPlaywrightAgent::close(Ref<CloseCallback>&& callback)
 +{
++    closeImpl([callback = WTFMove(callback)] (String error) {
++        if (!callback->isActive())
++            return;
++        if (error.isNull())
++            callback->sendSuccess();
++        else
++            callback->sendFailure(error);
++    });
++}
++
++void InspectorPlaywrightAgent::closeImpl(Function<void(String)>&& callback)
++{
 +    Vector<WebPageProxy*> pages;
 +    // If Web Process crashed it will be disconnected from its pool until
 +    // the page reloads. So we cannot discover such processes and the pages
@@ -11660,25 +11675,22 @@ index 0000000000000000000000000000000000000000..04d06589d224df007a9a1c3b3ffcf3d5
 +
 +    if (!WebProcessPool::allProcessPools().size()) {
 +        m_client->closeBrowser();
-+        callback->sendSuccess();
++        callback(String());
 +        return;
 +    }
 +
 +    if (!m_defaultContext) {
 +        m_client->closeBrowser();
-+        callback->sendSuccess();
++        callback(String());
 +        return;
 +    }
 +
 +    m_defaultContext->dataStore->syncLocalStorage([this, callback = WTFMove(callback)] () {
-+        if (!callback->isActive())
-+            return;
-+
 +        if (m_client == nullptr) {
-+            callback->sendFailure("no platform delegate to close browser");
++            callback("no platform delegate to close browser");
 +        } else {
 +            m_client->closeBrowser();
-+            callback->sendSuccess();
++            callback(String());
 +        }
 +    });
 +
@@ -12059,10 +12071,10 @@ index 0000000000000000000000000000000000000000..04d06589d224df007a9a1c3b3ffcf3d5
 +#endif // ENABLE(REMOTE_INSPECTOR)
 diff --git a/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0b6cd5c9357c90ac81c0c2d197699855062926af
+index 0000000000000000000000000000000000000000..f5eecb22827ecd3b002cb1dd9e9938a1db0cb36e
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/InspectorPlaywrightAgent.h
-@@ -0,0 +1,122 @@
+@@ -0,0 +1,123 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12168,6 +12180,7 @@ index 0000000000000000000000000000000000000000..0b6cd5c9357c90ac81c0c2d197699855
 +    BrowserContext* getExistingBrowserContext(const String& browserContextID);
 +    BrowserContext* lookupBrowserContext(Inspector::ErrorString&, const String& browserContextID);
 +    WebFrameProxy* frameForID(const String& frameID, String& error);
++    void closeImpl(Function<void(String)>&&);
 +
 +    Inspector::FrontendChannel* m_frontendChannel { nullptr };
 +    Ref<Inspector::FrontendRouter> m_frontendRouter;
@@ -12327,10 +12340,10 @@ index c4c71874a10da9b541fee2820808c1e50d3fa92b..12fd60e8ad5482e7faab2ba9c6b6990a
      virtual NSObject *immediateActionAnimationControllerForHitTestResult(RefPtr<API::HitTestResult>, uint64_t, RefPtr<API::Object>) = 0;
 diff --git a/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..9593d0c3cc694309a18ae791a3f6ea0725f9b0cb
+index 0000000000000000000000000000000000000000..1d1eb4591ab865688bec7505334a208e00918701
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/RemoteInspectorPipe.cpp
-@@ -0,0 +1,221 @@
+@@ -0,0 +1,226 @@
 +/*
 + * Copyright (C) 2019 Microsoft Corporation.
 + *
@@ -12520,8 +12533,13 @@ index 0000000000000000000000000000000000000000..9593d0c3cc694309a18ae791a3f6ea07
 +    Vector<char> line;
 +    while (!m_terminated) {
 +        size_t size = ReadBytes(buffer.get(), bufSize, false);
-+        if (!size)
++        if (!size) {
++            RunLoop::main().dispatch([this] {
++                if (!m_terminated)
++                    m_playwrightAgent.disconnectFrontend();
++            });
 +            break;
++        }
 +        size_t start = 0;
 +        size_t end = line.size();
 +        line.append(buffer.get(), size);
