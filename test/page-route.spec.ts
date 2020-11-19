@@ -159,6 +159,58 @@ it('should work with redirect inside sync XHR', async ({page, server}) => {
   expect(status).toBe(200);
 });
 
+it('should pause intercepted XHR until continue', (test, { browserName}) => {
+  test.fixme(browserName === 'webkit', 'Redirected request is not paused in WebKit');
+}, async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  let resolveRoute;
+  const routePromise = new Promise(r => resolveRoute = r);
+  await page.route('**/global-var.html', async route => resolveRoute(route));
+  let xhrFinished = false;
+  const statusPromise = page.evaluate(async () => {
+    const request = new XMLHttpRequest();
+    request.open('GET', '/global-var.html', false);  // `false` makes the request synchronous
+    request.send(null);
+    return request.status;
+  }).then(r => {
+    xhrFinished = true;
+    return r;
+  });
+  const route = await routePromise;
+  // Check that intercepted request is actually paused.
+  await new Promise(r => setTimeout(r, 500));
+  expect(xhrFinished).toBe(false);
+  const [status] = await Promise.all([
+    statusPromise,
+    (route as any).continue()
+  ]);
+  expect(status).toBe(200);
+});
+
+it('should pause intercepted fetch request until continue', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  let resolveRoute;
+  const routePromise = new Promise(r => resolveRoute = r);
+  await page.route('**/global-var.html', async route => resolveRoute(route));
+  let fetchFinished = false;
+  const statusPromise = page.evaluate(async () => {
+    const response = await fetch('/global-var.html');
+    return response.status;
+  }).then(r => {
+    fetchFinished = true;
+    return r;
+  });
+  const route = await routePromise;
+  // Check that intercepted request is actually paused.
+  await new Promise(r => setTimeout(r, 500));
+  expect(fetchFinished).toBe(false);
+  const [status] = await Promise.all([
+    statusPromise,
+    (route as any).continue()
+  ]);
+  expect(status).toBe(200);
+});
+
 it('should work with custom referer headers', async ({page, server}) => {
   await page.setExtraHTTPHeaders({ 'referer': server.EMPTY_PAGE });
   await page.route('**/*', route => {
