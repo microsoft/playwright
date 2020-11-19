@@ -3012,7 +3012,18 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
   - width <[number]> the width of the element in pixels.
   - height <[number]> the height of the element in pixels.
 
-This method returns the bounding box of the element (relative to the main frame), or `null` if the element is not visible.
+This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is calculated relative to the main frame viewport - which is usually the same as the browser window.
+
+Scrolling affects the returned bonding box, similarly to [Element.getBoundingClientRect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect). That means `x` and/or `y` may be negative.
+
+Elements from child frames return the bounding box relative to the main frame, unlike the [Element.getBoundingClientRect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect).
+
+Assuming the page is static, it is safe to use bounding box coordinates to perform input. For example, the following snippet should click the center of the element.
+
+```js
+const box = await elementHandle.boundingBox();
+await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+```
 
 #### elementHandle.check([options])
 - `options` <[Object]>
