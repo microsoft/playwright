@@ -95,7 +95,7 @@ it('should intercept network activity from worker', (test, browserName) => {
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
   const url = server.PREFIX + '/data_for_worker';
-  page.route(url, async (route) => {
+  page.route(url, async route => {
     await route.fulfill({
       status: 200,
       body: 'intercepted',
