@@ -9,6 +9,7 @@ const {Services} = ChromeUtils.import("resource://gre/modules/Services.jsm");
 const {TargetRegistry} = ChromeUtils.import("chrome://juggler/content/TargetRegistry.js");
 const {Helper} = ChromeUtils.import('chrome://juggler/content/Helper.js');
 const {PageHandler} = ChromeUtils.import("chrome://juggler/content/protocol/PageHandler.js");
+const {AppConstants} = ChromeUtils.import("resource://gre/modules/AppConstants.jsm");
 
 const helper = new Helper();
 
@@ -252,9 +253,7 @@ class BrowserHandler {
   }
 
   async ['Browser.getInfo']() {
-    const version = Components.classes["@mozilla.org/xre/app-info;1"]
-                              .getService(Components.interfaces.nsIXULAppInfo)
-                              .version;
+    const version = AppConstants.MOZ_APP_VERSION_DISPLAY;
     const userAgent = Components.classes["@mozilla.org/network/protocol;1?name=http"]
                                 .getService(Components.interfaces.nsIHttpProtocolHandler)
                                 .userAgent;
