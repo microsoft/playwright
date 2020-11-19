@@ -20,6 +20,7 @@ import type { Connection } from './connection';
 import type { Logger } from './types';
 import { debugLogger } from '../utils/debugLogger';
 import { rewriteErrorMessage } from '../utils/stackTrace';
+import { createScheme, Validator, ValidationError } from '../protocol/validator';
 
 export abstract class ChannelOwner<T extends channels.Channel = channels.Channel, Initializer = {}> extends EventEmitter {
   private _connection: Connection;
@@ -48,23 +49,14 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
     const base = new EventEmitter();
     this._channel = new Proxy(base, {
       get: (obj: any, prop) => {
-        if (String(prop).startsWith('_'))
-          return obj[prop];
-        if (prop === 'then')
-          return obj.then;
-        if (prop === 'emit')
-          return obj.emit;
-        if (prop === 'on')
-          return obj.on;
-        if (prop === 'once')
-          return obj.once;
-        if (prop === 'addEventListener')
-          return obj.addListener;
-        if (prop === 'removeEventListener')
-          return obj.removeListener;
-        if (prop === 'domain') // https://github.com/microsoft/playwright/issues/3848
-          return obj.domain;
-        return (params: any) => this._connection.sendMessageToServer(this._type, guid, String(prop), params);
+        if (prop === 'debugScopeState')
+          return (params: any) => this._connection.sendMessageToServer(guid, prop, params);
+        if (typeof prop === 'string') {
+          const validator = scheme[paramsName(type, prop)];
+          if (validator)
+            return (params: any) => this._connection.sendMessageToServer(guid, prop, validator(params, ''));
+        }
+        return obj[prop];
       },
     });
     (this._channel as any)._object = this;
@@ -121,3 +113,17 @@ function logApiCall(logger: Logger | undefined, message: string) {
     logger.log('api', 'info', message, [], { color: 'cyan' });
   debugLogger.log('api', message);
 }
+
+function paramsName(type: string, method: string) {
+  return type + method[0].toUpperCase() + method.substring(1) + 'Params';
+}
+
+const tChannel = (name: string): Validator => {
+  return (arg: any, path: string) => {
+    if (arg._object instanceof ChannelOwner && (name === '*' || arg._object._type === name))
+      return { guid: arg._object._guid };
+    throw new ValidationError(`${path}: expected ${name}`);
+  };
+};
+
+const scheme = createScheme(tChannel);
