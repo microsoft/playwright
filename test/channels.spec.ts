@@ -168,11 +168,26 @@ it('should scope browser handles', async ({browserType, browserOptions}) => {
   await expectScopeState(browserType, GOLDEN_PRECONDITION);
 });
 
-it('should work with the domain module', async ({ domain, browserType, browserOptions }) => {
+it('should work with the domain module', async ({ domain, browserType, browserOptions, server, isFirefox }) => {
   const browser = await browserType.launch(browserOptions);
   const page = await browser.newPage();
-  const result = await page.evaluate(() => 1 + 1);
-  expect(result).toBe(2);
+
+  expect(await page.evaluate(() => 1 + 1)).toBe(2);
+
+  // At the time of writing, we used to emit 'error' event for WebSockets,
+  // which failed with 'domain' module.
+  let callback;
+  const result = new Promise(f => callback = f);
+  page.on('websocket', ws => ws.on('socketerror', callback));
+  page.evaluate(port => {
+    new WebSocket('ws://localhost:' + port + '/bogus-ws');
+  }, server.PORT);
+  const message = await result;
+  if (isFirefox)
+    expect(message).toBe('CLOSE_ABNORMAL');
+  else
+    expect(message).toContain(': 400');
+
   await browser.close();
 });
 
