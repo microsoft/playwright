@@ -88,7 +88,7 @@ it('should work with glob', async () => {
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
 });
 
-it('should intercept network activity from worker', (test, browserName) => {
+it('should intercept network activity from worker', (test, {browserName}) => {
   // @see https://github.com/microsoft/playwright/issues/4487
   test.fixme(browserName === 'chromium');
 }, async function({page, server}) {
