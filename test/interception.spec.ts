@@ -88,6 +88,28 @@ it('should work with glob', async () => {
   expect(globToRegex('**/*.{png,jpg,jpeg}').test('https://localhost:8080/c.css')).toBeFalsy();
 });
 
+it('should intercept network activity from worker', (test, browserName) => {
+  // @see https://github.com/microsoft/playwright/issues/4487
+  test.fixme(browserName === 'chromium');
+}, async function({page, server}) {
+  await page.goto(server.EMPTY_PAGE);
+  server.setRoute('/data_for_worker', (req, res) => res.end('failed to intercept'));
+  const url = server.PREFIX + '/data_for_worker';
+  page.route(url, async (route) => {
+    await route.fulfill({
+      status: 200,
+      body: 'intercepted',
+    });
+  });
+  const [msg] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(url => new Worker(URL.createObjectURL(new Blob([`
+      fetch("${url}").then(response => response.text()).then(console.log);
+    `], {type: 'application/javascript'}))), url),
+  ]);
+  expect(msg.text()).toBe('intercepted');
+});
+
 it('should work with regular expression passed from a different context', async ({page, server}) => {
   const ctx = vm.createContext();
   const regexp = vm.runInContext('new RegExp("empty\\.html")', ctx);
