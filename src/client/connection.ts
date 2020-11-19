@@ -122,7 +122,7 @@ export class Connection {
     }
     const object = this._objects.get(guid);
     if (!object)
-      throw new Error(`Cannot find object to call "${method}": ${guid}`);
+      throw new Error(`Cannot find object to emit "${method}": ${guid}`);
     object._channel.emit(method, this._replaceGuidsWithChannels(params));
   }
 
