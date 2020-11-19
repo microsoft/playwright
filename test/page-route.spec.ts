@@ -465,7 +465,7 @@ it('should fulfill with redirect status', (test, { browserName, headful}) => {
     const data = await fetch(url);
     return data.text();
   }, server.PREFIX + '/redirect_this');
-  expect(text).toBe('<title>Woof-Woof</title>\n');
+  expect(text.trim()).toBe('<title>Woof-Woof</title>');
 });
 
 it('should not fulfill with redirect status', (test, { browserName, headful}) => {
