@@ -217,14 +217,6 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._client.send('Emulation.setDefaultBackgroundColorOverride', { color });
   }
 
-  async startScreencast(options: types.PageScreencastOptions): Promise<void> {
-    await this._mainFrameSession._startScreencast(createGuid(), options);
-  }
-
-  async stopScreencast(): Promise<void> {
-    await this._mainFrameSession._stopScreencast();
-  }
-
   async takeScreenshot(format: 'png' | 'jpeg', documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
     const { visualViewport } = await this._mainFrameSession._client.send('Page.getLayoutMetrics');
     if (!documentRect) {
@@ -335,7 +327,6 @@ class FrameSession {
   private _swappedIn = false;
   private _videoRecorder: VideoRecorder | null = null;
   private _screencastId: string | null = null;
-  private _screencastState: 'stopped' | 'starting' | 'started' = 'stopped';
 
   constructor(crPage: CRPage, client: CRSession, targetId: string, parentSession: FrameSession | null) {
     this._client = client;
@@ -777,44 +768,30 @@ class FrameSession {
   }
 
   async _startScreencast(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
-    if (this._screencastState !== 'stopped')
-      throw new Error('Already started');
-    const videoRecorder = await VideoRecorder.launch(options);
-    this._screencastState = 'starting';
-    try {
-      this._screencastState = 'started';
-      this._videoRecorder = videoRecorder;
-      this._screencastId = screencastId;
-      this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
-      await Promise.all([
-        this._client.send('Page.startScreencast', {
-          format: 'jpeg',
-          quality: 90,
-          maxWidth: options.width,
-          maxHeight: options.height,
-        }),
-        new Promise(f => this._client.once('Page.screencastFrame', f))
-      ]);
-    } catch (e) {
-      videoRecorder.stop().catch(() => {});
-      throw e;
-    }
+    assert(!this._screencastId);
+    this._videoRecorder = await VideoRecorder.launch(options);
+    this._screencastId = screencastId;
+    const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
+    await this._client.send('Page.startScreencast', {
+      format: 'jpeg',
+      quality: 90,
+      maxWidth: options.width,
+      maxHeight: options.height,
+    });
+    this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage.pageOrError());
+    await gotFirstFrame;
   }
 
   async _stopScreencast(): Promise<void> {
-    if (this._screencastState !== 'started')
-      throw new Error('No screencast in progress, current state: ' + this._screencastState);
-    try {
-      await this._client.send('Page.stopScreencast');
-    } finally {
-      const recorder = this._videoRecorder!;
-      const screencastId = this._screencastId!;
-      this._videoRecorder = null;
-      this._screencastId = null;
-      this._screencastState = 'stopped';
-      await recorder.stop().catch(() => {});
-      this._crPage._browserContext._browser._videoFinished(screencastId);
-    }
+    if (!this._screencastId)
+      return;
+    await this._client._sendMayFail('Page.stopScreencast');
+    const recorder = this._videoRecorder!;
+    const screencastId = this._screencastId;
+    this._videoRecorder = null;
+    this._screencastId = null;
+    await recorder.stop().catch(() => {});
+    this._crPage._browserContext._browser._videoFinished(screencastId);
   }
 
   async _updateExtraHTTPHeaders(initial: boolean): Promise<void> {
