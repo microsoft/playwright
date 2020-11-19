@@ -450,13 +450,14 @@ it('should fulfill with redirect status', (test, { browserName, headful}) => {
   test.fixme(browserName === 'webkit', 'in WebKit the redirects are handled by the network stack and we intercept before');
 }, async ({page, server}) => {
   await page.goto(server.PREFIX + '/title.html');
+  server.setRoute('/final', (req, res) => res.end('foo'));
   await page.route('**/*', async (route, request) => {
     if (request.url() !== server.PREFIX + '/redirect_this')
       return route.continue();
     await route.fulfill({
       status: 301,
       headers: {
-        'location': '/title.html',
+        'location': '/final',
       }
     });
   });
@@ -465,7 +466,7 @@ it('should fulfill with redirect status', (test, { browserName, headful}) => {
     const data = await fetch(url);
     return data.text();
   }, server.PREFIX + '/redirect_this');
-  expect(text).toBe('<title>Woof-Woof</title>\n');
+  expect(text).toBe('foo');
 });
 
 it('should not fulfill with redirect status', (test, { browserName, headful}) => {
