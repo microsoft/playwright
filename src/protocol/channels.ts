@@ -2215,7 +2215,7 @@ export interface WebSocketChannel extends Channel {
   on(event: 'open', callback: (params: WebSocketOpenEvent) => void): this;
   on(event: 'frameSent', callback: (params: WebSocketFrameSentEvent) => void): this;
   on(event: 'frameReceived', callback: (params: WebSocketFrameReceivedEvent) => void): this;
-  on(event: 'error', callback: (params: WebSocketErrorEvent) => void): this;
+  on(event: 'socketError', callback: (params: WebSocketSocketErrorEvent) => void): this;
   on(event: 'close', callback: (params: WebSocketCloseEvent) => void): this;
 }
 export type WebSocketOpenEvent = {};
@@ -2227,7 +2227,7 @@ export type WebSocketFrameReceivedEvent = {
   opcode: number,
   data: string,
 };
-export type WebSocketErrorEvent = {
+export type WebSocketSocketErrorEvent = {
   error: string,
 };
 export type WebSocketCloseEvent = {};

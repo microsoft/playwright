@@ -336,7 +336,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.
       const payload = event.opcode === 2 ? Buffer.from(event.data, 'base64') : event.data;
       this.emit(Events.WebSocket.FrameReceived, { payload });
     });
-    this._channel.on('error', ({ error }) => this.emit(Events.WebSocket.Error, error));
+    this._channel.on('socketError', ({ error }) => this.emit(Events.WebSocket.Error, error));
     this._channel.on('close', () => {
       this._isClosed = true;
       this.emit(Events.WebSocket.Close);

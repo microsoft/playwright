@@ -336,7 +336,7 @@ export class WebSocket extends EventEmitter {
 
   static Events = {
     Close: 'close',
-    Error: 'socketerror',
+    SocketError: 'socketerror',
     FrameReceived: 'framereceived',
     FrameSent: 'framesent',
   };
@@ -359,7 +359,7 @@ export class WebSocket extends EventEmitter {
   }
 
   error(errorMessage: string) {
-    this.emit(WebSocket.Events.Error, errorMessage);
+    this.emit(WebSocket.Events.SocketError, errorMessage);
   }
 
   closed() {
