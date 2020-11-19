@@ -37,6 +37,25 @@ it('should handle nested frames', async ({ page, server }) => {
   expect(box).toEqual({ x: 24, y: 224, width: 268, height: 18 });
 });
 
+it('should handle scroll offset and click', async ({ page, server }) => {
+  await page.setContent(`
+    <style>* { margin: 0; padding: 0; }</style>
+    <div style="width:8000px; height:8000px;">
+      <div id=target style="width:20px; height:20px; margin-left:230px; margin-top:340px;"
+        onclick="window.__clicked = true">
+      </div>
+    </div>
+  `);
+  const elementHandle = await page.$('#target');
+  const box1 = await elementHandle.boundingBox();
+  await page.evaluate(() => window.scrollBy(200, 300));
+  const box2 = await elementHandle.boundingBox();
+  expect(box1).toEqual({ x: 230, y: 340, width: 20, height: 20 });
+  expect(box2).toEqual({ x: 30, y: 40, width: 20, height: 20 });
+  await page.mouse.click(box2.x + 10, box2.y + 10);
+  expect(await page.evaluate(() => window['__clicked'])).toBe(true);
+});
+
 it('should return null for invisible elements', async ({ page, server }) => {
   await page.setContent('<div style="display:none">hi</div>');
   const element = await page.$('div');
