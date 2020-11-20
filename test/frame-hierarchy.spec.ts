@@ -205,7 +205,7 @@ it('should refuse to display x-frame-options:deny iframe', (test, { browserName 
     });
   });
   await page.setContent(`<iframe src="${server.CROSS_PROCESS_PREFIX}/x-frame-options-deny.html"></iframe>`);
-  expect(await refusalText).toMatch(/Refused to display 'http.*\/x-frame-options-deny\.html' in a frame because it set 'X-Frame-Options' to 'deny'./i);
+  expect(await refusalText).toMatch(/Refused to display .* in a frame because it set 'X-Frame-Options' to 'deny'./i);
 });
 
 it('should return frame.page()', async ({page, server}) => {
