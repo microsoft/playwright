@@ -1056,7 +1056,10 @@ export class Frame extends EventEmitter {
 
   _startNetworkIdleTimer() {
     assert(!this._networkIdleTimer);
-    if (this._firedLifecycleEvents.has('networkidle'))
+    // We should not start a timer and report networkidle in detached frames.
+    // This happens at least in Firefox for child frames, where we may get requestFinished
+    // after the frame was detached - probably a race in the Firefox itself.
+    if (this._firedLifecycleEvents.has('networkidle') || this._detached)
       return;
     this._networkIdleTimer = setTimeout(() => this._onLifecycleEvent('networkidle'), 500);
   }
