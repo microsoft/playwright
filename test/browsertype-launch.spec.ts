@@ -73,8 +73,8 @@ it('should reject if executable path is invalid', async ({browserType, browserOp
   expect(waitError.message).toContain('Failed to launch');
 });
 
-it('should handle timeout', (test, { wire }) => {
-  test.skip(wire);
+it('should handle timeout', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({browserType, browserOptions}) => {
   const options = { ...browserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launch(options).catch(e => e);
@@ -83,8 +83,8 @@ it('should handle timeout', (test, { wire }) => {
   expect(error.message).toContain(`<launched> pid=`);
 });
 
-it('should handle exception', (test, { wire }) => {
-  test.skip(wire);
+it('should handle exception', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({browserType, browserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...browserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };
@@ -92,8 +92,8 @@ it('should handle exception', (test, { wire }) => {
   expect(error.message).toContain('Dummy');
 });
 
-it('should report launch log', (test, { wire }) => {
-  test.skip(wire);
+it('should report launch log', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({browserType, browserOptions}) => {
   const e = new Error('Dummy');
   const options = { ...browserOptions, __testHookBeforeCreateBrowser: () => { throw e; }, timeout: 9000 };

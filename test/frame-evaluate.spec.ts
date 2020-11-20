@@ -44,8 +44,8 @@ function expectContexts(pageImpl, count, isChromium) {
     expect(pageImpl._delegate._contextIdToContext.size).toBe(count);
 }
 
-it('should dispose context on navigation', (test, { wire }) => {
-  test.skip(wire);
+it('should dispose context on navigation', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({ page, server, toImpl, isChromium }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);
@@ -54,8 +54,8 @@ it('should dispose context on navigation', (test, { wire }) => {
   expectContexts(toImpl(page), 2, isChromium);
 });
 
-it('should dispose context on cross-origin navigation', (test, { wire }) => {
-  test.skip(wire);
+it('should dispose context on cross-origin navigation', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({ page, server, toImpl, isChromium }) => {
   await page.goto(server.PREFIX + '/frames/one-frame.html');
   expect(page.frames().length).toBe(2);

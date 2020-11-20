@@ -19,8 +19,8 @@ import { folio } from './remoteServer.fixture';
 import * as fs from 'fs';
 const { it, expect, describe } = folio;
 
-describe('connect', (suite, { wire }) => {
-  suite.skip(wire);
+describe('connect', (suite, { mode }) => {
+  suite.skip(mode !== 'default');
   suite.slow();
 }, () => {
   it('should be able to reconnect to a browser', async ({browserType, remoteServer, server}) => {

@@ -97,7 +97,7 @@ it('should amend method on main request', async ({page, server}) => {
   expect((await request).method).toBe('POST');
 });
 
-describe('', (suite, { browserName, platform, wire }) => {
+describe('', (suite, { browserName, platform }) => {
   const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
   suite.flaky(isBigSur && browserName === 'webkit', 'Flaky after roll');
 }, () => {

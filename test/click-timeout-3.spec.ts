@@ -17,8 +17,8 @@
 
 import { it, expect } from './fixtures';
 
-it('should fail when element jumps during hit testing', (test, { wire }) => {
-  test.skip(wire);
+it('should fail when element jumps during hit testing', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({page}) => {
   await page.setContent('<button>Click me</button>');
   let clicked = false;

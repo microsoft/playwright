@@ -165,13 +165,13 @@ jobs:
         name: headful-${{ matrix.browser }}-linux-test-results
         path: test-results
 
-  wire_linux:
-    name: "Wire Linux"
+  transport_linux:
+    name: "Transport"
     strategy:
       fail-fast: false
       matrix:
-        browser: [chromium, firefox, webkit]
-    runs-on: ubuntu-18.04
+        mode: [driver, service]
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-node@v1
@@ -188,15 +188,15 @@ jobs:
     # Enable core dumps in the subshell.
     - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json"
       env:
-        BROWSER: ${{ matrix.browser }}
-        PWWIRE: true
+        BROWSER: "chromium"
+        PWMODE: "${{ matrix.mode }}"
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
       if: ${{ always() }}
       with:
-        name: wire-${{ matrix.browser }}-linux-test-results
+        name: mode-${{ matrix.mode }}-linux-test-results
         path: test-results
 
   video_linux:

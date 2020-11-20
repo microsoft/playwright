@@ -17,8 +17,8 @@
 
 import { it, expect, describe } from './fixtures';
 
-describe('lauch server', (suite, { wire }) => {
-  suite.skip(wire);
+describe('lauch server', (suite, { mode }) => {
+  suite.skip(mode !== 'default');
 }, () => {
   it('should work', async ({browserType, browserOptions}) => {
     const browserServer = await browserType.launchServer(browserOptions);

@@ -44,8 +44,8 @@ async function checkPageSlowMo(toImpl, page, task) {
   `);
   await checkSlowMo(toImpl, page, task);
 }
-describe('slowMo', (suite, { wire }) => {
-  suite.skip(wire);
+describe('slowMo', (suite, { mode }) => {
+  suite.skip(mode !== 'default');
 }, () => {
   it('Page SlowMo $$eval', async ({page, toImpl}) => {
     await checkPageSlowMo(toImpl, page, () => page.$$eval('button', () => void 0));

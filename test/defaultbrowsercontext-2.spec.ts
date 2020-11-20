@@ -154,8 +154,8 @@ it('should throw if page argument is passed', (test, { browserName }) => {
   expect(error.message).toContain('can not specify page');
 });
 
-it('should have passed URL when launching with ignoreDefaultArgs: true', (test, { wire }) => {
-  test.skip(wire);
+it('should have passed URL when launching with ignoreDefaultArgs: true', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({browserType, browserOptions, server, createUserDataDir, toImpl}) => {
   const userDataDir = await createUserDataDir();
   const args = toImpl(browserType)._defaultArgs(browserOptions, 'persistent', userDataDir, 0).filter(a => a !== 'about:blank');
@@ -173,16 +173,16 @@ it('should have passed URL when launching with ignoreDefaultArgs: true', (test, 
   await browserContext.close();
 });
 
-it('should handle timeout', (test, { wire }) => {
-  test.skip(wire);
+it('should handle timeout', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({browserType, browserOptions, createUserDataDir}) => {
   const options = { ...browserOptions, timeout: 5000, __testHookBeforeCreateBrowser: () => new Promise(f => setTimeout(f, 6000)) };
   const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);
   expect(error.message).toContain(`browserType.launchPersistentContext: Timeout 5000ms exceeded.`);
 });
 
-it('should handle exception', (test, { wire }) => {
-  test.skip(wire);
+it('should handle exception', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({browserType, browserOptions, createUserDataDir}) => {
   const e = new Error('Dummy');
   const options = { ...browserOptions, __testHookBeforeCreateBrowser: () => { throw e; } };
