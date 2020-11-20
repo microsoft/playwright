@@ -3754,6 +3754,10 @@ execution will stop on these operations as if there was a regular breakpoint set
      */
     export type DOMBreakpointType = "subtree-modified"|"attribute-modified"|"node-removed";
     /**
+     * CSP Violation type.
+     */
+    export type CSPViolationType = "trustedtype-sink-violation"|"trustedtype-policy-violation";
+    /**
      * Object event listener.
      */
     export interface EventListener {
@@ -3876,6 +3880,17 @@ entire subtree or provide an integer larger than 0.
       url: string;
     }
     export type removeXHRBreakpointReturnValue = {
+    }
+    /**
+     * Sets breakpoint on particular CSP violations.
+     */
+    export type setBreakOnCSPViolationParameters = {
+      /**
+       * CSP Violations to stop upon.
+       */
+      violationTypes: CSPViolationType[];
+    }
+    export type setBreakOnCSPViolationReturnValue = {
     }
     /**
      * Sets breakpoint on particular operation with DOM.
@@ -8623,6 +8638,16 @@ continueInterceptedRequest call.
        */
       nodeId: DOM.NodeId;
     }
+    export interface FlexNodeHighlightConfig {
+      /**
+       * A descriptor for the highlight appearance of flex containers.
+       */
+      flexContainerHighlightConfig: FlexContainerHighlightConfig;
+      /**
+       * Identifier of the node to highlight.
+       */
+      nodeId: DOM.NodeId;
+    }
     /**
      * Configuration for dual screen hinge
      */
@@ -8943,6 +8968,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
       gridNodeHighlightConfigs: GridNodeHighlightConfig[];
     }
     export type setShowGridOverlaysReturnValue = {
+    }
+    export type setShowFlexOverlaysParameters = {
+      /**
+       * An array of node identifiers and descriptors for the highlight appearance.
+       */
+      flexNodeHighlightConfigs: FlexNodeHighlightConfig[];
+    }
+    export type setShowFlexOverlaysReturnValue = {
     }
     /**
      * Requests that backend shows paint rectangles
@@ -13186,7 +13219,7 @@ variables as its properties.
       /**
        * Pause reason.
        */
-      reason: "ambiguous"|"assert"|"debugCommand"|"DOM"|"EventListener"|"exception"|"instrumentation"|"OOM"|"other"|"promiseRejection"|"XHR";
+      reason: "ambiguous"|"assert"|"CSPViolation"|"debugCommand"|"DOM"|"EventListener"|"exception"|"instrumentation"|"OOM"|"other"|"promiseRejection"|"XHR";
       /**
        * Object containing break-specific auxiliary properties.
        */
@@ -15780,6 +15813,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointParameters;
     "DOMDebugger.removeInstrumentationBreakpoint": DOMDebugger.removeInstrumentationBreakpointParameters;
     "DOMDebugger.removeXHRBreakpoint": DOMDebugger.removeXHRBreakpointParameters;
+    "DOMDebugger.setBreakOnCSPViolation": DOMDebugger.setBreakOnCSPViolationParameters;
     "DOMDebugger.setDOMBreakpoint": DOMDebugger.setDOMBreakpointParameters;
     "DOMDebugger.setEventListenerBreakpoint": DOMDebugger.setEventListenerBreakpointParameters;
     "DOMDebugger.setInstrumentationBreakpoint": DOMDebugger.setInstrumentationBreakpointParameters;
@@ -15924,6 +15958,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowDebugBorders": Overlay.setShowDebugBordersParameters;
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterParameters;
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysParameters;
+    "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysParameters;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsParameters;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsParameters;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsParameters;
@@ -16282,6 +16317,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "DOMDebugger.removeEventListenerBreakpoint": DOMDebugger.removeEventListenerBreakpointReturnValue;
     "DOMDebugger.removeInstrumentationBreakpoint": DOMDebugger.removeInstrumentationBreakpointReturnValue;
     "DOMDebugger.removeXHRBreakpoint": DOMDebugger.removeXHRBreakpointReturnValue;
+    "DOMDebugger.setBreakOnCSPViolation": DOMDebugger.setBreakOnCSPViolationReturnValue;
     "DOMDebugger.setDOMBreakpoint": DOMDebugger.setDOMBreakpointReturnValue;
     "DOMDebugger.setEventListenerBreakpoint": DOMDebugger.setEventListenerBreakpointReturnValue;
     "DOMDebugger.setInstrumentationBreakpoint": DOMDebugger.setInstrumentationBreakpointReturnValue;
@@ -16426,6 +16462,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowDebugBorders": Overlay.setShowDebugBordersReturnValue;
     "Overlay.setShowFPSCounter": Overlay.setShowFPSCounterReturnValue;
     "Overlay.setShowGridOverlays": Overlay.setShowGridOverlaysReturnValue;
+    "Overlay.setShowFlexOverlays": Overlay.setShowFlexOverlaysReturnValue;
     "Overlay.setShowPaintRects": Overlay.setShowPaintRectsReturnValue;
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsReturnValue;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsReturnValue;
