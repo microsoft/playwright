@@ -526,6 +526,8 @@ class PageTarget {
     } catch (e) {
       // In some cases, removing listeners from this._linkedBrowser fails
       // because it is already half-destroyed.
+      if (e)
+        dump(e.message + '\n' + e.stack + '\n');
     }
     this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
