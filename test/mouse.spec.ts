@@ -184,14 +184,3 @@ it('should work with mobile viewports and cross process navigations', (test, { b
   expect(await page.evaluate('result')).toEqual({x: 30, y: 40});
   await context.close();
 });
-
-describe.skip('Drag and Drop', function() {
-  it('should work', async ({server, page}) => {
-    await page.goto(server.PREFIX + '/drag-n-drop.html');
-    await page.hover('#source');
-    await page.mouse.down();
-    await page.hover('#target');
-    await page.mouse.up();
-    expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
-  });
-});
