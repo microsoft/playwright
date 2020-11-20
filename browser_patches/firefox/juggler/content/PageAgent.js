@@ -125,7 +125,7 @@ class PageAgent {
     this._docShell = docShell;
     this._initialDPPX = docShell.contentViewer.overrideDPPX;
     this._customScrollbars = null;
-    this._dataTransfer = null;
+    this._dragging = false;
 
     // Dispatch frameAttached events for all initial frames
     for (const frame of this._frameTree.frames()) {
@@ -663,7 +663,7 @@ class PageAgent {
 
   async _dispatchKeyEvent({type, keyCode, code, key, repeat, location, text}) {
     // key events don't fire if we are dragging.
-    if (this._dataTransfer) {
+    if (this._dragging) {
       if (type === 'keydown' && key === 'Escape')
         this._cancelDragIfNeeded();
       return;
@@ -817,7 +817,7 @@ class PageAgent {
       modifiers & 8 /* metaKey */,
       0 /* button */, // firefox always has the button as 0 on drops, regardless of which was pressed
       null /* relatedTarget */,
-      this._dataTransfer
+      dragService.getCurrentSession().dataTransfer.mozCloneForEvent(type)
     );
 
     window.windowUtils.dispatchDOMEventViaPresShellForTesting(element, event);
@@ -826,39 +826,25 @@ class PageAgent {
   }
 
   _cancelDragIfNeeded() {
-    this._dataTransfer = null;
+    this._dragging = false;
     const sess = dragService.getCurrentSession();
     if (sess)
-      dragService.endDragSession(false);
+      dragService.endDragSession(true);
   }
 
   async _dispatchMouseEvent({type, x, y, button, clickCount, modifiers, buttons}) {
     this._startDragSessionIfNeeded();
     const trapDrag = subject => {
-      this._dataTransfer = subject.mozCloneForEvent('drop');
+      this._dragging = true;
     }
 
-    const frame = this._frameTree.mainFrame();
+    // Don't send mouse events if there is an active drag
+    if (!this._dragging) {
+      const frame = this._frameTree.mainFrame();
 
-    obs.addObserver(trapDrag, 'on-datatransfer-available');
-    frame.domWindow().windowUtils.sendMouseEvent(
-      type,
-      x,
-      y,
-      button,
-      clickCount,
-      modifiers,
-      false /*aIgnoreRootScrollFrame*/,
-      undefined /*pressure*/,
-      undefined /*inputSource*/,
-      undefined /*isDOMEventSynthesized*/,
-      undefined /*isWidgetEventSynthesized*/,
-      buttons);
-    obs.removeObserver(trapDrag, 'on-datatransfer-available');
-
-    if (type === 'mousedown' && button === 2) {
+      obs.addObserver(trapDrag, 'on-datatransfer-available');
       frame.domWindow().windowUtils.sendMouseEvent(
-        'contextmenu',
+        type,
         x,
         y,
         button,
@@ -870,10 +856,27 @@ class PageAgent {
         undefined /*isDOMEventSynthesized*/,
         undefined /*isWidgetEventSynthesized*/,
         buttons);
+      obs.removeObserver(trapDrag, 'on-datatransfer-available');
+
+      if (type === 'mousedown' && button === 2) {
+        frame.domWindow().windowUtils.sendMouseEvent(
+          'contextmenu',
+          x,
+          y,
+          button,
+          clickCount,
+          modifiers,
+          false /*aIgnoreRootScrollFrame*/,
+          undefined /*pressure*/,
+          undefined /*inputSource*/,
+          undefined /*isDOMEventSynthesized*/,
+          undefined /*isWidgetEventSynthesized*/,
+          buttons);
+      }
     }
 
     // update drag state
-    if (this._dataTransfer) {
+    if (this._dragging) {
       if (type === 'mousemove')
         this._simulateDragEvent('dragover', x, y, modifiers);
       else if (type === 'mouseup') // firefox will do drops when any mouse button is released
