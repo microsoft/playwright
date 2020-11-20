@@ -521,7 +521,12 @@ class PageTarget {
     this._browserContext.pages.delete(this);
     this._registry._browserToTarget.delete(this._linkedBrowser);
     this._registry._browserBrowsingContextToTarget.delete(this._linkedBrowser.browsingContext);
-    helper.removeListeners(this._eventListeners);
+    try {
+      helper.removeListeners(this._eventListeners);
+    } catch (e) {
+      // In some cases, removing listeners from this._linkedBrowser fails
+      // because it is already half-destroyed.
+    }
     this._registry.emit(TargetRegistry.Events.TargetDestroyed, this);
   }
 }
