@@ -119,7 +119,7 @@ export class WKPage implements PageDelegate {
       const size = this._browserContext._options.recordVideo.size || this._browserContext._options.viewport || { width: 1280, height: 720 };
       const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
       promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this.startScreencast({
+        return this._startScreencast({
           ...size,
           outputFile,
         });
@@ -712,8 +712,7 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    if (this._recordingVideoFile)
-      await this.stopScreencast();
+    await this._stopScreencast();
     await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
@@ -728,28 +727,22 @@ export class WKPage implements PageDelegate {
     await this._session.send('Page.setDefaultBackgroundColorOverride', { color });
   }
 
-  async startScreencast(options: types.PageScreencastOptions): Promise<void> {
-    if (this._recordingVideoFile)
-      throw new Error('Already recording');
+  async _startScreencast(options: types.PageScreencastOptions): Promise<void> {
+    assert(!this._recordingVideoFile);
+    const { screencastId } = await this._pageProxySession.send('Screencast.start', {
+      file: options.outputFile,
+      width: options.width,
+      height: options.height,
+    });
     this._recordingVideoFile = options.outputFile;
-    try {
-      const {screencastId} = await this._pageProxySession.send('Screencast.start', {
-        file: options.outputFile,
-        width: options.width,
-        height: options.height,
-      }) as any;
-      this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
-    } catch (e) {
-      this._recordingVideoFile = null;
-      throw e;
-    }
+    this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this.pageOrError());
   }
 
-  async stopScreencast(): Promise<void> {
+  async _stopScreencast(): Promise<void> {
     if (!this._recordingVideoFile)
-      throw new Error('No video recording in progress');
+      return;
+    await this._pageProxySession.sendMayFail('Screencast.stop');
     this._recordingVideoFile = null;
-    await this._pageProxySession.send('Screencast.stop');
   }
 
   async takeScreenshot(format: string, documentRect: types.Rect | undefined, viewportRect: types.Rect | undefined, quality: number | undefined): Promise<Buffer> {
