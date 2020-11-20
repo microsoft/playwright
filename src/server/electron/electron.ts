@@ -156,7 +156,7 @@ export class Electron  {
         args: electronArguments,
         env: options.env ? envArrayToObject(options.env) : process.env,
         progress,
-        stdio: 'pipe',
+        closeMethod: 'none',
         cwd: options.cwd,
         tempDirectories: [],
       });

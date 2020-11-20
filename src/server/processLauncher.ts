@@ -28,7 +28,7 @@ export type LaunchProcessOptions = {
   executablePath: string,
   args: string[],
   env?: Env,
-  stdio: 'pipe' | 'stdin',
+  closeMethod: 'none' | string,
   tempDirectories: string[],
   cwd?: string,
   progress: Progress,
@@ -43,7 +43,7 @@ export function launchProcess(options: LaunchProcessOptions): Promise<LaunchResu
   const progress = options.progress;
   progress.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
 
-  const args = [path.join(__dirname, 'watchdog.js'), options.executablePath, options.stdio, String(options.tempDirectories.length), ...options.tempDirectories, ...options.args];
+  const args = [path.join(__dirname, 'watchdog.js'), options.executablePath, options.closeMethod, String(options.tempDirectories.length), ...options.tempDirectories, ...options.args];
   const watchdog = childProcess.spawn(
       process.argv[0],
       args,
@@ -51,7 +51,7 @@ export function launchProcess(options: LaunchProcessOptions): Promise<LaunchResu
         detached: true,
         env: (options.env as {[key: string]: string}),
         cwd: options.cwd,
-        stdio: options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'],
+        stdio: options.closeMethod === 'none' ? ['pipe', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'],
       }
   );
   // Prevent Unhandled 'error' event.
@@ -81,19 +81,22 @@ export function launchProcess(options: LaunchProcessOptions): Promise<LaunchResu
   watchdog.once('exit', (exitCode, signal) => {
     progress.log(`<process did exit: exitCode=${exitCode}, signal=${signal}>`);
     didExitCallback();
+    closeSet.delete(close);
   });
 
   async function close(): Promise<void> {
-    progress.log(`<gracefully close>`);
-    if (options.stdio === 'pipe') {
+    progress.log(`<gracefully close start>`);
+    if (options.closeMethod === 'none') {
+      watchdog.stdin.end();
+    } else {
       const stdio = watchdog.stdio as any as [NodeJS.WritableStream, NodeJS.ReadableStream, NodeJS.ReadableStream, NodeJS.WritableStream, NodeJS.ReadableStream];
       stdio[3].end();
-    } else {
-      watchdog.stdin.end();
     }
     await didExitPromise;
+    progress.log(`<gracefully close end>`);
   }
 
+  closeSet.add(close);
   return Promise.resolve({ launchedProcess: watchdog, close });
 }
 
@@ -102,4 +105,9 @@ export function envArrayToObject(env: types.EnvArray): Env {
   for (const { name, value } of env)
     result[name] = value;
   return result;
+}
+
+const closeSet = new Set<() => Promise<void>>();
+export async function gracefullyCloseAll() {
+  await Promise.all(closeSet);
 }

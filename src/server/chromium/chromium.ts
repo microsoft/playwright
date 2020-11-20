@@ -31,7 +31,7 @@ export class Chromium extends BrowserType {
   private _devtools: CRDevTools | undefined;
 
   constructor(packagePath: string, browser: BrowserDescriptor) {
-    super(packagePath, browser);
+    super(packagePath, browser, 'Browser.close');
     if (isDebugMode())
       this._devtools = this._createDevTools();
   }

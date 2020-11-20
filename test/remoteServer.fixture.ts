@@ -71,7 +71,7 @@ export class RemoteServer {
       browserTypeName: browserType.name(),
       launchOptions,
     };
-    this._child = spawn('node', [path.join(__dirname, 'fixtures', 'closeme.js'), JSON.stringify(options)], { env: process.env });
+    this._child = spawn('node', [path.join(__dirname, 'assets', 'testRemoteServer.js'), JSON.stringify(options)], { env: process.env });
     this._child.on('error', (...args) => console.log('ERROR', ...args));
     this._exitPromise = new Promise(resolve => this._child.on('exit', (exitCode, signal) => {
       this._didExit = true;

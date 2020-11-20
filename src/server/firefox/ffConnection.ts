@@ -82,6 +82,8 @@ export class FFConnection extends EventEmitter {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
+    if (message.id === -9999)
+      return;  // Watchdog issues a Browser.close command with this id.
     if (message.sessionId) {
       const session = this._sessions.get(message.sessionId);
       if (session)

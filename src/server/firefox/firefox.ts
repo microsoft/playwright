@@ -24,8 +24,13 @@ import { Env } from '../processLauncher';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import * as types from '../types';
+import { BrowserDescriptor } from '../../utils/browserPaths';
 
 export class Firefox extends BrowserType {
+  constructor(packagePath: string, browser: BrowserDescriptor) {
+    super(packagePath, browser, 'Browser.close');
+  }
+
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<FFBrowser> {
     return FFBrowser.connect(transport, options);
   }

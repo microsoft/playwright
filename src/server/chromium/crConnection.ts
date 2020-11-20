@@ -65,6 +65,8 @@ export class CRConnection extends EventEmitter {
 
   async _onMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
+    if (message.id === -9999)
+      return;  // Watchdog issues a Browser.close command with this id.
     if (message.method === 'Target.attachedToTarget') {
       const sessionId = message.params.sessionId;
       const rootSessionId = message.sessionId || '';

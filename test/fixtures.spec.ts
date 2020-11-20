@@ -62,7 +62,9 @@ describe('process launcher', (suite, { platform }) => {
   suite.skip(platform === 'win32', 'Cannot reliably send signals on Windows.');
   suite.slow();
 }, () => {
-  it('should report browser close signal', async ({connectedRemoteServer}) => {
+  it('should report browser close signal', (test, { headful, browserName }) => {
+    test.skip(browserName === 'chromium' && headful, 'Headful Chromium does not close on SIGTERM');
+  }, async ({connectedRemoteServer}) => {
     process.kill(-connectedRemoteServer.browserPid(), 'SIGTERM');
     expect(await connectedRemoteServer.out('exitCode')).toBe('null');
     expect(await connectedRemoteServer.out('signal')).toBe('SIGTERM');
@@ -110,9 +112,9 @@ describe('process launcher', (suite, { platform }) => {
 
 it('caller file path', async ({}) => {
   const stackTrace = require(path.join(__dirname, '..', 'lib', 'utils', 'stackTrace'));
-  const callme = require('./fixtures/callback');
+  const callme = require('./assets/callback');
   const filePath = callme(() => {
-    return stackTrace.getCallerFilePath(path.join(__dirname, 'fixtures') + path.sep);
+    return stackTrace.getCallerFilePath(path.join(__dirname, 'assets') + path.sep);
   });
   expect(filePath).toBe(__filename);
 });

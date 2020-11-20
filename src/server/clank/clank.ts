@@ -27,6 +27,10 @@ import { AndroidBrowser, AndroidClient, AndroidDevice } from './android';
 import { AdbBackend } from './backendAdb';
 
 export class Clank extends BrowserType {
+  constructor(packagePath: string) {
+    super(packagePath, { name: 'clank', revision: '0', download: false }, 'Browser.close');
+  }
+
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
     if ((options as any).__testHookBeforeCreateBrowser)

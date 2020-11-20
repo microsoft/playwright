@@ -64,7 +64,7 @@ export class VideoRecorder {
     const { launchedProcess, close } = await launchProcess({
       executablePath,
       args,
-      stdio: 'stdin',
+      closeMethod: 'none',
       progress,
       tempDirectories: [],
     });

@@ -33,6 +33,7 @@ async function start() {
 }
 
 process.on('SIGHUP', () => {
+  // To test process.exit workflow, test is sending SIGHUP signal to us.
   process.exit(123);
 });
 

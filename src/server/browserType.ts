@@ -40,12 +40,14 @@ export abstract class BrowserType {
   private _name: string;
   private _executablePath: string;
   private _browserDescriptor: browserPaths.BrowserDescriptor;
+  private _closeMethod: string;
   readonly _browserPath: string;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor) {
+  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, closeMethod: string) {
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
     this._browserDescriptor = browser;
+    this._closeMethod = closeMethod;
     this._browserPath = browserPaths.browserDirectory(browsersPath, browser);
     this._executablePath = browserPaths.executablePath(this._browserPath, browser) || '';
   }
@@ -163,7 +165,7 @@ export abstract class BrowserType {
       args: browserArguments,
       env: this._amendEnvironment(env, userDataDir, executable, browserArguments),
       progress,
-      stdio: 'pipe',
+      closeMethod: this._closeMethod,
       tempDirectories,
     });
     const browserProcess: BrowserProcess = {

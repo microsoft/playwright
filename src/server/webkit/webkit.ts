@@ -22,8 +22,13 @@ import { BrowserType } from '../browserType';
 import { ConnectionTransport } from '../transport';
 import { BrowserOptions } from '../browser';
 import * as types from '../types';
+import { BrowserDescriptor } from '../../utils/browserPaths';
 
 export class WebKit extends BrowserType {
+  constructor(packagePath: string, browser: BrowserDescriptor) {
+    super(packagePath, browser, 'Playwright.close');
+  }
+
   _connectToTransport(transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     return WKBrowser.connect(transport, options);
   }

@@ -58,6 +58,8 @@ export class WKConnection {
 
   private _dispatchMessage(message: ProtocolResponse) {
     this._protocolLogger('receive', message);
+    if (message.id === -9999)
+      return;  // Watchdog issues a Playwright.close command with this id.
     if (message.pageProxyId) {
       const payload: PageProxyMessageReceivedPayload = { message: message, pageProxyId: message.pageProxyId };
       this.browserSession.dispatchMessage({ method: kPageProxyMessageReceived, params: payload });

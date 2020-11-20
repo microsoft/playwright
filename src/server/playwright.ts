@@ -38,10 +38,6 @@ export class Playwright {
     const webkit = browsers.find(browser => browser.name === 'webkit');
     this.webkit = new WebKit(packagePath, webkit!);
 
-    this.clank = new Clank(packagePath, {
-      name: 'clank',
-      revision: '0',
-      download: false
-    });
+    this.clank = new Clank(packagePath);
   }
 }

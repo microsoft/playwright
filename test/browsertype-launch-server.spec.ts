@@ -60,8 +60,7 @@ describe('lauch server', (suite, { mode }) => {
       new Promise(f => browserServer.on('close', (exitCode, signal) => f({ exitCode, signal }))),
       browserServer.close(),
     ]);
-    expect(result['exitCode']).toBe(0);
-    expect(result['signal']).toBe(null);
+    expect(result).toEqual({ exitCode: 0, signal: null });
   });
 
   it('should log protocol', async ({browserType, browserOptions}) => {
