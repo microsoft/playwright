@@ -289,8 +289,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should restore viewport after page screenshot and exception', (test, { wire }) => {
-    test.skip(wire);
+  it('should restore viewport after page screenshot and exception', (test, { mode }) => {
+    test.skip(mode !== 'default');
   }, async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
@@ -302,8 +302,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should restore viewport after page screenshot and timeout', (test, { wire }) => {
-    test.skip(wire);
+  it('should restore viewport after page screenshot and timeout', (test, { mode }) => {
+    test.skip(mode !== 'default');
   }, async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();
@@ -348,8 +348,8 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should restore viewport after element screenshot and exception', (test, { wire }) => {
-    test.skip(wire);
+  it('should restore viewport after element screenshot and exception', (test, { mode }) => {
+    test.skip(mode !== 'default');
   }, async ({browser}) => {
     const context = await browser.newContext({ viewport: { width: 350, height: 360 } });
     const page = await context.newPage();

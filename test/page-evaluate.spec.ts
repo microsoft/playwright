@@ -435,8 +435,8 @@ it('should not throw an error when evaluation does a synchronous navigation and 
   expect(result).toBe(undefined);
 });
 
-it('should transfer 100Mb of data from page to node.js', (test, { wire }) => {
-  test.skip(wire);
+it('should transfer 100Mb of data from page to node.js', (test, { mode }) => {
+  test.skip(mode !== 'default');
 }, async ({ page }) => {
   // This is too slow with wire.
   const a = await page.evaluate(() => Array(100 * 1024 * 1024 + 1).join('a'));

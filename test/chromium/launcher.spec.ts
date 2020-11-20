@@ -18,8 +18,8 @@ import { it, expect } from '../fixtures';
 import path from 'path';
 import type { ChromiumBrowser, ChromiumBrowserContext } from '../..';
 
-it('should throw with remote-debugging-pipe argument', (test, { browserName, wire }) => {
-  test.skip(wire || browserName !== 'chromium');
+it('should throw with remote-debugging-pipe argument', (test, { browserName, mode }) => {
+  test.skip(mode !== 'default' || browserName !== 'chromium');
 }, async ({browserType, browserOptions}) => {
   const options = Object.assign({}, browserOptions);
   options.args = ['--remote-debugging-pipe'].concat(options.args || []);
@@ -27,8 +27,8 @@ it('should throw with remote-debugging-pipe argument', (test, { browserName, wir
   expect(error.message).toContain('Playwright manages remote debugging connection itself');
 });
 
-it('should not throw with remote-debugging-port argument', (test, { browserName, wire }) => {
-  test.skip(wire || browserName !== 'chromium');
+it('should not throw with remote-debugging-port argument', (test, { browserName, mode }) => {
+  test.skip(mode !== 'default' || browserName !== 'chromium');
 }, async ({browserType, browserOptions}) => {
   const options = Object.assign({}, browserOptions);
   options.args = ['--remote-debugging-port=0'].concat(options.args || []);
@@ -36,8 +36,8 @@ it('should not throw with remote-debugging-port argument', (test, { browserName,
   await browser.close();
 });
 
-it('should open devtools when "devtools: true" option is given', (test, { wire, browserName, platform}) => {
-  test.skip(browserName !== 'chromium' || wire || platform === 'win32');
+it('should open devtools when "devtools: true" option is given', (test, { mode, browserName, platform}) => {
+  test.skip(browserName !== 'chromium' || mode !== 'default' || platform === 'win32');
 }, async ({browserType, browserOptions}) => {
   let devtoolsCallback;
   const devtoolsPromise = new Promise(f => devtoolsCallback = f);

@@ -145,8 +145,8 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should save when connected remotely', (test, { wire }) => {
-    test.skip(wire);
+  it('should save when connected remotely', (test, { mode }) => {
+    test.skip(mode !== 'default');
   }, async ({testInfo, server, browserType, remoteServer}) => {
     const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
     const page = await browser.newPage({ acceptDownloads: true });
@@ -191,8 +191,8 @@ describe('download event', () => {
     await page.close();
   });
 
-  it('should error when saving after deletion when connected remotely', (test, { wire }) => {
-    test.skip(wire);
+  it('should error when saving after deletion when connected remotely', (test, { mode }) => {
+    test.skip(mode !== 'default');
   }, async ({testInfo, server, browserType, remoteServer}) => {
     const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
     const page = await browser.newPage({ acceptDownloads: true });
