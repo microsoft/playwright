@@ -15,7 +15,8 @@
  * limitations under the License.
  */
 
-import { it, expect, describe } from './fixtures';
+import { folio } from './remoteServer.fixture';
+const { it, expect, describe } = folio;
 
 describe('lauch server', (suite, { mode }) => {
   suite.skip(mode !== 'default');
@@ -79,5 +80,11 @@ describe('lauch server', (suite, { mode }) => {
 
     expect(logs.some(log => log.startsWith('protocol:verbose:SEND ►'))).toBe(true);
     expect(logs.some(log => log.startsWith('protocol:verbose:◀ RECV'))).toBe(true);
+  });
+
+  it('should work with cluster', async ({browserType, clusterRemoteServer}) => {
+    const browser = await browserType.connect({ wsEndpoint: clusterRemoteServer.wsEndpoint() });
+    const page = await browser.newPage();
+    expect(await page.evaluate('1 + 2')).toBe(3);
   });
 });
