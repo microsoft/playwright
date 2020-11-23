@@ -23,4 +23,4 @@ for (const browserType of [pw.chromium, pw.firefox]) {
   const version = child_process.execSync(executablePath + ' --version').toString().trim();
   console.log('- ' + version);
 }
-console.log('- WebKit 14.0');
+console.log('- WebKit 14.1');
