@@ -131,3 +131,39 @@ it('should work with numerical id', async ({page, server}) => {
   const element = await page.$('#\\31\\32\\33');
   expect(element).toBeTruthy();
 });
+
+it('should work with :nth-child', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  expect(await page.$$eval(`css=span:nth-child(odd)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=span:nth-child(even)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:nth-child(n+1)`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`css=span:nth-child(n+2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:nth-child(2n)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:nth-child(2n+1)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=span:nth-child(-n)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=span:nth-child(-n+1)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=span:nth-child(-n+2)`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`css=span:nth-child(23n+2)`, els => els.length)).toBe(1);
+});
+
+it('should work with :not', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  expect(await page.$$eval(`css=div:not(#root1)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`css=body :not(span)`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`css=div > :not(span):not(div)`, els => els.length)).toBe(0);
+});
+
+it('should work with spaces in :nth-child and :not', test => {
+  test.fixme('Our selector parser is broken');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  expect(await page.$$eval(`css=span:nth-child(23n +2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:nth-child(23n+ 2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:nth-child( 23n + 2 )`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:not(#root1 #target)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=span:not(:not(#root1 #target))`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span:not(span:not(#root1 #target))`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=div > :not(span)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`css=body :not(span, div)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=span, section:not(span, div)`, els => els.length)).toBe(5);
+});
