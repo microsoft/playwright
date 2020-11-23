@@ -23,6 +23,7 @@ import type { BrowserType, Browser, LaunchOptions } from '..';
 type ServerFixtures = {
   remoteServer: RemoteServer;
   stallingRemoteServer: RemoteServer;
+  clusterRemoteServer: RemoteServer;
 };
 const fixtures = base.extend<ServerFixtures>();
 
@@ -36,6 +37,13 @@ fixtures.remoteServer.init(async ({ browserType, browserOptions }, run) => {
 fixtures.stallingRemoteServer.init(async ({ browserType, browserOptions }, run) => {
   const remoteServer = new RemoteServer();
   await remoteServer._start(browserType, browserOptions, { stallOnClose: true });
+  await run(remoteServer);
+  await remoteServer.close();
+});
+
+fixtures.clusterRemoteServer.init(async ({ browserType, browserOptions }, run) => {
+  const remoteServer = new RemoteServer();
+  await remoteServer._start(browserType, browserOptions, { inCluster: true });
   await run(remoteServer);
   await remoteServer.close();
 });
@@ -55,7 +63,7 @@ export class RemoteServer {
   _didExit: boolean;
   _wsEndpoint: string;
 
-  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, extraOptions?: { stallOnClose: boolean; }) {
+  async _start(browserType: BrowserType<Browser>, browserOptions: LaunchOptions, extraOptions?: { stallOnClose?: boolean; inCluster?: boolean }) {
     this._output = new Map();
     this._outputCallback = new Map();
     this._didExit = false;
