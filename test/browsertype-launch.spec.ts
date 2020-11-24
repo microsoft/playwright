@@ -57,9 +57,7 @@ it('should throw if page argument is passed', (test, { browserName }) => {
   expect(waitError.message).toContain('can not specify page');
 });
 
-it('should reject if launched browser fails immediately', (test, parameters) => {
-  test.fixme(`I'm getting ENCONRESET on this one.`);
-}, async ({browserType, browserOptions}) => {
+it('should reject if launched browser fails immediately', async ({browserType, browserOptions}) => {
   const options = Object.assign({}, browserOptions, {executablePath: path.join(__dirname, 'assets', 'dummy_bad_browser_executable.js')});
   let waitError = null;
   await browserType.launch(options).catch(e => waitError = e);

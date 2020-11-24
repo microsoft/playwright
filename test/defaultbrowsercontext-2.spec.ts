@@ -77,9 +77,7 @@ it('should support extraHTTPHeaders option', (test, { browserName, platform, hea
   expect(request.headers['foo']).toBe('bar');
 });
 
-it('should accept userDataDir', (test, { browserName }) => {
-  test.flaky(browserName === 'chromium');
-}, async ({createUserDataDir, browserType, browserOptions}) => {
+it('should accept userDataDir', async ({createUserDataDir, browserType, browserOptions}) => {
   const userDataDir = await createUserDataDir();
   const context = await browserType.launchPersistentContext(userDataDir, browserOptions);
   expect(fs.readdirSync(userDataDir).length).toBeGreaterThan(0);
