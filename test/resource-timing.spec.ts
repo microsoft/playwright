@@ -16,7 +16,6 @@
  */
 
 import { expect, it } from './fixtures';
-import * as os from 'os';
 
 it('should work', async ({ page, server }) => {
   const [request] = await Promise.all([
