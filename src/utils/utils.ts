@@ -125,6 +125,10 @@ export function headersObjectToArray(headers: HeadersObject): HeadersArray {
 }
 
 export function headersArrayToObject(headers: HeadersArray, lowerCase: boolean): HeadersObject {
+  // In some cases headers are undefined.
+  if(!Array.isArray(headers)) {
+     return {}
+  }
   const result: HeadersObject = {};
   for (const { name, value } of headers)
     result[lowerCase ? name.toLowerCase() : name] = value;
