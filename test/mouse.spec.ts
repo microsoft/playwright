@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { it, expect, describe } from './fixtures';
+import { it, expect } from './fixtures';
 
 function dimensions() {
   const rect = document.querySelector('textarea').getBoundingClientRect();
