@@ -35,7 +35,6 @@ import * as channels from '../protocol/channels';
 import { ChromiumBrowser } from './chromiumBrowser';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
 import { Stream } from './stream';
-import { createScheme, Validator, ValidationError } from '../protocol/validator';
 import { WebKitBrowser } from './webkitBrowser';
 import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
@@ -70,13 +69,12 @@ export class Connection {
     return this._objects.get(guid)!;
   }
 
-  async sendMessageToServer(type: string, guid: string, method: string, params: any): Promise<any> {
+  async sendMessageToServer(guid: string, method: string, params: any): Promise<any> {
     const stackObject: any = {};
     Error.captureStackTrace(stackObject);
     const stack = stackObject.stack.startsWith('Error') ? stackObject.stack.substring(5) : stackObject.stack;
     const id = ++this._lastId;
-    const validated = method === 'debugScopeState' ? params : validateParams(type, method, params);
-    const converted = { id, guid, method, params: validated };
+    const converted = { id, guid, method, params };
     // Do not include metadata in debug logs to avoid noise.
     debugLogger.log('channel:command', converted);
     this.onmessage({ ...converted, metadata: { stack } });
@@ -242,21 +240,4 @@ export class Connection {
     }
     return result;
   }
-}
-
-const tChannel = (name: string): Validator => {
-  return (arg: any, path: string) => {
-    if (arg._object instanceof ChannelOwner && (name === '*' || arg._object._type === name))
-      return { guid: arg._object._guid };
-    throw new ValidationError(`${path}: expected ${name}`);
-  };
-};
-
-const scheme = createScheme(tChannel);
-
-function validateParams(type: string, method: string, params: any): any {
-  const name = type + method[0].toUpperCase() + method.substring(1) + 'Params';
-  if (!scheme[name])
-    throw new ValidationError(`Unknown scheme for ${type}.${method}`);
-  return scheme[name](params, '');
 }
