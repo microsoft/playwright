@@ -59,7 +59,7 @@ it('should work with predicate', async ({page, server}) => {
 it('should work with async predicate', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
-    page.waitForEvent('request', async response => response.url() === server.PREFIX + '/digits/2.png'),
+    page.waitForResponse(async response => response.url() === server.PREFIX + '/digits/2.png'),
     page.evaluate(() => {
       fetch('/digits/1.png');
       fetch('/digits/2.png');
