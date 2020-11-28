@@ -368,7 +368,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this.waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout });
   }
 
-  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
+  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => Promise<boolean> | boolean), options: { timeout?: number } = {}): Promise<Response> {
     const predicate = (response: Response) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(response.url(), urlOrPredicate);
