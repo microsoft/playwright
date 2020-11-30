@@ -72,7 +72,6 @@ class SimpleBlob {
 }
 
 async function deleteBlob(container, blobName) {
-  // First we do - delete the blob.
   const containerClient = await blobServiceClient.getContainerClient(container);
   await containerClient.deleteBlob(blobName, {});
 }
