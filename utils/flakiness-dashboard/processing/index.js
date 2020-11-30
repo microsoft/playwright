@@ -26,10 +26,9 @@ module.exports = async function(context) {
   const data = await gunzipAsync(context.bindings.newBlob);
   const report = JSON.parse(data.toString('utf8'));
 
-  // Uplaod report to both dashboards.
+  // Upload report to both dashboards.
   await Promise.all([
     processDashboardV1(context, report),
     processDashboardV2(context, report),
   ]);
 }
-
