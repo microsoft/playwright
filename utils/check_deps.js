@@ -66,6 +66,7 @@ async function checkDeps() {
     while (!DEPS[from]) {
       if (from.endsWith('/'))
         from = from.substring(0, from.length - 1);
+      console.log(from, to);
       if (from.lastIndexOf('/') === -1)
         throw new Error(`Cannot find DEPS for ${fromDirectory}`);
       from = from.substring(0, from.lastIndexOf('/') + 1);
@@ -123,4 +124,12 @@ DEPS['src/trace/'] = ['src/utils/', 'src/client/**', 'src/server/**'];
 // Debug is a server plugin, nothing should depend on it.
 DEPS['src/debug/'] = ['src/utils/', 'src/generated/', 'src/server/**', 'src/debug/**'];
 
-checkDeps();
+// The service is a cross-cutting feature, and so it depends on a bunch of things.
+DEPS['src/remote/playwrightClient.ts'] = ['src/client/'];
+DEPS['src/remote/playwrightServer.ts'] = ['src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/electron/', 'src/trace/'];
+DEPS['src/service.ts'] = ['src/remote/playwrightServer.ts'];
+
+checkDeps().catch(e => {
+  console.error(e && e.stack ? e.stack : e);
+  process.exit(1);
+});
