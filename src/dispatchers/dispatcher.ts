@@ -40,7 +40,6 @@ export function lookupNullableDispatcher<DispatcherType>(object: any | null): Di
 
 export class Dispatcher<Type, Initializer> extends EventEmitter implements channels.Channel {
   private _connection: DispatcherConnection;
-  private _isScope: boolean;
   // Parent is always "isScope".
   private _parent: Dispatcher<any, any> | undefined;
   // Only "isScope" channel owners have registered dispatchers inside.
@@ -56,7 +55,6 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
     super();
 
     this._connection = parent instanceof DispatcherConnection ? parent : parent._connection;
-    this._isScope = !!isScope;
     this._parent = parent instanceof DispatcherConnection ? undefined : parent;
     this._scope = isScope ? this : this._parent!;
 
@@ -87,7 +85,8 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
   }
 
   _dispose() {
-    assert(!this._disposed);
+    if (this._disposed)
+      return;
 
     // Clean up from parent and connection.
     if (this._parent)
@@ -99,8 +98,7 @@ export class Dispatcher<Type, Initializer> extends EventEmitter implements chann
       dispatcher._dispose();
     this._dispatchers.clear();
 
-    if (this._isScope)
-      this._connection.sendMessageToClient(this._guid, '__dispose__', {});
+    this._connection.sendMessageToClient(this._guid, '__dispose__', {});
   }
 
   _debugScopeState(): any {

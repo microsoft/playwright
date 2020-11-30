@@ -253,6 +253,7 @@ export class Response {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
   _finishedPromise: Promise<{ error?: string }>;
+  _hasFinished = false;
   private _finishedPromiseCallback: (arg: { error?: string }) => void = () => {};
   private _status: number;
   private _statusText: string;
@@ -279,6 +280,7 @@ export class Response {
   }
 
   _requestFinished(responseEndTiming: number, error?: string) {
+    this._hasFinished = true;
     this._request._responseEndTiming = Math.max(responseEndTiming, this._timing.responseStart);
     this._finishedPromiseCallback({ error });
   }

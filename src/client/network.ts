@@ -26,6 +26,8 @@ import { isString, headersObjectToArray, headersArrayToObject } from '../utils/u
 import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
+import { kBrowserOrContextClosedError, kNavigatedAwayError } from '../utils/errors';
+import { rewriteErrorMessage } from '../utils/stackTrace';
 
 export type NetworkCookie = {
   name: string,
@@ -57,6 +59,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   _headers: Headers;
   private _postData: Buffer | null;
   _timing: ResourceTiming;
+  _response: Response | undefined;
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -131,7 +134,15 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 
   async response(): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.response()).response);
+    if (this._response)
+      return this._response;
+    try {
+      return Response.fromNullable((await this._channel.response()).response);
+    } catch (e) {
+      if (e && e.message && e.message.endsWith(kBrowserOrContextClosedError))
+        rewriteErrorMessage(e, kNavigatedAwayError);
+      throw e;
+    }
   }
 
   frame(): Frame {
@@ -264,6 +275,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
     this._request = Request.from(this._initializer.request);
     this._request._headers = headersArrayToObject(initializer.requestHeaders, true /* lowerCase */);
     Object.assign(this._request._timing, this._initializer.timing);
+    this._request._response = this;
   }
 
   url(): string {
@@ -294,7 +306,13 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 
   async body(): Promise<Buffer> {
-    return Buffer.from((await this._channel.body()).binary, 'base64');
+    try {
+      return Buffer.from((await this._channel.body()).binary, 'base64');
+    } catch (e) {
+      if (e && e.message && e.message.endsWith(kBrowserOrContextClosedError))
+        rewriteErrorMessage(e, kNavigatedAwayError);
+      throw e;
+    }
   }
 
   async text(): Promise<string> {

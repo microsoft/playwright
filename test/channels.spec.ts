@@ -17,7 +17,7 @@
 
 import domain from 'domain';
 import { folio } from './fixtures';
-import type { ChromiumBrowser } from '..';
+import type { ChromiumBrowser, Response, Request } from '..';
 
 const fixtures = folio.extend<{}, { domain: any }>();
 fixtures.domain.init(async ({ }, run) => {
@@ -191,6 +191,42 @@ it('should work with the domain module', async ({ domain, browserType, browserOp
   await browser.close();
 });
 
+it('should not retain requests and responses after navigation', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/frames/one-frame.html');
+  const frame = page.frames()[1];
+
+  let requests: Request[] = [];
+  let responses: Response[] = [];
+  page.on('request', r => requests.push(r));
+  page.on('response', r => responses.push(r));
+
+  for (let i = 0; i < 20; i++) {
+    const oldRequests = requests;
+    requests = [];
+    const oldResponses = responses;
+    responses = [];
+    const url = i % 2 ? server.PREFIX + '/empty.html' : server.PREFIX + '/one-style.html';
+    await frame.goto(url);
+    expect(requests.some(r => r.url() === url));
+
+    // Should be disposed on both client and server sides.
+    expect(countType(await (page as any)._channel.debugScopeState(), 'Request')).toBeLessThan(5);
+    expect(countType(await (page as any)._channel.debugScopeState(), 'Response')).toBeLessThan(5);
+    expect(countType((page as any)._connection._debugScopeState(), 'Request')).toBeLessThan(5);
+    expect(countType((page as any)._connection._debugScopeState(), 'Response')).toBeLessThan(5);
+
+    // Should throw a nice error when accessed.
+    for (const response of oldResponses) {
+      const e = await response.body().catch(e => e);
+      expect(e.message).toContain('frame has navigated away');
+    }
+    for (const request of oldRequests) {
+      // Should not throw.
+      await request.response();
+    }
+  }
+});
+
 async function expectScopeState(object, golden) {
   golden = trimGuids(golden);
   const remoteState = trimGuids(await object._channel.debugScopeState());
@@ -217,4 +253,18 @@ function trimGuids(object) {
   if (typeof object === 'string')
     return object ? object.match(/[^@]+/)[0] : '';
   return object;
+}
+
+function countType(object, type) {
+  if (Array.isArray(object))
+    return object.map(item => countType(item, type)).reduce((a, b) => a + b, 0);
+  if (typeof object === 'object') {
+    let result = 0;
+    for (const key in object)
+      result += countType(object[key], type);
+    return result;
+  }
+  if (typeof object === 'string')
+    return object.startsWith(type + '@') ? 1 : 0;
+  return 0;
 }

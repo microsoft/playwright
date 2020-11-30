@@ -15,6 +15,7 @@
  */
 
 import { Request, Response, Route, WebSocket } from '../server/network';
+import { Frame, NavigationEvent } from '../server/frames';
 import * as channels from '../protocol/channels';
 import { Dispatcher, DispatcherScope, lookupNullableDispatcher, existingDispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -52,9 +53,10 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestIniti
 export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseInitializer> implements channels.ResponseChannel {
 
   constructor(scope: DispatcherScope, response: Response) {
+    const request = RequestDispatcher.from(scope, response.request());
     super(scope, response, 'Response', {
       // TODO: responses in popups can point to non-reported requests.
-      request: RequestDispatcher.from(scope, response.request()),
+      request,
       url: response.url(),
       status: response.status(),
       statusText: response.statusText(),
@@ -62,6 +64,23 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseIn
       headers: response.headers(),
       timing: response.timing()
     });
+
+    const listener = (navigation: NavigationEvent) => {
+      const didCommit = navigation.newDocument && !navigation.error;
+      if (!didCommit)
+        return;
+      const finalRequest = response.request()._finalRequest();
+      const finalResponse = finalRequest._existingResponse();
+      if (finalResponse && finalResponse._hasFinished) {
+        // When the whole redirect chain has finished before navigation,
+        // it belongs to the previous frame, and we cannot do anything
+        // useful to it anymore. Dispose to avoid ever-growing request/response lists.
+        this._dispose();
+        request._dispose();
+        response.frame().removeListener(Frame.Events.Navigation, listener);
+      }
+    };
+    response.frame().on(Frame.Events.Navigation, listener);
   }
 
   async finished(): Promise<channels.ResponseFinishedResult> {
