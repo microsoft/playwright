@@ -66,7 +66,6 @@ async function checkDeps() {
     while (!DEPS[from]) {
       if (from.endsWith('/'))
         from = from.substring(0, from.length - 1);
-      console.log(from, to);
       if (from.lastIndexOf('/') === -1)
         throw new Error(`Cannot find DEPS for ${fromDirectory}`);
       from = from.substring(0, from.lastIndexOf('/') + 1);
