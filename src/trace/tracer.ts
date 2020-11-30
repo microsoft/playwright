@@ -20,7 +20,7 @@ import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTr
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import { calculateSha1, createGuid, mkdirIfNeeded, monotonicTime } from '../utils/utils';
+import { calculateSha1, createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../utils/utils';
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';
 import { ElementHandle } from '../server/dom';
@@ -31,6 +31,7 @@ import { ProgressResult } from '../server/progress';
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
 const fsAccessAsync = util.promisify(fs.access.bind(fs));
+const envTrace = getFromENV('PW_TRACE_DIR');
 
 export function installTracer() {
   contextListeners.add(new Tracer());
@@ -40,10 +41,18 @@ class Tracer implements ContextListener {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (!context._options._tracePath)
+    let traceStorageDir: string;
+    let tracePath: string;
+    if (context._options._tracePath) {
+      traceStorageDir = context._options._traceResourcesPath || path.join(path.dirname(context._options._tracePath), 'trace-resources');
+      tracePath = context._options._tracePath;
+    } else if (envTrace) {
+      traceStorageDir = envTrace;
+      tracePath = path.join(envTrace, createGuid() + '.trace');
+    } else {
       return;
-    const traceStorageDir = context._options._traceResourcesPath || path.join(path.dirname(context._options._tracePath), 'trace-resources');
-    const contextTracer = new ContextTracer(context, traceStorageDir, context._options._tracePath);
+    }
+    const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
     this._contextTracers.set(context, contextTracer);
   }
 
