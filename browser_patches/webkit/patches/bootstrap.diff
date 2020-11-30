@@ -4948,7 +4948,7 @@ index 62a4054b2dcf48cc68450ebe04cdc4366e3f3fce..32ffa68cf8f5e852c3dfb387932163b1
  
  #undef RELEASE_LOG_ERROR_IF_ALLOWED
 diff --git a/Source/WebCore/page/Frame.h b/Source/WebCore/page/Frame.h
-index c8f1c5753bfcf94bba700bb6a22af5780d1cf913..32e464dfcebd75135bce5b16ebbc15ecf449f21f 100644
+index c8f1c5753bfcf94bba700bb6a22af5780d1cf913..4402d27bb6a9e358174ff30491c3bf4982dde473 100644
 --- a/Source/WebCore/page/Frame.h
 +++ b/Source/WebCore/page/Frame.h
 @@ -109,8 +109,8 @@ enum {
@@ -4983,7 +4983,15 @@ index c8f1c5753bfcf94bba700bb6a22af5780d1cf913..32e464dfcebd75135bce5b16ebbc15ec
      WEBCORE_EXPORT NSArray *wordsInCurrentParagraph() const;
      WEBCORE_EXPORT CGRect renderRectForPoint(CGPoint, bool* isReplaced, float* fontSize) const;
  
-@@ -349,7 +349,6 @@ private:
+@@ -313,6 +313,7 @@ public:
+ 
+     WEBCORE_EXPORT FloatSize screenSize() const;
+     void setOverrideScreenSize(FloatSize&&);
++    bool hasScreenSizeOverride() const { return !m_overrideScreenSize.isEmpty(); }
+ 
+     void selfOnlyRef();
+     void selfOnlyDeref();
+@@ -349,7 +350,6 @@ private:
  #if ENABLE(DATA_DETECTION)
      RetainPtr<NSArray> m_dataDetectionResults;
  #endif
@@ -4991,7 +4999,7 @@ index c8f1c5753bfcf94bba700bb6a22af5780d1cf913..32e464dfcebd75135bce5b16ebbc15ec
      void betterApproximateNode(const IntPoint& testPoint, const NodeQualifier&, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect);
      bool hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, HitTestResult&, IntPoint& center);
      
-@@ -357,6 +356,7 @@ private:
+@@ -357,6 +357,7 @@ private:
      enum class ShouldFindRootEditableElement : bool { No, Yes };
      Node* qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier&, ShouldApproximate, ShouldFindRootEditableElement = ShouldFindRootEditableElement::Yes);
  
@@ -5214,6 +5222,46 @@ index f804f073e09f6ff5a4e5f4b649832f3aaa47e586..17300db7d85a9c545ecf4d15bb0ad449
  #endif
  
      bool pageAtRuleSupportEnabled() const { return m_pageAtRuleSupportEnabled; }
+diff --git a/Source/WebCore/page/Screen.cpp b/Source/WebCore/page/Screen.cpp
+index 7ac11c8289347e3a2f3e7316cf9e32932b9544ed..764b2d4fe36ac2e5588bd22595424ac11d42acd0 100644
+--- a/Source/WebCore/page/Screen.cpp
++++ b/Source/WebCore/page/Screen.cpp
+@@ -102,6 +102,8 @@ int Screen::availLeft() const
+         return 0;
+     if (RuntimeEnabledFeatures::sharedFeatures().webAPIStatisticsEnabled())
+         ResourceLoadObserver::shared().logScreenAPIAccessed(*frame->document(), ResourceLoadStatistics::ScreenAPI::AvailLeft);
++    if (frame->hasScreenSizeOverride())
++        return 0;
+     return static_cast<int>(screenAvailableRect(frame->view()).x());
+ }
+ 
+@@ -112,6 +114,8 @@ int Screen::availTop() const
+         return 0;
+     if (RuntimeEnabledFeatures::sharedFeatures().webAPIStatisticsEnabled())
+         ResourceLoadObserver::shared().logScreenAPIAccessed(*frame->document(), ResourceLoadStatistics::ScreenAPI::AvailTop);
++    if (frame->hasScreenSizeOverride())
++        return 0;
+     return static_cast<int>(screenAvailableRect(frame->view()).y());
+ }
+ 
+@@ -122,6 +126,8 @@ unsigned Screen::availHeight() const
+         return 0;
+     if (RuntimeEnabledFeatures::sharedFeatures().webAPIStatisticsEnabled())
+         ResourceLoadObserver::shared().logScreenAPIAccessed(*frame->document(), ResourceLoadStatistics::ScreenAPI::AvailHeight);
++    if (frame->hasScreenSizeOverride())
++        return static_cast<unsigned>(frame->screenSize().height());
+     return static_cast<unsigned>(screenAvailableRect(frame->view()).height());
+ }
+ 
+@@ -132,6 +138,8 @@ unsigned Screen::availWidth() const
+         return 0;
+     if (RuntimeEnabledFeatures::sharedFeatures().webAPIStatisticsEnabled())
+         ResourceLoadObserver::shared().logScreenAPIAccessed(*frame->document(), ResourceLoadStatistics::ScreenAPI::AvailWidth);
++    if (frame->hasScreenSizeOverride())
++        return static_cast<unsigned>(frame->screenSize().width());
+     return static_cast<unsigned>(screenAvailableRect(frame->view()).width());
+ }
+ 
 diff --git a/Source/WebCore/page/SocketProvider.cpp b/Source/WebCore/page/SocketProvider.cpp
 index 3bec0aef174336939838fb1069fffbcb9f3d5604..566ef3806be3c5ccf1bb951251c2a90dba7071a3 100644
 --- a/Source/WebCore/page/SocketProvider.cpp
