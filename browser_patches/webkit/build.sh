@@ -13,7 +13,7 @@ build_gtk() {
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
     CMAKE_ARGS="--cmakeargs=\"-DCMAKE_EXPORT_COMPILE_COMMANDS=1\""
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/build-webkit --gtk --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox --no-webxr MiniBrowser
 }
 
 build_wpe() {
@@ -24,7 +24,7 @@ build_wpe() {
   if [[ -n "${EXPORT_COMPILE_COMMANDS}" ]]; then
     CMAKE_ARGS="--cmakeargs=\"-DCMAKE_EXPORT_COMPILE_COMMANDS=1\""
   fi
-  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox MiniBrowser
+  WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/WPE ./Tools/Scripts/build-webkit --wpe --release "${CMAKE_ARGS}" --touch-events --orientation-events --no-bubblewrap-sandbox --no-webxr MiniBrowser
 }
 
 ensure_linux_deps() {
