@@ -124,9 +124,8 @@ DEPS['src/trace/'] = ['src/utils/', 'src/client/**', 'src/server/**'];
 DEPS['src/debug/'] = ['src/utils/', 'src/generated/', 'src/server/**', 'src/debug/**'];
 
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
-DEPS['src/remote/playwrightClient.ts'] = ['src/client/'];
-DEPS['src/remote/playwrightServer.ts'] = ['src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/electron/', 'src/trace/'];
-DEPS['src/service.ts'] = ['src/remote/playwrightServer.ts'];
+DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/electron/', 'src/trace/'];
+DEPS['src/service.ts'] = ['src/remote/'];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
