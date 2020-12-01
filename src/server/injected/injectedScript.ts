@@ -281,8 +281,8 @@ export class InjectedScript {
       }
       if (element.nodeName.toLowerCase() === 'input') {
         const input = element as HTMLInputElement;
-        const type = (input.getAttribute('type') || '').toLowerCase();
-        const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local']);
+        const type = input.type.toLowerCase();
+        const kDateTypes = new Set(['date', 'time', 'datetime', 'datetime-local', 'month', 'week']);
         const kTextInputTypes = new Set(['', 'email', 'number', 'password', 'search', 'tel', 'text', 'url']);
         if (!kTextInputTypes.has(type) && !kDateTypes.has(type)) {
           progress.log(`    input of type "${type}" cannot be filled`);
