@@ -74,3 +74,33 @@ it('should be able to close context with open alert', (test, { browserName, plat
   await alertPromise;
   await context.close();
 });
+
+it('should handle multiple alerts', async ({page}) => {
+  page.on('dialog', dialog => {
+    dialog.accept().catch(e => {});
+  });
+  await page.setContent(`
+    <p>Hello World</p>
+    <script>
+      alert('Please dismiss this dialog');
+      alert('Please dismiss this dialog');
+      alert('Please dismiss this dialog');
+    </script>
+  `);
+  expect(await page.textContent('p')).toBe('Hello World');
+});
+
+it('should handle multiple confirms', async ({page}) => {
+  page.on('dialog', dialog => {
+    dialog.accept().catch(e => {});
+  });
+  await page.setContent(`
+    <p>Hello World</p>
+    <script>
+      confirm('Please confirm me?');
+      confirm('Please confirm me?');
+      confirm('Please confirm me?');
+    </script>
+  `);
+  expect(await page.textContent('p')).toBe('Hello World');
+});
