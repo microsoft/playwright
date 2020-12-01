@@ -773,9 +773,13 @@ class Dialog {
     const type = prompt.args.promptType;
     switch (type) {
       case 'alert':
+      case 'alertCheck':
+        return new Dialog(prompt, 'alert');
       case 'prompt':
+        return new Dialog(prompt, 'prompt');
       case 'confirm':
-        return new Dialog(prompt, type);
+      case 'confirmCheck':
+        return new Dialog(prompt, 'confirm');
       case 'confirmEx':
         return new Dialog(prompt, 'beforeunload');
       default:
