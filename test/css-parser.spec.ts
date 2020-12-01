@@ -56,6 +56,8 @@ it('should parse css', async () => {
   expect(serialize(parseCSS(':right-of(span):react(foobar)'))).toBe(':right-of(span):react(foobar)');
   expect(serialize(parseCSS('div:is(span):hover'))).toBe('div:hover:is(span)');
   expect(serialize(parseCSS('div:scope:hover'))).toBe('div:hover:scope()');
+  expect(serialize(parseCSS('div:sCOpe:HOVER'))).toBe('div:HOVER:scope()');
+  expect(serialize(parseCSS('div:NOT(span):hoVER'))).toBe('div:hoVER:not(span)');
 
   expect(serialize(parseCSS(':text("foo")'))).toBe(':text("foo")');
   expect(serialize(parseCSS(':text("*")'))).toBe(':text("*")');
