@@ -7,9 +7,10 @@
     "rootDir": "./src",
     "outDir": "./lib",
     "strict": true,
+    "allowJs": true,
     "declaration": false
   },
   "compileOnSave": true,
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.js"],
+  "exclude": ["node_modules", "src/.eslintrc.js"]
 }
