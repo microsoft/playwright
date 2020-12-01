@@ -16,14 +16,18 @@
 
 import * as css from './cssTokenizer';
 
-// TODO: Consider giving more information, e.g. whether the argument was a quoted string or not.
-type ParsedSelectorLiteral = string;
 type ClauseCombinator = '' | '>' | '+' | '~';
-export type ParsedSelectorClause = ParsedSelectorLiteral | { css?: string, funcs: { name: string, args: ParsedSelectorList }[] };
-export type ParsedSelector = { clauses: { clause: ParsedSelectorClause, combinator: ClauseCombinator }[] };
-export type ParsedSelectorList = (ParsedSelectorLiteral | ParsedSelector)[];
+// TODO: consider
+//   - key=value
+//   - operators like `=`, `|=`, `~=`, `*=`, `/`
+//   - <empty>~=value
+export type CSSFunctionArgument = CSSComplexSelector | number | string;
+export type CSSFunction = { name: string, args: CSSFunctionArgument[] };
+export type CSSSimpleSelector = { css?: string, functions: CSSFunction[] };
+export type CSSComplexSelector = { simple: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
+export type CSSSelectorList = CSSComplexSelector[];
 
-export function parseCSS(selector: string): ParsedSelectorList {
+export function parseCSS(selector: string): CSSSelectorList {
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
@@ -104,43 +108,46 @@ export function parseCSS(selector: string): ParsedSelectorList {
     return isComma(p) || isCloseParen(p) || isEOF(p) || isClauseCombinator(p) || (tokens[p] instanceof css.WhitespaceToken);
   }
 
-  function consumeSelectorList(): ParsedSelectorList {
-    const result = [consumeSelector()];
+  function consumeFunctionArguments(): CSSFunctionArgument[] {
+    const result = [consumeArgument()];
     while (true) {
       skipWhitespace();
       if (!isComma())
         break;
       pos++;
-      result.push(consumeSelector());
+      result.push(consumeArgument());
     }
     return result;
   }
 
-  function consumeSelector(): ParsedSelector | ParsedSelectorLiteral {
+  function consumeArgument(): CSSFunctionArgument {
     skipWhitespace();
-    const result = { clauses: [{ clause: consumeSelectorClause(), combinator: '' as ClauseCombinator }] };
+    if (isNumber())
+      return tokens[pos++].value;
+    if (isString())
+      return tokens[pos++].value;
+    return consumeComplexSelector();
+  }
+
+  function consumeComplexSelector(): CSSComplexSelector {
+    skipWhitespace();
+    const result = { simple: [{ selector: consumeSimpleSelector(), combinator: '' as ClauseCombinator }] };
     while (true) {
       skipWhitespace();
       if (isClauseCombinator()) {
-        result.clauses[result.clauses.length - 1].combinator = tokens[pos++].value as ClauseCombinator;
+        result.simple[result.simple.length - 1].combinator = tokens[pos++].value as ClauseCombinator;
         skipWhitespace();
       } else if (isSelectorClauseEnd()) {
         break;
       }
-      result.clauses.push({ combinator: '', clause: consumeSelectorClause() });
+      result.simple.push({ combinator: '', selector: consumeSimpleSelector() });
     }
-    if (result.clauses.length === 1 && typeof result.clauses[0].clause === 'string')
-      return result.clauses[0].clause;
     return result;
   }
 
-  function consumeSelectorClause(): ParsedSelectorClause {
-    // TODO: Consider symbols like `=`, `|=`, `~=`, `*=`, `/` and convert them to strings.
-    if ((isNumber() || isString() || isStar() || isIdent()) && isSelectorClauseEnd(pos + 1))
-      return isString() ? tokens[pos++].value : tokens[pos++].toSource();
-
+  function consumeSimpleSelector(): CSSSimpleSelector {
     let rawCSSString = '';
-    const funcs: { name: string, args: ParsedSelectorList }[] = [];
+    const functions: CSSFunction[] = [];
 
     while (!isSelectorClauseEnd()) {
       if (isIdent() || isStar()) {
@@ -156,16 +163,16 @@ export function parseCSS(selector: string): ParsedSelectorList {
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
-          if (cssFilters.has(tokens[pos].value))
+          if (builtinCSSFilters.has(tokens[pos].value))
             rawCSSString += ':' + tokens[pos++].toSource();
           else
-            funcs.push({ name: tokens[pos++].value, args: [] });
+            functions.push({ name: tokens[pos++].value, args: [] });
         } else if (tokens[pos] instanceof css.FunctionToken) {
           const name = tokens[pos++].value;
-          if (cssFunctions.has(name))
-            rawCSSString += `:${name}(${consumeCSSFunctionArgs()})`;
+          if (builtinCSSFunctions.has(name))
+            rawCSSString += `:${name}(${consumeBuiltinFunctionArguments()})`;
           else
-            funcs.push({ name, args: consumeSelectorList() });
+            functions.push({ name, args: consumeFunctionArguments() });
           skipWhitespace();
           if (!isCloseParen())
             throw unexpected();
@@ -186,37 +193,35 @@ export function parseCSS(selector: string): ParsedSelectorList {
         throw unexpected();
       }
     }
-    if (!rawCSSString && !funcs.length)
+    if (!rawCSSString && !functions.length)
       throw unexpected();
-    return { css: rawCSSString || undefined, funcs };
+    return { css: rawCSSString || undefined, functions };
   }
 
-  function consumeCSSFunctionArgs(): string {
+  function consumeBuiltinFunctionArguments(): string {
     let s = '';
     while (!isCloseParen() && !isEOF())
       s += tokens[pos++].toSource();
     return s;
   }
 
-  const result = consumeSelectorList();
+  const result = consumeFunctionArguments();
   if (!isEOF())
     throw new Error(`Error while parsing selector "${selector}"`);
-  return result;
+  if (result.some(arg => typeof arg !== 'object' || !('simple' in arg)))
+    throw new Error(`Error while parsing selector "${selector}"`);
+  return result as CSSComplexSelector[];
 }
 
-export function serializeSelector(selectorList: ParsedSelectorList) {
-  return selectorList.map(selector => {
-    if (typeof selector === 'string')
-      return selector;
-    return selector.clauses.map(({ clause, combinator }) => {
-      let s = '';
-      if (typeof clause === 'string') {
-        s = clause;
-      } else {
-        if (clause.css)
-          s = clause.css;
-        s = s + clause.funcs.map(func => `:${func.name}(${serializeSelector(func.args)})`).join('');
-      }
+export function serializeSelector(args: CSSFunctionArgument[]) {
+  return args.map(arg => {
+    if (typeof arg === 'string')
+      return `"${arg}"`;
+    if (typeof arg === 'number')
+      return String(arg);
+    return arg.simple.map(({ selector, combinator }) => {
+      let s = selector.css || '';
+      s = s + selector.functions.map(func => `:${func.name}(${serializeSelector(func.args)})`).join('');
       if (combinator)
         s += ' ' + combinator;
       return s;
@@ -224,7 +229,7 @@ export function serializeSelector(selectorList: ParsedSelectorList) {
   }).join(', ');
 }
 
-const cssFilters = new Set([
+const builtinCSSFilters = new Set([
   'active', 'any-link', 'checked', 'blank', 'default', 'defined',
   'disabled', 'empty', 'enabled', 'first', 'first-child', 'first-of-type',
   'fullscreen', 'focus', 'focus-visible', 'focus-within', 'hover',
@@ -233,6 +238,6 @@ const cssFilters = new Set([
   'read-only', 'read-write', 'required', 'root', 'target', 'valid', 'visited',
 ]);
 
-const cssFunctions = new Set([
+const builtinCSSFunctions = new Set([
   'dir', 'lang', 'nth-child', 'nth-last-child', 'nth-last-of-type', 'nth-of-type',
 ]);
