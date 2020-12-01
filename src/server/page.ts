@@ -512,26 +512,16 @@ export class PageBinding {
     this.needsHandle = needsHandle;
   }
 
-  static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
+  async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const {name, seq, args} = JSON.parse(payload);
-    try {
-      let binding = page._pageBindings.get(name);
-      if (!binding)
-        binding = page._browserContext._pageBindings.get(name);
-      let result: any;
-      if (binding!.needsHandle) {
-        const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
-        result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
-      } else {
-        result = await binding!.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
-      }
-      context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
-    } catch (error) {
-      if (isError(error))
-        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
-      else
-        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
+    let result: any;
+    if (this.needsHandle) {
+      const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
+      result = await this.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
+    } else {
+      result = await this.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
     }
+    context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
 
     function takeHandle(arg: { name: string, seq: number }) {
       const handle = (window as any)[arg.name]['handles'].get(arg.seq);
@@ -542,6 +532,21 @@ export class PageBinding {
     function deliverResult(arg: { name: string, seq: number, result: any }) {
       (window as any)[arg.name]['callbacks'].get(arg.seq).resolve(arg.result);
       (window as any)[arg.name]['callbacks'].delete(arg.seq);
+    }
+  }
+
+  static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
+    const {name, seq} = JSON.parse(payload);
+    try {
+      let binding = page._pageBindings.get(name);
+      if (!binding)
+        binding = page._browserContext._pageBindings.get(name);
+      await binding!.dispatch(page, payload, context);
+    } catch (error) {
+      if (isError(error))
+        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
+      else
+        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
 
     function deliverError(arg: { name: string, seq: number, message: string, stack: string | undefined }) {
