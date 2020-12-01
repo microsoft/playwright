@@ -298,6 +298,8 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async _doExposeBinding(binding: PageBinding) {
+    if (binding.world !== 'main')
+      throw new Error('Only main context bindings are supported in Firefox.');
     await this._browser._connection.send('Browser.addBinding', { browserContextId: this._browserContextId, name: binding.name, script: binding.source });
   }
 

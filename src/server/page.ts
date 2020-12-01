@@ -133,7 +133,7 @@ export class Page extends EventEmitter {
   readonly _timeoutSettings: TimeoutSettings;
   readonly _delegate: PageDelegate;
   readonly _state: PageState;
-  readonly _pageBindings = new Map<string, PageBinding>();
+  private readonly _pageBindings = new Map<string, PageBinding>();
   readonly _evaluateOnNewDocumentSources: string[] = [];
   readonly _screenshotter: Screenshotter;
   readonly _frameManager: frames.FrameManager;
@@ -258,12 +258,13 @@ export class Page extends EventEmitter {
   }
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
-    if (this._pageBindings.has(name))
+    const identifier = 'main:' + name;
+    if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);
-    if (this._browserContext._pageBindings.has(name))
+    if (this._browserContext._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
-    const binding = new PageBinding(name, playwrightBinding, needsHandle);
-    this._pageBindings.set(name, binding);
+    const binding = new PageBinding(name, playwrightBinding, needsHandle, 'main');
+    this._pageBindings.set(identifier, binding);
     await this._delegate.exposeBinding(binding);
   }
 
@@ -462,6 +463,14 @@ export class Page extends EventEmitter {
       return;
     this._browserContext.addVisitedOrigin(new URL(url).origin);
   }
+
+  allBindings() {
+    return [...this._browserContext._pageBindings.values(), ...this._pageBindings.values()];
+  }
+
+  getBinding(name: string, world: types.World) {
+    return this._pageBindings.get(world + ':' + name) || this._browserContext._pageBindings.get(world + ':' + name);
+  }
 }
 
 export class Worker extends EventEmitter {
@@ -504,24 +513,35 @@ export class PageBinding {
   readonly playwrightFunction: frames.FunctionWithSource;
   readonly source: string;
   readonly needsHandle: boolean;
+  readonly world: types.World;
 
-  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
+  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean, world: types.World) {
     this.name = name;
     this.playwrightFunction = playwrightFunction;
     this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle})`;
     this.needsHandle = needsHandle;
+    this.world = world;
   }
 
-  async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
+  static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
     const {name, seq, args} = JSON.parse(payload);
-    let result: any;
-    if (this.needsHandle) {
-      const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
-      result = await this.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
-    } else {
-      result = await this.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
+    try {
+      assert(context.world);
+      const binding = page.getBinding(name, context.world)!;
+      let result: any;
+      if (binding.needsHandle) {
+        const handle = await context.evaluateHandleInternal(takeHandle, { name, seq }).catch(e => null);
+        result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, handle);
+      } else {
+        result = await binding.playwrightFunction({ frame: context.frame, page, context: page._browserContext }, ...args);
+      }
+      context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
+    } catch (error) {
+      if (isError(error))
+        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
+      else
+        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
-    context.evaluateInternal(deliverResult, { name, seq, result }).catch(e => debugLogger.log('error', e));
 
     function takeHandle(arg: { name: string, seq: number }) {
       const handle = (window as any)[arg.name]['handles'].get(arg.seq);
@@ -532,21 +552,6 @@ export class PageBinding {
     function deliverResult(arg: { name: string, seq: number, result: any }) {
       (window as any)[arg.name]['callbacks'].get(arg.seq).resolve(arg.result);
       (window as any)[arg.name]['callbacks'].delete(arg.seq);
-    }
-  }
-
-  static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {
-    const {name, seq} = JSON.parse(payload);
-    try {
-      let binding = page._pageBindings.get(name);
-      if (!binding)
-        binding = page._browserContext._pageBindings.get(name);
-      await binding!.dispatch(page, payload, context);
-    } catch (error) {
-      if (isError(error))
-        context.evaluateInternal(deliverError, { name, seq, message: error.message, stack: error.stack }).catch(e => debugLogger.log('error', e));
-      else
-        context.evaluateInternal(deliverErrorValue, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
 
     function deliverError(arg: { name: string, seq: number, message: string, stack: string | undefined }) {

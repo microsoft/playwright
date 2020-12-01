@@ -56,7 +56,6 @@ export class CRPage implements PageDelegate {
   private readonly _coverage: CRCoverage;
   readonly _browserContext: CRBrowserContext;
   private readonly _pagePromise: Promise<Page | Error>;
-  readonly _internalBindings = new Map<string, PageBinding>();
   _initializedPage: Page | null = null;
 
   // Holds window features for the next popup being opened via window.open,
@@ -128,15 +127,8 @@ export class CRPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
-    await this._forAllFrameSessions(frame => frame._initBinding(binding, 'main'));
+    await this._forAllFrameSessions(frame => frame._initBinding(binding));
     await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(binding.source, false, {}).catch(e => {})));
-  }
-
-  async exposeInternalBinding(name: string, callback: frames.FunctionWithSource) {
-    const binding = new PageBinding(name, callback, false);
-    this._internalBindings.set(name, binding);
-    await this._forAllFrameSessions(frame => frame._initBinding(binding, 'utility'));
-    await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(binding.source, false, {}, 'utility').catch(e => {})));
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
@@ -413,10 +405,8 @@ class FrameSession {
             grantUniveralAccess: true,
             worldName: UTILITY_WORLD_NAME,
           });
-          for (const binding of this._crPage._internalBindings.values())
-            frame._evaluateExpression(binding.source, false, {}, 'utility').catch(e => {});
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame._evaluateExpression(binding.source, false, {}).catch(e => {});
+            frame._evaluateExpression(binding.source, false, {}, binding.world).catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
@@ -465,12 +455,8 @@ class FrameSession {
     promises.push(this._updateOffline(true));
     promises.push(this._updateHttpCredentials(true));
     promises.push(this._updateEmulateMedia(true));
-    for (const binding of this._crPage._internalBindings.values())
-      promises.push(this._initBinding(binding, 'utility'));
-    for (const binding of this._crPage._browserContext._pageBindings.values())
-      promises.push(this._initBinding(binding, 'main'));
-    for (const binding of this._crPage._page._pageBindings.values())
-      promises.push(this._initBinding(binding, 'main'));
+    for (const binding of this._crPage._page.allBindings())
+      promises.push(this._initBinding(binding));
     for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source, 'main'));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
@@ -577,11 +563,14 @@ class FrameSession {
     if (!frame)
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
-    const context = new dom.FrameExecutionContext(delegate, frame);
+    let worldName: types.World|null = null;
     if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
-      frame._contextCreated('main', context);
+      worldName = 'main';
     else if (contextPayload.name === UTILITY_WORLD_NAME)
-      frame._contextCreated('utility', context);
+      worldName = 'utility';
+    const context = new dom.FrameExecutionContext(delegate, frame, worldName);
+    if (worldName)
+      frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -694,8 +683,8 @@ class FrameSession {
     this._page._addConsoleMessage(event.type, values, toConsoleMessageLocation(event.stackTrace));
   }
 
-  async _initBinding(binding: PageBinding, world: types.World) {
-    const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
+  async _initBinding(binding: PageBinding) {
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : undefined;
     await Promise.all([
       this._client.send('Runtime.addBinding', { name: binding.name, executionContextName: worldName }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source, worldName })
@@ -704,14 +693,7 @@ class FrameSession {
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
     const context = this._contextIdToContext.get(event.executionContextId)!;
-    const pageOrError = await this._crPage.pageOrError();
-    if (pageOrError instanceof Error)
-      return;
-    const internalBinding = this._crPage._internalBindings.get(event.name);
-    if (internalBinding && await context.frame._utilityContext() === context)
-      await internalBinding.dispatch(pageOrError, event.payload, context);
-    else
-      await this._page._onBindingCalled(event.payload, context);
+    await this._page._onBindingCalled(event.payload, context);
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {

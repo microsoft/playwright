@@ -28,11 +28,12 @@ import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
   private _injectedScriptPromise?: Promise<js.JSHandle>;
-  private _debugScriptPromise?: Promise<js.JSHandle | undefined>;
+  readonly world: types.World|null;
 
-  constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame) {
+  constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World|null) {
     super(delegate);
     this.frame = frame;
+    this.world = world;
   }
 
   adoptIfNeeded(handle: js.JSHandle): Promise<js.JSHandle> | null {

@@ -134,11 +134,14 @@ export class FFPage implements PageDelegate {
     if (!frame)
       return;
     const delegate = new FFExecutionContext(this._session, executionContextId);
-    const context = new dom.FrameExecutionContext(delegate, frame);
+    let worldName: types.World|null = null;
     if (auxData.name === UTILITY_WORLD_NAME)
-      frame._contextCreated('utility', context);
-    else if (!auxData.name)
-      frame._contextCreated('main', context);
+      worldName = 'utility';
+    else if (!auxData)
+      worldName = 'main';
+    const context = new dom.FrameExecutionContext(delegate, frame, worldName);
+    if (worldName)
+      frame._contextCreated(worldName, context);
     this._contextIdToContext.set(executionContextId, context);
   }
 
@@ -290,6 +293,8 @@ export class FFPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding) {
+    if (binding.world !== 'main')
+      throw new Error('Only main context bindings are supported in Firefox.');
     await this._session.send('Page.addBinding', { name: binding.name, script: binding.source });
   }
 
