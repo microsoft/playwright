@@ -454,11 +454,14 @@ export class WKPage implements PageDelegate {
     if (!frame)
       return;
     const delegate = new WKExecutionContext(this._session, contextPayload.id);
-    const context = new dom.FrameExecutionContext(delegate, frame);
+    let worldName: types.World|null = null;
     if (contextPayload.type === 'normal')
-      frame._contextCreated('main', context);
+      worldName = 'main';
     else if (contextPayload.type === 'user' && contextPayload.name === UTILITY_WORLD_NAME)
-      frame._contextCreated('utility', context);
+      worldName = 'utility';
+    const context = new dom.FrameExecutionContext(delegate, frame, worldName);
+    if (worldName)
+      frame._contextCreated(worldName, context);
     if (contextPayload.type === 'normal' && frame === this._page.mainFrame())
       this._mainFrameContextId = contextPayload.id;
     this._contextIdToContext.set(contextPayload.id, context);
@@ -679,11 +682,15 @@ export class WKPage implements PageDelegate {
   }
 
   async exposeBinding(binding: PageBinding): Promise<void> {
+    if (binding.world !== 'main')
+      throw new Error('Only main context bindings are supported in WebKit.');
     await this._updateBootstrapScript();
     await this._evaluateBindingScript(binding);
   }
 
   private async _evaluateBindingScript(binding: PageBinding): Promise<void> {
+    if (binding.world !== 'main')
+      throw new Error('Only main context bindings are supported in WebKit.');
     const script = this._bindingToScript(binding);
     await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(script, false, {}).catch(e => {})));
   }
@@ -698,9 +705,7 @@ export class WKPage implements PageDelegate {
 
   private _calculateBootstrapScript(): string {
     const scripts: string[] = [];
-    for (const binding of this._browserContext._pageBindings.values())
-      scripts.push(this._bindingToScript(binding));
-    for (const binding of this._page._pageBindings.values())
+    for (const binding of this._page.allBindings())
       scripts.push(this._bindingToScript(binding));
     scripts.push(...this._browserContext._evaluateOnNewDocumentSources);
     scripts.push(...this._page._evaluateOnNewDocumentSources);

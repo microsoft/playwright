@@ -198,8 +198,8 @@ export class CRPage implements PageDelegate {
     return this._go(+1);
   }
 
-  async evaluateOnNewDocument(source: string): Promise<void> {
-    await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source));
+  async evaluateOnNewDocument(source: string, world: types.World = 'main'): Promise<void> {
+    await this._forAllFrameSessions(frame => frame._evaluateOnNewDocument(source, world));
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
@@ -406,7 +406,7 @@ class FrameSession {
             worldName: UTILITY_WORLD_NAME,
           });
           for (const binding of this._crPage._browserContext._pageBindings.values())
-            frame._evaluateExpression(binding.source, false, {}).catch(e => {});
+            frame._evaluateExpression(binding.source, false, {}, binding.world).catch(e => {});
         }
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
@@ -455,14 +455,12 @@ class FrameSession {
     promises.push(this._updateOffline(true));
     promises.push(this._updateHttpCredentials(true));
     promises.push(this._updateEmulateMedia(true));
-    for (const binding of this._crPage._browserContext._pageBindings.values())
-      promises.push(this._initBinding(binding));
-    for (const binding of this._crPage._page._pageBindings.values())
+    for (const binding of this._crPage._page.allBindings())
       promises.push(this._initBinding(binding));
     for (const source of this._crPage._browserContext._evaluateOnNewDocumentSources)
-      promises.push(this._evaluateOnNewDocument(source));
+      promises.push(this._evaluateOnNewDocument(source, 'main'));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
-      promises.push(this._evaluateOnNewDocument(source));
+      promises.push(this._evaluateOnNewDocument(source, 'main'));
     if (this._isMainFrame() && this._crPage._browserContext._options.recordVideo) {
       const size = this._crPage._browserContext._options.recordVideo.size || this._crPage._browserContext._options.viewport || { width: 1280, height: 720 };
       const screencastId = createGuid();
@@ -565,11 +563,14 @@ class FrameSession {
     if (!frame)
       return;
     const delegate = new CRExecutionContext(this._client, contextPayload);
-    const context = new dom.FrameExecutionContext(delegate, frame);
+    let worldName: types.World|null = null;
     if (contextPayload.auxData && !!contextPayload.auxData.isDefault)
-      frame._contextCreated('main', context);
+      worldName = 'main';
     else if (contextPayload.name === UTILITY_WORLD_NAME)
-      frame._contextCreated('utility', context);
+      worldName = 'utility';
+    const context = new dom.FrameExecutionContext(delegate, frame, worldName);
+    if (worldName)
+      frame._contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -683,9 +684,10 @@ class FrameSession {
   }
 
   async _initBinding(binding: PageBinding) {
+    const worldName = binding.world === 'utility' ? UTILITY_WORLD_NAME : undefined;
     await Promise.all([
-      this._client.send('Runtime.addBinding', { name: binding.name }),
-      this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source })
+      this._client.send('Runtime.addBinding', { name: binding.name, executionContextName: worldName }),
+      this._client.send('Page.addScriptToEvaluateOnNewDocument', { source: binding.source, worldName })
     ]);
   }
 
@@ -693,7 +695,7 @@ class FrameSession {
     const context = this._contextIdToContext.get(event.executionContextId)!;
     const pageOrError = await this._crPage.pageOrError();
     if (!(pageOrError instanceof Error))
-      this._page._onBindingCalled(event.payload, context);
+      await this._page._onBindingCalled(event.payload, context);
   }
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
@@ -877,8 +879,9 @@ class FrameSession {
     await this._client.send('Page.setInterceptFileChooserDialog', { enabled }).catch(e => {}); // target can be closed.
   }
 
-  async _evaluateOnNewDocument(source: string): Promise<void> {
-    await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source });
+  async _evaluateOnNewDocument(source: string, world: types.World): Promise<void> {
+    const worldName = world === 'utility' ? UTILITY_WORLD_NAME : undefined;
+    await this._client.send('Page.addScriptToEvaluateOnNewDocument', { source, worldName });
   }
 
   async _getContentFrame(handle: dom.ElementHandle): Promise<frames.Frame | null> {
