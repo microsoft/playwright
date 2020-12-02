@@ -57,13 +57,12 @@ it('should parse css', async () => {
   expect(serialize(parseCSS('div:is(span):hover'))).toBe('div:hover:is(span)');
   expect(serialize(parseCSS('div:scope:hover'))).toBe('div:hover:scope()');
 
-  expect(serialize(parseCSS(':text("foo")'))).toBe(':text(foo)');
-  expect(serialize(parseCSS(':text("*")'))).toBe(':text(*)');
+  expect(serialize(parseCSS(':text("foo")'))).toBe(':text("foo")');
+  expect(serialize(parseCSS(':text("*")'))).toBe(':text("*")');
   expect(serialize(parseCSS(':text(*)'))).toBe(':text(*)');
-  expect(serialize(parseCSS(':text("foo", normalize-space)'))).toBe(':text(foo, normalize-space)');
+  expect(serialize(parseCSS(':text("foo", normalize-space)'))).toBe(':text("foo", normalize-space)');
   expect(serialize(parseCSS(':index(3, div    span)'))).toBe(':index(3, div span)');
   expect(serialize(parseCSS(':is(foo, bar>baz.cls+:not(qux))'))).toBe(':is(foo, bar > baz.cls + :not(qux))');
-  // expect(serialize(parseCSS(':right-of(div, bar=50)'))).toBe(':right-of(div, bar=50)');
 });
 
 it('should throw on malformed css', async () => {
@@ -96,4 +95,7 @@ it('should throw on malformed css', async () => {
   expectError('div > > span');
   expectError('div > > > > span');
   expectError('div >');
+  expectError('"foo"');
+  expectError('23');
+  expectError('span, div>"foo"');
 });
