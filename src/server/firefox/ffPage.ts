@@ -137,7 +137,7 @@ export class FFPage implements PageDelegate {
     let worldName: types.World|null = null;
     if (auxData.name === UTILITY_WORLD_NAME)
       worldName = 'utility';
-    else if (!auxData)
+    else if (!auxData.name)
       worldName = 'main';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     if (worldName)

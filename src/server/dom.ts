@@ -28,7 +28,7 @@ import { FatalDOMError, RetargetableDOMError } from './common/domErrors';
 export class FrameExecutionContext extends js.ExecutionContext {
   readonly frame: frames.Frame;
   private _injectedScriptPromise?: Promise<js.JSHandle>;
-  readonly world: types.World|null;
+  readonly world: types.World | null;
 
   constructor(delegate: js.ExecutionContextDelegate, frame: frames.Frame, world: types.World|null) {
     super(delegate);

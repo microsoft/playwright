@@ -258,7 +258,7 @@ export class Page extends EventEmitter {
   }
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
-    const identifier = 'main:' + name;
+    const identifier = PageBinding.identifier(name, 'main');
     if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);
     if (this._browserContext._pageBindings.has(identifier))
@@ -469,7 +469,8 @@ export class Page extends EventEmitter {
   }
 
   getBinding(name: string, world: types.World) {
-    return this._pageBindings.get(world + ':' + name) || this._browserContext._pageBindings.get(world + ':' + name);
+    const identifier = PageBinding.identifier(name, world);
+    return this._pageBindings.get(identifier) || this._browserContext._pageBindings.get(identifier);
   }
 }
 
@@ -521,6 +522,10 @@ export class PageBinding {
     this.source = `(${addPageBinding.toString()})(${JSON.stringify(name)}, ${needsHandle})`;
     this.needsHandle = needsHandle;
     this.world = world;
+  }
+
+  static identifier(name: string, world: types.World) {
+    return world + ':' + name;
   }
 
   static async dispatch(page: Page, payload: string, context: dom.FrameExecutionContext) {

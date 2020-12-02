@@ -184,7 +184,7 @@ export abstract class BrowserContext extends EventEmitter {
   }
 
   async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource): Promise<void> {
-    const identifier = 'main:' + name;
+    const identifier = PageBinding.identifier(name, 'main');
     if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);
     for (const page of this.pages()) {
