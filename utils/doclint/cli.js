@@ -16,13 +16,13 @@
  */
 
 const playwright = require('../../');
+const fs = require('fs');
 const path = require('path');
+const os = require('os');
 const Source = require('./Source');
 const Message = require('./Message');
 
 const {spawnSync} = require('child_process');
-
-const os = require('os');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -41,11 +41,19 @@ async function run() {
   const messages = [];
   let changedFiles = false;
 
+  // Produce api.md
+  {
+    const comment = '<!-- THIS FILE IS NOW GENERATED -->';
+    const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
+    const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
+    const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
+    fs.writeFileSync(path.join(PROJECT_DIR, 'docs', 'api.md'), [comment, header, body, footer].join('\n'));
+  }
+
   // Documentation checks.
   {
     const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
     const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
-    const ffmpegReadme = await Source.readFile(path.join(PROJECT_DIR, 'third_party', 'ffmpeg', 'README.md'));
     const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
     const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
     const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
