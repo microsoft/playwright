@@ -32,7 +32,7 @@ const YELLOW_COLOR = '\x1b[33m';
 const RESET_COLOR = '\x1b[0m';
 
 run().catch(e => {
-  console.error(e && e.stack ? e.stack : e);
+  console.error(e);
   process.exit(1);
 });;
 
