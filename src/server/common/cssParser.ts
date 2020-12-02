@@ -24,10 +24,10 @@ type ClauseCombinator = '' | '>' | '+' | '~';
 export type CSSFunctionArgument = CSSComplexSelector | number | string;
 export type CSSFunction = { name: string, args: CSSFunctionArgument[] };
 export type CSSSimpleSelector = { css?: string, functions: CSSFunction[] };
-export type CSSComplexSelector = { simple: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
-export type CSSSelectorList = CSSComplexSelector[];
+export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
+export type CSSComplexSelectorList = CSSComplexSelector[];
 
-export function parseCSS(selector: string): CSSSelectorList {
+export function parseCSS(selector: string): CSSComplexSelectorList {
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
@@ -131,16 +131,16 @@ export function parseCSS(selector: string): CSSSelectorList {
 
   function consumeComplexSelector(): CSSComplexSelector {
     skipWhitespace();
-    const result = { simple: [{ selector: consumeSimpleSelector(), combinator: '' as ClauseCombinator }] };
+    const result = { simples: [{ selector: consumeSimpleSelector(), combinator: '' as ClauseCombinator }] };
     while (true) {
       skipWhitespace();
       if (isClauseCombinator()) {
-        result.simple[result.simple.length - 1].combinator = tokens[pos++].value as ClauseCombinator;
+        result.simples[result.simples.length - 1].combinator = tokens[pos++].value as ClauseCombinator;
         skipWhitespace();
       } else if (isSelectorClauseEnd()) {
         break;
       }
-      result.simple.push({ combinator: '', selector: consumeSimpleSelector() });
+      result.simples.push({ combinator: '', selector: consumeSimpleSelector() });
     }
     return result;
   }
@@ -163,12 +163,12 @@ export function parseCSS(selector: string): CSSSelectorList {
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
-          if (builtinCSSFilters.has(tokens[pos].value))
+          if (builtinCSSFilters.has(tokens[pos].value.toLowerCase()))
             rawCSSString += ':' + tokens[pos++].toSource();
           else
-            functions.push({ name: tokens[pos++].value, args: [] });
+            functions.push({ name: tokens[pos++].value.toLowerCase(), args: [] });
         } else if (tokens[pos] instanceof css.FunctionToken) {
-          const name = tokens[pos++].value;
+          const name = tokens[pos++].value.toLowerCase();
           if (builtinCSSFunctions.has(name))
             rawCSSString += `:${name}(${consumeBuiltinFunctionArguments()})`;
           else
@@ -208,7 +208,7 @@ export function parseCSS(selector: string): CSSSelectorList {
   const result = consumeFunctionArguments();
   if (!isEOF())
     throw new Error(`Error while parsing selector "${selector}"`);
-  if (result.some(arg => typeof arg !== 'object' || !('simple' in arg)))
+  if (result.some(arg => typeof arg !== 'object' || !('simples' in arg)))
     throw new Error(`Error while parsing selector "${selector}"`);
   return result as CSSComplexSelector[];
 }
@@ -219,7 +219,7 @@ export function serializeSelector(args: CSSFunctionArgument[]) {
       return `"${arg}"`;
     if (typeof arg === 'number')
       return String(arg);
-    return arg.simple.map(({ selector, combinator }) => {
+    return arg.simples.map(({ selector, combinator }) => {
       let s = selector.css || '';
       s = s + selector.functions.map(func => `:${func.name}(${serializeSelector(func.args)})`).join('');
       if (combinator)

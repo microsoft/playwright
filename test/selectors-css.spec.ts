@@ -153,6 +153,42 @@ it('should work with :not', async ({page, server}) => {
   expect(await page.$$eval(`css=div > :not(span):not(div)`, els => els.length)).toBe(0);
 });
 
+it('should work with ~', async ({page}) => {
+  await page.setContent(`
+    <div id=div1></div>
+    <div id=div2></div>
+    <div id=div3></div>
+    <div id=div4></div>
+    <div id=div5></div>
+    <div id=div6></div>
+  `);
+  expect(await page.$$eval(`css=#div1 ~ div ~ #div6`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=#div1 ~ div ~ div`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`css=#div3 ~ div ~ div`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`css=#div4 ~ div ~ div`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=#div5 ~ div ~ div`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=#div3 ~ #div2 ~ #div6`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=#div3 ~ #div4 ~ #div5`, els => els.length)).toBe(1);
+});
+
+it('should work with +', async ({page}) => {
+  await page.setContent(`
+    <div id=div1></div>
+    <div id=div2></div>
+    <div id=div3></div>
+    <div id=div4></div>
+    <div id=div5></div>
+    <div id=div6></div>
+  `);
+  expect(await page.$$eval(`css=#div1 ~ div + #div6`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=#div1 ~ div + div`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`css=#div3 + div + div`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=#div4 ~ #div5 + div`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=#div5 + div + div`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=#div3 ~ #div2 + #div6`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=#div3 + #div4 + #div5`, els => els.length)).toBe(1);
+});
+
 it('should work with spaces in :nth-child and :not', test => {
   test.fixme('Our selector parser is broken');
 }, async ({page, server}) => {
@@ -166,4 +202,47 @@ it('should work with spaces in :nth-child and :not', test => {
   expect(await page.$$eval(`css=div > :not(span)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=body :not(span, div)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span, section:not(span, div)`, els => els.length)).toBe(5);
+});
+
+it('should work with :is', test => {
+  test.skip('Needs a new selector evaluator');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  expect(await page.$$eval(`css=div:is(#root1)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=div:is(#root1, #target)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=div:is(span, #target)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=div:is(span, #root1 > *)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`css=div:is(section div)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=:is(div, span)`, els => els.length)).toBe(7);
+  expect(await page.$$eval(`css=section:is(section) div:is(section div)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=:is(div, span) > *`, els => els.length)).toBe(6);
+});
+
+it('should work with :has', test => {
+  test.skip('Needs a new selector evaluator');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  expect(await page.$$eval(`css=div:has(#target)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`css=div:has([data-testid=foo])`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`css=div:has([attr*=value])`, els => els.length)).toBe(2);
+});
+
+it('should work with :scope', test => {
+  test.skip('Needs a new selector evaluator');
+}, async ({page, server}) => {
+  await page.goto(server.PREFIX + '/deep-shadow.html');
+  // 'is' does not change the scope, so it remains 'html'.
+  expect(await page.$$eval(`css=div:is(:scope#root1)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=div:is(:scope #root1)`, els => els.length)).toBe(1);
+  // 'has' does change the scope, so it becomes the 'div' we are querying.
+  expect(await page.$$eval(`css=div:has(:scope > #target)`, els => els.length)).toBe(1);
+
+  const handle = await page.$(`css=span`);
+  for (const scope of [page, handle]) {
+    expect(await scope.$$eval(`css=:scope`, els => els.length)).toBe(1);
+    expect(await scope.$$eval(`css=* :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`css=* + :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`css=* > :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`css=* ~ :scope`, els => els.length)).toBe(0);
+  }
 });
