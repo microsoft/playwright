@@ -36,6 +36,6 @@ it('should fetch hidpi assets', async ({ contextFactory, server }) => {
   const [ request ] = await Promise.all([
     page.waitForRequest('**/image*'),
     page.goto(server.PREFIX + '/highdpi.html'),
-  ])
+  ]);
   expect(request.url()).toContain('image2x');
 });

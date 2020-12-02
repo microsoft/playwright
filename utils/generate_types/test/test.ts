@@ -26,7 +26,7 @@ type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
   await page.goto('https://example.com');
   await page.screenshot({ path: 'example.png' });
 
-  browser.close();
+  await browser.close();
 })();
 
 (async () => {
@@ -35,7 +35,7 @@ type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
   await page.goto('https://news.ycombinator.com', { waitUntil: 'networkidle' });
   await page.pdf({ path: 'hn.pdf', format: 'A4' });
 
-  browser.close();
+  await browser.close();
 })();
 
 (async () => {
@@ -54,7 +54,7 @@ type AssertNotAny<S> = {notRealProperty: number} extends S ? false : true;
 
   console.log('Dimensions:', dimensions);
 
-  browser.close();
+  await browser.close();
 })();
 
 // The following examples are taken from the docs itself
@@ -105,7 +105,7 @@ playwright.chromium.launch().then(async browser => {
     const myHash = await (window as any).md5(myString);
     console.log(`md5 of ${myString} is ${myHash}`);
   });
-  browser.close();
+  await browser.close();
 
   page.on('console', console.log);
   await page.exposeFunction('readfile', async (filePath: string) => {
@@ -189,7 +189,7 @@ playwright.chromium.launch().then(async browser => {
   page.on('dialog', async dialog => {
     console.log(dialog.message());
     await dialog.dismiss();
-    browser.close();
+    await browser.close();
   });
 
   const inputElement = (await page.$('input[type=submit]'))!;
@@ -214,7 +214,7 @@ playwright.chromium.launch().then(async browser => {
   await page.goto('https://example.com');
   await page.screenshot({ path: 'example.png' });
 
-  browser.close();
+  await browser.close();
 })();
 
 // Test v0.12 features
@@ -315,7 +315,7 @@ playwright.chromium.launch().then(async browser => {
   console.log(await resultHandle.jsonValue());
   await resultHandle.dispose();
 
-  browser.close();
+  await browser.close();
 })();
 
 // test $eval and $$eval
@@ -384,7 +384,7 @@ playwright.chromium.launch().then(async browser => {
       const assertion: AssertType<string, typeof value> = true;
     }
   }
-  browser.close();
+  await browser.close();
 })();
 
 // waitForEvent
@@ -780,6 +780,18 @@ playwright.chromium.launch().then(async browser => {
               .removeListener('close', listener)
               .off('close', listener);
 });
+
+// waitForResponse callback predicate
+(async () => {
+  const browser = await playwright.chromium.launch();
+  const page = await browser.newPage();
+  await Promise.all([
+    page.waitForResponse(response => response.url().includes('example.com')),
+    page.goto('https://example.com')
+  ]);
+
+  await browser.close();
+})();
 
 // exported types
 import {
