@@ -31,7 +31,10 @@ const RED_COLOR = '\x1b[31m';
 const YELLOW_COLOR = '\x1b[33m';
 const RESET_COLOR = '\x1b[0m';
 
-run();
+run().catch(e => {
+  console.error(e && e.stack ? e.stack : e);
+  process.exit(1);
+});;
 
 async function run() {
   const startTime = Date.now();
