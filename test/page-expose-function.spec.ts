@@ -222,3 +222,12 @@ it('exposeBindingHandle should throw for multiple arguments', async ({page}) => 
   }).catch(e => e);
   expect(error.message).toContain('exposeBindingHandle supports a single argument, 2 received');
 });
+
+it('should not result in unhandled rejection', async ({page}) => {
+  await page.exposeFunction('foo', async () => {
+    await page.close();
+  });
+  await page.evaluate(() => {
+    (window as any).foo();
+  });
+});

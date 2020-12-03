@@ -649,9 +649,9 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel, chann
         result = await func(source, JSHandle.from(this._initializer.handle));
       else
         result = await func(source, ...this._initializer.args!.map(parseResult));
-      this._channel.resolve({ result: serializeArgument(result) });
+      this._channel.resolve({ result: serializeArgument(result) }).catch(() => {});
     } catch (e) {
-      this._channel.reject({ error: serializeError(e) });
+      this._channel.reject({ error: serializeError(e) }).catch(() => {});
     }
   }
 }
