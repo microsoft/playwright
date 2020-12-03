@@ -114,14 +114,6 @@ export class Selectors {
     return adopted;
   }
 
-  async _createSelector(name: string, handle: dom.ElementHandle<Element>): Promise<string | undefined> {
-    const mainContext = await handle._page.mainFrame()._mainContext();
-    const injectedScript = await mainContext.injectedScript();
-    return injectedScript.evaluate((injected, { target, name }) => {
-      return injected.engines.get(name)!.create(document.documentElement, target);
-    }, { target: handle, name });
-  }
-
   _parseSelector(selector: string): SelectorInfo {
     const parsed = parseSelector(selector);
     for (const {name} of parsed.parts) {

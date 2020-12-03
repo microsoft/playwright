@@ -1756,7 +1756,6 @@ export interface ElementHandleChannel extends JSHandleChannel {
   uncheck(params: ElementHandleUncheckParams, metadata?: Metadata): Promise<ElementHandleUncheckResult>;
   waitForElementState(params: ElementHandleWaitForElementStateParams, metadata?: Metadata): Promise<ElementHandleWaitForElementStateResult>;
   waitForSelector(params: ElementHandleWaitForSelectorParams, metadata?: Metadata): Promise<ElementHandleWaitForSelectorResult>;
-  createSelectorForTest(params: ElementHandleCreateSelectorForTestParams, metadata?: Metadata): Promise<ElementHandleCreateSelectorForTestResult>;
 }
 export type ElementHandleEvalOnSelectorParams = {
   selector: string,
@@ -2088,15 +2087,6 @@ export type ElementHandleWaitForSelectorOptions = {
 };
 export type ElementHandleWaitForSelectorResult = {
   element?: ElementHandleChannel,
-};
-export type ElementHandleCreateSelectorForTestParams = {
-  name: string,
-};
-export type ElementHandleCreateSelectorForTestOptions = {
-
-};
-export type ElementHandleCreateSelectorForTestResult = {
-  value?: string,
 };
 
 // ----------- Request -----------
