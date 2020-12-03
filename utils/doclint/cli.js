@@ -21,7 +21,7 @@ const path = require('path');
 const os = require('os');
 const Source = require('./Source');
 const Message = require('./Message');
-const { renderMdTemplate, extractParamDescriptions } = require('./../parse_md');
+const { renderMdTemplate } = require('./../parse_md');
 const { spawnSync } = require('child_process');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
