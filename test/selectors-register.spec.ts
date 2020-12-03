@@ -41,12 +41,10 @@ it('should work', async ({playwright, browser}) => {
   const page = await context.newPage();
   await page.setContent('<div><span></span></div><div></div>');
 
-  expect(await (await page.$('div') as any)._createSelectorForTest('tag')).toBe('DIV');
   expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
 
-  expect(await (await page.$('div') as any)._createSelectorForTest('tag2')).toBe('DIV');
   expect(await page.$eval('tag2=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag2=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag2=DIV', es => es.length)).toBe(2);
