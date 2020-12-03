@@ -107,3 +107,13 @@ it('should traverse only form elements', (test, { browserName, platform }) => {
   await page.keyboard.press('Alt+Shift+Tab');
   expect(await page.evaluate(() => document.activeElement.id)).toBe('input-1');
 });
+
+it('clicking checkbox should activate it', (test, { browserName, headful, platform }) => {
+  test.fixme(browserName === 'webkit' && !headful);
+  test.fixme(browserName === 'firefox' && !headful && platform === 'darwin');
+}, async ({ page }) => {
+  await page.setContent(`<input type=checkbox></input>`);
+  await page.click('input');
+  const nodeName = await page.evaluate(() => document.activeElement.nodeName);
+  expect(nodeName).toBe('INPUT');
+});
