@@ -31,10 +31,10 @@ elif [[ "$(uname)" == MINGW* ]]; then
     echo "-- building win64 build on MINGW"
     echo "ac_add_options --target=x86_64-pc-mingw32" > .mozconfig
     echo "ac_add_options --host=x86_64-pc-mingw32" >> .mozconfig
-    DLL_FILE=$("$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
+    DLL_FILE=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x64\**\vcruntime140.dll')
   else
     echo "-- building win32 build on MINGW"
-    DLL_FILE=$("$PROGRAMFILES\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x86\**\vcruntime140.dll')
+    DLL_FILE=$("C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe" -latest -find '**\Redist\MSVC\*\x86\**\vcruntime140.dll')
   fi
   WIN32_REDIST_DIR=$(dirname "$DLL_FILE")
   if ! [[ -d $WIN32_REDIST_DIR ]]; then
