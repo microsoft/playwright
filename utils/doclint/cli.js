@@ -21,8 +21,8 @@ const path = require('path');
 const os = require('os');
 const Source = require('./Source');
 const Message = require('./Message');
-
-const {spawnSync} = require('child_process');
+const { renderMdTemplate } = require('./../parse_md');
+const { spawnSync } = require('child_process');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -47,7 +47,8 @@ async function run() {
     const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
     const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
     const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
-    fs.writeFileSync(path.join(PROJECT_DIR, 'docs', 'api.md'), [comment, header, body, footer].join('\n'));
+    const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
+    fs.writeFileSync(path.join(PROJECT_DIR, 'docs', 'api.md'), [comment, header, renderMdTemplate(body, params), footer].join('\n'));
   }
 
   // Documentation checks.
