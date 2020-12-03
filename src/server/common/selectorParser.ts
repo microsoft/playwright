@@ -14,21 +14,31 @@
  * limitations under the License.
  */
 
-// This file can't have dependencies, it is a part of the utility script.
+import { CSSComplexSelectorList, parseCSS } from './cssParser';
 
-export type ParsedSelector = {
+export type ParsedSelectorV1 = {
   parts: {
     name: string,
     body: string,
   }[],
   capture?: number,
 };
+export type ParsedSelectorV2 = CSSComplexSelectorList;
+export type ParsedSelector = { v1: ParsedSelectorV1 } | { v2: ParsedSelectorV2, names: string[] };
 
 export function parseSelector(selector: string): ParsedSelector {
+  if (selector[0] === '!') {
+    const parsed = parseCSS(selector.substring(1));
+    return { v2: parsed.selector, names: parsed.names };
+  }
+  return { v1: parseSelectorV1(selector) };
+}
+
+function parseSelectorV1(selector: string): ParsedSelectorV1 {
   let index = 0;
   let quote: string | undefined;
   let start = 0;
-  const result: ParsedSelector = { parts: [] };
+  const result: ParsedSelectorV1 = { parts: [] };
   const append = () => {
     const part = selector.substring(start, index).trim();
     const eqIndex = part.indexOf('=');

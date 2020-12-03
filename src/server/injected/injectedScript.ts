@@ -19,8 +19,9 @@ import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector, parseSelector } from '../common/selectorParser';
+import { ParsedSelector, ParsedSelectorV1, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
+import { SelectorEvaluatorImpl, SelectorEngine as SelectorEngineV2, QueryContext } from './selectorEvaluator';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -41,6 +42,7 @@ export type InjectedScriptPoll<T> = {
 
 export class InjectedScript {
   readonly engines: Map<string, SelectorEngine>;
+  private _evaluator: SelectorEvaluatorImpl;
 
   constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
     this.engines = new Map();
@@ -61,6 +63,10 @@ export class InjectedScript {
     this.engines.set('data-test:light', createAttributeEngine('data-test', false));
     for (const {name, engine} of customEngines)
       this.engines.set(name, engine);
+    const mapV2 = new Map<string, SelectorEngineV2>();
+    for (const {name, engine} of customEngines)
+      mapV2.set(name, wrapV2(name, engine));
+    this._evaluator = new SelectorEvaluatorImpl(mapV2);
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -70,16 +76,18 @@ export class InjectedScript {
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+    if ('v1' in selector)
+      return this._querySelectorRecursivelyV1(root as SelectorRoot, selector.v1, 0);
+    return this._evaluator.evaluate({ scope: root as (Document | Element), pierceShadow: true }, selector.v2)[0];
   }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
+  private _querySelectorRecursivelyV1(root: SelectorRoot, selector: ParsedSelectorV1, index: number): Element | undefined {
     const current = selector.parts[index];
     if (index === selector.parts.length - 1)
       return this.engines.get(current.name)!.query(root, current.body);
     const all = this.engines.get(current.name)!.queryAll(root, current.body);
     for (const next of all) {
-      const result = this._querySelectorRecursively(next, selector, index + 1);
+      const result = this._querySelectorRecursivelyV1(next, selector, index + 1);
       if (result)
         return selector.capture === index ? next : result;
     }
@@ -88,6 +96,12 @@ export class InjectedScript {
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (!(root as any)['querySelectorAll'])
       throw new Error('Node is not queryable.');
+    if ('v1' in selector)
+      return this._querySelectorAllV1(selector.v1, root as SelectorRoot);
+    return this._evaluator.evaluate({ scope: root as (Document | Element), pierceShadow: true }, selector.v2);
+  }
+
+  private _querySelectorAllV1(selector: ParsedSelectorV1, root: SelectorRoot): Element[] {
     const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
     // Query all elements up to the capture.
     const partsToQuerAll = selector.parts.slice(0, capture + 1);
@@ -109,7 +123,7 @@ export class InjectedScript {
     if (!partsToCheckOne.length)
       return candidates;
     const partial = { parts: partsToCheckOne };
-    return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+    return candidates.filter(e => !!this._querySelectorRecursivelyV1(e, partial, 0));
   }
 
   extend(source: string, params: any): any {
@@ -716,5 +730,15 @@ const eventType = new Map<string, 'mouse'|'keyboard'|'touch'|'pointer'|'focus'|'
   ['dragexit', 'drag'],
   ['drop', 'drag'],
 ]);
+
+function wrapV2(name: string, engine: SelectorEngine): SelectorEngineV2 {
+  return {
+    query(context: QueryContext, args: string[]): Element[] {
+      if (args.length !== 1 || typeof args[0] !== 'string')
+        throw new Error(`engine "${name}" expects a single string`);
+      return engine.queryAll(context.scope, args[0]);
+    }
+  };
+}
 
 export default InjectedScript;

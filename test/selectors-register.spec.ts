@@ -44,14 +44,22 @@ it('should work', async ({playwright, browser}) => {
   expect(await page.$eval('tag=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag=DIV', es => es.length)).toBe(2);
+  expect(await page.$eval('! :tag("DIV")', e => e.nodeName)).toBe('DIV');
+  expect(await page.$eval('! :tag("SPAN")', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$$eval('! :tag("DIV")', es => es.length)).toBe(2);
 
   expect(await page.$eval('tag2=DIV', e => e.nodeName)).toBe('DIV');
   expect(await page.$eval('tag2=SPAN', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('tag2=DIV', es => es.length)).toBe(2);
+  expect(await page.$eval('! :tag2("DIV")', e => e.nodeName)).toBe('DIV');
+  expect(await page.$eval('! :tag2("SPAN")', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$$eval('! :tag2("DIV")', es => es.length)).toBe(2);
 
   // Selector names are case-sensitive.
   const error = await page.$('tAG=DIV').catch(e => e);
   expect(error.message).toContain('Unknown engine "tAG" while parsing selector tAG=DIV');
+  // Selector v2 names are case-insensitive.
+  expect(await page.$eval('! :tAG("DIV")', e => e.nodeName)).toBe('DIV');
 
   await context.close();
 });
@@ -60,6 +68,7 @@ it('should work with path', async ({playwright, page}) => {
   await playwright.selectors.register('foo', { path: path.join(__dirname, 'assets/sectionselectorengine.js') });
   await page.setContent('<section></section>');
   expect(await page.$eval('foo=whatever', e => e.nodeName)).toBe('SECTION');
+  expect(await page.$eval('! :foo("whatever")', e => e.nodeName)).toBe('SECTION');
 });
 
 it('should work in main and isolated world', async ({playwright, page}) => {
@@ -69,7 +78,7 @@ it('should work in main and isolated world', async ({playwright, page}) => {
       return window['__answer'];
     },
     queryAll(root, selector) {
-      return [document.body, document.documentElement, window['__answer']];
+      return window['__answer'] ? [window['__answer'], document.body, document.documentElement] : [];
     }
   });
   await playwright.selectors.register('main', createDummySelector);
@@ -81,17 +90,28 @@ it('should work in main and isolated world', async ({playwright, page}) => {
   expect(await page.$eval('css=div >> main=ignored', e => e.nodeName)).toBe('SPAN');
   expect(await page.$$eval('main=ignored', es => window['__answer'] !== undefined)).toBe(true);
   expect(await page.$$eval('main=ignored', es => es.filter(e => e).length)).toBe(3);
+  expect(await page.$eval('! :main("ignored")', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$eval('! div :main("ignored")', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$$eval('! :main("ignored")', es => window['__answer'] !== undefined)).toBe(true);
+  expect(await page.$$eval('! :main("ignored")', es => es.filter(e => e).length)).toBe(3);
   // Works in isolated by default.
   expect(await page.$('isolated=ignored')).toBe(null);
   expect(await page.$('css=div >> isolated=ignored')).toBe(null);
+  expect(await page.$('! :isolated("ignored")')).toBe(null);
+  expect(await page.$('! div :isolated("ignored")')).toBe(null);
   // $$eval always works in main, to avoid adopting nodes one by one.
   expect(await page.$$eval('isolated=ignored', es => window['__answer'] !== undefined)).toBe(true);
   expect(await page.$$eval('isolated=ignored', es => es.filter(e => e).length)).toBe(3);
+  expect(await page.$$eval('! :isolated("ignored")', es => window['__answer'] !== undefined)).toBe(true);
+  expect(await page.$$eval('! :isolated("ignored")', es => es.filter(e => e).length)).toBe(3);
   // At least one engine in main forces all to be in main.
   expect(await page.$eval('main=ignored >> isolated=ignored', e => e.nodeName)).toBe('SPAN');
   expect(await page.$eval('isolated=ignored >> main=ignored', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$eval('! :main("ignored") :isolated("ignored")', e => e.nodeName)).toBe('SPAN');
+  expect(await page.$eval('! :isolated("ignored") :main("ignored")', e => e.nodeName)).toBe('SPAN');
   // Can be chained to css.
   expect(await page.$eval('main=ignored >> css=section', e => e.nodeName)).toBe('SECTION');
+  expect(await page.$eval('! :main("ignored") section', e => e.nodeName)).toBe('SECTION');
 });
 
 it('should handle errors', async ({playwright, page}) => {

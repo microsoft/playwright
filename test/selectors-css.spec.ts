@@ -33,16 +33,33 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await page.$eval(`css=section > div div span`, e => e.textContent)).toBe('Hello from root2');
   expect(await page.$eval(`css=section > div div span:nth-child(2)`, e => e.textContent)).toBe('Hello from root3 #2');
   expect(await page.$(`css=section div div div div`)).toBe(null);
+  expect(await page.$eval(`! span`, e => e.textContent)).toBe('Hello from root1');
+  expect(await page.$eval(`! [attr="value\\ space"]`, e => e.textContent)).toBe('Hello from root3 #2');
+  expect(await page.$eval(`! [attr='value\\ \\space']`, e => e.textContent)).toBe('Hello from root3 #2');
+  expect(await page.$eval(`! div div span`, e => e.textContent)).toBe('Hello from root2');
+  expect(await page.$eval(`! div span + span`, e => e.textContent)).toBe('Hello from root3 #2');
+  expect(await page.$eval(`! span + [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
+  expect(await page.$eval(`! [data-testid="foo"] + [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
+  expect(await page.$eval(`! #target`, e => e.textContent)).toBe('Hello from root2');
+  expect(await page.$eval(`! div #target`, e => e.textContent)).toBe('Hello from root2');
+  expect(await page.$eval(`! div div #target`, e => e.textContent)).toBe('Hello from root2');
+  expect(await page.$(`! div div div #target`)).toBe(null);
+  expect(await page.$eval(`! section > div div span`, e => e.textContent)).toBe('Hello from root2');
+  expect(await page.$eval(`! section > div div span:nth-child(2)`, e => e.textContent)).toBe('Hello from root3 #2');
+  expect(await page.$(`! section div div div div`)).toBe(null);
 
   const root2 = await page.$(`css=div div`);
   expect(await root2.$eval(`css=#target`, e => e.textContent)).toBe('Hello from root2');
   expect(await root2.$(`css:light=#target`)).toBe(null);
+  expect(await root2.$eval(`! #target`, e => e.textContent)).toBe('Hello from root2');
   const root2Shadow = await root2.evaluateHandle(r => r.shadowRoot);
   expect(await root2Shadow.$eval(`css:light=#target`, e => e.textContent)).toBe('Hello from root2');
   const root3 = (await page.$$(`css=div div`))[1];
   expect(await root3.$eval(`text=root3`, e => e.textContent)).toBe('Hello from root3');
   expect(await root3.$eval(`css=[attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
   expect(await root3.$(`css:light=[attr*="value"]`)).toBe(null);
+  expect(await root3.$eval(`! :text("root3", "g")`, e => e.textContent)).toBe('Hello from root3');
+  expect(await root3.$eval(`! [attr*="value"]`, e => e.textContent)).toBe('Hello from root3 #2');
 });
 
 it('should work with > combinator and spaces', async ({page, server}) => {
@@ -61,7 +78,20 @@ it('should work with > combinator and spaces', async ({page, server}) => {
   expect(await page.$eval(`div[foo="bar"][bar="baz"]   >    span`, e => e.outerHTML)).toBe(`<span></span>`);
   expect(await page.$eval(`div[foo="bar"][bar="baz"]>    span`, e => e.outerHTML)).toBe(`<span></span>`);
   expect(await page.$eval(`div[foo="bar"][bar="baz"]     >span`, e => e.outerHTML)).toBe(`<span></span>`);
-});
+  expect(await page.$eval(`! div[foo="bar"] > span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"]> span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"] >span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"]>span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"]   >    span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"]>    span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"]     >span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"] > span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"]> span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"] >span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"]>span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"]   >    span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"]>    span`, e => e.outerHTML)).toBe(`<span></span>`);
+  expect(await page.$eval(`! div[foo="bar"][bar="baz"]     >span`, e => e.outerHTML)).toBe(`<span></span>`);});
 
 it('should work with comma separated list', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
@@ -74,6 +104,15 @@ it('should work with comma separated list', async ({page, server}) => {
   expect(await page.$$eval(`css=#target,[attr="value\\ space"]`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"]`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=#target,[data-testid="foo"],[attr="value\\ space"],span`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! span,section #root1`, els => els.length)).toBe(5);
+  expect(await page.$$eval(`! section #root1, div span`, els => els.length)).toBe(5);
+  expect(await page.$eval(`! doesnotexist , section #root1`, e => e.id)).toBe('root1');
+  expect(await page.$$eval(`! doesnotexist ,section #root1`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span,div span`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! span,div span,div div span`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! #target,[attr="value\\ space"]`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! #target,[data-testid="foo"],[attr="value\\ space"]`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! #target,[data-testid="foo"],[attr="value\\ space"],span`, els => els.length)).toBe(4);
 });
 
 it('should keep dom order with comma separated list', async ({page}) => {
@@ -85,6 +124,13 @@ it('should keep dom order with comma separated list', async ({page}) => {
   expect(await page.$$eval(`css=section >> *css=div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('DIV');
   expect(await page.$$eval(`css=section >> *css=div,span >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
   expect(await page.$$eval(`css=section >> *css=div,span >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+  expect(await page.$$eval(`! span,div`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+  expect(await page.$$eval(`! div,span`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+  expect(await page.$$eval(`! span div, div`, els => els.map(e => e.nodeName).join(','))).toBe('DIV');
+  expect(await page.$$eval(`! section:has(div,span)`, els => els.map(e => e.nodeName).join(','))).toBe('SECTION');
+  expect(await page.$$eval(`! section div:has(x,y)`, els => els.map(e => e.nodeName).join(','))).toBe('DIV');
+  expect(await page.$$eval(`! section :is(div,span):has(x,y)`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
+  expect(await page.$$eval(`! section :is(div,span):has(y)`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
 });
 
 it('should work with comma inside text', async ({page}) => {
@@ -94,6 +140,11 @@ it('should work with comma inside text', async ({page}) => {
   expect(await page.$eval(`css=div[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
   expect(await page.$eval(`css=[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
   expect(await page.$eval(`css=div[attr="hello,world!"],span`, e => e.outerHTML)).toBe('<span></span>');
+  expect(await page.$eval(`! div[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+  expect(await page.$eval(`! [attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+  expect(await page.$eval(`! div[attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+  expect(await page.$eval(`! [attr='hello,world!']`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');
+  expect(await page.$eval(`! div[attr="hello,world!"],span`, e => e.outerHTML)).toBe('<span></span>');
 });
 
 it('should work with attribute selectors', async ({page}) => {
@@ -113,23 +164,27 @@ it('should work with attribute selectors', async ({page}) => {
     `[attr2 = "hello-''>>foo=bar[]"]`,
     `[attr2 $="foo=bar[]"]`,
   ];
-  for (const selector of selectors)
+  for (const selector of selectors) {
     expect(await page.$eval(selector, e => e === window['div'])).toBe(true);
+    expect(await page.$eval('! ' + selector, e => e === window['div'])).toBe(true);
+  }
   expect(await page.$eval(`[attr*=hello] span`, e => e.parentNode === window['div'])).toBe(true);
   expect(await page.$eval(`[attr*=hello] >> span`, e => e.parentNode === window['div'])).toBe(true);
   expect(await page.$eval(`[attr3="] span"] >> span`, e => e.parentNode === window['div'])).toBe(true);
+  expect(await page.$eval(`! [attr*=hello] span`, e => e.parentNode === window['div'])).toBe(true);
+  expect(await page.$eval(`! [attr3="] span"] span`, e => e.parentNode === window['div'])).toBe(true);
 });
 
 it('should not match root after >>', async ({page, server}) => {
   await page.setContent('<section><div>test</div></section>');
-  const element = await page.$('css=section >> css=section');
-  expect(element).toBe(null);
+  expect(await page.$('css=section >> css=section')).toBe(null);
+  expect(await page.$('! section section')).toBe(null);
 });
 
 it('should work with numerical id', async ({page, server}) => {
   await page.setContent('<section id="123"></section>');
-  const element = await page.$('#\\31\\32\\33');
-  expect(element).toBeTruthy();
+  expect(await page.$('#\\31\\32\\33')).toBeTruthy();
+  expect(await page.$('! #\\31\\32\\33')).toBeTruthy();
 });
 
 it('should work with :nth-child', async ({page, server}) => {
@@ -144,13 +199,25 @@ it('should work with :nth-child', async ({page, server}) => {
   expect(await page.$$eval(`css=span:nth-child(-n+1)`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=span:nth-child(-n+2)`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=span:nth-child(23n+2)`, els => els.length)).toBe(1);
-});
+  expect(await page.$$eval(`! span:nth-child(odd)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! span:nth-child(even)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:nth-child(n+1)`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! span:nth-child(n+2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:nth-child(2n)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:nth-child(2n+1)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! span:nth-child(-n)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! span:nth-child(-n+1)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! span:nth-child(-n+2)`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! span:nth-child(23n+2)`, els => els.length)).toBe(1);});
 
 it('should work with :not', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:not(#root1)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=body :not(span)`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=div > :not(span):not(div)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! div:not(#root1)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! body :not(span)`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! div > :not(span):not(div)`, els => els.length)).toBe(0);
 });
 
 it('should work with ~', async ({page}) => {
@@ -169,6 +236,13 @@ it('should work with ~', async ({page}) => {
   expect(await page.$$eval(`css=#div5 ~ div ~ div`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=#div3 ~ #div2 ~ #div6`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=#div3 ~ #div4 ~ #div5`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div1 ~ div ~ #div6`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div1 ~ div ~ div`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! #div3 ~ div ~ div`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! #div4 ~ div ~ div`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div5 ~ div ~ div`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! #div3 ~ #div2 ~ #div6`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! #div3 ~ #div4 ~ #div5`, els => els.length)).toBe(1);
 });
 
 it('should work with +', async ({page}) => {
@@ -187,62 +261,61 @@ it('should work with +', async ({page}) => {
   expect(await page.$$eval(`css=#div5 + div + div`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=#div3 ~ #div2 + #div6`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=#div3 + #div4 + #div5`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div1 ~ div + #div6`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div1 ~ div + div`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`! #div3 + div + div`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div4 ~ #div5 + div`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! #div5 + div + div`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! #div3 ~ #div2 + #div6`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! #div3 + #div4 + #div5`, els => els.length)).toBe(1);
 });
 
-it('should work with spaces in :nth-child and :not', test => {
-  test.fixme('Our selector parser is broken');
-}, async ({page, server}) => {
+it('should work with spaces in :nth-child and :not', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
-  expect(await page.$$eval(`css=span:nth-child(23n +2)`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=span:nth-child(23n+ 2)`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=span:nth-child( 23n + 2 )`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=span:not(#root1 #target)`, els => els.length)).toBe(3);
-  expect(await page.$$eval(`css=span:not(:not(#root1 #target))`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=span:not(span:not(#root1 #target))`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=div > :not(span)`, els => els.length)).toBe(2);
-  expect(await page.$$eval(`css=body :not(span, div)`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=span, section:not(span, div)`, els => els.length)).toBe(5);
+  expect(await page.$$eval(`! span:nth-child(23n +2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:nth-child(23n+ 2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:nth-child( 23n + 2 )`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:not(#root1 #target)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! span:not(:not(#root1 #target))`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span:not(span:not(#root1 #target))`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! div > :not(span)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! body :not(span, div)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! span, section:not(span, div)`, els => els.length)).toBe(5);
 });
 
-it('should work with :is', test => {
-  test.skip('Needs a new selector evaluator');
-}, async ({page, server}) => {
+it('should work with :is', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
-  expect(await page.$$eval(`css=div:is(#root1)`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=div:is(#root1, #target)`, els => els.length)).toBe(1);
-  expect(await page.$$eval(`css=div:is(span, #target)`, els => els.length)).toBe(0);
-  expect(await page.$$eval(`css=div:is(span, #root1 > *)`, els => els.length)).toBe(2);
-  expect(await page.$$eval(`css=div:is(section div)`, els => els.length)).toBe(3);
-  expect(await page.$$eval(`css=:is(div, span)`, els => els.length)).toBe(7);
-  expect(await page.$$eval(`css=section:is(section) div:is(section div)`, els => els.length)).toBe(3);
-  expect(await page.$$eval(`css=:is(div, span) > *`, els => els.length)).toBe(6);
+  expect(await page.$$eval(`! div:is(#root1)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! div:is(#root1, #target)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! div:is(span, #target)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! div:is(span, #root1 > *)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! div:is(section div)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! :is(div, span)`, els => els.length)).toBe(7);
+  expect(await page.$$eval(`! section:is(section) div:is(section div)`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! :is(div, span) > *`, els => els.length)).toBe(6);
 });
 
-it('should work with :has', test => {
-  test.skip('Needs a new selector evaluator');
-}, async ({page, server}) => {
+it('should work with :has', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
-  expect(await page.$$eval(`css=div:has(#target)`, els => els.length)).toBe(2);
-  expect(await page.$$eval(`css=div:has([data-testid=foo])`, els => els.length)).toBe(3);
-  expect(await page.$$eval(`css=div:has([attr*=value])`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! div:has(#target)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`! div:has([data-testid=foo])`, els => els.length)).toBe(3);
+  expect(await page.$$eval(`! div:has([attr*=value])`, els => els.length)).toBe(2);
 });
 
-it('should work with :scope', test => {
-  test.skip('Needs a new selector evaluator');
-}, async ({page, server}) => {
+it('should work with :scope', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   // 'is' does not change the scope, so it remains 'html'.
-  expect(await page.$$eval(`css=div:is(:scope#root1)`, els => els.length)).toBe(0);
-  expect(await page.$$eval(`css=div:is(:scope #root1)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! div:is(:scope#root1)`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`! div:is(:scope #root1)`, els => els.length)).toBe(1);
   // 'has' does change the scope, so it becomes the 'div' we are querying.
-  expect(await page.$$eval(`css=div:has(:scope > #target)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`! div:has(:scope > #target)`, els => els.length)).toBe(1);
 
-  const handle = await page.$(`css=span`);
+  const handle = await page.$(`! span`);
   for (const scope of [page, handle]) {
-    expect(await scope.$$eval(`css=:scope`, els => els.length)).toBe(1);
-    expect(await scope.$$eval(`css=* :scope`, els => els.length)).toBe(0);
-    expect(await scope.$$eval(`css=* + :scope`, els => els.length)).toBe(0);
-    expect(await scope.$$eval(`css=* > :scope`, els => els.length)).toBe(0);
-    expect(await scope.$$eval(`css=* ~ :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`! :scope`, els => els.length)).toBe(1);
+    expect(await scope.$$eval(`! * :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`! * + :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`! * > :scope`, els => els.length)).toBe(0);
+    expect(await scope.$$eval(`! * ~ :scope`, els => els.length)).toBe(0);
   }
 });

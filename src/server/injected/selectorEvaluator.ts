@@ -48,8 +48,9 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('xpath', xpathEngine);
     for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
       this._engines.set(attr, createAttributeEngine(attr));
-    // TODO: host
-    // TODO: host-context?
+    // TODO: :host
+    // TODO: :host-context?
+    // TODO: :light(selector) to turn off pierceShadow.
   }
 
   // This is the only function we should use for querying, because it does

@@ -25,4 +25,7 @@ it('should work for open shadow roots', async ({page, server}) => {
   expect(await page.$(`id:light=target`)).toBe(null);
   expect(await page.$(`data-testid:light=foo`)).toBe(null);
   expect(await page.$$(`data-testid:light=foo`)).toEqual([]);
+  expect(await page.$eval(`! :id("target")`, e => e.textContent)).toBe('Hello from root2');
+  expect(await page.$eval(`! :data-testid("foo")`, e => e.textContent)).toBe('Hello from root1');
+  expect(await page.$$eval(`! :data-testid("foo")`, els => els.length)).toBe(3);
 });
