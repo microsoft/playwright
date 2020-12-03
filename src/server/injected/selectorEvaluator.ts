@@ -17,8 +17,9 @@
 import { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../common/cssParser';
 
 export type QueryContext = {
-  scope: Element | ShadowRoot | Document;
-  // Place for more options, e.g. normalizing whitespace or piercing shadow.
+  scope: Element | Document;
+  pierceShadow: boolean;
+  // Place for more options, e.g. normalizing whitespace.
 };
 export type Selector = any; // Opaque selector type.
 export interface SelectorEvaluator {
@@ -42,6 +43,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('where', isEngine);
     this._engines.set('has', hasEngine);
     this._engines.set('scope', scopeEngine);
+    this._engines.set('text', textEngine);
+    this._engines.set('matches-text', matchesTextEngine);
+    this._engines.set('xpath', xpathEngine);
+    for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
+      this._engines.set(attr, createAttributeEngine(attr));
     // TODO: host
     // TODO: host-context?
   }
@@ -154,19 +160,19 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
         return true;
       const { selector: simple, combinator } = complex.simples[index];
       if (combinator === '>') {
-        const parent = parentElementOrShadowHostInScope(element, context.scope);
+        const parent = parentElementOrShadowHostInContext(element, context);
         if (!parent || !this._matchesSimple(parent, simple, context))
           return false;
         return this._matchesParents(parent, complex, index - 1, context);
       }
       if (combinator === '+') {
-        const previousSibling = element === context.scope ? null : element.previousElementSibling;
+        const previousSibling = previousSiblingInContext(element, context);
         if (!previousSibling || !this._matchesSimple(previousSibling, simple, context))
           return false;
         return this._matchesParents(previousSibling, complex, index - 1, context);
       }
       if (combinator === '') {
-        let parent = parentElementOrShadowHostInScope(element, context.scope);
+        let parent = parentElementOrShadowHostInContext(element, context);
         while (parent) {
           if (this._matchesSimple(parent, simple, context)) {
             if (this._matchesParents(parent, complex, index - 1, context))
@@ -174,12 +180,12 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
             if (complex.simples[index - 1].combinator === '')
               break;
           }
-          parent = parentElementOrShadowHostInScope(parent, context.scope);
+          parent = parentElementOrShadowHostInContext(parent, context);
         }
         return false;
       }
       if (combinator === '~') {
-        let previousSibling = element === context.scope ? null : element.previousElementSibling;
+        let previousSibling = previousSiblingInContext(element, context);
         while (previousSibling) {
           if (this._matchesSimple(previousSibling, simple, context)) {
             if (this._matchesParents(previousSibling, complex, index - 1, context))
@@ -187,7 +193,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
             if (complex.simples[index - 1].combinator === '~')
               break;
           }
-          previousSibling = previousSibling === context.scope ? null : previousSibling.previousElementSibling;
+          previousSibling = previousSiblingInContext(previousSibling, context);
         }
         return false;
       }
@@ -212,13 +218,13 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   private _callMatches(engine: SelectorEngine, element: Element, args: CSSFunctionArgument[], context: QueryContext): boolean {
-    return this._cached<boolean>(element, ['_callMatches', engine, args, context.scope], () => {
+    return this._cached<boolean>(element, ['_callMatches', engine, args, context.scope, context.pierceShadow], () => {
       return engine.matches!(element, args, context, this);
     });
   }
 
   private _callQuery(engine: SelectorEngine, args: CSSFunctionArgument[], context: QueryContext): Element[] {
-    return this._cached<Element[]>(args, ['_callQuery', engine, context.scope], () => {
+    return this._cached<Element[]>(args, ['_callQuery', engine, context.scope, context.pierceShadow], () => {
       return engine.query!(context, args, this);
     });
   }
@@ -229,11 +235,13 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     });
   }
 
-  private _queryCSS(context: QueryContext, css: string): Element[] {
+  _queryCSS(context: QueryContext, css: string): Element[] {
     return this._cached<Element[]>(css, ['_queryCSS', context], () => {
       const result: Element[] = [];
       function query(root: Element | ShadowRoot | Document) {
         result.push(...root.querySelectorAll(css));
+        if (!context.pierceShadow)
+          return;
         if ((root as Element).shadowRoot)
           query((root as Element).shadowRoot!);
         for (const element of root.querySelectorAll('*')) {
@@ -255,13 +263,13 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 }
 
 const isEngine: SelectorEngine = {
-  matches(element: Element, args: any[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0)
       throw new Error(`"is" engine expects non-empty selector list`);
     return args.some(selector => evaluator.matches(element, selector, context));
   },
 
-  query(context: QueryContext, args: any[], evaluator: SelectorEvaluator): Element[] {
+  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     if (args.length === 0)
       throw new Error(`"is" engine expects non-empty selector list`);
     const elements: Element[] = [];
@@ -273,7 +281,7 @@ const isEngine: SelectorEngine = {
 };
 
 const hasEngine: SelectorEngine = {
-  matches(element: Element, args: any[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0)
       throw new Error(`"has" engine expects non-empty selector list`);
     return evaluator.query({ ...context, scope: element }, args).length > 0;
@@ -284,7 +292,7 @@ const hasEngine: SelectorEngine = {
 };
 
 const scopeEngine: SelectorEngine = {
-  matches(element: Element, args: any[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length !== 0)
       throw new Error(`"scope" engine expects no arguments`);
     if (context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */)
@@ -292,7 +300,7 @@ const scopeEngine: SelectorEngine = {
     return element === context.scope;
   },
 
-  query(context: QueryContext, args: any[], evaluator: SelectorEvaluator): Element[] {
+  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     if (args.length !== 0)
       throw new Error(`"scope" engine expects no arguments`);
     if (context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */) {
@@ -306,12 +314,101 @@ const scopeEngine: SelectorEngine = {
 };
 
 const notEngine: SelectorEngine = {
-  matches(element: Element, args: any[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0)
       throw new Error(`"not" engine expects non-empty selector list`);
     return !evaluator.matches(element, args, context);
   },
 };
+
+const textEngine: SelectorEngine = {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
+      throw new Error(`"text" engine expects a string and an optional flags string`);
+    const text = args[0];
+    const flags = args.length === 2 ? args[1] : '';
+    const matcher = textMatcher(text, flags);
+    return elementMatchesText(element, context, matcher);
+  },
+};
+
+const matchesTextEngine: SelectorEngine = {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
+      throw new Error(`"matches-text" engine expects a regexp body and optional regexp flags`);
+    const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
+    return elementMatchesText(element, context, s => re.test(s));
+  },
+};
+
+function textMatcher(text: string, flags: string): (s: string) => boolean {
+  const normalizeSpace = flags.includes('s');
+  const lowerCase = flags.includes('i');
+  const substring = flags.includes('g');
+  if (normalizeSpace)
+    text = text.trim().replace(/\s+/g, ' ');
+  if (lowerCase)
+    text = text.toLowerCase();
+  return (s: string) => {
+    if (normalizeSpace)
+      s = s.trim().replace(/\s+/g, ' ');
+    if (lowerCase)
+      s = s.toLowerCase();
+    return substring ? s.includes(text) : s === text;
+  };
+}
+
+function elementMatchesText(element: Element, context: QueryContext, matcher: (s: string) => boolean) {
+  if (element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element))
+    return false;
+  if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
+    return true;
+  let lastText = '';
+  for (let child = element.firstChild; child; child = child.nextSibling) {
+    if (child.nodeType === 3 /* Node.TEXT_NODE */) {
+      lastText += child.nodeValue;
+    } else {
+      if (lastText && matcher(lastText))
+        return true;
+      lastText = '';
+    }
+  }
+  return !!lastText && matcher(lastText);
+}
+
+const xpathEngine: SelectorEngine = {
+  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
+    if (args.length !== 1 || typeof args[0] !== 'string')
+      throw new Error(`"xpath" engine expects a single string`);
+    const document = context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */ ? context.scope as Document : context.scope.ownerDocument;
+    if (!document)
+      return [];
+    const result: Element[] = [];
+    const it = document.evaluate(args[0], context.scope, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
+    for (let node = it.iterateNext(); node; node = it.iterateNext()) {
+      if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
+        result.push(node as Element);
+    }
+    return result;
+  },
+};
+
+function createAttributeEngine(attr: string): SelectorEngine {
+  return {
+    matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+      if (args.length === 0 || typeof args[0] !== 'string')
+        throw new Error(`"${attr}" engine expects a single string`);
+      return element.getAttribute(attr) === args[0];
+    },
+
+    query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
+      if (args.length !== 1 || typeof args[0] !== 'string')
+        throw new Error(`"${attr}" engine expects a single string`);
+      const css = `[${attr}=${CSS.escape(args[0])}]`;
+      return (evaluator as SelectorEvaluatorImpl)._queryCSS(context, css);
+    },
+  };
+}
 
 function parentElementOrShadowHost(element: Element): Element | undefined {
   if (element.parentElement)
@@ -322,8 +419,18 @@ function parentElementOrShadowHost(element: Element): Element | undefined {
     return (element.parentNode as ShadowRoot).host;
 }
 
-function parentElementOrShadowHostInScope(element: Element, scope: Element | ShadowRoot | Document): Element | undefined {
-  return element === scope ? undefined : parentElementOrShadowHost(element);
+function parentElementOrShadowHostInContext(element: Element, context: QueryContext): Element | undefined {
+  if (element === context.scope)
+    return;
+  if (!context.pierceShadow)
+    return element.parentElement || undefined;
+  return parentElementOrShadowHost(element);
+}
+
+function previousSiblingInContext(element: Element, context: QueryContext): Element | undefined {
+  if (element === context.scope)
+    return;
+  return element.previousElementSibling || undefined;
 }
 
 function sortInDOMOrder(elements: Element[]): Element[] {
