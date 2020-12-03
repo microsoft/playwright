@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-const maxColumns = 120;
-
 function normalizeLines(content) {
   const inLines = content.split('\n');
   let inCodeBlock = false;
@@ -28,7 +26,6 @@ function normalizeLines(content) {
       || line.trim().startsWith('<')
       || line.trim().startsWith('>')
       || line.trim().startsWith('-')
-      || line.trim().startsWith('[')
       || singleLineExpression;
     if (line.startsWith('```')) {
       inCodeBlock = !inCodeBlock;
@@ -38,10 +35,11 @@ function normalizeLines(content) {
       outLines.push(outLineTokens.join(' '));
       outLineTokens = [];
     }
+    const trimmedLine = line.trim();
     if (inCodeBlock || singleLineExpression)
       outLines.push(line);
-    else if (line.trim())
-      outLineTokens.push(line);
+    else if (trimmedLine)
+      outLineTokens.push(trimmedLine.startsWith('-') ? line : trimmedLine);
   }
   if (outLineTokens.length)
     outLines.push(outLineTokens.join(' '));
@@ -124,16 +122,17 @@ function renderMd(node) {
 
 function renderMdTemplate(body, params) {
   const map = new Map();
-  let chunks = [];
+  let nodes;
   for (const node of parseMd(params)) {
     if (node.h2) {
       const name = node.h2;
-      chunks = [];
-      map.set(name, chunks);
+      nodes = [];
+      map.set(name, nodes);
       continue;
     }
-    chunks.push(renderMd(node));
+    nodes.push(node);
   }
+
   const result = [];
   for (const line of body.split('\n')) {
     const match = line.match(/^(\s*)- %%-(.*)-%%/);
@@ -143,14 +142,68 @@ function renderMdTemplate(body, params) {
     }
     const indent = match[1];
     const key = match[2];
-    const chunks = map.get(key);
-    if (!chunks)
+    const nodes = map.get(key);
+    if (!nodes)
       throw new Error(`Missing param "${key}"`);
-    const snippet = chunks.join('\n');
+
+    let snippet;
+    if (line.endsWith('-as-is')) {
+      snippet = nodes.map(node => renderMd(node)).join('\n');
+    } else {
+      const { name, type } = parseArgument(nodes[0].li);
+      nodes[0].li = `\`${name}\` ${type}`;
+      if (nodes[1])
+        nodes[0].li += ` ${nodes[1].text}`;
+      snippet = renderMd(nodes[0]);
+    }
     for (const l of snippet.split('\n'))
       result.push(indent + l);
   }
   return result.join('\n');
 }
 
-module.exports = { parseMd, renderMd, renderMdTemplate };
+function extractParamDescriptions(params) {
+  let name;
+
+  for (const node of parseMd(params)) {
+    if (node.h2) {
+      name = node.h2;
+      continue;
+    }
+    extractParamDescription(name, node);
+  }
+}
+
+function extractParamDescription(group, node) {
+  const { name, type, text } = parseArgument(node.li);
+  node.li = `\`${name}\` ${type}`;
+  if (group === 'shared-context-params')
+    group = `context-option-${name.toLowerCase()}`;
+  console.log(`## ${group}`);
+  console.log();
+  console.log(renderMd(node));
+  console.log();
+  console.log(text);
+  console.log();
+}
+
+function parseArgument(line) {
+  const match = line.match(/`([^`]+)` (.*)/);
+  const name = match[1];
+  const remainder = match[2];
+  if (!remainder.startsWith('<'))
+    console.error('Bad argument:', remainder);
+  let depth = 0;
+  for (let i = 0; i < remainder.length; ++i) {
+    const c = remainder.charAt(i);
+    if (c === '<')
+      ++depth;
+    if (c === '>')
+      --depth;
+    if (depth === 0)
+      return { name, type: remainder.substring(0, i + 1), text: remainder.substring(i + 2) };
+  }
+  throw new Error('Should not be reached');
+}
+
+module.exports = { parseMd, renderMd, renderMdTemplate, extractParamDescriptions };
