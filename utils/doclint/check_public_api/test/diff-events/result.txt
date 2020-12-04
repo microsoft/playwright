@@ -1,2 +1,2 @@
+[MarkDown] Documented but not implemented event Foo: 'stop'
 [MarkDown] Implemented but not documented event Foo: 'finish'
-[MarkDown] Implemented but not documented event Foo: 'start'
