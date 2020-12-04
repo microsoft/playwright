@@ -18,7 +18,7 @@ import * as dom from './dom';
 import * as frames from './frames';
 import * as js from './javascript';
 import * as types from './types';
-import { ParsedSelector, parseSelector } from './common/selectorParser';
+import { ParsedSelector, parseSelector, selectorsV2Enabled } from './common/selectorParser';
 
 export type SelectorInfo = {
   parsed: ParsedSelector,
@@ -40,9 +40,11 @@ export class Selectors {
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
       'data-test', 'data-test:light',
-      // v2 engines:
-      'not', 'is', 'where', 'has', 'scope', 'light', 'matches-text',
     ]);
+    if (selectorsV2Enabled()) {
+      for (const name of ['not', 'is', 'where', 'has', 'scope', 'light', 'index', 'visible', 'matches-text'])
+        this._builtinEngines.add(name);
+    }
     this._engines = new Map();
   }
 

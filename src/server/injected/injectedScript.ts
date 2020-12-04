@@ -21,7 +21,7 @@ import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
 import { ParsedSelector, ParsedSelectorV1, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
-import { SelectorEvaluatorImpl, SelectorEngine as SelectorEngineV2, QueryContext } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, SelectorEngine as SelectorEngineV2, QueryContext, isVisible, parentElementOrShadowHost } from './selectorEvaluator';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -132,14 +132,7 @@ export class InjectedScript {
   }
 
   isVisible(element: Element): boolean {
-    // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
-    if (!element.ownerDocument || !element.ownerDocument.defaultView)
-      return true;
-    const style = element.ownerDocument.defaultView.getComputedStyle(element);
-    if (!style || style.visibility === 'hidden')
-      return false;
-    const rect = element.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0;
+    return isVisible(element);
   }
 
   pollRaf<T>(predicate: Predicate<T>): InjectedScriptPoll<T> {
@@ -573,7 +566,7 @@ export class InjectedScript {
     const hitParents: Element[] = [];
     while (hitElement && hitElement !== element) {
       hitParents.push(hitElement);
-      hitElement = this._parentElementOrShadowHost(hitElement);
+      hitElement = parentElementOrShadowHost(hitElement);
     }
     if (hitElement === element)
       return 'done';
@@ -589,7 +582,7 @@ export class InjectedScript {
           rootHitTargetDescription = this.previewNode(hitParents[index - 1]);
         break;
       }
-      element = this._parentElementOrShadowHost(element);
+      element = parentElementOrShadowHost(element);
     }
     if (rootHitTargetDescription)
       return { hitTargetDescription: `${hitTargetDescription} from ${rootHitTargetDescription} subtree` };
@@ -614,15 +607,6 @@ export class InjectedScript {
   private _isElementDisabled(element: Element): boolean {
     const elementOrButton = element.closest('button, [role=button]') || element;
     return ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
-  }
-
-  private _parentElementOrShadowHost(element: Element): Element | undefined {
-    if (element.parentElement)
-      return element.parentElement;
-    if (!element.parentNode)
-      return;
-    if (element.parentNode.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (element.parentNode as ShadowRoot).host)
-      return (element.parentNode as ShadowRoot).host;
   }
 
   deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
