@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+const maxColumns = 120;
+
 function normalizeLines(content) {
   const inLines = content.split('\n');
   let inCodeBlock = false;
@@ -26,6 +28,7 @@ function normalizeLines(content) {
       || line.trim().startsWith('<')
       || line.trim().startsWith('>')
       || line.trim().startsWith('-')
+      || line.trim().startsWith('*')
       || singleLineExpression;
     if (line.startsWith('```')) {
       inCodeBlock = !inCodeBlock;
@@ -56,7 +59,8 @@ function buildTree(lines) {
 
     if (line.startsWith('```')) {
       const node = {
-        code: []
+        code: [],
+        codeLang: line.substring(3)
       };
       root.ul.push(node);
       line = lines[++i];
@@ -69,7 +73,7 @@ function buildTree(lines) {
 
     if (line.startsWith('<!-- GEN')) {
       const node = {
-        gen: []
+        gen: [line]
       };
       root.ul.push(node);
       line = lines[++i];
@@ -77,6 +81,7 @@ function buildTree(lines) {
         node.gen.push(line);
         line = lines[++i];
       }
+      node.gen.push(line);
       continue;
     }
 
@@ -88,12 +93,17 @@ function buildTree(lines) {
       continue;
     }
 
-    const list = line.match(/^(\s*)(-|1.) /);
+    const list = line.match(/^(\s*)(-|1.|\*) /);
     const depth = list ? (list[1].length / 2) : 0;
     const node = {};
     if (list) {
       node.li = line.substring(list[0].length);
-      node.liType = line.trim().startsWith('1.') ? 'ordinals' : 'default';
+      if (line.trim().startsWith('1.'))
+        node.liType = 'ordinal';
+      else if (line.trim().startsWith('*'))
+        node.liType = 'bullet';
+      else 
+        node.liType = 'default';
     } else {
       node.text = line;
     }
@@ -109,15 +119,94 @@ function parseMd(content) {
   return buildTree(normalizeLines(content));
 }
 
-function renderMd(node) {
+function renderMd(nodes) {
   const result = [];
-  const visit = (node, indent, result) => {
-    result.push(`${indent}- ${node.li}`);
-    for (const child of node.ul || [])
-      visit(child, indent + '  ', result);
-  };
-  visit(node, '', result);
+  let lastNode;
+  for (let node of nodes) {
+    innerRenderMdNode(node, lastNode, result);
+    lastNode = node;
+  }
   return result.join('\n');
+}
+
+function renderMdNode(node, lastNode) {
+  const result = [];
+  innerRenderMdNode(node, lastNode, result);
+  return result.join('\n');
+}
+
+function innerRenderMdNode(node, lastNode, result) {
+  const newLine = () => {
+    if (result[result.length - 1] !== '')
+      result.push('');
+  };
+
+  if (node.h1) {
+    newLine();
+    result.push(`# ${node.h1}`);
+  }
+  if (node.h2) {
+    newLine();
+    result.push(`## ${node.h2}`);
+  }
+  if (node.h3) {
+    newLine();
+    result.push(`### ${node.h3}`);
+  }
+  if (node.h4) {
+    newLine();
+    result.push(`#### ${node.h4}`);
+  }
+  if (node.text) {
+    const bothComments = node.text.startsWith('>') && lastNode && lastNode.text && lastNode.text.startsWith('>');
+    if (!bothComments && lastNode && (lastNode.text || lastNode.li || lastNode.h1 || lastNode.h2 || lastNode.h3 || lastNode.h4))
+      newLine();
+      printText(node, result);
+  }
+  if (node.code) {
+    newLine();
+    result.push('```' + node.codeLang);
+    for (const line of node.code)
+      result.push(line);
+    result.push('```');
+    newLine();
+  }
+  if (node.gen) {
+    newLine();
+    for (const line of node.gen)
+      result.push(line);
+    newLine();
+  }
+  if (node.li) {
+    const visit = (node, indent) => {
+      let char;
+      switch (node.liType) {
+        case 'bullet': char = '*'; break;
+        case 'default': char = '-'; break;
+        case 'ordinal': char = '1.'; break;
+      }
+      result.push(`${indent}${char} ${node.li}`);
+      for (const child of node.ul || [])
+        visit(child, indent + '  ');
+    };
+    visit(node, '');
+  }
+}
+
+function printText(node, result) {
+  let line = node.text;
+  while (line.length > maxColumns) {
+    let index = line.lastIndexOf(' ', maxColumns);
+    if (index === -1) {
+      index = line.indexOf(' ', maxColumns);
+      if (index === -1)
+        break;
+    }
+    result.push(line.substring(0, index));
+    line = line.substring(index + 1);
+  }
+  if (line.length)
+    result.push(line);
 }
 
 function renderMdTemplate(body, params) {
@@ -148,13 +237,13 @@ function renderMdTemplate(body, params) {
 
     let snippet;
     if (line.endsWith('-as-is')) {
-      snippet = nodes.map(node => renderMd(node)).join('\n');
+      snippet = nodes.map(node => renderMdNode(node)).join('\n');
     } else {
       const { name, type } = parseArgument(nodes[0].li);
       nodes[0].li = `\`${name}\` ${type}`;
       if (nodes[1])
         nodes[0].li += ` ${nodes[1].text}`;
-      snippet = renderMd(nodes[0]);
+      snippet = renderMdNode(nodes[0]);
     }
     for (const l of snippet.split('\n'))
       result.push(indent + l);
@@ -181,7 +270,7 @@ function extractParamDescription(group, node) {
     group = `context-option-${name.toLowerCase()}`;
   console.log(`## ${group}`);
   console.log();
-  console.log(renderMd(node));
+  console.log(renderMdNode(node));
   console.log();
   console.log(text);
   console.log();
