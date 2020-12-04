@@ -36,6 +36,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _cache = new Map<any, { rest: any[], result: any }[]>();
 
   constructor(extraEngines: Map<string, SelectorEngine>) {
+    // Note: keep predefined names in sync with Selectors class.
     for (const [name, engine] of extraEngines)
       this._engines.set(name, engine);
     this._engines.set('not', notEngine);
@@ -43,6 +44,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('where', isEngine);
     this._engines.set('has', hasEngine);
     this._engines.set('scope', scopeEngine);
+    this._engines.set('light', lightEngine);
     this._engines.set('text', textEngine);
     this._engines.set('matches-text', matchesTextEngine);
     this._engines.set('xpath', xpathEngine);
@@ -319,6 +321,16 @@ const notEngine: SelectorEngine = {
       throw new Error(`"not" engine expects non-empty selector list`);
     return !evaluator.matches(element, args, context);
   },
+};
+
+const lightEngine: SelectorEngine = {
+  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
+    return evaluator.query({ ...context, pierceShadow: false }, args);
+  },
+
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    return evaluator.matches(element, args, { ...context, pierceShadow: false });
+  }
 };
 
 const textEngine: SelectorEngine = {

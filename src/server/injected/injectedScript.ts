@@ -19,8 +19,9 @@ import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector, parseSelector } from '../common/selectorParser';
+import { ParsedSelector, ParsedSelectorV1, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
+import { SelectorEvaluatorImpl, SelectorEngine as SelectorEngineV2, QueryContext } from './selectorEvaluator';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -40,27 +41,32 @@ export type InjectedScriptPoll<T> = {
 };
 
 export class InjectedScript {
-  readonly engines: Map<string, SelectorEngine>;
+  private _enginesV1: Map<string, SelectorEngine>;
+  private _evaluator: SelectorEvaluatorImpl;
 
   constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
-    this.engines = new Map();
-    // Note: keep predefined names in sync with Selectors class.
-    this.engines.set('css', createCSSEngine(true));
-    this.engines.set('css:light', createCSSEngine(false));
-    this.engines.set('xpath', XPathEngine);
-    this.engines.set('xpath:light', XPathEngine);
-    this.engines.set('text', createTextSelector(true));
-    this.engines.set('text:light', createTextSelector(false));
-    this.engines.set('id', createAttributeEngine('id', true));
-    this.engines.set('id:light', createAttributeEngine('id', false));
-    this.engines.set('data-testid', createAttributeEngine('data-testid', true));
-    this.engines.set('data-testid:light', createAttributeEngine('data-testid', false));
-    this.engines.set('data-test-id', createAttributeEngine('data-test-id', true));
-    this.engines.set('data-test-id:light', createAttributeEngine('data-test-id', false));
-    this.engines.set('data-test', createAttributeEngine('data-test', true));
-    this.engines.set('data-test:light', createAttributeEngine('data-test', false));
-    for (const {name, engine} of customEngines)
-      this.engines.set(name, engine);
+    this._enginesV1 = new Map();
+    this._enginesV1.set('css', createCSSEngine(true));
+    this._enginesV1.set('css:light', createCSSEngine(false));
+    this._enginesV1.set('xpath', XPathEngine);
+    this._enginesV1.set('xpath:light', XPathEngine);
+    this._enginesV1.set('text', createTextSelector(true));
+    this._enginesV1.set('text:light', createTextSelector(false));
+    this._enginesV1.set('id', createAttributeEngine('id', true));
+    this._enginesV1.set('id:light', createAttributeEngine('id', false));
+    this._enginesV1.set('data-testid', createAttributeEngine('data-testid', true));
+    this._enginesV1.set('data-testid:light', createAttributeEngine('data-testid', false));
+    this._enginesV1.set('data-test-id', createAttributeEngine('data-test-id', true));
+    this._enginesV1.set('data-test-id:light', createAttributeEngine('data-test-id', false));
+    this._enginesV1.set('data-test', createAttributeEngine('data-test', true));
+    this._enginesV1.set('data-test:light', createAttributeEngine('data-test', false));
+    for (const { name, engine } of customEngines)
+      this._enginesV1.set(name, engine);
+
+    const wrapped = new Map<string, SelectorEngineV2>();
+    for (const { name, engine } of customEngines)
+      wrapped.set(name, wrapV2(name, engine));
+    this._evaluator = new SelectorEvaluatorImpl(wrapped);
   }
 
   parseSelector(selector: string): ParsedSelector {
@@ -70,16 +76,18 @@ export class InjectedScript {
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
+    if (selector.v1)
+      return this._querySelectorRecursivelyV1(root as SelectorRoot, selector.v1, 0);
+    return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, selector.v2!)[0];
   }
 
-  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
+  private _querySelectorRecursivelyV1(root: SelectorRoot, selector: ParsedSelectorV1, index: number): Element | undefined {
     const current = selector.parts[index];
     if (index === selector.parts.length - 1)
-      return this.engines.get(current.name)!.query(root, current.body);
-    const all = this.engines.get(current.name)!.queryAll(root, current.body);
+      return this._enginesV1.get(current.name)!.query(root, current.body);
+    const all = this._enginesV1.get(current.name)!.queryAll(root, current.body);
     for (const next of all) {
-      const result = this._querySelectorRecursively(next, selector, index + 1);
+      const result = this._querySelectorRecursivelyV1(next, selector, index + 1);
       if (result)
         return selector.capture === index ? next : result;
     }
@@ -88,6 +96,12 @@ export class InjectedScript {
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (!(root as any)['querySelectorAll'])
       throw new Error('Node is not queryable.');
+    if (selector.v1)
+      return this._querySelectorAllV1(selector.v1, root as SelectorRoot);
+    return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, selector.v2!);
+  }
+
+  private _querySelectorAllV1(selector: ParsedSelectorV1, root: SelectorRoot): Element[] {
     const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
     // Query all elements up to the capture.
     const partsToQuerAll = selector.parts.slice(0, capture + 1);
@@ -97,7 +111,7 @@ export class InjectedScript {
     for (const { name, body } of partsToQuerAll) {
       const newSet = new Set<Element>();
       for (const prev of set) {
-        for (const next of this.engines.get(name)!.queryAll(prev, body)) {
+        for (const next of this._enginesV1.get(name)!.queryAll(prev, body)) {
           if (newSet.has(next))
             continue;
           newSet.add(next);
@@ -109,7 +123,7 @@ export class InjectedScript {
     if (!partsToCheckOne.length)
       return candidates;
     const partial = { parts: partsToCheckOne };
-    return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+    return candidates.filter(e => !!this._querySelectorRecursivelyV1(e, partial, 0));
   }
 
   extend(source: string, params: any): any {
@@ -660,6 +674,16 @@ export class InjectedScript {
       text = text.substring(0, 49) + '\u2026';
     return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
   }
+}
+
+function wrapV2(name: string, engine: SelectorEngine): SelectorEngineV2 {
+  return {
+    query(context: QueryContext, args: string[]): Element[] {
+      if (args.length !== 1 || typeof args[0] !== 'string')
+        throw new Error(`engine "${name}" expects a single string`);
+      return engine.queryAll(context.scope, args[0]);
+    }
+  };
 }
 
 const autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);

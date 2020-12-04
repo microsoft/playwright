@@ -17,7 +17,7 @@
 
 import { it, expect } from './fixtures';
 
-it('query', async ({page, isWebKit}) => {
+it('query', async ({page}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -59,9 +59,9 @@ it('query', async ({page, isWebKit}) => {
   expect(await page.$eval(`"x"`, e => e.outerHTML)).toBe('<div>x</div>');
   expect(await page.$eval(`'x'`, e => e.outerHTML)).toBe('<div>x</div>');
   let error = await page.$(`"`).catch(e => e);
-  expect(error.message).toContain(isWebKit ? 'SyntaxError' : 'querySelector');
+  expect(error).toBeInstanceOf(Error);
   error = await page.$(`'`).catch(e => e);
-  expect(error.message).toContain(isWebKit ? 'SyntaxError' : 'querySelector');
+  expect(error).toBeInstanceOf(Error);
 
   await page.setContent(`<div> ' </div><div> " </div>`);
   expect(await page.$eval(`text="`, e => e.outerHTML)).toBe('<div> " </div>');

@@ -39,7 +39,9 @@ export class Selectors {
       'id', 'id:light',
       'data-testid', 'data-testid:light',
       'data-test-id', 'data-test-id:light',
-      'data-test', 'data-test:light'
+      'data-test', 'data-test:light',
+      // v2 engines:
+      'not', 'is', 'where', 'has', 'scope', 'light', 'matches-text',
     ]);
     this._engines = new Map();
   }
@@ -116,11 +118,11 @@ export class Selectors {
 
   _parseSelector(selector: string): SelectorInfo {
     const parsed = parseSelector(selector);
-    for (const {name} of parsed.parts) {
+    for (const name of parsed.names) {
       if (!this._builtinEngines.has(name) && !this._engines.has(name))
         throw new Error(`Unknown engine "${name}" while parsing selector ${selector}`);
     }
-    const needsMainWorld = parsed.parts.some(({name}) => {
+    const needsMainWorld = parsed.names.some(name => {
       const custom = this._engines.get(name);
       return custom ? !custom.contentScript : false;
     });

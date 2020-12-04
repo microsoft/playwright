@@ -69,7 +69,7 @@ it('should work in main and isolated world', async ({playwright, page}) => {
       return window['__answer'];
     },
     queryAll(root, selector) {
-      return [document.body, document.documentElement, window['__answer']];
+      return window['__answer'] ? [window['__answer'], document.body, document.documentElement] : [];
     }
   });
   await playwright.selectors.register('main', createDummySelector);
