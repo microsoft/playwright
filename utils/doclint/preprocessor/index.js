@@ -181,6 +181,38 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
   }
 }
 
+function generateLinks(source, signatures, messages) {
+  const sourceEdits = new SourceEdits(source);
+  let offset = 0;
+
+  const lines = source.text().split('\n');
+  lines.forEach((line, lineNumber) => {
+    const linkRegex = /\[([^\]]+)\]\(\)/gm;
+    let match;
+    while (match = linkRegex.exec(line)) {
+      const [, name] = match;
+      const hrefOffset = offset + lineNumber + match.index + 3 + name.length;
+      const eventMatch = name.match(/.*on\('(.*)'\)/);
+      let replacement;
+      if (eventMatch) {
+        replacement = `#event-${eventMatch[1]}`;
+      } else {
+        const method = name.substring(0, name.length - 2);
+        let signature = signatures.get(method);
+        if (signature === undefined) {
+          messages.push(Message.error(`Bad method link: ${source.filePath()}:${lineNumber + 1}: ${method}`));
+          signature = '\u2026';
+        }
+        sourceEdits.edit(hrefOffset - 3, hrefOffset - 3, signature);
+        replacement = `#${(name + signature).toLowerCase().replace(/[^a-z]/gm, '')}`;
+      }
+      sourceEdits.edit(hrefOffset, hrefOffset, replacement);
+    }
+    offset += line.length;
+  });
+  sourceEdits.commit(messages);
+}
+
 class SourceEdits {
   constructor(source) {
     this._source = source;
@@ -286,4 +318,4 @@ function generateTableOfContentsForSuperclass(text, name) {
   return text;
 }
 
-module.exports = {autocorrectInvalidLinks, runCommands};
+module.exports = {autocorrectInvalidLinks, runCommands, generateLinks};

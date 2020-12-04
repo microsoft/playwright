@@ -23,6 +23,7 @@ const Source = require('./Source');
 const Message = require('./Message');
 const { renderMdTemplate, parseMd, renderMd, parseArgument } = require('./../parse_md');
 const { spawnSync } = require('child_process');
+const preprocessor = require('./preprocessor');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -54,48 +55,57 @@ async function run() {
     let params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
     params = renderMdTemplate(params, params);
 
-    const nodes = parseMd(renderMdTemplate(body, params));
-    let h4;
-    let args;
-    const flush = () => {
-      if (h4 && !['page.accessibility', 'page.mouse', 'page.keyboard', 'page.coverage', 'page.touchscreen'].includes(h4.h4)) {
-        const tokens = [];
-        let hasOptional = false;
-        for (const arg of args) {
-          const optional = arg.name === 'options' || arg.text.includes('Optional');
-          if (tokens.length) {
-            if (optional && !hasOptional)
-              tokens.push(`[, ${arg.name}`);
-            else
-              tokens.push(`, ${arg.name}`);
-          } else {
-            if (optional && !hasOptional)
-              tokens.push(`[${arg.name}`);
-            else
-              tokens.push(`${arg.name}`);
+    // Generate signatures
+    {
+      const nodes = parseMd(renderMdTemplate(body, params));
+      const signatures = new Map();
+      let h4;
+      let args;
+      const flush = () => {
+        if (h4 && !['page.accessibility', 'page.mouse', 'page.keyboard', 'page.coverage', 'page.touchscreen'].includes(h4.h4)) {
+          const tokens = [];
+          let hasOptional = false;
+          for (const arg of args) {
+            const optional = arg.name === 'options' || arg.text.includes('Optional');
+            if (tokens.length) {
+              if (optional && !hasOptional)
+                tokens.push(`[, ${arg.name}`);
+              else
+                tokens.push(`, ${arg.name}`);
+            } else {
+              if (optional && !hasOptional)
+                tokens.push(`[${arg.name}`);
+              else
+                tokens.push(`${arg.name}`);
+            }
+            hasOptional = hasOptional || optional;
           }
-          hasOptional = hasOptional || optional;
+          if (hasOptional)
+            tokens.push(']');
+          const signature = tokens.join('');
+          signatures.set(h4.h4, signature);
+          h4.h4 = `${h4.h4}(${signature})`;
         }
-        if (hasOptional)
-          tokens.push(']');
-        h4.h4 = `${h4.h4}(${tokens.join('')})`;
+        h4 = null;
+        args = null;
+      };
+      for (const node of nodes) {
+        if (node.h1 || node.h2 || node.h3 || node.h4)
+          flush();
+        if (node.h4) {
+          h4 = node.h4.startsWith('event:') ? null : node;
+          args = node.h4.startsWith('event:') ? null : [];
+          continue;
+        }
+        if (args && node.li && node.liType === 'default' && !node.li.startsWith('returns')) {
+          args.push(parseArgument(node.li));
+        }
       }
-      h4 = null;
-      args = null;
-    };
-    for (const node of nodes) {
-      if (node.h1 || node.h2 || node.h3 || node.h4)
-        flush();
-      if (node.h4) {
-        h4 = node.h4.startsWith('event:') ? null : node;
-        args = node.h4.startsWith('event:') ? null : [];
-        continue;
-      }
-      if (args && node.li && node.liType === 'default' && !node.li.startsWith('returns')) {
-        args.push(parseArgument(node.li));
-      }
+      api.setText([comment, header, renderMd(nodes), footer].join('\n'));
+
+      // Generate links
+      preprocessor.generateLinks(api, signatures, messages);
     }
-    api.setText([comment, header, renderMd(nodes), footer].join('\n'));
   }
 
   // Documentation checks.
@@ -106,7 +116,6 @@ async function run() {
     const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
     const mdSources = [readme, binReadme, api, contributing, ...docs];
 
-    const preprocessor = require('./preprocessor');
     const browserVersions = await getBrowserVersions();
     messages.push(...(await preprocessor.runCommands(mdSources, {
       libversion: VERSION,

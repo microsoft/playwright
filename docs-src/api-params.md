@@ -13,25 +13,25 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 
 Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout.
 The default value can be changed by using the
-[browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout),
-[browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout),
-[page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or
-[page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+[browserContext.setDefaultNavigationTimeout()](),
+[browserContext.setDefaultTimeout()](),
+[page.setDefaultNavigationTimeout()]() or
+[page.setDefaultTimeout()]() methods.
 
 ## wait-for-timeout
 
 - `timeout` <[number]>
 
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
-value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+value can be changed by using the [browserContext.setDefaultTimeout()]().
 
 ## input-timeout
 
 - `timeout` <[number]>
 
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or
-[page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+using the [browserContext.setDefaultTimeout()]() or
+[page.setDefaultTimeout()]() methods.
 
 ## input-no-wait-after
 
@@ -133,7 +133,7 @@ Defaults to `'visible'`. Can be either:
       - `value` <[string]>
 
 Populates context with given storage state. This method can be used to initialize context with logged-in information
-obtained via [browserContext.storageState()](#browsercontextstoragestate).
+obtained via [browserContext.storageState()]().
 
 ## context-option-acceptdownloads
 
@@ -218,7 +218,7 @@ request header value as well as number and date formatting rules.
 - `permissions` <[Array]<[string]>>
 
 A list of permissions to grant to all pages in this context. See
-[browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) for more details.
+[browserContext.grantPermissions()]() for more details.
 
 ## context-option-extrahttpheaders
 
@@ -245,7 +245,7 @@ Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/W
 - `colorScheme` <"light"|"dark"|"no-preference">
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-[page.emulateMedia()](#pageemulatemedia) for more details. Defaults to '`light`'.
+[page.emulateMedia()]() for more details. Defaults to '`light`'.
 
 ## context-option-logger
 
@@ -259,7 +259,7 @@ Logger sink for Playwright logging.
 
 **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
 `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-[`browserContext.close`](#browsercontextclose) for videos to be saved.
+[browserContext.close()]() for videos to be saved.
 
 ## context-option-videosize
 
@@ -280,7 +280,7 @@ down if necessary to fit specified size.
   - `path` <[string]> Path on the filesystem to write the HAR file to.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
-specified, the HAR is not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for the HAR to be
+specified, the HAR is not recorded. Make sure to await [browserContext.close()]() for the HAR to be
 saved.
 
 ## context-option-recordvideo
@@ -294,7 +294,7 @@ saved.
     - `height` <[number]> Video frame height.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
-sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
+sure to await [browserContext.close()]() for videos to be saved.
 
 ## context-option-proxy
 
