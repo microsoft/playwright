@@ -49,6 +49,7 @@ class Source {
     this._projectPath = path.relative(PROJECT_DIR, filePath);
     this._name = path.basename(filePath);
     this._text = text;
+    this._originalText = text;
     this._hasUpdatedText = false;
   }
 
@@ -75,14 +76,9 @@ class Source {
 
   /**
    * @param {string} text
-   * @return {boolean}
    */
   setText(text) {
-    if (text === this._text)
-      return false;
-    this._hasUpdatedText = true;
     this._text = text;
-    return true;
   }
 
   /**
@@ -96,7 +92,7 @@ class Source {
    * @return {boolean}
    */
   hasUpdatedText() {
-    return this._hasUpdatedText;
+    return this._text !== this._originalText;
   }
 
   async save() {

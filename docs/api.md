@@ -133,11 +133,12 @@ Selectors can be used to install custom selector engines. See [Working with sele
 This object can be used to launch or connect to WebKit, returning instances of [WebKitBrowser].
 
 
+
 ### class: Browser
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
 A Browser is created when Playwright connects to a browser instance, either through
-[`browserType.launch`](#browsertypelaunchoptions) or [`browserType.connect`](#browsertypeconnectoptions).
+[`browserType.launch`](#browsertypelaunchoptions) or [`browserType.connect`](#browsertypeconnectparams).
 
 An example of using a [Browser] to create a [Page]:
 
@@ -153,9 +154,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 ```
 
 See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
-[browserType.connect(options)](#browsertypeconnectoptions) and
-[browserType.launch([options])](#browsertypelaunchoptions) always return a specific browser instance, based on the
-browser being connected to or launched.
+[browserType.connect(options)](#browserisconnected) and [browserType.launch([options])](#browsertypelaunchoptions)
+always return a specific browser instance, based on the browser being connected to or launched.
 
 <!-- GEN:toc -->
 - [event: 'disconnected'](#event-disconnected)
@@ -170,8 +170,8 @@ browser being connected to or launched.
 #### event: 'disconnected'
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
-- Browser application is closed or crashed.
-- The [`browser.close`](#browserclose) method was called.
+* Browser application is closed or crashed.
+* The [`browser.close`](#browserclose) method was called.
 
 #### browser.close()
 - returns: <[Promise]>
@@ -179,8 +179,8 @@ Emitted when Browser gets disconnected from the browser application. This might 
 In case this browser is obtained using [browserType.launch](#browsertypelaunchoptions), closes the browser and all of
 its pages (if any were opened).
 
-In case this browser is obtained using [browserType.connect](#browsertypeconnectoptions), clears all created contexts
-belonging to this browser and disconnects from the browser server.
+In case this browser is obtained using [browserType.connect](#browserisconnected), clears all created contexts belonging
+to this browser and disconnects from the browser server.
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
@@ -227,7 +227,7 @@ Indicates that the browser is connected.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
-  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia()](#pageemulatemediaparams) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `videosPath` <[string]> **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` directory. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
   - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
@@ -302,7 +302,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
-  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia()](#pageemulatemediaparams) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `videosPath` <[string]> **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` directory. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
   - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
@@ -383,7 +383,7 @@ await context.close();
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
 - [browserContext.exposeBinding(name, playwrightBinding[, options])](#browsercontextexposebindingname-playwrightbinding-options)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
-- [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
+- [browserContext.grantPermissions(permissions[, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
@@ -401,9 +401,9 @@ await context.close();
 #### event: 'close'
 
 Emitted when Browser context gets closed. This might happen because of one of the following:
-- Browser context is closed.
-- Browser application is closed or crashed.
-- The [`browser.close`](#browserclose) method was called.
+* Browser context is closed.
+* Browser application is closed or crashed.
+* The [`browser.close`](#browserclose) method was called.
 
 #### event: 'page'
 - <[Page]>
@@ -452,10 +452,10 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 - returns: <[Promise]>
 
 Adds a script which would be evaluated in one of the following scenarios:
-- Whenever a page is created in the browser context or is navigated.
-- Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is evaluated in the context of the newly attached frame.
+* Whenever a page is created in the browser context or is navigated.
+* Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is evaluated in the context of the newly attached frame.
 
-The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend 
+The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
 the JavaScript environment, e.g. to seed `Math.random`.
 
 An example of overriding `Math.random` before the page loads:
@@ -504,7 +504,7 @@ Closes the browser context. All the pages that belong to the browser context wil
 > **NOTE** the default browser context cannot be closed.
 
 #### browserContext.cookies([urls])
-- `urls` <[string]|[Array]<[string]>>
+- `urls` <[string]|[Array]<[string]>> Optional list of URLs.
 - returns: <[Promise]<[Array]<[Object]>>>
   - `name` <[string]>
   - `value` <[string]>
@@ -610,7 +610,7 @@ const crypto = require('crypto');
 })();
 ```
 
-#### browserContext.grantPermissions(permissions[][, options])
+#### browserContext.grantPermissions(permissions[, options])
 - `permissions` <[Array]<[string]>> A permission or an array of permissions to grant. Permissions can be one of the following values:
   - `'geolocation'`
   - `'midi'`
@@ -680,12 +680,12 @@ when request matches both handlers.
 - `timeout` <[number]> Maximum navigation time in milliseconds
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
-- [page.goBack([options])](#pagegobackoptions)
-- [page.goForward([options])](#pagegoforwardoptions)
-- [page.goto(url[, options])](#pagegotourl-options)
-- [page.reload([options])](#pagereloadoptions)
-- [page.setContent(html[, options])](#pagesetcontenthtml-options)
-- [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
+* [page.goBack([options])](#pagegobackoptions)
+* [page.goForward([options])](#pagegoforwardoptions)
+* [page.goto(url[, options])](#pagegotourl-options)
+* [page.reload([options])](#pagereloadoptions)
+* [page.setContent(html[, options])](#pagesetcontenthtml-options)
+* [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) and
 [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) take priority over
@@ -764,7 +764,7 @@ Returns storage state for this browser context, contains current cookies and loc
 
 #### browserContext.unroute(url[, handler])
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
-- `handler` <[function]\([Route], [Request]\)> Handler function used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
+- `handler` <[function]\([Route], [Request]\)> Optional handler function used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
 - returns: <[Promise]>
 
 Removes a route created with [browserContext.route(url, handler)](#browsercontextrouteurl-handler). When `handler` is
@@ -772,7 +772,7 @@ not specified, removes all routes for the `url`.
 
 #### browserContext.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `browserContext.on(event)`.
-- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
+- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
@@ -854,10 +854,10 @@ page.removeListener('request', logRequest);
 - [page.$$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg-1)
 - [page.accessibility](#pageaccessibility)
 - [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg)
-- [page.addScriptTag(options)](#pageaddscripttagoptions)
-- [page.addStyleTag(options)](#pageaddstyletagoptions)
+- [page.addScriptTag(script)](#pageaddscripttagscript)
+- [page.addStyleTag(style)](#pageaddstyletagstyle)
 - [page.bringToFront()](#pagebringtofront)
-- [page.check(selector, [options])](#pagecheckselector-options)
+- [page.check(selector[, options])](#pagecheckselector-options)
 - [page.click(selector[, options])](#pageclickselector-options)
 - [page.close([options])](#pagecloseoptions)
 - [page.content()](#pagecontent)
@@ -865,14 +865,14 @@ page.removeListener('request', logRequest);
 - [page.coverage](#pagecoverage)
 - [page.dblclick(selector[, options])](#pagedblclickselector-options)
 - [page.dispatchEvent(selector, type[, eventInit, options])](#pagedispatcheventselector-type-eventinit-options)
-- [page.emulateMedia(options)](#pageemulatemediaoptions)
+- [page.emulateMedia(params)](#pageemulatemediaparams)
 - [page.evaluate(pageFunction[, arg])](#pageevaluatepagefunction-arg)
 - [page.evaluateHandle(pageFunction[, arg])](#pageevaluatehandlepagefunction-arg)
 - [page.exposeBinding(name, playwrightBinding[, options])](#pageexposebindingname-playwrightbinding-options)
 - [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction)
 - [page.fill(selector, value[, options])](#pagefillselector-value-options)
 - [page.focus(selector[, options])](#pagefocusselector-options)
-- [page.frame(options)](#pageframeoptions)
+- [page.frame(frameSelector)](#pageframeframeselector)
 - [page.frames()](#pageframes)
 - [page.getAttribute(selector, name[, options])](#pagegetattributeselector-name-options)
 - [page.goBack([options])](#pagegobackoptions)
@@ -903,14 +903,14 @@ page.removeListener('request', logRequest);
 - [page.title()](#pagetitle)
 - [page.touchscreen](#pagetouchscreen)
 - [page.type(selector, text[, options])](#pagetypeselector-text-options)
-- [page.uncheck(selector, [options])](#pageuncheckselector-options)
+- [page.uncheck(selector[, options])](#pageuncheckselector-options)
 - [page.unroute(url[, handler])](#pageunrouteurl-handler)
 - [page.url()](#pageurl)
 - [page.video()](#pagevideo)
 - [page.viewportSize()](#pageviewportsize)
 - [page.waitForEvent(event[, optionsOrPredicate])](#pagewaitforeventevent-optionsorpredicate)
 - [page.waitForFunction(pageFunction[, arg, options])](#pagewaitforfunctionpagefunction-arg-options)
-- [page.waitForLoadState([state[, options]])](#pagewaitforloadstatestate-options)
+- [page.waitForLoadState([state, options])](#pagewaitforloadstatestate-options)
 - [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 - [page.waitForRequest(urlOrPredicate[, options])](#pagewaitforrequesturlorpredicate-options)
 - [page.waitForResponse(urlOrPredicate[, options])](#pagewaitforresponseurlorpredicate-options)
@@ -1156,10 +1156,10 @@ const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 1
 - returns: <[Promise]>
 
 Adds a script which would be evaluated in one of the following scenarios:
-- Whenever the page is navigated.
-- Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly attached frame.
+* Whenever the page is navigated.
+* Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly attached frame.
 
-The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend 
+The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
 the JavaScript environment, e.g. to seed `Math.random`.
 
 An example of overriding `Math.random` before the page loads:
@@ -1177,8 +1177,8 @@ await page.addInitScript(preloadFile);
 arg])](#browsercontextaddinitscriptscript-arg) and [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg) is
 not defined.
 
-#### page.addScriptTag(options)
-- `options` <[Object]>
+#### page.addScriptTag(script)
+- `script` <[Object]>
   - `url` <[string]> URL of a script to be added.
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
@@ -1187,10 +1187,10 @@ not defined.
 
 Adds a `<script>` tag into the page with the desired url or content.
 
-Shortcut for [page.mainFrame().addScriptTag(options)](#frameaddscripttagoptions).
+Shortcut for [page.mainFrame().addScriptTag()](#frameaddscripttagscript).
 
-#### page.addStyleTag(options)
-- `options` <[Object]>
+#### page.addStyleTag(style)
+- `style` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
@@ -1199,14 +1199,14 @@ Shortcut for [page.mainFrame().addScriptTag(options)](#frameaddscripttagoptions)
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content.
 
-Shortcut for [page.mainFrame().addStyleTag(options)](#frameaddstyletagoptions).
+Shortcut for [page.mainFrame().addStyleTag()](#frameaddstyletagstyle).
 
 #### page.bringToFront()
 - returns: <[Promise]>
 
 Brings page to front (activates tab).
 
-#### page.check(selector, [options])
+#### page.check(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
@@ -1314,7 +1314,7 @@ Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclicksele
 #### page.dispatchEvent(selector, type[, eventInit, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[EvaluationArgument]> event-specific initialization properties.
+- `eventInit` <[EvaluationArgument]> Optional event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -1331,13 +1331,13 @@ Under the hood, it creates an instance of an event based on the given `type`, in
 and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
 
 Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
-- [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
-- [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
-- [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
-- [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
-- [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
-- [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
-- [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+* [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+* [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
+* [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
+* [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
+* [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
+* [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
+* [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
 
 You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
 
@@ -1347,8 +1347,8 @@ const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
 await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
 ```
 
-#### page.emulateMedia(options)
-- `options` <[Object]>
+#### page.emulateMedia(params)
+- `params` <[Object]>
   - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
   - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
 - returns: <[Promise]>
@@ -1600,8 +1600,8 @@ waits until a matching element appears in the DOM.
 
 Shortcut for [page.mainFrame().focus(selector)](#framefocusselector-options).
 
-#### page.frame(options)
-- `options` <[string]|[Object]> Frame name or other frame lookup options.
+#### page.frame(frameSelector)
+- `frameSelector` <[string]|[Object]> Frame name or other frame lookup options.
   - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 - returns: <[null]|[Frame]> frame matching the criteria. Returns `null` if no frame matches.
@@ -1766,7 +1766,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 > **NOTE** Generating a pdf is currently only supported in Chromium headless.
 
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
-[page.emulateMedia({ media: 'screen' })](#pageemulatemediaoptions) before calling `page.pdf()`:
+[page.emulateMedia()](#pageemulatemediaparams) before calling `page.pdf()`:
 
 > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
 [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to
@@ -1951,12 +1951,12 @@ Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values
 - `timeout` <[number]> Maximum navigation time in milliseconds
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
-- [page.goBack([options])](#pagegobackoptions)
-- [page.goForward([options])](#pagegoforwardoptions)
-- [page.goto(url[, options])](#pagegotourl-options)
-- [page.reload([options])](#pagereloadoptions)
-- [page.setContent(html[, options])](#pagesetcontenthtml-options)
-- [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
+* [page.goBack([options])](#pagegobackoptions)
+* [page.goForward([options])](#pagegoforwardoptions)
+* [page.goto(url[, options])](#pagegotourl-options)
+* [page.reload([options])](#pagereloadoptions)
+* [page.setContent(html[, options])](#pagesetcontenthtml-options)
+* [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
 
 > **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) takes priority over
 [`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout),
@@ -2082,7 +2082,7 @@ await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a u
 
 Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselector-text-options).
 
-#### page.uncheck(selector, [options])
+#### page.uncheck(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
@@ -2106,7 +2106,7 @@ Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselect
 
 #### page.unroute(url[, handler])
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
-- `handler` <[function]\([Route], [Request]\)> Handler function to route the request.
+- `handler` <[function]\([Route], [Request]\)> Optional handler function to route the request.
 - returns: <[Promise]>
 
 Removes a route created with [page.route(url, handler)](#pagerouteurl-handler). When `handler` is not specified, removes
@@ -2129,7 +2129,7 @@ Video object associated with this page.
 
 #### page.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
-- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
+- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
@@ -2170,8 +2170,8 @@ await page.waitForFunction(selector => !!document.querySelector(selector), selec
 Shortcut for [page.mainFrame().waitForFunction(pageFunction[, arg,
 options])](#framewaitforfunctionpagefunction-arg-options).
 
-#### page.waitForLoadState([state[, options]])
-- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
+#### page.waitForLoadState([state, options])
+- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Optional.
   - `'load'` - wait for the `load` event to be fired.
   - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
@@ -2351,9 +2351,9 @@ console.log(text);
 - [frame.$$(selector)](#frameselector-1)
 - [frame.$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg)
 - [frame.$$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg-1)
-- [frame.addScriptTag(options)](#frameaddscripttagoptions)
-- [frame.addStyleTag(options)](#frameaddstyletagoptions)
-- [frame.check(selector, [options])](#framecheckselector-options)
+- [frame.addScriptTag(script)](#frameaddscripttagscript)
+- [frame.addStyleTag(style)](#frameaddstyletagstyle)
+- [frame.check(selector[, options])](#framecheckselector-options)
 - [frame.childFrames()](#framechildframes)
 - [frame.click(selector[, options])](#frameclickselector-options)
 - [frame.content()](#framecontent)
@@ -2381,10 +2381,10 @@ console.log(text);
 - [frame.textContent(selector[, options])](#frametextcontentselector-options)
 - [frame.title()](#frametitle)
 - [frame.type(selector, text[, options])](#frametypeselector-text-options)
-- [frame.uncheck(selector, [options])](#frameuncheckselector-options)
+- [frame.uncheck(selector[, options])](#frameuncheckselector-options)
 - [frame.url()](#frameurl)
 - [frame.waitForFunction(pageFunction[, arg, options])](#framewaitforfunctionpagefunction-arg-options)
-- [frame.waitForLoadState([state[, options]])](#framewaitforloadstatestate-options)
+- [frame.waitForLoadState([state, options])](#framewaitforloadstatestate-options)
 - [frame.waitForNavigation([options])](#framewaitfornavigationoptions)
 - [frame.waitForSelector(selector[, options])](#framewaitforselectorselector-options)
 - [frame.waitForTimeout(timeout)](#framewaitfortimeouttimeout)
@@ -2443,8 +2443,8 @@ Examples:
 const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
-#### frame.addScriptTag(options)
-- `options` <[Object]>
+#### frame.addScriptTag(script)
+- `script` <[Object]>
   - `url` <[string]> URL of a script to be added.
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
@@ -2453,8 +2453,8 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
 
 Adds a `<script>` tag into the page with the desired url or content.
 
-#### frame.addStyleTag(options)
-- `options` <[Object]>
+#### frame.addStyleTag(style)
+- `style` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
@@ -2463,7 +2463,7 @@ Adds a `<script>` tag into the page with the desired url or content.
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content.
 
-#### frame.check(selector, [options])
+#### frame.check(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
@@ -2545,7 +2545,7 @@ Passing zero timeout disables this.
 #### frame.dispatchEvent(selector, type[, eventInit, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[EvaluationArgument]> event-specific initialization properties.
+- `eventInit` <[EvaluationArgument]> Optional event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -2562,13 +2562,13 @@ Under the hood, it creates an instance of an event based on the given `type`, in
 and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
 
 Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
-- [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
-- [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
-- [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
-- [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
-- [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
-- [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
-- [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+* [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+* [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
+* [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
+* [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
+* [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
+* [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
+* [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
 
 You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
 
@@ -2909,7 +2909,7 @@ await frame.type('#mytextarea', 'Hello'); // Types instantly
 await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
 ```
 
-#### frame.uncheck(selector, [options])
+#### frame.uncheck(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
@@ -2964,8 +2964,8 @@ const selector = '.foo';
 await frame.waitForFunction(selector => !!document.querySelector(selector), selector);
 ```
 
-#### frame.waitForLoadState([state[, options]])
-- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately.
+#### frame.waitForLoadState([state, options])
+- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Optional.
   - `'load'` - wait for the `load` event to be fired.
   - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
@@ -3277,7 +3277,7 @@ Passing zero timeout disables this.
 
 #### elementHandle.dispatchEvent(type[, eventInit])
 - `type` <[string]> DOM event type: `"click"`, `"dragstart"`, etc.
-- `eventInit` <[EvaluationArgument]> event-specific initialization properties.
+- `eventInit` <[EvaluationArgument]> Optional event-specific initialization properties.
 - returns: <[Promise]>
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
@@ -3292,13 +3292,13 @@ Under the hood, it creates an instance of an event based on the given `type`, in
 and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
 
 Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
-- [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
-- [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
-- [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
-- [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
-- [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
-- [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
-- [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
+* [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
+* [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
+* [KeyboardEvent](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/KeyboardEvent)
+* [MouseEvent](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/MouseEvent)
+* [PointerEvent](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent/PointerEvent)
+* [TouchEvent](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/TouchEvent)
+* [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event)
 
 You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
 
@@ -3739,7 +3739,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 <!-- GEN:stop -->
 
 #### dialog.accept([promptText])
-- `promptText` <[string]> A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt.
+- `promptText` <[string]> A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt. Optional.
 - returns: <[Promise]> Promise which resolves when the dialog has been accepted.
 
 #### dialog.defaultValue()
@@ -4519,7 +4519,7 @@ Contains the URL of the WebSocket.
 
 #### webSocket.waitForEvent(event[, optionsOrPredicate])
 - `event` <[string]> Event name, same one would pass into `webSocket.on(event)`.
-- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object.
+- `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
@@ -4701,8 +4701,8 @@ Kills the browser process and waits for the process to exit.
 #### browserServer.wsEndpoint()
 - returns: <[string]> Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to
-[browserType.connect(options)](#browsertypeconnectoptions) to establish connection to the browser.
+Browser websocket endpoint which can be used as an argument to [browserType.connect(options)](#browserisconnected) to
+establish connection to the browser.
 
 ### class: BrowserType
 
@@ -4722,16 +4722,16 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 ```
 
 <!-- GEN:toc -->
-- [browserType.connect(options)](#browsertypeconnectoptions)
+- [browserType.connect(params)](#browsertypeconnectparams)
 - [browserType.executablePath()](#browsertypeexecutablepath)
 - [browserType.launch([options])](#browsertypelaunchoptions)
-- [browserType.launchPersistentContext(userDataDir, [options])](#browsertypelaunchpersistentcontextuserdatadir-options)
+- [browserType.launchPersistentContext(userDataDir[, options])](#browsertypelaunchpersistentcontextuserdatadir-options)
 - [browserType.launchServer([options])](#browsertypelaunchserveroptions)
 - [browserType.name()](#browsertypename)
 <!-- GEN:stop -->
 
-#### browserType.connect(options)
-- `options` <[Object]>
+#### browserType.connect(params)
+- `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging.
@@ -4790,7 +4790,7 @@ a description of the differences between Chromium and Chrome. [`This
 article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes
 some differences for Linux users.
 
-#### browserType.launchPersistentContext(userDataDir, [options])
+#### browserType.launchPersistentContext(userDataDir[, options])
 - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
 - `options` <[Object]>
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
@@ -4834,7 +4834,7 @@ some differences for Linux users.
   - `httpCredentials` <[Object]> Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
     - `username` <[string]>
     - `password` <[string]>
-  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia(options)](#pageemulatemediaoptions) for more details. Defaults to '`light`'.
+  - `colorScheme` <"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See [page.emulateMedia()](#pageemulatemediaparams) for more details. Defaults to '`light`'.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `videosPath` <[string]> **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to `videosPath` directory. If not specified, videos are not recorded. Make sure to await [`browserContext.close`](#browsercontextclose) for videos to be saved.
   - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
@@ -5011,7 +5011,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.cookies([urls])](#browsercontextcookiesurls)
 - [browserContext.exposeBinding(name, playwrightBinding[, options])](#browsercontextexposebindingname-playwrightbinding-options)
 - [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction)
-- [browserContext.grantPermissions(permissions[][, options])](#browsercontextgrantpermissionspermissions-options)
+- [browserContext.grantPermissions(permissions[, options])](#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](#browsercontextnewpage)
 - [browserContext.pages()](#browsercontextpages)
 - [browserContext.route(url, handler)](#browsercontextrouteurl-handler)
@@ -5189,7 +5189,6 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.newPage([options])](#browsernewpageoptions)
 - [browser.version()](#browserversion)
 <!-- GEN:stop -->
-
 
 ### EvaluationArgument
 

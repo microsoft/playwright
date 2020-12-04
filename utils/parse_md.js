@@ -278,6 +278,8 @@ function extractParamDescription(group, node) {
 
 function parseArgument(line) {
   const match = line.match(/`([^`]+)` (.*)/);
+  if (!match)
+    throw new Error('Invalid argument: ' + line);
   const name = match[1];
   const remainder = match[2];
   if (!remainder.startsWith('<'))
@@ -295,4 +297,4 @@ function parseArgument(line) {
   throw new Error('Should not be reached');
 }
 
-module.exports = { parseMd, renderMd, renderMdTemplate, extractParamDescriptions };
+module.exports = { parseMd, renderMd, renderMdTemplate, extractParamDescriptions, parseArgument };

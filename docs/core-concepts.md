@@ -128,7 +128,7 @@ await frame.fill('#username-input', 'John');
 
 - [class `Page`](./api.md#class-page)
 - [class `Frame`](./api.md#class-frame)
-- [page.frame(options)](./api.md#pageframeoptions)
+- [page.frame()](./api.md#pageframeframeselector)
 
 <br/>
 
@@ -226,9 +226,9 @@ await page.waitForSelector('#promo', { state: 'detached' });
 
 #### API reference
 
-- [page.click(selector[, options])](./api.md#pageclickselector-options)
-- [page.fill(selector, value[, options])](./api.md#pagefillselector-value-options)
-- [page.waitForSelector(selector[, options])](./api.md#pagewaitforselectorselector-options)
+- [page.click()](./api.md#pageclickselector-options)
+- [page.fill()](./api.md#pagefillselector-value-options)
+- [page.waitForSelector()](./api.md#pagewaitforselectorselector-options)
 
 <br/>
 
@@ -279,8 +279,8 @@ const result = await page.evaluate(() => {
 
 #### API reference
 
-- [`page.evaluate(pageFunction[, arg])`](api.md#pageevaluatepagefunction-arg)
-- [`frame.evaluate(pageFunction[, arg])`](api.md#frameevaluatepagefunction-arg)
+- [`page.evaluate()`](api.md#pageevaluatepagefunction-arg)
+- [`frame.evaluate()`](api.md#frameevaluatepagefunction-arg)
 - Evaluation argument [examples](api.md#evaluationargument)
 
 <br/>
@@ -352,7 +352,7 @@ await myArrayHandle.dispose();
 #### API reference
 - [class `JSHandle`](./api.md#class-jshandle)
 - [class `ElementHandle`](./api.md#class-elementhandle)
-- [`page.evaluateHandle`](./api.md#pageevaluatehandlepagefunction-arg)
-- [`page.$`](./api.md#pageselector)
-- [`page.$$`](./api.md#pageselector-1)
-- [`jsHandle.evaluate`](./api.md#jshandleevaluatepagefunction-arg)
+- [`page.evaluateHandle()`](./api.md#pageevaluatehandlepagefunction-arg)
+- [`page.$()`](./api.md#pageselector)
+- [`page.$$()`](./api.md#pageselector-1)
+- [`jsHandle.evaluate()`](./api.md#jshandleevaluatepagefunction-arg)

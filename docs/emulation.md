@@ -39,7 +39,7 @@ All pages created in the context above will share the same device parameters.
 #### API reference
 
 - [`playwright.devices`](./api.md#playwrightdevices)
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
 
 <br/>
 
@@ -55,7 +55,7 @@ const context = await browser.newContext({
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
 
 <br/>
 
@@ -81,8 +81,8 @@ const context = await browser.newContext({
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`page.setViewportSize(viewportSize)`](./api.md#pagesetviewportsizeviewportsize)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
+- [`page.setViewportSize()`](./api.md#pagesetviewportsizeviewportsize)
 
 <br/>
 
@@ -98,7 +98,7 @@ const context = await browser.newContext({
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
 
 <br/>
 
@@ -128,8 +128,8 @@ await context.clearPermissions();
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`browserContext.grantPermissions(permissions[][, options])`](./api.md#browsercontextgrantpermissionspermissions-options)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
+- [`browserContext.grantPermissions()`](./api.md#browsercontextgrantpermissionspermissions-options)
 - [`browserContext.clearPermissions()`](./api.md#browsercontextclearpermissions)
 
 <br/>
@@ -152,8 +152,8 @@ await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`browserContext.setGeolocation(geolocation)`](./api.md#browsercontextsetgeolocationgeolocation)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
+- [`browserContext.setGeolocation()`](./api.md#browsercontextsetgeolocationgeolocation)
 
 <br/>
 
@@ -182,5 +182,5 @@ await page.emulateMedia({ media: 'print' });
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
-- [`page.emulateMedia([options])`](./api.md#pageemulatemediaoptions)
+- [`browser.newContext()`](./api.md#browsernewcontextoptions)
+- [`page.emulateMedia()`](./api.md#pageemulatemediaparams)
