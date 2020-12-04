@@ -1,3 +1,5 @@
-# text files must be lf for golden file tests to work
-*.txt eol=lf
-*.json eol=lf
+# text files must be lf for golden file tests to work and for browser
+# patches to apply.
+#
+# In general, it seems to be safe to default to lf for all text files.
+* text=auto eol=lf
