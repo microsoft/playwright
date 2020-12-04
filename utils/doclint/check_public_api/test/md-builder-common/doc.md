@@ -2,7 +2,7 @@
 
 This is a class.
 
-#### event: 'frame'
+#### foo.on('frame')
 - <[Frame]>
 
 This event is dispatched.

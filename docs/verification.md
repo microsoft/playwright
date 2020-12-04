@@ -98,7 +98,7 @@ await msg.args[1].jsonValue() // 42
 
 - [class: ConsoleMessage](./api.md#class-consolemessage)
 - [class: Page](./api.md#class-page)
-- [event: 'console'](./api.md#event-console)
+- [page.on('console')](./api.md#pageonconsole)
 
 <br/>
 
@@ -119,7 +119,7 @@ await page.goto('data:text/html,<script>throw new Error("Test")</script>');
 #### API reference
 
 - [class: Page](./api.md#class-page)
-- [event: 'pageerror'](./api.md#event-pageerror)
+- [page.on('pageerror')](./api.md#pageonpageerror)
 
 <br/>
 
@@ -153,6 +153,6 @@ const [popup] = await Promise.all([
 #### API reference
 
 - [class: Page](./api.md#class-page)
-- [event: 'requestfailed'](./api.md#event-requestfailed)
-- [event: 'dialog'](./api.md#event-dialog)
-- [event: 'popup'](./api.md#event-popup)
+- [page.on('requestfailed')](./api.md#pageonrequestfailed)
+- [page.on('dialog')](./api.md#pageondialog)
+- [page.on('popup')](./api.md#pageonpopup)

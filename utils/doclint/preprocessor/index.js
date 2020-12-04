@@ -126,7 +126,6 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
     }
     const sourceEdits = new SourceEdits(source);
     let offset = 0;
-    const edits = [];
 
     const lines = source.text().split('\n');
     lines.forEach((line, lineNumber) => {
@@ -192,10 +191,10 @@ function generateLinks(source, signatures, messages) {
     while (match = linkRegex.exec(line)) {
       const [, name] = match;
       const hrefOffset = offset + lineNumber + match.index + 3 + name.length;
-      const eventMatch = name.match(/.*on\('(.*)'\)/);
+      const eventMatch = name.match(/.*on\('.*'\)/);
       let replacement;
       if (eventMatch) {
-        replacement = `#event-${eventMatch[1]}`;
+        replacement = eventMatch[0];
       } else {
         const method = name.substring(0, name.length - 2);
         let signature = signatures.get(method);
@@ -204,9 +203,9 @@ function generateLinks(source, signatures, messages) {
           signature = '\u2026';
         }
         sourceEdits.edit(hrefOffset - 3, hrefOffset - 3, signature);
-        replacement = `#${(name + signature).toLowerCase().replace(/[^a-z]/gm, '')}`;
+        replacement = name + signature;
       }
-      sourceEdits.edit(hrefOffset, hrefOffset, replacement);
+      sourceEdits.edit(hrefOffset, hrefOffset, '#' + replacement.toLowerCase().replace(/[^a-z]/gm, ''));
     }
     offset += line.length;
   });

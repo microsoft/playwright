@@ -102,9 +102,9 @@ function compareDocumentations(actual, expected) {
   const expectedClasses = Array.from(expected.classes.keys()).sort();
   const classesDiff = diff(actualClasses, expectedClasses);
   for (const className of classesDiff.extra)
-    errors.push(`Non-existing class found: ${className}`);
+    errors.push(`Documented but not implemented class: ${className}`);
   for (const className of classesDiff.missing)
-    errors.push(`Class not found: ${className}`);
+    errors.push(`Implemented but not documented class: ${className}`);
 
   for (const className of classesDiff.equal) {
     const actualClass = actual.classes.get(className);
@@ -113,9 +113,9 @@ function compareDocumentations(actual, expected) {
     const expectedMethods = Array.from(expectedClass.methods.keys()).sort();
     const methodDiff = diff(actualMethods, expectedMethods);
     for (const methodName of methodDiff.extra)
-      errors.push(`Non-existing method found: ${className}.${methodName}()`);
+      errors.push(`Documented but not implemented method: ${className}.${methodName}()`);
     for (const methodName of methodDiff.missing)
-      errors.push(`Method not found: ${className}.${methodName}()`);
+      errors.push(`Implemented but not documented method: ${className}.${methodName}()`);
 
     for (const methodName of methodDiff.equal) {
       const actualMethod = actualClass.methods.get(methodName);
@@ -134,9 +134,9 @@ function compareDocumentations(actual, expected) {
       if (argsDiff.extra.length || argsDiff.missing.length) {
         const text = [`Method ${className}.${methodName}() fails to describe its parameters:`];
         for (const arg of argsDiff.missing)
-          text.push(`- Argument not found: ${arg}`);
+          text.push(`- Implemented but not documented argument: ${arg}`);
         for (const arg of argsDiff.extra)
-          text.push(`- Non-existing argument found: ${arg}`);
+          text.push(`- Documented but not implemented argument: ${arg}`);
         errors.push(text.join('\n'));
       }
 
@@ -147,20 +147,20 @@ function compareDocumentations(actual, expected) {
     const expectedProperties = Array.from(expectedClass.properties.keys()).sort();
     const propertyDiff = diff(actualProperties, expectedProperties);
     for (const propertyName of propertyDiff.extra)
-      errors.push(`Non-existing property found: ${className}.${propertyName}`);
+      errors.push(`Documented but not implemented property: ${className}.${propertyName}`);
     for (const propertyName of propertyDiff.missing) {
       if (propertyName === 'T')
         continue;
-      errors.push(`Property not found: ${className}.${propertyName}`);
+      errors.push(`Implemented but not documented property: ${className}.${propertyName}`);
     }
 
     const actualEvents = Array.from(actualClass.events.keys()).sort();
     const expectedEvents = Array.from(expectedClass.events.keys()).sort();
     const eventsDiff = diff(actualEvents, expectedEvents);
     for (const eventName of eventsDiff.extra)
-      errors.push(`Non-existing event found in class ${className}: '${eventName}'`);
+      errors.push(`Documented but not implemented event ${className}: '${eventName}'`);
     for (const eventName of eventsDiff.missing)
-      errors.push(`Event not found in class ${className}: '${eventName}'`);
+      errors.push(`Implemented but not documented event ${className}: '${eventName}'`);
   }
 
 

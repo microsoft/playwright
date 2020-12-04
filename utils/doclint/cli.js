@@ -59,47 +59,67 @@ async function run() {
     {
       const nodes = parseMd(renderMdTemplate(body, params));
       const signatures = new Map();
-      let h4;
+      let lastMethod;
       let args;
-      const flush = () => {
-        if (h4 && !['page.accessibility', 'page.mouse', 'page.keyboard', 'page.coverage', 'page.touchscreen'].includes(h4.h4)) {
-          const tokens = [];
-          let hasOptional = false;
-          for (const arg of args) {
-            const optional = arg.name === 'options' || arg.text.includes('Optional');
-            if (tokens.length) {
-              if (optional && !hasOptional)
-                tokens.push(`[, ${arg.name}`);
-              else
-                tokens.push(`, ${arg.name}`);
-            } else {
-              if (optional && !hasOptional)
-                tokens.push(`[${arg.name}`);
-              else
-                tokens.push(`${arg.name}`);
-            }
-            hasOptional = hasOptional || optional;
+      const flushMethodSignature = () => {
+        if (!lastMethod)
+          return;
+        const tokens = [];
+        let hasOptional = false;
+        for (const arg of args) {
+          const optional = arg.name === 'options' || arg.text.includes('Optional');
+          if (tokens.length) {
+            if (optional && !hasOptional)
+              tokens.push(`[, ${arg.name}`);
+            else
+              tokens.push(`, ${arg.name}`);
+          } else {
+            if (optional && !hasOptional)
+              tokens.push(`[${arg.name}`);
+            else
+              tokens.push(`${arg.name}`);
           }
-          if (hasOptional)
-            tokens.push(']');
-          const signature = tokens.join('');
-          signatures.set(h4.h4, signature);
-          h4.h4 = `${h4.h4}(${signature})`;
+          hasOptional = hasOptional || optional;
         }
-        h4 = null;
+        if (hasOptional)
+          tokens.push(']');
+        const signature = tokens.join('');
+        signatures.set(lastMethod.h4, signature);
+        lastMethod.h4 = `${lastMethod.h4}(${signature})`;
+        lastMethod = null;
         args = null;
       };
       for (const node of nodes) {
         if (node.h1 || node.h2 || node.h3 || node.h4)
-          flush();
+          flushMethodSignature();
+
         if (node.h4) {
-          h4 = node.h4.startsWith('event:') ? null : node;
-          args = node.h4.startsWith('event:') ? null : [];
+          lastMethod = null;
+          args = null;
+          let match = node.h4.match(/(event|method|namespace) (JS|CDP|[A-Z])([^.]+)\.(.*)/);
+          if (!match)
+            continue;
+          if (match[1] === 'event') {
+            node.h4 = `${match[2].toLowerCase() + match[3]}.on('${match[4]}')`;
+            continue;
+          }
+
+          if (match[1] === 'method') {
+            node.h4 = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
+            lastMethod = node;
+            args = [];
+            continue;
+          }
+
+          if (match[1] === 'namespace') {
+            node.h4 = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
+            continue;
+          }
+
           continue;
         }
-        if (args && node.li && node.liType === 'default' && !node.li.startsWith('returns')) {
+        if (args && node.li && node.liType === 'default' && !node.li.startsWith('returns'))
           args.push(parseArgument(node.li));
-        }
       }
       api.setText([comment, header, renderMd(nodes), footer].join('\n'));
 
@@ -202,7 +222,8 @@ async function getChromeVersion() {
 
 function getRepositoryFiles() {
   const out = spawnSync('git', ['ls-files'], {cwd: PROJECT_DIR});
-  return out.stdout.toString().trim().split('\n').map(file => path.join(PROJECT_DIR, file));
+  const files = out.stdout.toString().trim().split('\n').filter(f => !f.startsWith('docs-src'));
+  return files.map(file => path.join(PROJECT_DIR, file));
 }
 
 async function getFirefoxVersion() {

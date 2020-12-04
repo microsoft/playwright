@@ -1,12 +1,12 @@
 ### class: Foo
 
-#### event: 'c'
+#### foo.on('c')
 
-#### event: 'a'
+#### foo.on('a')
 
 #### foo.aaa()
 
-#### event: 'b'
+#### foo.on('b')
 
 #### foo.ddd
 
