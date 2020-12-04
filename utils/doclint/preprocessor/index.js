@@ -17,7 +17,7 @@
 const path = require('path');
 const Message = require('../Message');
 
-function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, onlyBrowserVersions}) {
+function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
   // Release version is everything that doesn't include "-".
   const isReleaseVersion = !libversion.includes('-');
 
@@ -51,8 +51,6 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, only
         newText = `[![Chromium version](https://img.shields.io/badge/chromium-${chromiumVersion}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)`;
       else if (commandName === 'firefox-version-badge')
         newText = `[![Firefox version](https://img.shields.io/badge/firefox-${firefoxVersion}-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)`;
-      else if (onlyBrowserVersions)
-        continue;
       else if (commandName === 'version')
         newText = isReleaseVersion ? 'v' + libversion : 'Tip-Of-Tree';
       else if (commandName === 'toc')

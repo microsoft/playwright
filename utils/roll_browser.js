@@ -82,7 +82,7 @@ Example:
   // 5. Update docs.
   console.log('\nUpdating documentation...');
   try {
-    process.stdout.write(execSync('npm run --silent doc -- --only-browser-versions'));
+    process.stdout.write(execSync('npm run --silent doc'));
   } catch (e) {
   }
 
