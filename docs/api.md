@@ -158,7 +158,7 @@ See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific
 being connected to or launched.
 
 <!-- GEN:toc -->
-- [event: 'disconnected'](#event-disconnected)
+- [browser.on('disconnected')](#browserondisconnected)
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
@@ -167,7 +167,7 @@ being connected to or launched.
 - [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
-#### event: 'disconnected'
+#### browser.on('disconnected')
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 * Browser application is closed or crashed.
@@ -372,8 +372,8 @@ await context.close();
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close)
-- [event: 'page'](#event-page)
+- [browserContext.on('close')](#browsercontextonclose)
+- [browserContext.on('page')](#browsercontextonpage)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg)
 - [browserContext.browser()](#browsercontextbrowser)
@@ -398,18 +398,18 @@ await context.close();
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
-#### event: 'close'
+#### browserContext.on('close')
 
 Emitted when Browser context gets closed. This might happen because of one of the following:
 * Browser context is closed.
 * Browser application is closed or crashed.
 * The [browser.close()](#browserclose) method was called.
 
-#### event: 'page'
+#### browserContext.on('page')
 - <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-also fire for popup pages. See also [page.on('popup')](#event-popup) to receive events about popups relevant to a specific page.
+also fire for popup pages. See also [page.on('popup')](#pageonpopup) to receive events about popups relevant to a specific page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -823,25 +823,25 @@ page.removeListener('request', logRequest);
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-1)
-- [event: 'console'](#event-console)
-- [event: 'crash'](#event-crash)
-- [event: 'dialog'](#event-dialog)
-- [event: 'domcontentloaded'](#event-domcontentloaded)
-- [event: 'download'](#event-download)
-- [event: 'filechooser'](#event-filechooser)
-- [event: 'frameattached'](#event-frameattached)
-- [event: 'framedetached'](#event-framedetached)
-- [event: 'framenavigated'](#event-framenavigated)
-- [event: 'load'](#event-load)
-- [event: 'pageerror'](#event-pageerror)
-- [event: 'popup'](#event-popup)
-- [event: 'request'](#event-request)
-- [event: 'requestfailed'](#event-requestfailed)
-- [event: 'requestfinished'](#event-requestfinished)
-- [event: 'response'](#event-response)
-- [event: 'websocket'](#event-websocket)
-- [event: 'worker'](#event-worker)
+- [page.on('close')](#pageonclose)
+- [page.on('console')](#pageonconsole)
+- [page.on('crash')](#pageoncrash)
+- [page.on('dialog')](#pageondialog)
+- [page.on('domcontentloaded')](#pageondomcontentloaded)
+- [page.on('download')](#pageondownload)
+- [page.on('filechooser')](#pageonfilechooser)
+- [page.on('frameattached')](#pageonframeattached)
+- [page.on('framedetached')](#pageonframedetached)
+- [page.on('framenavigated')](#pageonframenavigated)
+- [page.on('load')](#pageonload)
+- [page.on('pageerror')](#pageonpageerror)
+- [page.on('popup')](#pageonpopup)
+- [page.on('request')](#pageonrequest)
+- [page.on('requestfailed')](#pageonrequestfailed)
+- [page.on('requestfinished')](#pageonrequestfinished)
+- [page.on('response')](#pageonresponse)
+- [page.on('websocket')](#pageonwebsocket)
+- [page.on('worker')](#pageonworker)
 - [page.$(selector)](#pageselector)
 - [page.$$(selector)](#pageselector-1)
 - [page.$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg)
@@ -913,11 +913,11 @@ page.removeListener('request', logRequest);
 - [page.workers()](#pageworkers)
 <!-- GEN:stop -->
 
-#### event: 'close'
+#### page.on('close')
 
 Emitted when the page closes.
 
-#### event: 'console'
+#### page.on('console')
 - <[ConsoleMessage]>
 
 Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -935,7 +935,7 @@ page.on('console', msg => {
 page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
 ```
 
-#### event: 'crash'
+#### page.on('crash')
 
 Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,
 ongoing and subsequent operations will throw.
@@ -966,18 +966,18 @@ await new Promise((resolve, reject) => {
 });
 ```
 
-#### event: 'dialog'
+#### page.on('dialog')
 - <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
 to the dialog via [dialog.accept([promptText])](#dialogacceptprompttext) or [dialog.dismiss()](#dialogdismiss) methods.
 
-#### event: 'domcontentloaded'
+#### page.on('domcontentloaded')
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
 event is dispatched.
 
-#### event: 'download'
+#### page.on('download')
 - <[Download]>
 
 Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -987,7 +987,7 @@ Emitted when attachment download started. User can access basic file operations 
 downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
 download is not performed and user has no access to the downloaded files.
 
-#### event: 'filechooser'
+#### page.on('filechooser')
 - <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
@@ -999,34 +999,34 @@ page.on('filechooser', async (fileChooser) => {
 });
 ```
 
-#### event: 'frameattached'
+#### page.on('frameattached')
 - <[Frame]>
 
 Emitted when a frame is attached.
 
-#### event: 'framedetached'
+#### page.on('framedetached')
 - <[Frame]>
 
 Emitted when a frame is detached.
 
-#### event: 'framenavigated'
+#### page.on('framenavigated')
 - <[Frame]>
 
 Emitted when a frame is navigated to a new url.
 
-#### event: 'load'
+#### page.on('load')
 
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
-#### event: 'pageerror'
+#### page.on('pageerror')
 - <[Error]> The exception message
 
 Emitted when an uncaught exception happens within the page.
 
-#### event: 'popup'
+#### page.on('popup')
 - <[Page]> Page corresponding to "popup" window
 
-Emitted when the page opens a new tab or window. This event is emitted in addition to the [browserContext.on('page')](#event-page),
+Emitted when the page opens a new tab or window. This event is emitted in addition to the [browserContext.on('page')](#browsercontextonpage),
 but only for popups relevant to this page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -1044,38 +1044,38 @@ console.log(await popup.evaluate('location.href'));
 > **NOTE** Use [page.waitForLoadState([state, options])](#pagewaitforloadstatestate-options) to wait until the page gets to a particular state (you should not need it in
 most cases).
 
-#### event: 'request'
+#### page.on('request')
 - <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
 [page.route(url, handler)](#pagerouteurl-handler) or [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
 
-#### event: 'requestfailed'
+#### page.on('requestfailed')
 - <[Request]>
 
 Emitted when a request fails, for example by timing out.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-will complete with [page.on('requestfinished')](#event-requestfinished) event and not with [page.on('requestfailed')](#event-requestfailed).
+will complete with [page.on('requestfinished')](#pageonrequestfinished) event and not with [page.on('requestfailed')](#pageonrequestfailed).
 
-#### event: 'requestfinished'
+#### page.on('requestfinished')
 - <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
 sequence of events is `request`, `response` and `requestfinished`.
 
-#### event: 'response'
+#### page.on('response')
 - <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`.
 
-#### event: 'websocket'
+#### page.on('websocket')
 - <[WebSocket]> websocket
 
 Emitted when <[WebSocket]> request is sent.
 
-#### event: 'worker'
+#### page.on('worker')
 - <[Worker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
@@ -1256,7 +1256,7 @@ If `runBeforeUnload` is `false` the result will resolve only after the page has 
 handlers.
 
 > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
-> and should be handled manually via [page.on('dialog')](#event-dialog) event.
+> and should be handled manually via [page.on('dialog')](#pageondialog) event.
 
 #### page.content()
 - returns: <[Promise]<[string]>>
@@ -2296,9 +2296,9 @@ At every point of time, page exposes its current frame tree via the [page.mainFr
 methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-- [frame.on('frameattached')](#event-frameattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
-- [frame.on('framenavigated')](#event-framenavigated) - fired when the frame commits navigation to a different URL.
-- [frame.on('framedetached')](#event-framedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
+- [page.on('frameattached')](#pageonframeattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+- [page.on('framenavigated')](#pageonframenavigated) - fired when the frame commits navigation to a different URL.
+- [page.on('framedetached')](#pageonframedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
 
 An example of dumping frame tree:
 
@@ -3659,7 +3659,7 @@ error if the object has circular references.
 
 ### class: ConsoleMessage
 
-[ConsoleMessage] objects are dispatched by page via the [page.on('console')](#event-console) event.
+[ConsoleMessage] objects are dispatched by page via the [page.on('console')](#pageonconsole) event.
 
 <!-- GEN:toc -->
 - [consoleMessage.args()](#consolemessageargs)
@@ -3689,7 +3689,7 @@ One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'
 
 ### class: Dialog
 
-[Dialog] objects are dispatched by page via the [page.on('dialog')](#event-dialog) event.
+[Dialog] objects are dispatched by page via the [page.on('dialog')](#pageondialog) event.
 
 An example of using `Dialog` class:
 
@@ -3734,7 +3734,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 ### class: Download
 
-[Download] objects are dispatched by page via the [page.on('download')](#event-download) event.
+[Download] objects are dispatched by page via the [page.on('download')](#pageondownload) event.
 
 All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
 files are deleted when the browser closes.
@@ -3824,7 +3824,7 @@ upon closing the browser context.
 
 ### class: FileChooser
 
-[FileChooser] objects are dispatched by the page in the [page.on('filechooser')](#event-filechooser) event.
+[FileChooser] objects are dispatched by the page in the [page.on('filechooser')](#pageonfilechooser) event.
 
 ```js
 page.on('filechooser', async (fileChooser) => {
@@ -4103,12 +4103,12 @@ Dispatches a `touchstart` and `touchend` event with a single touch at the positi
 ### class: Request
 
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
-- [page.on('request')](#event-request) emitted when the request is issued by the page.
-- [page.on('response')](#event-response) emitted when/if the response status and headers are received for the request.
-- [page.on('requestfinished')](#event-requestfinished) emitted when the response body is downloaded and the request is complete.
+- [page.on('request')](#pageonrequest) emitted when the request is issued by the page.
+- [page.on('response')](#pageonresponse) emitted when/if the response status and headers are received for the request.
+- [page.on('requestfinished')](#pageonrequestfinished) emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
-the  [page.on('requestfailed')](#event-requestfailed) event is emitted.
+the  [page.on('requestfailed')](#pageonrequestfailed) event is emitted.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
 will complete with `'requestfinished'` event.
@@ -4453,32 +4453,32 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 The [WebSocket] class represents websocket connections in the page.
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-2)
-- [event: 'framereceived'](#event-framereceived)
-- [event: 'framesent'](#event-framesent)
-- [event: 'socketerror'](#event-socketerror)
+- [webSocket.on('close')](#websocketonclose)
+- [webSocket.on('framereceived')](#websocketonframereceived)
+- [webSocket.on('framesent')](#websocketonframesent)
+- [webSocket.on('socketerror')](#websocketonsocketerror)
 - [webSocket.isClosed()](#websocketisclosed)
 - [webSocket.url()](#websocketurl)
 - [webSocket.waitForEvent(event[, optionsOrPredicate])](#websocketwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
-#### event: 'close'
+#### webSocket.on('close')
 
 Fired when the websocket closes.
 
-#### event: 'framereceived'
+#### webSocket.on('framereceived')
 - <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
-#### event: 'framesent'
+#### webSocket.on('framesent')
 - <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
-#### event: 'socketerror'
+#### webSocket.on('socketerror')
 - <[String]> the error message
 
 Fired when the websocket has an error.
@@ -4610,13 +4610,13 @@ for (const worker of page.workers())
 ```
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-3)
+- [worker.on('close')](#workeronclose)
 - [worker.evaluate(pageFunction[, arg])](#workerevaluatepagefunction-arg)
 - [worker.evaluateHandle(pageFunction[, arg])](#workerevaluatehandlepagefunction-arg)
 - [worker.url()](#workerurl)
 <!-- GEN:stop -->
 
-#### event: 'close'
+#### worker.on('close')
 - <[Worker]>
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
@@ -4650,14 +4650,14 @@ the promise to resolve and return its value.
 ### class: BrowserServer
 
 <!-- GEN:toc -->
-- [event: 'close'](#event-close-4)
+- [browserServer.on('close')](#browserserveronclose)
 - [browserServer.close()](#browserserverclose)
 - [browserServer.kill()](#browserserverkill)
 - [browserServer.process()](#browserserverprocess)
 - [browserServer.wsEndpoint()](#browserserverwsendpoint)
 <!-- GEN:stop -->
 
-#### event: 'close'
+#### browserServer.on('close')
 
 Emitted when the browser server closes.
 
@@ -4932,7 +4932,7 @@ await browser.stopTracing();
 <!-- GEN:stop -->
 
 <!-- GEN:toc-extends-Browser -->
-- [event: 'disconnected'](#event-disconnected)
+- [browser.on('disconnected')](#browserondisconnected)
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
@@ -4967,16 +4967,16 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 ```
 
 <!-- GEN:toc -->
-- [event: 'backgroundpage'](#event-backgroundpage)
-- [event: 'serviceworker'](#event-serviceworker)
+- [chromiumBrowserContext.on('backgroundpage')](#chromiumbrowsercontextonbackgroundpage)
+- [chromiumBrowserContext.on('serviceworker')](#chromiumbrowsercontextonserviceworker)
 - [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages)
 - [chromiumBrowserContext.newCDPSession(page)](#chromiumbrowsercontextnewcdpsessionpage)
 - [chromiumBrowserContext.serviceWorkers()](#chromiumbrowsercontextserviceworkers)
 <!-- GEN:stop -->
 
 <!-- GEN:toc-extends-BrowserContext -->
-- [event: 'close'](#event-close)
-- [event: 'page'](#event-page)
+- [browserContext.on('close')](#browsercontextonclose)
+- [browserContext.on('page')](#browsercontextonpage)
 - [browserContext.addCookies(cookies)](#browsercontextaddcookiescookies)
 - [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg)
 - [browserContext.browser()](#browsercontextbrowser)
@@ -5001,14 +5001,14 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
 
-#### event: 'backgroundpage'
+#### chromiumBrowserContext.on('backgroundpage')
 - <[Page]>
 
 Emitted when new background page is created in the context.
 
 > **NOTE** Only works with persistent context.
 
-#### event: 'serviceworker'
+#### chromiumBrowserContext.on('serviceworker')
 - <[Worker]>
 
 Emitted when new service worker is created in the context.
@@ -5141,7 +5141,7 @@ send messages.
 Firefox browser instance does not expose Firefox-specific features.
 
 <!-- GEN:toc-extends-Browser -->
-- [event: 'disconnected'](#event-disconnected)
+- [browser.on('disconnected')](#browserondisconnected)
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)
@@ -5156,7 +5156,7 @@ Firefox browser instance does not expose Firefox-specific features.
 WebKit browser instance does not expose WebKit-specific features.
 
 <!-- GEN:toc-extends-Browser -->
-- [event: 'disconnected'](#event-disconnected)
+- [browser.on('disconnected')](#browserondisconnected)
 - [browser.close()](#browserclose)
 - [browser.contexts()](#browsercontexts)
 - [browser.isConnected()](#browserisconnected)

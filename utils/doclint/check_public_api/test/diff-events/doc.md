@@ -1,5 +1,5 @@
 ### class: Foo
 
-#### event: 'start'
+#### foo.on('start')
 
-#### event: 'stop'
+#### foo.on('stop')

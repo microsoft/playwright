@@ -90,7 +90,7 @@ context.on('page', async page => {
 
 #### API reference
 
-- [event: 'page'](./api.md#event-page)
+- [browserContext.on('page')](./api.md#browsercontextonpage)
 
 ## Handling popups
 
@@ -122,4 +122,4 @@ page.on('popup', async popup => {
 
 #### API reference
 
-- [event: 'popup'](./api.md#event-popup)
+- [page.on('popup')](./api.md#pageonpopup)

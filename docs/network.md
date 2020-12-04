@@ -30,7 +30,7 @@ await page.goto('https://example.com');
 
 #### API reference
 
-- [`browser.newContext([options])`](./api.md#browsernewcontextoptions)
+- [browser.newContext([options])](./api.md#browsernewcontextoptions)
 
 <br/>
 
@@ -58,9 +58,9 @@ Note that handling the event forks the control flow and makes script harder to f
 
 #### API reference
 
-- [`Download`](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-download)
-- [`page.on('download')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#event-download)
-- [`page.waitForEvent(event)`](https://github.com/microsoft/playwright/blob/master/docs/api.md##pagewaitforeventevent-optionsorpredicate)
+- [Download](https://github.com/microsoft/playwright/blob/master/docs/api.md#class-download)
+- [page.on('download')](https://github.com/microsoft/playwright/blob/master/docs/api.md#event-download)
+- [page.waitForEvent(event)](https://github.com/microsoft/playwright/blob/master/docs/api.md##pagewaitforeventevent-optionsorpredicate)
 
 <br/>
 
@@ -116,10 +116,10 @@ const [response] = await Promise.all([
 
 - [class `Request`](./api.md#class-request)
 - [class `Response`](./api.md#class-response)
-- [event `'request'`](./api.md#event-request)
-- [event `'response'`](./api.md#event-response)
-- [`page.waitForRequest(urlOrPredicate[, options])`](./api.md#pagewaitforrequesturlorpredicate-options)
-- [`page.waitForResponse(urlOrPredicate[, options])`](./api.md#pagewaitforresponseurlorpredicate-options)
+- [page.on('request')](./api.md#pageonrequest)
+- [page.on('response')](./api.md#pageonresponse)
+- [page.waitForRequest(urlOrPredicate[, options])](./api.md#pagewaitforrequesturlorpredicate-options)
+- [page.waitForResponse(urlOrPredicate[, options])](./api.md#pagewaitforresponseurlorpredicate-options)
 
 <br/>
 
@@ -150,11 +150,11 @@ await page.goto('https://example.com');
 
 #### API reference
 
-- [`browserContext.route(url, handler)`](./api.md#browsercontextrouteurl-handler)
-- [`browserContext.unroute(url[, handler])`](./api.md#browsercontextunrouteurl-handler)
-- [`page.route(url, handler)`](./api.md#pagerouteurl-handler)
-- [`page.unroute(url[, handler])`](./api.md#pageunrouteurl-handler)
-- [`Route`](./api.md#class-route)
+- [browserContext.route(url, handler)](./api.md#browsercontextrouteurl-handler)
+- [browserContext.unroute(url[, handler])](./api.md#browsercontextunrouteurl-handler)
+- [page.route(url, handler)](./api.md#pagerouteurl-handler)
+- [page.unroute(url[, handler])](./api.md#pageunrouteurl-handler)
+- [Route](./api.md#class-route)
 
 <br/>
 
@@ -188,8 +188,8 @@ await page.route('**/*', route => {
 
 #### API reference
 
-- [`page.route(url, handler)`](./api.md#pagerouteurl-handler)
-- [`browserContext.route(url, handler)`](./api.md#browsercontextrouteurl-handler)
-- [`route.abort([errorCode])`](./api.md#routeaborterrorcode)
+- [page.route(url, handler)](./api.md#pagerouteurl-handler)
+- [browserContext.route(url, handler)](./api.md#browsercontextrouteurl-handler)
+- [route.abort([errorCode])](./api.md#routeaborterrorcode)
 
 <br/>

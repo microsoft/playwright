@@ -1,2 +1,2 @@
-[MarkDown] Non-existing property found: Foo.c
-[MarkDown] Property not found: Foo.b
+[MarkDown] Documented but not implemented property: Foo.c
+[MarkDown] Implemented but not documented property: Foo.b
