@@ -20,6 +20,7 @@ const path = require('path');
 const files = [
   path.join('src', 'server', 'injected', 'injectedScript.webpack.config.js'),
   path.join('src', 'server', 'injected', 'utilityScript.webpack.config.js'),
+  path.join('src', 'server', 'injected', 'dragScript.webpack.config.js'),
   path.join('src', 'debug', 'injected', 'debugScript.webpack.config.js'),
 ];
 
