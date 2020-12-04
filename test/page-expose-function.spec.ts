@@ -224,10 +224,15 @@ it('exposeBindingHandle should throw for multiple arguments', async ({page}) => 
 });
 
 it('should not result in unhandled rejection', async ({page}) => {
+  const closedPromise = page.waitForEvent('close');
   await page.exposeFunction('foo', async () => {
     await page.close();
   });
   await page.evaluate(() => {
-    (window as any).foo();
+    setTimeout(() => (window as any).foo(), 0);
+    return undefined;
   });
+  await closedPromise;
+  // Make a round-trip to be sure we did not throw immediately after closing.
+  expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
 });
