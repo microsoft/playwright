@@ -309,7 +309,7 @@ Network proxy settings to use with this context. Note that browser needs to be l
 option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example
 `launch({ proxy: { server: 'per-context' } })`.
 
-## shared-context-params
+## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
