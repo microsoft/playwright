@@ -108,20 +108,20 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     }, options.logger);
   }
 
-  async connect(options: ConnectOptions): Promise<Browser> {
-    const logger = options.logger;
+  async connect(params: ConnectOptions): Promise<Browser> {
+    const logger = params.logger;
     return this._wrapApiCall('browserType.connect', async () => {
       const connection = new Connection();
 
-      const ws = new WebSocket(options.wsEndpoint, [], {
+      const ws = new WebSocket(params.wsEndpoint, [], {
         perMessageDeflate: false,
         maxPayload: 256 * 1024 * 1024, // 256Mb,
-        handshakeTimeout: this._timeoutSettings.timeout(options),
+        handshakeTimeout: this._timeoutSettings.timeout(params),
       });
 
       // The 'ws' module in node sometimes sends us multiple messages in a single task.
-      const waitForNextTask = options.slowMo
-        ? (cb: () => any) => setTimeout(cb, options.slowMo)
+      const waitForNextTask = params.slowMo
+        ? (cb: () => any) => setTimeout(cb, params.slowMo)
         : makeWaitForNextTask();
       connection.onmessage = message => {
         if (ws.readyState !== WebSocket.OPEN) {
@@ -137,9 +137,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
       });
 
       return await new Promise<Browser>(async (fulfill, reject) => {
-        if ((options as any).__testHookBeforeCreateBrowser) {
+        if ((params as any).__testHookBeforeCreateBrowser) {
           try {
-            await (options as any).__testHookBeforeCreateBrowser();
+            await (params as any).__testHookBeforeCreateBrowser();
           } catch (e) {
             reject(e);
           }

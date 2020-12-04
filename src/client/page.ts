@@ -215,9 +215,9 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._mainFrame;
   }
 
-  frame(options: string | { name?: string, url?: URLMatch }): Frame | null {
-    const name = isString(options) ? options : options.name;
-    const url = isObject(options) ? options.url : undefined;
+  frame(frameSelector: string | { name?: string, url?: URLMatch }): Frame | null {
+    const name = isString(frameSelector) ? frameSelector : frameSelector.name;
+    const url = isObject(frameSelector) ? frameSelector.url : undefined;
     assert(name || url, 'Either name or url matcher should be specified');
     return this.frames().find(f => {
       if (name)
@@ -298,12 +298,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.$$(selector));
   }
 
-  async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
-    return this._attributeToPage(() => this._mainFrame.addScriptTag(options));
+  async addScriptTag(script: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
+    return this._attributeToPage(() => this._mainFrame.addScriptTag(script));
   }
 
-  async addStyleTag(options: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    return this._attributeToPage(() => this._mainFrame.addStyleTag(options));
+  async addStyleTag(style: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+    return this._attributeToPage(() => this._mainFrame.addStyleTag(style));
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {
@@ -405,11 +405,11 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null }) {
+  async emulateMedia(params: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null }) {
     return this._wrapApiCall('page.emulateMedia', async () => {
       await this._channel.emulateMedia({
-        media: options.media === null ? 'null' : options.media,
-        colorScheme: options.colorScheme === null ? 'null' : options.colorScheme,
+        media: params.media === null ? 'null' : params.media,
+        colorScheme: params.colorScheme === null ? 'null' : params.colorScheme,
       });
     });
   }
