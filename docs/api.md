@@ -1373,7 +1373,7 @@ await page.evaluate(() => matchMedia('print').matches);
 ```
 
 ```js
-await page.emulateMedia({ colorScheme: 'dark' }] });
+await page.emulateMedia({ colorScheme: 'dark' });
 await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
 // → true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
