@@ -57,16 +57,15 @@ console.log(browser.contexts().length); // prints `1`
 ```
 
 #### browser.isConnected()
-
 - returns: <[boolean]>
 
 Indicates that the browser is connected.
 
 #### browser.newContext([options])
 - `options` <[Object]>
-  - %%-shared-context-params-%%
-  - %%-context-proxy-params-%%
-  - %%-context-storage-state-%%
+  - %%-shared-context-params-%%-as-is
+  - %%-context-option-proxy-%%
+  - %%-context-option-storage-state-%%
 - returns: <[Promise]<[BrowserContext]>>
 
 Creates a new browser context. It won't share cookies/cache with other browser contexts.
@@ -84,9 +83,9 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 
 #### browser.newPage([options])
 - `options` <[Object]>
-  - %%-shared-context-params-%%
-  - %%-context-proxy-params-%%
-  - %%-context-storage-state-%%
+  - %%-shared-context-params-%%-as-is
+  - %%-context-option-proxy-%%
+  - %%-context-option-storage-state-%%
 - returns: <[Promise]<[Page]>>
 
 Creates a new page in a new browser context. Closing this page will close the context as well.
@@ -4222,7 +4221,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
-  - %%-shared-context-params-%%
+  - %%-shared-context-params-%%-as-is
 - returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this context will automatically close the browser.

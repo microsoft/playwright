@@ -21,7 +21,7 @@ const path = require('path');
 const os = require('os');
 const Source = require('./Source');
 const Message = require('./Message');
-const { renderMdTemplate } = require('./../parse_md');
+const { renderMdTemplate, extractParamDescriptions } = require('./../parse_md');
 const { spawnSync } = require('child_process');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
@@ -50,7 +50,8 @@ async function run() {
     const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
     const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
     const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
-    const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
+    let params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
+    params = renderMdTemplate(params, params);
     fs.writeFileSync(path.join(PROJECT_DIR, 'docs', 'api.md'), [comment, header, renderMdTemplate(body, params), footer].join('\n'));
   }
 

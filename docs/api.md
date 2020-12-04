@@ -192,7 +192,6 @@ console.log(browser.contexts().length); // prints `1`
 ```
 
 #### browser.isConnected()
-
 - returns: <[boolean]>
 
 Indicates that the browser is connected.
