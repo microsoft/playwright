@@ -27,7 +27,7 @@ export type CSSSimpleSelector = { css?: string, functions: CSSFunction[] };
 export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
 export type CSSComplexSelectorList = CSSComplexSelector[];
 
-export function parseCSS(selector: string): CSSComplexSelectorList {
+export function parseCSS(selector: string): { selector: CSSComplexSelectorList, names: string[] } {
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
@@ -62,6 +62,7 @@ export function parseCSS(selector: string): CSSComplexSelectorList {
     throw new Error(`Unsupported token "${unsupportedToken.toSource()}" while parsing selector "${selector}"`);
 
   let pos = 0;
+  const names = new Set<string>();
 
   function unexpected() {
     return new Error(`Unexpected token "${tokens[pos].toSource()}" while parsing selector "${selector}"`);
@@ -163,16 +164,21 @@ export function parseCSS(selector: string): CSSComplexSelectorList {
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
-          if (builtinCSSFilters.has(tokens[pos].value.toLowerCase()))
+          if (builtinCSSFilters.has(tokens[pos].value.toLowerCase())) {
             rawCSSString += ':' + tokens[pos++].toSource();
-          else
-            functions.push({ name: tokens[pos++].value.toLowerCase(), args: [] });
+          } else {
+            const name = tokens[pos++].value.toLowerCase();
+            functions.push({ name, args: [] });
+            names.add(name);
+          }
         } else if (tokens[pos] instanceof css.FunctionToken) {
           const name = tokens[pos++].value.toLowerCase();
-          if (builtinCSSFunctions.has(name))
+          if (builtinCSSFunctions.has(name)) {
             rawCSSString += `:${name}(${consumeBuiltinFunctionArguments()})`;
-          else
+          } else {
             functions.push({ name, args: consumeFunctionArguments() });
+            names.add(name);
+          }
           skipWhitespace();
           if (!isCloseParen())
             throw unexpected();
@@ -210,7 +216,7 @@ export function parseCSS(selector: string): CSSComplexSelectorList {
     throw new Error(`Error while parsing selector "${selector}"`);
   if (result.some(arg => typeof arg !== 'object' || !('simples' in arg)))
     throw new Error(`Error while parsing selector "${selector}"`);
-  return result as CSSComplexSelector[];
+  return { selector: result as CSSComplexSelector[], names: Array.from(names) };
 }
 
 export function serializeSelector(args: CSSFunctionArgument[]) {

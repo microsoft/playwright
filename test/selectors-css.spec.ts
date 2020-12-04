@@ -16,6 +16,9 @@
  */
 
 import { it, expect } from './fixtures';
+import * as path from 'path';
+
+const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
 
 it('should work for open shadow roots', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
@@ -189,9 +192,9 @@ it('should work with +', async ({page}) => {
   expect(await page.$$eval(`css=#div3 + #div4 + #div5`, els => els.length)).toBe(1);
 });
 
-it('should work with spaces in :nth-child and :not', test => {
-  test.fixme('Our selector parser is broken');
-}, async ({page, server}) => {
+it('should work with spaces in :nth-child and :not', async ({page, server}) => {
+  if (!selectorsV2Enabled())
+    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span:nth-child(23n +2)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span:nth-child(23n+ 2)`, els => els.length)).toBe(1);
@@ -204,9 +207,9 @@ it('should work with spaces in :nth-child and :not', test => {
   expect(await page.$$eval(`css=span, section:not(span, div)`, els => els.length)).toBe(5);
 });
 
-it('should work with :is', test => {
-  test.skip('Needs a new selector evaluator');
-}, async ({page, server}) => {
+it('should work with :is', async ({page, server}) => {
+  if (!selectorsV2Enabled())
+    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:is(#root1)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=div:is(#root1, #target)`, els => els.length)).toBe(1);
@@ -218,18 +221,18 @@ it('should work with :is', test => {
   expect(await page.$$eval(`css=:is(div, span) > *`, els => els.length)).toBe(6);
 });
 
-it('should work with :has', test => {
-  test.skip('Needs a new selector evaluator');
-}, async ({page, server}) => {
+it('should work with :has', async ({page, server}) => {
+  if (!selectorsV2Enabled())
+    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:has(#target)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=div:has([data-testid=foo])`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=div:has([attr*=value])`, els => els.length)).toBe(2);
 });
 
-it('should work with :scope', test => {
-  test.skip('Needs a new selector evaluator');
-}, async ({page, server}) => {
+it('should work with :scope', async ({page, server}) => {
+  if (!selectorsV2Enabled())
+    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   // 'is' does not change the scope, so it remains 'html'.
   expect(await page.$$eval(`css=div:is(:scope#root1)`, els => els.length)).toBe(0);
