@@ -2,7 +2,7 @@
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
 A Browser is created when Playwright connects to a browser instance, either through
-[`browserType.launch`](#browsertypelaunchoptions) or [`browserType.connect`](#browsertypeconnectoptions).
+[browserType.launch()]() or [browserType.connect()]().
 
 An example of using a [Browser] to create a [Page]:
 
@@ -18,8 +18,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 ```
 
 See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
-[browserType.connect(options)](#browsertypeconnect) and
-[browserType.launch([options])](#browsertypelaunchoptions) always return a specific browser instance, based on the
+[browserType.connect()]() and
+[browserType.launch()]() always return a specific browser instance, based on the
 browser being connected to or launched.
 
 <!-- GEN:toc -->
@@ -29,15 +29,15 @@ browser being connected to or launched.
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 * Browser application is closed or crashed.
-* The [`browser.close`](#browserclose) method was called.
+* The [browser.close()]() method was called.
 
 #### browser.close
 - returns: <[Promise]>
 
-In case this browser is obtained using [browserType.launch](#browsertypelaunchoptions), closes the browser and all of
+In case this browser is obtained using [browserType.launch()](), closes the browser and all of
 its pages (if any were opened).
 
-In case this browser is obtained using [browserType.connect](#browsertypeconnect), clears all created contexts
+In case this browser is obtained using [browserType.connect()](), clears all created contexts
 belonging to this browser and disconnects from the browser server.
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
@@ -90,8 +90,8 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 Creates a new page in a new browser context. Closing this page will close the context as well.
 
 This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and
-testing frameworks should explicitly create [browser.newContext](#browsernewcontextoptions) followed by the
-[browserContext.newPage](#browsercontextnewpage) to control their exact life times.
+testing frameworks should explicitly create [browser.newContext()]() followed by the
+[browserContext.newPage()]() to control their exact life times.
 
 #### browser.version
 - returns: <[string]>
@@ -127,13 +127,13 @@ await context.close();
 Emitted when Browser context gets closed. This might happen because of one of the following:
 * Browser context is closed.
 * Browser application is closed or crashed.
-* The [`browser.close`](#browserclose) method was called.
+* The [browser.close()]() method was called.
 
 #### event: 'page'
 - <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-also fire for popup pages. See also [`Page.on('popup')`](#event-popup) to receive events about popups relevant to a
+also fire for popup pages. See also [page.on('popup')]() to receive events about popups relevant to a
 specific page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -148,7 +148,7 @@ const [page] = await Promise.all([
 console.log(await page.evaluate('location.href'));
 ```
 
-> **NOTE** Use [`page.waitForLoadState([state[, options]])`](#pagewaitforloadstatestate-options) to wait until the page
+> **NOTE** Use [page.waitForLoadState()]() to wait until the page
 gets to a particular state (you should not need it in most cases).
 
 #### browserContext.addCookies
@@ -196,8 +196,7 @@ await browserContext.addInitScript({
 });
 ```
 
-> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[,
-arg])](#browsercontextaddinitscriptscript-arg) and [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg) is
+> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript()]() and [page.addInitScript()]() is
 not defined.
 
 #### browserContext.browser
@@ -256,7 +255,7 @@ of `playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will 
 The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext:
 BrowserContext, page: Page, frame: Frame }`.
 
-See [page.exposeBinding(name, playwrightBinding)](#pageexposebindingname-playwrightbinding-options) for page-only
+See [page.exposeBinding()]() for page-only
 version.
 
 An example of exposing page URL to all frames in all pages in the context:
@@ -308,7 +307,7 @@ of `playwrightFunction`.
 
 If the `playwrightFunction` returns a [Promise], it will be awaited.
 
-See [page.exposeFunction(name, playwrightFunction)](#pageexposefunctionname-playwrightfunction) for page-only version.
+See [page.exposeFunction()]() for page-only version.
 
 An example of adding an `md5` function to all pages in the context:
 
@@ -365,7 +364,7 @@ specified.
 Creates a new page in the browser context.
 
 #### browserContext.pages
-- returns: <[Array]<[Page]>> All open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
+- returns: <[Array]<[Page]>> All open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumBrowserContext.backgroundPages()]().
 
 #### browserContext.route
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -395,7 +394,7 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
-Page routes (set up with [page.route(url, handler)](#pagerouteurl-handler)) take precedence over browser context routes
+Page routes (set up with [page.route()]()) take precedence over browser context routes
 when request matches both handlers.
 
 > **NOTE** Enabling routing disables http cache.
@@ -404,33 +403,33 @@ when request matches both handlers.
 - `timeout` <[number]> Maximum navigation time in milliseconds
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
-* [page.goBack([options])](#pagegobackoptions)
-* [page.goForward([options])](#pagegoforwardoptions)
-* [page.goto(url[, options])](#pagegotourl-options)
-* [page.reload([options])](#pagereloadoptions)
-* [page.setContent(html[, options])](#pagesetcontenthtml-options)
-* [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
+* [page.goBack()]()
+* [page.goForward()]()
+* [page.goto()]()
+* [page.reload()]()
+* [page.setContent()]()
+* [page.waitForNavigation()]()
 
-> **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) and
-[`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) take priority over
-[`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout).
+> **NOTE** [page.setDefaultNavigationTimeout()]() and
+[page.setDefaultTimeout()]() take priority over
+[browserContext.setDefaultNavigationTimeout()]().
 
 #### browserContext.setDefaultTimeout
 - `timeout` <[number]> Maximum time in milliseconds
 
 This setting will change the default maximum time for all the methods accepting `timeout` option.
 
-> **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout),
-[`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout) and
-[`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout) take priority over
-[`browserContext.setDefaultTimeout`](#browsercontextsetdefaulttimeouttimeout).
+> **NOTE** [page.setDefaultNavigationTimeout()](),
+[page.setDefaultTimeout()]() and
+[browserContext.setDefaultNavigationTimeout()]() take priority over
+[browserContext.setDefaultTimeout()]().
 
 #### browserContext.setExtraHTTPHeaders
 - `headers` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
 - returns: <[Promise]>
 
 The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged
-with page-specific extra HTTP headers set with [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders). If page
+with page-specific extra HTTP headers set with [page.setExtraHTTPHeaders()](). If page
 overrides a particular header, page-specific header value will be used instead of the browser context header value.
 
 > **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
@@ -448,7 +447,7 @@ Sets the context's geolocation. Passing `null` or `undefined` emulates position 
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
-> **NOTE** Consider using [browserContext.grantPermissions](#browsercontextgrantpermissionspermissions-options) to grant
+> **NOTE** Consider using [browserContext.grantPermissions()]() to grant
 permissions for the browser context pages to read its geolocation.
 
 #### browserContext.setHTTPCredentials
@@ -487,11 +486,11 @@ instead.
 Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
 #### browserContext.unroute
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
-- `handler` <[function]\([Route], [Request]\)> Optional handler function used to register a routing with [browserContext.route(url, handler)](#browsercontextrouteurl-handler).
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route()]().
+- `handler` <[function]\([Route], [Request]\)> Optional handler function used to register a routing with [browserContext.route()]().
 - returns: <[Promise]>
 
-Removes a route created with [browserContext.route(url, handler)](#browsercontextrouteurl-handler). When `handler` is
+Removes a route created with [browserContext.route()](). When `handler` is
 not specified, removes all routes for the `url`.
 
 #### browserContext.waitForEvent
@@ -612,7 +611,7 @@ await new Promise((resolve, reject) => {
 - <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-to the dialog via [Dialog]'s [accept](#dialogacceptprompttext) or [dismiss](#dialogdismiss) methods.
+to the dialog via [dialog.accept()]() or [dialog.dismiss()]() methods.
 
 #### event: 'domcontentloaded'
 
@@ -633,7 +632,7 @@ download is not performed and user has no access to the downloaded files.
 - <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
-respond to it via setting the input files using [`fileChooser.setFiles`](#filechoosersetfilesfiles-options) that can be
+respond to it via setting the input files using [fileChooser.setFiles()]() that can be
 uploaded after that.
 
 ```js
@@ -670,7 +669,7 @@ Emitted when an uncaught exception happens within the page.
 - <[Page]> Page corresponding to "popup" window
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the
-[`browserContext.on('page')`](#event-page), but only for popups relevant to this page.
+[browserContext.on('page')](), but only for popups relevant to this page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -684,14 +683,14 @@ const [popup] = await Promise.all([
 console.log(await popup.evaluate('location.href'));
 ```
 
-> **NOTE** Use [`page.waitForLoadState([state[, options]])`](#pagewaitforloadstatestate-options) to wait until the page
+> **NOTE** Use [page.waitForLoadState()]() to wait until the page
 gets to a particular state (you should not need it in most cases).
 
 #### event: 'request'
 - <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-[`page.route()`](#pagerouteurl-handler) or [`browserContext.route()`](#browsercontextrouteurl-handler).
+[page.route()]() or [browserContext.route()]().
 
 #### event: 'requestfailed'
 - <[Request]>
@@ -699,8 +698,8 @@ Emitted when a page issues a request. The [request] object is read-only. In orde
 Emitted when a request fails, for example by timing out.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-will complete with [`'requestfinished'`](#event-requestfinished) event and not with
-[`'requestfailed'`](#event-requestfailed).
+will complete with [page.on('requestfinished')]() event and not with
+[page.on('requestfailed')]().
 
 #### event: 'requestfinished'
 - <[Request]>
@@ -732,7 +731,7 @@ page.
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
 return value resolves to `null`.
 
-Shortcut for [page.mainFrame().$(selector)](#frameselector).
+Shortcut for main frame's [frame.$()]().
 
 #### page.$$
 - %%-query-selector-%%
@@ -741,7 +740,7 @@ Shortcut for [page.mainFrame().$(selector)](#frameselector).
 The method finds all elements matching the specified selector within the page. If no elements match the selector, the
 return value resolves to `[]`.
 
-Shortcut for [page.mainFrame().$$(selector)](#frameselector-1).
+Shortcut for main frame's [frame.$$()]().
 
 #### page.$eval
 - %%-query-selector-%%
@@ -762,7 +761,7 @@ const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
 const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
 ```
 
-Shortcut for [page.mainFrame().$eval(selector, pageFunction)](#frameevalselector-pagefunction-arg).
+Shortcut for main frame's [frame.$eval()]().
 
 #### page.$$eval
 - %%-query-selector-%%
@@ -809,8 +808,7 @@ const preloadFile = fs.readFileSync('./preload.js', 'utf8');
 await page.addInitScript(preloadFile);
 ```
 
-> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[,
-arg])](#browsercontextaddinitscriptscript-arg) and [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg) is
+> **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript()]() and [page.addInitScript()]() is
 not defined.
 
 #### page.addScriptTag
@@ -823,7 +821,7 @@ not defined.
 
 Adds a `<script>` tag into the page with the desired url or content.
 
-Shortcut for [page.mainFrame().addScriptTag()](#frameaddscripttag).
+Shortcut for main frame's [frame.addScriptTag()]().
 
 #### page.addStyleTag
 - `style` <[Object]>
@@ -835,7 +833,7 @@ Shortcut for [page.mainFrame().addScriptTag()](#frameaddscripttag).
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content.
 
-Shortcut for [page.mainFrame().addStyleTag()](#frameaddstyletag).
+Shortcut for main frame's [frame.addStyleTag()]().
 
 #### page.bringToFront
 - returns: <[Promise]>
@@ -862,7 +860,7 @@ This method checks an element matching `selector` by performing the following st
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
 Passing zero timeout disables this.
 
-Shortcut for [page.mainFrame().check(selector[, options])](#framecheckselector-options).
+Shortcut for main frame's [frame.check()]().
 
 #### page.click
 - %%-input-selector-%%
@@ -887,7 +885,7 @@ This method clicks an element matching `selector` by performing the following st
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
 Passing zero timeout disables this.
 
-Shortcut for [page.mainFrame().click(selector[, options])](#frameclickselector-options).
+Shortcut for main frame's [frame.click()]().
 
 #### page.close
 - `options` <[Object]>
@@ -899,7 +897,7 @@ If `runBeforeUnload` is `false` the result will resolve only after the page has 
 handlers.
 
 > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
-> and should be handled manually via page's ['dialog'](#event-dialog) event.
+> and should be handled manually via [page.on('dialog')]() event.
 
 #### page.content
 - returns: <[Promise]<[string]>>
@@ -941,7 +939,7 @@ Passing zero timeout disables this.
 
 > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
-Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclickselector-options).
+Shortcut for main frame's [frame.dblclick()]().
 
 #### page.dispatchEvent
 - %%-input-selector-%%
@@ -953,7 +951,7 @@ Shortcut for [page.mainFrame().dblclick(selector[, options])](#framedblclicksele
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
 is dispatched. This is equivalend to calling
-[`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+[element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
 ```js
 await page.dispatchEvent('button#submit', 'click');
@@ -1005,7 +1003,7 @@ await page.evaluate(() => matchMedia('print').matches);
 ```
 
 ```js
-await page.emulateMedia({ colorScheme: 'dark' }] });
+await page.emulateMedia({ colorScheme: 'dark' });
 await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches);
 // → true
 await page.evaluate(() => matchMedia('(prefers-color-scheme: light)').matches);
@@ -1051,7 +1049,7 @@ const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [b
 await bodyHandle.dispose();
 ```
 
-Shortcut for [page.mainFrame().evaluate(pageFunction[, arg])](#frameevaluatepagefunction-arg).
+Shortcut for main frame's [frame.evaluate()]().
 
 #### page.evaluateHandle
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
@@ -1093,7 +1091,7 @@ executes `playwrightBinding` in Node.js and returns a [Promise] which resolves t
 The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext:
 BrowserContext, page: Page, frame: Frame }`.
 
-See [browserContext.exposeBinding(name, playwrightBinding)](#browsercontextexposebindingname-playwrightbinding-options)
+See [browserContext.exposeBinding()]()
 for the context-wide version.
 
 > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
@@ -1147,7 +1145,7 @@ executes `playwrightFunction` in Node.js and returns a [Promise] which resolves 
 
 If the `playwrightFunction` returns a [Promise], it will be awaited.
 
-See [browserContext.exposeFunction(name, playwrightFunction)](#browsercontextexposefunctionname-playwrightfunction) for
+See [browserContext.exposeFunction()]() for
 context-wide exposed function.
 
 > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
@@ -1217,9 +1215,9 @@ element, fills it and triggers an `input` event after filling. If the element ma
 `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to
 clear the input field.
 
-To send fine-grained keyboard events, use [`page.type`](#pagetypeselector-text-options).
+To send fine-grained keyboard events, use [page.type()]().
 
-Shortcut for [page.mainFrame().fill()](#framefillselector-value-options)
+Shortcut for main frame's [frame.fill()]()
 
 #### page.focus
 - %%-input-selector-%%
@@ -1230,7 +1228,7 @@ Shortcut for [page.mainFrame().fill()](#framefillselector-value-options)
 This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
 waits until a matching element appears in the DOM.
 
-Shortcut for [page.mainFrame().focus(selector)](#framefocusselector-options).
+Shortcut for main frame's [frame.focus()]().
 
 #### page.frame
 - `frameSelector` <[string]|[Object]> Frame name or other frame lookup options.
@@ -1281,7 +1279,7 @@ Navigate to the next page in history.
 - `options` <[Object]>
   - %%-navigation-timeout-%%
   - %%-navigation-wait-until-%%
-  - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
+  - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()]().
 - returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 `page.goto` will throw an error if:
@@ -1293,14 +1291,14 @@ Navigate to the next page in history.
 
 `page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
 Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
-[response.status()](#responsestatus).
+[response.status()]().
 
 > **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
 `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
 > **NOTE** Headless mode doesn't support navigation to a PDF document. See the [upstream
 issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
 
-Shortcut for [page.mainFrame().goto(url[, options])](#framegotourl-options)
+Shortcut for main frame's [frame.goto()]()
 
 #### page.hover
 - %%-input-selector-%%
@@ -1321,7 +1319,7 @@ This method hovers over an element matching `selector` by performing the followi
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
 Passing zero timeout disables this.
 
-Shortcut for [page.mainFrame().hover(selector[, options])](#framehoverselector-options).
+Shortcut for main frame's [frame.hover()]().
 
 #### page.innerHTML
 - %%-input-selector-%%
@@ -1387,7 +1385,7 @@ Page is guaranteed to have a main frame which persists during navigations.
 > **NOTE** Generating a pdf is currently only supported in Chromium headless.
 
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
-[page.emulateMedia()](#pageemulatemedia) before calling `page.pdf()`:
+[page.emulateMedia()]() before calling `page.pdf()`:
 
 > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
 [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to
@@ -1438,7 +1436,7 @@ The `format` options are:
   - %%-input-timeout-%%
 - returns: <[Promise]>
 
-Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
+Focuses the element, and then uses [keyboard.down()]() and [keyboard.up()]().
 
 `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
 value or a single character to generate the text for. A superset of the `key` values can be found
@@ -1504,8 +1502,7 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
-Page routes take precedence over browser context routes (set up with [browserContext.route(url,
-handler)](#browsercontextrouteurl-handler)) when request matches both handlers.
+Page routes take precedence over browser context routes (set up with [browserContext.route()]()) when request matches both handlers.
 
 > **NOTE** Enabling routing disables http cache.
 
@@ -1553,7 +1550,7 @@ page.selectOption('select#colors', ['red', 'green', 'blue']);
 
 ```
 
-Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values-options)
+Shortcut for main frame's [frame.selectOption()]()
 
 #### page.setContent
 - `html` <[string]> HTML markup to assign to the page.
@@ -1566,25 +1563,25 @@ Shortcut for [page.mainFrame().selectOption()](#frameselectoptionselector-values
 - `timeout` <[number]> Maximum navigation time in milliseconds
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
-* [page.goBack([options])](#pagegobackoptions)
-* [page.goForward([options])](#pagegoforwardoptions)
-* [page.goto(url[, options])](#pagegotourl-options)
-* [page.reload([options])](#pagereloadoptions)
-* [page.setContent(html[, options])](#pagesetcontenthtml-options)
-* [page.waitForNavigation([options])](#pagewaitfornavigationoptions)
+* [page.goBack()]()
+* [page.goForward()]()
+* [page.goto()]()
+* [page.reload()]()
+* [page.setContent()]()
+* [page.waitForNavigation()]()
 
-> **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) takes priority over
-[`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout),
-[`browserContext.setDefaultTimeout`](#browsercontextsetdefaulttimeouttimeout) and
-[`browserContext.setDefaultNavigationTimeout`](#browsercontextsetdefaultnavigationtimeouttimeout).
+> **NOTE** [page.setDefaultNavigationTimeout()]() takes priority over
+[page.setDefaultTimeout()](),
+[browserContext.setDefaultTimeout()]() and
+[browserContext.setDefaultNavigationTimeout()]().
 
 #### page.setDefaultTimeout
 - `timeout` <[number]> Maximum time in milliseconds
 
 This setting will change the default maximum time for all the methods accepting `timeout` option.
 
-> **NOTE** [`page.setDefaultNavigationTimeout`](#pagesetdefaultnavigationtimeouttimeout) takes priority over
-[`page.setDefaultTimeout`](#pagesetdefaulttimeouttimeout).
+> **NOTE** [page.setDefaultNavigationTimeout()]() takes priority over
+[page.setDefaultTimeout()]().
 
 #### page.setExtraHTTPHeaders
 - `headers` <[Object]<[string], [string]>> An object containing additional HTTP headers to be sent with every request. All header values must be strings.
@@ -1616,7 +1613,7 @@ empty array, clears the selected files.
 - returns: <[Promise]>
 
 In the case of multiple pages in a single browser, each page can have its own viewport size. However,
-[browser.newContext([options])](#browsernewcontextoptions) allows to set viewport size (and more) for all pages in the
+[browser.newContext()]() allows to set viewport size (and more) for all pages in the
 context at once.
 
 `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
@@ -1645,7 +1642,7 @@ This method taps an element matching `selector` by performing the following step
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagemouse) to tap the center of the element, or the specified `position`.
+1. Use [page.touchscreen](#pagetouchscreen#pagetouchscreen) to tap the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
@@ -1653,7 +1650,7 @@ Passing zero timeout disables this.
 
 > **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
 
-Shortcut for [page.mainFrame().tap()](#framename).
+Shortcut for main frame's [frame.tap()]().
 
 #### page.textContent
 - %%-input-selector-%%
@@ -1666,7 +1663,7 @@ Resolves to the `element.textContent`.
 #### page.title
 - returns: <[Promise]<[string]>> The page's title.
 
-Shortcut for [page.mainFrame().title()](#frametitle).
+Shortcut for main frame's [frame.title()]().
 
 #### page.touchscreen
 - returns: <[Touchscreen]>
@@ -1681,16 +1678,16 @@ Shortcut for [page.mainFrame().title()](#frametitle).
 - returns: <[Promise]>
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
-fine-grained keyboard events. To fill values in form fields, use [`page.fill`](#pagefillselector-value-options).
+fine-grained keyboard events. To fill values in form fields, use [page.fill()]().
 
-To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
+To press a special key, like `Control` or `ArrowDown`, use [keyboard.press()]().
 
 ```js
 await page.type('#mytextarea', 'Hello'); // Types instantly
 await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
 ```
 
-Shortcut for [page.mainFrame().type(selector, text[, options])](#frametypeselector-text-options).
+Shortcut for main frame's [frame.type()]().
 
 #### page.uncheck
 - %%-input-selector-%%
@@ -1712,20 +1709,20 @@ This method unchecks an element matching `selector` by performing the following 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
 Passing zero timeout disables this.
 
-Shortcut for [page.mainFrame().uncheck(selector[, options])](#frameuncheckselector-options).
+Shortcut for main frame's [frame.uncheck()]().
 
 #### page.unroute
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> Optional handler function to route the request.
 - returns: <[Promise]>
 
-Removes a route created with [page.route(url, handler)](#pagerouteurl-handler). When `handler` is not specified, removes
+Removes a route created with [page.route()](). When `handler` is not specified, removes
 all routes for the `url`.
 
 #### page.url
 - returns: <[string]>
 
-This is a shortcut for [page.mainFrame().url()](#frameurl)
+Shortcut for main frame's [frame.url()]().
 
 #### page.video
 - returns: <[null]|[Video]>
@@ -1777,8 +1774,7 @@ const selector = '.foo';
 await page.waitForFunction(selector => !!document.querySelector(selector), selector);
 ```
 
-Shortcut for [page.mainFrame().waitForFunction(pageFunction[, arg,
-options])](#framewaitforfunctionpagefunction-arg-options).
+Shortcut for main frame's [frame.waitForFunction()]().
 
 #### page.waitForLoadState
 - `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Optional.
@@ -1806,7 +1802,7 @@ await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 
 console.log(await popup.title()); // Popup is ready to use.
 ```
 
-Shortcut for [page.mainFrame().waitForLoadState([options])](#framewaitforloadstatestate-options).
+Shortcut for main frame's [frame.waitForLoadState()]().
 
 #### page.waitForNavigation
 - `options` <[Object]>
@@ -1829,12 +1825,12 @@ const [response] = await Promise.all([
 **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
 considered a navigation.
 
-Shortcut for [page.mainFrame().waitForNavigation(options)](#framewaitfornavigationoptions).
+Shortcut for main frame's [frame.waitForNavigation()]().
 
 #### page.waitForRequest
 - `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Request] object.
 - `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
+  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout()]() method.
 - returns: <[Promise]<[Request]>> Promise which resolves to the matched request.
 
 ```js
@@ -1850,7 +1846,7 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 #### page.waitForResponse
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]> Request URL string, regex or predicate receiving [Response] object.
 - `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
+  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [browserContext.setDefaultTimeout()]() or [page.setDefaultTimeout()]() methods.
 - returns: <[Promise]<[Response]>> Promise which resolves to the matched response.
 
 ```js
@@ -1903,7 +1899,7 @@ flaky. Use signals such as network events, selectors becoming visible and others
 await page.waitForTimeout(1000);
 ```
 
-Shortcut for [page.mainFrame().waitForTimeout(timeout)](#pagewaitfortimeouttimeout).
+Shortcut for main frame's [frame.waitForTimeout()]().
 
 #### page.workers
 - returns: <[Array]<[Worker]>> This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
@@ -1912,13 +1908,13 @@ Shortcut for [page.mainFrame().waitForTimeout(timeout)](#pagewaitfortimeouttimeo
 
 ### class: Frame
 
-At every point of time, page exposes its current frame tree via the [page.mainFrame()](#pagemainframe) and
-[frame.childFrames()](#framechildframes) methods.
+At every point of time, page exposes its current frame tree via the [page.mainFrame()]() and
+[frame.childFrames()]() methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-- ['frameattached'](#event-frameattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
-- ['framenavigated'](#event-framenavigated) - fired when the frame commits navigation to a different URL.
-- ['framedetached'](#event-framedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
+- [frame.on('frameattached')]() - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+- [frame.on('framenavigated')]() - fired when the frame commits navigation to a different URL.
+- [frame.on('framedetached')]() - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
 
 An example of dumping frame tree:
 
@@ -2110,7 +2106,7 @@ Passing zero timeout disables this.
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
 is dispatched. This is equivalend to calling
-[`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+[element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
 ```js
 await frame.dispatchEvent('button#submit', 'click');
@@ -2213,7 +2209,7 @@ element, fills it and triggers an `input` event after filling. If the element ma
 `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to
 clear the input field.
 
-To send fine-grained keyboard events, use [`frame.type`](#frametypeselector-text-options).
+To send fine-grained keyboard events, use [frame.type()]().
 
 #### frame.focus
 - %%-input-selector-%%
@@ -2227,7 +2223,7 @@ waits until a matching element appears in the DOM.
 #### frame.frameElement
 - returns: <[Promise]<[ElementHandle]>> Promise that resolves with a `frame` or `iframe` element handle which corresponds to this frame.
 
-This is an inverse of [elementHandle.contentFrame()](#elementhandlecontentframe). Note that returned handle actually
+This is an inverse of [elementHandle.contentFrame()](). Note that returned handle actually
 belongs to the parent frame.
 
 This method throws an error if the frame has been detached before `frameElement()` returns.
@@ -2252,7 +2248,7 @@ Returns element attribute value.
 - `options` <[Object]>
   - %%-navigation-timeout-%%
   - %%-navigation-wait-until-%%
-  - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()](#pagesetextrahttpheadersheaders).
+  - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders()]().
 - returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
 
 `frame.goto` will throw an error if:
@@ -2264,7 +2260,7 @@ Returns element attribute value.
 
 `frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404
 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
-[response.status()](#responsestatus).
+[response.status()]().
 
 > **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation
 to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
@@ -2416,7 +2412,7 @@ This method taps an element matching `selector` by performing the following step
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagemouse) to tap the center of the element, or the specified `position`.
+1. Use [page.touchscreen](#pagetouchscreen#pagetouchscreen) to tap the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
@@ -2445,9 +2441,9 @@ Resolves to the `element.textContent`.
 - returns: <[Promise]>
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
-send fine-grained keyboard events. To fill values in form fields, use [`frame.fill`](#framefillselector-value-options).
+send fine-grained keyboard events. To fill values in form fields, use [frame.fill()]().
 
-To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
+To press a special key, like `Control` or `ArrowDown`, use [keyboard.press()]().
 
 ```js
 await frame.type('#mytextarea', 'Hello'); // Types instantly
@@ -2588,7 +2584,7 @@ be flaky. Use signals such as network events, selectors becoming visible and oth
 ### class: ElementHandle
 * extends: [JSHandle]
 
-ElementHandle represents an in-page DOM element. ElementHandles can be created with the [page.$](#pageselector) method.
+ElementHandle represents an in-page DOM element. ElementHandles can be created with the [page.$()]() method.
 
 ```js
 const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -2603,11 +2599,11 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 })();
 ```
 
-ElementHandle prevents DOM element from garbage collection unless the handle is [disposed](#jshandledispose).
+ElementHandle prevents DOM element from garbage collection unless the handle is disposed with [jsHandle.dispose()]().
 ElementHandles are auto-disposed when their origin frame gets navigated.
 
-ElementHandle instances can be used as an argument in [`page.$eval()`](#pageevalselector-pagefunction-arg) and
-[`page.evaluate()`](#pageevaluatepagefunction-arg) methods.
+ElementHandle instances can be used as an argument in [page.$eval()]() and
+[page.evaluate()]() methods.
 
 <!-- GEN:toc -->
 <!-- GEN:stop -->
@@ -2779,7 +2775,7 @@ Passing zero timeout disables this.
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
 is dispatched. This is equivalend to calling
-[`element.click()`](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
+[element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
 
 ```js
 await elementHandle.dispatchEvent('click');
@@ -2863,7 +2859,7 @@ Passing zero timeout disables this.
   - %%-input-timeout-%%
 - returns: <[Promise]>
 
-Focuses the element, and then uses [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
+Focuses the element, and then uses [keyboard.down()]() and [keyboard.up()]().
 
 `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
 value or a single character to generate the text for. A superset of the `key` values can be found
@@ -2967,7 +2963,7 @@ empty array, clears the selected files.
 This method taps the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagemouse) to tap in the center of the element, or the specified `position`.
+1. Use [page.touchscreen](#pagetouchscreen) to tap in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -2993,7 +2989,7 @@ Passing zero timeout disables this.
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
-To press a special key, like `Control` or `ArrowDown`, use [`elementHandle.press`](#elementhandlepresskey-options).
+To press a special key, like `Control` or `ArrowDown`, use [elementHandle.press()]().
 
 ```js
 await elementHandle.type('Hello'); // Types instantly
@@ -3063,25 +3059,24 @@ const div = await page.$('div');
 const span = await div.waitForSelector('span', { state: 'attached' });
 ```
 
-> **NOTE** This method does not work across navigations, use [page.waitForSelector(selector[,
-options])](#pagewaitforselectorselector-options) instead.
+> **NOTE** This method does not work across navigations, use [page.waitForSelector()]() instead.
 
 ### class: JSHandle
 
 JSHandle represents an in-page JavaScript object. JSHandles can be created with the
-[page.evaluateHandle](#pageevaluatehandlepagefunction-arg) method.
+[page.evaluateHandle()]() method.
 
 ```js
 const windowHandle = await page.evaluateHandle(() => window);
 // ...
 ```
 
-JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is
-[disposed](#jshandledispose). JSHandles are auto-disposed when their origin frame gets navigated or the parent context
+JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with
+[jsHandle.dispose()](). JSHandles are auto-disposed when their origin frame gets navigated or the parent context
 gets destroyed.
 
-JSHandle instances can be used as an argument in [`page.$eval()`](#pageevalselector-pagefunction-arg),
-[`page.evaluate()`](#pageevaluatepagefunction-arg) and [`page.evaluateHandle()`](#pageevaluatehandlepagefunction-arg)
+JSHandle instances can be used as an argument in [page.$eval()](),
+[page.evaluate()]() and [page.evaluateHandle()]()
 methods.
 
 <!-- GEN:toc -->
@@ -3127,7 +3122,7 @@ in-page object (JSHandle).
 If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would wait
 for the promise to resolve and return its value.
 
-See [page.evaluateHandle()](#pageevaluatehandlepagefunction-arg) for more details.
+See [page.evaluateHandle()]() for more details.
 
 #### jsHandle.getProperties
 - returns: <[Promise]<[Map]<[string], [JSHandle]>>>
@@ -3160,7 +3155,7 @@ error if the object has circular references.
 
 ### class: ConsoleMessage
 
-[ConsoleMessage] objects are dispatched by page via the ['console'](#event-console) event.
+[ConsoleMessage] objects are dispatched by page via the [page.on('console')]() event.
 
 <!-- GEN:toc -->
 <!-- GEN:stop -->
@@ -3186,7 +3181,7 @@ One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'
 
 ### class: Dialog
 
-[Dialog] objects are dispatched by page via the ['dialog'](#event-dialog) event.
+[Dialog] objects are dispatched by page via the [page.on('dialog')]() event.
 
 An example of using `Dialog` class:
 
@@ -3226,7 +3221,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 ### class: Download
 
-[Download] objects are dispatched by page via the ['download'](#event-download) event.
+[Download] objects are dispatched by page via the [page.on('download')]() event.
 
 All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
 files are deleted when the browser closes.
@@ -3308,7 +3303,7 @@ upon closing the browser context.
 
 ### class: FileChooser
 
-[FileChooser] objects are dispatched by the page in the ['filechooser'](#event-filechooser) event.
+[FileChooser] objects are dispatched by the page in the [page.on('filechooser')]() event.
 
 ```js
 page.on('filechooser', async (fileChooser) => {
@@ -3348,11 +3343,11 @@ For empty array, clears the selected files.
 ### class: Keyboard
 
 Keyboard provides an api for managing a virtual keyboard. The high level api is
-[`keyboard.type`](#keyboardtypetext-options), which takes raw characters and generates proper keydown, keypress/input,
+[keyboard.type()](), which takes raw characters and generates proper keydown, keypress/input,
 and keyup events on your page.
 
-For finer control, you can use [`keyboard.down`](#keyboarddownkey), [`keyboard.up`](#keyboardupkey), and
-[`keyboard.insertText`](#keyboardinserttexttext) to manually fire events as if they were generated from a real keyboard.
+For finer control, you can use [keyboard.down()](), [keyboard.up()](), and
+[keyboard.insertText()]() to manually fire events as if they were generated from a real keyboard.
 
 An example of holding down `Shift` in order to select and delete some text:
 
@@ -3410,11 +3405,11 @@ If `key` is a single character, it is case-sensitive, so the values `a` and `A` 
 texts.
 
 If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier
-active. To release the modifier key, use [`keyboard.up`](#keyboardupkey).
+active. To release the modifier key, use [keyboard.up()]().
 
-After the key is pressed once, subsequent calls to [`keyboard.down`](#keyboarddownkey) will have
+After the key is pressed once, subsequent calls to [keyboard.down()]() will have
 [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
-[`keyboard.up`](#keyboardupkey).
+[keyboard.up()]().
 
 > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
 
@@ -3465,7 +3460,7 @@ await page.screenshot({ path: 'O.png' });
 await browser.close();
 ```
 
-Shortcut for [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardupkey).
+Shortcut for [keyboard.down()]() and [keyboard.up()]().
 
 #### keyboard.type
 - `text` <[string]> A text to type into a focused element.
@@ -3475,7 +3470,7 @@ Shortcut for [`keyboard.down`](#keyboarddownkey) and [`keyboard.up`](#keyboardup
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
-To press a special key, like `Control` or `ArrowDown`, use [`keyboard.press`](#keyboardpresskey-options).
+To press a special key, like `Control` or `ArrowDown`, use [keyboard.press()]().
 
 ```js
 await page.keyboard.type('Hello'); // Types instantly
@@ -3494,7 +3489,7 @@ Dispatches a `keyup` event.
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
-Every `page` object has its own Mouse, accessible with [`page.mouse`](#pagemouse).
+Every `page` object has its own Mouse, accessible with [page.mouse](#pagemouse).
 
 ```js
 // Using ‘page.mouse’ to trace a 100x100 square.
@@ -3519,7 +3514,7 @@ await page.mouse.up();
   - %%-input-down-up-delay-%%
 - returns: <[Promise]>
 
-Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
+Shortcut for [mouse.move()](), [mouse.down()](), [mouse.up()]().
 
 #### mouse.dblclick
 - `x` <[number]>
@@ -3529,8 +3524,8 @@ Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownopt
   - %%-input-down-up-delay-%%
 - returns: <[Promise]>
 
-Shortcut for [`mouse.move`](#mousemovex-y-options), [`mouse.down`](#mousedownoptions), [`mouse.up`](#mouseupoptions),
-[`mouse.down`](#mousedownoptions) and [`mouse.up`](#mouseupoptions).
+Shortcut for [mouse.move()](), [mouse.down()](), [mouse.up()](),
+[mouse.down()]() and [mouse.up()]().
 
 #### mouse.down
 - `options` <[Object]>
@@ -3572,12 +3567,12 @@ Dispatches a `touchstart` and `touchend` event with a single touch at the positi
 ### class: Request
 
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
-- [`'request'`](#event-request) emitted when the request is issued by the page.
-- [`'response'`](#event-response) emitted when/if the response status and headers are received for the request.
-- [`'requestfinished'`](#event-requestfinished) emitted when the response body is downloaded and the request is complete.
+- [page.on('request')]() emitted when the request is issued by the page.
+- [page.on('response')]() emitted when/if the response status and headers are received for the request.
+- [page.on('requestfinished')]() emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
-the  [`'requestfailed'`](#event-requestfailed) event is emitted.
+the  [page.on('requestfailed')]() event is emitted.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
 will complete with `'requestfinished'` event.
@@ -3652,7 +3647,7 @@ console.log(response.request().redirectedFrom()); // null
 #### request.redirectedTo
 - returns: <[null]|[Request]> New request issued by the browser if the server responded with redirect.
 
-This method is the opposite of [request.redirectedFrom()](#requestredirectedfrom):
+This method is the opposite of [request.redirectedFrom()]():
 
 ```js
 console.log(request.redirectedFrom().redirectedTo() === request); // true
@@ -3807,8 +3802,7 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 
 ### class: Route
 
-Whenever a network route is set up with [page.route(url, handler)](#pagerouteurl-handler) or [browserContext.route(url,
-handler)](#browsercontextrouteurl-handler), the `Route` object allows to handle the route.
+Whenever a network route is set up with [page.route()]() or [browserContext.route()](), the `Route` object allows to handle the route.
 
 <!-- GEN:toc -->
 <!-- GEN:stop -->
@@ -3938,8 +3932,7 @@ value. Will throw an error if the webSocket is closed before the event is fired.
 ### class: TimeoutError
 * extends: [Error]
 
-TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector(selector[,
-options])](#pagewaitforselectorselector-options) or [browserType.launch([options])](#browsertypelaunchoptions).
+TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [page.waitForSelector()]() or [browserType.launch()]().
 
 ### class: Accessibility
 
@@ -4100,7 +4093,7 @@ Kills the browser process and waits for the process to exit.
 - returns: <[string]> Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to
-[browserType.connect(options)](#browsertypeconnect) to establish connection to the browser.
+[browserType.connect()]() to establish connection to the browser.
 
 ### class: BrowserType
 
@@ -4175,7 +4168,7 @@ extreme caution.
 Canary](https://www.google.com/chrome/browser/canary.html) or [Dev
 Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
 >
-> In [browserType.launch([options])](#browsertypelaunchoptions) above, any mention of Chromium also applies to Chrome.
+> In [browserType.launch()]() above, any mention of Chromium also applies to Chrome.
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for
 a description of the differences between Chromium and Chrome. [`This
@@ -4294,8 +4287,8 @@ Determines whether sink is interested in the logger with the given name and seve
 * extends: [Browser]
 
 Chromium-specific features including Tracing, service worker support, etc. You can use
-[`chromiumBrowser.startTracing`](#chromiumbrowserstarttracingpage-options) and
-[`chromiumBrowser.stopTracing`](#chromiumbrowserstoptracing) to create a trace file which can be opened in Chrome
+[chromiumBrowser.startTracing()]() and
+[chromiumBrowser.stopTracing()]() to create a trace file which can be opened in Chrome
 DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
 
 ```js
