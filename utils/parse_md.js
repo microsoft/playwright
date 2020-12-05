@@ -51,9 +51,12 @@ function normalizeLines(content) {
 
 function buildTree(lines) {
   const root = {
-    ul: []
+    h0: '<root>',
+    children: []
   };
   const stack = [root];
+  let liStack = null;
+
   for (let i = 0; i < lines.length; ++i) {
     let line = lines[i];
 
@@ -62,7 +65,7 @@ function buildTree(lines) {
         code: [],
         codeLang: line.substring(3)
       };
-      root.ul.push(node);
+      stack[0].children.push(node);
       line = lines[++i];
       while (!line.startsWith('```')) {
         node.code.push(line);
@@ -75,7 +78,7 @@ function buildTree(lines) {
       const node = {
         gen: [line]
       };
-      root.ul.push(node);
+      stack[0].children.push(node);
       line = lines[++i];
       while (!line.startsWith('<!-- GEN')) {
         node.gen.push(line);
@@ -87,9 +90,20 @@ function buildTree(lines) {
 
     const header = line.match(/^(#+)/);
     if (header) {
-      const node = {};
-      node['h' + header[1].length] = line.substring(header[1].length + 1);
-      root.ul.push(node);
+      const node = { children: [] };
+      const h = header[1].length;
+      node['h' + h] = line.substring(h + 1);
+
+      while (true) {
+        const lastH = +Object.keys(stack[0]).find(k => k.startsWith('h')).substring(1);
+        if (h <= lastH)
+          stack.shift();
+        else
+          break;
+      }
+      stack[0].children.push(node);
+      stack.unshift(node);
+      liStack = [node];
       continue;
     }
 
@@ -107,12 +121,12 @@ function buildTree(lines) {
     } else {
       node.text = line;
     }
-    if (!stack[depth].ul)
-      stack[depth].ul = [];
-    stack[depth].ul.push(node);
-    stack[depth + 1] = node;
+    if (!liStack[depth].children)
+      liStack[depth].children = [];
+    liStack[depth].children.push(node);
+    liStack[depth + 1] = node;
   }
-  return root.ul;
+  return root.children;
 }
 
 function parseMd(content) {
@@ -141,28 +155,26 @@ function innerRenderMdNode(node, lastNode, result) {
       result.push('');
   };
 
-  if (node.h1) {
-    newLine();
-    result.push(`# ${node.h1}`);
+  for (let i = 1; i < 10; ++i) {
+    if (node[`h${i}`]) {
+      newLine();
+      result.push(`${'#'.repeat(i)} ${node[`h${i}`]}`);
+      let lastNode = node;
+      for (const child of node.children) {
+        innerRenderMdNode(child, lastNode, result);
+        lastNode = child;
+      }
+      break;
+    }
   }
-  if (node.h2) {
-    newLine();
-    result.push(`## ${node.h2}`);
-  }
-  if (node.h3) {
-    newLine();
-    result.push(`### ${node.h3}`);
-  }
-  if (node.h4) {
-    newLine();
-    result.push(`#### ${node.h4}`);
-  }
+
   if (node.text) {
     const bothComments = node.text.startsWith('>') && lastNode && lastNode.text && lastNode.text.startsWith('>');
     if (!bothComments && lastNode && (lastNode.text || lastNode.li || lastNode.h1 || lastNode.h2 || lastNode.h3 || lastNode.h4))
       newLine();
       printText(node, result);
   }
+
   if (node.code) {
     newLine();
     result.push('```' + node.codeLang);
@@ -171,12 +183,14 @@ function innerRenderMdNode(node, lastNode, result) {
     result.push('```');
     newLine();
   }
+
   if (node.gen) {
     newLine();
     for (const line of node.gen)
       result.push(line);
     newLine();
   }
+
   if (node.li) {
     const visit = (node, indent) => {
       let char;
@@ -186,7 +200,7 @@ function innerRenderMdNode(node, lastNode, result) {
         case 'ordinal': char = '1.'; break;
       }
       result.push(`${indent}${char} ${node.li}`);
-      for (const child of node.ul || [])
+      for (const child of node.children || [])
         visit(child, indent + '  ');
     };
     visit(node, '');
@@ -207,73 +221,6 @@ function printText(node, result) {
   }
   if (line.length)
     result.push(line);
-}
-
-function renderMdTemplate(body, params) {
-  const map = new Map();
-  let nodes;
-  for (const node of parseMd(params)) {
-    if (node.h2) {
-      const name = node.h2;
-      nodes = [];
-      map.set(name, nodes);
-      continue;
-    }
-    nodes.push(node);
-  }
-
-  const result = [];
-  for (const line of body.split('\n')) {
-    const match = line.match(/^(\s*)- %%-(.*)-%%/);
-    if (!match) {
-      result.push(line);
-      continue;
-    }
-    const indent = match[1];
-    const key = match[2];
-    const nodes = map.get(key);
-    if (!nodes)
-      throw new Error(`Missing param "${key}"`);
-
-    let snippet;
-    if (line.endsWith('-as-is')) {
-      snippet = nodes.map(node => renderMdNode(node)).join('\n');
-    } else {
-      const { name, type } = parseArgument(nodes[0].li);
-      nodes[0].li = `\`${name}\` ${type}`;
-      if (nodes[1])
-        nodes[0].li += ` ${nodes[1].text}`;
-      snippet = renderMdNode(nodes[0]);
-    }
-    for (const l of snippet.split('\n'))
-      result.push(indent + l);
-  }
-  return result.join('\n');
-}
-
-function extractParamDescriptions(params) {
-  let name;
-
-  for (const node of parseMd(params)) {
-    if (node.h2) {
-      name = node.h2;
-      continue;
-    }
-    extractParamDescription(name, node);
-  }
-}
-
-function extractParamDescription(group, node) {
-  const { name, type, text } = parseArgument(node.li);
-  node.li = `\`${name}\` ${type}`;
-  if (group === 'shared-context-params')
-    group = `context-option-${name.toLowerCase()}`;
-  console.log(`## ${group}`);
-  console.log();
-  console.log(renderMdNode(node));
-  console.log();
-  console.log(text);
-  console.log();
 }
 
 function parseArgument(line) {
@@ -297,4 +244,4 @@ function parseArgument(line) {
   throw new Error('Should not be reached');
 }
 
-module.exports = { parseMd, renderMd, renderMdTemplate, extractParamDescriptions, parseArgument };
+module.exports = { parseMd, renderMd, parseArgument };

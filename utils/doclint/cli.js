@@ -21,7 +21,7 @@ const path = require('path');
 const os = require('os');
 const Source = require('./Source');
 const Message = require('./Message');
-const { renderMdTemplate, parseMd, renderMd, parseArgument } = require('./../parse_md');
+const { parseMd, renderMd, parseArgument } = require('./../parse_md');
 const { spawnSync } = require('child_process');
 const preprocessor = require('./preprocessor');
 
@@ -40,85 +40,148 @@ run().catch(e => {
 async function run() {
   const startTime = Date.now();
 
+  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
+  const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
+  const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
+  const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
+  const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
+  const mdSources = [readme, binReadme, api, contributing, ...docs];
+
   /** @type {!Array<!Message>} */
   const messages = [];
   let changedFiles = false;
 
   // Produce api.md
-  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
   {
     const comment = '<!-- THIS FILE IS NOW GENERATED -->';
     const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
     const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
     const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
     let params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
-    params = renderMdTemplate(params, params);
 
+    const paramsMap = new Map();
+    for (const node of parseMd(params)) {
+      if (node.h2.endsWith('-list')) {
+        node.children = node.children.map(child => paramsMap.get(child.li));
+        paramsMap.set('%%-' + node.h2 + '-%%', node);
+        continue;
+      }
+      if (node.children[1])
+        node.children[0].li += ' ' + node.children[1].text;
+      paramsMap.set('%%-' + node.h2 + '-%%', node.children[0]);
+    }
+  
     // Generate signatures
     {
-      const nodes = parseMd(renderMdTemplate(body, params));
+      const nodes = parseMd(body);
       const signatures = new Map();
-      let lastMethod;
-      let args;
-      const flushMethodSignature = () => {
-        if (!lastMethod)
-          return;
-        const tokens = [];
-        let hasOptional = false;
-        for (const arg of args) {
-          const optional = arg.name === 'options' || arg.text.includes('Optional');
-          if (tokens.length) {
-            if (optional && !hasOptional)
-              tokens.push(`[, ${arg.name}`);
-            else
-              tokens.push(`, ${arg.name}`);
-          } else {
-            if (optional && !hasOptional)
-              tokens.push(`[${arg.name}`);
-            else
-              tokens.push(`${arg.name}`);
-          }
-          hasOptional = hasOptional || optional;
-        }
-        if (hasOptional)
-          tokens.push(']');
-        const signature = tokens.join('');
-        signatures.set(lastMethod.h4, signature);
-        lastMethod.h4 = `${lastMethod.h4}(${signature})`;
-        lastMethod = null;
-        args = null;
-      };
-      for (const node of nodes) {
-        if (node.h1 || node.h2 || node.h3 || node.h4)
-          flushMethodSignature();
+      for (const clazz of nodes) {
+        clazz.h3 = clazz.h1;
+        clazz.h1 = undefined;
+        for (const member of clazz.children) {
+          if (!member.h2)
+            continue;
+          member.h4 = member.h2;
+          member.h2 = undefined;
 
-        if (node.h4) {
-          lastMethod = null;
-          args = null;
-          let match = node.h4.match(/(event|method|namespace) (JS|CDP|[A-Z])([^.]+)\.(.*)/);
+          let match = member.h4.match(/(event|method|namespace): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
           if (!match)
             continue;
+
           if (match[1] === 'event') {
-            node.h4 = `${match[2].toLowerCase() + match[3]}.on('${match[4]}')`;
+            member.h4 = `${match[2].toLowerCase() + match[3]}.on('${match[4]}')`;
             continue;
           }
 
           if (match[1] === 'method') {
-            node.h4 = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
-            lastMethod = node;
-            args = [];
-            continue;
+            const args = [];
+            const argChildren = [];
+            const nonArgChildren = [];
+            const optionsContainer = [];
+            for (const item of member.children) {
+              if (!item.h3) {
+                nonArgChildren.push(item);
+                continue;
+              }
+              if (item.h3.startsWith('param:')) {
+                if (item.h3.includes('=')) {
+                  const [name, key] = item.h3.split(' = ');
+                  item.h3 = name;
+                  const template = paramsMap.get(key);
+                  if (!template)
+                    throw new Error('Bad template: ' + kkey);
+                  args.push(parseArgument(template.li));
+                  argChildren.push(template);
+                } else {
+                  const param = item.children[0];
+                  if (item.children[1])
+                    param.li += ' ' + item.children[1].text;
+                  args.push(parseArgument(param.li));
+                  argChildren.push(param);
+                }
+              }
+              if (item.h3.startsWith('option:')) {
+                let optionsNode = optionsContainer[0];
+                if (!optionsNode) {
+                  optionsNode = {
+                    li: '`options` <[Object]>',
+                    liType: 'default',
+                    children: [],
+                  };
+                  optionsContainer.push(optionsNode);
+                  args.push(parseArgument(optionsNode.li));
+                }
+                if (item.h3.includes('=')) {
+                  const [name, key] = item.h3.split(' = ');
+                  const template = paramsMap.get(key);
+                  if (!template)
+                    throw new Error('Bad template: ' + key);
+                  if (item.h3.includes('-inline-')) {
+                    optionsNode.children.push(...template.children);
+                  } else {
+                    item.h3 = name;
+                    optionsNode.children.push(template);
+                  }
+                } else {
+                  const param = item.children[0];
+                  if (item.children[1])
+                    param.li += ' ' + item.children[1].text;
+                  optionsNode.children.push(param);
+                }
+              }
+            }
+            member.children = [...argChildren, ...optionsContainer, ...nonArgChildren];
+
+            const tokens = [];
+            let hasOptional = false;
+            for (const arg of args) {
+              const optional = arg.name === 'options' || arg.text.includes('Optional');
+              if (tokens.length) {
+                if (optional && !hasOptional)
+                  tokens.push(`[, ${arg.name}`);
+                else
+                  tokens.push(`, ${arg.name}`);
+              } else {
+                if (optional && !hasOptional)
+                  tokens.push(`[${arg.name}`);
+                else
+                  tokens.push(`${arg.name}`);
+              }
+              hasOptional = hasOptional || optional;
+            }
+            if (hasOptional)
+              tokens.push(']');
+            const signature = tokens.join('');
+            const methodName = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
+            signatures.set(methodName, signature);
+            member.h4 = `${methodName}(${signature})`;
           }
 
           if (match[1] === 'namespace') {
-            node.h4 = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
+            member.h4 = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
             continue;
           }
-
-          continue;
         }
-        if (args && node.li && node.liType === 'default' && !node.li.startsWith('returns'))
-          args.push(parseArgument(node.li));
       }
       api.setText([comment, header, renderMd(nodes), footer].join('\n'));
 
@@ -129,12 +192,6 @@ async function run() {
 
   // Documentation checks.
   {
-    const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
-    const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
-    const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
-    const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
-    const mdSources = [readme, binReadme, api, contributing, ...docs];
-
     const browserVersions = await getBrowserVersions();
     messages.push(...(await preprocessor.runCommands(mdSources, {
       libversion: VERSION,
@@ -143,7 +200,6 @@ async function run() {
     })));
 
     messages.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
-
     for (const source of mdSources.filter(source => source.hasUpdatedText()))
       messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
 
