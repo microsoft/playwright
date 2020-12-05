@@ -6,8 +6,17 @@ RUST_VERSION="1.45.0"
 CBINDGEN_VERSION="0.15.0"
 
 trap "cd $(pwd -P)" EXIT
+
 cd "$(dirname $0)"
-cd "checkout"
+SCRIPT_FOLDER="$(pwd -P)"
+
+if [[ ! -z "${FF_CHECKOUT_PATH}" ]]; then
+  cd "${FF_CHECKOUT_PATH}"
+  echo "WARNING: checkout path from FF_CHECKOUT_PATH env: ${FF_CHECKOUT_PATH}"
+else
+  cd "checkout"
+fi
+
 
 if [[ "$(uname)" == "Darwin" ]]; then
   # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.11.
@@ -74,8 +83,8 @@ else
 fi
 
 if [[ "$(uname)" == "Darwin" ]]; then
-  node ../install-preferences.js $PWD/${OBJ_FOLDER}/dist
+  node "${SCRIPT_FOLDER}"/install-preferences.js $PWD/${OBJ_FOLDER}/dist
 else
-  node ../install-preferences.js $PWD/${OBJ_FOLDER}/dist/bin
+  node "${SCRIPT_FOLDER}"/install-preferences.js $PWD/${OBJ_FOLDER}/dist/bin
 fi
 
