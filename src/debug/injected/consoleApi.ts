@@ -16,7 +16,7 @@
 
 import { parseSelector } from '../../server/common/selectorParser';
 import type InjectedScript from '../../server/injected/injectedScript';
-
+import { buildSelector } from './selectorGenerator';
 export class ConsoleAPI {
   private _injectedScript: InjectedScript;
 
@@ -26,10 +26,11 @@ export class ConsoleAPI {
       $: (selector: string) => this._querySelector(selector),
       $$: (selector: string) => this._querySelectorAll(selector),
       inspect: (selector: string) => this._inspect(selector),
+      selector: (element: Element) => this._buildSelector(element).selector,
     };
   }
 
-  _querySelector(selector: string): (Element | undefined) {
+  _querySelector(selector: string): Element | undefined {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
     const parsed = parseSelector(selector);
@@ -44,10 +45,12 @@ export class ConsoleAPI {
   }
 
   _inspect(selector: string) {
-    if (typeof (window as any).inspect !== 'function')
-      return;
+    if (typeof (window as any).inspect !== 'function') return;
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
     (window as any).inspect(this._querySelector(selector));
+  }
+  _buildSelector(element: Element): { selector: string; elements: Element[] } {
+    return buildSelector(this._injectedScript, element);
   }
 }
