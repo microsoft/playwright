@@ -7831,6 +7831,18 @@ index 5f35531de116eb5de98f24cdf8cbc66c30e47508..5430009f5a26c02607eb6e9961800b76
  UIProcess/wpe/WebPageProxyWPE.cpp
  
  WebProcess/GPU/media/gstreamer/VideoLayerRemoteGStreamer.cpp
+diff --git a/Source/WebKit/UIProcess/API/APIInspectorExtension.h b/Source/WebKit/UIProcess/API/APIInspectorExtension.h
+index 7e0f18afe2c94ec97527f6b7afb40daceee0480b..dacd4c7e0f769bb055c20e646ff84ee37bb3117f 100644
+--- a/Source/WebKit/UIProcess/API/APIInspectorExtension.h
++++ b/Source/WebKit/UIProcess/API/APIInspectorExtension.h
+@@ -29,6 +29,7 @@
+ 
+ #include "APIObject.h"
+ #include <wtf/Forward.h>
++#include <wtf/text/WTFString.h>
+ 
+ namespace API {
+ 
 diff --git a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp b/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
 index 18585f61bb6ecabec39ff0c03b862c65856dca24..21bab039d1f6116ebf9c59bc42a695a45f4701e8 100644
 --- a/Source/WebKit/UIProcess/API/APIProcessPoolConfiguration.cpp
