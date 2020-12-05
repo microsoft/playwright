@@ -439,6 +439,9 @@ most cases).
   - `sameSite` <"Strict"|"Lax"|"None">
 - returns: <[Promise]>
 
+Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
+obtained via [browserContext.cookies([urls])](#browsercontextcookiesurls).
+
 ```js
 await browserContext.addCookies([cookieObject1, cookieObject2]);
 ```
@@ -475,7 +478,9 @@ await browserContext.addInitScript({
 [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg) is not defined.
 
 #### browserContext.browser()
-- returns: <[null]|[Browser]> Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
+- returns: <[null]|[Browser]>
+
+Returns the browser instance of the context. If it was launched as a persistent context null gets returned.
 
 #### browserContext.clearCookies()
 - returns: <[Promise]>
@@ -638,7 +643,10 @@ specified.
 Creates a new page in the browser context.
 
 #### browserContext.pages()
-- returns: <[Array]<[Page]>> All open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can find them using [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
+- returns: <[Array]<[Page]>>
+
+Returns all open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can
+find them using [chromiumBrowserContext.backgroundPages()](#chromiumbrowsercontextbackgroundpages).
 
 #### browserContext.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
@@ -769,10 +777,10 @@ Removes a route created with [browserContext.route(url, handler)](#browsercontex
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
-- returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
+- returns: <[Promise]<[Object]>>
 
 Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy
-value. Will throw an error if the context closes before the event is fired.
+value. Will throw an error if the context closes before the event is fired. Returns the event data value.
 
 ```js
 const context = await browser.newContext();
@@ -1103,10 +1111,10 @@ Shortcut for main frame's [frame.$$(selector)](#frameselector).
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
 
 The method finds an element matching the specified selector within the page and passes it as a first argument to
-`pageFunction`. If no elements match the selector, the method throws an error.
+`pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
 
 If `pageFunction` returns a [Promise], then `page.$eval` would wait for the promise to resolve and return its value.
 
@@ -1124,10 +1132,10 @@ Shortcut for main frame's [frame.$eval(selector, pageFunction[, arg])](#frameeva
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
 
 The method finds all elements matching the specified selector within the page and passes an array of matched elements as
-a first argument to `pageFunction`.
+a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
 
 If `pageFunction` returns a [Promise], then `page.$$eval` would wait for the promise to resolve and return its value.
 
@@ -1174,9 +1182,10 @@ await page.addInitScript(preloadFile);
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
-- returns: <[Promise]<[ElementHandle]>> which resolves to the added tag when the script's onload fires or when the script content was injected into frame.
+- returns: <[Promise]<[ElementHandle]>>
 
-Adds a `<script>` tag into the page with the desired url or content.
+Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
+fires or when the script content was injected into frame.
 
 Shortcut for main frame's [frame.addScriptTag(script)](#frameaddscripttagscript).
 
@@ -1185,10 +1194,10 @@ Shortcut for main frame's [frame.addScriptTag(script)](#frameaddscripttagscript)
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
-- returns: <[Promise]<[ElementHandle]>> which resolves to the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
+- returns: <[Promise]<[ElementHandle]>>
 
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
-content.
+content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
 
 Shortcut for main frame's [frame.addStyleTag(style)](#frameaddstyletagstyle).
 
@@ -1203,7 +1212,7 @@ Brings page to front (activates tab).
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully checked.
+- returns: <[Promise]>
 
 This method checks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -1232,7 +1241,7 @@ Shortcut for main frame's [frame.check(selector[, options])](#framecheckselector
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully clicked.
+- returns: <[Promise]>
 
 This method clicks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -1286,7 +1295,7 @@ Browser-specific Coverage implementation, only available for Chromium atm. See
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully double clicked.
+- returns: <[Promise]>
 
 This method double clicks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -1376,7 +1385,9 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 #### page.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the value of the `pageFunction` invacation.
 
 If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to
 resolve and return its value.
@@ -1415,7 +1426,9 @@ Shortcut for main frame's [frame.evaluate(pageFunction[, arg])](#frameevaluatepa
 #### page.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle).
+- returns: <[Promise]<[JSHandle]>>
+
+Returns the value of the `pageFunction` invacation as in-page object (JSHandle).
 
 The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page
 object (JSHandle).
@@ -1582,7 +1595,7 @@ Shortcut for main frame's [frame.fill(selector, value[, options])](#framefillsel
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]>
 
 This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
 waits until a matching element appears in the DOM.
@@ -1593,7 +1606,9 @@ Shortcut for main frame's [frame.focus(selector[, options])](#framefocusselector
 - `frameSelector` <[string]|[Object]> Frame name or other frame lookup options.
   - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
-- returns: <[null]|[Frame]> frame matching the criteria. Returns `null` if no frame matches.
+- returns: <[null]|[Frame]>
+
+Returns frame matching the criteria. Returns `null` if no frame matches.
 
 ```js
 const frame = page.frame('frame-name');
@@ -1606,7 +1621,9 @@ const frame = page.frame({ url: /.*domain.*/ });
 Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 #### page.frames()
-- returns: <[Array]<[Frame]>> An array of all frames attached to the page.
+- returns: <[Array]<[Frame]>>
+
+An array of all frames attached to the page.
 
 #### page.getAttribute(selector, name[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -1624,7 +1641,10 @@ Returns element attribute value.
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If can not go back, resolves to `null`.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect. If can not go back, resolves to `null`.
 
 Navigate to the previous page in history.
 
@@ -1635,7 +1655,10 @@ Navigate to the previous page in history.
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If can not go forward, resolves to `null`.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect. If can not go forward, resolves to `null`.
 
 Navigate to the next page in history.
 
@@ -1648,7 +1671,10 @@ Navigate to the next page in history.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders).
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect.
 
 `page.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
@@ -1677,7 +1703,7 @@ Shortcut for main frame's [frame.goto(url[, options])](#framegotourl-options)
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully hovered.
+- returns: <[Promise]>
 
 This method hovers over an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -1697,7 +1723,7 @@ Shortcut for main frame's [frame.hover(selector[, options])](#framehoverselector
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[string]>>
 
-Resolves to the `element.innerHTML`.
+Returns `element.innerHTML`.
 
 #### page.innerText(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -1705,7 +1731,7 @@ Resolves to the `element.innerHTML`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[string]>>
 
-Resolves to the `element.innerText`.
+Returns `element.innerText`.
 
 #### page.isClosed()
 - returns: <[boolean]>
@@ -1716,15 +1742,18 @@ Indicates that the page has been closed.
 - returns: <[Keyboard]>
 
 #### page.mainFrame()
-- returns: <[Frame]> The page's main frame.
+- returns: <[Frame]>
 
-Page is guaranteed to have a main frame which persists during navigations.
+The page's main frame. Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.mouse
 - returns: <[Mouse]>
 
 #### page.opener()
-- returns: <[Promise]<[null]|[Page]>> Promise which resolves to the opener for popup pages and `null` for others. If the opener has been closed already the promise may resolve to `null`.
+- returns: <[Promise]<[null]|[Page]>>
+
+Returns the opener for popup pages and `null` for others. If the opener has been closed already the promise may resolve
+to `null`.
 
 #### page.pdf([options])
 - `options` <[Object]>
@@ -1750,7 +1779,9 @@ Page is guaranteed to have a main frame which persists during navigations.
     - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units. Defaults to `0`.
     - `left` <[string]|[number]> Left margin, accepts values labeled with units. Defaults to `0`.
   - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
-- returns: <[Promise]<[Buffer]>> Promise which resolves with PDF buffer.
+- returns: <[Promise]<[Buffer]>>
+
+Returns the PDF buffer.
 
 > **NOTE** Generating a pdf is currently only supported in Chromium headless.
 
@@ -1844,12 +1875,15 @@ await browser.close();
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect.
 
 #### page.route(url, handler)
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
 - `handler` <[function]\([Route], [Request]\)> handler function to route the request.
-- returns: <[Promise]>.
+- returns: <[Promise]>
 
 Routing provides the capability to modify network requests that are made by a page.
 
@@ -1893,7 +1927,9 @@ both handlers.
     - `height` <[number]> height of clipping area
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with the captured screenshot.
+- returns: <[Promise]<[Buffer]>>
+
+Returns the buffer with the captured screenshot.
 
 > **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for
 discussion.
@@ -1907,7 +1943,9 @@ discussion.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
+- returns: <[Promise]<[Array]<[string]>>>
+
+Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
 matching `selector`, the method throws an error.
@@ -2014,7 +2052,7 @@ await page.goto('https://example.com');
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully tapped.
+- returns: <[Promise]>
 
 This method taps an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2036,12 +2074,12 @@ Shortcut for main frame's [frame.tap(selector[, options])](#frametapselector-opt
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[string]>>
 
-Resolves to the `element.textContent`.
+Returns `element.textContent`.
 
 #### page.title()
-- returns: <[Promise]<[string]>> The page's title.
+- returns: <[Promise]<[string]>>
 
-Shortcut for main frame's [frame.title()](#frametitle).
+Returns the page's title. Shortcut for main frame's [frame.title()](#frametitle).
 
 #### page.touchscreen
 - returns: <[Touchscreen]>
@@ -2073,7 +2111,7 @@ Shortcut for main frame's [frame.type(selector, text[, options])](#frametypesele
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully unchecked.
+- returns: <[Promise]>
 
 This method unchecks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2116,7 +2154,9 @@ Video object associated with this page.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
-- returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
+- returns: <[Promise]<[Object]>>
+
+Returns the event data value.
 
 Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy
 value. Will throw an error if the page is closed before the event is fired.
@@ -2127,7 +2167,9 @@ value. Will throw an error if the page is closed before the event is fired.
 - `options` <[Object]>
   - `polling` <[number]|"raf"> If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
-- returns: <[Promise]<[JSHandle]>> Promise which resolves when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
+- returns: <[Promise]<[JSHandle]>>
+
+Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
 
 The `waitForFunction` can be used to observe viewport size change:
 
@@ -2160,7 +2202,9 @@ Shortcut for main frame's [frame.waitForFunction(pageFunction[, arg, options])](
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the required load state has been reached.
+- returns: <[Promise]>
+
+Returns when the required load state has been reached.
 
 This resolves when the page reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
@@ -2189,7 +2233,11 @@ Shortcut for main frame's [frame.waitForLoadState([state, options])](#framewaitf
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
+resolve with `null`.
 
 This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will indirectly
 cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation from a `setTimeout`.
@@ -2211,7 +2259,9 @@ Shortcut for main frame's [frame.waitForNavigation([options])](#framewaitfornavi
 - `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Request] object.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
-- returns: <[Promise]<[Request]>> Promise which resolves to the matched request.
+- returns: <[Promise]<[Request]>>
+
+Returns promise that resolves to the matched request.
 
 ```js
 const firstRequest = await page.waitForRequest('http://example.com/resource');
@@ -2227,7 +2277,9 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]> Request URL string, regex or predicate receiving [Response] object.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[Response]>> Promise which resolves to the matched response.
+- returns: <[Promise]<[Response]>>
+
+Returns the matched response.
 
 ```js
 const firstResponse = await page.waitForResponse('https://example.com/resource');
@@ -2244,7 +2296,10 @@ return finalResponse.ok();
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[null]|[ElementHandle]>> Promise which resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
+- returns: <[Promise]<[null]|[ElementHandle]>>
+
+Returns when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or
+`detached`.
 
 Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
 the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -2286,7 +2341,10 @@ await page.waitForTimeout(1000);
 Shortcut for main frame's [frame.waitForTimeout(timeout)](#framewaitfortimeouttimeout).
 
 #### page.workers()
-- returns: <[Array]<[Worker]>> This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) associated with the page.
+- returns: <[Array]<[Worker]>>
+
+This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
+associated with the page.
 
 > **NOTE** This does not contain ServiceWorkers
 
@@ -2375,7 +2433,9 @@ console.log(text);
 
 #### frame.$(selector)
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
-- returns: <[Promise]<[null]|[ElementHandle]>> Promise which resolves to ElementHandle pointing to the frame element.
+- returns: <[Promise]<[null]|[ElementHandle]>>
+
+Returns the ElementHandle pointing to the frame element.
 
 The method finds an element matching the specified selector within the frame. See [Working with
 selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to
@@ -2383,7 +2443,9 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 
 #### frame.$$(selector)
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
-- returns: <[Promise]<[Array]<[ElementHandle]>>> Promise which resolves to ElementHandles pointing to the frame elements.
+- returns: <[Promise]<[Array]<[ElementHandle]>>>
+
+Returns the ElementHandles pointing to the frame elements.
 
 The method finds all elements matching the specified selector within the frame. See [Working with
 selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to
@@ -2393,7 +2455,9 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
 `pageFunction`. See [Working with selectors](#working-with-selectors) for more details. If no elements match the
@@ -2413,7 +2477,9 @@ const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + s
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
 as a first argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more details.
@@ -2432,7 +2498,9 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
-- returns: <[Promise]<[ElementHandle]>> which resolves to the added tag when the script's onload fires or when the script content was injected into frame.
+- returns: <[Promise]<[ElementHandle]>>
+
+Returns the added tag when the script's onload fires or when the script content was injected into frame.
 
 Adds a `<script>` tag into the page with the desired url or content.
 
@@ -2441,7 +2509,9 @@ Adds a `<script>` tag into the page with the desired url or content.
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
-- returns: <[Promise]<[ElementHandle]>> which resolves to the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
+- returns: <[Promise]<[ElementHandle]>>
+
+Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
 
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content.
@@ -2452,7 +2522,7 @@ content.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully checked.
+- returns: <[Promise]>
 
 This method checks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2482,7 +2552,7 @@ Passing zero timeout disables this.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully clicked.
+- returns: <[Promise]>
 
 This method clicks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2511,7 +2581,7 @@ Gets the full HTML contents of the frame, including the doctype.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully double clicked.
+- returns: <[Promise]>
 
 This method double clicks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2564,7 +2634,9 @@ await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
 #### frame.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 If the function passed to the `frame.evaluate` returns a [Promise], then `frame.evaluate` would wait for the promise to
 resolve and return its value.
@@ -2597,7 +2669,9 @@ await bodyHandle.dispose();
 #### frame.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle).
+- returns: <[Promise]<[JSHandle]>>
+
+Returns the return value of `pageFunction` as in-page object (JSHandle).
 
 The only difference between `frame.evaluate` and `frame.evaluateHandle` is that `frame.evaluateHandle` returns in-page
 object (JSHandle).
@@ -2644,13 +2718,15 @@ To send fine-grained keyboard events, use [frame.type(selector, text[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the element matching `selector` is successfully focused. The promise will be rejected if there is no element matching `selector`.
+- returns: <[Promise]>
 
 This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
 waits until a matching element appears in the DOM.
 
 #### frame.frameElement()
-- returns: <[Promise]<[ElementHandle]>> Promise that resolves with a `frame` or `iframe` element handle which corresponds to this frame.
+- returns: <[Promise]<[ElementHandle]>>
+
+Returns the `frame` or `iframe` element handle which corresponds to this frame.
 
 This is an inverse of [elementHandle.contentFrame()](#elementhandlecontentframe). Note that returned handle actually belongs to the parent frame.
 
@@ -2680,7 +2756,10 @@ Returns element attribute value.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [page.setExtraHTTPHeaders(headers)](#pagesetextrahttpheadersheaders).
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect.
 
 `frame.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
@@ -2707,7 +2786,7 @@ issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully hovered.
+- returns: <[Promise]>
 
 This method hovers over an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2756,7 +2835,9 @@ later.
 Returns the page containing this frame.
 
 #### frame.parentFrame()
-- returns: <[null]|[Frame]> Parent frame, if any. Detached frames and main frames return `null`.
+- returns: <[null]|[Frame]>
+
+Parent frame, if any. Detached frames and main frames return `null`.
 
 #### frame.press(selector, key[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2793,7 +2874,9 @@ modifier, modifier is pressed and being held while the subsequent key is being p
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
+- returns: <[Promise]<[Array]<[string]>>>
+
+Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
 matching `selector`, the method throws an error.
@@ -2847,7 +2930,7 @@ empty array, clears the selected files.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully tapped.
+- returns: <[Promise]>
 
 This method taps an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2870,7 +2953,9 @@ Passing zero timeout disables this.
 Resolves to the `element.textContent`.
 
 #### frame.title()
-- returns: <[Promise]<[string]>> The page's title.
+- returns: <[Promise]<[string]>>
+
+Returns the page title.
 
 #### frame.type(selector, text[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2897,7 +2982,7 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element matching `selector` is successfully unchecked.
+- returns: <[Promise]>
 
 This method checks an element matching `selector` by performing the following steps:
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
@@ -2922,7 +3007,9 @@ Returns frame's url.
 - `options` <[Object]>
   - `polling` <[number]|"raf"> If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
-- returns: <[Promise]<[JSHandle]>> Promise which resolves when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
+- returns: <[Promise]<[JSHandle]>>
+
+Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
 
 The `waitForFunction` can be used to observe viewport size change:
 
@@ -2953,7 +3040,9 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise which resolves when the required load state has been reached.
+- returns: <[Promise]>
+
+Returns when the required load state has been reached.
 
 This resolves when the frame reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
@@ -2971,7 +3060,11 @@ await frame.waitForLoadState(); // The promise resolves after 'load' event.
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
     - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
-- returns: <[Promise]<[null]|[Response]>> Promise which resolves to the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
+last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
+resolve with `null`.
 
 This resolves when the frame navigates to a new URL. It is useful for when you run code which will indirectly cause the
 frame to navigate. Consider this example:
@@ -2995,7 +3088,10 @@ considered a navigation.
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[null]|[ElementHandle]>> Promise which resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
+- returns: <[Promise]<[null]|[ElementHandle]>>
+
+Returns when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or
+`detached`.
 
 Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
 the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the
@@ -3115,7 +3211,9 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Element]\)> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
 argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more details. If no elements match
@@ -3135,7 +3233,9 @@ expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `pageFunction` <[function]\([Array]<[Element]>\)> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
 matched elements as a first argument to `pageFunction`. See [Working with selectors](#working-with-selectors) for more
@@ -3187,7 +3287,7 @@ await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element is successfully checked.
+- returns: <[Promise]>
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
@@ -3214,7 +3314,7 @@ Passing zero timeout disables this.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element is successfully clicked.
+- returns: <[Promise]>
 
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
@@ -3228,7 +3328,9 @@ When all steps combined have not finished during the specified `timeout`, this m
 Passing zero timeout disables this.
 
 #### elementHandle.contentFrame()
-- returns: <[Promise]<[null]|[Frame]>> Resolves to the content frame for element handles referencing iframe nodes, or `null` otherwise
+- returns: <[Promise]<[null]|[Frame]>>
+
+Returns the content frame for element handles referencing iframe nodes, or `null` otherwise
 
 #### elementHandle.dblclick([options])
 - `options` <[Object]>
@@ -3241,7 +3343,7 @@ Passing zero timeout disables this.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element is successfully double clicked.
+- returns: <[Promise]>
 
 This method double clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
@@ -3319,7 +3421,7 @@ Returns element attribute value.
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element is successfully hovered.
+- returns: <[Promise]>
 
 This method hovers over the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
@@ -3333,13 +3435,19 @@ When all steps combined have not finished during the specified `timeout`, this m
 Passing zero timeout disables this.
 
 #### elementHandle.innerHTML()
-- returns: <[Promise]<[string]>> Resolves to the `element.innerHTML`.
+- returns: <[Promise]<[string]>>
+
+Returns the `element.innerHTML`.
 
 #### elementHandle.innerText()
-- returns: <[Promise]<[string]>> Resolves to the `element.innerText`.
+- returns: <[Promise]<[string]>>
+
+Returns the `element.innerText`.
 
 #### elementHandle.ownerFrame()
-- returns: <[Promise]<[null]|[Frame]>> Returns the frame containing the given element.
+- returns: <[Promise]<[null]|[Frame]>>
+
+Returns the frame containing the given element.
 
 #### elementHandle.press(key[, options])
 - `key` <[string]> Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
@@ -3375,7 +3483,9 @@ modifier, modifier is pressed and being held while the subsequent key is being p
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with the captured screenshot.
+- returns: <[Promise]<[Buffer]>>
+
+Returns the buffer with the captured screenshot.
 
 This method waits for the [actionability](./actionability.md) checks, then scrolls element into view before taking a
 screenshot. If the element is detached from DOM, the method throws an error.
@@ -3400,7 +3510,9 @@ Throws when ```elementHandle``` does not point to an element
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[Array]<[string]>>> An array of option values that have been successfully selected.
+- returns: <[Promise]<[Array]<[string]>>>
+
+Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`
 element, the method throws an error.
@@ -3453,7 +3565,7 @@ empty array, clears the selected files.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element is successfully tapped.
+- returns: <[Promise]>
 
 This method taps the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
@@ -3469,7 +3581,9 @@ Passing zero timeout disables this.
 > **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
 
 #### elementHandle.textContent()
-- returns: <[Promise]<[null]|[string]>> Resolves to the `node.textContent`.
+- returns: <[Promise]<[null]|[string]>>
+
+Returns the `node.textContent`.
 
 #### elementHandle.toString()
 - returns: <[string]>
@@ -3504,7 +3618,7 @@ await elementHandle.press('Enter');
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element is successfully unchecked.
+- returns: <[Promise]>
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
@@ -3523,7 +3637,9 @@ Passing zero timeout disables this.
 - `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled"> A state to wait for, see below for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]> Promise that resolves when the element satisfies the `state`.
+- returns: <[Promise]>
+
+Returns the element satisfies the `state`.
 
 Depending on the `state` parameter, this method waits for one of the [actionability](./actionability.md) checks to pass.
 This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
@@ -3544,7 +3660,10 @@ If the element does not satisfy the condition for the `timeout` milliseconds, th
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
-- returns: <[Promise]<[null]|[ElementHandle]>> Promise that resolves when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or `detached`.
+- returns: <[Promise]<[null]|[ElementHandle]>>
+
+Returns element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or
+`detached`.
 
 Wait for the `selector` relative to the element handle to satisfy `state` option (either appear/disappear from dom, or
 become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method
@@ -3592,14 +3711,16 @@ methods.
 Returns either `null` or the object handle itself, if the object handle is an instance of [ElementHandle].
 
 #### jsHandle.dispose()
-- returns: <[Promise]> Promise which resolves when the object handle is successfully disposed.
+- returns: <[Promise]>
 
 The `jsHandle.dispose` method stops referencing the element handle.
 
 #### jsHandle.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]> Function to be evaluated in browser context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 This method passes this handle as the first argument to `pageFunction`.
 
@@ -3616,7 +3737,9 @@ expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')
 #### jsHandle.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle).
+- returns: <[Promise]<[JSHandle]>>
+
+Returns the return value of `pageFunction` as in-page object (JSHandle).
 
 This method passes this handle as the first argument to `pageFunction`.
 
@@ -3718,19 +3841,29 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 #### dialog.accept([promptText])
 - `promptText` <[string]> A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt. Optional.
-- returns: <[Promise]> Promise which resolves when the dialog has been accepted.
+- returns: <[Promise]>
+
+Returns when the dialog has been accepted.
 
 #### dialog.defaultValue()
-- returns: <[string]> If dialog is prompt, returns default prompt value. Otherwise, returns empty string.
+- returns: <[string]>
+
+If dialog is prompt, returns default prompt value. Otherwise, returns empty string.
 
 #### dialog.dismiss()
-- returns: <[Promise]> Promise which resolves when the dialog has been dismissed.
+- returns: <[Promise]>
+
+Returns when the dialog has been dismissed.
 
 #### dialog.message()
-- returns: <[string]> A message displayed in the dialog.
+- returns: <[string]>
+
+A message displayed in the dialog.
 
 #### dialog.type()
-- returns: <[string]> Dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
+- returns: <[string]>
+
+Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
 
 ### class: Download
 
@@ -4134,7 +4267,7 @@ request is  issued to a redirected url.
 <!-- GEN:stop -->
 
 #### request.failure()
-- returns: <[null]|[Object]> Object describing request failure, if any
+- returns: <[null]|[Object]>
   - `errorText` <[string]> Human-readable error message, e.g. `'net::ERR_FAILED'`.
 
 The method returns `null` unless this request has failed, as reported by `requestfailed` event.
@@ -4148,10 +4281,14 @@ page.on('requestfailed', request => {
 ```
 
 #### request.frame()
-- returns: <[Frame]> A [Frame] that initiated this request.
+- returns: <[Frame]>
+
+Returns the [Frame] that initiated this request.
 
 #### request.headers()
-- returns: <[Object]<[string], [string]>> An object with HTTP headers associated with the request. All header names are lower-case.
+- returns: <[Object]<[string], [string]>>
+
+An object with HTTP headers associated with the request. All header names are lower-case.
 
 #### request.isNavigationRequest()
 - returns: <[boolean]>
@@ -4159,22 +4296,32 @@ page.on('requestfailed', request => {
 Whether this request is driving frame's navigation.
 
 #### request.method()
-- returns: <[string]> Request's method (GET, POST, etc.)
+- returns: <[string]>
+
+Request's method (GET, POST, etc.)
 
 #### request.postData()
-- returns: <[null]|[string]> Request's post body, if any.
+- returns: <[null]|[string]>
+
+Request's post body, if any.
 
 #### request.postDataBuffer()
-- returns: <[null]|[Buffer]> Request's post body in a binary form, if any.
+- returns: <[null]|[Buffer]>
+
+Request's post body in a binary form, if any.
 
 #### request.postDataJSON()
-- returns: <[null]|[Object]> Parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+- returns: <[null]|[Object]>
+
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
 
 When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
 Otherwise it will be parsed as JSON.
 
 #### request.redirectedFrom()
-- returns: <[null]|[Request]> Request that was redirected by the server to this one, if any.
+- returns: <[null]|[Request]>
+
+Request that was redirected by the server to this one, if any.
 
 When the server responds with a redirect, Playwright creates a new [Request] object. The two requests are connected by
 `redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to
@@ -4195,7 +4342,9 @@ console.log(response.request().redirectedFrom()); // null
 ```
 
 #### request.redirectedTo()
-- returns: <[null]|[Request]> New request issued by the browser if the server responded with redirect.
+- returns: <[null]|[Request]>
+
+New request issued by the browser if the server responded with redirect.
 
 This method is the opposite of [request.redirectedFrom()](#requestredirectedfrom):
 
@@ -4211,7 +4360,9 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 `websocket`, `manifest`, `other`.
 
 #### request.response()
-- returns: <[Promise]<[null]|[Response]>> A matching [Response] object, or `null` if the response was not received due to error.
+- returns: <[Promise]<[null]|[Response]>>
+
+Returns the matching [Response] object, or `null` if the response was not received due to error.
 
 #### request.timing()
 - returns: <[Object]>
@@ -4238,7 +4389,9 @@ console.log(request.timing());
 ```
 
 #### request.url()
-- returns: <[string]> URL of the request.
+- returns: <[string]>
+
+URL of the request.
 
 ### class: Response
 
@@ -4259,19 +4412,29 @@ console.log(request.timing());
 <!-- GEN:stop -->
 
 #### response.body()
-- returns: <[Promise]<[Buffer]>> Promise which resolves to a buffer with response body.
+- returns: <[Promise]<[Buffer]>>
+
+Returns the buffer with response body.
 
 #### response.finished()
-- returns: <[Promise]<[null]|[Error]>> Waits for this response to finish, returns failure error if request failed.
+- returns: <[Promise]<[null]|[Error]>>
+
+Waits for this response to finish, returns failure error if request failed.
 
 #### response.frame()
-- returns: <[Frame]> A [Frame] that initiated this response.
+- returns: <[Frame]>
+
+Returns the [Frame] that initiated this response.
 
 #### response.headers()
-- returns: <[Object]<[string], [string]>> An object with HTTP headers associated with the response. All header names are lower-case.
+- returns: <[Object]<[string], [string]>>
+
+Returns the object with HTTP headers associated with the response. All header names are lower-case.
 
 #### response.json()
-- returns: <[Promise]<[Serializable]>> Promise which resolves to a JSON representation of response body.
+- returns: <[Promise]<[Serializable]>>
+
+Returns the JSON representation of response body.
 
 This method will throw if the response body is not parsable via `JSON.parse`.
 
@@ -4281,7 +4444,9 @@ This method will throw if the response body is not parsable via `JSON.parse`.
 Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
 
 #### response.request()
-- returns: <[Request]> A matching [Request] object.
+- returns: <[Request]>
+
+Returns the matching [Request] object.
 
 #### response.status()
 - returns: <[number]>
@@ -4294,7 +4459,9 @@ Contains the status code of the response (e.g., 200 for a success).
 Contains the status text of the response (e.g. usually an "OK" for a success).
 
 #### response.text()
-- returns: <[Promise]<[string]>> Promise which resolves to a text representation of response body.
+- returns: <[Promise]<[string]>>
+
+Returns the text representation of response body.
 
 #### response.url()
 - returns: <[string]>
@@ -4446,7 +4613,9 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 ```
 
 #### route.request()
-- returns: <[Request]> A request to be routed.
+- returns: <[Request]>
+
+A request to be routed.
 
 ### class: WebSocket
 
@@ -4498,7 +4667,9 @@ Contains the URL of the WebSocket.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
-- returns: <[Promise]<[Object]>> Promise which resolves to the event data value.
+- returns: <[Promise]<[Object]>>
+
+Returns the event data value.
 
 Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy
 value. Will throw an error if the webSocket is closed before the event is fired.
@@ -4533,7 +4704,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
 - `options` <[Object]>
   - `interestingOnly` <[boolean]> Prune uninteresting nodes from the tree. Defaults to `true`.
   - `root` <[ElementHandle]> The root DOM element for the snapshot. Defaults to the whole page.
-- returns: <[Promise]<[null]|[Object]>> An [AXNode] object with the following properties:
+- returns: <[Promise]<[null]|[Object]>>
   - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage_intro).
   - `name` <[string]> A human readable name for the node.
   - `value` <[string]|[number]> The current value of the node, if applicable.
@@ -4624,7 +4795,9 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 #### worker.evaluate(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the worker context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[Serializable]>> Promise which resolves to the return value of `pageFunction`
+- returns: <[Promise]<[Serializable]>>
+
+Returns the return value of `pageFunction`
 
 If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise
 to resolve and return its value.
@@ -4636,7 +4809,9 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 #### worker.evaluateHandle(pageFunction[, arg])
 - `pageFunction` <[function]|[string]> Function to be evaluated in the page context
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
-- returns: <[Promise]<[JSHandle]>> Promise which resolves to the return value of `pageFunction` as in-page object (JSHandle).
+- returns: <[Promise]<[JSHandle]>>
+
+Returns the return value of `pageFunction` as in-page object (JSHandle).
 
 The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns
 in-page object (JSHandle).
@@ -4672,10 +4847,14 @@ Closes the browser gracefully and makes sure the process is terminated.
 Kills the browser process and waits for the process to exit.
 
 #### browserServer.process()
-- returns: <[ChildProcess]> Spawned browser application process.
+- returns: <[ChildProcess]>
+
+Spawned browser application process.
 
 #### browserServer.wsEndpoint()
-- returns: <[string]> Browser websocket url.
+- returns: <[string]>
+
+Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to [browserType.connect(params)](#browsertypeconnectparams) to establish connection to the
 browser.
@@ -4717,7 +4896,9 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 This methods attaches Playwright to an existing browser instance.
 
 #### browserType.executablePath()
-- returns: <[string]> A path where Playwright expects to find a bundled browser executable.
+- returns: <[string]>
+
+A path where Playwright expects to find a bundled browser executable.
 
 #### browserType.launch([options])
 - `options` <[Object]>
@@ -4741,7 +4922,9 @@ This methods attaches Playwright to an existing browser instance.
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
-- returns: <[Promise]<[Browser]>> Promise which resolves to browser instance.
+- returns: <[Promise]<[Browser]>>
+
+Returns the browser instance.
 
 You can use `ignoreDefaultArgs` to filter out `--mute-audio` from default arguments:
 
@@ -4824,7 +5007,9 @@ some differences for Linux users.
     - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be scaled down if necessary to fit the specified size.
       - `width` <[number]> Video frame width.
       - `height` <[number]> Video frame height.
-- returns: <[Promise]<[BrowserContext]>> Promise that resolves to the persistent browser context instance.
+- returns: <[Promise]<[BrowserContext]>>
+
+Returns the persistent browser context instance.
 
 Launches browser that uses persistent storage located at `userDataDir` and returns the only context. Closing this
 context will automatically close the browser.
@@ -4851,7 +5036,9 @@ context will automatically close the browser.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
-- returns: <[Promise]<[BrowserServer]>> Promise which resolves to the browser app instance.
+- returns: <[Promise]<[BrowserServer]>>
+
+Returns the browser app instance.
 
 Launches browser server that client can connect to. An example of launching a browser executable and connecting to it
 later:
@@ -4942,7 +5129,9 @@ await browser.stopTracing();
 <!-- GEN:stop -->
 
 #### chromiumBrowser.newBrowserCDPSession()
-- returns: <[Promise]<[CDPSession]>> Promise that resolves to the newly created browser session.
+- returns: <[Promise]<[CDPSession]>>
+
+Returns the newly created browser session.
 
 #### chromiumBrowser.startTracing([page, options])
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
@@ -4955,7 +5144,9 @@ await browser.stopTracing();
 Only one trace can be active at a time per browser.
 
 #### chromiumBrowser.stopTracing()
-- returns: <[Promise]<[Buffer]>> Promise which resolves to buffer with trace data.
+- returns: <[Promise]<[Buffer]>>
+
+Returns the buffer with trace data.
 
 ### class: ChromiumBrowserContext
 * extends: [BrowserContext]
@@ -5014,14 +5205,20 @@ Emitted when new background page is created in the context.
 Emitted when new service worker is created in the context.
 
 #### chromiumBrowserContext.backgroundPages()
-- returns: <[Array]<[Page]>> All existing background pages in the context.
+- returns: <[Array]<[Page]>>
+
+All existing background pages in the context.
 
 #### chromiumBrowserContext.newCDPSession(page)
 - `page` <[Page]> Page to create new session for.
-- returns: <[Promise]<[CDPSession]>> Promise that resolves to the newly created session.
+- returns: <[Promise]<[CDPSession]>>
+
+Returns the newly created session.
 
 #### chromiumBrowserContext.serviceWorkers()
-- returns: <[Array]<[Worker]>> All existing service workers in the context.
+- returns: <[Array]<[Worker]>>
+
+All existing service workers in the context.
 
 ### class: ChromiumCoverage
 
@@ -5059,30 +5256,36 @@ const v8toIstanbul = require('v8-to-istanbul');
 #### chromiumCoverage.startCSSCoverage([options])
 - `options` <[Object]>
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
-- returns: <[Promise]> Promise that resolves when coverage is started
+- returns: <[Promise]>
+
+Returns coverage is started
 
 #### chromiumCoverage.startJSCoverage([options])
 - `options` <[Object]>
   - `resetOnNavigation` <[boolean]> Whether to reset coverage on every navigation. Defaults to `true`.
   - `reportAnonymousScripts` <[boolean]> Whether anonymous scripts generated by the page should be reported. Defaults to `false`.
-- returns: <[Promise]> Promise that resolves when coverage is started
+- returns: <[Promise]>
+
+Returns coverage is started
 
 > **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created
 on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have
 `__playwright_evaluation_script__` as their URL.
 
 #### chromiumCoverage.stopCSSCoverage()
-- returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all stylesheets
+- returns: <[Promise]<[Array]<[Object]>>>
   - `url` <[string]> StyleSheet URL
   - `text` <[string]> StyleSheet content, if available.
   - `ranges` <[Array]<[Object]>> StyleSheet ranges that were used. Ranges are sorted and non-overlapping.
     - `start` <[number]> A start offset in text, inclusive
     - `end` <[number]> An end offset in text, exclusive
 
+Returns the array of coverage reports for all stylesheets
+
 > **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
 
 #### chromiumCoverage.stopJSCoverage()
-- returns: <[Promise]<[Array]<[Object]>>> Promise that resolves to the array of coverage reports for all scripts
+- returns: <[Promise]<[Array]<[Object]>>>
   - `url` <[string]> Script URL
   - `scriptId` <[string]> Script ID
   - `source` <[string]> Script content, if applicable.
@@ -5093,6 +5296,8 @@ on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set t
       - `count` <[number]>
       - `startOffset` <[number]>
       - `endOffset` <[number]>
+
+Returns the array of coverage reports for all scripts
 
 > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
 reported.
