@@ -289,6 +289,8 @@ const hasEngine: SelectorEngine = {
     return evaluator.query({ ...context, scope: element }, args).length > 0;
   },
 
+  // TODO: we do not implement "relative selectors", as in "div:has(> span)" or "div:has(+ span)".
+
   // TODO: we can implement efficient "query" by matching "args" and returning
   // all parents/descendants, just have to be careful with the ":scope" matching.
 };

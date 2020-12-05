@@ -135,6 +135,53 @@ it('should work with numerical id', async ({page, server}) => {
   expect(element).toBeTruthy();
 });
 
+it('should work with wrong-case id', async ({page}) => {
+  await page.setContent('<section id="Hello"></section>');
+  expect(await page.$eval('#Hello', e => e.tagName)).toBe('SECTION');
+  expect(await page.$eval('#hello', e => e.tagName)).toBe('SECTION');
+  expect(await page.$eval('#HELLO', e => e.tagName)).toBe('SECTION');
+  expect(await page.$eval('#helLO', e => e.tagName)).toBe('SECTION');
+});
+
+it('should work with *', async ({page}) => {
+  await page.setContent('<div id=div1></div><div id=div2><span><span></span></span></div>');
+  // Includes html, head and body.
+  expect(await page.$$eval('*', els => els.length)).toBe(7);
+  expect(await page.$$eval('*#div1', els => els.length)).toBe(1);
+  expect(await page.$$eval('*:not(#div1)', els => els.length)).toBe(6);
+  expect(await page.$$eval('*:not(div)', els => els.length)).toBe(5);
+  expect(await page.$$eval('*:not(span)', els => els.length)).toBe(5);
+  expect(await page.$$eval('*:not(*)', els => els.length)).toBe(0);
+  expect(await page.$$eval('*:is(*)', els => els.length)).toBe(7);
+  expect(await page.$$eval('* *', els => els.length)).toBe(6);
+  expect(await page.$$eval('* *:not(span)', els => els.length)).toBe(4);
+  expect(await page.$$eval('div > *', els => els.length)).toBe(1);
+  expect(await page.$$eval('div *', els => els.length)).toBe(2);
+  expect(await page.$$eval('* > *', els => els.length)).toBe(6);
+
+  const body = await page.$('body');
+  // Does not include html, head or body.
+  expect(await body.$$eval('*', els => els.length)).toBe(4);
+  expect(await body.$$eval('*#div1', els => els.length)).toBe(1);
+  expect(await body.$$eval('*:not(#div1)', els => els.length)).toBe(3);
+  expect(await body.$$eval('*:not(div)', els => els.length)).toBe(2);
+  expect(await body.$$eval('*:not(span)', els => els.length)).toBe(2);
+  expect(await body.$$eval('*:not(*)', els => els.length)).toBe(0);
+  expect(await body.$$eval('*:is(*)', els => els.length)).toBe(4);
+  expect(await body.$$eval('div > *', els => els.length)).toBe(1);
+  expect(await body.$$eval('div *', els => els.length)).toBe(2);
+  // Selectors v2 matches jquery in the sense that matching starts with the element scope,
+  // not the document scope.
+  expect(await body.$$eval('* > *', els => els.length)).toBe(selectorsV2Enabled() ? 2 : 4);
+  // Adding scope makes querySelectorAll work like jquery.
+  expect(await body.$$eval(':scope * > *', els => els.length)).toBe(2);
+  // Note that the following two selectors are following jquery logic even
+  // with selectors v1. Just running `body.querySelectorAll` returns 4 and 2 respectively.
+  // That's probably a bug in v1, but oh well.
+  expect(await body.$$eval('* *', els => els.length)).toBe(2);
+  expect(await body.$$eval('* *:not(span)', els => els.length)).toBe(0);
+});
+
 it('should work with :nth-child', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span:nth-child(odd)`, els => els.length)).toBe(3);
@@ -176,12 +223,14 @@ it('should work with ~', async ({page}) => {
 
 it('should work with +', async ({page}) => {
   await page.setContent(`
-    <div id=div1></div>
-    <div id=div2></div>
-    <div id=div3></div>
-    <div id=div4></div>
-    <div id=div5></div>
-    <div id=div6></div>
+    <section>
+      <div id=div1></div>
+      <div id=div2></div>
+      <div id=div3></div>
+      <div id=div4></div>
+      <div id=div5></div>
+      <div id=div6></div>
+    </section>
   `);
   expect(await page.$$eval(`css=#div1 ~ div + #div6`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=#div1 ~ div + div`, els => els.length)).toBe(4);
@@ -190,6 +239,16 @@ it('should work with +', async ({page}) => {
   expect(await page.$$eval(`css=#div5 + div + div`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=#div3 ~ #div2 + #div6`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=#div3 + #div4 + #div5`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=div + #div1`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=section > div + div ~ div`, els => els.length)).toBe(4);
+  expect(await page.$$eval(`css=section > div + #div4 ~ div`, els => els.length)).toBe(2);
+  if (selectorsV2Enabled()) {
+    // Selectors v1 do not support this.
+    expect(await page.$$eval(`css=section:has(:scope > div + #div2)`, els => els.length)).toBe(1);
+    expect(await page.$$eval(`css=section:has(:scope > div + #div1)`, els => els.length)).toBe(0);
+  }
+  // TODO: the following does not work. Should it?
+  // expect(await page.$eval(`css=div:has(:scope + #div5)`, e => e.id)).toBe('div4');
 });
 
 it('should work with spaces in :nth-child and :not', async ({page, server}) => {
