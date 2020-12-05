@@ -84,7 +84,7 @@ async function run() {
           member.h4 = member.h2;
           member.h2 = undefined;
 
-          let match = member.h4.match(/(event|method|namespace): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
+          let match = member.h4.match(/(event|method|namespace|async method|): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
           if (!match)
             continue;
 
@@ -93,12 +93,22 @@ async function run() {
             continue;
           }
 
-          if (match[1] === 'method') {
+          if (match[1] === 'method' || match[1] === 'async method') {
             const args = [];
             const argChildren = [];
+            const returnContainer = [];
             const nonArgChildren = [];
             const optionsContainer = [];
             for (const item of member.children) {
+              if (item.li && item.liType === 'default') {
+                const { type } = parseArgument(item.li);
+                if (match[1] === 'method')
+                  item.li = `returns: ${type}`;
+                else
+                  item.li = `returns: <[Promise]${type}>`;
+                returnContainer.push(item);
+                continue;
+              }
               if (!item.h3) {
                 nonArgChildren.push(item);
                 continue;
@@ -150,7 +160,13 @@ async function run() {
                 }
               }
             }
-            member.children = [...argChildren, ...optionsContainer, ...nonArgChildren];
+            if (match[1] === 'async method' && !returnContainer[0]) {
+              returnContainer.push({
+                li: 'returns: <[Promise]>',
+                liType: 'default'
+              });
+            }
+            member.children = [...argChildren, ...optionsContainer, ...returnContainer, ...nonArgChildren];
 
             const tokens = [];
             let hasOptional = false;

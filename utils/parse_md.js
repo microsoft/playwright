@@ -224,7 +224,9 @@ function printText(node, result) {
 }
 
 function parseArgument(line) {
-  const match = line.match(/`([^`]+)` (.*)/);
+  let match = line.match(/`([^`]+)` (.*)/);
+  if (!match)
+    match = line.match(/(returns): (.*)/);
   if (!match)
     throw new Error('Invalid argument: ' + line);
   const name = match[1];
