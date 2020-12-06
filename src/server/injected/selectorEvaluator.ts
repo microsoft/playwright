@@ -45,13 +45,13 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('has', hasEngine);
     this._engines.set('scope', scopeEngine);
     this._engines.set('light', lightEngine);
+    this._engines.set('index', indexEngine);
+    this._engines.set('visible', visibleEngine);
     this._engines.set('text', textEngine);
     this._engines.set('matches-text', matchesTextEngine);
     this._engines.set('xpath', xpathEngine);
     for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
       this._engines.set(attr, createAttributeEngine(attr));
-    // TODO: host
-    // TODO: host-context?
   }
 
   // This is the only function we should use for querying, because it does
@@ -335,6 +335,24 @@ const lightEngine: SelectorEngine = {
   }
 };
 
+const indexEngine: SelectorEngine = {
+  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
+    if (args.length < 2 || typeof args[0] !== 'number')
+      throw new Error(`"index" engine expects a number and non-empty selector list`);
+    const list = evaluator.query(context, args.slice(1));
+    const index = (args[0] as number) - 1;
+    return [list[index]];
+  },
+};
+
+const visibleEngine: SelectorEngine = {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    if (args.length)
+      throw new Error(`"visible" engine expects no arguments`);
+    return isVisible(element);
+  }
+};
+
 const textEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
@@ -424,7 +442,7 @@ function createAttributeEngine(attr: string): SelectorEngine {
   };
 }
 
-function parentElementOrShadowHost(element: Element): Element | undefined {
+export function parentElementOrShadowHost(element: Element): Element | undefined {
   if (element.parentElement)
     return element.parentElement;
   if (!element.parentNode)
@@ -445,6 +463,17 @@ function previousSiblingInContext(element: Element, context: QueryContext): Elem
   if (element === context.scope)
     return;
   return element.previousElementSibling || undefined;
+}
+
+export function isVisible(element: Element): boolean {
+  // Note: this logic should be similar to waitForDisplayedAtStablePosition() to avoid surprises.
+  if (!element.ownerDocument || !element.ownerDocument.defaultView)
+    return true;
+  const style = element.ownerDocument.defaultView.getComputedStyle(element);
+  if (!style || style.visibility === 'hidden')
+    return false;
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0;
 }
 
 function sortInDOMOrder(elements: Element[]): Element[] {
