@@ -40,6 +40,7 @@ import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
+import { Android, AndroidDevice } from './android';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -147,6 +148,12 @@ export class Connection {
     let result: ChannelOwner<any, any>;
     initializer = this._replaceGuidsWithChannels(initializer);
     switch (type) {
+      case 'Android':
+        result = new Android(parent, type, guid, initializer);
+        break;
+      case 'AndroidDevice':
+        result = new AndroidDevice(parent, type, guid, initializer);
+        break;
       case 'BindingCall':
         result = new BindingCall(parent, type, guid, initializer);
         break;
