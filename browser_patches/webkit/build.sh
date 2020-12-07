@@ -4,6 +4,7 @@ set +x
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
+SCRIPT_FOLDER="$(pwd -P)"
 
 build_gtk() {
   if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
@@ -69,7 +70,7 @@ elif [[ "$(uname)" == "Linux" ]]; then
     build_wpe
   fi
 elif [[ "$(uname)" == MINGW* ]]; then
-  /c/Windows/System32/cmd.exe "/c buildwin.bat"
+  /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwin.bat)"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
   exit 1;
