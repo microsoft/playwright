@@ -98,12 +98,12 @@ index faf53eff9a46f958890d2c50de4c741fce75f1b1..7ad4b9f2203dbf1706518a0ba372d424
    DWORD creationFlags = CREATE_SUSPENDED | CREATE_UNICODE_ENVIRONMENT;
  
 diff --git a/browser/installer/allowed-dupes.mn b/browser/installer/allowed-dupes.mn
-index ca21219eb11a16c74ba0a85949a557ae13f8261e..29f22d6f0af607c06ddc29b267108153bbda14a0 100644
+index a01e9a49ecac2134ab2d3b28f920fa564d88935f..1b1073ecf0d3ec061fac6d34f9161d0096167821 100644
 --- a/browser/installer/allowed-dupes.mn
 +++ b/browser/installer/allowed-dupes.mn
-@@ -64,6 +64,12 @@ browser/defaults/settings/pinning/pins.json
- browser/defaults/settings/main/example.json
+@@ -65,6 +65,12 @@ browser/defaults/settings/main/example.json
  browser/defaults/settings/main/search-default-override-allowlist.json
+ browser/defaults/settings/main/url-classifier-skip-urls.json
  
 +# Juggler/marionette files
 +chrome/juggler/content/content/floating-scrollbars.css
@@ -1968,7 +1968,7 @@ index 87701f8d2cfee8bd84acd28c62b3be4989c9474c..ae1aa85c019cb21d4f7e79c35e8afe72
 +                             [optional] in unsigned long aFlags);
  };
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
-index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405387ad9eb 100644
+index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c0e3b4756 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
 @@ -101,6 +101,7 @@
@@ -1979,7 +1979,7 @@ index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405
  #include "mozilla/Preferences.h"
  #include "mozilla/ipc/URIUtils.h"
  
-@@ -905,6 +906,12 @@ NS_IMETHODIMP nsExternalHelperAppService::ApplyDecodingForExtension(
+@@ -919,6 +920,12 @@ NS_IMETHODIMP nsExternalHelperAppService::ApplyDecodingForExtension(
    return NS_OK;
  }
  
@@ -1992,7 +1992,7 @@ index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405
  nsresult nsExternalHelperAppService::GetFileTokenForPath(
      const char16_t* aPlatformAppPath, nsIFile** aFile) {
    nsDependentString platformAppPath(aPlatformAppPath);
-@@ -1554,7 +1561,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
+@@ -1568,7 +1575,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
    // Strip off the ".part" from mTempLeafName
    mTempLeafName.Truncate(mTempLeafName.Length() - ArrayLength(".part") + 1);
  
@@ -2005,7 +2005,7 @@ index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405
    mSaver =
        do_CreateInstance(NS_BACKGROUNDFILESAVERSTREAMLISTENER_CONTRACTID, &rv);
    NS_ENSURE_SUCCESS(rv, rv);
-@@ -1730,7 +1742,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1744,7 +1756,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
      return NS_OK;
    }
  
@@ -2043,7 +2043,7 @@ index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405
    if (NS_FAILED(rv)) {
      nsresult transferError = rv;
  
-@@ -1783,6 +1824,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1797,6 +1838,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
  
    bool alwaysAsk = true;
    mMimeInfo->GetAlwaysAskBeforeHandling(&alwaysAsk);
@@ -2055,7 +2055,7 @@ index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405
    if (alwaysAsk) {
      // But we *don't* ask if this mimeInfo didn't come from
      // our user configuration datastore and the user has said
-@@ -2190,6 +2236,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
+@@ -2204,6 +2250,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
      NotifyTransfer(aStatus);
    }
  
@@ -2072,7 +2072,7 @@ index e736183cf64a497e08224cbd79994b9d7c7b20be..c0ab1bebd57a616710d9aa4ab4112405
    return NS_OK;
  }
  
-@@ -2570,6 +2626,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
+@@ -2584,6 +2640,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
      }
    }
  
