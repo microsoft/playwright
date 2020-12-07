@@ -52,6 +52,12 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('xpath', xpathEngine);
     for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
       this._engines.set(attr, createAttributeEngine(attr));
+    this._engines.set('right-of', createProximityEngine('right-of', boxRightOf));
+    this._engines.set('left-of', createProximityEngine('left-of', boxLeftOf));
+    this._engines.set('above', createProximityEngine('above', boxAbove));
+    this._engines.set('below', createProximityEngine('below', boxBelow));
+    this._engines.set('near', createProximityEngine('near', boxNear));
+    this._engines.set('within', createProximityEngine('within', boxWithin));
   }
 
   // This is the only function we should use for querying, because it does
@@ -438,6 +444,70 @@ function createAttributeEngine(attr: string): SelectorEngine {
         throw new Error(`"${attr}" engine expects a single string`);
       const css = `[${attr}=${CSS.escape(args[0])}]`;
       return (evaluator as SelectorEvaluatorImpl)._queryCSS(context, css);
+    },
+  };
+}
+
+function areCloseRanges(from1: number, to1: number, from2: number, to2: number, threshold: number) {
+  return to1 >= from2 - threshold && to2 >= from1 - threshold;
+}
+
+function boxSize(box: DOMRect) {
+  return Math.sqrt(box.width * box.height);
+}
+
+function boxesProximityThreshold(box1: DOMRect, box2: DOMRect) {
+  return (boxSize(box1) + boxSize(box2)) / 2;
+}
+
+function boxRightOf(box1: DOMRect, box2: DOMRect): boolean {
+  // To the right, but not too far, and vertically intersects.
+  const distance = box1.left - box2.right;
+  return distance >= 0 && distance <= boxesProximityThreshold(box1, box2) &&
+    areCloseRanges(box1.top, box1.bottom, box2.top, box2.bottom, 0);
+}
+
+function boxLeftOf(box1: DOMRect, box2: DOMRect): boolean {
+  // To the left, but not too far, and vertically intersects.
+  const distance = box2.left - box1.right;
+  return distance >= 0 && distance <= boxesProximityThreshold(box1, box2) &&
+    areCloseRanges(box1.top, box1.bottom, box2.top, box2.bottom, 0);
+}
+
+function boxAbove(box1: DOMRect, box2: DOMRect): boolean {
+  // Above, but not too far, and horizontally intersects.
+  const distance = box2.top - box1.bottom;
+  return distance >= 0 && distance <= boxesProximityThreshold(box1, box2) &&
+    areCloseRanges(box1.left, box1.right, box2.left, box2.right, 0);
+}
+
+function boxBelow(box1: DOMRect, box2: DOMRect): boolean {
+  // Below, but not too far, and horizontally intersects.
+  const distance = box1.top - box2.bottom;
+  return distance >= 0 && distance <= boxesProximityThreshold(box1, box2) &&
+    areCloseRanges(box1.left, box1.right, box2.left, box2.right, 0);
+}
+
+function boxWithin(box1: DOMRect, box2: DOMRect): boolean {
+  return box1.left >= box2.left && box1.right <= box2.right && box1.top >= box2.top && box1.bottom <= box2.bottom;
+}
+
+function boxNear(box1: DOMRect, box2: DOMRect): boolean {
+  const intersects = !(box1.left >= box2.right || box2.left >= box1.right || box1.top >= box2.bottom || box2.top >= box1.bottom);
+  if (intersects)
+    return false;
+  const threshold = boxesProximityThreshold(box1, box2);
+  return areCloseRanges(box1.left, box1.right, box2.left, box2.right, threshold) &&
+    areCloseRanges(box1.top, box1.bottom, box2.top, box2.bottom, threshold);
+}
+
+function createProximityEngine(name: string, predicate: (box1: DOMRect, box2: DOMRect) => boolean): SelectorEngine {
+  return {
+    matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+      if (!args.length)
+        throw new Error(`"${name}" engine expects a selector list`);
+      const box = element.getBoundingClientRect();
+      return evaluator.query(context, args).some(e => e !== element && predicate(box, e.getBoundingClientRect()));
     },
   };
 }

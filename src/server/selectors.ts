@@ -42,7 +42,7 @@ export class Selectors {
       'data-test', 'data-test:light',
     ]);
     if (selectorsV2Enabled()) {
-      for (const name of ['not', 'is', 'where', 'has', 'scope', 'light', 'index', 'visible', 'matches-text'])
+      for (const name of ['not', 'is', 'where', 'has', 'scope', 'light', 'index', 'visible', 'matches-text', 'above', 'below', 'right-of', 'left-of', 'near', 'within'])
         this._builtinEngines.add(name);
     }
     this._engines = new Map();
