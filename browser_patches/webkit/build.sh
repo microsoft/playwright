@@ -34,11 +34,16 @@ ensure_linux_deps() {
   yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/update-webkitgtk-libs
 }
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
+  cd "${WK_CHECKOUT_PATH}"
+  echo "WARNING: checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
+else
   cd "checkout"
+fi
+
+if [[ "$(uname)" == "Darwin" ]]; then
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
 elif [[ "$(uname)" == "Linux" ]]; then
-  cd "checkout"
   if [[ $# == 0 || (-z "$1") ]]; then
     echo
     echo BUILDING: GTK and WPE
