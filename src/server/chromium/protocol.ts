@@ -17,7 +17,7 @@ export module Protocol {
     /**
      * Enum of possible native property sources (as a subtype of a particular AXValueSourceType).
      */
-    export type AXValueNativeSourceType = "figcaption"|"label"|"labelfor"|"labelwrapped"|"legend"|"tablecaption"|"title"|"other";
+    export type AXValueNativeSourceType = "figcaption"|"label"|"labelfor"|"labelwrapped"|"legend"|"rubyannotation"|"tablecaption"|"title"|"other";
     /**
      * A single source for a computed AX property.
      */
@@ -204,11 +204,26 @@ children, if requested.
       nodes: AXNode[];
     }
     /**
-     * Fetches the entire accessibility tree
+     * Fetches the entire accessibility tree for the root Document
      */
     export type getFullAXTreeParameters = {
+      /**
+       * The maximum depth at which descendants of the root node should be retrieved.
+If omitted, the full tree is returned.
+       */
+      max_depth?: number;
     }
     export type getFullAXTreeReturnValue = {
+      nodes: AXNode[];
+    }
+    /**
+     * Fetches a particular accessibility node by AXNodeId.
+Requires `enable()` to have been called previously.
+     */
+    export type getChildAXNodesParameters = {
+      id: AXNodeId;
+    }
+    export type getChildAXNodesReturnValue = {
       nodes: AXNode[];
     }
     /**
@@ -6580,7 +6595,7 @@ file, data and other requests and responses, their headers, bodies, timing, etc.
     /**
      * Resource type as it was perceived by the rendering engine.
      */
-    export type ResourceType = "Document"|"Stylesheet"|"Image"|"Media"|"Font"|"Script"|"TextTrack"|"XHR"|"Fetch"|"EventSource"|"WebSocket"|"Manifest"|"SignedExchange"|"Ping"|"CSPViolationReport"|"Other";
+    export type ResourceType = "Document"|"Stylesheet"|"Image"|"Media"|"Font"|"Script"|"TextTrack"|"XHR"|"Fetch"|"EventSource"|"WebSocket"|"Manifest"|"SignedExchange"|"Ping"|"CSPViolationReport"|"Preflight"|"Other";
     /**
      * Unique loader identifier.
      */
@@ -7080,7 +7095,7 @@ If the opcode isn't 1, then payloadData is a base64 encoded string representing 
       /**
        * Type of this initiator.
        */
-      type: "parser"|"script"|"preload"|"SignedExchange"|"other";
+      type: "parser"|"script"|"preload"|"SignedExchange"|"preflight"|"other";
       /**
        * Initiator JavaScript stack trace, set for Script only.
        */
@@ -7099,6 +7114,10 @@ module) (0-based).
 module) (0-based).
        */
       columnNumber?: number;
+      /**
+       * Set if another request triggered this request (e.g. preflight).
+       */
+      requestId?: RequestId;
     }
     /**
      * Cookie object
@@ -7410,6 +7429,13 @@ https://wicg.github.io/webpackage/draft-yasskin-httpbis-origin-signed-exchanges-
        * Errors occurred while handling the signed exchagne.
        */
       errors?: SignedExchangeError[];
+    }
+    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate";
+    export type IPAddressSpace = "Local"|"Private"|"Public"|"Unknown";
+    export interface ClientSecurityState {
+      initiatorIsSecureContext: boolean;
+      initiatorIPAddressSpace: IPAddressSpace;
+      privateNetworkRequestPolicy: PrivateNetworkRequestPolicy;
     }
     export type CrossOriginOpenerPolicyValue = "SameOrigin"|"SameOriginAllowPopups"|"UnsafeNone"|"SameOriginPlusCoep";
     export interface CrossOriginOpenerPolicyStatus {
@@ -7856,6 +7882,29 @@ this requestId will be the same as the requestId present in the requestWillBeSen
       request: WebSocketRequest;
     }
     /**
+     * Fired upon WebTransport creation.
+     */
+    export type webTransportCreatedPayload = {
+      /**
+       * WebTransport identifier.
+       */
+      transportId: RequestId;
+      /**
+       * WebTransport request URL.
+       */
+      url: string;
+      /**
+       * Request initiator.
+       */
+      initiator?: Initiator;
+    }
+    export type webTransportClosedPayload = {
+      /**
+       * WebTransport identifier.
+       */
+      transportId: RequestId;
+    }
+    /**
      * Fired when additional information about a requestWillBeSent event is available from the
 network stack. Not every requestWillBeSent event will have an additional
 requestWillBeSentExtraInfo fired for it, and there is no guarantee whether requestWillBeSent
@@ -7875,6 +7924,10 @@ the request and the ones not sent; the latter are distinguished by having blocke
        * Raw request headers as they will be sent over the wire.
        */
       headers: Headers;
+      /**
+       * The client security state set for the request.
+       */
+      clientSecurityState?: ClientSecurityState;
     }
     /**
      * Fired when additional information about a responseReceived event is available from the network
@@ -7901,6 +7954,35 @@ are represented by the invalid cookie line string instead of a proper cookie.
 available, such as in the case of HTTP/2 or QUIC.
        */
       headersText?: string;
+    }
+    /**
+     * Fired exactly once for each Trust Token operation. Depending on
+the type of the operation and whether the operation succeeded or
+failed, the event is fired before the corresponding request was sent
+or after the response was received.
+     */
+    export type trustTokenOperationDonePayload = {
+      /**
+       * Detailed success or error status of the operation.
+'AlreadyExists' also signifies a successful operation, as the result
+of the operation already exists und thus, the operation was abort
+preemptively (e.g. a cache hit).
+       */
+      status: "Ok"|"InvalidArgument"|"FailedPrecondition"|"ResourceExhausted"|"AlreadyExists"|"Unavailable"|"BadResponse"|"InternalError"|"UnknownError"|"FulfilledLocally";
+      type: TrustTokenOperationType;
+      requestId: RequestId;
+      /**
+       * Top level origin. The context in which the operation was attempted.
+       */
+      topLevelOrigin?: string;
+      /**
+       * Origin of the issuer in case of a "Issuance" or "Redemption" operation.
+       */
+      issuerOrigin?: string;
+      /**
+       * The number of obtained Trust Tokens on a successful "Issuance" operation.
+       */
+      issuedTokenCount?: number;
     }
     
     /**
@@ -8541,6 +8623,26 @@ continueInterceptedRequest call.
        * The style of the separator between items
        */
       itemSeparator?: LineStyle;
+      /**
+       * Style of content-distribution space on the main axis (justify-content).
+       */
+      mainDistributedSpace?: BoxStyle;
+      /**
+       * Style of content-distribution space on the cross axis (align-content).
+       */
+      crossDistributedSpace?: BoxStyle;
+      /**
+       * Style of empty space caused by row gaps (gap/row-gap).
+       */
+      rowGapSpace?: BoxStyle;
+      /**
+       * Style of empty space caused by columns gaps (gap/column-gap).
+       */
+      columnGapSpace?: BoxStyle;
+      /**
+       * Style of the self-alignment line (align-items).
+       */
+      crossAlignment?: LineStyle;
     }
     /**
      * Style information for drawing a line.
@@ -8555,6 +8657,20 @@ continueInterceptedRequest call.
        */
       pattern?: "dashed"|"dotted";
     }
+    /**
+     * Style information for drawing a box.
+     */
+    export interface BoxStyle {
+      /**
+       * The background color for the box (default: transparent)
+       */
+      fillColor?: DOM.RGBA;
+      /**
+       * The hatching color for the box (default: transparent)
+       */
+      hatchColor?: DOM.RGBA;
+    }
+    export type ContrastAlgorithm = "aa"|"aaa"|"apca";
     /**
      * Configuration data for the highlighting of page elements.
      */
@@ -8623,6 +8739,10 @@ continueInterceptedRequest call.
        * The flex container highlight configuration (default: all transparent).
        */
       flexContainerHighlightConfig?: FlexContainerHighlightConfig;
+      /**
+       * The contrast algorithm to use for the contrast ratio (default: aa).
+       */
+      contrastAlgorithm?: ContrastAlgorithm;
     }
     export type ColorFormat = "rgb"|"hsl"|"hex";
     /**
@@ -9517,6 +9637,15 @@ Example URLs: http://www.google.com/file.html -> "google.com"
        */
       frame: Frame;
     }
+    /**
+     * Fired when opening document to write to.
+     */
+    export type documentOpenedPayload = {
+      /**
+       * Frame object.
+       */
+      frame: Frame;
+    }
     export type frameResizedPayload = void;
     /**
      * Fired when a renderer-initiated navigation is requested.
@@ -9820,6 +9949,10 @@ event is emitted.
        * Capture the screenshot from the surface, rather than the view. Defaults to true.
        */
       fromSurface?: boolean;
+      /**
+       * Capture the screenshot beyond the viewport. Defaults to false.
+       */
+      captureBeyondViewport?: boolean;
     }
     export type captureScreenshotReturnValue = {
       /**
@@ -15589,8 +15722,11 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Network.webSocketFrameSent": Network.webSocketFrameSentPayload;
     "Network.webSocketHandshakeResponseReceived": Network.webSocketHandshakeResponseReceivedPayload;
     "Network.webSocketWillSendHandshakeRequest": Network.webSocketWillSendHandshakeRequestPayload;
+    "Network.webTransportCreated": Network.webTransportCreatedPayload;
+    "Network.webTransportClosed": Network.webTransportClosedPayload;
     "Network.requestWillBeSentExtraInfo": Network.requestWillBeSentExtraInfoPayload;
     "Network.responseReceivedExtraInfo": Network.responseReceivedExtraInfoPayload;
+    "Network.trustTokenOperationDone": Network.trustTokenOperationDonePayload;
     "Overlay.inspectNodeRequested": Overlay.inspectNodeRequestedPayload;
     "Overlay.nodeHighlightRequested": Overlay.nodeHighlightRequestedPayload;
     "Overlay.screenshotRequested": Overlay.screenshotRequestedPayload;
@@ -15601,6 +15737,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.frameClearedScheduledNavigation": Page.frameClearedScheduledNavigationPayload;
     "Page.frameDetached": Page.frameDetachedPayload;
     "Page.frameNavigated": Page.frameNavigatedPayload;
+    "Page.documentOpened": Page.documentOpenedPayload;
     "Page.frameResized": Page.frameResizedPayload;
     "Page.frameRequestedNavigation": Page.frameRequestedNavigationPayload;
     "Page.frameScheduledNavigation": Page.frameScheduledNavigationPayload;
@@ -15689,6 +15826,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Accessibility.enable": Accessibility.enableParameters;
     "Accessibility.getPartialAXTree": Accessibility.getPartialAXTreeParameters;
     "Accessibility.getFullAXTree": Accessibility.getFullAXTreeParameters;
+    "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesParameters;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeParameters;
     "Animation.disable": Animation.disableParameters;
     "Animation.enable": Animation.enableParameters;
@@ -16193,6 +16331,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Accessibility.enable": Accessibility.enableReturnValue;
     "Accessibility.getPartialAXTree": Accessibility.getPartialAXTreeReturnValue;
     "Accessibility.getFullAXTree": Accessibility.getFullAXTreeReturnValue;
+    "Accessibility.getChildAXNodes": Accessibility.getChildAXNodesReturnValue;
     "Accessibility.queryAXTree": Accessibility.queryAXTreeReturnValue;
     "Animation.disable": Animation.disableReturnValue;
     "Animation.enable": Animation.enableReturnValue;
