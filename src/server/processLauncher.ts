@@ -19,7 +19,6 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import * as removeFolder from 'rimraf';
 import { helper } from './helper';
-import { Progress } from './progress';
 import * as types from './types';
 import { isUnderTest } from '../utils/utils';
 
@@ -41,7 +40,7 @@ export type LaunchProcessOptions = {
   // Note: attemptToGracefullyClose should reject if it does not close the browser.
   attemptToGracefullyClose: () => Promise<any>,
   onExit: (exitCode: number | null, signal: string | null) => void,
-  progress: Progress,
+  log: (message: string) => void,
 };
 
 type LaunchResult = {
@@ -65,9 +64,8 @@ if (maxListeners !== 0)
 export async function launchProcess(options: LaunchProcessOptions): Promise<LaunchResult> {
   const cleanup = () => helper.removeFolders(options.tempDirectories);
 
-  const progress = options.progress;
   const stdio: ('ignore' | 'pipe')[] = options.stdio === 'pipe' ? ['ignore', 'pipe', 'pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'];
-  progress.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
+  options.log(`<launching> ${options.executablePath} ${options.args.join(' ')}`);
   const spawnedProcess = childProcess.spawn(
       options.executablePath,
       options.args,
@@ -93,16 +91,16 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     });
     return cleanup().then(() => failedPromise).then(e => Promise.reject(e));
   }
-  progress.log(`<launched> pid=${spawnedProcess.pid}`);
+  options.log(`<launched> pid=${spawnedProcess.pid}`);
 
   const stdout = readline.createInterface({ input: spawnedProcess.stdout });
   stdout.on('line', (data: string) => {
-    progress.log('[out] ' + data);
+    options.log('[out] ' + data);
   });
 
   const stderr = readline.createInterface({ input: spawnedProcess.stderr });
   stderr.on('line', (data: string) => {
-    progress.log('[err] ' + data);
+    options.log('[err] ' + data);
   });
 
   let processClosed = false;
@@ -111,7 +109,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
   let fulfillCleanup = () => {};
   const waitForCleanup = new Promise<void>(f => fulfillCleanup = f);
   spawnedProcess.once('exit', (exitCode, signal) => {
-    progress.log(`<process did exit: exitCode=${exitCode}, signal=${signal}>`);
+    options.log(`<process did exit: exitCode=${exitCode}, signal=${signal}>`);
     processClosed = true;
     helper.removeEventListeners(listeners);
     gracefullyCloseSet.delete(gracefullyClose);
@@ -147,21 +145,21 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     // reentrancy to this function, for example user sends SIGINT second time.
     // In this case, let's forcefully kill the process.
     if (gracefullyClosing) {
-      progress.log(`<forecefully close>`);
+      options.log(`<forecefully close>`);
       killProcess();
       await waitForClose;  // Ensure the process is dead and we called options.onkill.
       return;
     }
     gracefullyClosing = true;
-    progress.log(`<gracefully close start>`);
+    options.log(`<gracefully close start>`);
     await options.attemptToGracefullyClose().catch(() => killProcess());
     await waitForCleanup;  // Ensure the process is dead and we have cleaned up.
-    progress.log(`<gracefully close end>`);
+    options.log(`<gracefully close end>`);
   }
 
   // This method has to be sync to be used as 'exit' event handler.
   function killProcess() {
-    progress.log(`<kill>`);
+    options.log(`<kill>`);
     helper.removeEventListeners(listeners);
     if (spawnedProcess.pid && !spawnedProcess.killed && !processClosed) {
       // Force kill the browser.

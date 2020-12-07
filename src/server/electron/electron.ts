@@ -32,6 +32,7 @@ import { helper } from '../helper';
 import { BrowserOptions, BrowserProcess } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
+import { RecentLogsCollector } from '../../utils/debugLogger';
 
 export type ElectronLaunchOptionsBase = {
   args?: string[],
@@ -157,6 +158,7 @@ export class Electron  {
           electronArguments.push('--no-sandbox');
       }
 
+      const browserLogsCollector = new RecentLogsCollector();
       const { launchedProcess, gracefullyClose, kill } = await launchProcess({
         executablePath,
         args: electronArguments,
@@ -164,7 +166,10 @@ export class Electron  {
         handleSIGINT,
         handleSIGTERM,
         handleSIGHUP,
-        progress,
+        log: (message: string) => {
+          progress.log(message);
+          browserLogsCollector.log(message);
+        },
         stdio: 'pipe',
         cwd: options.cwd,
         tempDirectories: [],
@@ -174,7 +179,7 @@ export class Electron  {
 
       const nodeMatch = await waitForLine(progress, launchedProcess, /^Debugger listening on (ws:\/\/.*)$/);
       const nodeTransport = await WebSocketTransport.connect(progress, nodeMatch[1]);
-      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger());
+      const nodeConnection = new CRConnection(nodeTransport, helper.debugProtocolLogger(), browserLogsCollector);
 
       const chromeMatch = await waitForLine(progress, launchedProcess, /^DevTools listening on (ws:\/\/.*)$/);
       const chromeTransport = await WebSocketTransport.connect(progress, chromeMatch[1]);
@@ -190,6 +195,7 @@ export class Electron  {
         persistent: { noDefaultViewport: true },
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),
+        browserLogsCollector,
       };
       const browser = await CRBrowser.connect(chromeTransport, browserOptions);
       app = new ElectronApplication(browser, nodeConnection);

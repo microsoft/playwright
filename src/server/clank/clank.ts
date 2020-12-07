@@ -25,6 +25,7 @@ import { Env } from '../processLauncher';
 import { CRBrowser } from '../chromium/crBrowser';
 import { AndroidBrowser, AndroidClient, AndroidDevice } from './android';
 import { AdbBackend } from './backendAdb';
+import { RecentLogsCollector } from '../../utils/debugLogger';
 
 export class Clank extends BrowserType {
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
@@ -48,6 +49,7 @@ export class Clank extends BrowserType {
       browserProcess: new ClankBrowserProcess(device, adbBrowser),
       proxy: options.proxy,
       protocolLogger,
+      browserLogsCollector: new RecentLogsCollector(),
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
