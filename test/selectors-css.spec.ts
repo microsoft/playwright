@@ -20,6 +20,62 @@ import * as path from 'path';
 
 const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
 
+it('should work with large DOM', async ({page, server}) => {
+  await page.evaluate(() => {
+    let id = 0;
+    const next = (tag: string) => {
+      const e = document.createElement(tag);
+      const eid = ++id;
+      e.textContent = 'id' + eid;
+      e.id = '' + eid;
+      return e;
+    };
+    const generate = (depth: number) => {
+      const div = next('div');
+      const span1 = next('span');
+      const span2 = next('span');
+      div.appendChild(span1);
+      div.appendChild(span2);
+      if (depth > 0) {
+        div.appendChild(generate(depth - 1));
+        div.appendChild(generate(depth - 1));
+      }
+      return div;
+    };
+    document.body.appendChild(generate(12));
+  });
+  const selectors = [
+    'div div div span',
+    'div > div div > span',
+    'div + div div div span + span',
+    'div ~ div div > span ~ span',
+    'div > div > div + div > div + div > span ~ span',
+    'div div div div div div div div div div span',
+    'div > div > div > div > div > div > div > div > div > div > span',
+    'div ~ div div ~ div div ~ div div ~ div div ~ div span',
+    'span',
+  ];
+
+  const measure = false;
+  for (const selector of selectors) {
+    const counts1 = [];
+    const time1 = Date.now();
+    for (let i = 0; i < (measure ? 10 : 1); i++)
+      counts1.push(await page.$$eval(selector, els => els.length));
+    if (measure)
+      console.log('pw: ' + (Date.now() - time1));
+
+    const time2 = Date.now();
+    const counts2 = [];
+    for (let i = 0; i < (measure ? 10 : 1); i++)
+      counts2.push(await page.evaluate(selector => document.querySelectorAll(selector).length, selector));
+    if (measure)
+      console.log('qs: ' + (Date.now() - time2));
+
+    expect(counts1).toEqual(counts2);
+  }
+});
+
 it('should work for open shadow roots', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$eval(`css=span`, e => e.textContent)).toBe('Hello from root1');

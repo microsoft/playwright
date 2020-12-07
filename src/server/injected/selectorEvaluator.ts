@@ -31,9 +31,17 @@ export interface SelectorEngine {
   query?(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[];
 }
 
+type QueryCache = Map<any, { rest: any[], result: any }[]>;
 export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _engines = new Map<string, SelectorEngine>();
-  private _cache = new Map<any, { rest: any[], result: any }[]>();
+  private _cacheQueryCSS: QueryCache = new Map();
+  private _cacheMatches: QueryCache = new Map();
+  private _cacheQuery: QueryCache = new Map();
+  private _cacheMatchesSimple: QueryCache = new Map();
+  private _cacheMatchesParents: QueryCache = new Map();
+  private _cacheCallMatches: QueryCache = new Map();
+  private _cacheCallQuery: QueryCache = new Map();
+  private _cacheQuerySimple: QueryCache = new Map();
 
   constructor(extraEngines: Map<string, SelectorEngine>) {
     // Note: keep predefined names in sync with Selectors class.
@@ -55,21 +63,25 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   // This is the only function we should use for querying, because it does
-  // the right thing with caching
+  // the right thing with caching.
   evaluate(context: QueryContext, s: CSSComplexSelectorList): Element[] {
     const result = this.query(context, s);
-    this._cache.clear();
+    this._cacheQueryCSS.clear();
+    this._cacheMatches.clear();
+    this._cacheQuery.clear();
+    this._cacheMatchesSimple.clear();
+    this._cacheMatchesParents.clear();
+    this._cacheCallMatches.clear();
+    this._cacheCallQuery.clear();
+    this._cacheQuerySimple.clear();
     return result;
   }
 
-  private _cached<T>(main: any, rest: any[], cb: () => T): T {
-    if (!this._cache.has(main))
-      this._cache.set(main, []);
-    const entries = this._cache.get(main)!;
-    const entry = entries.find(e => {
-      return e.rest.length === rest.length &&
-          rest.findIndex((value, index) => e.rest[index] !== value) === -1;
-    });
+  private _cached<T>(cache: QueryCache, main: any, rest: any[], cb: () => T): T {
+    if (!cache.has(main))
+      cache.set(main, []);
+    const entries = cache.get(main)!;
+    const entry = entries.find(e => rest.every((value, index) => e.rest[index] === value));
     if (entry)
       return entry.result as T;
     const result = cb();
@@ -87,7 +99,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 
   matches(element: Element, s: Selector, context: QueryContext): boolean {
     const selector = this._checkSelector(s);
-    return this._cached<boolean>(element, ['matches', selector, context], () => {
+    return this._cached<boolean>(this._cacheMatches, element, [selector, context], () => {
       if (Array.isArray(selector))
         return this._matchesEngine(isEngine, element, selector, context);
       if (!this._matchesSimple(element, selector.simples[selector.simples.length - 1].selector, context))
@@ -98,7 +110,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 
   query(context: QueryContext, s: any): Element[] {
     const selector = this._checkSelector(s);
-    return this._cached<Element[]>(selector, ['query', context], () => {
+    return this._cached<Element[]>(this._cacheQuery, selector, [context], () => {
       if (Array.isArray(selector))
         return this._queryEngine(isEngine, context, selector);
       const elements = this._querySimple(context, selector.simples[selector.simples.length - 1].selector);
@@ -107,7 +119,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   private _matchesSimple(element: Element, simple: CSSSimpleSelector, context: QueryContext): boolean {
-    return this._cached<boolean>(element, ['_matchesSimple', simple, context], () => {
+    return this._cached<boolean>(this._cacheMatchesSimple, element, [simple, context], () => {
       const isScopeClause = simple.functions.some(f => f.name === 'scope');
       if (!isScopeClause && element === context.scope)
         return false;
@@ -122,7 +134,10 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   private _querySimple(context: QueryContext, simple: CSSSimpleSelector): Element[] {
-    return this._cached<Element[]>(simple, ['_querySimple', context], () => {
+    if (!simple.functions.length)
+      return this._queryCSS(context, simple.css || '*');
+
+    return this._cached<Element[]>(this._cacheQuerySimple, simple, [context], () => {
       let css = simple.css;
       const funcs = simple.functions;
       if (css === '*' && funcs.length)
@@ -157,9 +172,9 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   private _matchesParents(element: Element, complex: CSSComplexSelector, index: number, context: QueryContext): boolean {
-    return this._cached<boolean>(element, ['_matchesParents', complex, index, context], () => {
-      if (index < 0)
-        return true;
+    if (index < 0)
+      return true;
+    return this._cached<boolean>(this._cacheMatchesParents, element, [complex, index, context], () => {
       const { selector: simple, combinator } = complex.simples[index];
       if (combinator === '>') {
         const parent = parentElementOrShadowHostInContext(element, context);
@@ -220,28 +235,26 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   }
 
   private _callMatches(engine: SelectorEngine, element: Element, args: CSSFunctionArgument[], context: QueryContext): boolean {
-    return this._cached<boolean>(element, ['_callMatches', engine, args, context.scope, context.pierceShadow], () => {
+    return this._cached<boolean>(this._cacheCallMatches, element, [engine, args, context.scope, context.pierceShadow], () => {
       return engine.matches!(element, args, context, this);
     });
   }
 
   private _callQuery(engine: SelectorEngine, args: CSSFunctionArgument[], context: QueryContext): Element[] {
-    return this._cached<Element[]>(args, ['_callQuery', engine, context.scope, context.pierceShadow], () => {
+    return this._cached<Element[]>(this._cacheCallQuery, args, [engine, context.scope, context.pierceShadow], () => {
       return engine.query!(context, args, this);
     });
   }
 
   private _matchesCSS(element: Element, css: string): boolean {
-    return this._cached<boolean>(element, ['_matchesCSS', css], () => {
-      return element.matches(css);
-    });
+    return element.matches(css);
   }
 
   _queryCSS(context: QueryContext, css: string): Element[] {
-    return this._cached<Element[]>(css, ['_queryCSS', context], () => {
-      const result: Element[] = [];
+    return this._cached<Element[]>(this._cacheQueryCSS, css, [context], () => {
+      let result: Element[] = [];
       function query(root: Element | ShadowRoot | Document) {
-        result.push(...root.querySelectorAll(css));
+        result = result.concat([...root.querySelectorAll(css)]);
         if (!context.pierceShadow)
           return;
         if ((root as Element).shadowRoot)
@@ -274,11 +287,10 @@ const isEngine: SelectorEngine = {
   query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
     if (args.length === 0)
       throw new Error(`"is" engine expects non-empty selector list`);
-    const elements: Element[] = [];
+    let elements: Element[] = [];
     for (const arg of args)
-      elements.push(...evaluator.query(context, arg));
-    const result = Array.from(new Set(elements));
-    return args.length > 1 ? sortInDOMOrder(result) : result;
+      elements = elements.concat(evaluator.query(context, arg));
+    return args.length === 1 ? elements : sortInDOMOrder(elements);
   },
 };
 
