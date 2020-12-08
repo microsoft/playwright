@@ -12,6 +12,7 @@ cd ./output
 # cleanup environment
 unset PLAYWRIGHT_DOWNLOAD_HOST
 unset PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD
+unset PLAYWRIGHT_BROWSERS_LIST
 export PLAYWRIGHT_BROWSERS_PATH=0
 
 # Pack all packages and put them in our output folder.

@@ -107,6 +107,18 @@ export function getAsBooleanFromENV(name: string): boolean {
   return !!value && value !== 'false' && value !== '0';
 }
 
+export function getBrowserListFromENV(): string[]|undefined{
+  const value = getFromENV('PLAYWRIGHT_BROWSERS_LIST');
+  if (!!value){
+    const browserList = value.toLowerCase().replace(/ /g,'').split(',');
+    return browserList.filter(browser => {
+      if ((['chromium','firefox','webkit']).includes(browser))
+        return true;
+      throw new Error(`Invalid browser ${browser}, valid browsers are chromium, firefox, webkit `);
+    });
+  }
+}
+
 export async function mkdirIfNeeded(filePath: string) {
   // This will harmlessly throw on windows if the dirname is the root directory.
   await mkdirAsync(path.dirname(filePath), {recursive: true}).catch(() => {});

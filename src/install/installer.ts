@@ -22,7 +22,7 @@ import * as removeFolder from 'rimraf';
 import * as lockfile from 'proper-lockfile';
 import * as browserPaths from '../utils/browserPaths';
 import * as browserFetcher from './browserFetcher';
-import { getAsBooleanFromENV } from '../utils/utils';
+import { getAsBooleanFromENV, getBrowserListFromENV } from '../utils/utils';
 
 const fsMkdirAsync = util.promisify(fs.mkdir.bind(fs));
 const fsReaddirAsync = util.promisify(fs.readdir.bind(fs));
@@ -101,8 +101,14 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   }
 
   // 3. Install missing browsers for this package.
-  const myBrowsersToDownload = await readBrowsersToDownload(packagePath);
-  for (const browser of myBrowsersToDownload) {
+  let browsersToDownload = await readBrowsersToDownload(packagePath);
+  const browserListFromENV = getBrowserListFromENV();
+  if (browserListFromENV){
+    browserFetcher.logPolitely(`Downloading browsers ${browserListFromENV.join(', ')} as specified in PLAYWRIGHT_BROWSERS_LIST env var.`);
+    browsersToDownload = browsersToDownload.filter(browser => browserListFromENV.includes(browser.name));
+  }
+
+  for (const browser of browsersToDownload) {
     await browserFetcher.downloadBrowserWithProgressBar(browsersPath, browser);
     await fsWriteFileAsync(browserPaths.markerFilePath(browsersPath, browser), '');
   }

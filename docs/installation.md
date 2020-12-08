@@ -30,6 +30,16 @@ du -hs ./Library/Caches/ms-playwright/*
 180M  webkit-XXXX
 ```
 
+You can override the default browser download behavior by using environment variable. When installing Playwright, ask it to download browsers you need using environment variable `PLAYWRIGHT_BROWSERS_LIST` with a list of comma `,` separated browsers:
+
+```sh
+# Linux/macOS
+$ PLAYWRIGHT_BROWSERS_LIST=firefox,webkit npm i -D playwright
+# Windows
+$ set PLAYWRIGHT_BROWSERS_LIST=firefox,webkit
+$ npm i -D playwright
+```
+
 You can override default behavior using environment variables. When installing Playwright, ask it to download browsers into a specific location:
 
 ```sh

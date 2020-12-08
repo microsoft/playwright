@@ -5432,6 +5432,7 @@ If Playwright doesn't find them in the environment, a lowercased variant of thes
   - `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` - host to specify Webkit downloads
 - `PLAYWRIGHT_BROWSERS_PATH` - specify a shared directory that playwright will use to download browsers and to look for browsers when launching browser instances.
 - `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` - set to non-empty value to skip browser downloads altogether.
+- `PLAYWRIGHT_BROWSERS_LIST` - set to comma separated list of browsers to download.
 
 ```sh
 # Linux/macOS
@@ -5439,7 +5440,8 @@ If Playwright doesn't find them in the environment, a lowercased variant of thes
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers npm install --save-dev playwright
 # Use shared location to find browsers.
 $ PLAYWRIGHT_BROWSERS_PATH=$HOME/playwright-browsers node playwright-script.js
-
+# Install specific browsers.
+$ PLAYWRIGHT_BROWSERS_LIST=chromium,webkit npm install --save-dev playwright
 # Windows
 # Install browsers to the shared location.
 $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\playwright-browsers
@@ -5447,6 +5449,9 @@ $ npm install --save-dev playwright
 # Use shared location to find browsers.
 $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\playwright-browsers
 $ node playwright-script.js
+# Install specific browsers.
+$ set PLAYWRIGHT_BROWSERS_LIST=chromium,webkit
+$ npm install --save-dev playwright
 ```
 
 
