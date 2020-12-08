@@ -34,9 +34,18 @@ export function selectorsV2Enabled() {
   return true;
 }
 
-export function parseSelector(selector: string): ParsedSelector {
+export function selectorsV2EngineNames() {
+  return ['not', 'is', 'where', 'has', 'scope', 'light', 'index', 'visible', 'matches-text', 'above', 'below', 'right-of', 'left-of', 'near', 'within'];
+}
+
+export function parseSelector(selector: string, customNames: Set<string>): ParsedSelector {
   const v1 = parseSelectorV1(selector);
-  const names = new Set<string>(v1.parts.map(part => part.name));
+  const names = new Set<string>();
+  for (const { name } of v1.parts) {
+    names.add(name);
+    if (!customNames.has(name))
+      throw new Error(`Unknown engine "${name}" while parsing selector ${selector}`);
+  }
 
   if (!selectorsV2Enabled()) {
     return {
@@ -56,7 +65,7 @@ export function parseSelector(selector: string): ParsedSelector {
       }
       let simple: CSSSimpleSelector;
       if (name === 'css') {
-        const parsed = parseCSS(part.body);
+        const parsed = parseCSS(part.body, customNames);
         parsed.names.forEach(name => names.add(name));
         simple = callWith('is', parsed.selector);
       } else if (name === 'text') {

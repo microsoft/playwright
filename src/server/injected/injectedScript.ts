@@ -19,7 +19,7 @@ import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector, ParsedSelectorV1, parseSelector } from '../common/selectorParser';
+import { ParsedSelector, ParsedSelectorV1, parseSelector, selectorsV2Enabled, selectorsV2EngineNames } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
 import { SelectorEvaluatorImpl, SelectorEngine as SelectorEngineV2, QueryContext, isVisible, parentElementOrShadowHost } from './selectorEvaluator';
 
@@ -43,6 +43,7 @@ export type InjectedScriptPoll<T> = {
 export class InjectedScript {
   private _enginesV1: Map<string, SelectorEngine>;
   private _evaluator: SelectorEvaluatorImpl;
+  private _engineNames: Set<string>;
 
   constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
     this._enginesV1 = new Map();
@@ -67,10 +68,16 @@ export class InjectedScript {
     for (const { name, engine } of customEngines)
       wrapped.set(name, wrapV2(name, engine));
     this._evaluator = new SelectorEvaluatorImpl(wrapped);
+
+    this._engineNames = new Set(this._enginesV1.keys());
+    if (selectorsV2Enabled()) {
+      for (const name of selectorsV2EngineNames())
+        this._engineNames.add(name);
+    }
   }
 
   parseSelector(selector: string): ParsedSelector {
-    return parseSelector(selector);
+    return parseSelector(selector, this._engineNames);
   }
 
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
