@@ -30,6 +30,7 @@ import { TimeoutSettings } from '../utils/timeoutSettings';
 import { validateHostRequirements } from './validateDependencies';
 import { isDebugMode } from '../utils/utils';
 import { helper } from './helper';
+import { RecentLogsCollector } from '../utils/debugLogger';
 
 const mkdirAsync = util.promisify(fs.mkdir);
 const mkdtempAsync = util.promisify(fs.mkdtemp);
@@ -81,7 +82,8 @@ export abstract class BrowserType {
 
   async _innerLaunch(progress: Progress, options: types.LaunchOptions, persistent: types.BrowserContextOptions | undefined, protocolLogger: types.ProtocolLogger, userDataDir?: string): Promise<Browser> {
     options.proxy = options.proxy ? normalizeProxySettings(options.proxy) : undefined;
-    const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, userDataDir);
+    const browserLogsCollector = new RecentLogsCollector();
+    const { browserProcess, downloadsPath, transport } = await this._launchProcess(progress, options, !!persistent, browserLogsCollector, userDataDir);
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
@@ -93,6 +95,7 @@ export abstract class BrowserType {
       browserProcess,
       proxy: options.proxy,
       protocolLogger,
+      browserLogsCollector,
     };
     if (persistent)
       validateBrowserContextOptions(persistent, browserOptions);
@@ -104,7 +107,7 @@ export abstract class BrowserType {
     return browser;
   }
 
-  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, downloadsPath: string, transport: ConnectionTransport }> {
+  private async _launchProcess(progress: Progress, options: types.LaunchOptions, isPersistent: boolean, browserLogsCollector: RecentLogsCollector, userDataDir?: string): Promise<{ browserProcess: BrowserProcess, downloadsPath: string, transport: ConnectionTransport }> {
     const {
       ignoreDefaultArgs,
       ignoreAllDefaultArgs,
@@ -172,7 +175,10 @@ export abstract class BrowserType {
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,
-      progress,
+      log: (message: string) => {
+        progress.log(message);
+        browserLogsCollector.log(message);
+      },
       stdio: 'pipe',
       tempDirectories,
       attemptToGracefullyClose: async () => {

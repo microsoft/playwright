@@ -52,7 +52,7 @@ export class WKBrowser extends Browser {
 
   constructor(transport: ConnectionTransport, options: BrowserOptions) {
     super(options);
-    this._connection = new WKConnection(transport, this._onDisconnect.bind(this), options.protocolLogger);
+    this._connection = new WKConnection(transport, this._onDisconnect.bind(this), options.protocolLogger, options.browserLogsCollector);
     this._browserSession = this._connection.browserSession;
     this._eventListeners = [
       helper.addEventListener(this._browserSession, 'Playwright.pageProxyCreated', this._onPageProxyCreated.bind(this)),
@@ -69,7 +69,7 @@ export class WKBrowser extends Browser {
 
   _onDisconnect() {
     for (const wkPage of this._wkPages.values())
-      wkPage.dispose();
+      wkPage.dispose(true);
     this._didClose();
   }
 
@@ -162,7 +162,7 @@ export class WKBrowser extends Browser {
     if (!wkPage)
       return;
     wkPage.didClose();
-    wkPage.dispose();
+    wkPage.dispose(false);
     this._wkPages.delete(pageProxyId);
   }
 

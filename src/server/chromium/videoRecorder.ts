@@ -65,7 +65,7 @@ export class VideoRecorder {
       executablePath,
       args,
       stdio: 'stdin',
-      progress,
+      log: (message: string) => progress.log(message),
       tempDirectories: [],
       attemptToGracefullyClose: async () => {
         progress.log('Closing stdin...');

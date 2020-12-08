@@ -20,8 +20,9 @@ import { assert } from '../../utils/utils';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
+import { helper } from '../helper';
 
 export const ConnectionEvents = {
   Disconnected: Symbol('Disconnected'),
@@ -36,6 +37,7 @@ export class FFConnection extends EventEmitter {
   private _callbacks: Map<number, {resolve: Function, reject: Function, error: Error, method: string}>;
   private _transport: ConnectionTransport;
   private readonly _protocolLogger: ProtocolLogger;
+  private readonly _browserLogsCollector: RecentLogsCollector;
   readonly _sessions: Map<string, FFSession>;
   _closed: boolean;
 
@@ -45,10 +47,11 @@ export class FFConnection extends EventEmitter {
   removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
   once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
-  constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger) {
+  constructor(transport: ConnectionTransport, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     super();
     this._transport = transport;
     this._protocolLogger = protocolLogger;
+    this._browserLogsCollector = browserLogsCollector;
     this._lastId = 0;
     this._callbacks = new Map();
 
@@ -68,6 +71,7 @@ export class FFConnection extends EventEmitter {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]> {
+    this._checkClosed(method);
     const id = this.nextMessageId();
     this._rawSend({id, method, params});
     return new Promise((resolve, reject) => {
@@ -77,6 +81,11 @@ export class FFConnection extends EventEmitter {
 
   nextMessageId(): number {
     return ++this._lastId;
+  }
+
+  _checkClosed(method: string) {
+    if (this._closed)
+      throw new Error(`Protocol error (${method}): Browser closed.` + helper.formatBrowserLogs(this._browserLogsCollector.recentLogs()));
   }
 
   _rawSend(message: ProtocolRequest) {
@@ -111,12 +120,13 @@ export class FFConnection extends EventEmitter {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    for (const callback of this._callbacks.values())
-      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.`));
-    this._callbacks.clear();
+    const formattedBrowserLogs = helper.formatBrowserLogs(this._browserLogsCollector.recentLogs());
     for (const session of this._sessions.values())
-      session.dispose();
+      session.dispose(formattedBrowserLogs);
     this._sessions.clear();
+    for (const callback of this._callbacks.values())
+      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Browser closed.` + formattedBrowserLogs));
+    this._callbacks.clear();
     Promise.resolve().then(() => this.emit(ConnectionEvents.Disconnected));
   }
 
@@ -175,6 +185,7 @@ export class FFSession extends EventEmitter {
   ): Promise<Protocol.CommandReturnValues[T]> {
     if (this._crashed)
       throw new Error('Page crashed');
+    this._connection._checkClosed(method);
     if (this._disposed)
       throw new Error(`Protocol error (${method}): Session closed. Most likely the ${this._targetType} has been closed.`);
     const id = this._connection.nextMessageId();
@@ -202,9 +213,9 @@ export class FFSession extends EventEmitter {
     }
   }
 
-  dispose() {
+  dispose(formattedBrowserLogs?: string) {
     for (const callback of this._callbacks.values())
-      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.`));
+      callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): Target closed.` + formattedBrowserLogs));
     this._callbacks.clear();
     this._disposed = true;
     this._connection._sessions.delete(this._sessionId);

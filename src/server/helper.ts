@@ -120,6 +120,12 @@ class Helper {
         debugLogger.log('protocol', (direction === 'send' ? 'SEND ► ' : '◀ RECV ') + JSON.stringify(message));
     };
   }
+
+  static formatBrowserLogs(logs: string[]) {
+    if (!logs.length)
+      return '';
+    return '\n' + '='.repeat(20) + ' Browser output: ' + '='.repeat(20) + '\n' + logs.join('\n');
+  }
 }
 
 export const helper = Helper;
