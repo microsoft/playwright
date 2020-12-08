@@ -238,8 +238,9 @@ it('should not result in unhandled rejection', async ({page}) => {
   expect(await page.evaluate('1 + 1').catch(e => e)).toBeInstanceOf(Error);
 });
 
-it('should work with internal bindings', (test, { mode }) => {
+it('should work with internal bindings', (test, { mode, browserName }) => {
   test.skip(mode !== 'default');
+  test.skip(browserName !== 'chromium');
 }, async ({page, toImpl, server}) => {
   const implPage: import('../src/server/page').Page = toImpl(page);
   let foo;
