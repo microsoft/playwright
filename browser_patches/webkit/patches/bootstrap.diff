@@ -9818,10 +9818,10 @@ index 0000000000000000000000000000000000000000..0d4a837cbb0bbba71e32ed083a4c4cfe
 +} // namespace WebKit
 diff --git a/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045633dc0de
+index 0000000000000000000000000000000000000000..eca2c4cd9c8d312ad519e312c99f0b0a2435c9eb
 --- /dev/null
 +++ b/Source/WebKit/UIProcess/Inspector/Agents/ScreencastEncoder.cpp
-@@ -0,0 +1,394 @@
+@@ -0,0 +1,393 @@
 +/*
 + * Copyright (c) 2010, The WebM Project authors. All rights reserved.
 + * Copyright (c) 2013 The Chromium Authors. All rights reserved.
@@ -10048,9 +10048,8 @@ index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045
 +                    fprintf(stderr, "Failed to write compressed frame\n");
 +                    return false;
 +                }
-+                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
 +                ++m_frameCount;
-+                fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
++                // fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0 ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
 +                m_pts += pkt->data.frame.duration;
 +            }
 +        }
@@ -10066,7 +10065,7 @@ index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045
 +
 +        m_writer->finish();
 +        fclose(m_file);
-+        fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
++        // fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
 +    }
 +
 +    Ref<WorkQueue> m_encoderQueue;
@@ -10132,7 +10131,7 @@ index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045
 +    }
 +
 +    std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(codec, cfg, file));
-+    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
++    // fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
 +    return adoptRef(new ScreencastEncoder(WTFMove(vpxCodec), size, scale));
 +}
 +
@@ -10154,12 +10153,12 @@ index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045
 +#if USE(CAIRO)
 +void ScreencastEncoder::encodeFrame(cairo_surface_t* drawingAreaSurface, IntSize size)
 +{
-+    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
++    // fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +    // Note that in WPE drawing area size is updated asynchronously and may differ from acutal
 +    // size of the surface.
 +    if (size.isZero()) {
-+        fprintf(stderr, "Cairo surface size is 0\n");
++        // fprintf(stderr, "Cairo surface size is 0\n");
 +        return;
 +    }
 +
@@ -10192,7 +10191,7 @@ index 0000000000000000000000000000000000000000..bc0bca0fcd5fe15d6ace9acb6bd21045
 +#elif PLATFORM(MAC)
 +void ScreencastEncoder::encodeFrame(RetainPtr<CGImageRef>&& windowImage)
 +{
-+    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
++    // fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
 +    flushLastFrame();
 +
 +    m_lastFrame = makeUnique<VPXFrame>(WTFMove(windowImage), m_scale, m_offsetTop);
