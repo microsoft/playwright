@@ -29,8 +29,12 @@ jobs:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - run: ./docs/docker/build.sh bionic playwright:localbuild-bionic
-    - run: ./docs/docker/build.sh focal playwright:localbuild-focal
+    - run: ./docs/docker/build.sh bionic playwright.azurecr.io/public/playwright-base:next-bionic playwright:localbuild-bionic
+    - run: ./docs/docker/build.sh focal playwright.azurecr.io/public/playwright-base:next-focal playwright:localbuild-focal
+    - name: publish base image
+      run: |
+        docker push playwright.azurecr.io/public/playwright-base:next-bionic
+        docker push playwright.azurecr.io/public/playwright-base:next-focal
     - name: tag & publish
       run: |
         ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next
