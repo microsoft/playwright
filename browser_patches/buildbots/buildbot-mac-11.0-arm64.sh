@@ -51,7 +51,7 @@ cd "$(dirname "$0")"
 IS_FIRST_RUN_FILE="/tmp/pw-buildbot-first-run.txt";
 if ! [[ -f $IS_FIRST_RUN_FILE ]]; then
   source ./send_telegram_message.sh
-  send_telegram_message '**Mac 10.15 Buildbot Is Active**'
+  send_telegram_message '**Mac 11.0 M1 Buildbot Is Active**'
 fi
 touch "$IS_FIRST_RUN_FILE"
 
