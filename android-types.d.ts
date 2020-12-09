@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
-import { BrowserContext, BrowserContextOptions } from './types/types';
+import { Page, BrowserContext, BrowserContextOptions } from './types/types';
 import * as apiInternal from './android-types-internal';
+import { EventEmitter } from 'events';
 
-export * from './android-types-internal';
-export type AndroidDevice  = apiInternal.AndroidDevice<BrowserContext, BrowserContextOptions>;
+export { AndroidElementInfo, AndroidSelector } from './android-types-internal';
+export type AndroidDevice  = apiInternal.AndroidDevice<BrowserContextOptions, BrowserContext, Page>;
+export type AndroidWebView  = apiInternal.AndroidWebView<Page>;
+
+export interface Android extends EventEmitter {
+  setDefaultTimeout(timeout: number): void;
+  devices(): Promise<AndroidDevice[]>;
+}

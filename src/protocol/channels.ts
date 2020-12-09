@@ -2406,55 +2406,20 @@ export type ElectronApplicationCloseResult = void;
 export type AndroidInitializer = {};
 export interface AndroidChannel extends Channel {
   devices(params?: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
+  setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
 }
 export type AndroidDevicesParams = {};
 export type AndroidDevicesOptions = {};
 export type AndroidDevicesResult = {
   devices: AndroidDeviceChannel[],
 };
-
-export type AndroidSelector = {
-  checkable?: boolean,
-  checked?: boolean,
-  clazz?: string,
-  clickable?: boolean,
-  depth?: number,
-  desc?: string,
-  enabled?: boolean,
-  focusable?: boolean,
-  focused?: boolean,
-  hasChild?: {
-    selector: AndroidSelector,
-  },
-  hasDescendant?: {
-    selector: AndroidSelector,
-    maxDepth?: number,
-  },
-  longClickable?: boolean,
-  pkg?: string,
-  res?: string,
-  scrollable?: boolean,
-  selected?: boolean,
-  text?: string,
+export type AndroidSetDefaultTimeoutNoReplyParams = {
+  timeout: number,
 };
+export type AndroidSetDefaultTimeoutNoReplyOptions = {
 
-export type AndroidElementInfo = {
-  clazz: string,
-  desc: string,
-  res: string,
-  pkg: string,
-  text: string,
-  bounds: Rect,
-  checkable: boolean,
-  checked: boolean,
-  clickable: boolean,
-  enabled: boolean,
-  focusable: boolean,
-  focused: boolean,
-  longClickable: boolean,
-  scrollable: boolean,
-  selected: boolean,
 };
+export type AndroidSetDefaultTimeoutNoReplyResult = void;
 
 // ----------- AndroidDevice -----------
 export type AndroidDeviceInitializer = {
@@ -2462,6 +2427,8 @@ export type AndroidDeviceInitializer = {
   serial: string,
 };
 export interface AndroidDeviceChannel extends Channel {
+  on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
+  on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
   wait(params: AndroidDeviceWaitParams, metadata?: Metadata): Promise<AndroidDeviceWaitResult>;
   fill(params: AndroidDeviceFillParams, metadata?: Metadata): Promise<AndroidDeviceFillResult>;
   tap(params: AndroidDeviceTapParams, metadata?: Metadata): Promise<AndroidDeviceTapResult>;
@@ -2480,8 +2447,16 @@ export interface AndroidDeviceChannel extends Channel {
   inputDrag(params: AndroidDeviceInputDragParams, metadata?: Metadata): Promise<AndroidDeviceInputDragResult>;
   launchBrowser(params: AndroidDeviceLaunchBrowserParams, metadata?: Metadata): Promise<AndroidDeviceLaunchBrowserResult>;
   shell(params: AndroidDeviceShellParams, metadata?: Metadata): Promise<AndroidDeviceShellResult>;
+  setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: Metadata): Promise<AndroidDeviceConnectToWebViewResult>;
   close(params?: AndroidDeviceCloseParams, metadata?: Metadata): Promise<AndroidDeviceCloseResult>;
 }
+export type AndroidDeviceWebViewAddedEvent = {
+  webView: AndroidWebView,
+};
+export type AndroidDeviceWebViewRemovedEvent = {
+  pid: number,
+};
 export type AndroidDeviceWaitParams = {
   selector: AndroidSelector,
   state?: 'gone',
@@ -2736,6 +2711,70 @@ export type AndroidDeviceShellOptions = {
 export type AndroidDeviceShellResult = {
   result: string,
 };
+export type AndroidDeviceSetDefaultTimeoutNoReplyParams = {
+  timeout: number,
+};
+export type AndroidDeviceSetDefaultTimeoutNoReplyOptions = {
+
+};
+export type AndroidDeviceSetDefaultTimeoutNoReplyResult = void;
+export type AndroidDeviceConnectToWebViewParams = {
+  pid: number,
+};
+export type AndroidDeviceConnectToWebViewOptions = {
+
+};
+export type AndroidDeviceConnectToWebViewResult = {
+  context: BrowserContextChannel,
+};
 export type AndroidDeviceCloseParams = {};
 export type AndroidDeviceCloseOptions = {};
 export type AndroidDeviceCloseResult = void;
+
+export type AndroidWebView = {
+  pid: number,
+  pkg: string,
+};
+
+export type AndroidSelector = {
+  checkable?: boolean,
+  checked?: boolean,
+  clazz?: string,
+  clickable?: boolean,
+  depth?: number,
+  desc?: string,
+  enabled?: boolean,
+  focusable?: boolean,
+  focused?: boolean,
+  hasChild?: {
+    selector: AndroidSelector,
+  },
+  hasDescendant?: {
+    selector: AndroidSelector,
+    maxDepth?: number,
+  },
+  longClickable?: boolean,
+  pkg?: string,
+  res?: string,
+  scrollable?: boolean,
+  selected?: boolean,
+  text?: string,
+};
+
+export type AndroidElementInfo = {
+  clazz: string,
+  desc: string,
+  res: string,
+  pkg: string,
+  text: string,
+  bounds: Rect,
+  checkable: boolean,
+  checked: boolean,
+  clickable: boolean,
+  enabled: boolean,
+  focusable: boolean,
+  focused: boolean,
+  longClickable: boolean,
+  scrollable: boolean,
+  selected: boolean,
+};

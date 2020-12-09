@@ -20,8 +20,8 @@ import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer> implements channels.AndroidChannel {
-  constructor(scope: DispatcherScope, electron: Android) {
-    super(scope, electron, 'Android', {}, true);
+  constructor(scope: DispatcherScope, android: Android) {
+    super(scope, android, 'Android', {}, true);
   }
 
   async devices(params: channels.AndroidDevicesParams): Promise<channels.AndroidDevicesResult> {
@@ -30,14 +30,22 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidIniti
       devices: devices.map(d => new AndroidDeviceDispatcher(this._scope, d))
     };
   }
+
+  async setDefaultTimeoutNoReply(params: channels.AndroidSetDefaultTimeoutNoReplyParams) {
+    this._object.setDefaultTimeout(params.timeout);
+  }
 }
 
 export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceInitializer> implements channels.AndroidDeviceChannel {
   constructor(scope: DispatcherScope, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,
-      serial: device.serial
+      serial: device.serial,
     }, true);
+    for (const webView of device.webViews())
+      this._dispatchEvent('webViewAdded', { webView });
+    device.on(AndroidDevice.Events.WebViewAdded, webView => this._dispatchEvent('webViewAdded', { webView }));
+    device.on(AndroidDevice.Events.WebViewRemoved, pid => this._dispatchEvent('webViewRemoved', { pid }));
   }
 
   async wait(params: channels.AndroidDeviceWaitParams) {
@@ -128,6 +136,14 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async close(params: channels.AndroidDeviceCloseParams) {
     await this._object.close();
+  }
+
+  async setDefaultTimeoutNoReply(params: channels.AndroidDeviceSetDefaultTimeoutNoReplyParams) {
+    this._object.setDefaultTimeout(params.timeout);
+  }
+
+  async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
+    return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid)) };
   }
 }
 

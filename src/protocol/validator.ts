@@ -898,46 +898,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElectronApplicationCloseParams = tOptional(tObject({}));
   scheme.AndroidDevicesParams = tOptional(tObject({}));
-  scheme.AndroidSelector = tObject({
-    checkable: tOptional(tBoolean),
-    checked: tOptional(tBoolean),
-    clazz: tOptional(tString),
-    clickable: tOptional(tBoolean),
-    depth: tOptional(tNumber),
-    desc: tOptional(tString),
-    enabled: tOptional(tBoolean),
-    focusable: tOptional(tBoolean),
-    focused: tOptional(tBoolean),
-    hasChild: tOptional(tObject({
-      selector: tType('AndroidSelector'),
-    })),
-    hasDescendant: tOptional(tObject({
-      selector: tType('AndroidSelector'),
-      maxDepth: tOptional(tNumber),
-    })),
-    longClickable: tOptional(tBoolean),
-    pkg: tOptional(tString),
-    res: tOptional(tString),
-    scrollable: tOptional(tBoolean),
-    selected: tOptional(tBoolean),
-    text: tOptional(tString),
-  });
-  scheme.AndroidElementInfo = tObject({
-    clazz: tString,
-    desc: tString,
-    res: tString,
-    pkg: tString,
-    text: tString,
-    bounds: tType('Rect'),
-    checkable: tBoolean,
-    checked: tBoolean,
-    clickable: tBoolean,
-    enabled: tBoolean,
-    focusable: tBoolean,
-    focused: tBoolean,
-    longClickable: tBoolean,
-    scrollable: tBoolean,
-    selected: tBoolean,
+  scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
+    timeout: tNumber,
   });
   scheme.AndroidDeviceWaitParams = tObject({
     selector: tType('AndroidSelector'),
@@ -1065,7 +1027,58 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidDeviceShellParams = tObject({
     command: tString,
   });
+  scheme.AndroidDeviceSetDefaultTimeoutNoReplyParams = tObject({
+    timeout: tNumber,
+  });
+  scheme.AndroidDeviceConnectToWebViewParams = tObject({
+    pid: tNumber,
+  });
   scheme.AndroidDeviceCloseParams = tOptional(tObject({}));
+  scheme.AndroidWebView = tObject({
+    pid: tNumber,
+    pkg: tString,
+  });
+  scheme.AndroidSelector = tObject({
+    checkable: tOptional(tBoolean),
+    checked: tOptional(tBoolean),
+    clazz: tOptional(tString),
+    clickable: tOptional(tBoolean),
+    depth: tOptional(tNumber),
+    desc: tOptional(tString),
+    enabled: tOptional(tBoolean),
+    focusable: tOptional(tBoolean),
+    focused: tOptional(tBoolean),
+    hasChild: tOptional(tObject({
+      selector: tType('AndroidSelector'),
+    })),
+    hasDescendant: tOptional(tObject({
+      selector: tType('AndroidSelector'),
+      maxDepth: tOptional(tNumber),
+    })),
+    longClickable: tOptional(tBoolean),
+    pkg: tOptional(tString),
+    res: tOptional(tString),
+    scrollable: tOptional(tBoolean),
+    selected: tOptional(tBoolean),
+    text: tOptional(tString),
+  });
+  scheme.AndroidElementInfo = tObject({
+    clazz: tString,
+    desc: tString,
+    res: tString,
+    pkg: tString,
+    text: tString,
+    bounds: tType('Rect'),
+    checkable: tBoolean,
+    checked: tBoolean,
+    clickable: tBoolean,
+    enabled: tBoolean,
+    focusable: tBoolean,
+    focused: tBoolean,
+    longClickable: tBoolean,
+    scrollable: tBoolean,
+    selected: tBoolean,
+  });
 
   return scheme;
 }

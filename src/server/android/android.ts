@@ -29,6 +29,8 @@ import { CRBrowser } from '../chromium/crBrowser';
 import { helper } from '../helper';
 import { Transport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
+import { TimeoutSettings } from '../../utils/timeoutSettings';
+import { AndroidWebView } from '../../protocol/channels';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -51,35 +53,67 @@ export interface SocketBackend extends EventEmitter {
 
 export class Android {
   private _backend: Backend;
+  readonly _timeoutSettings: TimeoutSettings;
 
   constructor(backend: Backend) {
     this._backend = backend;
+    this._timeoutSettings = new TimeoutSettings();
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
   async devices(): Promise<AndroidDevice[]> {
     const devices = await this._backend.devices();
-    return await Promise.all(devices.map(d => AndroidDevice.create(d)));
+    return await Promise.all(devices.map(d => AndroidDevice.create(this, d)));
   }
 }
 
-export class AndroidDevice {
+export class AndroidDevice extends EventEmitter {
   readonly _backend: DeviceBackend;
   readonly model: string;
   readonly serial: string;
   private _driverPromise: Promise<Transport> | undefined;
   private _lastId = 0;
   private _callbacks = new Map<number, { fulfill: (result: any) => void, reject: (error: Error) => void }>();
+  private _pollingWebViews: NodeJS.Timeout | undefined;
+  readonly _timeoutSettings: TimeoutSettings;
+  private _webViews = new Map<number, AndroidWebView>();
 
-  constructor(backend: DeviceBackend, model: string) {
+  static Events = {
+    WebViewAdded: 'webViewAdded',
+    WebViewRemoved: 'webViewRemoved',
+  };
+
+  private _browserConnections = new Set<AndroidBrowser>();
+
+  constructor(android: Android, backend: DeviceBackend, model: string) {
+    super();
     this._backend = backend;
     this.model = model;
     this.serial = backend.serial;
+    this._timeoutSettings = new TimeoutSettings(android._timeoutSettings);
   }
 
-  static async create(backend: DeviceBackend): Promise<AndroidDevice> {
+  static async create(android: Android, backend: DeviceBackend): Promise<AndroidDevice> {
     await backend.init();
     const model = await backend.runCommand('shell:getprop ro.product.model');
-    return new AndroidDevice(backend, model);
+    const device = new AndroidDevice(android, backend, model.trim());
+    await device._init();
+    return device;
+  }
+
+  async _init() {
+    await this._refreshWebViews();
+    const poll = () => {
+      this._pollingWebViews = setTimeout(() => this._refreshWebViews().then(poll).catch(() => {}), 500);
+    };
+    poll();
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
   async shell(command: string): Promise<string> {
@@ -101,7 +135,9 @@ export class AndroidDevice {
 
     debug('pw:android')('Installing the new driver');
     for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
+      debug('pw:android')('Reading ' + require.resolve(`../../../bin/${file}`));
       const driverFile = await readFileAsync(require.resolve(`../../../bin/${file}`));
+      debug('pw:android')('Opening install socket');
       const installSocket = await this._backend.open(`shell:cmd package install -r -t -S ${driverFile.length}`);
       debug('pw:android')('Writing driver bytes: ' + driverFile.length);
       await installSocket.write(driverFile);
@@ -150,20 +186,26 @@ export class AndroidDevice {
   }
 
   async close() {
-    const driver = await this._driver();
-    driver.close();
+    if (this._pollingWebViews)
+      clearTimeout(this._pollingWebViews);
+    for (const connection of this._browserConnections)
+      await connection.close();
+    if (this._driverPromise) {
+      const driver = await this._driver();
+      driver.close();
+    }
     await this._backend.close();
   }
 
-  async launchBrowser(packageName: string = 'com.android.chrome', options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    debug('pw:android')('Force-stopping', packageName);
-    await this._backend.runCommand(`shell:am force-stop ${packageName}`);
+  async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    debug('pw:android')('Force-stopping', pkg);
+    await this._backend.runCommand(`shell:am force-stop ${pkg}`);
 
     const socketName = createGuid();
     const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
-    debug('pw:android')('Starting', packageName, commandLine);
+    debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
-    await this._backend.runCommand(`shell:am start -n ${packageName}/com.google.android.apps.chrome.Main about:blank`);
+    await this._backend.runCommand(`shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`);
 
     debug('pw:android')('Polling for socket', socketName);
     while (true) {
@@ -173,8 +215,20 @@ export class AndroidDevice {
       await new Promise(f => setTimeout(f, 100));
     }
     debug('pw:android')('Got the socket, connecting');
-    const androidBrowser = new AndroidBrowser(this, packageName, socketName);
+    return await this._connectToBrowser(socketName, options);
+  }
+
+  connectToWebView(pid: number): Promise<BrowserContext> {
+    const webView = this._webViews.get(pid);
+    if (!webView)
+      throw new Error('WebView has been closed');
+    return this._connectToBrowser(`webview_devtools_remote_${pid}`);
+  }
+
+  private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
+    const androidBrowser = new AndroidBrowser(this, socketName);
     await androidBrowser._open();
+    this._browserConnections.add(androidBrowser);
 
     const browserOptions: BrowserOptions = {
       name: 'clank',
@@ -195,6 +249,49 @@ export class AndroidDevice {
     });
     return browser._defaultContext!;
   }
+
+  webViews(): AndroidWebView[] {
+    return [...this._webViews.values()];
+  }
+
+  private async _refreshWebViews() {
+    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).split('\n');
+
+    const newPids = new Set<number>();
+    for (const line of sockets) {
+      const match = line.match(/[^@]+@webview_devtools_remote_(\d+)/);
+      if (!match)
+        continue;
+      const pid = +match[1];
+      newPids.add(pid);
+    }
+    for (const pid of newPids) {
+      if (this._webViews.has(pid))
+        continue;
+
+      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).split('\n');
+      let pkg = '';
+      for (const proc of procs) {
+        const match = proc.match(/[^\s]+\s+(\d+).*$/);
+        if (!match)
+          continue;
+        const p = match[1];
+        if (+p !== pid)
+          continue;
+        pkg = proc.substring(proc.lastIndexOf(' '));
+      }
+      const webView = { pid, pkg };
+      this._webViews.set(pid, webView);
+      this.emit(AndroidDevice.Events.WebViewAdded, webView);
+    }
+
+    for (const p of this._webViews.keys()) {
+      if (!newPids.has(p)) {
+        this._webViews.delete(p);
+        this.emit(AndroidDevice.Events.WebViewRemoved, p);
+      }
+    }
+  }
 }
 
 class AndroidBrowser extends EventEmitter {
@@ -205,11 +302,9 @@ class AndroidBrowser extends EventEmitter {
   private _waitForNextTask = makeWaitForNextTask();
   onmessage?: (message: any) => void;
   onclose?: () => void;
-  private _packageName: string;
 
-  constructor(device: AndroidDevice, packageName: string, socketName: string) {
+  constructor(device: AndroidDevice, socketName: string) {
     super();
-    this._packageName = packageName;
     this.device = device;
     this.socketName = socketName;
     this._receiver = new (ws as any).Receiver() as stream.Writable;
@@ -249,7 +344,6 @@ Sec-WebSocket-Version: 13\r
 
   async close() {
     await this._socket!.close();
-    await this.device._backend.runCommand(`shell:am force-stop ${this._packageName}`);
   }
 }
 

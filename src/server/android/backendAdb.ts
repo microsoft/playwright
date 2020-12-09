@@ -55,7 +55,7 @@ class AdbDevice implements DeviceBackend {
 
 async function runCommand(command: string, serial?: string): Promise<string> {
   debug('pw:adb:runCommand')(command, serial);
-  const socket = new BufferedSocketWrapper(net.createConnection({ port: 5037 }));
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);
@@ -72,7 +72,7 @@ async function runCommand(command: string, serial?: string): Promise<string> {
 }
 
 async function open(command: string, serial?: string): Promise<BufferedSocketWrapper> {
-  const socket = new BufferedSocketWrapper(net.createConnection({ port: 5037 }));
+  const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
   if (serial) {
     await socket.write(encodeMessage(`host:transport:${serial}`));
     const status = await socket.read(4);
@@ -97,13 +97,15 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   private _notifyReader: (() => void) | undefined;
   private _connectPromise: Promise<void>;
   private _isClosed = false;
+  private _command: string;
 
-  constructor(socket: net.Socket) {
+  constructor(command: string, socket: net.Socket) {
     super();
+    this._command = command;
     this._socket = socket;
     this._connectPromise = new Promise(f => this._socket.on('connect', f));
     this._socket.on('data', data => {
-      debug('pw:android:adb:data')(data.toString());
+      debug('pw:adb:data')(data.toString());
       if (this._isSocket) {
         this.emit('data', data);
         return;
@@ -122,13 +124,13 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
   }
 
   async write(data: Buffer) {
-    debug('pw:android:adb:send')(data.toString());
+    debug('pw:adb:send')(data.toString().substring(0, 100) + '...');
     await this._connectPromise;
     await new Promise(f => this._socket.write(data, f));
   }
 
   async close() {
-    debug('pw:android:adb')('Close');
+    debug('pw:adb')('Close ' + this._command);
     this._socket.destroy();
   }
 
@@ -139,7 +141,7 @@ class BufferedSocketWrapper extends EventEmitter implements SocketBackend {
       await new Promise(f => this._notifyReader = f);
     const result = this._buffer.slice(0, length);
     this._buffer = this._buffer.slice(length);
-    debug('pw:android:adb:recv')(result.toString());
+    debug('pw:adb:recv')(result.toString().substring(0, 100) + '...');
     return result;
   }
 
