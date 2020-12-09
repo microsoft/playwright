@@ -21,6 +21,7 @@ if [[ $# == 0 ]]; then
   exit 1
 fi
 
+CURRENT_ARCH="$(uname -m)"
 CURRENT_HOST_OS="$(uname)"
 CURRENT_HOST_OS_VERSION=""
 if [[ "$CURRENT_HOST_OS" == "Darwin" ]]; then
@@ -36,6 +37,7 @@ BUILD_FLAVOR="$1"
 BUILD_BLOB_NAME=""
 EXPECTED_HOST_OS=""
 EXPECTED_HOST_OS_VERSION=""
+EXPECTED_ARCH="x86_64"
 if [[ "$BUILD_FLAVOR" == "winldd-win64" ]]; then
   BROWSER_NAME="winldd"
   EXPECTED_HOST_OS="MINGW"
@@ -138,8 +140,28 @@ elif [[ "$BUILD_FLAVOR" == "webkit-mac-11.0" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="11.0"
   BUILD_BLOB_NAME="webkit-mac-11.0.zip"
+elif [[ "$BUILD_FLAVOR" == "webkit-mac-11.0-arm64" ]]; then
+  BROWSER_NAME="webkit"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="11.0"
+  EXPECTED_ARCH="arm64"
+  BUILD_BLOB_NAME="webkit-mac-11.0-arm64.zip"
 else
   echo ERROR: unknown build flavor - "$BUILD_FLAVOR"
+  exit 1
+fi
+
+if [[ "$CURRENT_ARCH" != "$EXPECTED_ARCH" ]]; then
+  echo "ERROR: cannot build $BUILD_FLAVOR"
+  echo "  -- expected arch: $EXPECTED_ARCH"
+  echo "  --  current arch: $CURRENT_ARCH"
+  exit 1
+fi
+
+if [[ "$CURRENT_HOST_OS" != $EXPECTED_HOST_OS* ]]; then
+  echo "ERROR: cannot build $BUILD_FLAVOR"
+  echo "  -- expected OS: $EXPECTED_HOST_OS"
+  echo "  --  current OS: $CURRENT_HOST_OS"
   exit 1
 fi
 
