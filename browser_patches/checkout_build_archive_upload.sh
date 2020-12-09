@@ -153,7 +153,7 @@ fi
 
 # Ability to skip arch checks since as of Dec 8, 2020 github self-hosted runner runs
 # under rosetta on Apple Silicon: https://github.com/actions/runner/issues/805
-if [[ (-n "${DO_NOT_ENFORCE_ARCH}") || ("$CURRENT_ARCH" != "$EXPECTED_ARCH") ]]; then
+if [[ (-z "${DO_NOT_ENFORCE_ARCH}") && ("$CURRENT_ARCH" != "$EXPECTED_ARCH") ]]; then
   echo "ERROR: cannot build $BUILD_FLAVOR"
   echo "  -- expected arch: $EXPECTED_ARCH"
   echo "  --  current arch: $CURRENT_ARCH"
