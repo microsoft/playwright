@@ -165,13 +165,6 @@ if [[ "$CURRENT_HOST_OS" != $EXPECTED_HOST_OS* ]]; then
   exit 1
 fi
 
-if [[ "$CURRENT_HOST_OS" != $EXPECTED_HOST_OS* ]]; then
-  echo "ERROR: cannot build $BUILD_FLAVOR"
-  echo "  -- expected OS: $EXPECTED_HOST_OS"
-  echo "  --  current OS: $CURRENT_HOST_OS"
-  exit 1
-fi
-
 if [[ "$CURRENT_HOST_OS_VERSION" != "$EXPECTED_HOST_OS_VERSION" ]]; then
   echo "ERROR: cannot build $BUILD_FLAVOR"
   echo "  -- expected OS Version: $EXPECTED_HOST_OS_VERSION"
