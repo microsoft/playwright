@@ -30,6 +30,7 @@ export type Headers = { [key: string]: string };
 export type Env = { [key: string]: string | number | boolean | undefined };
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
+export type TimeoutOptions = { timeout?: number };
 export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
 export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | number };
 

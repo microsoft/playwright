@@ -20,6 +20,22 @@ Metadata:
     stack: string?
 
 
+Point:
+  type: object
+  properties:
+    x: number
+    y: number
+
+
+Rect:
+  type: object
+  properties:
+    x: number
+    y: number
+    width: number
+    height: number
+
+
 SerializedValue:
   type: object
   # Exactly one of the properties must be present.
@@ -183,10 +199,10 @@ Playwright:
 
   initializer:
     chromium: BrowserType
-    clank: BrowserType
     firefox: BrowserType
     webkit: BrowserType
-    electron: Electron?
+    android: Android
+    electron: Electron
     deviceDescriptors:
       type: array
       items:
@@ -727,13 +743,7 @@ Page:
         quality: number?
         omitBackground: boolean?
         fullPage: boolean?
-        clip:
-          type: object?
-          properties:
-            width: number
-            height: number
-            x: number
-            y: number
+        clip: Rect?
       returns:
         binary: binary
 
@@ -1062,11 +1072,7 @@ Frame:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         delay: number?
         button:
           type: enum?
@@ -1095,11 +1101,7 @@ Frame:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         delay: number?
         button:
           type: enum?
@@ -1193,11 +1195,7 @@ Frame:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         timeout: number?
 
     innerHTML:
@@ -1296,11 +1294,7 @@ Frame:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         timeout: number?
 
     textContent:
@@ -1501,13 +1495,7 @@ ElementHandle:
 
     boundingBox:
       returns:
-        value:
-          type: object?
-          properties:
-            width: number
-            height: number
-            x: number
-            y: number
+        value: Rect?
 
     check:
       parameters:
@@ -1528,11 +1516,7 @@ ElementHandle:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         delay: number?
         button:
           type: enum?
@@ -1560,11 +1544,7 @@ ElementHandle:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         delay: number?
         button:
           type: enum?
@@ -1605,11 +1585,7 @@ ElementHandle:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         timeout: number?
 
     innerHTML:
@@ -1712,11 +1688,7 @@ ElementHandle:
             - Control
             - Meta
             - Shift
-        position:
-          type: object?
-          properties:
-            x: number
-            y: number
+        position: Point?
         timeout: number?
 
     textContent:
@@ -2095,3 +2067,263 @@ ElectronApplication:
         browserWindow: JSHandle
 
 
+
+Android:
+  type: interface
+
+  commands:
+
+    devices:
+      returns:
+        devices:
+          type: array
+          items: AndroidDevice
+
+
+AndroidSelector:
+  type: object
+  properties:
+    checkable: boolean?
+    checked: boolean?
+    clazz: string?
+    clickable: boolean?
+    depth: number?
+    desc: string?
+    enabled: boolean?
+    focusable: boolean?
+    focused: boolean?
+    hasChild:
+      type: object?
+      properties:
+        selector: AndroidSelector
+    hasDescendant:
+      type: object?
+      properties:
+        selector: AndroidSelector
+        maxDepth: number?
+    longClickable: boolean?
+    pkg: string?
+    res: string?
+    scrollable: boolean?
+    selected: boolean?
+    text: string?
+
+
+AndroidElementInfo:
+  type: object
+  properties:
+    clazz: string
+    desc: string
+    res: string
+    pkg: string
+    text: string
+    bounds: Rect
+    checkable: boolean
+    checked: boolean
+    clickable: boolean
+    enabled: boolean
+    focusable: boolean
+    focused: boolean
+    longClickable: boolean
+    scrollable: boolean
+    selected: boolean
+
+
+AndroidDevice:
+  type: interface
+
+  initializer:
+    model: string
+    serial: string
+
+  commands:
+    wait:
+      parameters:
+        selector: AndroidSelector
+        state:
+          type: enum?
+          literals:
+          - gone
+        timeout: number?
+
+    fill:
+      parameters:
+        selector: AndroidSelector
+        text: string
+        timeout: number?
+
+    tap:
+      parameters:
+        selector: AndroidSelector
+        duration: number?
+        timeout: number?
+
+    drag:
+      parameters:
+        selector: AndroidSelector
+        dest: Point
+        speed: number?
+        timeout: number?
+    
+    fling:
+      parameters:
+        selector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        speed: number?
+        timeout: number?
+    
+    longTap:
+      parameters:
+        selector: AndroidSelector
+        timeout: number?
+    
+    pinchClose:
+      parameters:
+        selector: AndroidSelector
+        percent: number
+        speed: number?
+        timeout: number?
+
+    pinchOpen:
+      parameters:
+        selector: AndroidSelector
+        percent: number
+        speed: number?
+        timeout: number?
+
+    scroll:
+      parameters:
+        selector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        percent: number
+        speed: number?
+        timeout: number?
+
+    swipe:
+      parameters:
+        selector: AndroidSelector
+        direction:
+          type: enum
+          literals:
+          - up
+          - down
+          - left
+          - right
+        percent: number
+        speed: number?
+        timeout: number?
+
+    info:
+      parameters:
+        selector: AndroidSelector
+      returns:
+        info: AndroidElementInfo
+
+    inputType:
+      parameters:
+        text: string
+
+    inputPress:
+      parameters:
+        key: string
+
+    inputTap:
+      parameters:
+        point: Point
+
+    inputSwipe:
+      parameters:
+        segments:
+          type: array
+          items: Point
+        steps: number
+
+    inputDrag:
+      parameters:
+        from: Point
+        to: Point
+        steps: number
+
+    launchBrowser:
+      parameters:
+        packageName: string?
+        ignoreHTTPSErrors: boolean?
+        javaScriptEnabled: boolean?
+        bypassCSP: boolean?
+        userAgent: string?
+        locale: string?
+        timezoneId: string?
+        geolocation:
+          type: object?
+          properties:
+            longitude: number
+            latitude: number
+            accuracy: number?
+        permissions:
+          type: array?
+          items: string
+        extraHTTPHeaders:
+          type: array?
+          items: NameValue
+        offline: boolean?
+        httpCredentials:
+          type: object?
+          properties:
+            username: string
+            password: string
+        deviceScaleFactor: number?
+        isMobile: boolean?
+        hasTouch: boolean?
+        colorScheme:
+          type: enum?
+          literals:
+          - dark
+          - light
+          - no-preference
+        acceptDownloads: boolean?
+        _traceResourcesPath: string?
+        _tracePath: string?
+        recordVideo:
+          type: object?
+          properties:
+            dir: string
+            size:
+              type: object?
+              properties:
+                width: number
+                height: number
+        recordHar:
+          type: object?
+          properties:
+            omitContent: boolean?
+            path: string
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
+
+      returns:
+        context: BrowserContext
+
+    shell:
+      parameters:
+        command: string
+      returns:
+        result: string
+
+    close:

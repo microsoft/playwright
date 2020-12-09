@@ -25,7 +25,7 @@ describe('electron app', (suite, { browserName }) => {
 }, () => {
   it('should fire close event', async ({ playwright }) => {
     const electronPath = path.join(__dirname, '..', '..', 'node_modules', '.bin', electronName);
-    const application = await playwright.electron.launch(electronPath, {
+    const application = await playwright._electron.launch(electronPath, {
       args: [path.join(__dirname, 'testApp.js')],
     });
     const events = [];

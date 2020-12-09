@@ -56,6 +56,8 @@ async function checkDeps() {
   }
 
   function allowImport(from, to) {
+    if (!to.startsWith('src' + path.sep))
+      return true;
     from = from.substring(from.indexOf('src' + path.sep)).replace(/\\/g, '/');
     to = to.substring(to.indexOf('src' + path.sep)).replace(/\\/g, '/');
     const fromDirectory = from.substring(0, from.lastIndexOf('/') + 1);
@@ -111,10 +113,11 @@ DEPS['src/server/common/'] = [];
 DEPS['src/server/injected/'] = ['src/server/common/'];
 
 // Electron and Clank use chromium internally.
+DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/transport.ts'];
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 DEPS['src/server/clank/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
-DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/clank/'];
+DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
 DEPS['src/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 // Tracing is a client/server plugin, nothing should depend on it.
