@@ -87,6 +87,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
       ['mac10.14', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac10.15', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac11.0', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
+      ['mac11.0-arm64', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['win32', ['chrome-win', 'chrome.exe']],
       ['win64', ['chrome-win', 'chrome.exe']],
     ]).get(hostPlatform);
@@ -100,6 +101,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
       ['mac10.14', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac10.15', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac11.0', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
+      ['mac11.0-arm64', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['win32', ['firefox', 'firefox.exe']],
       ['win64', ['firefox', 'firefox.exe']],
     ]).get(hostPlatform);
@@ -113,6 +115,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
       ['mac10.14', ['pw_run.sh']],
       ['mac10.15', ['pw_run.sh']],
       ['mac11.0', ['pw_run.sh']],
+      ['mac11.0-arm64', ['pw_run.sh']],
       ['win32', ['Playwright.exe']],
       ['win64', ['Playwright.exe']],
     ]).get(hostPlatform);
