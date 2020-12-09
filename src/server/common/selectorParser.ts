@@ -35,7 +35,7 @@ export function selectorsV2Enabled() {
 }
 
 export function selectorsV2EngineNames() {
-  return ['not', 'is', 'where', 'has', 'scope', 'light', 'index', 'visible', 'matches-text', 'above', 'below', 'right-of', 'left-of', 'near', 'within'];
+  return ['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'matches-text', 'above', 'below', 'right-of', 'left-of', 'near', 'within'];
 }
 
 export function parseSelector(selector: string, customNames: Set<string>): ParsedSelector {

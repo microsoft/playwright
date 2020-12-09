@@ -53,7 +53,6 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('has', hasEngine);
     this._engines.set('scope', scopeEngine);
     this._engines.set('light', lightEngine);
-    this._engines.set('index', indexEngine);
     this._engines.set('visible', visibleEngine);
     this._engines.set('text', textEngine);
     this._engines.set('matches-text', matchesTextEngine);
@@ -351,16 +350,6 @@ const lightEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     return evaluator.matches(element, args, { ...context, pierceShadow: false });
   }
-};
-
-const indexEngine: SelectorEngine = {
-  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
-    if (args.length < 2 || typeof args[0] !== 'number')
-      throw new Error(`"index" engine expects a number and non-empty selector list`);
-    const list = evaluator.query(context, args.slice(1));
-    const index = (args[0] as number) - 1;
-    return [list[index]];
-  },
 };
 
 const visibleEngine: SelectorEngine = {

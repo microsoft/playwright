@@ -10,7 +10,7 @@ Selectors query elements on the web page for interactions, like [page.click](api
 <!-- GEN:stop -->
 
 ## Syntax
-Selectors are defined by selector engine name and selector body, `engine=body`. 
+Selectors are defined by selector engine name and selector body, `engine=body`.
 
 * `engine` refers to one of the [supported engines](#selector-engines)
   * Built-in selector engines: [css], [text], [xpath] and [id selectors][id]
@@ -136,11 +136,15 @@ const handle = await divHandle.$('css=span');
 
 `css` is a default engine - any malformed selector not starting with `//` nor starting and ending with a quote is assumed to be a css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`.
 
-`css:light` engine is equivalent to [`Document.querySelector`](https://developer.mozilla.org/en/docs/Web/API/Document/querySelector) and behaves according to the CSS spec. However, it does not pierce shadow roots, which may be inconvenient when working with [Shadow DOM and Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). For that reason, `css` engine pierces shadow roots. More specifically, every [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator) pierces an arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the selector.
+Playwright augments standard CSS selectors in two ways, see below for more details:
+* `css` engine pierces open shadow DOM by default.
+* Playwright adds a few custom pseudo-classes like `:visible`.
+
+#### Shadow piercing
+
+`css:light` engine is equivalent to [`Document.querySelector`](https://developer.mozilla.org/en/docs/Web/API/Document/querySelector) and behaves according to the CSS spec. However, it does not pierce shadow roots, which may be inconvenient when working with [Shadow DOM and Web Components](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM). For that reason, `css` engine pierces shadow roots. More specifically, any [Descendant combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Descendant_combinator) or [Child combinator](https://developer.mozilla.org/en-US/docs/Web/CSS/Child_combinator) pierces an arbitrary number of open shadow roots, including the implicit descendant combinator at the start of the selector.
 
 `css` engine first searches for elements in the light dom in the iteration order, and then recursively inside open shadow roots in the iteration order. It does not search inside closed shadow roots or iframes.
-
-#### Examples
 
 ```html
 <article>
@@ -170,6 +174,68 @@ Note that `<open mode shadow root>` is not an html element, but rather a shadow 
 - `"css=article > .in-the-shadow"` does not match anything, because `<div class='in-the-shadow'>` is not a direct child of `article`
 - `"css:light=article > .in-the-shadow"` does not match anything.
 - `"css=article li#target"` matches the `<li id='target'>Deep in the shadow</li>`, piercing two shadow roots.
+
+#### CSS extension: visible
+
+The `:visible` pseudo-class matches elements that are visible as defined in the [actionability](./actionability.md#visible) guide. For example, `input` matches all the inputs on the page, while `input:visible` matches only visible inputs. This is useful to distinguish elements that are very similar but differ in visibility.
+
+```js
+// Clicks the first button.
+await page.click('button');
+// Clicks the first visible button. If there are some invisible buttons, this click will just ignore them.
+await page.click('button:visible');
+```
+
+Use `:visible` with caution, because it has two major drawbacks:
+* When elements change their visibility dynamically, `:visible` will give upredictable results based on the timing.
+* `:visible` forces a layout and may lead to querying being slow, especially when used with `page.waitForSelector(selector[, options])` method.
+
+#### CSS extension: text
+
+The `:text` pseudo-class matches elements that have a text node child with specific text. It is similar to the [text engine](#text-and-textlight). There are a few variations that support different arguments:
+
+* `:text("exact match")` - Only matches when element's text exactly equals to passed string.
+* `:text("substring", "g")` - Matches when element's text contains "substring" somewhere.
+* `:text("String", "i")` - Performs case-insensitive match.
+* `:text("string with spaces", "s")` - Normalizes whitespace when matching, for example turns multiple spaces into one and line breaks into spaces.
+* `:text("substring", "sgi")` - Different flags may be combined. For example, pass `"sgi"` to match by case-insensitive substring with normalized whitespace.
+* `button:text("Sign in")` - Text selector may be combined with regular CSS.
+* `:matches-text("[+-]?\\d+")` - Matches text against a regular expression. Note that back-slash `\` and quotes `"` must be escaped.
+* `:matches-text("regex", "g")` - Matches text against a regular expression with specified flags. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
+
+```js
+// Click a button with text "Sign in".
+await page.click('button:text("Sign in")');
+```
+
+#### CSS extension: light
+
+`css` engine [pierces shadow](#shadow-piercing) by default. It is possible to disable this behavior by wrapping a selector in `:light` pseudo-class: `:light(section > button.class)` matches in light DOM only.
+
+```js
+await page.click(':light(.article > .header)');
+```
+
+#### CSS extension: proximity
+
+Playwright provides a few proximity selectors based on the page layout. These can be combined with regular CSS for better results, for example `input:right-of(:text("Password"))` matches an input field that is to the right of text "Password".
+
+Note that Playwright uses some heuristics to determine whether one element should be considered to the left/right/above/below/near/within another. Therefore, using proximity selectors may produce unpredictable results. For example, selector could stop matching when element moves by one pixel.
+
+* `:right-of(css > selector)` - Matches elements that are to the right of any element matching the inner selector.
+* `:left-of(css > selector)` - Matches elements that are to the left of any element matching the inner selector.
+* `:above(css > selector)` - Matches elements that are above any of the elements matching the inner selector.
+* `:below(css > selector)` - Matches elements that are below any of the elements matching the inner selector.
+* `:near(css > selector)` - Matches elements that are near any of the elements matching the inner selector.
+* `:within(css > selector)` - Matches elements that are within any of the elements matching the inner selector.
+
+```js
+// Fill an input to the right of "Username".
+await page.fill('input:right-of(:text("Username"))');
+
+// Click a button near the promo card.
+await page.click('button:near(.promo-card)');
+```
 
 ### xpath
 
