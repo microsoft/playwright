@@ -272,8 +272,6 @@ class TestServer {
       response.end(`File not found: ${filePath}`);
       return;
     }
-    // after async hop, the request might've been already aborted, so attempting to change response
-    // will throw.
     const extension = filePath.substring(filePath.lastIndexOf('.') + 1);
     const mimeType = extensionToMime[extension] || 'application/octet-stream';
     const isTextEncoding = /^text\/|^application\/(javascript|json)/.test(mimeType);
