@@ -63,21 +63,30 @@ export function parseSelector(selector: string, customNames: Set<string>): Parse
         wrapInLight = true;
         name = name.substring(0, name.indexOf(':'));
       }
-      let simple: CSSSimpleSelector;
       if (name === 'css') {
         const parsed = parseCSS(part.body, customNames);
         parsed.names.forEach(name => names.add(name));
-        simple = callWith('is', parsed.selector);
+        if (wrapInLight || parsed.selector.length > 1) {
+          let simple = callWith('is', parsed.selector);
+          if (wrapInLight)
+            simple = callWith('light', [simpleToComplex(simple)]);
+          result.simples.push({ selector: simple, combinator: '' });
+        } else {
+          result.simples.push(...parsed.selector[0].simples);
+        }
       } else if (name === 'text') {
-        simple = textSelectorToSimple(part.body);
+        let simple = textSelectorToSimple(part.body);
         if (result.simples.length)
           result.simples[result.simples.length - 1].combinator = '>=';
+        if (wrapInLight)
+          simple = callWith('light', [simpleToComplex(simple)]);
+        result.simples.push({ selector: simple, combinator: '' });
       } else {
-        simple = callWith(name, [part.body]);
+        let simple = callWith(name, [part.body]);
+        if (wrapInLight)
+          simple = callWith('light', [simpleToComplex(simple)]);
+        result.simples.push({ selector: simple, combinator: '' });
       }
-      if (wrapInLight)
-        simple = callWith('light', [simpleToComplex(simple)]);
-      result.simples.push({ selector: simple, combinator: '' });
     }
     return result;
   };
