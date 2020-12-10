@@ -16,7 +16,8 @@
 
 import * as css from './cssTokenizer';
 
-type ClauseCombinator = '' | '>' | '+' | '~';
+// Note: '>=' is used internally for text engine to preserve backwards compatibility.
+type ClauseCombinator = '' | '>' | '+' | '~' | '>=';
 // TODO: consider
 //   - key=value
 //   - operators like `=`, `|=`, `~=`, `*=`, `/`

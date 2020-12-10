@@ -214,6 +214,19 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
         }
         return false;
       }
+      if (combinator === '>=') {
+        let parent: Element | undefined = element;
+        while (parent) {
+          if (this._matchesSimple(parent, simple, context)) {
+            if (this._matchesParents(parent, complex, index - 1, context))
+              return true;
+            if (complex.simples[index - 1].combinator === '')
+              break;
+          }
+          parent = parentElementOrShadowHostInContext(parent, context);
+        }
+        return false;
+      }
       throw new Error(`Unsupported combinator "${combinator}"`);
     });
   }

@@ -55,7 +55,7 @@ export function parseSelector(selector: string, customNames: Set<string>): Parse
   }
 
   const chain = (from: number, to: number): CSSComplexSelector => {
-    let result: CSSComplexSelector = { simples: [] };
+    const result: CSSComplexSelector = { simples: [] };
     for (const part of v1.parts.slice(from, to)) {
       let name = part.name;
       let wrapInLight = false;
@@ -70,24 +70,14 @@ export function parseSelector(selector: string, customNames: Set<string>): Parse
         simple = callWith('is', parsed.selector);
       } else if (name === 'text') {
         simple = textSelectorToSimple(part.body);
+        if (result.simples.length)
+          result.simples[result.simples.length - 1].combinator = '>=';
       } else {
         simple = callWith(name, [part.body]);
       }
       if (wrapInLight)
         simple = callWith('light', [simpleToComplex(simple)]);
-      if (name === 'text') {
-        const copy = result.simples.map(one => {
-          return { selector: copySimple(one.selector), combinator: one.combinator };
-        });
-        copy.push({ selector: simple, combinator: '' });
-        if (!result.simples.length)
-          result.simples.push({ selector: callWith('scope', []), combinator: '' });
-        const last = result.simples[result.simples.length - 1];
-        last.selector.functions.push({ name: 'is', args: [simpleToComplex(simple)] });
-        result = simpleToComplex(callWith('is', [{ simples: copy }, result]));
-      } else {
-        result.simples.push({ selector: simple, combinator: '' });
-      }
+      result.simples.push({ selector: simple, combinator: '' });
     }
     return result;
   };
@@ -108,10 +98,6 @@ function callWith(name: string, args: CSSFunctionArgument[]): CSSSimpleSelector 
 
 function simpleToComplex(simple: CSSSimpleSelector): CSSComplexSelector {
   return { simples: [{ selector: simple, combinator: '' }]};
-}
-
-function copySimple(simple: CSSSimpleSelector): CSSSimpleSelector {
-  return { css: simple.css, functions: simple.functions.slice() };
 }
 
 function textSelectorToSimple(selector: string): CSSSimpleSelector {
