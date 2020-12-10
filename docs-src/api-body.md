@@ -1405,7 +1405,7 @@ Shortcut for main frame's [frame.focus()]().
 ## method: Page.frame
 - returns: <[null]|[Frame]>
 
-Returns frame matching the criteria. Returns `null` if no frame matches.
+Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 ```js
 const frame = page.frame('frame-name');
@@ -1414,8 +1414,6 @@ const frame = page.frame('frame-name');
 ```js
 const frame = page.frame({ url: /.*domain.*/ });
 ```
-
-Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 ### param: Page.frame.frameSelector
 - `frameSelector` <[string]|[Object]>
