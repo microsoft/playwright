@@ -14,6 +14,52 @@
  * limitations under the License.
  */
 
+import { EventEmitter } from 'events';
+
+export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> extends EventEmitter {
+  input: AndroidInput;
+
+  setDefaultTimeout(timeout: number): void;
+  on(event: 'webview', handler: (webView: AndroidWebView<Page>) => void): this;
+  waitForEvent(event: string, predicate?: (data: any) => boolean): Promise<any>;
+
+  serial(): string;
+  model(): string;
+  webViews(): AndroidWebView<Page>[];
+  shell(command: string): Promise<string>;
+  launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;
+  close(): Promise<void>;
+
+  wait(selector: AndroidSelector, options?: { state?: 'gone' } & { timeout?: number }): Promise<void>;
+  fill(selector: AndroidSelector, text: string, options?: { timeout?: number }): Promise<void>;
+  press(selector: AndroidSelector, key: AndroidKey, options?: { duration?: number } & { timeout?: number }): Promise<void>;
+  tap(selector: AndroidSelector, options?: { duration?: number } & { timeout?: number }): Promise<void>;
+  drag(selector: AndroidSelector, dest: { x: number, y: number }, options?: { speed?: number } & { timeout?: number }): Promise<void>;
+  fling(selector: AndroidSelector, direction: 'down' | 'up' | 'left' | 'right', options?: { speed?: number } & { timeout?: number }): Promise<void>;
+  longTap(selector: AndroidSelector, options?: { timeout?: number }): Promise<void>;
+  pinchClose(selector: AndroidSelector, percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
+  pinchOpen(selector: AndroidSelector, percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
+  scroll(selector: AndroidSelector,  direction: 'down' | 'up' | 'left' | 'right', percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
+  swipe(selector: AndroidSelector, direction: 'down' | 'up' | 'left' | 'right', percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
+
+  info(selector: AndroidSelector): Promise<AndroidElementInfo>;
+}
+
+export interface AndroidInput {
+  type(text: string): Promise<void>;
+  press(key: AndroidKey): Promise<void>;
+  tap(point: { x: number, y: number }): Promise<void>;
+  swipe(from: { x: number, y: number }, segments: { x: number, y: number }[], steps: number): Promise<void>;
+  drag(from: { x: number, y: number }, to: { x: number, y: number }, steps: number): Promise<void>;
+}
+
+export interface AndroidWebView<Page> extends EventEmitter {
+  on(event: 'close', handler: () => void): this;
+  pid(): number;
+  pkg(): string;
+  page(): Promise<Page>;
+}
+
 export type AndroidElementInfo = {
   clazz: string;
   desc: string;
@@ -51,37 +97,6 @@ export type AndroidSelector = {
   selected?: boolean,
   text?: string | RegExp,
 };
-
-export interface AndroidDevice<BrowserContextOptions, BrowserContext> {
-  input: AndroidInput;
-
-  serial(): string;
-  model(): string;
-  shell(command: string): Promise<string>;
-  launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;
-  close(): Promise<void>;
-
-  wait(selector: AndroidSelector, options?: { state?: 'gone' } & { timeout?: number }): Promise<void>;
-  fill(selector: AndroidSelector, text: string, options?: { timeout?: number }): Promise<void>;
-  tap(selector: AndroidSelector, options?: { duration?: number } & { timeout?: number }): Promise<void>;
-  drag(selector: AndroidSelector, dest: { x: number, y: number }, options?: { speed?: number } & { timeout?: number }): Promise<void>;
-  fling(selector: AndroidSelector, direction: 'down' | 'up' | 'left' | 'right', options?: { speed?: number } & { timeout?: number }): Promise<void>;
-  longTap(selector: AndroidSelector, options?: { timeout?: number }): Promise<void>;
-  pinchClose(selector: AndroidSelector, percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
-  pinchOpen(selector: AndroidSelector, percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
-  scroll(selector: AndroidSelector,  direction: 'down' | 'up' | 'left' | 'right', percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
-  swipe(selector: AndroidSelector, direction: 'down' | 'up' | 'left' | 'right', percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
-
-  info(selector: AndroidSelector): Promise<AndroidElementInfo>;
-}
-
-export interface AndroidInput {
-  type(text: string): Promise<void>;
-  press(key: AndroidKey): Promise<void>;
-  tap(point: { x: number, y: number }): Promise<void>;
-  swipe(from: { x: number, y: number }, segments: { x: number, y: number }[], steps: number): Promise<void>;
-  drag(from: { x: number, y: number }, to: { x: number, y: number }, steps: number): Promise<void>;
-}
 
 export type AndroidKey =
   'Unknown' |

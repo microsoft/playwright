@@ -2079,54 +2079,9 @@ Android:
           type: array
           items: AndroidDevice
 
-
-AndroidSelector:
-  type: object
-  properties:
-    checkable: boolean?
-    checked: boolean?
-    clazz: string?
-    clickable: boolean?
-    depth: number?
-    desc: string?
-    enabled: boolean?
-    focusable: boolean?
-    focused: boolean?
-    hasChild:
-      type: object?
-      properties:
-        selector: AndroidSelector
-    hasDescendant:
-      type: object?
-      properties:
-        selector: AndroidSelector
-        maxDepth: number?
-    longClickable: boolean?
-    pkg: string?
-    res: string?
-    scrollable: boolean?
-    selected: boolean?
-    text: string?
-
-
-AndroidElementInfo:
-  type: object
-  properties:
-    clazz: string
-    desc: string
-    res: string
-    pkg: string
-    text: string
-    bounds: Rect
-    checkable: boolean
-    checked: boolean
-    clickable: boolean
-    enabled: boolean
-    focusable: boolean
-    focused: boolean
-    longClickable: boolean
-    scrollable: boolean
-    selected: boolean
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
 
 
 AndroidDevice:
@@ -2326,4 +2281,79 @@ AndroidDevice:
       returns:
         result: string
 
+    setDefaultTimeoutNoReply:
+      parameters:
+        timeout: number
+
+    connectToWebView:
+      parameters:
+        pid: number
+      returns:
+        context: BrowserContext
+
     close:
+
+  events:
+    webViewAdded:
+      parameters:
+        webView: AndroidWebView
+
+    webViewRemoved:
+      parameters:
+        pid: number
+
+
+AndroidWebView:
+  type: object
+  properties:
+    pid: number
+    pkg: string
+
+
+AndroidSelector:
+  type: object
+  properties:
+    checkable: boolean?
+    checked: boolean?
+    clazz: string?
+    clickable: boolean?
+    depth: number?
+    desc: string?
+    enabled: boolean?
+    focusable: boolean?
+    focused: boolean?
+    hasChild:
+      type: object?
+      properties:
+        selector: AndroidSelector
+    hasDescendant:
+      type: object?
+      properties:
+        selector: AndroidSelector
+        maxDepth: number?
+    longClickable: boolean?
+    pkg: string?
+    res: string?
+    scrollable: boolean?
+    selected: boolean?
+    text: string?
+
+
+AndroidElementInfo:
+  type: object
+  properties:
+    clazz: string
+    desc: string
+    res: string
+    pkg: string
+    text: string
+    bounds: Rect
+    checkable: boolean
+    checked: boolean
+    clickable: boolean
+    enabled: boolean
+    focusable: boolean
+    focused: boolean
+    longClickable: boolean
+    scrollable: boolean
+    selected: boolean

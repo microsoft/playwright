@@ -15,28 +15,32 @@ const { android } = require('playwright-android');
 
 (async () => {
   const [device] = await android.devices();
-
-  // Android automation.
   console.log(`Model: ${device.model()}`);
   console.log(`Serial: ${device.serial()}`);
 
-  await device.tap({ desc: 'Home' });
-  console.log(await device.info({ text: 'Chrome' }));
-  await device.tap({ text: 'Chrome' });
-  await device.fill({ res: 'com.android.chrome:id/url_bar' }, 'www.chromium.org');
-  await device.input.press('Enter');
-  await new Promise(f => setTimeout(f, 1000));
+  await device.shell('am force-stop org.chromium.webview_shell');
+  await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
 
-  await device.tap({ res: 'com.android.chrome:id/tab_switcher_button' });
-  await device.tap({ desc: 'More options' });
-  await device.tap({ desc: 'Close all tabs' });
+  await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'github.com/microsoft/playwright');
 
-  // Browser automation.
-  const context = await device.launchBrowser();
-  const [page] = context.pages();
-  await page.goto('https://webkit.org/');
-  console.log(await page.evaluate(() => window.location.href));
-  await context.close();
+  let [webview] = device.webViews();
+  if (!webview)
+    webview = await device.waitForEvent('webview');
+
+  const page = await webview.page();
+  await Promise.all([
+    page.waitForNavigation(),
+    device.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter')
+  ]);
+  console.log(await page.title());
+
+  {
+    const context = await device.launchBrowser();
+    const [page] = context.pages();
+    await page.goto('https://webkit.org/');
+    console.log(await page.evaluate(() => window.location.href));
+    await context.close();
+  }
 
   await device.close();
 })();

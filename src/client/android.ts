@@ -15,21 +15,34 @@
  */
 
 import * as channels from '../protocol/channels';
+import { Events } from './events';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import * as apiInternal from '../../android-types-internal';
 import * as types from './types';
+import { Page } from './page';
+import { TimeoutSettings } from '../utils/timeoutSettings';
+import { Waiter } from './waiter';
+import { EventEmitter } from 'events';
 
 type Direction =  'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
 
 export class Android extends ChannelOwner<channels.AndroidChannel, channels.AndroidInitializer> {
+  readonly _timeoutSettings: TimeoutSettings;
+
   static from(android: channels.AndroidChannel): Android {
     return (android as any)._object;
   }
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidInitializer) {
     super(parent, type, guid, initializer);
+    this._timeoutSettings = new TimeoutSettings();
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
+    this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
   async devices(): Promise<AndroidDevice[]> {
@@ -41,6 +54,9 @@ export class Android extends ChannelOwner<channels.AndroidChannel, channels.Andr
 }
 
 export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, channels.AndroidDeviceInitializer> {
+  readonly _timeoutSettings: TimeoutSettings;
+  private _webViews = new Map<number, AndroidWebView>();
+
   static from(androidDevice: channels.AndroidDeviceChannel): AndroidDevice {
     return (androidDevice as any)._object;
   }
@@ -50,6 +66,27 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidDeviceInitializer) {
     super(parent, type, guid, initializer);
     this.input = new Input(this);
+    this._timeoutSettings = new TimeoutSettings((parent as Android)._timeoutSettings);
+    this._channel.on('webViewAdded', ({ webView }) => this._onWebViewAdded(webView));
+    this._channel.on('webViewRemoved', ({ pid }) => this._onWebViewRemoved(pid));
+  }
+
+  private _onWebViewAdded(webView: channels.AndroidWebView) {
+    const view = new AndroidWebView(this, webView);
+    this._webViews.set(webView.pid, view);
+    this.emit(Events.AndroidDevice.WebView, view);
+  }
+
+  private _onWebViewRemoved(pid: number) {
+    const view = this._webViews.get(pid);
+    this._webViews.delete(pid);
+    if (view)
+      view.emit(Events.AndroidWebView.Close);
+  }
+
+  setDefaultTimeout(timeout: number) {
+    this._timeoutSettings.setDefaultTimeout(timeout);
+    this._channel.setDefaultTimeoutNoReply({ timeout });
   }
 
   serial(): string {
@@ -58,6 +95,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
 
   model(): string {
     return this._initializer.model;
+  }
+
+  webViews(): AndroidWebView[] {
+    return [...this._webViews.values()];
   }
 
   async wait(selector: apiInternal.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
@@ -70,6 +111,11 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     await this._wrapApiCall('androidDevice.fill', async () => {
       await this._channel.fill({ selector: toSelectorChannel(selector), text, ...options });
     });
+  }
+
+  async press(selector: apiInternal.AndroidSelector, key: apiInternal.AndroidKey, options?: types.TimeoutOptions) {
+    await this.tap(selector, options);
+    await this.input.press(key);
   }
 
   async tap(selector: apiInternal.AndroidSelector, options?: { duration?: number } & types.TimeoutOptions) {
@@ -129,6 +175,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
   async close() {
     return this._wrapApiCall('androidDevice.close', async () => {
       await this._channel.close();
+      this.emit(Events.AndroidDevice.Close);
     });
   }
 
@@ -145,6 +192,18 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
       const { context } = await this._channel.launchBrowser(contextOptions);
       return BrowserContext.from(context);
     });
+  }
+
+  async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
+    const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+    const waiter = new Waiter();
+    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
+    if (event !== Events.AndroidDevice.Close)
+      waiter.rejectOnEvent(this, Events.AndroidDevice.Close, new Error('Device closed'));
+    const result = await waiter.waitForEvent(this, event, predicate as any);
+    waiter.dispose();
+    return result;
   }
 }
 
@@ -234,4 +293,37 @@ function toSelectorChannel(selector: apiInternal.AndroidSelector): channels.Andr
     scrollable,
     selected,
   };
+}
+
+export class AndroidWebView extends EventEmitter {
+  private _device: AndroidDevice;
+  private _data: channels.AndroidWebView;
+  private _pagePromise: Promise<Page> | undefined;
+
+  constructor(device: AndroidDevice, data: channels.AndroidWebView) {
+    super();
+    this._device = device;
+    this._data = data;
+  }
+
+  pid(): number {
+    return this._data.pid;
+  }
+
+  pkg(): string {
+    return this._data.pkg;
+  }
+
+  async page(): Promise<Page> {
+    if (!this._pagePromise)
+      this._pagePromise = this._fetchPage();
+    return this._pagePromise;
+  }
+
+  private async _fetchPage(): Promise<Page> {
+    return this._device._wrapApiCall('androidWebView.page', async () => {
+      const { context } = await this._device._channel.connectToWebView({ pid: this._data.pid });
+      return BrowserContext.from(context).pages()[0];
+    });
+  }
 }
