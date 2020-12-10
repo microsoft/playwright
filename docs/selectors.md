@@ -213,6 +213,7 @@ await page.click('button:text("Sign in")');
 await page.click(':light(.article > .header)');
 ```
 
+<!--
 #### CSS extension: proximity
 
 Playwright provides a few proximity selectors based on the page layout. These can be combined with regular CSS for better results, for example `input:right-of(:text("Password"))` matches an input field that is to the right of text "Password".
@@ -233,6 +234,7 @@ await page.fill('input:right-of(:text("Username"))');
 // Click a button near the promo card.
 await page.click('button:near(.promo-card)');
 ```
+-->
 
 ### xpath
 
