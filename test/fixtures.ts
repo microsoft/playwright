@@ -131,6 +131,7 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
     const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'service.js'), [String(port)], {
       stdio: 'pipe'
     });
+    spawnedProcess.stderr.pipe(process.stderr);
     await new Promise(f => {
       spawnedProcess.stdout.on('data', data => {
         if (data.toString().includes('Listening on'))
@@ -144,9 +145,11 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
     spawnedProcess.on('exit', onExit);
     const client = await PlaywrightClient.connect(`ws://localhost:${port}/ws`);
     await run(client.playwright());
-    spawnedProcess.removeListener('exit', onExit);
     await client.close();
+    spawnedProcess.removeListener('exit', onExit);
+    const processExited = new Promise(f => spawnedProcess.on('exit', f));
     spawnedProcess.kill();
+    await processExited;
     await teardownCoverage();
   } else {
     const playwright = require('../index');
