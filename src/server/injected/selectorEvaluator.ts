@@ -176,58 +176,44 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
       return true;
     return this._cached<boolean>(this._cacheMatchesParents, element, [complex, index, context], () => {
       const { selector: simple, combinator } = complex.simples[index];
-      if (combinator === '>') {
-        const parent = parentElementOrShadowHostInContext(element, context);
-        if (!parent || !this._matchesSimple(parent, simple, context))
+
+      // We move up the parent/sibling chain until a match is found.
+      let parent: Element | undefined;
+      if (combinator === '~' || combinator === '+')
+        parent = previousSiblingInContext(element, context);
+      else if (combinator === '' || combinator === '>')
+        parent = parentElementOrShadowHostInContext(element, context);
+      else if (combinator === '>=')
+        parent = element;
+      else
+        throw new Error(`Unsupported combinator "${combinator}"`);
+
+      while (parent) {
+        if (this._matchesSimple(parent, simple, context)) {
+          // Recursively check whether we've found a match.
+          if (this._matchesParents(parent, complex, index - 1, context))
+            return true;
+
+          const previousCombinator = complex.simples[index - 1].combinator;
+          // Optimization: recursive call has already checked all siblings for us.
+          if (combinator === '~' && previousCombinator === '~')
+            return false;
+          // Optimization: recursive call has already checked all parents for us.
+          if ((combinator === '' || combinator === '>=') && previousCombinator === '')
+            return false;
+        }
+
+        // For immediate child/sibling we only check the a single parent.
+        if (combinator === '>' || combinator === '+')
           return false;
-        return this._matchesParents(parent, complex, index - 1, context);
-      }
-      if (combinator === '+') {
-        const previousSibling = previousSiblingInContext(element, context);
-        if (!previousSibling || !this._matchesSimple(previousSibling, simple, context))
-          return false;
-        return this._matchesParents(previousSibling, complex, index - 1, context);
-      }
-      if (combinator === '') {
-        let parent = parentElementOrShadowHostInContext(element, context);
-        while (parent) {
-          if (this._matchesSimple(parent, simple, context)) {
-            if (this._matchesParents(parent, complex, index - 1, context))
-              return true;
-            if (complex.simples[index - 1].combinator === '')
-              break;
-          }
+
+        // Move up the parent/sibling chain.
+        if (combinator === '~')
+          parent = previousSiblingInContext(parent, context);
+        else
           parent = parentElementOrShadowHostInContext(parent, context);
-        }
-        return false;
       }
-      if (combinator === '~') {
-        let previousSibling = previousSiblingInContext(element, context);
-        while (previousSibling) {
-          if (this._matchesSimple(previousSibling, simple, context)) {
-            if (this._matchesParents(previousSibling, complex, index - 1, context))
-              return true;
-            if (complex.simples[index - 1].combinator === '~')
-              break;
-          }
-          previousSibling = previousSiblingInContext(previousSibling, context);
-        }
-        return false;
-      }
-      if (combinator === '>=') {
-        let parent: Element | undefined = element;
-        while (parent) {
-          if (this._matchesSimple(parent, simple, context)) {
-            if (this._matchesParents(parent, complex, index - 1, context))
-              return true;
-            if (complex.simples[index - 1].combinator === '')
-              break;
-          }
-          parent = parentElementOrShadowHostInContext(parent, context);
-        }
-        return false;
-      }
-      throw new Error(`Unsupported combinator "${combinator}"`);
+      return false;
     });
   }
 
