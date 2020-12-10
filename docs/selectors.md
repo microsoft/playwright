@@ -194,14 +194,11 @@ Use `:visible` with caution, because it has two major drawbacks:
 
 The `:text` pseudo-class matches elements that have a text node child with specific text. It is similar to the [text engine](#text-and-textlight). There are a few variations that support different arguments:
 
-* `:text("exact match")` - Only matches when element's text exactly equals to passed string.
-* `:text("substring", "g")` - Matches when element's text contains "substring" somewhere.
-* `:text("String", "i")` - Performs case-insensitive match.
-* `:text("string with spaces", "s")` - Normalizes whitespace when matching, for example turns multiple spaces into one and line breaks into spaces.
-* `:text("substring", "sgi")` - Different flags may be combined. For example, pass `"sgi"` to match by case-insensitive substring with normalized whitespace.
+* `:text("substring")` - Matches when element's text contains "substring" somewhere. Matching is case-insensitive. Matching also normalizes whitespace, for example it turns multiple spaces into one, trusn line breaks into spaces and ignores leading and trailing whitespace.
+* `:text-is("string")` - Matches when element's text equals the "string". Matching is case-insensitive and normalizes whitespace.
 * `button:text("Sign in")` - Text selector may be combined with regular CSS.
-* `:matches-text("[+-]?\\d+")` - Matches text against a regular expression. Note that back-slash `\` and quotes `"` must be escaped.
-* `:matches-text("regex", "g")` - Matches text against a regular expression with specified flags. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
+* `:text-matches("[+-]?\\d+")` - Matches text against a regular expression. Note that special characters like back-slash `\`, quotes `"`, square brackets `[]` and more should be escaped. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
+* `:text-matches("value", "i")` - Matches text against a regular expression with specified flags.
 
 ```js
 // Click a button with text "Sign in".

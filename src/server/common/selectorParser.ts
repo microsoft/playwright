@@ -35,7 +35,7 @@ export function selectorsV2Enabled() {
 }
 
 export function selectorsV2EngineNames() {
-  return ['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'matches-text', 'above', 'below', 'right-of', 'left-of', 'near', 'within'];
+  return ['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text-matches', 'text-is', 'above', 'below', 'right-of', 'left-of', 'near', 'within'];
 }
 
 export function parseSelector(selector: string, customNames: Set<string>): ParsedSelector {
@@ -128,18 +128,22 @@ function textSelectorToSimple(selector: string): CSSSimpleSelector {
     return r.join('');
   }
 
-  let functionName = 'text';
+  function escapeRegExp(s: string) {
+    return s.replace(/[.*+\?^${}()|[\]\\]/g, '\\$&').replace(/-/g, '\\x2d');
+  }
+
+  let functionName = 'text-matches';
   let args: string[];
   if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
-    args = [unescape(selector.substring(1, selector.length - 1))];
+    args = ['^' + escapeRegExp(unescape(selector.substring(1, selector.length - 1))) + '$'];
   } else if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
-    args = [unescape(selector.substring(1, selector.length - 1))];
+    args = ['^' + escapeRegExp(unescape(selector.substring(1, selector.length - 1))) + '$'];
   } else if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
-    functionName = 'matches-text';
     const lastSlash = selector.lastIndexOf('/');
     args = [selector.substring(1, lastSlash), selector.substring(lastSlash + 1)];
   } else {
-    args = [selector, 'sgi'];
+    functionName = 'text';
+    args = [selector];
   }
   return callWith(functionName, args);
 }

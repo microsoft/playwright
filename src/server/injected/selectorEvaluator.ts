@@ -55,7 +55,8 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('light', lightEngine);
     this._engines.set('visible', visibleEngine);
     this._engines.set('text', textEngine);
-    this._engines.set('matches-text', matchesTextEngine);
+    this._engines.set('text-is', textIsEngine);
+    this._engines.set('text-matches', textMatchesEngine);
     this._engines.set('xpath', xpathEngine);
     for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
       this._engines.set(attr, createAttributeEngine(attr));
@@ -362,37 +363,35 @@ const visibleEngine: SelectorEngine = {
 
 const textEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
-    if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
-      throw new Error(`"text" engine expects a string and an optional flags string`);
-    const text = args[0];
-    const flags = args.length === 2 ? args[1] : '';
-    const matcher = textMatcher(text, flags);
-    return elementMatchesText(element, context, matcher);
+    if (args.length === 0 || typeof args[0] !== 'string')
+      throw new Error(`"text" engine expects a single string`);
+    return elementMatchesText(element, context, textMatcher(args[0], true));
   },
 };
 
-const matchesTextEngine: SelectorEngine = {
+const textIsEngine: SelectorEngine = {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    if (args.length === 0 || typeof args[0] !== 'string')
+      throw new Error(`"text-is" engine expects a single string`);
+    return elementMatchesText(element, context, textMatcher(args[0], false));
+  },
+};
+
+const textMatchesEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
     if (args.length === 0 || typeof args[0] !== 'string' || args.length > 2 || (args.length === 2 && typeof args[1] !== 'string'))
-      throw new Error(`"matches-text" engine expects a regexp body and optional regexp flags`);
+      throw new Error(`"text-matches" engine expects a regexp body and optional regexp flags`);
     const re = new RegExp(args[0], args.length === 2 ? args[1] : undefined);
     return elementMatchesText(element, context, s => re.test(s));
   },
 };
 
-function textMatcher(text: string, flags: string): (s: string) => boolean {
-  const normalizeSpace = flags.includes('s');
-  const lowerCase = flags.includes('i');
-  const substring = flags.includes('g');
-  if (normalizeSpace)
-    text = text.trim().replace(/\s+/g, ' ');
-  if (lowerCase)
-    text = text.toLowerCase();
+function textMatcher(text: string, substring: boolean): (s: string) => boolean {
+  text = text.trim().replace(/\s+/g, ' ');
+  text = text.toLowerCase();
   return (s: string) => {
-    if (normalizeSpace)
-      s = s.trim().replace(/\s+/g, ' ');
-    if (lowerCase)
-      s = s.toLowerCase();
+    s = s.trim().replace(/\s+/g, ' ');
+    s = s.toLowerCase();
     return substring ? s.includes(text) : s === text;
   };
 }
