@@ -52,7 +52,9 @@ it('should work with :visible', async ({page}) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
-it('should work with proximity selectors', async ({page}) => {
+it('should work with proximity selectors', test => {
+  test.skip('Not ready yet');
+}, async ({page}) => {
   if (!selectorsV2Enabled())
     return; // Selectors v1 do not support this.
 
