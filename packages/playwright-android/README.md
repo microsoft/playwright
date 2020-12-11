@@ -21,13 +21,10 @@ const { android } = require('playwright-android');
   await device.shell('am force-stop org.chromium.webview_shell');
   await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
 
-  await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'github.com/microsoft/playwright');
-
-  let [webview] = device.webViews();
-  if (!webview)
-    webview = await device.waitForEvent('webview');
-
+  const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
   const page = await webview.page();
+
+  await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'github.com/microsoft/playwright');
   await Promise.all([
     page.waitForNavigation(),
     device.press({ res: 'org.chromium.webview_shell:id/url_field' }, 'Enter')
