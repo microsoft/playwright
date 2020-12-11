@@ -78,7 +78,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.14', '%s/builds/chromium/%s/chromium-mac.zip'],
         ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
         ['mac11.0', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac11.0-arm64', '%s/builds/chromium/%s/chromium-mac.zip'],
+        ['mac11.0-arm64', '%s/builds/chromium/%s/chromium-mac-arm64.zip'],
         ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
         ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
       ]).get(platform);
