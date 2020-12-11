@@ -24,16 +24,20 @@ export class AdbBackend implements Backend {
   async devices(): Promise<DeviceBackend[]> {
     const result = await runCommand('host:devices');
     const lines = result.toString().trim().split('\n');
-    const serials = lines.map(line => line.split('\t')[0]);
-    return serials.map(serial => new AdbDevice(serial));
+    return lines.map(line => {
+      const [serial, status] = line.trim().split('\t');
+      return new AdbDevice(serial, status);
+    });
   }
 }
 
 class AdbDevice implements DeviceBackend {
   readonly serial: string;
+  readonly status: string;
 
-  constructor(serial: string) {
+  constructor(serial: string, status: string) {
     this.serial = serial;
+    this.status = status;
   }
 
   async init() {

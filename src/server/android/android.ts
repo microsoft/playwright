@@ -40,6 +40,7 @@ export interface Backend {
 
 export interface DeviceBackend {
   serial: string;
+  status: string;
   close(): Promise<void>;
   init(): Promise<void>;
   runCommand(command: string): Promise<string>;
@@ -65,7 +66,7 @@ export class Android {
   }
 
   async devices(): Promise<AndroidDevice[]> {
-    const devices = await this._backend.devices();
+    const devices = (await this._backend.devices()).filter(d => d.status === 'device');
     return await Promise.all(devices.map(d => AndroidDevice.create(this, d)));
   }
 }
@@ -117,7 +118,9 @@ export class AndroidDevice extends EventEmitter {
   }
 
   async shell(command: string): Promise<string> {
-    return await this._backend.runCommand(`shell:${command}`);
+    const result = await this._backend.runCommand(`shell:${command}`);
+    await this._refreshWebViews();
+    return result;
   }
 
   private async _driver(): Promise<Transport> {
@@ -245,7 +248,7 @@ export class AndroidDevice extends EventEmitter {
     const browser = await CRBrowser.connect(androidBrowser, browserOptions);
     const controller = new ProgressController();
     await controller.run(async progress => {
-      await browser._defaultContext!._loadDefaultContext(progress);
+      await browser._defaultContext!._loadDefaultContextAsIs(progress);
     });
     return browser._defaultContext!;
   }
@@ -278,7 +281,7 @@ export class AndroidDevice extends EventEmitter {
         const p = match[1];
         if (+p !== pid)
           continue;
-        pkg = proc.substring(proc.lastIndexOf(' '));
+        pkg = proc.substring(proc.lastIndexOf(' ') + 1);
       }
       const webView = { pid, pkg };
       this._webViews.set(pid, webView);

@@ -53,7 +53,7 @@ export class Android extends ChannelOwner<channels.AndroidChannel, channels.Andr
   }
 }
 
-export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, channels.AndroidDeviceInitializer> {
+export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, channels.AndroidDeviceInitializer> implements apiInternal.AndroidDevice<types.BrowserContextOptions, BrowserContext, Page> {
   readonly _timeoutSettings: TimeoutSettings;
   private _webViews = new Map<number, AndroidWebView>();
 
@@ -99,6 +99,16 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
 
   webViews(): AndroidWebView[] {
     return [...this._webViews.values()];
+  }
+
+  async webView(selector: { pkg: string }, options?: types.TimeoutOptions): Promise<AndroidWebView> {
+    const webView = [...this._webViews.values()].find(v => v.pkg() === selector.pkg);
+    if (webView)
+      return webView;
+    return this.waitForEvent('webview', {
+      ...options,
+      predicate: (view: AndroidWebView) => view.pkg() === selector.pkg
+    });
   }
 
   async wait(selector: apiInternal.AndroidSelector, options?: { state?: 'gone' } & types.TimeoutOptions) {
