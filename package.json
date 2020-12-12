@@ -30,7 +30,8 @@
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/checkCoverage.js",
-    "check-deps": "node utils/check_deps.js"
+    "check-deps": "node utils/check_deps.js",
+    "build-android-driver": "./utils/build_android_driver.sh"
   },
   "author": {
     "name": "Microsoft Corporation"
