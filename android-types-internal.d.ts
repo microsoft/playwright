@@ -26,7 +26,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   serial(): string;
   model(): string;
   webViews(): AndroidWebView<Page>[];
-  webView(selector: { pkg: string }): Promise<AndroidWebView<Page>>;
+  webView(selector: { pkg: string }, options?: { timeout?: number }): Promise<AndroidWebView<Page>>;
   shell(command: string): Promise<string>;
   launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;
   close(): Promise<void>;

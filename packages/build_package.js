@@ -65,7 +65,7 @@ const PACKAGES = {
     files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'electron-types.d.ts'],
   },
   'playwright-android': {
-    version: '0.0.7', // Manually manage playwright-android version.
+    version: '0.0.8', // Manually manage playwright-android version.
     description: 'A high-level API to automate Chrome for Android',
     browsers: [],
     files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'android-types.d.ts', 'android-types-internal.d.ts', 'bin/android-driver.apk', 'bin/android-driver-target.apk'],
