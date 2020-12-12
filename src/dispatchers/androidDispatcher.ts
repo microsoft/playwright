@@ -15,9 +15,10 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { Android, AndroidDevice, AndroidSocket } from '../server/android/android';
+import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { Events } from '../client/events';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer> implements channels.AndroidChannel {
   constructor(scope: DispatcherScope, android: Android) {
@@ -156,10 +157,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 }
 
-export class AndroidSocketDispatcher extends Dispatcher<AndroidSocket, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
-  constructor(scope: DispatcherScope, socket: AndroidSocket) {
+export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
+  constructor(scope: DispatcherScope, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
-    socket.on(AndroidSocket.Events.Data, data => this._dispatchEvent('data', { data }));
+    socket.on(Events.AndroidSocket.Data, (data: string) => this._dispatchEvent('data', { data }));
   }
 
   async write(params: channels.AndroidSocketWriteParams, metadata?: channels.Metadata): Promise<void> {

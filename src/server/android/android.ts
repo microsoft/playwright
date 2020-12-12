@@ -123,10 +123,8 @@ export class AndroidDevice extends EventEmitter {
     return result;
   }
 
-  async open(command: string): Promise<AndroidSocket> {
-    const socket = new AndroidSocket(this._backend);
-    await socket.init(`shell:${command}`);
-    return socket;
+  async open(command: string): Promise<SocketBackend> {
+    return await this._backend.open(`shell:${command}`);
   }
 
   private async _driver(): Promise<Transport> {
@@ -302,30 +300,6 @@ export class AndroidDevice extends EventEmitter {
         this.emit(AndroidDevice.Events.WebViewRemoved, p);
       }
     }
-  }
-}
-
-export class AndroidSocket extends EventEmitter {
-  private readonly _backend: DeviceBackend;
-  private _socketBackend?: SocketBackend;
-  static Events = {
-    Data: 'data',
-  };
-
-  constructor(backend: DeviceBackend) {
-    super();
-    this._backend = backend;
-  }
-
-  async init(command: string) {
-    this._socketBackend = await this._backend.open(command);
-    this._socketBackend.on('data', (data: Buffer) =>
-      this.emit(AndroidSocket.Events.Data, data.toString('base64'))
-    );
-  }
-
-  async write(data: Buffer): Promise<void> {
-    return this._socketBackend!.write(data);
   }
 }
 
