@@ -40,7 +40,7 @@ import { FirefoxBrowser } from './firefoxBrowser';
 import { debugLogger } from '../utils/debugLogger';
 import { SelectorsOwner } from './selectors';
 import { isUnderTest } from '../utils/utils';
-import { Android, AndroidDevice } from './android';
+import { Android, AndroidSocket, AndroidDevice } from './android';
 
 class Root extends ChannelOwner<channels.Channel, {}> {
   constructor(connection: Connection) {
@@ -150,6 +150,9 @@ export class Connection {
     switch (type) {
       case 'Android':
         result = new Android(parent, type, guid, initializer);
+        break;
+      case 'AndroidSocket':
+        result = new AndroidSocket(parent, type, guid, initializer);
         break;
       case 'AndroidDevice':
         result = new AndroidDevice(parent, type, guid, initializer);

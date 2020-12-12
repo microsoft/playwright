@@ -123,6 +123,12 @@ export class AndroidDevice extends EventEmitter {
     return result;
   }
 
+  async open(command: string): Promise<AndroidSocket> {
+    const socket = new AndroidSocket(this._backend);
+    await socket.init(`shell:${command}`);
+    return socket;
+  }
+
   private async _driver(): Promise<Transport> {
     if (this._driverPromise)
       return this._driverPromise;
@@ -137,16 +143,8 @@ export class AndroidDevice extends EventEmitter {
     await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
     debug('pw:android')('Installing the new driver');
-    for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
-      debug('pw:android')('Reading ' + require.resolve(`../../../bin/${file}`));
-      const driverFile = await readFileAsync(require.resolve(`../../../bin/${file}`));
-      debug('pw:android')('Opening install socket');
-      const installSocket = await this._backend.open(`shell:cmd package install -r -t -S ${driverFile.length}`);
-      debug('pw:android')('Writing driver bytes: ' + driverFile.length);
-      await installSocket.write(driverFile);
-      const success = await new Promise(f => installSocket.on('data', f));
-      debug('pw:android')('Written driver bytes: ' + success);
-    }
+    for (const file of ['android-driver.apk', 'android-driver-target.apk'])
+      await this.installApk(await readFileAsync(require.resolve(`../../../bin/${file}`)));
 
     debug('pw:android')('Starting the new driver');
     this.shell(`am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner`);
@@ -156,7 +154,7 @@ export class AndroidDevice extends EventEmitter {
     while (!socket) {
       try {
         socket = await this._backend.open(`localabstract:playwright_android_driver_socket`);
-      } catch (e)  {
+      } catch (e) {
         await new Promise(f => setTimeout(f, 100));
       }
     }
@@ -257,6 +255,16 @@ export class AndroidDevice extends EventEmitter {
     return [...this._webViews.values()];
   }
 
+  async installApk(content: Buffer, options?: { args?: string[] }): Promise<void> {
+    const args = options && options.args ? options.args : ['-r', '-t', '-S'];
+    debug('pw:android')('Opening install socket');
+    const installSocket = await this._backend.open(`shell:cmd package install ${args.join(' ')} ${content.length}`);
+    debug('pw:android')('Writing driver bytes: ' + content.length);
+    await installSocket.write(content);
+    const success = await new Promise(f => installSocket.on('data', f));
+    debug('pw:android')('Written driver bytes: ' + success);
+  }
+
   private async _refreshWebViews() {
     const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).split('\n');
 
@@ -294,6 +302,30 @@ export class AndroidDevice extends EventEmitter {
         this.emit(AndroidDevice.Events.WebViewRemoved, p);
       }
     }
+  }
+}
+
+export class AndroidSocket extends EventEmitter {
+  private readonly _backend: DeviceBackend;
+  private _socketBackend?: SocketBackend;
+  static Events = {
+    Data: 'data',
+  };
+
+  constructor(backend: DeviceBackend) {
+    super();
+    this._backend = backend;
+  }
+
+  async init(command: string) {
+    this._socketBackend = await this._backend.open(command);
+    this._socketBackend.on('data', (data: Buffer) =>
+      this.emit(AndroidSocket.Events.Data, data.toString('base64'))
+    );
+  }
+
+  async write(data: Buffer): Promise<void> {
+    return this._socketBackend!.write(data);
   }
 }
 

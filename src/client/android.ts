@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as util from 'util';
+import { isString } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { Events } from './events';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
@@ -196,6 +199,18 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
+  async open(command: string): Promise<AndroidSocket> {
+    return this._wrapApiCall('androidDevice.open', async () => {
+      return AndroidSocket.from((await this._channel.open({ command })).socket);
+    });
+  }
+
+  async installApk(file: string | Buffer, options?: { args: string[] }): Promise<void> {
+    return this._wrapApiCall('androidDevice.installApk', async () => {
+      await this._channel.installApk({ file: await readApkFile(file), args: options && options.args });
+    });
+  }
+
   async launchBrowser(options: types.BrowserContextOptions & { packageName?: string  } = {}): Promise<BrowserContext> {
     return this._wrapApiCall('androidDevice.launchBrowser', async () => {
       const contextOptions = validateBrowserContextOptions(options);
@@ -215,6 +230,29 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     waiter.dispose();
     return result;
   }
+}
+
+export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, channels.AndroidSocketInitializer> {
+  static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
+    return (androidDevice as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidSocketInitializer) {
+    super(parent, type, guid, initializer);
+    this._channel.on('data', ({ data }) => this.emit(Events.AndroidSocket.Data, Buffer.from(data, 'base64')));
+  }
+
+  async write(data: Buffer): Promise<void> {
+    return this._wrapApiCall('androidDevice.write', async () => {
+      await this._channel.write({ data: data.toString('base64') });
+    });
+  }
+}
+
+async function readApkFile(file: string | Buffer): Promise<string> {
+  if (isString(file))
+    return (await util.promisify(fs.readFile)(file)).toString('base64');
+  return file.toString('base64');
 }
 
 class Input implements apiInternal.AndroidInput {

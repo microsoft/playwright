@@ -15,7 +15,7 @@
  */
 
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { Android, AndroidDevice } from '../server/android/android';
+import { Android, AndroidDevice, AndroidSocket } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
@@ -125,8 +125,17 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.send('inputDrag', params);
   }
 
-  async shell(params: channels.AndroidDeviceShellParams) {
+  async shell(params: channels.AndroidDeviceShellParams): Promise<channels.AndroidDeviceShellResult> {
     return { result: await this._object.shell(params.command) };
+  }
+
+  async open(params: channels.AndroidDeviceOpenParams, metadata?: channels.Metadata): Promise<channels.AndroidDeviceOpenResult> {
+    const socket = await this._object.open(params.command);
+    return { socket: new AndroidSocketDispatcher(this._scope, socket) };
+  }
+
+  async installApk(params: channels.AndroidDeviceInstallApkParams) {
+    await this._object.installApk(Buffer.from(params.file, 'base64'), { args: params.args });
   }
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
@@ -144,6 +153,17 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
     return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid)) };
+  }
+}
+
+export class AndroidSocketDispatcher extends Dispatcher<AndroidSocket, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
+  constructor(scope: DispatcherScope, socket: AndroidSocket) {
+    super(scope, socket, 'AndroidSocket', {}, true);
+    socket.on(AndroidSocket.Events.Data, data => this._dispatchEvent('data', { data }));
+  }
+
+  async write(params: channels.AndroidSocketWriteParams, metadata?: channels.Metadata): Promise<void> {
+    await this._object.write(Buffer.from(params.data, 'base64'));
   }
 }
 
