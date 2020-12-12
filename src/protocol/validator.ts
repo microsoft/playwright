@@ -901,6 +901,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
+  scheme.AndroidSocketWriteParams = tObject({
+    data: tBinary,
+  });
+  scheme.AndroidSocketCloseParams = tOptional(tObject({}));
   scheme.AndroidDeviceWaitParams = tObject({
     selector: tType('AndroidSelector'),
     state: tOptional(tEnum(['gone'])),
@@ -1024,8 +1028,15 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
   });
+  scheme.AndroidDeviceOpenParams = tObject({
+    command: tString,
+  });
   scheme.AndroidDeviceShellParams = tObject({
     command: tString,
+  });
+  scheme.AndroidDeviceInstallApkParams = tObject({
+    file: tBinary,
+    args: tOptional(tArray(tString)),
   });
   scheme.AndroidDeviceSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,

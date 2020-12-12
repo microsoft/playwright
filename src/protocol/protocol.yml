@@ -2083,6 +2083,20 @@ Android:
       parameters:
         timeout: number
 
+AndroidSocket:
+  type: interface
+
+  commands:
+    write:
+      parameters:
+        data: binary
+
+    close:
+
+  events:
+    data:
+      parameters:
+        data: binary
 
 AndroidDevice:
   type: interface
@@ -2119,7 +2133,7 @@ AndroidDevice:
         dest: Point
         speed: number?
         timeout: number?
-    
+
     fling:
       parameters:
         selector: AndroidSelector
@@ -2132,12 +2146,12 @@ AndroidDevice:
           - right
         speed: number?
         timeout: number?
-    
+
     longTap:
       parameters:
         selector: AndroidSelector
         timeout: number?
-    
+
     pinchClose:
       parameters:
         selector: AndroidSelector
@@ -2275,11 +2289,24 @@ AndroidDevice:
       returns:
         context: BrowserContext
 
+    open:
+      parameters:
+        command: string
+      returns:
+        socket: AndroidSocket
+
     shell:
       parameters:
         command: string
       returns:
         result: string
+
+    installApk:
+      parameters:
+        file: binary
+        args:
+          type: array?
+          items: string
 
     setDefaultTimeoutNoReply:
       parameters:

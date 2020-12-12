@@ -15,9 +15,10 @@
  */
 
 import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
-import { Android, AndroidDevice } from '../server/android/android';
+import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
+import { Events } from '../client/events';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer> implements channels.AndroidChannel {
   constructor(scope: DispatcherScope, android: Android) {
@@ -131,8 +132,17 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.send('inputDrag', params);
   }
 
-  async shell(params: channels.AndroidDeviceShellParams) {
+  async shell(params: channels.AndroidDeviceShellParams): Promise<channels.AndroidDeviceShellResult> {
     return { result: await this._object.shell(params.command) };
+  }
+
+  async open(params: channels.AndroidDeviceOpenParams, metadata?: channels.Metadata): Promise<channels.AndroidDeviceOpenResult> {
+    const socket = await this._object.open(params.command);
+    return { socket: new AndroidSocketDispatcher(this._scope, socket) };
+  }
+
+  async installApk(params: channels.AndroidDeviceInstallApkParams) {
+    await this._object.installApk(Buffer.from(params.file, 'base64'), { args: params.args });
   }
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
@@ -150,6 +160,21 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
     return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid)) };
+  }
+}
+
+export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
+  constructor(scope: DispatcherScope, socket: SocketBackend) {
+    super(scope, socket, 'AndroidSocket', {}, true);
+    socket.on(Events.AndroidSocket.Data, (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
+  }
+
+  async write(params: channels.AndroidSocketWriteParams, metadata?: channels.Metadata): Promise<void> {
+    await this._object.write(Buffer.from(params.data, 'base64'));
+  }
+
+  async close(params: channels.AndroidSocketCloseParams, metadata?: channels.Metadata): Promise<void> {
+    await this._object.close();
   }
 }
 

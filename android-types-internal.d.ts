@@ -28,6 +28,8 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   webViews(): AndroidWebView<Page>[];
   webView(selector: { pkg: string }, options?: { timeout?: number }): Promise<AndroidWebView<Page>>;
   shell(command: string): Promise<string>;
+  open(command: string): Promise<AndroidSocket>;
+  installApk(file: string | Buffer, options?: { args?: string[] }): Promise<void>;
   launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;
   close(): Promise<void>;
 
@@ -44,6 +46,12 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   swipe(selector: AndroidSelector, direction: 'down' | 'up' | 'left' | 'right', percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
 
   info(selector: AndroidSelector): Promise<AndroidElementInfo>;
+}
+
+export interface AndroidSocket extends EventEmitter {
+  on(event: 'data', handler: (data: Buffer) => void): this;
+  write(data: Buffer): Promise<void>
+  close(): Promise<void>
 }
 
 export interface AndroidInput {
