@@ -243,9 +243,8 @@ private:
 
             if (pkt->kind == VPX_CODEC_CX_FRAME_PKT) {
                 m_writer->writeFrame(pkt);
-                bool keyframe = (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0;
                 ++m_frameCount;
-                fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, keyframe ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
+                // fprintf(stderr, "  #%03d %spts=%" PRId64 " sz=%zd\n", m_frameCount, (pkt->data.frame.flags & VPX_FRAME_IS_KEY) != 0 ? "[K] " : "", pkt->data.frame.pts, pkt->data.frame.sz);
                 m_pts += pkt->data.frame.duration;
             }
         }
@@ -261,7 +260,7 @@ private:
 
         m_writer->finish();
         fclose(m_file);
-        fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
+        // fprintf(stderr, "ScreencastEncoder::finish %d frames\n", m_frameCount);
     }
 
     RefPtr<nsIThread> m_encoderQueue;
@@ -327,7 +326,7 @@ RefPtr<ScreencastEncoder> ScreencastEncoder::create(nsCString& errorString, cons
     }
 
     std::unique_ptr<VPXCodec> vpxCodec(new VPXCodec(codec, cfg, file));
-    fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
+    // fprintf(stderr, "ScreencastEncoder initialized with: %s\n", vpx_codec_iface_name(codec_interface));
     return new ScreencastEncoder(std::move(vpxCodec), scale, margin);
 }
 
@@ -347,7 +346,7 @@ void ScreencastEncoder::flushLastFrame()
 
 void ScreencastEncoder::encodeFrame(const webrtc::VideoFrame& videoFrame)
 {
-    fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
+    // fprintf(stderr, "ScreencastEncoder::encodeFrame\n");
     flushLastFrame();
 
     m_lastFrame = std::make_unique<VPXFrame>(videoFrame.video_frame_buffer(), m_scale, m_margin);

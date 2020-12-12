@@ -16,8 +16,11 @@
  */
 
 import { it, expect } from './fixtures';
+import * as path from 'path';
 
-it('query', async ({page}) => {
+const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
+
+it('should work', async ({page}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
   expect(await page.$eval(`text=ya`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`text="ya"`, e => e.outerHTML)).toBe('<div>ya</div>');
@@ -104,6 +107,24 @@ it('query', async ({page}) => {
   expect(await page.$(`text="lo wo"`)).toBe(null);
   expect((await page.$$(`text=lo \nwo`)).length).toBe(1);
   expect((await page.$$(`text="lo wo"`)).length).toBe(0);
+});
+
+it('should work in v2', async ({page}) => {
+  if (!selectorsV2Enabled())
+    return; // Selectors v1 do not support this.
+  await page.setContent(`<div>yo</div><div>ya</div><div>\nHELLO   \n world  </div>`);
+  expect(await page.$eval(`:text("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`:text-is("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`:text("y")`, e => e.outerHTML)).toBe('<div>yo</div>');
+  expect(await page.$(`:text-is("y")`)).toBe(null);
+  expect(await page.$eval(`:text("hello world")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
+  expect(await page.$eval(`:text-is("hello world")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
+  expect(await page.$eval(`:text("lo wo")`, e => e.outerHTML)).toBe('<div>\nHELLO   \n world  </div>');
+  expect(await page.$(`:text-is("lo wo")`)).toBe(null);
+  expect(await page.$eval(`:text-matches("^[ay]+$")`, e => e.outerHTML)).toBe('<div>ya</div>');
+  expect(await page.$eval(`:text-matches("y", "g")`, e => e.outerHTML)).toBe('<div>yo</div>');
+  expect(await page.$eval(`:text-matches("Y", "i")`, e => e.outerHTML)).toBe('<div>yo</div>');
+  expect(await page.$(`:text-matches("^y$")`)).toBe(null);
 });
 
 it('should be case sensitive if quotes are specified', async ({page}) => {

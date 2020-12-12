@@ -61,6 +61,11 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   WEBKIT_EXTRA_FOLDER_PATH="$PWD/webkit/embedder/Playwright"
   BUILD_NUMBER=$(head -1 "$PWD/webkit/BUILD_NUMBER")
   source "./webkit/UPSTREAM_CONFIG.sh"
+  if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
+    echo "WARNING: using checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${WK_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<WK_CHECKOUT_PATH>"
+  fi
 else
   echo ERROR: unknown browser - "$1"
   exit 1

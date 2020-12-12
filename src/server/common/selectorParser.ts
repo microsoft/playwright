@@ -34,9 +34,18 @@ export function selectorsV2Enabled() {
   return true;
 }
 
-export function parseSelector(selector: string): ParsedSelector {
+export function selectorsV2EngineNames() {
+  return ['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text-matches', 'text-is'];
+}
+
+export function parseSelector(selector: string, customNames: Set<string>): ParsedSelector {
   const v1 = parseSelectorV1(selector);
-  const names = new Set<string>(v1.parts.map(part => part.name));
+  const names = new Set<string>();
+  for (const { name } of v1.parts) {
+    names.add(name);
+    if (!customNames.has(name))
+      throw new Error(`Unknown engine "${name}" while parsing selector ${selector}`);
+  }
 
   if (!selectorsV2Enabled()) {
     return {
@@ -46,7 +55,7 @@ export function parseSelector(selector: string): ParsedSelector {
   }
 
   const chain = (from: number, to: number): CSSComplexSelector => {
-    let result: CSSComplexSelector = { simples: [] };
+    const result: CSSComplexSelector = { simples: [] };
     for (const part of v1.parts.slice(from, to)) {
       let name = part.name;
       let wrapInLight = false;
@@ -54,29 +63,28 @@ export function parseSelector(selector: string): ParsedSelector {
         wrapInLight = true;
         name = name.substring(0, name.indexOf(':'));
       }
-      let simple: CSSSimpleSelector;
       if (name === 'css') {
-        const parsed = parseCSS(part.body);
+        const parsed = parseCSS(part.body, customNames);
         parsed.names.forEach(name => names.add(name));
-        simple = callWith('is', parsed.selector);
+        if (wrapInLight || parsed.selector.length > 1) {
+          let simple = callWith('is', parsed.selector);
+          if (wrapInLight)
+            simple = callWith('light', [simpleToComplex(simple)]);
+          result.simples.push({ selector: simple, combinator: '' });
+        } else {
+          result.simples.push(...parsed.selector[0].simples);
+        }
       } else if (name === 'text') {
-        simple = textSelectorToSimple(part.body);
+        let simple = textSelectorToSimple(part.body);
+        if (result.simples.length)
+          result.simples[result.simples.length - 1].combinator = '>=';
+        if (wrapInLight)
+          simple = callWith('light', [simpleToComplex(simple)]);
+        result.simples.push({ selector: simple, combinator: '' });
       } else {
-        simple = callWith(name, [part.body]);
-      }
-      if (wrapInLight)
-        simple = callWith('light', [simpleToComplex(simple)]);
-      if (name === 'text') {
-        const copy = result.simples.map(one => {
-          return { selector: copySimple(one.selector), combinator: one.combinator };
-        });
-        copy.push({ selector: simple, combinator: '' });
-        if (!result.simples.length)
-          result.simples.push({ selector: callWith('scope', []), combinator: '' });
-        const last = result.simples[result.simples.length - 1];
-        last.selector.functions.push({ name: 'is', args: [simpleToComplex(simple)] });
-        result = simpleToComplex(callWith('is', [{ simples: copy }, result]));
-      } else {
+        let simple = callWith(name, [part.body]);
+        if (wrapInLight)
+          simple = callWith('light', [simpleToComplex(simple)]);
         result.simples.push({ selector: simple, combinator: '' });
       }
     }
@@ -101,10 +109,6 @@ function simpleToComplex(simple: CSSSimpleSelector): CSSComplexSelector {
   return { simples: [{ selector: simple, combinator: '' }]};
 }
 
-function copySimple(simple: CSSSimpleSelector): CSSSimpleSelector {
-  return { css: simple.css, functions: simple.functions.slice() };
-}
-
 function textSelectorToSimple(selector: string): CSSSimpleSelector {
   function unescape(s: string): string {
     if (!s.includes('\\'))
@@ -119,18 +123,22 @@ function textSelectorToSimple(selector: string): CSSSimpleSelector {
     return r.join('');
   }
 
-  let functionName = 'text';
+  function escapeRegExp(s: string) {
+    return s.replace(/[.*+\?^${}()|[\]\\]/g, '\\$&').replace(/-/g, '\\x2d');
+  }
+
+  let functionName = 'text-matches';
   let args: string[];
   if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
-    args = [unescape(selector.substring(1, selector.length - 1))];
+    args = ['^' + escapeRegExp(unescape(selector.substring(1, selector.length - 1))) + '$'];
   } else if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
-    args = [unescape(selector.substring(1, selector.length - 1))];
+    args = ['^' + escapeRegExp(unescape(selector.substring(1, selector.length - 1))) + '$'];
   } else if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
-    functionName = 'matches-text';
     const lastSlash = selector.lastIndexOf('/');
     args = [selector.substring(1, lastSlash), selector.substring(lastSlash + 1)];
   } else {
-    args = [selector, 'sgi'];
+    functionName = 'text';
+    args = [selector];
   }
   return callWith(functionName, args);
 }

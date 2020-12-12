@@ -61,6 +61,11 @@ elif [[ ("$1" == "webkit") || ("$1" == "webkit/") || ("$1" == "wk") ]]; then
   EXPORT_PATH="$PWD/webkit"
   BUILD_NUMBER_UPSTREAM_URL="https://raw.githubusercontent.com/microsoft/playwright/master/browser_patches/webkit/BUILD_NUMBER"
   source "./webkit/UPSTREAM_CONFIG.sh"
+  if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
+    echo "WARNING: using checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
+    CHECKOUT_PATH="${WK_CHECKOUT_PATH}"
+    FRIENDLY_CHECKOUT_PATH="<WK_CHECKOUT_PATH>"
+  fi
 else
   echo ERROR: unknown browser to export - "$1"
   exit 1

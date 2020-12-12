@@ -16,18 +16,20 @@
 
 import * as css from './cssTokenizer';
 
-type ClauseCombinator = '' | '>' | '+' | '~';
+// Note: '>=' is used internally for text engine to preserve backwards compatibility.
+type ClauseCombinator = '' | '>' | '+' | '~' | '>=';
 // TODO: consider
 //   - key=value
 //   - operators like `=`, `|=`, `~=`, `*=`, `/`
 //   - <empty>~=value
+//   - argument modes: "parse all", "parse commas", "just a string"
 export type CSSFunctionArgument = CSSComplexSelector | number | string;
 export type CSSFunction = { name: string, args: CSSFunctionArgument[] };
 export type CSSSimpleSelector = { css?: string, functions: CSSFunction[] };
 export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combinator: ClauseCombinator }[] };
 export type CSSComplexSelectorList = CSSComplexSelector[];
 
-export function parseCSS(selector: string): { selector: CSSComplexSelectorList, names: string[] } {
+export function parseCSS(selector: string, customNames: Set<string>): { selector: CSSComplexSelectorList, names: string[] } {
   let tokens: css.CSSTokenInterface[];
   try {
     tokens = css.tokenize(selector);
@@ -164,7 +166,7 @@ export function parseCSS(selector: string): { selector: CSSComplexSelectorList, 
       } else if (tokens[pos] instanceof css.ColonToken) {
         pos++;
         if (isIdent()) {
-          if (builtinCSSFilters.has(tokens[pos].value.toLowerCase())) {
+          if (!customNames.has(tokens[pos].value.toLowerCase())) {
             rawCSSString += ':' + tokens[pos++].toSource();
           } else {
             const name = tokens[pos++].value.toLowerCase();
@@ -173,7 +175,7 @@ export function parseCSS(selector: string): { selector: CSSComplexSelectorList, 
           }
         } else if (tokens[pos] instanceof css.FunctionToken) {
           const name = tokens[pos++].value.toLowerCase();
-          if (builtinCSSFunctions.has(name)) {
+          if (!customNames.has(name)) {
             rawCSSString += `:${name}(${consumeBuiltinFunctionArguments()})`;
           } else {
             functions.push({ name, args: consumeFunctionArguments() });
@@ -234,16 +236,3 @@ export function serializeSelector(args: CSSFunctionArgument[]) {
     }).join(' ');
   }).join(', ');
 }
-
-const builtinCSSFilters = new Set([
-  'active', 'any-link', 'checked', 'blank', 'default', 'defined',
-  'disabled', 'empty', 'enabled', 'first', 'first-child', 'first-of-type',
-  'fullscreen', 'focus', 'focus-visible', 'focus-within', 'hover',
-  'indeterminate', 'in-range', 'invalid', 'last-child', 'last-of-type',
-  'link', 'only-child', 'only-of-type', 'optional', 'out-of-range', 'placeholder-shown',
-  'read-only', 'read-write', 'required', 'root', 'target', 'valid', 'visited',
-]);
-
-const builtinCSSFunctions = new Set([
-  'dir', 'lang', 'nth-child', 'nth-last-child', 'nth-last-of-type', 'nth-of-type',
-]);

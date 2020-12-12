@@ -222,7 +222,7 @@ export abstract class BrowserContext extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async _loadDefaultContext(progress: Progress) {
+  async _loadDefaultContextAsIs(progress: Progress): Promise<Page[]> {
     if (!this.pages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       progress.cleanupWhenAborted(() => waitForEvent.dispose);
@@ -230,6 +230,11 @@ export abstract class BrowserContext extends EventEmitter {
     }
     const pages = this.pages();
     await pages[0].mainFrame()._waitForLoadState(progress, 'load');
+    return pages;
+  }
+
+  async _loadDefaultContext(progress: Progress) {
+    const pages = await this._loadDefaultContextAsIs(progress);
     if (pages.length !== 1 || pages[0].mainFrame().url() !== 'about:blank')
       throw new Error(`Arguments can not specify page to be opened (first url is ${pages[0].mainFrame().url()})`);
     if (this._options.isMobile || this._options.locale) {

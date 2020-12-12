@@ -4,6 +4,7 @@ set +x
 
 trap "cd $(pwd -P)" EXIT
 cd "$(dirname $0)"
+SCRIPT_FOLDER="$(pwd -P)"
 
 build_gtk() {
   if ! [[ -d ./WebKitBuild/GTK/DependenciesGTK ]]; then
@@ -34,11 +35,16 @@ ensure_linux_deps() {
   yes | DEBIAN_FRONTEND=noninteractive WEBKIT_JHBUILD=1 WEBKIT_JHBUILD_MODULESET=minimal WEBKIT_OUTPUTDIR=$(pwd)/WebKitBuild/GTK ./Tools/Scripts/update-webkitgtk-libs
 }
 
-if [[ "$(uname)" == "Darwin" ]]; then
+if [[ ! -z "${WK_CHECKOUT_PATH}" ]]; then
+  cd "${WK_CHECKOUT_PATH}"
+  echo "WARNING: checkout path from WK_CHECKOUT_PATH env: ${WK_CHECKOUT_PATH}"
+else
   cd "checkout"
+fi
+
+if [[ "$(uname)" == "Darwin" ]]; then
   ./Tools/Scripts/build-webkit --release --touch-events --orientation-events
 elif [[ "$(uname)" == "Linux" ]]; then
-  cd "checkout"
   if [[ $# == 0 || (-z "$1") ]]; then
     echo
     echo BUILDING: GTK and WPE
@@ -64,7 +70,7 @@ elif [[ "$(uname)" == "Linux" ]]; then
     build_wpe
   fi
 elif [[ "$(uname)" == MINGW* ]]; then
-  /c/Windows/System32/cmd.exe "/c buildwin.bat"
+  /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwin.bat)"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
   exit 1;

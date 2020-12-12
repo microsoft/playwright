@@ -335,7 +335,6 @@ const NSActivityOptions ActivityOptions =
     [dataStoreConfiguration setProxyConfiguration:[self proxyConfiguration:proxyServer WithBypassList:proxyBypassList]];
     browserContext.dataStore = [[[WKWebsiteDataStore alloc] _initWithConfiguration:dataStoreConfiguration] autorelease];
     browserContext.processPool = [[[WKProcessPool alloc] _initWithConfiguration:processConfiguration] autorelease];
-    [browserContext.processPool _setDownloadDelegate:self];
     [_browserContexts addObject:browserContext];
     return browserContext;
 }
@@ -434,8 +433,8 @@ const NSActivityOptions ActivityOptions =
 {
     LOG(@"decidePolicyForNavigationAction");
 
-    if (navigationAction._shouldPerformDownload) {
-        decisionHandler(_WKNavigationActionPolicyDownload);
+    if (navigationAction.downloadAttribute) {
+        decisionHandler(WKNavigationActionPolicyBecomeDownload);
         return;
     }
     if (navigationAction._canHandleRequest) {
@@ -455,17 +454,27 @@ const NSActivityOptions ActivityOptions =
 
     NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
     if (disposition && [disposition hasPrefix:@"attachment"]) {
-        decisionHandler(_WKNavigationResponsePolicyBecomeDownload);
+        decisionHandler(WKNavigationResponsePolicyBecomeDownload);
         return;
     }
     decisionHandler(WKNavigationResponsePolicyAllow);
 }
 
-#pragma mark _WKDownloadDelegate
-
-- (void)_download:(_WKDownload *)download decideDestinationWithSuggestedFilename:(NSString *)filename completionHandler:(void (^)(BOOL allowOverwrite, NSString *destination))completionHandler
+- (void)webView:(WKWebView *)webView navigationAction:(WKNavigationAction *)navigationAction didBecomeDownload:(WKDownload *)download
 {
-    completionHandler(NO, @"");
+    download.delegate = self;
+}
+
+- (void)webView:(WKWebView *)webView navigationResponse:(WKNavigationResponse *)navigationResponse didBecomeDownload:(WKDownload *)download
+{
+    download.delegate = self;
+}
+
+#pragma mark WKDownloadDelegate
+
+- (void)download:(WKDownload *)download decideDestinationWithResponse:(NSURLResponse *)response suggestedFilename:(NSString *)suggestedFilename completionHandler:(void (^)(NSURL * _Nullable destination))completionHandler
+{
+    completionHandler(nil);
 }
 
 @end

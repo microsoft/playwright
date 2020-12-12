@@ -22,7 +22,7 @@ import { getUbuntuVersionSync } from './ubuntuVersion';
 import { getFromENV } from './utils';
 
 export type BrowserName = 'chromium'|'webkit'|'firefox'|'clank';
-export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11.0'|'ubuntu18.04'|'ubuntu20.04';
+export type BrowserPlatform = 'win32'|'win64'|'mac10.13'|'mac10.14'|'mac10.15'|'mac11.0'|'mac11.0-arm64'|'ubuntu18.04'|'ubuntu20.04';
 export type BrowserDescriptor = {
   name: BrowserName,
   revision: string,
@@ -35,7 +35,8 @@ export const hostPlatform = ((): BrowserPlatform => {
     const macVersion = execSync('sw_vers -productVersion', {
       stdio: ['ignore', 'pipe', 'ignore']
     }).toString('utf8').trim().split('.').slice(0, 2).join('.');
-    return `mac${macVersion}` as BrowserPlatform;
+    const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
+    return `mac${macVersion}${archSuffix}` as BrowserPlatform;
   }
   if (platform === 'linux') {
     const ubuntuVersion = getUbuntuVersionSync();
@@ -86,6 +87,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
       ['mac10.14', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac10.15', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['mac11.0', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
+      ['mac11.0-arm64', ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium']],
       ['win32', ['chrome-win', 'chrome.exe']],
       ['win64', ['chrome-win', 'chrome.exe']],
     ]).get(hostPlatform);
@@ -99,6 +101,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
       ['mac10.14', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac10.15', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['mac11.0', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
+      ['mac11.0-arm64', ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox']],
       ['win32', ['firefox', 'firefox.exe']],
       ['win64', ['firefox', 'firefox.exe']],
     ]).get(hostPlatform);
@@ -112,6 +115,7 @@ export function executablePath(browserPath: string, browser: BrowserDescriptor):
       ['mac10.14', ['pw_run.sh']],
       ['mac10.15', ['pw_run.sh']],
       ['mac11.0', ['pw_run.sh']],
+      ['mac11.0-arm64', ['pw_run.sh']],
       ['win32', ['Playwright.exe']],
       ['win64', ['Playwright.exe']],
     ]).get(hostPlatform);

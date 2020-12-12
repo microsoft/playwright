@@ -20,7 +20,6 @@ import * as WebSocket from 'ws';
 import { installDebugController } from '../debug/debugController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
-import { Electron } from '../server/electron/electron';
 import { Playwright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
 import { installTracer } from '../trace/tracer';
@@ -64,7 +63,6 @@ export class PlaywrightServer {
       });
       dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
       const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
-      (playwright as any).electron = new Electron();
       new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
     });
   }

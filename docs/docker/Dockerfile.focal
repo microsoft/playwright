@@ -1,11 +1,8 @@
 FROM ubuntu:focal
 
-# 1. Install node12
-RUN apt-get update && apt-get install -y curl && \
-    curl -sL https://deb.nodesource.com/setup_12.x | bash - && \
-    apt-get install -y nodejs
+# === INSTALL BROWSER DEPENDENCIES ===
 
-# 2. Install WebKit dependencies
+# Install WebKit dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libwoff1 \
     libopus0 \
@@ -28,14 +25,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 \
     libharfbuzz-icu0
 
-# 3. Install gstreamer and plugins to support video playback in WebKit.
+# Install gstreamer and plugins to support video playback in WebKit.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgstreamer-gl1.0-0 \
     libgstreamer-plugins-bad1.0-0 \
     gstreamer1.0-plugins-good \
     gstreamer1.0-libav
 
-# 4. Install Chromium dependencies
+# Install Chromium dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 \
     libxss1 \
@@ -43,24 +40,31 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-noto-color-emoji \
     libxtst6
 
-# 5. Install Firefox dependencies
+# Install Firefox dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libdbus-glib-1-2 \
     libxt6
 
-# 6. Install ffmpeg to bring in audio and video codecs necessary for playing videos in Firefox.
+# Install ffmpeg to bring in audio and video codecs necessary for playing videos in Firefox.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg
 
-# 7. (Optional) Install XVFB if there's a need to run browsers in headful mode
+# (Optional) Install XVFB if there's a need to run browsers in headful mode
 RUN apt-get update && apt-get install -y --no-install-recommends \
     xvfb
 
-# 8. Feature-parity with node.js base images.
+# === INSTALL Node.js ===
+
+# Install node14
+RUN apt-get update && apt-get install -y curl && \
+    curl -sL https://deb.nodesource.com/setup_14.x | bash - && \
+    apt-get install -y nodejs
+
+# Feature-parity with node.js base images.
 RUN apt-get update && apt-get install -y --no-install-recommends git ssh && \
     npm install -g yarn
 
-# 9. Create the pwuser (we internally create a symlink for the pwuser and the root user)
+# Create the pwuser (we internally create a symlink for the pwuser and the root user)
 RUN adduser pwuser
 
 # === BAKE BROWSERS INTO IMAGE ===

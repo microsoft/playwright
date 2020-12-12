@@ -14,26 +14,25 @@
  * limitations under the License.
  */
 
-import { Playwright } from '../server/playwright';
 import * as channels from '../protocol/channels';
+import { DeviceDescriptors } from '../server/deviceDescriptors';
+import { Playwright } from '../server/playwright';
+import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
-import { Electron } from '../server/electron/electron';
 import { ElectronDispatcher } from './electronDispatcher';
-import { DeviceDescriptors } from '../server/deviceDescriptors';
 import { SelectorsDispatcher } from './selectorsDispatcher';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
-    const electron = (playwright as any).electron as (Electron | undefined);
     const deviceDescriptors = Object.entries(DeviceDescriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),
-      clank: new BrowserTypeDispatcher(scope, playwright.clank),
       firefox: new BrowserTypeDispatcher(scope, playwright.firefox),
       webkit: new BrowserTypeDispatcher(scope, playwright.webkit),
-      electron: electron ? new ElectronDispatcher(scope, electron) : undefined,
+      android: new AndroidDispatcher(scope, playwright.android),
+      electron: new ElectronDispatcher(scope, playwright.electron),
       deviceDescriptors,
       selectors: new SelectorsDispatcher(scope, playwright.selectors),
     }, false, 'Playwright');

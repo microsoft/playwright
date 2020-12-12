@@ -31,7 +31,7 @@
 @property (nonatomic, copy) void (^completionHandler)(BOOL accept, NSString* value);
 @end
 
-@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate, _WKDownloadDelegate> {
+@interface BrowserAppDelegate : NSObject <NSApplicationDelegate, WKNavigationDelegate, WKUIDelegate, _WKBrowserInspectorDelegate, WKDownloadDelegate> {
     NSMutableSet *_headlessWindows;
     NSMutableSet *_browserContexts;
     bool _headless;

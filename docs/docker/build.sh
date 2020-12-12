@@ -3,12 +3,12 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
-  echo "usage: $(basename $0) {bionic,focal} playwright:localbuild-bionic"
+  echo "usage: $(basename $0) {bionic,focal} playwright:localbuild-focal"
   echo
-  echo "Build Playwright docker image and tag it as 'playwright:localbuild-bionic'."
+  echo "Build Playwright docker image and tag it as 'playwright:localbuild-focal'."
   echo "Once image is built, you can run it with"
   echo ""
-  echo "  docker run --rm -it playwright:localbuildbionic /bin/bash"
+  echo "  docker run --rm -it playwright:localbuild-focal /bin/bash"
   echo ""
   echo "NOTE: this requires on Playwright dependencies to be installed with 'npm install'"
   echo "      and Playwright itself being built with 'npm run build'"

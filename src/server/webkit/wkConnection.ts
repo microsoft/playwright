@@ -20,8 +20,9 @@ import { assert } from '../../utils/utils';
 import { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../transport';
 import { Protocol } from './protocol';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
-import { debugLogger } from '../../utils/debugLogger';
+import { debugLogger, RecentLogsCollector } from '../../utils/debugLogger';
 import { ProtocolLogger } from '../types';
+import { helper } from '../helper';
 
 // WKPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
@@ -36,16 +37,18 @@ export class WKConnection {
   private readonly _transport: ConnectionTransport;
   private readonly _onDisconnect: () => void;
   private readonly _protocolLogger: ProtocolLogger;
+  readonly _browserLogsCollector: RecentLogsCollector;
   private _lastId = 0;
   private _closed = false;
   readonly browserSession: WKSession;
 
-  constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger) {
+  constructor(transport: ConnectionTransport, onDisconnect: () => void, protocolLogger: ProtocolLogger, browserLogsCollector: RecentLogsCollector) {
     this._transport = transport;
     this._transport.onmessage = this._dispatchMessage.bind(this);
     this._transport.onclose = this._onClose.bind(this);
     this._onDisconnect = onDisconnect;
     this._protocolLogger = protocolLogger;
+    this._browserLogsCollector = browserLogsCollector;
     this.browserSession = new WKSession(this, '', 'Browser has been closed.', (message: any) => {
       this.rawSend(message);
     });
@@ -76,7 +79,7 @@ export class WKConnection {
     this._closed = true;
     this._transport.onmessage = undefined;
     this._transport.onclose = undefined;
-    this.browserSession.dispose();
+    this.browserSession.dispose(true);
     this._onDisconnect();
   }
 
@@ -148,7 +151,9 @@ export class WKSession extends EventEmitter {
     return this._disposed;
   }
 
-  dispose() {
+  dispose(disconnected: boolean) {
+    if (disconnected)
+      this.errorText = 'Browser closed.' + helper.formatBrowserLogs(this.connection._browserLogsCollector.recentLogs());
     for (const callback of this._callbacks.values())
       callback.reject(rewriteErrorMessage(callback.error, `Protocol error (${callback.method}): ${this.errorText}`));
     this._callbacks.clear();

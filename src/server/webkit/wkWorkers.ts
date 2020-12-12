@@ -67,7 +67,7 @@ export class WKWorkers {
         const workerSession = this._workerSessions.get(event.workerId)!;
         if (!workerSession)
           return;
-        workerSession.dispose();
+        workerSession.dispose(false);
         this._workerSessions.delete(event.workerId);
         this._page._removeWorker(event.workerId);
       })

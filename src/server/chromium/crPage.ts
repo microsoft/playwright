@@ -128,7 +128,7 @@ export class CRPage implements PageDelegate {
 
   async exposeBinding(binding: PageBinding) {
     await this._forAllFrameSessions(frame => frame._initBinding(binding));
-    await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(binding.source, false, {}).catch(e => {})));
+    await Promise.all(this._page.frames().map(frame => frame._evaluateExpression(binding.source, false, {}, binding.world).catch(e => {})));
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {

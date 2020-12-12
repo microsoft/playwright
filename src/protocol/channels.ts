@@ -27,6 +27,18 @@ export type Metadata = {
   stack?: string,
 };
 
+export type Point = {
+  x: number,
+  y: number,
+};
+
+export type Rect = {
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+};
+
 export type SerializedValue = {
   n?: number,
   b?: boolean,
@@ -125,10 +137,10 @@ export type SerializedError = {
 // ----------- Playwright -----------
 export type PlaywrightInitializer = {
   chromium: BrowserTypeChannel,
-  clank: BrowserTypeChannel,
   firefox: BrowserTypeChannel,
   webkit: BrowserTypeChannel,
-  electron?: ElectronChannel,
+  android: AndroidChannel,
+  electron: ElectronChannel,
   deviceDescriptors: {
     name: string,
     descriptor: {
@@ -916,12 +928,7 @@ export type PageScreenshotParams = {
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
-  clip?: {
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-  },
+  clip?: Rect,
 };
 export type PageScreenshotOptions = {
   timeout?: number,
@@ -929,12 +936,7 @@ export type PageScreenshotOptions = {
   quality?: number,
   omitBackground?: boolean,
   fullPage?: boolean,
-  clip?: {
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-  },
+  clip?: Rect,
 };
 export type PageScreenshotResult = {
   binary: Binary,
@@ -1271,10 +1273,7 @@ export type FrameClickParams = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
@@ -1284,10 +1283,7 @@ export type FrameClickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
@@ -1304,10 +1300,7 @@ export type FrameDblclickParams = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
@@ -1316,10 +1309,7 @@ export type FrameDblclickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
@@ -1412,19 +1402,13 @@ export type FrameHoverParams = {
   selector: string,
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type FrameHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type FrameHoverResult = void;
@@ -1533,20 +1517,14 @@ export type FrameTapParams = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type FrameTapOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type FrameTapResult = void;
@@ -1784,12 +1762,7 @@ export type ElementHandleEvalOnSelectorAllResult = {
 export type ElementHandleBoundingBoxParams = {};
 export type ElementHandleBoundingBoxOptions = {};
 export type ElementHandleBoundingBoxResult = {
-  value?: {
-    width: number,
-    height: number,
-    x: number,
-    y: number,
-  },
+  value?: Rect,
 };
 export type ElementHandleCheckParams = {
   force?: boolean,
@@ -1806,10 +1779,7 @@ export type ElementHandleClickParams = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
@@ -1819,10 +1789,7 @@ export type ElementHandleClickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
@@ -1838,10 +1805,7 @@ export type ElementHandleDblclickParams = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
@@ -1850,10 +1814,7 @@ export type ElementHandleDblclickOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   timeout?: number,
@@ -1892,19 +1853,13 @@ export type ElementHandleGetAttributeResult = {
 export type ElementHandleHoverParams = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleHoverOptions = {
   force?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleHoverResult = void;
@@ -2023,20 +1978,14 @@ export type ElementHandleTapParams = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleTapOptions = {
   force?: boolean,
   noWaitAfter?: boolean,
   modifiers?: ('Alt' | 'Control' | 'Meta' | 'Shift')[],
-  position?: {
-    x: number,
-    y: number,
-  },
+  position?: Point,
   timeout?: number,
 };
 export type ElementHandleTapResult = void;
@@ -2452,3 +2401,380 @@ export type ElectronApplicationEvaluateExpressionHandleResult = {
 export type ElectronApplicationCloseParams = {};
 export type ElectronApplicationCloseOptions = {};
 export type ElectronApplicationCloseResult = void;
+
+// ----------- Android -----------
+export type AndroidInitializer = {};
+export interface AndroidChannel extends Channel {
+  devices(params?: AndroidDevicesParams, metadata?: Metadata): Promise<AndroidDevicesResult>;
+  setDefaultTimeoutNoReply(params: AndroidSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidSetDefaultTimeoutNoReplyResult>;
+}
+export type AndroidDevicesParams = {};
+export type AndroidDevicesOptions = {};
+export type AndroidDevicesResult = {
+  devices: AndroidDeviceChannel[],
+};
+export type AndroidSetDefaultTimeoutNoReplyParams = {
+  timeout: number,
+};
+export type AndroidSetDefaultTimeoutNoReplyOptions = {
+
+};
+export type AndroidSetDefaultTimeoutNoReplyResult = void;
+
+// ----------- AndroidDevice -----------
+export type AndroidDeviceInitializer = {
+  model: string,
+  serial: string,
+};
+export interface AndroidDeviceChannel extends Channel {
+  on(event: 'webViewAdded', callback: (params: AndroidDeviceWebViewAddedEvent) => void): this;
+  on(event: 'webViewRemoved', callback: (params: AndroidDeviceWebViewRemovedEvent) => void): this;
+  wait(params: AndroidDeviceWaitParams, metadata?: Metadata): Promise<AndroidDeviceWaitResult>;
+  fill(params: AndroidDeviceFillParams, metadata?: Metadata): Promise<AndroidDeviceFillResult>;
+  tap(params: AndroidDeviceTapParams, metadata?: Metadata): Promise<AndroidDeviceTapResult>;
+  drag(params: AndroidDeviceDragParams, metadata?: Metadata): Promise<AndroidDeviceDragResult>;
+  fling(params: AndroidDeviceFlingParams, metadata?: Metadata): Promise<AndroidDeviceFlingResult>;
+  longTap(params: AndroidDeviceLongTapParams, metadata?: Metadata): Promise<AndroidDeviceLongTapResult>;
+  pinchClose(params: AndroidDevicePinchCloseParams, metadata?: Metadata): Promise<AndroidDevicePinchCloseResult>;
+  pinchOpen(params: AndroidDevicePinchOpenParams, metadata?: Metadata): Promise<AndroidDevicePinchOpenResult>;
+  scroll(params: AndroidDeviceScrollParams, metadata?: Metadata): Promise<AndroidDeviceScrollResult>;
+  swipe(params: AndroidDeviceSwipeParams, metadata?: Metadata): Promise<AndroidDeviceSwipeResult>;
+  info(params: AndroidDeviceInfoParams, metadata?: Metadata): Promise<AndroidDeviceInfoResult>;
+  inputType(params: AndroidDeviceInputTypeParams, metadata?: Metadata): Promise<AndroidDeviceInputTypeResult>;
+  inputPress(params: AndroidDeviceInputPressParams, metadata?: Metadata): Promise<AndroidDeviceInputPressResult>;
+  inputTap(params: AndroidDeviceInputTapParams, metadata?: Metadata): Promise<AndroidDeviceInputTapResult>;
+  inputSwipe(params: AndroidDeviceInputSwipeParams, metadata?: Metadata): Promise<AndroidDeviceInputSwipeResult>;
+  inputDrag(params: AndroidDeviceInputDragParams, metadata?: Metadata): Promise<AndroidDeviceInputDragResult>;
+  launchBrowser(params: AndroidDeviceLaunchBrowserParams, metadata?: Metadata): Promise<AndroidDeviceLaunchBrowserResult>;
+  shell(params: AndroidDeviceShellParams, metadata?: Metadata): Promise<AndroidDeviceShellResult>;
+  setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
+  connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: Metadata): Promise<AndroidDeviceConnectToWebViewResult>;
+  close(params?: AndroidDeviceCloseParams, metadata?: Metadata): Promise<AndroidDeviceCloseResult>;
+}
+export type AndroidDeviceWebViewAddedEvent = {
+  webView: AndroidWebView,
+};
+export type AndroidDeviceWebViewRemovedEvent = {
+  pid: number,
+};
+export type AndroidDeviceWaitParams = {
+  selector: AndroidSelector,
+  state?: 'gone',
+  timeout?: number,
+};
+export type AndroidDeviceWaitOptions = {
+  state?: 'gone',
+  timeout?: number,
+};
+export type AndroidDeviceWaitResult = void;
+export type AndroidDeviceFillParams = {
+  selector: AndroidSelector,
+  text: string,
+  timeout?: number,
+};
+export type AndroidDeviceFillOptions = {
+  timeout?: number,
+};
+export type AndroidDeviceFillResult = void;
+export type AndroidDeviceTapParams = {
+  selector: AndroidSelector,
+  duration?: number,
+  timeout?: number,
+};
+export type AndroidDeviceTapOptions = {
+  duration?: number,
+  timeout?: number,
+};
+export type AndroidDeviceTapResult = void;
+export type AndroidDeviceDragParams = {
+  selector: AndroidSelector,
+  dest: Point,
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceDragOptions = {
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceDragResult = void;
+export type AndroidDeviceFlingParams = {
+  selector: AndroidSelector,
+  direction: 'up' | 'down' | 'left' | 'right',
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceFlingOptions = {
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceFlingResult = void;
+export type AndroidDeviceLongTapParams = {
+  selector: AndroidSelector,
+  timeout?: number,
+};
+export type AndroidDeviceLongTapOptions = {
+  timeout?: number,
+};
+export type AndroidDeviceLongTapResult = void;
+export type AndroidDevicePinchCloseParams = {
+  selector: AndroidSelector,
+  percent: number,
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDevicePinchCloseOptions = {
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDevicePinchCloseResult = void;
+export type AndroidDevicePinchOpenParams = {
+  selector: AndroidSelector,
+  percent: number,
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDevicePinchOpenOptions = {
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDevicePinchOpenResult = void;
+export type AndroidDeviceScrollParams = {
+  selector: AndroidSelector,
+  direction: 'up' | 'down' | 'left' | 'right',
+  percent: number,
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceScrollOptions = {
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceScrollResult = void;
+export type AndroidDeviceSwipeParams = {
+  selector: AndroidSelector,
+  direction: 'up' | 'down' | 'left' | 'right',
+  percent: number,
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceSwipeOptions = {
+  speed?: number,
+  timeout?: number,
+};
+export type AndroidDeviceSwipeResult = void;
+export type AndroidDeviceInfoParams = {
+  selector: AndroidSelector,
+};
+export type AndroidDeviceInfoOptions = {
+
+};
+export type AndroidDeviceInfoResult = {
+  info: AndroidElementInfo,
+};
+export type AndroidDeviceInputTypeParams = {
+  text: string,
+};
+export type AndroidDeviceInputTypeOptions = {
+
+};
+export type AndroidDeviceInputTypeResult = void;
+export type AndroidDeviceInputPressParams = {
+  key: string,
+};
+export type AndroidDeviceInputPressOptions = {
+
+};
+export type AndroidDeviceInputPressResult = void;
+export type AndroidDeviceInputTapParams = {
+  point: Point,
+};
+export type AndroidDeviceInputTapOptions = {
+
+};
+export type AndroidDeviceInputTapResult = void;
+export type AndroidDeviceInputSwipeParams = {
+  segments: Point[],
+  steps: number,
+};
+export type AndroidDeviceInputSwipeOptions = {
+
+};
+export type AndroidDeviceInputSwipeResult = void;
+export type AndroidDeviceInputDragParams = {
+  from: Point,
+  to: Point,
+  steps: number,
+};
+export type AndroidDeviceInputDragOptions = {
+
+};
+export type AndroidDeviceInputDragResult = void;
+export type AndroidDeviceLaunchBrowserParams = {
+  packageName?: string,
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  acceptDownloads?: boolean,
+  _traceResourcesPath?: string,
+  _tracePath?: string,
+  recordVideo?: {
+    dir: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+  },
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+};
+export type AndroidDeviceLaunchBrowserOptions = {
+  packageName?: string,
+  ignoreHTTPSErrors?: boolean,
+  javaScriptEnabled?: boolean,
+  bypassCSP?: boolean,
+  userAgent?: string,
+  locale?: string,
+  timezoneId?: string,
+  geolocation?: {
+    longitude: number,
+    latitude: number,
+    accuracy?: number,
+  },
+  permissions?: string[],
+  extraHTTPHeaders?: NameValue[],
+  offline?: boolean,
+  httpCredentials?: {
+    username: string,
+    password: string,
+  },
+  deviceScaleFactor?: number,
+  isMobile?: boolean,
+  hasTouch?: boolean,
+  colorScheme?: 'dark' | 'light' | 'no-preference',
+  acceptDownloads?: boolean,
+  _traceResourcesPath?: string,
+  _tracePath?: string,
+  recordVideo?: {
+    dir: string,
+    size?: {
+      width: number,
+      height: number,
+    },
+  },
+  recordHar?: {
+    omitContent?: boolean,
+    path: string,
+  },
+  proxy?: {
+    server: string,
+    bypass?: string,
+    username?: string,
+    password?: string,
+  },
+};
+export type AndroidDeviceLaunchBrowserResult = {
+  context: BrowserContextChannel,
+};
+export type AndroidDeviceShellParams = {
+  command: string,
+};
+export type AndroidDeviceShellOptions = {
+
+};
+export type AndroidDeviceShellResult = {
+  result: string,
+};
+export type AndroidDeviceSetDefaultTimeoutNoReplyParams = {
+  timeout: number,
+};
+export type AndroidDeviceSetDefaultTimeoutNoReplyOptions = {
+
+};
+export type AndroidDeviceSetDefaultTimeoutNoReplyResult = void;
+export type AndroidDeviceConnectToWebViewParams = {
+  pid: number,
+};
+export type AndroidDeviceConnectToWebViewOptions = {
+
+};
+export type AndroidDeviceConnectToWebViewResult = {
+  context: BrowserContextChannel,
+};
+export type AndroidDeviceCloseParams = {};
+export type AndroidDeviceCloseOptions = {};
+export type AndroidDeviceCloseResult = void;
+
+export type AndroidWebView = {
+  pid: number,
+  pkg: string,
+};
+
+export type AndroidSelector = {
+  checkable?: boolean,
+  checked?: boolean,
+  clazz?: string,
+  clickable?: boolean,
+  depth?: number,
+  desc?: string,
+  enabled?: boolean,
+  focusable?: boolean,
+  focused?: boolean,
+  hasChild?: {
+    selector: AndroidSelector,
+  },
+  hasDescendant?: {
+    selector: AndroidSelector,
+    maxDepth?: number,
+  },
+  longClickable?: boolean,
+  pkg?: string,
+  res?: string,
+  scrollable?: boolean,
+  selected?: boolean,
+  text?: string,
+};
+
+export type AndroidElementInfo = {
+  clazz: string,
+  desc: string,
+  res: string,
+  pkg: string,
+  text: string,
+  bounds: Rect,
+  checkable: boolean,
+  checked: boolean,
+  clickable: boolean,
+  enabled: boolean,
+  focusable: boolean,
+  focused: boolean,
+  longClickable: boolean,
+  scrollable: boolean,
+  selected: boolean,
+};

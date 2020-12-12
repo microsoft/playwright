@@ -21,6 +21,7 @@ import { EventEmitter } from 'events';
 import { Download } from './download';
 import { ProxySettings } from './types';
 import { ChildProcess } from 'child_process';
+import { RecentLogsCollector } from '../utils/debugLogger';
 
 export interface BrowserProcess {
   onclose: ((exitCode: number | null, signal: string | null) => void) | undefined;
@@ -37,6 +38,7 @@ export type BrowserOptions = types.UIOptions & {
   browserProcess: BrowserProcess,
   proxy?: ProxySettings,
   protocolLogger: types.ProtocolLogger,
+  browserLogsCollector: RecentLogsCollector,
 };
 
 export abstract class Browser extends EventEmitter {
