@@ -54,6 +54,7 @@ export interface SocketBackend extends EventEmitter {
 
 export class Android {
   private _backend: Backend;
+  private _devices = new Map<string, AndroidDevice>();
   readonly _timeoutSettings: TimeoutSettings;
 
   constructor(backend: Backend) {
@@ -67,7 +68,19 @@ export class Android {
 
   async devices(): Promise<AndroidDevice[]> {
     const devices = (await this._backend.devices()).filter(d => d.status === 'device');
-    return await Promise.all(devices.map(d => AndroidDevice.create(this, d)));
+    const newSerials = new Set<string>();
+    for (const d of devices) {
+      newSerials.add(d.serial);
+      if (this._devices.has(d.serial))
+        continue;
+      const device = await AndroidDevice.create(this, d);
+      this._devices.set(d.serial, device);
+    }
+    for (const d of this._devices.keys()) {
+      if (!newSerials.has(d))
+        this._devices.delete(d);
+    }
+    return [...this._devices.values()];
   }
 }
 
