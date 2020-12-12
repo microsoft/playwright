@@ -108,41 +108,47 @@ it('should emit error', async ({page, server, isFirefox}) => {
     expect(message).toContain(': 400');
 });
 
-it('should not have stray error events', async ({page, server, isFirefox}) => {
-  const [ws] = await Promise.all([
-    page.waitForEvent('websocket'),
+it('should not have stray error events', async ({page, server}) => {
+  let error;
+  page.on('websocket', ws => ws.on('socketerror', e => error = e));
+  await Promise.all([
+    page.waitForEvent('websocket').then(async ws => {
+      await ws.waitForEvent('framereceived');
+      return ws;
+    }),
     page.evaluate(port => {
       (window as any).ws = new WebSocket('ws://localhost:' + port + '/ws');
     }, server.PORT)
   ]);
-  let error;
-  ws.on('socketerror', e => error = e);
-  await ws.waitForEvent('framereceived');
   await page.evaluate('window.ws.close()');
   expect(error).toBeFalsy();
 });
 
-it('should reject waitForEvent on socket close', async ({page, server, isFirefox}) => {
+it('should reject waitForEvent on socket close', async ({page, server}) => {
   const [ws] = await Promise.all([
-    page.waitForEvent('websocket'),
+    page.waitForEvent('websocket').then(async ws => {
+      await ws.waitForEvent('framereceived');
+      return ws;
+    }),
     page.evaluate(port => {
       (window as any).ws = new WebSocket('ws://localhost:' + port + '/ws');
     }, server.PORT)
   ]);
-  await ws.waitForEvent('framereceived');
   const error = ws.waitForEvent('framesent').catch(e => e);
   await page.evaluate('window.ws.close()');
   expect((await error).message).toContain('Socket closed');
 });
 
-it('should reject waitForEvent on page close', async ({page, server, isFirefox}) => {
+it('should reject waitForEvent on page close', async ({page, server}) => {
   const [ws] = await Promise.all([
-    page.waitForEvent('websocket'),
+    page.waitForEvent('websocket').then(async ws => {
+      await ws.waitForEvent('framereceived');
+      return ws;
+    }),
     page.evaluate(port => {
       (window as any).ws = new WebSocket('ws://localhost:' + port + '/ws');
     }, server.PORT)
   ]);
-  await ws.waitForEvent('framereceived');
   const error = ws.waitForEvent('framesent').catch(e => e);
   await page.close();
   expect((await error).message).toContain('Page closed');

@@ -257,13 +257,13 @@ export class Page extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource) {
-    const identifier = PageBinding.identifier(name, 'main');
+  async exposeBinding(name: string, needsHandle: boolean, playwrightBinding: frames.FunctionWithSource, world: types.World = 'main') {
+    const identifier = PageBinding.identifier(name, world);
     if (this._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered`);
     if (this._browserContext._pageBindings.has(identifier))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
-    const binding = new PageBinding(name, playwrightBinding, needsHandle, 'main');
+    const binding = new PageBinding(name, playwrightBinding, needsHandle, world);
     this._pageBindings.set(identifier, binding);
     await this._delegate.exposeBinding(binding);
   }

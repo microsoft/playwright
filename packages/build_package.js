@@ -28,7 +28,7 @@ const cpAsync = util.promisify(ncp);
 const SCRIPT_NAME = path.basename(__filename);
 const ROOT_PATH = path.join(__dirname, '..');
 
-const PLAYWRIGHT_CORE_FILES = ['bin', 'lib', 'types', 'NOTICE', 'LICENSE'];
+const PLAYWRIGHT_CORE_FILES = ['bin/PrintDeps.exe', 'lib', 'types', 'NOTICE', 'LICENSE'];
 const FFMPEG_FILES = ['third_party/ffmpeg'];
 
 const PACKAGES = {
@@ -63,6 +63,12 @@ const PACKAGES = {
     description: 'A high-level API to automate Electron',
     browsers: [],
     files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'electron-types.d.ts'],
+  },
+  'playwright-android': {
+    version: '0.0.7', // Manually manage playwright-android version.
+    description: 'A high-level API to automate Chrome for Android',
+    browsers: [],
+    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'android-types.d.ts', 'android-types-internal.d.ts', 'bin/android-driver.apk', 'bin/android-driver-target.apk'],
   },
 };
 

@@ -879,7 +879,7 @@ export function waitForSelectorTask(selector: SelectorInfo, state: 'attached' | 
 
 export function dispatchEventTask(selector: SelectorInfo, type: string, eventInit: Object): SchedulableTask<undefined> {
   return injectedScript => injectedScript.evaluateHandle((injected, { parsed, type, eventInit }) => {
-    return injected.pollRaf((progress, continuePolling) => {
+    return injected.pollRaf<undefined>((progress, continuePolling) => {
       const element = injected.querySelector(parsed, document);
       if (!element)
         return continuePolling;

@@ -18,6 +18,9 @@ lib/server/injected/
 # Include generated types and entrypoint.
 !types/*
 !index.d.ts
+# Include separate android types.
+!android-types.d.ts
+!android-types-internal.d.ts
 # Include separate electron types.
 !electron-types.d.ts
 # Include main entrypoint.

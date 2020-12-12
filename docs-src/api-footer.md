@@ -89,6 +89,14 @@ Selector describes an element in the page. It can be used to obtain `ElementHand
 
 Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported [selector engines](selectors.md) (e.g. `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
 
+Playwright also supports the following CSS extensions:
+* `:text("string")` - Matches elements that contain specific text node. Learn more about [text selector](./selectors.md#css-extension-text).
+* `:visible` - Matches only visible elements. Learn more about [visible selector](./selectors.md#css-extension-visible).
+* `:light(selector)` - Matches in the light DOM only as opposite to piercing open shadow roots. Learn more about [shadow piercing](./selectors.md#shadow-piercing).
+<!--
+* `:right-of(selector)`, `:left-of(selector)`, `:above(selector)`, `:below(selector)`, `:near(selector)`, `:within(selector)` - Match elements based on their relative position to another element. Learn more about [proximity selectors](./selectors.md#css-extension-proximity).
+-->
+
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - selector starting with `//` or `..` is assumed to be `xpath=selector`;
 - selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`;

@@ -146,6 +146,20 @@ it('should keep dom order with comma separated list', async ({page}) => {
   expect(await page.$$eval(`css=section >> *css=div,span >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('SPAN,DIV');
 });
 
+it('should work with comma separated list in various positions', async ({page}) => {
+  await page.setContent(`<section><span><div><x></x><y></y></div></span></section>`);
+  expect(await page.$$eval(`css=span,div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
+  expect(await page.$$eval(`css=span,div >> css=x`, els => els.map(e => e.nodeName).join(','))).toBe('X');
+  expect(await page.$$eval(`css=div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
+  expect(await page.$$eval(`css=div >> css=x`, els => els.map(e => e.nodeName).join(','))).toBe('X');
+
+  expect(await page.$$eval(`css=section >> css=div >> css=x`, els => els.map(e => e.nodeName).join(','))).toBe('X');
+  expect(await page.$$eval(`css=section >> css=span >> css=div >> css=y`, els => els.map(e => e.nodeName).join(','))).toBe('Y');
+  expect(await page.$$eval(`css=section >> css=div >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
+  expect(await page.$$eval(`css=section >> css=div,span >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
+  expect(await page.$$eval(`css=section >> css=span >> css=x,y`, els => els.map(e => e.nodeName).join(','))).toBe('X,Y');
+});
+
 it('should work with comma inside text', async ({page}) => {
   await page.setContent(`<span></span><div attr="hello,world!"></div>`);
   expect(await page.$eval(`css=div[attr="hello,world!"]`, e => e.outerHTML)).toBe('<div attr="hello,world!"></div>');

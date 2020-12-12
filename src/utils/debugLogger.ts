@@ -61,3 +61,20 @@ class DebugLogger {
 }
 
 export const debugLogger = new DebugLogger();
+
+const kLogCount = 50;
+export class RecentLogsCollector {
+  private _logs: string[] = [];
+
+  log(message: string) {
+    this._logs.push(message);
+    if (this._logs.length === kLogCount * 2)
+      this._logs.splice(0, kLogCount);
+  }
+
+  recentLogs(): string[] {
+    if (this._logs.length > kLogCount)
+      return this._logs.slice(-kLogCount);
+    return this._logs;
+  }
+}

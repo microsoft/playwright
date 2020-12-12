@@ -16,8 +16,21 @@
 
 import { makeWaitForNextTask } from '../utils/utils';
 
+export interface WritableStream {
+  write(data: Buffer): void;
+}
+
+export interface ReadableStream {
+  on(event: 'data', callback: (b: Buffer) => void): void;
+  on(event: 'close', callback: () => void): void;
+}
+
+export interface ClosableStream {
+  close(): void;
+}
+
 export class Transport {
-  private _pipeWrite: NodeJS.WritableStream;
+  private _pipeWrite: WritableStream;
   private _data = Buffer.from([]);
   private _waitForNextTask = makeWaitForNextTask();
   private _closed = false;
@@ -26,8 +39,13 @@ export class Transport {
   onmessage?: (message: string) => void;
   onclose?: () => void;
 
-  constructor(pipeWrite: NodeJS.WritableStream, pipeRead: NodeJS.ReadableStream) {
+  private _endian: 'be' | 'le';
+  private _closeableStream: ClosableStream | undefined;
+
+  constructor(pipeWrite: WritableStream, pipeRead: ReadableStream, closeable?: ClosableStream, endian: 'be' | 'le' = 'le') {
     this._pipeWrite = pipeWrite;
+    this._endian = endian;
+    this._closeableStream = closeable;
     pipeRead.on('data', buffer => this._dispatch(buffer));
     pipeRead.on('close', () => this.onclose && this.onclose());
     this.onmessage = undefined;
@@ -39,13 +57,17 @@ export class Transport {
       throw new Error('Pipe has been closed');
     const data = Buffer.from(message, 'utf-8');
     const dataLength = Buffer.alloc(4);
-    dataLength.writeUInt32LE(data.length, 0);
+    if (this._endian === 'be')
+      dataLength.writeUInt32BE(data.length, 0);
+    else
+      dataLength.writeUInt32LE(data.length, 0);
     this._pipeWrite.write(dataLength);
     this._pipeWrite.write(data);
   }
 
   close() {
-    throw new Error('unimplemented');
+    // Let it throw.
+    this._closeableStream!.close();
   }
 
   _dispatch(buffer: Buffer) {
@@ -57,7 +79,7 @@ export class Transport {
       }
 
       if (!this._bytesLeft) {
-        this._bytesLeft = this._data.readUInt32LE(0);
+        this._bytesLeft = this._endian === 'be' ? this._data.readUInt32BE(0) : this._data.readUInt32LE(0);
         this._data = this._data.slice(4);
       }
 
