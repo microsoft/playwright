@@ -185,6 +185,12 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
+  async tree(): Promise<apiInternal.AndroidElementInfo> {
+    return await this._wrapApiCall('androidDevice.tree', async () => {
+      return (await this._channel.tree()).tree;
+    });
+  }
+
   async close() {
     return this._wrapApiCall('androidDevice.close', async () => {
       await this._channel.close();
