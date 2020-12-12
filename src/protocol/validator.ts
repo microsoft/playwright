@@ -904,6 +904,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidSocketWriteParams = tObject({
     data: tBinary,
   });
+  scheme.AndroidSocketCloseParams = tOptional(tObject({}));
   scheme.AndroidDeviceWaitParams = tObject({
     selector: tType('AndroidSelector'),
     state: tOptional(tEnum(['gone'])),

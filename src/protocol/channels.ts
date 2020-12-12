@@ -2426,6 +2426,7 @@ export type AndroidSocketInitializer = {};
 export interface AndroidSocketChannel extends Channel {
   on(event: 'data', callback: (params: AndroidSocketDataEvent) => void): this;
   write(params: AndroidSocketWriteParams, metadata?: Metadata): Promise<AndroidSocketWriteResult>;
+  close(params?: AndroidSocketCloseParams, metadata?: Metadata): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: Binary,
@@ -2437,6 +2438,9 @@ export type AndroidSocketWriteOptions = {
 
 };
 export type AndroidSocketWriteResult = void;
+export type AndroidSocketCloseParams = {};
+export type AndroidSocketCloseOptions = {};
+export type AndroidSocketCloseResult = void;
 
 // ----------- AndroidDevice -----------
 export type AndroidDeviceInitializer = {

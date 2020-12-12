@@ -247,6 +247,12 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, c
       await this._channel.write({ data: data.toString('base64') });
     });
   }
+
+  async close(): Promise<void> {
+    return this._wrapApiCall('androidDevice.close', async () => {
+      await this._channel.close();
+    });
+  }
 }
 
 async function readApkFile(file: string | Buffer): Promise<string> {

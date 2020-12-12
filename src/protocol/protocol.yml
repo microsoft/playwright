@@ -2087,10 +2087,11 @@ AndroidSocket:
   type: interface
 
   commands:
-
     write:
       parameters:
         data: binary
+
+    close:
 
   events:
     data:
