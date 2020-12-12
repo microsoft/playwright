@@ -27,6 +27,8 @@ import { installCoverageHooks } from './coverage';
 import { folio as httpFolio } from './http.fixtures';
 import { folio as playwrightFolio } from './playwright.fixtures';
 import { PlaywrightClient } from '../lib/remote/playwrightClient';
+import type { Android } from '../android-types';
+import type { ElectronLauncher } from '../electron-types';
 export { expect, config } from 'folio';
 
 const removeFolderAsync = util.promisify(require('rimraf'));
@@ -189,3 +191,9 @@ export const beforeEach = folio.beforeEach;
 export const afterEach = folio.afterEach;
 export const beforeAll = folio.beforeAll;
 export const afterAll = folio.afterAll;
+
+
+declare module '../index' {
+  const _android: Android;
+  const _electron: ElectronLauncher;
+}

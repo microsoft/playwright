@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Dispatcher, DispatcherScope } from './dispatcher';
+import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
 import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
@@ -28,7 +28,7 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidIniti
   async devices(params: channels.AndroidDevicesParams): Promise<channels.AndroidDevicesResult> {
     const devices = await this._object.devices();
     return {
-      devices: devices.map(d => new AndroidDeviceDispatcher(this._scope, d))
+      devices: devices.map(d => AndroidDeviceDispatcher.from(this._scope, d))
     };
   }
 
@@ -38,6 +38,12 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidIniti
 }
 
 export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceInitializer> implements channels.AndroidDeviceChannel {
+
+  static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
+    const result = existingDispatcher<AndroidDeviceDispatcher>(device);
+    return result || new AndroidDeviceDispatcher(scope, device);
+  }
+
   constructor(scope: DispatcherScope, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,

@@ -10,8 +10,8 @@ mkdir ${SDKDIR}/cmdline-tools
 
 echo Downloading Android SDK...
 cd ${SDKDIR}/cmdline-tools
-curl https://dl.google.com/android/repository/commandlinetools-linux-6858069_latest.zip -o commandlinetools-linux-6858069_latest.zip
-unzip commandlinetools-linux-6858069_latest.zip
+curl https://dl.google.com/android/repository/commandlinetools-mac-6858069_latest.zip -o commandlinetools-mac-6858069_latest.zip
+unzip commandlinetools-mac-6858069_latest.zip
 mv cmdline-tools latest
 
 echo Installing emulator...

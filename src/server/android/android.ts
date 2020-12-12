@@ -54,6 +54,7 @@ export interface SocketBackend extends EventEmitter {
 
 export class Android {
   private _backend: Backend;
+  private _devices = new Map<string, AndroidDevice>();
   readonly _timeoutSettings: TimeoutSettings;
 
   constructor(backend: Backend) {
@@ -67,7 +68,23 @@ export class Android {
 
   async devices(): Promise<AndroidDevice[]> {
     const devices = (await this._backend.devices()).filter(d => d.status === 'device');
-    return await Promise.all(devices.map(d => AndroidDevice.create(this, d)));
+    const newSerials = new Set<string>();
+    for (const d of devices) {
+      newSerials.add(d.serial);
+      if (this._devices.has(d.serial))
+        continue;
+      const device = await AndroidDevice.create(this, d);
+      this._devices.set(d.serial, device);
+    }
+    for (const d of this._devices.keys()) {
+      if (!newSerials.has(d))
+        this._devices.delete(d);
+    }
+    return [...this._devices.values()];
+  }
+
+  _deviceClosed(device: AndroidDevice) {
+    this._devices.delete(device.serial);
   }
 }
 
@@ -85,12 +102,16 @@ export class AndroidDevice extends EventEmitter {
   static Events = {
     WebViewAdded: 'webViewAdded',
     WebViewRemoved: 'webViewRemoved',
+    Closed: 'closed'
   };
 
   private _browserConnections = new Set<AndroidBrowser>();
+  private _android: Android;
+  private _isClosed = false;
 
   constructor(android: Android, backend: DeviceBackend, model: string) {
     super();
+    this._android = android;
     this._backend = backend;
     this.model = model;
     this.serial = backend.serial;
@@ -185,6 +206,7 @@ export class AndroidDevice extends EventEmitter {
   }
 
   async close() {
+    this._isClosed = true;
     if (this._pollingWebViews)
       clearTimeout(this._pollingWebViews);
     for (const connection of this._browserConnections)
@@ -194,6 +216,8 @@ export class AndroidDevice extends EventEmitter {
       driver.close();
     }
     await this._backend.close();
+    this._android._deviceClosed(this);
+    this.emit(AndroidDevice.Events.Closed);
   }
 
   async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -217,11 +241,11 @@ export class AndroidDevice extends EventEmitter {
     return await this._connectToBrowser(socketName, options);
   }
 
-  connectToWebView(pid: number): Promise<BrowserContext> {
+  async connectToWebView(pid: number): Promise<BrowserContext> {
     const webView = this._webViews.get(pid);
     if (!webView)
       throw new Error('WebView has been closed');
-    return this._connectToBrowser(`webview_devtools_remote_${pid}`);
+    return await this._connectToBrowser(`webview_devtools_remote_${pid}`);
   }
 
   private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
@@ -265,6 +289,8 @@ export class AndroidDevice extends EventEmitter {
 
   private async _refreshWebViews() {
     const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).split('\n');
+    if (this._isClosed)
+      return;
 
     const newPids = new Set<number>();
     for (const line of sockets) {
@@ -279,6 +305,8 @@ export class AndroidDevice extends EventEmitter {
         continue;
 
       const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).split('\n');
+      if (this._isClosed)
+        return;
       let pkg = '';
       for (const proc of procs) {
         const match = proc.match(/[^\s]+\s+(\d+).*$/);

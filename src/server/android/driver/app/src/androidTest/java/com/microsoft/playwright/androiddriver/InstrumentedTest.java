@@ -154,11 +154,14 @@ public class InstrumentedTest {
   }
 
   private static UiObject2 wait(UiDevice device, JSONObject params) throws JSONException {
-    return device.wait(Until.findObject(parseSelector(params)), parseTimeout(params));
+    UiObject2 result = device.wait(Until.findObject(parseSelector(params)), parseTimeout(params));
+    if (result == null)
+      throw new RuntimeException("Timed out waiting for selector");
+    return result;
   }
 
   private static void fill(UiDevice device, JSONObject params) throws JSONException {
-    device.wait(Until.findObject(parseSelector(params)), parseTimeout(params)).setText(params.getString("text"));
+    wait(device, params).setText(params.getString("text"));
   }
 
   private static void click(UiDevice device, JSONObject params) throws JSONException {
