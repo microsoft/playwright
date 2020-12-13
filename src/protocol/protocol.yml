@@ -2312,6 +2312,12 @@ AndroidDevice:
           type: array?
           items: string
 
+    push:
+      parameters:
+        file: binary
+        path: string
+        mode: number?
+
     setDefaultTimeoutNoReply:
       parameters:
         timeout: number

@@ -2471,6 +2471,7 @@ export interface AndroidDeviceChannel extends Channel {
   open(params: AndroidDeviceOpenParams, metadata?: Metadata): Promise<AndroidDeviceOpenResult>;
   shell(params: AndroidDeviceShellParams, metadata?: Metadata): Promise<AndroidDeviceShellResult>;
   installApk(params: AndroidDeviceInstallApkParams, metadata?: Metadata): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, metadata?: Metadata): Promise<AndroidDevicePushResult>;
   setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
   connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: Metadata): Promise<AndroidDeviceConnectToWebViewResult>;
   close(params?: AndroidDeviceCloseParams, metadata?: Metadata): Promise<AndroidDeviceCloseResult>;
@@ -2757,6 +2758,15 @@ export type AndroidDeviceInstallApkOptions = {
   args?: string[],
 };
 export type AndroidDeviceInstallApkResult = void;
+export type AndroidDevicePushParams = {
+  file: Binary,
+  path: string,
+  mode?: number,
+};
+export type AndroidDevicePushOptions = {
+  mode?: number,
+};
+export type AndroidDevicePushResult = void;
 export type AndroidDeviceSetDefaultTimeoutNoReplyParams = {
   timeout: number,
 };

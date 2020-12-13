@@ -213,7 +213,13 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
 
   async installApk(file: string | Buffer, options?: { args: string[] }): Promise<void> {
     return this._wrapApiCall('androidDevice.installApk', async () => {
-      await this._channel.installApk({ file: await readApkFile(file), args: options && options.args });
+      await this._channel.installApk({ file: await loadFile(file), args: options && options.args });
+    });
+  }
+
+  async push(file: string | Buffer, path: string, options?: { mode: number }): Promise<void> {
+    return this._wrapApiCall('androidDevice.push', async () => {
+      await this._channel.push({ file: await loadFile(file), path, mode: options ? options.mode : undefined });
     });
   }
 
@@ -261,7 +267,7 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, c
   }
 }
 
-async function readApkFile(file: string | Buffer): Promise<string> {
+async function loadFile(file: string | Buffer): Promise<string> {
   if (isString(file))
     return (await util.promisify(fs.readFile)(file)).toString('base64');
   return file.toString('base64');

@@ -287,6 +287,30 @@ export class AndroidDevice extends EventEmitter {
     debug('pw:android')('Written driver bytes: ' + success);
   }
 
+  async push(content: Buffer, path: string, mode = 0o644): Promise<void> {
+    const socket = await this._backend.open(`sync:`);
+    const sendHeader = async (command: string, length: number) => {
+      const buffer = Buffer.alloc(command.length + 4);
+      buffer.write(command, 0);
+      buffer.writeUInt32LE(length, command.length);
+      await socket.write(buffer);
+    };
+    const send = async (command: string, data: Buffer) => {
+      await sendHeader(command, data.length);
+      await socket.write(data);
+    };
+    await send('SEND', Buffer.from(`${path},${mode}`));
+    const maxChunk = 65535;
+    for (let i = 0; i < content.length; i += maxChunk)
+      await send('DATA', content.slice(i, i + maxChunk));
+    await sendHeader('DONE', (Date.now() / 1000) | 0);
+    const result = await new Promise<Buffer>(f => socket.once('data', f));
+    const code = result.slice(0, 4).toString();
+    if (code !== 'OKAY')
+      throw new Error('Could not push: ' + code);
+    await socket.close();
+  }
+
   private async _refreshWebViews() {
     const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
     if (this._isClosed)

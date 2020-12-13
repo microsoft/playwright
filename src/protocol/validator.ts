@@ -1039,6 +1039,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     file: tBinary,
     args: tOptional(tArray(tString)),
   });
+  scheme.AndroidDevicePushParams = tObject({
+    file: tBinary,
+    path: tString,
+    mode: tOptional(tNumber),
+  });
   scheme.AndroidDeviceSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
