@@ -3,7 +3,7 @@
 set -e
 
 if [[ -z "${ANDROID_HOME}" ]]; then
-    SDKDIR=$PWD/.android-sdk
+    export SDKDIR=$PWD/.android-sdk
     export ANDROID_HOME=${SDKDIR}
     export ANDROID_SDK_ROOT=${SDKDIR}
 fi
