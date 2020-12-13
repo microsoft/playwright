@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,12 +16,10 @@
 
 package com.microsoft.playwright.androiddriver;
 
-import android.bluetooth.BluetoothClass;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
-import android.os.Bundle;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -32,7 +30,6 @@ import androidx.test.uiautomator.BySelector;
 import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObject2;
-import androidx.test.uiautomator.UiSelector;
 import androidx.test.uiautomator.Until;
 
 import org.json.JSONArray;
@@ -48,7 +45,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 /**
@@ -60,12 +56,13 @@ import java.util.regex.Pattern;
 @SdkSuppress(minSdkVersion = 21)
 public class InstrumentedTest {
 
+  @SuppressWarnings("ConstantConditions")
   private static BySelector parseSelector(JSONObject param) throws JSONException{
     JSONObject selector = param.getJSONObject("selector");
     BySelector result = null;
     if (selector.has("checkable")) {
       boolean value = selector.getBoolean("checkable");
-      result = result != null ? result.checkable(value) : By.checkable(value);
+      result = result != null ? result.checked(value) : By.checkable(value);
     }
     if (selector.has("checked")) {
       boolean value = selector.getBoolean("checked");
@@ -146,7 +143,7 @@ public class InstrumentedTest {
 
   private static Point parsePoint(JSONObject params, String propertyName) throws JSONException {
     JSONObject point = params.getJSONObject(propertyName);
-    return new Point(params.getInt("x"),  params.getInt("y"));
+    return new Point(point.getInt("x"),  point.getInt("y"));
   }
 
   private static Direction parseDirection(JSONObject params) throws JSONException {
@@ -313,6 +310,7 @@ public class InstrumentedTest {
       getQueryController.setAccessible(true);
       Object queryController = getQueryController.invoke(device);
 
+      assert queryController != null;
       Method getRootNode = queryController.getClass().getDeclaredMethod("getRootNode");
       getRootNode.setAccessible(true);
       return (AccessibilityNodeInfo) getRootNode.invoke(queryController);
@@ -343,6 +341,7 @@ public class InstrumentedTest {
       DataInputStream dis = new DataInputStream(is);
       DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
+      //noinspection InfiniteLoopStatement
       while (true) {
         int id = 0;
         String method = null;
@@ -356,7 +355,7 @@ public class InstrumentedTest {
           id = message.getInt("id");
           method = message.getString("method");
           params = message.getJSONObject("params");
-        } catch (JSONException e) {
+        } catch (JSONException ignored) {
         }
         if (method == null)
           continue;
@@ -365,6 +364,7 @@ public class InstrumentedTest {
         response.put("id", id);
         response.put("result", params);
         try {
+          assert params != null;
           switch (method) {
             case "wait":
               wait(device, params);
