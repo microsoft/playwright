@@ -27,7 +27,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   model(): string;
   webViews(): AndroidWebView<Page>[];
   webView(selector: { pkg: string }, options?: { timeout?: number }): Promise<AndroidWebView<Page>>;
-  shell(command: string): Promise<string>;
+  shell(command: string): Promise<Buffer>;
   open(command: string): Promise<AndroidSocket>;
   installApk(file: string | Buffer, options?: { args?: string[] }): Promise<void>;
   launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;

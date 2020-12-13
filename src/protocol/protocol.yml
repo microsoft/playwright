@@ -2200,6 +2200,10 @@ AndroidDevice:
       returns:
         info: AndroidElementInfo
 
+    tree:
+      returns:
+        tree: AndroidElementInfo
+
     inputType:
       parameters:
         text: string
@@ -2299,7 +2303,7 @@ AndroidDevice:
       parameters:
         command: string
       returns:
-        result: string
+        result: binary
 
     installApk:
       parameters:
@@ -2369,6 +2373,9 @@ AndroidSelector:
 AndroidElementInfo:
   type: object
   properties:
+    children:
+      type: array?
+      items: AndroidElementInfo
     clazz: string
     desc: string
     res: string

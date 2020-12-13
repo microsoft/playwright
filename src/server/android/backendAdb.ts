@@ -46,7 +46,7 @@ class AdbDevice implements DeviceBackend {
   async close() {
   }
 
-  runCommand(command: string): Promise<string> {
+  runCommand(command: string): Promise<Buffer> {
     return runCommand(command, this.serial);
   }
 
@@ -57,7 +57,7 @@ class AdbDevice implements DeviceBackend {
   }
 }
 
-async function runCommand(command: string, serial?: string): Promise<string> {
+async function runCommand(command: string, serial?: string): Promise<Buffer> {
   debug('pw:adb:runCommand')(command, serial);
   const socket = new BufferedSocketWrapper(command, net.createConnection({ port: 5037 }));
   if (serial) {
@@ -70,9 +70,9 @@ async function runCommand(command: string, serial?: string): Promise<string> {
   assert(status.toString() === 'OKAY', status.toString());
   if (!command.startsWith('shell:')) {
     const remainingLength = parseInt((await socket.read(4)).toString(), 16);
-    return (await socket.read(remainingLength)).toString();
+    return (await socket.read(remainingLength));
   }
-  return (await socket.readAll()).toString();
+  return (await socket.readAll());
 }
 
 async function open(command: string, serial?: string): Promise<BufferedSocketWrapper> {

@@ -102,6 +102,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     return { info: await this._object.send('info', params) };
   }
 
+  async tree(params: channels.AndroidDeviceTreeParams): Promise<channels.AndroidDeviceTreeResult> {
+    return { tree: await this._object.send('tree', params) };
+  }
+
   async inputType(params: channels.AndroidDeviceInputTypeParams) {
     const text = params.text;
     const keyCodes: number[] = [];
@@ -133,7 +137,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async shell(params: channels.AndroidDeviceShellParams): Promise<channels.AndroidDeviceShellResult> {
-    return { result: await this._object.shell(params.command) };
+    return { result: (await this._object.shell(params.command)).toString('base64') };
   }
 
   async open(params: channels.AndroidDeviceOpenParams, metadata?: channels.Metadata): Promise<channels.AndroidDeviceOpenResult> {
