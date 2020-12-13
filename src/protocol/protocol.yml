@@ -2303,7 +2303,7 @@ AndroidDevice:
       parameters:
         command: string
       returns:
-        result: string
+        result: binary
 
     installApk:
       parameters:

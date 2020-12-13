@@ -198,10 +198,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
-  async shell(command: string): Promise<string> {
+  async shell(command: string): Promise<Buffer> {
     return this._wrapApiCall('androidDevice.shell', async () => {
       const { result } = await this._channel.shell({ command });
-      return result;
+      return Buffer.from(result, 'base64');
     });
   }
 

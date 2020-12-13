@@ -43,7 +43,7 @@ export interface DeviceBackend {
   status: string;
   close(): Promise<void>;
   init(): Promise<void>;
-  runCommand(command: string): Promise<string>;
+  runCommand(command: string): Promise<Buffer>;
   open(command: string): Promise<SocketBackend>;
 }
 
@@ -121,7 +121,7 @@ export class AndroidDevice extends EventEmitter {
   static async create(android: Android, backend: DeviceBackend): Promise<AndroidDevice> {
     await backend.init();
     const model = await backend.runCommand('shell:getprop ro.product.model');
-    const device = new AndroidDevice(android, backend, model.trim());
+    const device = new AndroidDevice(android, backend, model.toString().trim());
     await device._init();
     return device;
   }
@@ -138,7 +138,7 @@ export class AndroidDevice extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async shell(command: string): Promise<string> {
+  async shell(command: string): Promise<Buffer> {
     const result = await this._backend.runCommand(`shell:${command}`);
     await this._refreshWebViews();
     return result;
@@ -288,7 +288,7 @@ export class AndroidDevice extends EventEmitter {
   }
 
   private async _refreshWebViews() {
-    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).split('\n');
+    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
     if (this._isClosed)
       return;
 
@@ -304,7 +304,7 @@ export class AndroidDevice extends EventEmitter {
       if (this._webViews.has(pid))
         continue;
 
-      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).split('\n');
+      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
       if (this._isClosed)
         return;
       let pkg = '';
