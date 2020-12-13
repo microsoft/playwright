@@ -965,6 +965,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidDeviceInfoParams = tObject({
     selector: tType('AndroidSelector'),
   });
+  scheme.AndroidDeviceTreeParams = tOptional(tObject({}));
   scheme.AndroidDeviceInputTypeParams = tObject({
     text: tString,
   });
@@ -1074,6 +1075,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     text: tOptional(tString),
   });
   scheme.AndroidElementInfo = tObject({
+    children: tOptional(tArray(tType('AndroidElementInfo'))),
     clazz: tString,
     desc: tString,
     res: tString,
