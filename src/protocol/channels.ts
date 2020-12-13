@@ -2747,7 +2747,7 @@ export type AndroidDeviceShellOptions = {
 
 };
 export type AndroidDeviceShellResult = {
-  result: string,
+  result: Binary,
 };
 export type AndroidDeviceInstallApkParams = {
   file: Binary,
