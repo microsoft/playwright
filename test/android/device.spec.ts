@@ -20,7 +20,7 @@ const { it, expect } = folio;
 if (process.env.PW_ANDROID_TESTS) {
   it('should run ADB shell commands', async function({ device }) {
     const output = await device.shell('echo 123');
-    expect(output).toBe('123\n');
+    expect(output.toString()).toBe('123\n');
   });
 
   it('should open a ADB socket', async function({ device }) {
