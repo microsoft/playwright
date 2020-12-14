@@ -9,7 +9,7 @@ if [[ -z "${ANDROID_HOME}" ]]; then
 fi
 
 echo "Killing previous emulators"
-adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done
+${ANDROID_HOME}/platform-tools/adb devices | grep emulator | cut -f1 | while read line; do adb -s $line emu kill; done
 
 echo "Starting emulator"
 nohup ${ANDROID_HOME}/emulator/emulator -avd android30 -no-audio -no-snapshot -no-window -gpu swiftshader_indirect &

@@ -145,7 +145,7 @@ export class AndroidDevice extends EventEmitter {
   }
 
   async open(command: string): Promise<SocketBackend> {
-    return await this._backend.open(`shell:${command}`);
+    return await this._backend.open(`${command}`);
   }
 
   private async _driver(): Promise<Transport> {
@@ -167,18 +167,7 @@ export class AndroidDevice extends EventEmitter {
 
     debug('pw:android')('Starting the new driver');
     this.shell(`am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner`);
-
-    debug('pw:android')('Polling the socket');
-    let socket;
-    while (!socket) {
-      try {
-        socket = await this._backend.open(`localabstract:playwright_android_driver_socket`);
-      } catch (e) {
-        await new Promise(f => setTimeout(f, 100));
-      }
-    }
-
-    debug('pw:android')('Connected to driver');
+    const socket = await this._waitForLocalAbstract('playwright_android_driver_socket');
     const transport = new Transport(socket, socket, socket, 'be');
     transport.onmessage = message => {
       const response = JSON.parse(message);
@@ -195,6 +184,20 @@ export class AndroidDevice extends EventEmitter {
 
     callback(transport);
     return this._driverPromise;
+  }
+
+  private async _waitForLocalAbstract(socketName: string): Promise<SocketBackend> {
+    let socket: SocketBackend | undefined;
+    debug('pw:android')(`Polling the socket localabstract:${socketName}`);
+    while (!socket) {
+      try {
+        socket = await this._backend.open(`localabstract:${socketName}`);
+      } catch (e) {
+        await new Promise(f => setTimeout(f, 250));
+      }
+    }
+    debug('pw:android')(`Connected to localabstract:${socketName}`);
+    return socket;
   }
 
   async send(method: string, params: any): Promise<any> {
@@ -224,20 +227,11 @@ export class AndroidDevice extends EventEmitter {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
 
-    const socketName = createGuid();
+    const socketName = 'playwright-' + createGuid();
     const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
     await this._backend.runCommand(`shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`);
-
-    debug('pw:android')('Polling for socket', socketName);
-    while (true) {
-      const net = await this._backend.runCommand(`shell:cat /proc/net/unix | grep ${socketName}$`);
-      if (net)
-        break;
-      await new Promise(f => setTimeout(f, 100));
-    }
-    debug('pw:android')('Got the socket, connecting');
     return await this._connectToBrowser(socketName, options);
   }
 
@@ -249,8 +243,9 @@ export class AndroidDevice extends EventEmitter {
   }
 
   private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    const androidBrowser = new AndroidBrowser(this, socketName);
-    await androidBrowser._open();
+    const socket = await this._waitForLocalAbstract(socketName);
+    const androidBrowser = new AndroidBrowser(this, socket);
+    await androidBrowser._init();
     this._browserConnections.add(androidBrowser);
 
     const browserOptions: BrowserOptions = {
@@ -357,17 +352,22 @@ export class AndroidDevice extends EventEmitter {
 
 class AndroidBrowser extends EventEmitter {
   readonly device: AndroidDevice;
-  readonly socketName: string;
-  private _socket: SocketBackend | undefined;
+  private _socket: SocketBackend;
   private _receiver: stream.Writable;
   private _waitForNextTask = makeWaitForNextTask();
   onmessage?: (message: any) => void;
   onclose?: () => void;
 
-  constructor(device: AndroidDevice, socketName: string) {
+  constructor(device: AndroidDevice, socket: SocketBackend) {
     super();
     this.device = device;
-    this.socketName = socketName;
+    this._socket = socket;
+    this._socket.on('close', () => {
+      this._waitForNextTask(() => {
+        if (this.onclose)
+          this.onclose();
+      });
+    });
     this._receiver = new (ws as any).Receiver() as stream.Writable;
     this._receiver.on('message', message => {
       this._waitForNextTask(() => {
@@ -377,14 +377,7 @@ class AndroidBrowser extends EventEmitter {
     });
   }
 
-  async _open() {
-    this._socket = await this.device._backend.open(`localabstract:${this.socketName}`);
-    this._socket.on('close', () => {
-      this._waitForNextTask(() => {
-        if (this.onclose)
-          this.onclose();
-      });
-    });
+  async _init() {
     await this._socket.write(Buffer.from(`GET /devtools/browser HTTP/1.1\r
 Upgrade: WebSocket\r
 Connection: Upgrade\r
