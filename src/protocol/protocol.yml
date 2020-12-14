@@ -2204,6 +2204,10 @@ AndroidDevice:
       returns:
         tree: AndroidElementInfo
 
+    screenshot:
+      returns:
+        binary: binary
+
     inputType:
       parameters:
         text: string

@@ -18,7 +18,7 @@ import { folio } from './android.fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
-  it('should discover webviews', async function({ device }) {
+  it('androidDevice.webView', async function({ device }) {
     expect(device.webViews().length).toBe(0);
     await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
@@ -26,7 +26,7 @@ if (process.env.PW_ANDROID_TESTS) {
     expect(device.webViews().length).toBe(1);
   });
 
-  it('should connect to page', async function({ device }) {
+  it('webView.page', async function({ device }) {
     expect(device.webViews().length).toBe(0);
     await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
@@ -43,7 +43,9 @@ if (process.env.PW_ANDROID_TESTS) {
     expect(await page.title()).toBe('Hello world!');
   });
 
-  it('should navigate page externally', async function({ device, server }) {
+  it('should navigate page externally', test => {
+    test.fixme(!!process.env.CI, 'Hangs on the bots');
+  }, async function({ device, server }) {
     expect(device.webViews().length).toBe(0);
     await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });

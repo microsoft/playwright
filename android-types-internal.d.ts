@@ -47,6 +47,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   swipe(selector: AndroidSelector, direction: 'down' | 'up' | 'left' | 'right', percent: number, options?: { speed?: number } & { timeout?: number }): Promise<void>;
 
   info(selector: AndroidSelector): Promise<AndroidElementInfo>;
+  screenshot(options?: { path?: string }): Promise<Buffer>;
 }
 
 export interface AndroidSocket extends EventEmitter {

@@ -191,6 +191,16 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
+  async screenshot(options: { path?: string } = {}): Promise<Buffer> {
+    return await this._wrapApiCall('androidDevice.screenshot', async () => {
+      const { binary } = await this._channel.screenshot();
+      const buffer = Buffer.from(binary, 'base64');
+      if (options.path)
+        await util.promisify(fs.writeFile)(options.path, buffer);
+      return buffer;
+    });
+  }
+
   async close() {
     return this._wrapApiCall('androidDevice.close', async () => {
       await this._channel.close();

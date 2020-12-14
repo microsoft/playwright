@@ -966,6 +966,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tType('AndroidSelector'),
   });
   scheme.AndroidDeviceTreeParams = tOptional(tObject({}));
+  scheme.AndroidDeviceScreenshotParams = tOptional(tObject({}));
   scheme.AndroidDeviceInputTypeParams = tObject({
     text: tString,
   });
