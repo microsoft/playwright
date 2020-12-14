@@ -15,7 +15,7 @@
  */
 
 import * as channels from '../protocol/channels';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
@@ -46,7 +46,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
     return this._wrapApiCall('browser.newContext', async () => {
       if (this._isRemote && options._tracePath)
         throw new Error(`"_tracePath" is not supported in connected browser`);
-      const contextOptions = validateBrowserContextOptions(options);
+      const contextOptions = await prepareBrowserContextOptions(options);
       const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
       context._options = contextOptions;
       this._contexts.add(context);

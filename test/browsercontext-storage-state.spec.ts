@@ -16,6 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
+import * as fs from 'fs';
 
 it('should capture local storage', async ({ context }) => {
   const page1 = await context.newPage();
@@ -60,7 +61,6 @@ it('should set local storage', async ({ browser }) => {
       ]
     }
   });
-  // await new Promise(f => setTimeout(f, 1000));
   const page = await context.newPage();
   await page.route('**/*', route => {
     route.fulfill({ body: '<html></html>' }).catch(() => {});
@@ -69,4 +69,34 @@ it('should set local storage', async ({ browser }) => {
   const localStorage = await page.evaluate('window.localStorage');
   expect(localStorage).toEqual({ name1: 'value1' });
   await context.close();
+});
+
+it('should round-trip through the file', async ({ browser, context, testInfo }) => {
+  const page1 = await context.newPage();
+  await page1.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await page1.goto('https://www.example.com');
+  await page1.evaluate(() => {
+    localStorage['name1'] = 'value1';
+    document.cookie = 'username=John Doe';
+    return document.cookie;
+  });
+
+  const path = testInfo.outputPath('storage-state.json');
+  const state = await context.storageState({ path });
+  const written = await fs.promises.readFile(path, 'utf8');
+  expect(JSON.stringify(state)).toBe(written);
+
+  const context2 = await browser.newContext({ storageState: path });
+  const page2 = await context2.newPage();
+  await page2.route('**/*', route => {
+    route.fulfill({ body: '<html></html>' }).catch(() => {});
+  });
+  await page2.goto('https://www.example.com');
+  const localStorage = await page2.evaluate('window.localStorage');
+  expect(localStorage).toEqual({ name1: 'value1' });
+  const cookie = await page2.evaluate('document.cookie');
+  expect(cookie).toEqual('username=John Doe');
+  await context2.close();
 });

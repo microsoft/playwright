@@ -246,7 +246,7 @@ Indicates that the browser is connected.
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `storageState` <[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState()](#browsercontextstoragestate).
+  - `storageState` <[string]|[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState([options])](#browsercontextstoragestateoptions). Either a path to the file with saved storage, or an object with the following fields:
     - `cookies` <[Array]<[Object]>> Optional cookies to set for context
       - `name` <[string]> **required**
       - `value` <[string]> **required**
@@ -321,7 +321,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `storageState` <[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState()](#browsercontextstoragestate).
+  - `storageState` <[string]|[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState([options])](#browsercontextstoragestateoptions). Either a path to the file with saved storage, or an object with the following fields:
     - `cookies` <[Array]<[Object]>> Optional cookies to set for context
       - `name` <[string]> **required**
       - `value` <[string]> **required**
@@ -393,7 +393,7 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
-- [browserContext.storageState()](#browsercontextstoragestate)
+- [browserContext.storageState([options])](#browsercontextstoragestateoptions)
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
@@ -745,7 +745,9 @@ instead.
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]>
 
-#### browserContext.storageState()
+#### browserContext.storageState([options])
+- `options` <[Object]>
+  - `path` <[string]> The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
 - returns: <[Promise]<[Object]>>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>
@@ -5185,7 +5187,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
-- [browserContext.storageState()](#browsercontextstoragestate)
+- [browserContext.storageState([options])](#browsercontextstoragestateoptions)
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
