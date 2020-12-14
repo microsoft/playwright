@@ -149,6 +149,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.installApk(Buffer.from(params.file, 'base64'), { args: params.args });
   }
 
+  async push(params: channels.AndroidDevicePushParams) {
+    await this._object.push(Buffer.from(params.file, 'base64'), params.path, params.mode);
+  }
+
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
     const context = await this._object.launchBrowser(params.packageName, params);
     return { context: new BrowserContextDispatcher(this._scope, context) };

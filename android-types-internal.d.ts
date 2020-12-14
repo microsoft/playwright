@@ -30,6 +30,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   shell(command: string): Promise<Buffer>;
   open(command: string): Promise<AndroidSocket>;
   installApk(file: string | Buffer, options?: { args?: string[] }): Promise<void>;
+  push(file: string | Buffer, path: string, options?: { mode?: number }): Promise<void>;
   launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;
   close(): Promise<void>;
 
