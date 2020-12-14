@@ -24,7 +24,7 @@ if (process.env.PW_ANDROID_TESTS) {
   });
 
   it('should open a ADB socket', async function({ device }) {
-    const socket = await device.open('/bin/cat');
+    const socket = await device.open('shell:/bin/cat');
     await socket.write(Buffer.from('321\n'));
     const output = await new Promise(resolve => socket.on('data', resolve));
     expect(output.toString()).toBe('321\n');

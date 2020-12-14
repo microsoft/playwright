@@ -232,7 +232,7 @@ jobs:
         name: video-${{ matrix.browser }}-linux-test-results
         path: test-results
   test_android:
-    name: Android on macOS
+    name: Android Emulator
     runs-on: macos-10.15
     steps:
     - uses: actions/checkout@v2
@@ -250,6 +250,7 @@ jobs:
       env:
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
         PW_ANDROID_TESTS: 1
+        DEBUG: pw:api
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
     - uses: actions/upload-artifact@v1
