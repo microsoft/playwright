@@ -1,10 +1,18 @@
 # Troubleshooting
 
 <!-- GEN:toc -->
+- [Browser dependencies](#browser-dependencies)
 - [Code transpilation issues](#code-transpilation-issues)
 - [Node.js requirements](#nodejs-requirements)
   * [ReferenceError: URL is not defined](#referenceerror-url-is-not-defined)
 <!-- GEN:stop -->
+
+## Browser dependencies
+
+Playwright does self-inspection every time it runs to make sure the browsers can be launched successfully. If there are missing
+dependencies, playwright will print instructions to acquire them.
+
+We also provide [Ubuntu 18.04 dockerfile](docker/Dockerfile.bionic) and [Ubuntu 20.04 dockerfile](docker/Dockerfile.focal) with the list of Debian dependencies.
 
 ## Code transpilation issues
 
