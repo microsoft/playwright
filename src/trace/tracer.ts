@@ -77,10 +77,12 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   private _eventListeners: RegisteredListener[];
   private _disposed = false;
   private _pageToId = new Map<Page, string>();
+  private _traceFile: string;
 
   constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
     this._context = context;
     this._contextId = 'context@' + createGuid();
+    this._traceFile = traceFile;
     this._traceStoragePromise = mkdirIfNeeded(path.join(traceStorageDir, 'sha1')).then(() => traceStorageDir);
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
     this._writeArtifactChain = Promise.resolve();
@@ -162,7 +164,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
         type: 'page-video',
         contextId: this._contextId,
         pageId,
-        fileName: path.basename(video._path),
+        fileName: path.relative(path.dirname(this._traceFile), video._path),
       };
       this._appendTraceEvent(event);
     });
