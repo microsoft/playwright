@@ -60,10 +60,8 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async fill(params: channels.AndroidDeviceFillParams) {
-    await Promise.all([
-      this._object.send('click', { selector: params.selector }),
-      this._object.send('fill', params)
-    ]);
+    await this._object.send('click', { selector: params.selector });
+    await this._object.send('fill', params);
   }
 
   async tap(params: channels.AndroidDeviceTapParams) {

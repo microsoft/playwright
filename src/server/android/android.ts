@@ -153,11 +153,12 @@ export class AndroidDevice extends EventEmitter {
   }
 
   private async _driver(): Promise<Transport> {
-    if (this._driverPromise)
-      return this._driverPromise;
-    let callback: any;
-    this._driverPromise = new Promise(f => callback = f);
+    if (!this._driverPromise)
+      this._driverPromise = this._installDriver();
+    return this._driverPromise;
+  }
 
+  private async _installDriver(): Promise<Transport> {
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 
@@ -185,9 +186,7 @@ export class AndroidDevice extends EventEmitter {
         callback.fulfill(result);
       this._callbacks.delete(id);
     };
-
-    callback(transport);
-    return this._driverPromise;
+    return transport;
   }
 
   private async _waitForLocalAbstract(socketName: string): Promise<SocketBackend> {
@@ -204,7 +203,9 @@ export class AndroidDevice extends EventEmitter {
     return socket;
   }
 
-  async send(method: string, params: any): Promise<any> {
+  async send(method: string, params: any = {}): Promise<any> {
+    // Patch the timeout in!
+    params.timeout = this._timeoutSettings.timeout(params);
     const driver = await this._driver();
     const id = ++this._lastId;
     const result = new Promise((fulfill, reject) => this._callbacks.set(id, { fulfill, reject }));

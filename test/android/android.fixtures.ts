@@ -27,6 +27,7 @@ fixtures.device.init(async ({ playwright }, runTest) => {
   const [device] = await playwright._android.devices();
   await device.shell('am force-stop org.chromium.webview_shell');
   await device.shell('am force-stop com.android.chrome');
+  device.setDefaultTimeout(120000);
   await runTest(device);
   device.close();
 });
