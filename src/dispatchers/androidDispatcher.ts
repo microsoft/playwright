@@ -136,6 +136,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.send('inputDrag', params);
   }
 
+  async screenshot(params: channels.AndroidDeviceScreenshotParams): Promise<channels.AndroidDeviceScreenshotResult> {
+    return { binary: (await this._object.screenshot()).toString('base64') };
+  }
+
   async shell(params: channels.AndroidDeviceShellParams): Promise<channels.AndroidDeviceShellResult> {
     return { result: (await this._object.shell(params.command)).toString('base64') };
   }

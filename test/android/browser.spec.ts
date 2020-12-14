@@ -18,11 +18,11 @@ import { folio } from './android.fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
-  it('should discover device', async function({ device }) {
+  it('androidDevice.model', async function({ device }) {
     expect(device.model()).toBe('sdk_gphone_x86_arm');
   });
 
-  it('should launch browser', async function({ device }) {
+  it('androidDevice.launchBrowser', async function({ device }) {
     const context = await device.launchBrowser();
     const [page] = context.pages();
     await page.goto('data:text/html,<title>Hello world!</title>');

@@ -2462,6 +2462,7 @@ export interface AndroidDeviceChannel extends Channel {
   swipe(params: AndroidDeviceSwipeParams, metadata?: Metadata): Promise<AndroidDeviceSwipeResult>;
   info(params: AndroidDeviceInfoParams, metadata?: Metadata): Promise<AndroidDeviceInfoResult>;
   tree(params?: AndroidDeviceTreeParams, metadata?: Metadata): Promise<AndroidDeviceTreeResult>;
+  screenshot(params?: AndroidDeviceScreenshotParams, metadata?: Metadata): Promise<AndroidDeviceScreenshotResult>;
   inputType(params: AndroidDeviceInputTypeParams, metadata?: Metadata): Promise<AndroidDeviceInputTypeResult>;
   inputPress(params: AndroidDeviceInputPressParams, metadata?: Metadata): Promise<AndroidDeviceInputPressResult>;
   inputTap(params: AndroidDeviceInputTapParams, metadata?: Metadata): Promise<AndroidDeviceInputTapResult>;
@@ -2600,6 +2601,11 @@ export type AndroidDeviceTreeParams = {};
 export type AndroidDeviceTreeOptions = {};
 export type AndroidDeviceTreeResult = {
   tree: AndroidElementInfo,
+};
+export type AndroidDeviceScreenshotParams = {};
+export type AndroidDeviceScreenshotOptions = {};
+export type AndroidDeviceScreenshotResult = {
+  binary: Binary,
 };
 export type AndroidDeviceInputTypeParams = {
   text: string,

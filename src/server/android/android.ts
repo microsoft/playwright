@@ -148,6 +148,10 @@ export class AndroidDevice extends EventEmitter {
     return await this._backend.open(`${command}`);
   }
 
+  async screenshot(): Promise<Buffer> {
+    return await this._backend.runCommand(`shell:screencap -p`);
+  }
+
   private async _driver(): Promise<Transport> {
     if (this._driverPromise)
       return this._driverPromise;
