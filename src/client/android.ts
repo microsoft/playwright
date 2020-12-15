@@ -262,6 +262,7 @@ export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, c
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidSocketInitializer) {
     super(parent, type, guid, initializer);
     this._channel.on('data', ({ data }) => this.emit(Events.AndroidSocket.Data, Buffer.from(data, 'base64')));
+    this._channel.on('close', () => this.emit(Events.AndroidSocket.Close));
   }
 
   async write(data: Buffer): Promise<void> {

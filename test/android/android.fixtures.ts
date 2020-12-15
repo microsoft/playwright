@@ -29,7 +29,7 @@ fixtures.device.init(async ({ playwright }, runTest) => {
   await device.shell('am force-stop com.android.chrome');
   device.setDefaultTimeout(120000);
   await runTest(device);
-  device.close();
+  await device.close();
 });
 
 export const folio = fixtures.build();

@@ -52,6 +52,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
 
 export interface AndroidSocket extends EventEmitter {
   on(event: 'data', handler: (data: Buffer) => void): this;
+  on(event: 'close', handler: () => void): this;
   write(data: Buffer): Promise<void>
   close(): Promise<void>
 }

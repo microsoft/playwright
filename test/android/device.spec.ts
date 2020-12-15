@@ -31,6 +31,9 @@ if (process.env.PW_ANDROID_TESTS) {
     await socket.write(Buffer.from('321\n'));
     const output = await new Promise(resolve => socket.on('data', resolve));
     expect(output.toString()).toBe('321\n');
+    const closedPromise = new Promise(resolve => socket.on('close', resolve));
+    await socket.close();
+    await closedPromise;
   });
 
   it('androidDevice.screenshot', async function({ device, testInfo }) {
