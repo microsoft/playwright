@@ -115,7 +115,7 @@ Defaults to `'visible'`. Can be either:
 
 ## context-option-storage-state
 
-- `storageState` <[Object]>
+- `storageState` <[string]|[Object]>
   - `cookies` <[Array]<[Object]>> Optional cookies to set for context
     - `name` <[string]> **required**
     - `value` <[string]> **required**
@@ -133,7 +133,7 @@ Defaults to `'visible'`. Can be either:
       - `value` <[string]>
 
 Populates context with given storage state. This method can be used to initialize context with logged-in information
-obtained via [browserContext.storageState()]().
+obtained via [browserContext.storageState()](). Either a path to the file with saved storage, or an object with the following fields:
 
 ## context-option-acceptdownloads
 
