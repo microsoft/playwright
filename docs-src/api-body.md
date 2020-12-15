@@ -545,6 +545,11 @@ Whether to emulate network being offline for the browser context.
 
 Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
+### option: BrowserContext.storageState.path
+- `path` <[string]>
+
+The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
+
 ## async method: BrowserContext.unroute
 
 Removes a route created with [browserContext.route()](). When `handler` is not specified, removes all routes for the
