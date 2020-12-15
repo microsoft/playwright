@@ -1,6 +1,6 @@
 <!-- THIS FILE IS NOW GENERATED -->
 
-# Playwright API <!-- GEN:version -->Tip-Of-Tree<!-- GEN:stop-->
+# Playwright API <!-- GEN:version -->v1.7.0<!-- GEN:stop-->
 
 ##### Table of Contents
 
