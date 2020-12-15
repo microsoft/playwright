@@ -49,4 +49,12 @@ if (process.env.PW_ANDROID_TESTS) {
     const data = await device.shell('cat /data/local/tmp/hello-world');
     expect(data).toEqual(Buffer.from('hello world'));
   });
+
+  it('androidDevice.fill', test => {
+    test.fixme(!!process.env.CI, 'Hangs on the bots');
+  }, async function({ device }) {
+    await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+    await device.fill({ res: 'org.chromium.webview_shell:id/url_field' }, 'Hello');
+    expect((await device.info({ res: 'org.chromium.webview_shell:id/url_field' })).text).toBe('Hello');
+  });
 }
