@@ -29,4 +29,13 @@ if (process.env.PW_ANDROID_TESTS) {
     expect(await page.title()).toBe('Hello world!');
     await context.close();
   });
+
+  it('should create new page', async function({ device }) {
+    const context = await device.launchBrowser();
+    const page = await context.newPage();
+    await page.goto('data:text/html,<title>Hello world!</title>');
+    expect(await page.title()).toBe('Hello world!');
+    await page.close();
+    await context.close();
+  });
 }
