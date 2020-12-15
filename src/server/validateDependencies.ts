@@ -50,7 +50,7 @@ function isSupportedWindowsVersion(): boolean {
   const [major, minor] = os.release().split('.').map(token => parseInt(token, 10));
   // This is based on: https://stackoverflow.com/questions/42524606/how-to-get-windows-version-using-node-js/44916050#44916050
   // The table with versions is taken from: https://docs.microsoft.com/en-us/windows/win32/api/winnt/ns-winnt-osversioninfoexw#remarks
-  // We support launch doctor on windows 7 and above, which is encoded as `6.1`.
+  // Windows 7 is not supported and is encoded as `6.1`.
   return major > 6 || (major === 6 && minor > 1);
 }
 
