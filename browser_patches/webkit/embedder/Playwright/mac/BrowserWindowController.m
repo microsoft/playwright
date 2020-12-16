@@ -687,7 +687,7 @@ static NSSet *dataTypes()
 
     NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
     if (disposition && [disposition hasPrefix:@"attachment"]) {
-        decisionHandler(WKNavigationResponsePolicyBecomeDownload);
+        decisionHandler(WKNavigationResponsePolicyDownload);
         return;
     }
     decisionHandler(WKNavigationResponsePolicyAllow);

@@ -1812,6 +1812,64 @@ index 6d5be9a591a272cd67d6e9d097b30505bdf8ae5e..8f67ba28c380e844c8e4191ee7044665
              return false;
      }
      
+diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
+index 50250777bb504be21e2d93110fb391c133b08463..7d4dc06317611d9e1d94c51cc9e93a267aebd1ff 100644
+--- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
++++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTask.mm
+@@ -203,6 +203,7 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ - (void)speechRecognizer:(SFSpeechRecognizer *)speechRecognizer availabilityDidChange:(BOOL)available
+ {
++    UNUSED_PARAM(speechRecognizer);
+     ASSERT(isMainThread());
+ 
+     if (available || !_task)
+@@ -216,6 +217,7 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didHypothesizeTranscription:(SFTranscription *)transcription
+ {
++    UNUSED_PARAM(task);
+     ASSERT(isMainThread());
+ 
+     [self sendSpeechStartIfNeeded];
+@@ -224,6 +226,7 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ - (void)speechRecognitionTask:(SFSpeechRecognitionTask *)task didFinishRecognition:(SFSpeechRecognitionResult *)recognitionResult
+ {
++    UNUSED_PARAM(task);
+     ASSERT(isMainThread());
+ 
+     [self callbackWithResult:recognitionResult.bestTranscription isFinal:YES];
+@@ -236,6 +239,7 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ - (void)speechRecognitionTaskWasCancelled:(SFSpeechRecognitionTask *)task
+ {
++    UNUSED_PARAM(task);
+     ASSERT(isMainThread());
+ 
+     [self sendSpeechEndIfNeeded];
+diff --git a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
+index 66cec91542b74765a9c1ffbc2f28e1a5085c55e0..9a2a89a09279b3b7102282de6bfc4cc7e2b5925f 100644
+--- a/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
++++ b/Source/WebCore/Modules/speech/cocoa/WebSpeechRecognizerTaskMock.mm
+@@ -36,6 +36,9 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ - (instancetype)initWithIdentifier:(SpeechRecognitionConnectionClientIdentifier)identifier locale:(NSString*)localeIdentifier doMultipleRecognitions:(BOOL)continuous reportInterimResults:(BOOL)interimResults maxAlternatives:(unsigned long)alternatives delegateCallback:(void(^)(const SpeechRecognitionUpdate&))callback
+ {
++    UNUSED_PARAM(localeIdentifier);
++    UNUSED_PARAM(interimResults);
++    UNUSED_PARAM(alternatives);
+     if (!(self = [super init]))
+         return nil;
+ 
+@@ -51,6 +54,7 @@ NS_ASSUME_NONNULL_BEGIN
+ 
+ - (void)audioSamplesAvailable:(CMSampleBufferRef)sampleBuffer
+ {
++    UNUSED_PARAM(sampleBuffer);
+     if (!_hasSentSpeechStart) {
+         _hasSentSpeechStart = true;
+         _delegateCallback(SpeechRecognitionUpdate::create(_identifier, SpeechRecognitionUpdateType::SpeechStart));
 diff --git a/Source/WebCore/SourcesCocoa.txt b/Source/WebCore/SourcesCocoa.txt
 index 84f5868761e29a9460c6ca565e4cccd1e0f502b0..ae47e801848f5b86fc0e21990880464b6a338ea6 100644
 --- a/Source/WebCore/SourcesCocoa.txt
@@ -8171,6 +8229,21 @@ index 0000000000000000000000000000000000000000..e7143513ea2be8e1cdab5c86a28643ff
 +    [super dealloc];
 +}
 +@end
+diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm b/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
+index 367c0ebd69d0dc84594ae3ba58eaa234b84defc5..44ad0dc9d8ae01871dbd24d63e6bc94a620036fd 100644
+--- a/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
++++ b/Source/WebKit/UIProcess/API/Cocoa/_WKInspectorExtension.mm
+@@ -24,7 +24,10 @@
+  */
+ 
+ #import "config.h"
++#import "WKError.h"
+ #import "_WKInspectorExtensionInternal.h"
++#import <wtf/BlockPtr.h>
++#import <wtf/URL.h>
+ 
+ #if ENABLE(INSPECTOR_EXTENSIONS)
+ 
 diff --git a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h b/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
 index 7226cc2cb605d2384b5fdf9210ac731b41610c1e..7883367044356751886f5c1f89250c29fcc58d3a 100644
 --- a/Source/WebKit/UIProcess/API/Cocoa/_WKProcessPoolConfiguration.h
@@ -12686,6 +12759,22 @@ index 0000000000000000000000000000000000000000..6d04f9290135069359ce6bf872654648
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp b/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
+index aafb76bf2042cf2930c7671c1029243990aec20b..7f522b232eaeb8462f2414f36f49e165b7a396b5 100644
+--- a/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
++++ b/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
+@@ -33,8 +33,11 @@
+ 
+ #if PLATFORM(COCOA)
+ #include "SharedRingBufferStorage.h"
++#include <WebCore/WebAudioBufferList.h>
+ #endif
+ 
++using namespace WebCore;
++
+ namespace WebKit {
+ 
+ Ref<WebCore::RealtimeMediaSource> SpeechRecognitionRemoteRealtimeMediaSource::create(SpeechRecognitionRemoteRealtimeMediaSourceManager& manager, const WebCore::CaptureDevice& captureDevice)
 diff --git a/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.h b/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.h
 index 8b51250f5cad7f3f5ce78f58d67637190cf8bf91..15012ef7bf5927d536bceeb1677a69b0f0cac8c8 100644
 --- a/Source/WebKit/UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.h
@@ -12699,6 +12788,18 @@ index 8b51250f5cad7f3f5ce78f58d67637190cf8bf91..15012ef7bf5927d536bceeb1677a69b0
  class SpeechRecognitionRemoteRealtimeMediaSource : public WebCore::RealtimeMediaSource {
  public:
      static Ref<WebCore::RealtimeMediaSource> create(SpeechRecognitionRemoteRealtimeMediaSourceManager&, const WebCore::CaptureDevice&);
+diff --git a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h
+index 63d070c3de7d28766b5ca86ce8a35e490fe6cd49..7a284be26edfdc070b03cbb6ee7716cc1f8fcdb7 100644
+--- a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h
++++ b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h
+@@ -31,6 +31,7 @@
+ #include <WebCore/AuthenticatorAssertionResponse.h>
+ #include <WebCore/AuthenticatorTransport.h>
+ #include <WebCore/WebAuthenticationConstants.h>
++#include <wtf/CompletionHandler.h>
+ #include <wtf/Forward.h>
+ #include <wtf/RetainPtr.h>
+ #include <wtf/WeakPtr.h>
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h b/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
 index ff90d3de4349c9a3385c20c059729b8e22ebe2e5..d5c4f2cd715551ddef6f5af93ada65cbe78ad213 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Mock/MockLocalConnection.h
