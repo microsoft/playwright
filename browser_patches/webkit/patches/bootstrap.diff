@@ -1591,7 +1591,7 @@ index 9a5c568f780007163a05d9d741d5a47f0d6c38c0..087af58713d3b1e880a64f472a3d6d2a
  InspectorWindowFrame:
    type: String
 diff --git a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
-index 88d28e27d998ba4602f3cc3bd6ed9338869689c9..422ea4e602f2a2532c8489cffbec8db30b50afd6 100644
+index 5a217a99584e3977ddc9710de45e41728cac60a9..ed49f4da40f90ab9104fe72b9da534402b2f0c78 100644
 --- a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 +++ b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 @@ -521,7 +521,7 @@ MaskWebGLStringsEnabled:
@@ -1760,7 +1760,7 @@ index f0049d8221462f419f6887d03fcc41905af2d560..1c4f52105a1f6c46488c76ef58c387fa
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index a80bd11a6e3e60cac26da023ede7641510e64889..a909118d5c32654e03d12600b328226c9928f1ce 100644
+index 6bb786f6ae4984e46255bcab162ab955050dd6ca..38a52e5f171a31c1db0e12fa17c557f4c00a72a3 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
 @@ -335,7 +335,7 @@
