@@ -2943,7 +2943,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 575382e4390dd31dbf404fc72662b2206071c7e8..d6ec8d26d165b110872dea47fa09a9dfa751f37b 100644
+index 575382e4390dd31dbf404fc72662b2206071c7e8..cd7fe4765825d36dbb75a6be55ef0dd2cce7263c 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -2962,6 +2962,17 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..d6ec8d26d165b110872dea47fa09a9df
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
+@@ -309,8 +311,8 @@ static Ref<Protocol::Network::Request> buildObjectForResourceRequest(const Resou
+         .setHeaders(buildObjectForHeaders(request.httpHeaderFields()))
+         .release();
+     if (request.httpBody() && !request.httpBody()->isEmpty()) {
+-        auto bytes = request.httpBody()->flatten();
+-        requestObject->setPostData(String::fromUTF8WithLatin1Fallback(bytes.data(), bytes.size()));
++        Vector<char> bytes = request.httpBody()->flatten();
++        requestObject->setPostData(base64Encode(bytes));
+     }
+     return requestObject;
+ }
 @@ -355,6 +357,8 @@ RefPtr<Protocol::Network::Response> InspectorNetworkAgent::buildObjectForResourc
          .setSource(responseSource(response.source()))
          .release();
