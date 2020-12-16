@@ -95,3 +95,21 @@ it('should work with url match regular expression from a different context', asy
   ]);
   expect(request.url()).toBe(server.PREFIX + '/digits/1.png');
 });
+
+it('should return correct postData buffer for utf-8 body', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  const value = 'baẞ';
+  const [request] = await Promise.all([
+    page.waitForRequest('**'),
+    page.evaluate(({url, value}) => {
+      const request = new Request(url, {
+        method: 'POST',
+        body: JSON.stringify(value),
+      });
+      request.headers.set('content-type', 'application/json;charset=UTF-8');
+      return fetch(request);
+    }, {url: server.PREFIX + '/title.html', value})
+  ]);
+  expect(request.postDataBuffer().equals(Buffer.from(JSON.stringify(value), 'utf-8'))).toBe(true);
+  expect(request.postDataJSON()).toBe(value);
+});
