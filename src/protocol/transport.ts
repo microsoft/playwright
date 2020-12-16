@@ -47,7 +47,11 @@ export class Transport {
     this._endian = endian;
     this._closeableStream = closeable;
     pipeRead.on('data', buffer => this._dispatch(buffer));
-    pipeRead.on('close', () => this.onclose && this.onclose());
+    pipeRead.on('close', () => {
+      this._closed = true;
+      if (this.onclose)
+        this.onclose();
+    });
     this.onmessage = undefined;
     this.onclose = undefined;
   }
