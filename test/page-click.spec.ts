@@ -338,6 +338,43 @@ it('should click the button with fixed position inside an iframe', (test, { brow
   expect(await frame.evaluate(() => window['result'])).toBe('Clicked');
 });
 
+it('should click the button behind sticky header', async ({page}) => {
+  await page.setViewportSize({ width: 500, height: 240 });
+  await page.setContent(`
+    <style>
+    * {
+      padding: 0;
+      margin: 0;
+    }
+    li {
+      height: 80px;
+      border: 1px solid black;
+    }
+    ol {
+      padding-top: 160px;
+    }
+    div.fixed {
+      position: fixed;
+      z-index: 1001;
+      width: 100%;
+      background: red;
+      height: 160px;
+    }
+    </style>
+
+    <div class=fixed></div>
+
+    <ol>
+    <li>hi1</li><li>hi2</li><li>hi3</li><li>hi4</li><li>hi5</li><li>hi6</li><li>hi7</li><li>hi8</li>
+    <li id=target onclick="window.__clicked = true">hi9</li>
+    <li>hi10</li><li>hi11</li><li>hi12</li><li>hi13</li><li id=li14>hi14</li>
+    </ol>
+  `);
+  await page.$eval('#li14', e => e.scrollIntoView());
+  await page.click('#target');
+  expect(await page.evaluate(() => window['__clicked'])).toBe(true);
+});
+
 it('should click the button with deviceScaleFactor set', async ({browser, server}) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
   const page = await context.newPage();
