@@ -17474,6 +17474,18 @@ index bacc141154331b79d1a3ced681c7f948988b9066..2510aeebae530265918f7bd08e114faa
 +
 +
  } // namespace WTR
+diff --git a/Tools/gtk/install-dependencies b/Tools/gtk/install-dependencies
+index 3d428cc63cc396f82e05b8794a7a1f33facd4e80..6f92d7643acbe7b347ccf15918fb2e9527509e8e 100755
+--- a/Tools/gtk/install-dependencies
++++ b/Tools/gtk/install-dependencies
+@@ -149,6 +149,7 @@ function installDependenciesWithApt {
+         libwayland-dev \
+         ninja-build \
+         patch \
++        patchelf \
+         ruby \
+         xfonts-utils"
+ 
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 39238ac08dbcab92fb1d053928938a96f154c9b1..64bc9f1458254322dca9005b5e2d2b19bb901386 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
@@ -17547,3 +17559,15 @@ index c09b6f39f894943f11b7a453428fab7d6f6e68fb..bc21acb648562ee0380811599b08f7d2
  
      static cairo_user_data_key_t bufferKey;
      cairo_surface_set_user_data(m_snapshot, &bufferKey, buffer,
+diff --git a/Tools/wpe/install-dependencies b/Tools/wpe/install-dependencies
+index 4d51f0d0f9a9105ec5f9f50f6a2a86f879e41a85..d84068e9e89b6dd66e47872633b0467b68685139 100755
+--- a/Tools/wpe/install-dependencies
++++ b/Tools/wpe/install-dependencies
+@@ -90,6 +90,7 @@ function installDependenciesWithApt {
+         libxslt1-dev \
+         ninja-build \
+         patch \
++        patchelf \
+         pkg-config \
+         ruby \
+         zlib1g-dev"
