@@ -18,10 +18,6 @@ import { folio } from './android.fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
-  it('androidDevice.model', async function({ device }) {
-    expect(device.model()).toBe('sdk_gphone_x86_arm');
-  });
-
   it('androidDevice.launchBrowser', async function({ device }) {
     const context = await device.launchBrowser();
     const [page] = context.pages();

@@ -21,6 +21,14 @@ import { folio } from './android.fixtures';
 const { it, expect } = folio;
 
 if (process.env.PW_ANDROID_TESTS) {
+  it('androidDevice.serial', async function({ device }) {
+    expect(device.serial().length).toBeGreaterThan(5);
+  });
+
+  it('androidDevice.model', async function({ device }) {
+    expect(device.model()).toBe('sdk_gphone_x86_arm');
+  });
+
   it('androidDevice.shell', async function({ device }) {
     const output = await device.shell('echo 123');
     expect(output.toString()).toBe('123\n');
@@ -46,7 +54,7 @@ if (process.env.PW_ANDROID_TESTS) {
     expect(height).toBe(1920);
   });
 
-  it('androidDevice.push', async function({ device, testInfo }) {
+  it('androidDevice.push', async function({ device }) {
     await device.shell('rm /data/local/tmp/hello-world');
     await device.push(Buffer.from('hello world'), '/data/local/tmp/hello-world');
     const data = await device.shell('cat /data/local/tmp/hello-world');

@@ -59,6 +59,7 @@ type PlaywrightWorkerFixtures = {
   browserOptions: LaunchOptions;
   // Browser instance, shared for the worker.
   browser: Browser;
+  androidContext: BrowserContext;
   // True iff browserName is Chromium
   isChromium: boolean;
   // True iff browserName is Firefox
@@ -114,6 +115,10 @@ fixtures.browserType.init(async ({ playwright, browserName }, run) => {
 }, { scope: 'worker' });
 
 fixtures.browser.init(async ({ browserType, browserOptions }, run) => {
+  if (process.env.PWMODE === 'android') {
+    await run(null);
+    return;
+  }
   const browser = await browserType.launch(browserOptions);
   await run(browser);
   await browser.close();
@@ -153,7 +158,16 @@ fixtures.contextOptions.init(async ({ video, testInfo }, run) => {
   }
 });
 
-fixtures.contextFactory.init(async ({ browser, contextOptions, testInfo, screenshotOnFailure }, run) => {
+fixtures.androidContext.init(async ({ playwright }, run) => {
+  if (process.env.PWMODE !== 'android')
+    return;
+  const [device] = await playwright._android.devices();
+  const context = await device.launchBrowser();
+  await run(context);
+  await context.close();
+}, { scope: 'worker' });
+
+fixtures.contextFactory.init(async ({ browser, contextOptions, testInfo, screenshotOnFailure, androidContext }, run) => {
   const contexts: BrowserContext[] = [];
   async function contextFactory(options: BrowserContextOptions = {}) {
     const context = await browser.newContext({ ...contextOptions, ...options });
@@ -173,17 +187,25 @@ fixtures.contextFactory.init(async ({ browser, contextOptions, testInfo, screens
     await context.close();
 });
 
-fixtures.context.init(async ({ contextFactory }, run) => {
-  const context = await contextFactory();
+fixtures.context.init(async ({ contextFactory, androidContext }, run) => {
+  const context = process.env.PWMODE === 'android' ? androidContext : await contextFactory();
   await run(context);
   // Context factory is taking care of closing the context,
   // so that it could capture a screenshot on failure.
 });
 
 fixtures.page.init(async ({ context }, run) => {
-  // Always create page off context so that they matched.
-  await run(await context.newPage());
-  // Context fixture is taking care of closing the page.
+  if (process.env.PWMODE === 'android') {
+    const page = await context.newPage();
+    await run(page);
+    context.setDefaultNavigationTimeout(0);
+    context.setDefaultTimeout(0);
+    await Promise.all(context.pages().map(p => p.close()));
+  } else {
+    // Always create page off context so that they matched.
+    await run(await context.newPage());
+    // Context fixture is taking care of closing the page.
+  }
 });
 
 fixtures.testParametersPathSegment.override(async ({ browserName, platform }, run) => {

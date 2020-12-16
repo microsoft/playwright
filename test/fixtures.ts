@@ -44,7 +44,7 @@ const getExecutablePath = browserName => {
 };
 
 type ModeParameters = {
-  mode: 'default' | 'driver' | 'service';
+  mode: 'default' | 'driver' | 'service' | 'android';
 };
 type WorkerFixtures = {
   toImpl: (rpcObject: any) => any;
@@ -61,12 +61,12 @@ fixtures.mode.initParameter('Testing mode', process.env.PWMODE as any || 'defaul
 fixtures.createUserDataDir.init(async ({ }, run) => {
   const dirs: string[] = [];
   async function createUserDataDir() {
-  // We do not put user data dir in testOutputPath,
-  // because we do not want to upload them as test result artifacts.
-  //
-  // Additionally, it is impossible to upload user data dir after test run:
-  // - Firefox removes lock file later, presumably from another watchdog process?
-  // - WebKit has circular symlinks that makes CI go crazy.
+    // We do not put user data dir in testOutputPath,
+    // because we do not want to upload them as test result artifacts.
+    //
+    // Additionally, it is impossible to upload user data dir after test run:
+    // - Firefox removes lock file later, presumably from another watchdog process?
+    // - WebKit has circular symlinks that makes CI go crazy.
     const dir = await mkdtempAsync(path.join(os.tmpdir(), 'playwright-test-'));
     dirs.push(dir);
     return dir;
@@ -153,6 +153,9 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
     spawnedProcess.kill();
     await processExited;
     await teardownCoverage();
+  } else if (mode === 'android') {
+    const playwright = require('../index');
+    await run(playwright);
   } else {
     const playwright = require('../index');
     await run(playwright);

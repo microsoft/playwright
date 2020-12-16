@@ -34,7 +34,7 @@ if (process.env.PW_ANDROID_TESTS) {
     expect(page.url()).toBe('about:blank');
   });
 
-  it('should navigate page internally', async function({ device, server }) {
+  it('should navigate page internally', async function({ device }) {
     expect(device.webViews().length).toBe(0);
     await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
     const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });

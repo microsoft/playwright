@@ -15,10 +15,12 @@
  */
 
 import type { Android, AndroidDevice } from '../../android-types';
+import type { Page } from '../../types/types';
 import { folio as baseFolio } from '../fixtures';
 
 const fixtures = baseFolio.extend<{
     device: AndroidDevice
+    page: Page
   }, {
     android: Android,
   }>();
@@ -30,6 +32,13 @@ fixtures.device.init(async ({ playwright }, runTest) => {
   device.setDefaultTimeout(120000);
   await runTest(device);
   await device.close();
+});
+
+fixtures.page.override(async ({ device }, runTest) => {
+  await device.shell('am start org.chromium.webview_shell/.WebViewBrowserActivity');
+  const webview = await device.webView({ pkg: 'org.chromium.webview_shell' });
+  const page = await webview.page();
+  await runTest(page);
 });
 
 export const folio = fixtures.build();

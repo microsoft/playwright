@@ -35,11 +35,11 @@ fixtures.httpService.init(async ({ testWorkerIndex }, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + testWorkerIndex * 2;
+  const port = process.env.PWMODE ? 8180 : (8907 + testWorkerIndex * 2);
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
-  const httpsPort = port + 1;
+  const httpsPort =  process.env.PWMODE ? 8181 : (port + 1);
   const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
   httpsServer.enableHTTPCache(cachedPath);
 
