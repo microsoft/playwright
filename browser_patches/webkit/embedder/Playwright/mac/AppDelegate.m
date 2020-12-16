@@ -433,8 +433,8 @@ const NSActivityOptions ActivityOptions =
 {
     LOG(@"decidePolicyForNavigationAction");
 
-    if (navigationAction.downloadAttribute) {
-        decisionHandler(WKNavigationActionPolicyBecomeDownload);
+    if (navigationAction.shouldPerformDownload) {
+        decisionHandler(WKNavigationActionPolicyDownload);
         return;
     }
     if (navigationAction._canHandleRequest) {
@@ -454,7 +454,7 @@ const NSActivityOptions ActivityOptions =
 
     NSString *disposition = [[httpResponse allHeaderFields] objectForKey:@"Content-Disposition"];
     if (disposition && [disposition hasPrefix:@"attachment"]) {
-        decisionHandler(WKNavigationResponsePolicyBecomeDownload);
+        decisionHandler(WKNavigationResponsePolicyDownload);
         return;
     }
     decisionHandler(WKNavigationResponsePolicyAllow);
@@ -472,7 +472,7 @@ const NSActivityOptions ActivityOptions =
 
 #pragma mark WKDownloadDelegate
 
-- (void)download:(WKDownload *)download decideDestinationWithResponse:(NSURLResponse *)response suggestedFilename:(NSString *)suggestedFilename completionHandler:(void (^)(NSURL * _Nullable destination))completionHandler
+- (void)download:(WKDownload *)download decideDestinationUsingResponse:(NSURLResponse *)response suggestedFilename:(NSString *)suggestedFilename completionHandler:(void (^)(NSURL * _Nullable destination))completionHandler
 {
     completionHandler(nil);
 }
