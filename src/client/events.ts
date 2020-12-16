@@ -22,7 +22,8 @@ export const Events = {
   },
 
   AndroidSocket: {
-    Data: 'data'
+    Data: 'data',
+    Close: 'close'
   },
 
   AndroidWebView: {

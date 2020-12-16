@@ -177,6 +177,10 @@ export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.
   constructor(scope: DispatcherScope, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
     socket.on(Events.AndroidSocket.Data, (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
+    socket.on(Events.AndroidSocket.Close, () => {
+      this._dispatchEvent('close');
+      this._dispose();
+    });
   }
 
   async write(params: channels.AndroidSocketWriteParams, metadata?: channels.Metadata): Promise<void> {

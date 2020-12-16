@@ -2097,6 +2097,7 @@ AndroidSocket:
     data:
       parameters:
         data: binary
+    close:
 
 AndroidDevice:
   type: interface

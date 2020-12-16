@@ -171,7 +171,7 @@ export class AndroidDevice extends EventEmitter {
       await this.installApk(await readFileAsync(require.resolve(`../../../bin/${file}`)));
 
     debug('pw:android')('Starting the new driver');
-    this.shell(`am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner`);
+    this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner');
     const socket = await this._waitForLocalAbstract('playwright_android_driver_socket');
     const transport = new Transport(socket, socket, socket, 'be');
     transport.onmessage = message => {
@@ -285,6 +285,7 @@ export class AndroidDevice extends EventEmitter {
     await installSocket.write(content);
     const success = await new Promise(f => installSocket.on('data', f));
     debug('pw:android')('Written driver bytes: ' + success);
+    await installSocket.close();
   }
 
   async push(content: Buffer, path: string, mode = 0o644): Promise<void> {

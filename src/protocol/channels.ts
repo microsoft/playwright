@@ -2425,12 +2425,14 @@ export type AndroidSetDefaultTimeoutNoReplyResult = void;
 export type AndroidSocketInitializer = {};
 export interface AndroidSocketChannel extends Channel {
   on(event: 'data', callback: (params: AndroidSocketDataEvent) => void): this;
+  on(event: 'close', callback: (params: AndroidSocketCloseEvent) => void): this;
   write(params: AndroidSocketWriteParams, metadata?: Metadata): Promise<AndroidSocketWriteResult>;
   close(params?: AndroidSocketCloseParams, metadata?: Metadata): Promise<AndroidSocketCloseResult>;
 }
 export type AndroidSocketDataEvent = {
   data: Binary,
 };
+export type AndroidSocketCloseEvent = {};
 export type AndroidSocketWriteParams = {
   data: Binary,
 };
