@@ -251,8 +251,10 @@ jobs:
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
         PW_ANDROID_TESTS: 1
     - name: Run upstream Page tests
-      run: npx folio test/ --test-match="**/page-*\.ts" -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=list,json
+      run: npx folio test/ --test-match="**/page-*\.ts" -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=0 --reporter=list,json
       env:
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        PW_ANDROID_TESTS: 1
         PWMODE: android
     - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
       if: always() && github.ref == 'refs/heads/master'
