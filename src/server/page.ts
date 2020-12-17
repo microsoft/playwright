@@ -32,6 +32,7 @@ import { ProgressController, runAbortableTask } from './progress';
 import { assert, isError } from '../utils/utils';
 import { debugLogger } from '../utils/debugLogger';
 import { Selectors } from './selectors';
+import * as fs from 'fs';
 
 export interface PageDelegate {
   readonly rawMouse: input.RawMouse;
@@ -472,6 +473,13 @@ export class Page extends EventEmitter {
   getBinding(name: string, world: types.World) {
     const identifier = PageBinding.identifier(name, world);
     return this._pageBindings.get(identifier) || this._browserContext._pageBindings.get(identifier);
+  }
+
+  async runAxeAudit() /* : AxeResults */ {
+    const axeCorePath = require.resolve('axe-core');
+    const axeSource = await fs.promises.readFile(axeCorePath, 'utf8');
+    await this.mainFrame()._evaluateExpression(axeSource, false, null, 'utility');
+    return await this.mainFrame()._evaluateExpression('axe.run()', false, null, 'utility');
   }
 }
 

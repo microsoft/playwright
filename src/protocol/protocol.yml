@@ -915,6 +915,10 @@ Page:
 
     bringToFront:
 
+    runAxeAudit:
+      returns:
+        result: object
+
   events:
 
     bindingCall:

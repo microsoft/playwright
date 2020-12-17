@@ -79,6 +79,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     page.on(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this._scope, worker) }));
   }
 
+  async runAxeAudit(params?: channels.PageRunAxeAuditParams, metadata?: channels.Metadata): Promise<channels.PageRunAxeAuditResult> {
+    return await this._page.runAxeAudit();
+  }
+
   async setDefaultNavigationTimeoutNoReply(params: channels.PageSetDefaultNavigationTimeoutNoReplyParams): Promise<void> {
     this._page.setDefaultNavigationTimeout(params.timeout);
   }

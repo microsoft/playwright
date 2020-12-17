@@ -470,6 +470,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageCrStopCSSCoverageParams = tOptional(tObject({}));
   scheme.PageBringToFrontParams = tOptional(tObject({}));
+  scheme.PageRunAxeAuditParams = tOptional(tObject({}));
   scheme.FrameEvalOnSelectorParams = tObject({
     selector: tString,
     expression: tString,

@@ -625,6 +625,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     }
     return buffer;
   }
+
+  async runAxeAudit() {
+    return await this._channel.runAxeAudit();
+  }
 }
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel, channels.BindingCallInitializer> {
