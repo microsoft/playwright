@@ -227,3 +227,8 @@ it('should match root after >>', async ({page, server}) => {
   const element2 = await page.$('text=test >> text=test');
   expect(element2).toBeTruthy();
 });
+
+it('should match root after >> with *', async ({ page }) => {
+  await page.setContent(`<button> hello world </button> <button> hellow <span> world </span> </button>`);
+  expect(await page.$$eval('*css=button >> text=hello >> text=world', els => els.length)).toBe(2);
+});

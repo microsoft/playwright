@@ -54,7 +54,7 @@ export function parseSelector(selector: string, customNames: Set<string>): Parse
     };
   }
 
-  const chain = (from: number, to: number): CSSComplexSelector => {
+  const chain = (from: number, to: number, turnFirstTextIntoScope: boolean): CSSComplexSelector => {
     const result: CSSComplexSelector = { simples: [] };
     for (const part of v1.parts.slice(from, to)) {
       let name = part.name;
@@ -76,6 +76,8 @@ export function parseSelector(selector: string, customNames: Set<string>): Parse
         }
       } else if (name === 'text') {
         let simple = textSelectorToSimple(part.body);
+        if (turnFirstTextIntoScope)
+          simple.functions.push({ name: 'is', args: [ simpleToComplex(callWith('scope', [])), simpleToComplex({ css: '*', functions: [] }) ]});
         if (result.simples.length)
           result.simples[result.simples.length - 1].combinator = '>=';
         if (wrapInLight)
@@ -87,14 +89,16 @@ export function parseSelector(selector: string, customNames: Set<string>): Parse
           simple = callWith('light', [simpleToComplex(simple)]);
         result.simples.push({ selector: simple, combinator: '' });
       }
+      if (name !== 'text')
+        turnFirstTextIntoScope = false;
     }
     return result;
   };
 
   const capture = v1.capture === undefined ? v1.parts.length - 1 : v1.capture;
-  const result = chain(0, capture + 1);
+  const result = chain(0, capture + 1, false);
   if (capture + 1 < v1.parts.length) {
-    const has = chain(capture + 1, v1.parts.length);
+    const has = chain(capture + 1, v1.parts.length, true);
     const last = result.simples[result.simples.length - 1];
     last.selector.functions.push({ name: 'has', args: [has] });
   }
