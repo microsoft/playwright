@@ -164,8 +164,10 @@ fixtures.contextOptions.init(async ({ video, testInfo }, run) => {
 });
 
 fixtures.androidContext.init(async ({ playwright }, run) => {
-  if (process.env.PWMODE !== 'android')
+  if (process.env.PWMODE !== 'android') {
+    await run(null);
     return;
+  }
   const [device] = await playwright._android.devices();
   const context = await device.launchBrowser();
   await run(context);
