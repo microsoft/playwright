@@ -1591,7 +1591,7 @@ index 9a5c568f780007163a05d9d741d5a47f0d6c38c0..087af58713d3b1e880a64f472a3d6d2a
  InspectorWindowFrame:
    type: String
 diff --git a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
-index 88d28e27d998ba4602f3cc3bd6ed9338869689c9..422ea4e602f2a2532c8489cffbec8db30b50afd6 100644
+index 5a217a99584e3977ddc9710de45e41728cac60a9..ed49f4da40f90ab9104fe72b9da534402b2f0c78 100644
 --- a/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 +++ b/Source/WTF/Scripts/Preferences/WebPreferencesExperimental.yaml
 @@ -521,7 +521,7 @@ MaskWebGLStringsEnabled:
@@ -1760,7 +1760,7 @@ index f0049d8221462f419f6887d03fcc41905af2d560..1c4f52105a1f6c46488c76ef58c387fa
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index a80bd11a6e3e60cac26da023ede7641510e64889..a909118d5c32654e03d12600b328226c9928f1ce 100644
+index 6bb786f6ae4984e46255bcab162ab955050dd6ca..38a52e5f171a31c1db0e12fa17c557f4c00a72a3 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
 @@ -335,7 +335,7 @@
@@ -2943,7 +2943,7 @@ index 3386cb879f1178c1b9635775c9a0e864f5b94c52..d2350182f5f061855e8ca172779ad60e
  class Page;
  class SecurityOrigin;
 diff --git a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
-index 575382e4390dd31dbf404fc72662b2206071c7e8..d6ec8d26d165b110872dea47fa09a9dfa751f37b 100644
+index 575382e4390dd31dbf404fc72662b2206071c7e8..cd7fe4765825d36dbb75a6be55ef0dd2cce7263c 100644
 --- a/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorNetworkAgent.cpp
 @@ -45,6 +45,7 @@
@@ -2962,6 +2962,17 @@ index 575382e4390dd31dbf404fc72662b2206071c7e8..d6ec8d26d165b110872dea47fa09a9df
  #include "Page.h"
  #include "PlatformStrategies.h"
  #include "ProgressTracker.h"
+@@ -309,8 +311,8 @@ static Ref<Protocol::Network::Request> buildObjectForResourceRequest(const Resou
+         .setHeaders(buildObjectForHeaders(request.httpHeaderFields()))
+         .release();
+     if (request.httpBody() && !request.httpBody()->isEmpty()) {
+-        auto bytes = request.httpBody()->flatten();
+-        requestObject->setPostData(String::fromUTF8WithLatin1Fallback(bytes.data(), bytes.size()));
++        Vector<char> bytes = request.httpBody()->flatten();
++        requestObject->setPostData(base64Encode(bytes));
+     }
+     return requestObject;
+ }
 @@ -355,6 +357,8 @@ RefPtr<Protocol::Network::Response> InspectorNetworkAgent::buildObjectForResourc
          .setSource(responseSource(response.source()))
          .release();
@@ -17474,6 +17485,18 @@ index bacc141154331b79d1a3ced681c7f948988b9066..2510aeebae530265918f7bd08e114faa
 +
 +
  } // namespace WTR
+diff --git a/Tools/gtk/install-dependencies b/Tools/gtk/install-dependencies
+index 3d428cc63cc396f82e05b8794a7a1f33facd4e80..6f92d7643acbe7b347ccf15918fb2e9527509e8e 100755
+--- a/Tools/gtk/install-dependencies
++++ b/Tools/gtk/install-dependencies
+@@ -149,6 +149,7 @@ function installDependenciesWithApt {
+         libwayland-dev \
+         ninja-build \
+         patch \
++        patchelf \
+         ruby \
+         xfonts-utils"
+ 
 diff --git a/Tools/win/DLLLauncher/DLLLauncherMain.cpp b/Tools/win/DLLLauncher/DLLLauncherMain.cpp
 index 39238ac08dbcab92fb1d053928938a96f154c9b1..64bc9f1458254322dca9005b5e2d2b19bb901386 100644
 --- a/Tools/win/DLLLauncher/DLLLauncherMain.cpp
@@ -17547,3 +17570,15 @@ index c09b6f39f894943f11b7a453428fab7d6f6e68fb..bc21acb648562ee0380811599b08f7d2
  
      static cairo_user_data_key_t bufferKey;
      cairo_surface_set_user_data(m_snapshot, &bufferKey, buffer,
+diff --git a/Tools/wpe/install-dependencies b/Tools/wpe/install-dependencies
+index 4d51f0d0f9a9105ec5f9f50f6a2a86f879e41a85..d84068e9e89b6dd66e47872633b0467b68685139 100755
+--- a/Tools/wpe/install-dependencies
++++ b/Tools/wpe/install-dependencies
+@@ -90,6 +90,7 @@ function installDependenciesWithApt {
+         libxslt1-dev \
+         ninja-build \
+         patch \
++        patchelf \
+         pkg-config \
+         ruby \
+         zlib1g-dev"

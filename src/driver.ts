@@ -50,15 +50,17 @@ export function runServer() {
 
   const dispatcherConnection = new DispatcherConnection();
   const transport = new Transport(process.stdout, process.stdin);
+  transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
+  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
   transport.onclose = async () => {
+    // Drop any messages during shutdown on the floor.
+    dispatcherConnection.onmessage = () => {};
     // Force exit after 30 seconds.
     setTimeout(() => process.exit(0), 30000);
     // Meanwhile, try to gracefully close all browsers.
     await gracefullyCloseAll();
     process.exit(0);
   };
-  transport.onmessage = message => dispatcherConnection.dispatch(JSON.parse(message));
-  dispatcherConnection.onmessage = message => transport.send(JSON.stringify(message));
 
   const playwright = new Playwright(__dirname, require('../browsers.json')['browsers']);
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);

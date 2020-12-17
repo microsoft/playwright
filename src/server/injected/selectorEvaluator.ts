@@ -120,8 +120,8 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
 
   private _matchesSimple(element: Element, simple: CSSSimpleSelector, context: QueryContext): boolean {
     return this._cached<boolean>(this._cacheMatchesSimple, element, [simple, context], () => {
-      const isScopeClause = simple.functions.some(f => f.name === 'scope');
-      if (!isScopeClause && element === context.scope)
+      const isPossiblyScopeClause = simple.functions.some(f => f.name === 'scope' || f.name === 'is');
+      if (!isPossiblyScopeClause && element === context.scope)
         return false;
       if (simple.css && !this._matchesCSS(element, simple.css))
         return false;
