@@ -348,6 +348,8 @@ it('should work with :is', async ({page, server}) => {
   expect(await page.$$eval(`css=:is(div, span)`, els => els.length)).toBe(7);
   expect(await page.$$eval(`css=section:is(section) div:is(section div)`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=:is(div, span) > *`, els => els.length)).toBe(6);
+  expect(await page.$$eval(`css=#root1:has(:is(#root1))`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=#root1:has(:is(:scope, #root1))`, els => els.length)).toBe(1);
 });
 
 it('should work with :has', async ({page, server}) => {
