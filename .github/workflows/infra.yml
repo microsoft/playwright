@@ -19,6 +19,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10.15
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build

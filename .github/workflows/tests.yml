@@ -29,6 +29,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
@@ -64,6 +72,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/Library/Caches/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
@@ -125,6 +141,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: ${{ matrix.node_version }}
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
@@ -142,6 +166,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
@@ -177,6 +209,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
@@ -211,6 +251,14 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 10
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.cache/ms-playwright
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
@@ -239,6 +287,18 @@ jobs:
     - uses: actions/setup-node@v1
       with:
         node-version: 14
+    - uses: actions/cache@v2
+      with:
+        path: |
+          ~/.npm
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/Library/Caches/ms-playwright
+          ~/Library/Android/sdk/platforms
+          ~/Library/Android/sdk/system-images
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json','**/browsers.json','**/*.gradle*') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
