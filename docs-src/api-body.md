@@ -545,6 +545,11 @@ Whether to emulate network being offline for the browser context.
 
 Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
+### option: BrowserContext.storageState.path
+- `path` <[string]>
+
+The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
+
 ## async method: BrowserContext.unroute
 
 Removes a route created with [browserContext.route()](). When `handler` is not specified, removes all routes for the
@@ -919,8 +924,8 @@ fires or when the script content was injected into frame.
 
 Shortcut for main frame's [frame.addScriptTag()]().
 
-### param: Page.addScriptTag.script
-- `script` <[Object]>
+### param: Page.addScriptTag.params
+- `params` <[Object]>
   - `url` <[string]> URL of a script to be added.
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
@@ -934,8 +939,8 @@ content. Returns the added tag when the stylesheet's onload fires or when the CS
 
 Shortcut for main frame's [frame.addStyleTag()]().
 
-### param: Page.addStyleTag.style
-- `style` <[Object]>
+### param: Page.addStyleTag.params
+- `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
@@ -1405,7 +1410,7 @@ Shortcut for main frame's [frame.focus()]().
 ## method: Page.frame
 - returns: <[null]|[Frame]>
 
-Returns frame matching the criteria. Returns `null` if no frame matches.
+Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 ```js
 const frame = page.frame('frame-name');
@@ -1414,8 +1419,6 @@ const frame = page.frame('frame-name');
 ```js
 const frame = page.frame({ url: /.*domain.*/ });
 ```
-
-Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 ### param: Page.frame.frameSelector
 - `frameSelector` <[string]|[Object]>
@@ -2475,8 +2478,8 @@ Returns the added tag when the script's onload fires or when the script content 
 
 Adds a `<script>` tag into the page with the desired url or content.
 
-### param: Frame.addScriptTag.script
-- `script` <[Object]>
+### param: Frame.addScriptTag.params
+- `params` <[Object]>
   - `url` <[string]> URL of a script to be added.
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
@@ -2490,8 +2493,8 @@ Returns the added tag when the stylesheet's onload fires or when the CSS content
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content.
 
-### param: Frame.addStyleTag.style
-- `style` <[Object]>
+### param: Frame.addStyleTag.params
+- `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.

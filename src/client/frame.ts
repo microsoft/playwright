@@ -288,9 +288,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     return this._detached;
   }
 
-  async addScriptTag(script: { url?: string, path?: string, content?: string, type?: string }): Promise<ElementHandle> {
+  async addScriptTag(params: { url?: string, path?: string, content?: string, type?: string }): Promise<ElementHandle> {
     return this._wrapApiCall(this._apiName('addScriptTag'), async () => {
-      const copy = { ...script };
+      const copy = { ...params };
       if (copy.path) {
         copy.content = (await fsReadFileAsync(copy.path)).toString();
         copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
@@ -299,9 +299,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async addStyleTag(style: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+  async addStyleTag(params: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
     return this._wrapApiCall(this._apiName('addStyleTag'), async () => {
-      const copy = { ...style };
+      const copy = { ...params };
       if (copy.path) {
         copy.content = (await fsReadFileAsync(copy.path)).toString();
         copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';

@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
+import * as fs from 'fs';
+import * as util from 'util';
+import { isString } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { Events } from './events';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import * as apiInternal from '../../android-types-internal';
 import * as types from './types';
@@ -182,6 +185,22 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
+  async tree(): Promise<apiInternal.AndroidElementInfo> {
+    return await this._wrapApiCall('androidDevice.tree', async () => {
+      return (await this._channel.tree()).tree;
+    });
+  }
+
+  async screenshot(options: { path?: string } = {}): Promise<Buffer> {
+    return await this._wrapApiCall('androidDevice.screenshot', async () => {
+      const { binary } = await this._channel.screenshot();
+      const buffer = Buffer.from(binary, 'base64');
+      if (options.path)
+        await util.promisify(fs.writeFile)(options.path, buffer);
+      return buffer;
+    });
+  }
+
   async close() {
     return this._wrapApiCall('androidDevice.close', async () => {
       await this._channel.close();
@@ -189,16 +208,34 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
-  async shell(command: string): Promise<string> {
+  async shell(command: string): Promise<Buffer> {
     return this._wrapApiCall('androidDevice.shell', async () => {
       const { result } = await this._channel.shell({ command });
-      return result;
+      return Buffer.from(result, 'base64');
+    });
+  }
+
+  async open(command: string): Promise<AndroidSocket> {
+    return this._wrapApiCall('androidDevice.open', async () => {
+      return AndroidSocket.from((await this._channel.open({ command })).socket);
+    });
+  }
+
+  async installApk(file: string | Buffer, options?: { args: string[] }): Promise<void> {
+    return this._wrapApiCall('androidDevice.installApk', async () => {
+      await this._channel.installApk({ file: await loadFile(file), args: options && options.args });
+    });
+  }
+
+  async push(file: string | Buffer, path: string, options?: { mode: number }): Promise<void> {
+    return this._wrapApiCall('androidDevice.push', async () => {
+      await this._channel.push({ file: await loadFile(file), path, mode: options ? options.mode : undefined });
     });
   }
 
   async launchBrowser(options: types.BrowserContextOptions & { packageName?: string  } = {}): Promise<BrowserContext> {
     return this._wrapApiCall('androidDevice.launchBrowser', async () => {
-      const contextOptions = validateBrowserContextOptions(options);
+      const contextOptions = await prepareBrowserContextOptions(options);
       const { context } = await this._channel.launchBrowser(contextOptions);
       return BrowserContext.from(context);
     });
@@ -215,6 +252,36 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     waiter.dispose();
     return result;
   }
+}
+
+export class AndroidSocket extends ChannelOwner<channels.AndroidSocketChannel, channels.AndroidSocketInitializer> {
+  static from(androidDevice: channels.AndroidSocketChannel): AndroidSocket {
+    return (androidDevice as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.AndroidSocketInitializer) {
+    super(parent, type, guid, initializer);
+    this._channel.on('data', ({ data }) => this.emit(Events.AndroidSocket.Data, Buffer.from(data, 'base64')));
+    this._channel.on('close', () => this.emit(Events.AndroidSocket.Close));
+  }
+
+  async write(data: Buffer): Promise<void> {
+    return this._wrapApiCall('androidDevice.write', async () => {
+      await this._channel.write({ data: data.toString('base64') });
+    });
+  }
+
+  async close(): Promise<void> {
+    return this._wrapApiCall('androidDevice.close', async () => {
+      await this._channel.close();
+    });
+  }
+}
+
+async function loadFile(file: string | Buffer): Promise<string> {
+  if (isString(file))
+    return (await util.promisify(fs.readFile)(file)).toString('base64');
+  return file.toString('base64');
 }
 
 class Input implements apiInternal.AndroidInput {

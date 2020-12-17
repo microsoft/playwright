@@ -298,12 +298,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.$$(selector));
   }
 
-  async addScriptTag(script: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
-    return this._attributeToPage(() => this._mainFrame.addScriptTag(script));
+  async addScriptTag(params: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
+    return this._attributeToPage(() => this._mainFrame.addScriptTag(params));
   }
 
-  async addStyleTag(style: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    return this._attributeToPage(() => this._mainFrame.addStyleTag(style));
+  async addStyleTag(params: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+    return this._attributeToPage(() => this._mainFrame.addStyleTag(params));
   }
 
   async exposeFunction(name: string, playwrightFunction: Function) {

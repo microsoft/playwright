@@ -149,6 +149,7 @@ export class Page extends EventEmitter {
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
+    this.setMaxListeners(0);
     this._delegate = delegate;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);

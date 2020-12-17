@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (c) Microsoft Corporation.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -20,10 +20,9 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.LocalServerSocket;
 import android.net.LocalSocket;
-import android.os.Bundle;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.test.ext.junit.runners.AndroidJUnit4;
-import androidx.test.filters.SdkSuppress;
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.By;
 import androidx.test.uiautomator.BySelector;
@@ -42,6 +41,8 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
@@ -51,15 +52,15 @@ import java.util.regex.Pattern;
  * @see <a href="http://d.android.com/tools/testing">Testing documentation</a>
  */
 @RunWith(AndroidJUnit4.class)
-@SdkSuppress(minSdkVersion = 21)
 public class InstrumentedTest {
 
+  @SuppressWarnings("ConstantConditions")
   private static BySelector parseSelector(JSONObject param) throws JSONException{
     JSONObject selector = param.getJSONObject("selector");
     BySelector result = null;
     if (selector.has("checkable")) {
       boolean value = selector.getBoolean("checkable");
-      result = result != null ? result.checkable(value) : By.checkable(value);
+      result = result != null ? result.checked(value) : By.checkable(value);
     }
     if (selector.has("checked")) {
       boolean value = selector.getBoolean("checked");
@@ -140,7 +141,7 @@ public class InstrumentedTest {
 
   private static Point parsePoint(JSONObject params, String propertyName) throws JSONException {
     JSONObject point = params.getJSONObject(propertyName);
-    return new Point(params.getInt("x"),  params.getInt("y"));
+    return new Point(point.getInt("x"),  point.getInt("y"));
   }
 
   private static Direction parseDirection(JSONObject params) throws JSONException {
@@ -154,11 +155,14 @@ public class InstrumentedTest {
   }
 
   private static UiObject2 wait(UiDevice device, JSONObject params) throws JSONException {
-    return device.wait(Until.findObject(parseSelector(params)), parseTimeout(params));
+    UiObject2 result = device.wait(Until.findObject(parseSelector(params)), parseTimeout(params));
+    if (result == null)
+      throw new RuntimeException("Timed out waiting for selector");
+    return result;
   }
 
   private static void fill(UiDevice device, JSONObject params) throws JSONException {
-    device.wait(Until.findObject(parseSelector(params)), parseTimeout(params)).setText(params.getString("text"));
+    wait(device, params).setText(params.getString("text"));
   }
 
   private static void click(UiDevice device, JSONObject params) throws JSONException {
@@ -218,21 +222,25 @@ public class InstrumentedTest {
       wait(device, params).swipe(parseDirection(params), params.getInt("percent"));
   }
 
+  private static JSONObject serializeRect(Rect rect) throws JSONException {
+    JSONObject rectObject = new JSONObject();
+    rectObject.put("x",  rect.left);
+    rectObject.put("y",  rect.top);
+    rectObject.put("width",  rect.width());
+    rectObject.put("height",  rect.height());
+    return rectObject;
+  }
+
   private static JSONObject info(UiDevice device, JSONObject params) throws JSONException {
-    JSONObject info = new JSONObject();
     UiObject2 object = device.findObject(parseSelector(params));
-    Rect bounds = object.getVisibleBounds();
-    JSONObject boundsObject = new JSONObject();
-    boundsObject.put("x",  bounds.left);
-    boundsObject.put("y",  bounds.top);
-    boundsObject.put("width",  bounds.width());
-    boundsObject.put("height",  bounds.height());
+
+    JSONObject info = new JSONObject();
     info.put("clazz", object.getClassName());
     info.put("pkg", object.getApplicationPackage());
     info.put("desc", object.getContentDescription());
     info.put("res",  object.getResourceName());
     info.put("text", object.getText());
-    info.put("bounds", boundsObject);
+    info.put("bounds", serializeRect(object.getVisibleBounds()));
     info.put("checkable", object.isCheckable());
     info.put("checked", object.isChecked());
     info.put("clickable", object.isClickable());
@@ -242,6 +250,26 @@ public class InstrumentedTest {
     info.put("longClickable", object.isLongClickable());
     info.put("scrollable", object.isScrollable());
     info.put("selected", object.isSelected());
+    return info;
+  }
+
+  private static JSONObject info(AccessibilityNodeInfo node) throws JSONException {
+    JSONObject info = new JSONObject();
+    Rect bounds = new Rect();
+    node.getBoundsInScreen(bounds);
+    info.put("desc", node.getContentDescription());
+    info.put("res",  node.getViewIdResourceName());
+    info.put("text", node.getText());
+    info.put("bounds", serializeRect(bounds));
+    info.put("checkable", node.isCheckable());
+    info.put("checked", node.isChecked());
+    info.put("clickable", node.isClickable());
+    info.put("enabled", node.isEnabled());
+    info.put("focusable", node.isFocusable());
+    info.put("focused", node.isFocused());
+    info.put("longClickable", node.isLongClickable());
+    info.put("scrollable", node.isScrollable());
+    info.put("selected", node.isSelected());
     return info;
   }
 
@@ -270,6 +298,36 @@ public class InstrumentedTest {
     device.drag(from.x, from.y, to.x, to.y, params.getInt("steps"));
   }
 
+  private static JSONObject tree(UiDevice device) throws JSONException {
+    return serializeA11yNode(getRootA11yNode(device));
+  }
+
+  private static AccessibilityNodeInfo getRootA11yNode(UiDevice device) {
+    try {
+      Method getQueryController = UiDevice.class.getDeclaredMethod("getQueryController");
+      getQueryController.setAccessible(true);
+      Object queryController = getQueryController.invoke(device);
+
+      assert queryController != null;
+      Method getRootNode = queryController.getClass().getDeclaredMethod("getRootNode");
+      getRootNode.setAccessible(true);
+      return (AccessibilityNodeInfo) getRootNode.invoke(queryController);
+    } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+      return null;
+    }
+  }
+
+  private static JSONObject serializeA11yNode(AccessibilityNodeInfo node) throws JSONException {
+    JSONObject object = info(node);
+    if (node.getChildCount() == 0)
+      return  object;
+    JSONArray children = new JSONArray();
+    object.put("children", children);
+    for (int i = 0; i < node.getChildCount(); ++i)
+      children.put(serializeA11yNode(node.getChild(i)));
+    return object;
+  }
+
   @Test
   public void main() {
     UiDevice device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
@@ -281,6 +339,7 @@ public class InstrumentedTest {
       DataInputStream dis = new DataInputStream(is);
       DataOutputStream dos = new DataOutputStream(socket.getOutputStream());
 
+      //noinspection InfiniteLoopStatement
       while (true) {
         int id = 0;
         String method = null;
@@ -294,7 +353,7 @@ public class InstrumentedTest {
           id = message.getInt("id");
           method = message.getString("method");
           params = message.getJSONObject("params");
-        } catch (JSONException e) {
+        } catch (JSONException ignored) {
         }
         if (method == null)
           continue;
@@ -303,6 +362,7 @@ public class InstrumentedTest {
         response.put("id", id);
         response.put("result", params);
         try {
+          assert params != null;
           switch (method) {
             case "wait":
               wait(device, params);
@@ -348,6 +408,9 @@ public class InstrumentedTest {
               break;
             case "inputDrag":
               inputDrag(device, params);
+              break;
+            case "tree":
+              response.put("result", tree(device));
               break;
             default:
 

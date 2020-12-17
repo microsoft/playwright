@@ -18,9 +18,7 @@
 import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
 
-it('exposeBinding should work', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('exposeBinding should work', async ({page}) => {
   let bindingSource;
   await page.exposeBinding('add', (source, a, b) => {
     bindingSource = source;
@@ -29,11 +27,10 @@ it('exposeBinding should work', async ({browser}) => {
   const result = await page.evaluate(async function() {
     return window['add'](5, 6);
   });
-  expect(bindingSource.context).toBe(context);
+  expect(bindingSource.context).toBe(page.context());
   expect(bindingSource.page).toBe(page);
   expect(bindingSource.frame).toBe(page.mainFrame());
   expect(result).toEqual(11);
-  await context.close();
 });
 
 it('should work', async ({page, server}) => {

@@ -2421,6 +2421,29 @@ export type AndroidSetDefaultTimeoutNoReplyOptions = {
 };
 export type AndroidSetDefaultTimeoutNoReplyResult = void;
 
+// ----------- AndroidSocket -----------
+export type AndroidSocketInitializer = {};
+export interface AndroidSocketChannel extends Channel {
+  on(event: 'data', callback: (params: AndroidSocketDataEvent) => void): this;
+  on(event: 'close', callback: (params: AndroidSocketCloseEvent) => void): this;
+  write(params: AndroidSocketWriteParams, metadata?: Metadata): Promise<AndroidSocketWriteResult>;
+  close(params?: AndroidSocketCloseParams, metadata?: Metadata): Promise<AndroidSocketCloseResult>;
+}
+export type AndroidSocketDataEvent = {
+  data: Binary,
+};
+export type AndroidSocketCloseEvent = {};
+export type AndroidSocketWriteParams = {
+  data: Binary,
+};
+export type AndroidSocketWriteOptions = {
+
+};
+export type AndroidSocketWriteResult = void;
+export type AndroidSocketCloseParams = {};
+export type AndroidSocketCloseOptions = {};
+export type AndroidSocketCloseResult = void;
+
 // ----------- AndroidDevice -----------
 export type AndroidDeviceInitializer = {
   model: string,
@@ -2440,13 +2463,18 @@ export interface AndroidDeviceChannel extends Channel {
   scroll(params: AndroidDeviceScrollParams, metadata?: Metadata): Promise<AndroidDeviceScrollResult>;
   swipe(params: AndroidDeviceSwipeParams, metadata?: Metadata): Promise<AndroidDeviceSwipeResult>;
   info(params: AndroidDeviceInfoParams, metadata?: Metadata): Promise<AndroidDeviceInfoResult>;
+  tree(params?: AndroidDeviceTreeParams, metadata?: Metadata): Promise<AndroidDeviceTreeResult>;
+  screenshot(params?: AndroidDeviceScreenshotParams, metadata?: Metadata): Promise<AndroidDeviceScreenshotResult>;
   inputType(params: AndroidDeviceInputTypeParams, metadata?: Metadata): Promise<AndroidDeviceInputTypeResult>;
   inputPress(params: AndroidDeviceInputPressParams, metadata?: Metadata): Promise<AndroidDeviceInputPressResult>;
   inputTap(params: AndroidDeviceInputTapParams, metadata?: Metadata): Promise<AndroidDeviceInputTapResult>;
   inputSwipe(params: AndroidDeviceInputSwipeParams, metadata?: Metadata): Promise<AndroidDeviceInputSwipeResult>;
   inputDrag(params: AndroidDeviceInputDragParams, metadata?: Metadata): Promise<AndroidDeviceInputDragResult>;
   launchBrowser(params: AndroidDeviceLaunchBrowserParams, metadata?: Metadata): Promise<AndroidDeviceLaunchBrowserResult>;
+  open(params: AndroidDeviceOpenParams, metadata?: Metadata): Promise<AndroidDeviceOpenResult>;
   shell(params: AndroidDeviceShellParams, metadata?: Metadata): Promise<AndroidDeviceShellResult>;
+  installApk(params: AndroidDeviceInstallApkParams, metadata?: Metadata): Promise<AndroidDeviceInstallApkResult>;
+  push(params: AndroidDevicePushParams, metadata?: Metadata): Promise<AndroidDevicePushResult>;
   setDefaultTimeoutNoReply(params: AndroidDeviceSetDefaultTimeoutNoReplyParams, metadata?: Metadata): Promise<AndroidDeviceSetDefaultTimeoutNoReplyResult>;
   connectToWebView(params: AndroidDeviceConnectToWebViewParams, metadata?: Metadata): Promise<AndroidDeviceConnectToWebViewResult>;
   close(params?: AndroidDeviceCloseParams, metadata?: Metadata): Promise<AndroidDeviceCloseResult>;
@@ -2570,6 +2598,16 @@ export type AndroidDeviceInfoOptions = {
 };
 export type AndroidDeviceInfoResult = {
   info: AndroidElementInfo,
+};
+export type AndroidDeviceTreeParams = {};
+export type AndroidDeviceTreeOptions = {};
+export type AndroidDeviceTreeResult = {
+  tree: AndroidElementInfo,
+};
+export type AndroidDeviceScreenshotParams = {};
+export type AndroidDeviceScreenshotOptions = {};
+export type AndroidDeviceScreenshotResult = {
+  binary: Binary,
 };
 export type AndroidDeviceInputTypeParams = {
   text: string,
@@ -2702,6 +2740,15 @@ export type AndroidDeviceLaunchBrowserOptions = {
 export type AndroidDeviceLaunchBrowserResult = {
   context: BrowserContextChannel,
 };
+export type AndroidDeviceOpenParams = {
+  command: string,
+};
+export type AndroidDeviceOpenOptions = {
+
+};
+export type AndroidDeviceOpenResult = {
+  socket: AndroidSocketChannel,
+};
 export type AndroidDeviceShellParams = {
   command: string,
 };
@@ -2709,8 +2756,25 @@ export type AndroidDeviceShellOptions = {
 
 };
 export type AndroidDeviceShellResult = {
-  result: string,
+  result: Binary,
 };
+export type AndroidDeviceInstallApkParams = {
+  file: Binary,
+  args?: string[],
+};
+export type AndroidDeviceInstallApkOptions = {
+  args?: string[],
+};
+export type AndroidDeviceInstallApkResult = void;
+export type AndroidDevicePushParams = {
+  file: Binary,
+  path: string,
+  mode?: number,
+};
+export type AndroidDevicePushOptions = {
+  mode?: number,
+};
+export type AndroidDevicePushResult = void;
 export type AndroidDeviceSetDefaultTimeoutNoReplyParams = {
   timeout: number,
 };
@@ -2762,6 +2826,7 @@ export type AndroidSelector = {
 };
 
 export type AndroidElementInfo = {
+  children?: AndroidElementInfo[],
   clazz: string,
   desc: string,
   res: string,

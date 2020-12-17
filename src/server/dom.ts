@@ -276,7 +276,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
-    const waitTime = [0, 20, 100, 500];
+    const waitTime = [0, 20, 100, 100, 500];
+
+    // By default, we scroll with protocol method to reveal the action point.
+    // However, that might not work to scroll from under position:sticky elements
+    // that overlay the target element. To fight this, we cycle through different
+    // scroll alignments. This works in most scenarios.
+    const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
+      undefined,
+      { block: 'end', inline: 'end' },
+      { block: 'center', inline: 'center' },
+      { block: 'start', inline: 'start' },
+    ];
+
     while (progress.isRunning()) {
       if (retry) {
         progress.log(`retrying ${actionName} action, attempt #${retry}`);
@@ -288,7 +300,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       } else {
         progress.log(`attempting ${actionName} action`);
       }
-      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, options);
+      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
+      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force)
@@ -313,7 +326,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
@@ -327,9 +340,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     progress.log('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
-    if (scrolled !== 'done')
-      return scrolled;
+    if (forceScrollOptions) {
+      await this._evaluateInUtility(([injected, node, options]) => {
+        if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
+          (node as Node as Element).scrollIntoView(options);
+      }, forceScrollOptions);
+    } else {
+      const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+      if (scrolled !== 'done')
+        return scrolled;
+    }
     progress.log('  done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();

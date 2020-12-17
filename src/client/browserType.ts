@@ -16,7 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import { Browser } from './browser';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import * as WebSocket from 'ws';
@@ -92,7 +92,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-      const contextOptions = validateBrowserContextOptions(options);
+      const contextOptions = await prepareBrowserContextOptions(options);
       const persistentOptions: channels.BrowserTypeLaunchPersistentContextParams = {
         ...contextOptions,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,

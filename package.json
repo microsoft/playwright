@@ -1,7 +1,7 @@
 {
   "name": "playwright-internal",
   "private": true,
-  "version": "1.7.0-next",
+  "version": "1.8.0-next",
   "description": "A high-level API to automate web browsers",
   "repository": "github:Microsoft/playwright",
   "homepage": "https://playwright.dev",
@@ -12,6 +12,7 @@
     "ctest": "cross-env BROWSER=chromium folio test/",
     "ftest": "cross-env BROWSER=firefox folio test/",
     "wtest": "cross-env BROWSER=webkit folio test/",
+    "atest": "cross-env BROWSER=chromium PW_ANDROID_TESTS=1 npx folio test/android --workers=1 --reporter=list",
     "test": "folio test/",
     "eslint": "[ \"$CI\" = true ] && eslint --quiet -f codeframe --ext js,ts . || eslint --ext js,ts .",
     "tsc": "tsc -p .",
@@ -30,7 +31,8 @@
     "typecheck-tests": "tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/checkCoverage.js",
-    "check-deps": "node utils/check_deps.js"
+    "check-deps": "node utils/check_deps.js",
+    "build-android-driver": "./utils/build_android_driver.sh"
   },
   "author": {
     "name": "Microsoft Corporation"

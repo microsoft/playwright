@@ -246,7 +246,7 @@ Indicates that the browser is connected.
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `storageState` <[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState()](#browsercontextstoragestate).
+  - `storageState` <[string]|[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState([options])](#browsercontextstoragestateoptions). Either a path to the file with saved storage, or an object with the following fields:
     - `cookies` <[Array]<[Object]>> Optional cookies to set for context
       - `name` <[string]> **required**
       - `value` <[string]> **required**
@@ -321,7 +321,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
     - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
     - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
     - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-  - `storageState` <[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState()](#browsercontextstoragestate).
+  - `storageState` <[string]|[Object]> Populates context with given storage state. This method can be used to initialize context with logged-in information obtained via [browserContext.storageState([options])](#browsercontextstoragestateoptions). Either a path to the file with saved storage, or an object with the following fields:
     - `cookies` <[Array]<[Object]>> Optional cookies to set for context
       - `name` <[string]> **required**
       - `value` <[string]> **required**
@@ -393,7 +393,7 @@ await context.close();
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
-- [browserContext.storageState()](#browsercontextstoragestate)
+- [browserContext.storageState([options])](#browsercontextstoragestateoptions)
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->
@@ -745,7 +745,9 @@ instead.
 - `offline` <[boolean]> Whether to emulate network being offline for the browser context.
 - returns: <[Promise]>
 
-#### browserContext.storageState()
+#### browserContext.storageState([options])
+- `options` <[Object]>
+  - `path` <[string]> The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
 - returns: <[Promise]<[Object]>>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>
@@ -856,8 +858,8 @@ page.removeListener('request', logRequest);
 - [page.$$eval(selector, pageFunction[, arg])](#pageevalselector-pagefunction-arg-1)
 - [page.accessibility](#pageaccessibility)
 - [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg)
-- [page.addScriptTag(script)](#pageaddscripttagscript)
-- [page.addStyleTag(style)](#pageaddstyletagstyle)
+- [page.addScriptTag(params)](#pageaddscripttagparams)
+- [page.addStyleTag(params)](#pageaddstyletagparams)
 - [page.bringToFront()](#pagebringtofront)
 - [page.check(selector[, options])](#pagecheckselector-options)
 - [page.click(selector[, options])](#pageclickselector-options)
@@ -1176,8 +1178,8 @@ await page.addInitScript(preloadFile);
 > **NOTE** The order of evaluation of multiple scripts installed via [browserContext.addInitScript(script[, arg])](#browsercontextaddinitscriptscript-arg) and
 [page.addInitScript(script[, arg])](#pageaddinitscriptscript-arg) is not defined.
 
-#### page.addScriptTag(script)
-- `script` <[Object]>
+#### page.addScriptTag(params)
+- `params` <[Object]>
   - `url` <[string]> URL of a script to be added.
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
@@ -1187,10 +1189,10 @@ await page.addInitScript(preloadFile);
 Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
 fires or when the script content was injected into frame.
 
-Shortcut for main frame's [frame.addScriptTag(script)](#frameaddscripttagscript).
+Shortcut for main frame's [frame.addScriptTag(params)](#frameaddscripttagparams).
 
-#### page.addStyleTag(style)
-- `style` <[Object]>
+#### page.addStyleTag(params)
+- `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
@@ -1199,7 +1201,7 @@ Shortcut for main frame's [frame.addScriptTag(script)](#frameaddscripttagscript)
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
 
-Shortcut for main frame's [frame.addStyleTag(style)](#frameaddstyletagstyle).
+Shortcut for main frame's [frame.addStyleTag(params)](#frameaddstyletagparams).
 
 #### page.bringToFront()
 - returns: <[Promise]>
@@ -1608,7 +1610,7 @@ Shortcut for main frame's [frame.focus(selector[, options])](#framefocusselector
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
 - returns: <[null]|[Frame]>
 
-Returns frame matching the criteria. Returns `null` if no frame matches.
+Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 ```js
 const frame = page.frame('frame-name');
@@ -1617,8 +1619,6 @@ const frame = page.frame('frame-name');
 ```js
 const frame = page.frame({ url: /.*domain.*/ });
 ```
-
-Returns frame matching the specified criteria. Either `name` or `url` must be specified.
 
 #### page.frames()
 - returns: <[Array]<[Frame]>>
@@ -2392,8 +2392,8 @@ console.log(text);
 - [frame.$$(selector)](#frameselector-1)
 - [frame.$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg)
 - [frame.$$eval(selector, pageFunction[, arg])](#frameevalselector-pagefunction-arg-1)
-- [frame.addScriptTag(script)](#frameaddscripttagscript)
-- [frame.addStyleTag(style)](#frameaddstyletagstyle)
+- [frame.addScriptTag(params)](#frameaddscripttagparams)
+- [frame.addStyleTag(params)](#frameaddstyletagparams)
 - [frame.check(selector[, options])](#framecheckselector-options)
 - [frame.childFrames()](#framechildframes)
 - [frame.click(selector[, options])](#frameclickselector-options)
@@ -2492,8 +2492,8 @@ Examples:
 const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
 ```
 
-#### frame.addScriptTag(script)
-- `script` <[Object]>
+#### frame.addScriptTag(params)
+- `params` <[Object]>
   - `url` <[string]> URL of a script to be added.
   - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw JavaScript content to be injected into frame.
@@ -2504,8 +2504,8 @@ Returns the added tag when the script's onload fires or when the script content 
 
 Adds a `<script>` tag into the page with the desired url or content.
 
-#### frame.addStyleTag(style)
-- `style` <[Object]>
+#### frame.addStyleTag(params)
+- `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
   - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
   - `content` <[string]> Raw CSS content to be injected into frame.
@@ -5187,7 +5187,7 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 - [browserContext.setGeolocation(geolocation)](#browsercontextsetgeolocationgeolocation)
 - [browserContext.setHTTPCredentials(httpCredentials)](#browsercontextsethttpcredentialshttpcredentials)
 - [browserContext.setOffline(offline)](#browsercontextsetofflineoffline)
-- [browserContext.storageState()](#browsercontextstoragestate)
+- [browserContext.storageState([options])](#browsercontextstoragestateoptions)
 - [browserContext.unroute(url[, handler])](#browsercontextunrouteurl-handler)
 - [browserContext.waitForEvent(event[, optionsOrPredicate])](#browsercontextwaitforeventevent-optionsorpredicate)
 <!-- GEN:stop -->

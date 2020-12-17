@@ -901,6 +901,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
+  scheme.AndroidSocketWriteParams = tObject({
+    data: tBinary,
+  });
+  scheme.AndroidSocketCloseParams = tOptional(tObject({}));
   scheme.AndroidDeviceWaitParams = tObject({
     selector: tType('AndroidSelector'),
     state: tOptional(tEnum(['gone'])),
@@ -961,6 +965,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidDeviceInfoParams = tObject({
     selector: tType('AndroidSelector'),
   });
+  scheme.AndroidDeviceTreeParams = tOptional(tObject({}));
+  scheme.AndroidDeviceScreenshotParams = tOptional(tObject({}));
   scheme.AndroidDeviceInputTypeParams = tObject({
     text: tString,
   });
@@ -1024,8 +1030,20 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
   });
+  scheme.AndroidDeviceOpenParams = tObject({
+    command: tString,
+  });
   scheme.AndroidDeviceShellParams = tObject({
     command: tString,
+  });
+  scheme.AndroidDeviceInstallApkParams = tObject({
+    file: tBinary,
+    args: tOptional(tArray(tString)),
+  });
+  scheme.AndroidDevicePushParams = tObject({
+    file: tBinary,
+    path: tString,
+    mode: tOptional(tNumber),
   });
   scheme.AndroidDeviceSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
@@ -1063,6 +1081,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     text: tOptional(tString),
   });
   scheme.AndroidElementInfo = tObject({
+    children: tOptional(tArray(tType('AndroidElementInfo'))),
     clazz: tString,
     desc: tString,
     res: tString,

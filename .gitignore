@@ -17,3 +17,5 @@ jest-report.json
 drivers/
 /docs/api.json
 .android-sdk/
+.gradle/
+nohup.out

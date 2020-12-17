@@ -11,6 +11,7 @@
 #else
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/socket.h>
 #endif
 
 #include "mozilla/StaticPtr.h"
