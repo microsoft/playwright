@@ -35,7 +35,9 @@ it('should work with window features', async ({page, server}) => {
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
 });
 
-it('should emit for immediately closed popups', async ({page}) => {
+it('should emit for immediately closed popups', async ({browser}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -44,6 +46,7 @@ it('should emit for immediately closed popups', async ({page}) => {
     }),
   ]);
   expect(popup).toBeTruthy();
+  await context.close();
 });
 
 it('should emit for immediately closed popups 2', async ({page, server}) => {
@@ -58,7 +61,9 @@ it('should emit for immediately closed popups 2', async ({page, server}) => {
   expect(popup).toBeTruthy();
 });
 
-it('should be able to capture alert', async ({page}) => {
+it('should be able to capture alert', async ({browser}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const evaluatePromise = page.evaluate(() => {
     const win = window.open('');
     win.alert('hello');
@@ -68,6 +73,7 @@ it('should be able to capture alert', async ({page}) => {
   expect(dialog.message()).toBe('hello');
   await dialog.dismiss();
   await evaluatePromise;
+  await context.close();
 });
 
 it('should work with empty url', async ({page}) => {
@@ -142,7 +148,8 @@ it('should work with clicking target=_blank and rel=noopener', async ({page, ser
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
 });
 
-it('should not treat navigations as new popups', async ({page, server}) => {
+it('should not treat navigations as new popups', async ({context, server}) => {
+  const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -152,6 +159,7 @@ it('should not treat navigations as new popups', async ({page, server}) => {
   let badSecondPopup = false;
   page.on('popup', () => badSecondPopup = true);
   await popup.goto(server.CROSS_PROCESS_PREFIX + '/empty.html');
+  await context.close();
   expect(badSecondPopup).toBe(false);
 });
 
