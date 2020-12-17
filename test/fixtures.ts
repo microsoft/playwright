@@ -43,9 +43,6 @@ const getExecutablePath = browserName => {
     return process.env.WKPATH;
 };
 
-type ModeParameters = {
-  mode: 'default' | 'driver' | 'service' | 'android';
-};
 type WorkerFixtures = {
   toImpl: (rpcObject: any) => any;
 };
@@ -54,9 +51,7 @@ type TestFixtures = {
   launchPersistent: (options?: Parameters<BrowserType<Browser>['launchPersistentContext']>[1]) => Promise<{ context: BrowserContext, page: Page }>;
 };
 
-const fixtures = playwrightFolio.union(httpFolio).extend<TestFixtures, WorkerFixtures, ModeParameters>();
-
-fixtures.mode.initParameter('Testing mode', process.env.PWMODE as any || 'default');
+const fixtures = playwrightFolio.union(httpFolio).extend<TestFixtures, WorkerFixtures>();
 
 fixtures.createUserDataDir.init(async ({ }, run) => {
   const dirs: string[] = [];
@@ -137,7 +132,7 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
     await new Promise(f => {
       spawnedProcess.stdout.on('data', data => {
         if (data.toString().includes('Listening on'))
-          f();
+          f(null);
       });
     });
     spawnedProcess.unref();

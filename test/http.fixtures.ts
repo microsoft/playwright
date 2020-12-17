@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { folio as base } from 'folio';
 import path from 'path';
 import socks from 'socksv5';
 import { TestServer } from '../utils/testserver';
+import { folio as base } from './base.fixtures';
 
 type HttpWorkerFixtures = {
   asset: (path: string) => string;
@@ -31,15 +31,14 @@ type HttpTestFixtures = {
 };
 
 const fixtures = base.extend<HttpTestFixtures, HttpWorkerFixtures>();
-fixtures.httpService.init(async ({ testWorkerIndex }, test) => {
+fixtures.httpService.init(async ({ testWorkerIndex, mode }, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
-
-  const port = process.env.PWMODE ? 8180 : (8907 + testWorkerIndex * 2);
+  const port = mode === 'android' ? 8180 : (8907 + testWorkerIndex * 2);
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
-  const httpsPort =  process.env.PWMODE ? 8181 : (port + 1);
+  const httpsPort = mode === 'android' ? 8181 : (port + 1);
   const httpsServer = await TestServer.createHTTPS(assetsPath, httpsPort);
   httpsServer.enableHTTPCache(cachedPath);
 

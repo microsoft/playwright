@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Microsoft Corporation. All rights reserved.
+ * Copyright Microsoft Corporation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,14 @@
  * limitations under the License.
  */
 
-import type { Android, AndroidDevice } from '../../android-types';
-import { folio as baseFolio } from '../fixtures';
+import { folio as base } from 'folio';
 
-const fixtures = baseFolio.extend<{
-    device: AndroidDevice
-  }, {
-    android: Android,
-  }>();
+type BaseParameters = {
+  mode: 'default' | 'driver' | 'service' | 'android';
+}
 
-fixtures.device.init(async ({ playwright }, runTest) => {
-  const [device] = await playwright._android.devices();
-  await device.shell('am force-stop org.chromium.webview_shell');
-  await device.shell('am force-stop com.android.chrome');
-  device.setDefaultTimeout(120000);
-  await runTest(device);
-  await device.close();
-});
+const fixtures = base.extend<{}, {}, BaseParameters>();
+
+fixtures.mode.initParameter('Testing mode', process.env.PWMODE as any || 'default');
 
 export const folio = fixtures.build();

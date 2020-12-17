@@ -116,7 +116,12 @@ fixtures.browserType.init(async ({ playwright, browserName }, run) => {
 
 fixtures.browser.init(async ({ browserType, browserOptions }, run) => {
   if (process.env.PWMODE === 'android') {
-    await run(null);
+    const browser = new Proxy({}, {
+      get: () => {
+        throw new Error('Accessing the browser fixture is not supported on Android');
+      }
+    }) as Browser;
+    await run(browser);
     return;
   }
   const browser = await browserType.launch(browserOptions);
@@ -167,7 +172,7 @@ fixtures.androidContext.init(async ({ playwright }, run) => {
   await context.close();
 }, { scope: 'worker' });
 
-fixtures.contextFactory.init(async ({ browser, contextOptions, testInfo, screenshotOnFailure, androidContext }, run) => {
+fixtures.contextFactory.init(async ({ browser, contextOptions, testInfo, screenshotOnFailure }, run) => {
   const contexts: BrowserContext[] = [];
   async function contextFactory(options: BrowserContextOptions = {}) {
     const context = await browser.newContext({ ...contextOptions, ...options });
