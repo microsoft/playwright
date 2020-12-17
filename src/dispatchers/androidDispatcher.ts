@@ -156,7 +156,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
-    const context = await this._object.launchBrowser(params.packageName, params);
+    const context = await this._object.launchBrowser(params.pkg, params);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 

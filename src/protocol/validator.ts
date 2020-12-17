@@ -986,7 +986,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    packageName: tOptional(tString),
+    pkg: tOptional(tString),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),

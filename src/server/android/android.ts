@@ -31,6 +31,7 @@ import { Transport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
+import { CRPage } from '../chromium/crPage';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -267,10 +268,19 @@ export class AndroidDevice extends EventEmitter {
 
     const browser = await CRBrowser.connect(androidBrowser, browserOptions);
     const controller = new ProgressController();
+    const defaultContext = browser._defaultContext!;
     await controller.run(async progress => {
-      await browser._defaultContext!._loadDefaultContextAsIs(progress);
+      await defaultContext._loadDefaultContextAsIs(progress);
     });
-    return browser._defaultContext!;
+    {
+      // TODO: remove after rolling to r838157
+      // Force page scale factor update.
+      const page = defaultContext.pages()[0];
+      const crPage = page._delegate as CRPage;
+      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
+      await crPage._mainFrameSession._client.send('Emulation.clearDeviceMetricsOverride', {});
+    }
+    return defaultContext;
   }
 
   webViews(): AndroidWebView[] {

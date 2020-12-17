@@ -2235,7 +2235,7 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
-        packageName: string?
+        pkg: string?
         ignoreHTTPSErrors: boolean?
         javaScriptEnabled: boolean?
         bypassCSP: boolean?

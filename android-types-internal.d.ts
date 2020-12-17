@@ -31,7 +31,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
   open(command: string): Promise<AndroidSocket>;
   installApk(file: string | Buffer, options?: { args?: string[] }): Promise<void>;
   push(file: string | Buffer, path: string, options?: { mode?: number }): Promise<void>;
-  launchBrowser(options?: BrowserContextOptions & { packageName?: string  }): Promise<BrowserContext>;
+  launchBrowser(options?: BrowserContextOptions & { pkg?: string  }): Promise<BrowserContext>;
   close(): Promise<void>;
 
   wait(selector: AndroidSelector, options?: { state?: 'gone' } & { timeout?: number }): Promise<void>;

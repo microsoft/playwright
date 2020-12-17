@@ -233,7 +233,7 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
-  async launchBrowser(options: types.BrowserContextOptions & { packageName?: string  } = {}): Promise<BrowserContext> {
+  async launchBrowser(options: types.BrowserContextOptions & { pkg?: string  } = {}): Promise<BrowserContext> {
     return this._wrapApiCall('androidDevice.launchBrowser', async () => {
       const contextOptions = await prepareBrowserContextOptions(options);
       const { context } = await this._channel.launchBrowser(contextOptions);
