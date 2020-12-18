@@ -334,6 +334,7 @@ it('should work with spaces in :nth-child and :not', async ({page, server}) => {
   expect(await page.$$eval(`css=div > :not(span)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=body :not(span, div)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span, section:not(span, div)`, els => els.length)).toBe(5);
+  expect(await page.$$eval(`span:nth-child(23n+ 2) >> xpath=.`, els => els.length)).toBe(1);
 });
 
 it('should work with :is', async ({page, server}) => {

@@ -153,3 +153,8 @@ it('should work with proximity selectors', test => {
   expect(await page.$$eval('div:near(#id7)', els => els.map(e => e.id).join(','))).toBe('id0,id3,id4,id5,id6');
   expect(await page.$$eval('div:near(#id0)', els => els.map(e => e.id).join(','))).toBe('id1,id2,id3,id4,id5,id7,id8,id9');
 });
+
+it('should escape the scope with >>', async ({ page }) => {
+  await page.setContent(`<div><label>Test</label><input id='myinput'></div>`);
+  expect(await page.$eval(`label >> xpath=.. >> input`, e => e.id)).toBe('myinput');
+});
