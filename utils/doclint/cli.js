@@ -199,7 +199,7 @@ async function run() {
           }
         }
       }
-      api.setText([comment, header, renderMd(nodes), footer].join('\n'));
+      api.setText([comment, header, renderMd(nodes, 10000), footer].join('\n'));
 
       // Generate links
       preprocessor.generateLinks(api, signatures, messages);
