@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-const maxColumns = 120;
-
 function normalizeLines(content) {
   const inLines = content.split('\n');
   let inCodeBlock = false;
@@ -133,23 +131,17 @@ function parseMd(content) {
   return buildTree(normalizeLines(content));
 }
 
-function renderMd(nodes) {
+function renderMd(nodes, maxColumns) {
   const result = [];
   let lastNode;
   for (let node of nodes) {
-    innerRenderMdNode(node, lastNode, result);
+    innerRenderMdNode(node, lastNode, result, maxColumns);
     lastNode = node;
   }
   return result.join('\n');
 }
 
-function renderMdNode(node, lastNode) {
-  const result = [];
-  innerRenderMdNode(node, lastNode, result);
-  return result.join('\n');
-}
-
-function innerRenderMdNode(node, lastNode, result) {
+function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
   const newLine = () => {
     if (result[result.length - 1] !== '')
       result.push('');
@@ -161,7 +153,7 @@ function innerRenderMdNode(node, lastNode, result) {
       result.push(`${'#'.repeat(i)} ${node[`h${i}`]}`);
       let lastNode = node;
       for (const child of node.children) {
-        innerRenderMdNode(child, lastNode, result);
+        innerRenderMdNode(child, lastNode, result, maxColumns);
         lastNode = child;
       }
       break;
@@ -172,7 +164,7 @@ function innerRenderMdNode(node, lastNode, result) {
     const bothComments = node.text.startsWith('>') && lastNode && lastNode.text && lastNode.text.startsWith('>');
     if (!bothComments && lastNode && (lastNode.text || lastNode.li || lastNode.h1 || lastNode.h2 || lastNode.h3 || lastNode.h4))
       newLine();
-      printText(node, result);
+      printText(node, result, maxColumns);
   }
 
   if (node.code) {
@@ -207,7 +199,7 @@ function innerRenderMdNode(node, lastNode, result) {
   }
 }
 
-function printText(node, result) {
+function printText(node, result, maxColumns) {
   let line = node.text;
   while (line.length > maxColumns) {
     let index = line.lastIndexOf(' ', maxColumns);

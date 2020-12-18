@@ -13,25 +13,25 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 
 Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout.
 The default value can be changed by using the
-[browserContext.setDefaultNavigationTimeout()](),
-[browserContext.setDefaultTimeout()](),
-[page.setDefaultNavigationTimeout()]() or
-[page.setDefaultTimeout()]() methods.
+[`method: BrowserContext.setDefaultNavigationTimeout`](),
+[`method: BrowserContext.setDefaultTimeout`](),
+[`method: Page.setDefaultNavigationTimeout`]() or
+[`method: Page.setDefaultTimeout`]() methods.
 
 ## wait-for-timeout
 
 - `timeout` <[number]>
 
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
-value can be changed by using the [browserContext.setDefaultTimeout()]().
+value can be changed by using the [`method: BrowserContext.setDefaultTimeout`]().
 
 ## input-timeout
 
 - `timeout` <[number]>
 
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-using the [browserContext.setDefaultTimeout()]() or
-[page.setDefaultTimeout()]() methods.
+using the [`method: BrowserContext.setDefaultTimeout`]() or
+[`method: Page.setDefaultTimeout`]() methods.
 
 ## input-no-wait-after
 
@@ -133,7 +133,7 @@ Defaults to `'visible'`. Can be either:
       - `value` <[string]>
 
 Populates context with given storage state. This method can be used to initialize context with logged-in information
-obtained via [browserContext.storageState()](). Either a path to the file with saved storage, or an object with the following fields:
+obtained via [`method: BrowserContext.storageState`](). Either a path to the file with saved storage, or an object with the following fields:
 
 ## context-option-acceptdownloads
 
@@ -218,7 +218,7 @@ request header value as well as number and date formatting rules.
 - `permissions` <[Array]<[string]>>
 
 A list of permissions to grant to all pages in this context. See
-[browserContext.grantPermissions()]() for more details.
+[`method: BrowserContext.grantPermissions`]() for more details.
 
 ## context-option-extrahttpheaders
 
@@ -245,7 +245,7 @@ Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/W
 - `colorScheme` <"light"|"dark"|"no-preference">
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-[page.emulateMedia()]() for more details. Defaults to '`light`'.
+[`method: Page.emulateMedia`]() for more details. Defaults to '`light`'.
 
 ## context-option-logger
 
@@ -257,9 +257,9 @@ Logger sink for Playwright logging.
 
 - `videosPath` <[string]>
 
-**NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
+**NOTE** Use [`param: recordVideo`]() instead, it takes precedence over `videosPath`. Enables video recording for all pages to
 `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-[browserContext.close()]() for videos to be saved.
+[`method: BrowserContext.close`]() for videos to be saved.
 
 ## context-option-videosize
 
@@ -267,7 +267,7 @@ Logger sink for Playwright logging.
   - `width` <[number]> Video frame width.
   - `height` <[number]> Video frame height.
 
-**NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically
+**NOTE** Use [`param: recordVideo`]() instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically
 recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If
 `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled
 down if necessary to fit specified size.
@@ -280,7 +280,7 @@ down if necessary to fit specified size.
   - `path` <[string]> Path on the filesystem to write the HAR file to.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
-specified, the HAR is not recorded. Make sure to await [browserContext.close()]() for the HAR to be
+specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`]() for the HAR to be
 saved.
 
 ## context-option-recordvideo
@@ -294,7 +294,7 @@ saved.
     - `height` <[number]> Video frame height.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
-sure to await [browserContext.close()]() for videos to be saved.
+sure to await [`method: BrowserContext.close`]() for videos to be saved.
 
 ## context-option-proxy
 
