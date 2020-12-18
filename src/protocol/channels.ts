@@ -2648,7 +2648,7 @@ export type AndroidDeviceInputDragOptions = {
 };
 export type AndroidDeviceInputDragResult = void;
 export type AndroidDeviceLaunchBrowserParams = {
-  packageName?: string,
+  pkg?: string,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,
@@ -2693,7 +2693,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   },
 };
 export type AndroidDeviceLaunchBrowserOptions = {
-  packageName?: string,
+  pkg?: string,
   ignoreHTTPSErrors?: boolean,
   javaScriptEnabled?: boolean,
   bypassCSP?: boolean,

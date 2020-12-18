@@ -34,4 +34,14 @@ if (process.env.PW_ANDROID_TESTS) {
     await page.close();
     await context.close();
   });
+
+  it('should check', async function({ device }) {
+    const context = await device.launchBrowser();
+    const [page] = context.pages();
+    await page.setContent(`<input id='checkbox' type='checkbox'></input>`);
+    await page.check('input');
+    expect(await page.evaluate(() => window['checkbox'].checked)).toBe(true);
+    await page.close();
+    await context.close();
+  });
 }

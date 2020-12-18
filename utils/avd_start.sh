@@ -12,7 +12,7 @@ echo "Killing previous emulators"
 ${ANDROID_HOME}/platform-tools/adb devices | grep emulator | cut -f1 | while read line; do ${ANDROID_HOME}/platform-tools/adb -s $line emu kill; done
 
 echo "Starting emulator"
-nohup ${ANDROID_HOME}/emulator/emulator -avd android30 -no-audio -no-snapshot &
+nohup ${ANDROID_HOME}/emulator/emulator -avd android30 -no-audio -gpu swiftshader &
 ${ANDROID_HOME}/platform-tools/adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed | tr -d '\r') ]]; do sleep 1; done; input keyevent 82'
 ${ANDROID_HOME}/platform-tools/adb devices
 ${ANDROID_HOME}/platform-tools/adb reverse tcp:8180 tcp:8180
