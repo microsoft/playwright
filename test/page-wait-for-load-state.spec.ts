@@ -140,7 +140,9 @@ it('should wait for load state of newPage', async ({browser, context, page, serv
   expect(await newPage.evaluate(() => document.readyState)).toBe('complete');
 });
 
-it('should resolve after popup load', async ({page, server}) => {
+it('should resolve after popup load', async ({browser, server}) => {
+  const context = await browser.newContext();
+  const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   // Stall the 'load' by delaying css.
   let cssResponse;
@@ -160,6 +162,7 @@ it('should resolve after popup load', async ({page, server}) => {
   await loadSatePromise;
   expect(resolved).toBe(true);
   expect(popup.url()).toBe(server.PREFIX + '/one-style.html');
+  await context.close();
 });
 
 it('should work for frame', async ({page, server}) => {
