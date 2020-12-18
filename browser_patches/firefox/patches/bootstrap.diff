@@ -2181,19 +2181,21 @@ index 657e15bc07426745b9488b903c5a53b8d977fb2d..4f61835e64d537ab7a35c2c2fb059e67
  
  /**
 diff --git a/widget/InProcessCompositorWidget.cpp b/widget/InProcessCompositorWidget.cpp
-index 2083825cec0019a76710afd516a82936e9743708..7538f5b2cf10d405bc4e04ff61a8f0f7b7bc8899 100644
+index 2083825cec0019a76710afd516a82936e9743708..5a324df5800acb989f143c7d48b942b6b5dde286 100644
 --- a/widget/InProcessCompositorWidget.cpp
 +++ b/widget/InProcessCompositorWidget.cpp
-@@ -4,6 +4,8 @@
+@@ -4,7 +4,10 @@
  
  #include "InProcessCompositorWidget.h"
  
 +#include "HeadlessCompositorWidget.h"
 +#include "HeadlessWidget.h"
  #include "mozilla/VsyncDispatcher.h"
++#include "mozilla/widget/PlatformWidgetTypes.h"
  #include "nsBaseWidget.h"
  
-@@ -22,6 +24,12 @@ RefPtr<CompositorWidget> CompositorWidget::CreateLocal(
+ #if defined(MOZ_WIDGET_ANDROID) && !defined(MOZ_WIDGET_SUPPORTS_OOP_COMPOSITING)
+@@ -22,6 +25,12 @@ RefPtr<CompositorWidget> CompositorWidget::CreateLocal(
      const CompositorWidgetInitData& aInitData,
      const layers::CompositorOptions& aOptions, nsIWidget* aWidget) {
    MOZ_ASSERT(aWidget);
