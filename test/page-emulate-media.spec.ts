@@ -81,7 +81,9 @@ it('should work during navigation', async ({page, server}) => {
   expect(await page.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches)).toBe(true);
 });
 
-it('should work in popup', async ({browser, server}) => {
+it('should work in popup', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({browser, server}) => {
   {
     const context = await browser.newContext({ colorScheme: 'dark' });
     const page = await context.newPage();
@@ -107,7 +109,9 @@ it('should work in popup', async ({browser, server}) => {
   }
 });
 
-it('should work in cross-process iframe', async ({browser, server}) => {
+it('should work in cross-process iframe', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({browser, server}) => {
   const page = await browser.newPage({ colorScheme: 'dark' });
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.CROSS_PROCESS_PREFIX + '/empty.html');

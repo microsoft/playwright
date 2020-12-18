@@ -25,7 +25,9 @@ it('should work', async ({page, server}) => {
   expect(page.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should work with file URL', async ({page}) => {
+it('should work with file URL', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({page}) => {
   const fileurl = url.pathToFileURL(path.join(__dirname, 'assets', 'frames', 'two-frames.html')).href;
   await page.goto(fileurl);
   expect(page.url().toLowerCase()).toBe(fileurl.toLowerCase());

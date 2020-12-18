@@ -60,7 +60,9 @@ it('should click on a span with an inline element inside', async ({page, server}
   expect(await page.evaluate('CLICKED')).toBe(42);
 });
 
-it('should not throw UnhandledPromiseRejection when page closes', async ({browser, server}) => {
+it('should not throw UnhandledPromiseRejection when page closes', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await Promise.all([
@@ -92,7 +94,9 @@ it('should click the button after a cross origin navigation ', async ({page, ser
   expect(await page.evaluate('result')).toBe('Clicked');
 });
 
-it('should click with disabled javascript', async ({browser, server}) => {
+it('should click with disabled javascript', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({browser, server}) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/wrappedlink.html');
@@ -248,7 +252,9 @@ it('should click on checkbox label and toggle', async ({page, server}) => {
   expect(await page.evaluate(() => window['result'].check)).toBe(false);
 });
 
-it('should not hang with touch-enabled viewports', async ({browser, playwright}) => {
+it('should not hang with touch-enabled viewports', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({browser, playwright}) => {
   // @see https://github.com/GoogleChrome/puppeteer/issues/161
   const { viewport, hasTouch } = playwright.devices['iPhone 6'];
   const context = await browser.newContext({ viewport, hasTouch });
@@ -375,7 +381,9 @@ it('should click the button behind sticky header', async ({page}) => {
   expect(await page.evaluate(() => window['__clicked'])).toBe(true);
 });
 
-it('should click the button with deviceScaleFactor set', async ({browser, server}) => {
+it('should click the button with deviceScaleFactor set', (suite, { mode }) => {
+  suite.skip(mode === 'android');
+}, async ({browser, server}) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, deviceScaleFactor: 5 });
   const page = await context.newPage();
   expect(await page.evaluate(() => window.devicePixelRatio)).toBe(5);
@@ -440,7 +448,8 @@ it('should click a button in scrolling container with offset', async ({page, ser
   expect(await page.evaluate('offsetY')).toBe(isWebKit ? 1910 + 8 : 1910);
 });
 
-it('should click the button with offset with page scale', (test, { browserName }) => {
+it('should click the button with offset with page scale', (test, { browserName, mode }) => {
+  test.skip(mode === 'android');
   test.skip(browserName === 'firefox');
 }, async ({browser, server, isWebKit, isChromium, headful}) => {
   const context = await browser.newContext({ viewport: { width: 400, height: 400 }, isMobile: true });
