@@ -51,7 +51,7 @@ jobs:
         path: test-results
 
   test_mac:
-    name: ${{ matrix.os }} (${{ matrix.browser }})
+    name: ${{ matrix.os }} (${{ matrix.browser }} - ${{ matrix.shard }})
     strategy:
       fail-fast: false
       matrix:
