@@ -865,6 +865,44 @@ export module Protocol {
        */
       sourceURL?: string;
     }
+    /**
+     * A representation of WebCore::Font. Conceptually this is backed by either a font file on disk or from the network.
+     */
+    export interface Font {
+      /**
+       * The display name defined by the font.
+       */
+      displayName: string;
+      /**
+       * The variation axes defined by the font.
+       */
+      variationAxes: FontVariationAxis[];
+    }
+    /**
+     * A single variation axis associated with a Font.
+     */
+    export interface FontVariationAxis {
+      /**
+       * The name, generally human-readable, of the variation axis. Some axes may not provide a human-readable name distiguishable from the tag. This field is ommited when there is no name, or the name matches the tag exactly.
+       */
+      name?: string;
+      /**
+       * The four character tag for the variation axis.
+       */
+      tag: string;
+      /**
+       * The minimum value that will affect the axis.
+       */
+      minimumValue: number;
+      /**
+       * The maximum value that will affect the axis.
+       */
+      maximumValue: number;
+      /**
+       * The value that is used for the axis when it is not otherwise controlled.
+       */
+      defaultValue: number;
+    }
     
     /**
      * Fires whenever a MediaQuery result changes (for example, after a browser window has been resized.) The current implementation considers only viewport-dependent media features.
@@ -964,6 +1002,18 @@ export module Protocol {
        * Computed style for the specified DOM node.
        */
       computedStyle: CSSComputedStyleProperty[];
+    }
+    /**
+     * Returns the primary font of the computed font cascade for a DOM node identified by <code>nodeId</code>.
+     */
+    export type getFontDataForNodeParameters = {
+      nodeId: DOM.NodeId;
+    }
+    export type getFontDataForNodeReturnValue = {
+      /**
+       * Computed primary font for the specified DOM node.
+       */
+      primaryFont: Font;
     }
     /**
      * Returns metainfo entries for all known stylesheets.
@@ -8492,6 +8542,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeParameters;
     "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeParameters;
     "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeParameters;
+    "CSS.getFontDataForNode": CSS.getFontDataForNodeParameters;
     "CSS.getAllStyleSheets": CSS.getAllStyleSheetsParameters;
     "CSS.getStyleSheet": CSS.getStyleSheetParameters;
     "CSS.getStyleSheetText": CSS.getStyleSheetTextParameters;
@@ -8776,6 +8827,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "CSS.getMatchedStylesForNode": CSS.getMatchedStylesForNodeReturnValue;
     "CSS.getInlineStylesForNode": CSS.getInlineStylesForNodeReturnValue;
     "CSS.getComputedStyleForNode": CSS.getComputedStyleForNodeReturnValue;
+    "CSS.getFontDataForNode": CSS.getFontDataForNodeReturnValue;
     "CSS.getAllStyleSheets": CSS.getAllStyleSheetsReturnValue;
     "CSS.getStyleSheet": CSS.getStyleSheetReturnValue;
     "CSS.getStyleSheetText": CSS.getStyleSheetTextReturnValue;
