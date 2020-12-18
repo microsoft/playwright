@@ -448,7 +448,7 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 
 #### browserContext.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw script content.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
@@ -529,8 +529,8 @@ are returned.
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in every page in the context. When
-called, the function executes `playwrightBinding` in Node.js and returns a [Promise] which resolves to the return value
-of `playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will be awaited.
+called, the function executes `playwrightBinding` and returns a [Promise] which resolves to the return value of
+`playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will be awaited.
 
 The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext:
 BrowserContext, page: Page, frame: Frame }`.
@@ -581,8 +581,8 @@ await page.setContent(`
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in every page in the context. When
-called, the function executes `playwrightFunction` in Node.js and returns a [Promise] which resolves to the return value
-of `playwrightFunction`.
+called, the function executes `playwrightFunction` and returns a [Promise] which resolves to the return value of
+`playwrightFunction`.
 
 If the `playwrightFunction` returns a [Promise], it will be awaited.
 
@@ -781,7 +781,7 @@ Removes a route created with [browserContext.route(url, handler)](#browsercontex
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>>
 
-Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy
+Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the context closes before the event is fired. Returns the event data value.
 
 ```js
@@ -1152,7 +1152,7 @@ const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 1
 
 #### page.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in the page.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw script content.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
@@ -1181,7 +1181,7 @@ await page.addInitScript(preloadFile);
 #### page.addScriptTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw JavaScript content to be injected into frame.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 - returns: <[Promise]<[ElementHandle]>>
@@ -1194,7 +1194,7 @@ Shortcut for main frame's [frame.addScriptTag(params)](#frameaddscripttagparams)
 #### page.addStyleTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw CSS content to be injected into frame.
 - returns: <[Promise]<[ElementHandle]>>
 
@@ -1262,9 +1262,10 @@ Shortcut for main frame's [frame.click(selector[, options])](#frameclickselector
   - `runBeforeUnload` <[boolean]> Defaults to `false`. Whether to run the [before unload](https://developer.mozilla.org/en-US/docs/Web/Events/beforeunload) page handlers.
 - returns: <[Promise]>
 
-If `runBeforeUnload` is `false` the result will resolve only after the page has been closed. If `runBeforeUnload` is
-`true` the method will **not** wait for the page to close. By default, `page.close()` **does not** run beforeunload
-handlers.
+If `runBeforeUnload` is `false`, does not run any unload handlers and waits for the page to be closed. If
+`runBeforeUnload` is `true` the method will run unload handlers, but will **not** wait for the page to close.
+
+By default, `page.close()` **does not** run `beforeunload` handlers.
 
 > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
 > and should be handled manually via [page.on('dialog')](#pageondialog) event.
@@ -1461,8 +1462,8 @@ await resultHandle.dispose();
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in this page. When called, the function
-executes `playwrightBinding` in Node.js and returns a [Promise] which resolves to the return value of
-`playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will be awaited.
+executes `playwrightBinding` and returns a [Promise] which resolves to the return value of `playwrightBinding`. If the
+`playwrightBinding` returns a [Promise], it will be awaited.
 
 The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext:
 BrowserContext, page: Page, frame: Frame }`.
@@ -1515,8 +1516,7 @@ await page.setContent(`
 - returns: <[Promise]>
 
 The method adds a function called `name` on the `window` object of every frame in the page. When called, the function
-executes `playwrightFunction` in Node.js and returns a [Promise] which resolves to the return value of
-`playwrightFunction`.
+executes `playwrightFunction` and returns a [Promise] which resolves to the return value of `playwrightFunction`.
 
 If the `playwrightFunction` returns a [Promise], it will be awaited.
 
@@ -1644,7 +1644,7 @@ Returns element attribute value.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. If can not go back, resolves to `null`.
+last redirect. If can not go back, returns `null`.
 
 Navigate to the previous page in history.
 
@@ -1658,7 +1658,7 @@ Navigate to the previous page in history.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. If can not go forward, resolves to `null`.
+last redirect. If can not go forward, returns `null`.
 
 Navigate to the next page in history.
 
@@ -1752,12 +1752,11 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 #### page.opener()
 - returns: <[Promise]<[null]|[Page]>>
 
-Returns the opener for popup pages and `null` for others. If the opener has been closed already the promise may resolve
-to `null`.
+Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
 
 #### page.pdf([options])
 - `options` <[Object]>
-  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the PDF won't be saved to the disk.
+  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the PDF won't be saved to the disk.
   - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
   - `displayHeaderFooter` <[boolean]> Display header and footer. Defaults to `false`.
   - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
@@ -1916,7 +1915,7 @@ both handlers.
 
 #### page.screenshot([options])
 - `options` <[Object]>
-  - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
+  - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
@@ -2018,8 +2017,7 @@ This method expects `selector` to point to an [input
 element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For
-empty array, clears the selected files.
+are resolved relative to the the current working directory. For empty array, clears the selected files.
 
 #### page.setViewportSize(viewportSize)
 - `viewportSize` <[Object]>
@@ -2158,7 +2156,7 @@ Video object associated with this page.
 
 Returns the event data value.
 
-Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy
+Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the page is closed before the event is fired.
 
 #### page.waitForFunction(pageFunction[, arg, options])
@@ -2186,7 +2184,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 })();
 ```
 
-To pass an argument from Node.js to the predicate of `page.waitForFunction` function:
+To pass an argument to the predicate of `page.waitForFunction` function:
 
 ```js
 const selector = '.foo';
@@ -2261,7 +2259,7 @@ Shortcut for main frame's [frame.waitForNavigation([options])](#framewaitfornavi
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<[Request]>>
 
-Returns promise that resolves to the matched request.
+Waits for the matching request and returns it.
 
 ```js
 const firstRequest = await page.waitForRequest('http://example.com/resource');
@@ -2298,7 +2296,7 @@ return finalResponse.ok();
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
-Returns when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or
+Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
 `detached`.
 
 Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
@@ -2328,7 +2326,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - `timeout` <[number]> A timeout to wait for
 - returns: <[Promise]>
 
-Returns a promise that resolves after the timeout.
+Waits for the given `timeout` in milliseconds.
 
 Note that `page.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to be
 flaky. Use signals such as network events, selectors becoming visible and others instead.
@@ -2438,8 +2436,7 @@ console.log(text);
 Returns the ElementHandle pointing to the frame element.
 
 The method finds an element matching the specified selector within the frame. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to
-`null`.
+selectors](#working-with-selectors) for more details. If no elements match the selector, returns `null`.
 
 #### frame.$$(selector)
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
@@ -2448,8 +2445,7 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 Returns the ElementHandles pointing to the frame elements.
 
 The method finds all elements matching the specified selector within the frame. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to
-`[]`.
+selectors](#working-with-selectors) for more details. If no elements match the selector, returns empty array.
 
 #### frame.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
@@ -2495,7 +2491,7 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
 #### frame.addScriptTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw JavaScript content to be injected into frame.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 - returns: <[Promise]<[ElementHandle]>>
@@ -2507,7 +2503,7 @@ Adds a `<script>` tag into the page with the desired url or content.
 #### frame.addStyleTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw CSS content to be injected into frame.
 - returns: <[Promise]<[ElementHandle]>>
 
@@ -2641,7 +2637,7 @@ Returns the return value of `pageFunction`
 If the function passed to the `frame.evaluate` returns a [Promise], then `frame.evaluate` would wait for the promise to
 resolve and return its value.
 
-If the function passed to the `frame.evaluate` returns a non-[Serializable] value, then `frame.evaluate` resolves to
+If the function passed to the `frame.evaluate` returns a non-[Serializable] value, then `frame.evaluate` returns
 `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
 `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
@@ -2804,7 +2800,7 @@ Passing zero timeout disables this.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[string]>>
 
-Resolves to the `element.innerHTML`.
+Returns `element.innerHTML`.
 
 #### frame.innerText(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2812,7 +2808,7 @@ Resolves to the `element.innerHTML`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[string]>>
 
-Resolves to the `element.innerText`.
+Returns `element.innerText`.
 
 #### frame.isDetached()
 - returns: <[boolean]>
@@ -2917,8 +2913,7 @@ This method expects `selector` to point to an [input
 element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For
-empty array, clears the selected files.
+are resolved relative to the the current working directory. For empty array, clears the selected files.
 
 #### frame.tap(selector[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2950,7 +2945,7 @@ Passing zero timeout disables this.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[string]>>
 
-Resolves to the `element.textContent`.
+Returns `element.textContent`.
 
 #### frame.title()
 - returns: <[Promise]<[string]>>
@@ -3009,7 +3004,7 @@ Returns frame's url.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[JSHandle]>>
 
-Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
+Returns when the `pageFunction` returns a truthy value, returns that value.
 
 The `waitForFunction` can be used to observe viewport size change:
 
@@ -3026,7 +3021,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
-To pass an argument from Node.js to the predicate of `frame.waitForFunction` function:
+To pass an argument to the predicate of `frame.waitForFunction` function:
 
 ```js
 const selector = '.foo';
@@ -3034,7 +3029,7 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
 ```
 
 #### frame.waitForLoadState([state, options])
-- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Optional.
+- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method returns immediately. Optional.
   - `'load'` - wait for the `load` event to be fired.
   - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
@@ -3042,14 +3037,14 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Returns when the required load state has been reached.
+Waits for the required load state to be reached.
 
-This resolves when the frame reaches a required load state, `load` by default. The navigation must have been committed
+This returns when the frame reaches a required load state, `load` by default. The navigation must have been committed
 when this method is called. If current document has already reached the required state, resolves immediately.
 
 ```js
 await frame.click('button'); // Click triggers navigation.
-await frame.waitForLoadState(); // The promise resolves after 'load' event.
+await frame.waitForLoadState(); // Waits for 'load' state by default.
 ```
 
 #### frame.waitForNavigation([options])
@@ -3066,12 +3061,12 @@ Returns the main resource response. In case of multiple redirects, the navigatio
 last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
 resolve with `null`.
 
-This resolves when the frame navigates to a new URL. It is useful for when you run code which will indirectly cause the
-frame to navigate. Consider this example:
+This method waits for the frame to navigate to a new URL. It is useful for when you run code which will indirectly cause
+the frame to navigate. Consider this example:
 
 ```js
 const [response] = await Promise.all([
-  frame.waitForNavigation(), // The navigation promise resolves after navigation has finished
+  frame.waitForNavigation(), // Wait for the navigation to finish
   frame.click('a.my-link'), // Clicking the link will indirectly cause a navigation
 ]);
 ```
@@ -3090,7 +3085,7 @@ considered a navigation.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
-Returns when element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or
+Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or
 `detached`.
 
 Wait for the `selector` to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at
@@ -3120,7 +3115,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 - `timeout` <[number]> A timeout to wait for
 - returns: <[Promise]>
 
-Returns a promise that resolves after the timeout.
+Waits for the given `timeout` in milliseconds.
 
 Note that `frame.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to
 be flaky. Use signals such as network events, selectors becoming visible and others instead.
@@ -3196,16 +3191,14 @@ ElementHandle instances can be used as an argument in [page.$eval(selector, page
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to
-`null`.
+selectors](#working-with-selectors) for more details. If no elements match the selector, returns `null`.
 
 #### elementHandle.$$(selector)
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - returns: <[Promise]<[Array]<[ElementHandle]>>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, the return value resolves to
-`[]`.
+selectors](#working-with-selectors) for more details. If no elements match the selector, returns empty array.
 
 #### elementHandle.$eval(selector, pageFunction[, arg])
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
@@ -3478,7 +3471,7 @@ modifier, modifier is pressed and being held while the subsequent key is being p
 
 #### elementHandle.screenshot([options])
 - `options` <[Object]>
-  - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, the image won't be saved to the disk.
+  - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
@@ -3553,8 +3546,7 @@ This method expects `elementHandle` to point to an [input
 element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
-are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). For
-empty array, clears the selected files.
+are resolved relative to the the current working directory. For empty array, clears the selected files.
 
 #### elementHandle.tap([options])
 - `options` <[Object]>
@@ -3662,8 +3654,7 @@ If the element does not satisfy the condition for the `timeout` milliseconds, th
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
-Returns element specified by selector satisfies `state` option. Resolves to `null` if waiting for `hidden` or
-`detached`.
+Returns element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
 
 Wait for the `selector` relative to the element handle to satisfy `state` option (either appear/disappear from dom, or
 become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method
@@ -3998,8 +3989,7 @@ Returns page this file chooser belongs to.
 - returns: <[Promise]>
 
 Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then
-they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
-For empty array, clears the selected files.
+they are resolved relative to the the current working directory. For empty array, clears the selected files.
 
 ### class: Keyboard
 
@@ -4480,7 +4470,7 @@ information.
 #### selectors.register(name, script[, options])
 - `name` <[string]> Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
 - `script` <[function]|[string]|[Object]> Script that evaluates to a selector engine instance.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
   - `content` <[string]> Raw script content.
 - `options` <[Object]>
   - `contentScript` <[boolean]> Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content script is not guaranteed when this engine is used together with other registered engines.
@@ -4589,7 +4579,7 @@ await page.route('**/*', (route, request) => {
   - `headers` <[Object]<[string], [string]>> Optional response headers. Header values will be converted to a string.
   - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
   - `body` <[string]|[Buffer]> Optional response body.
-  - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd).
+  - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory.
 - returns: <[Promise]>
 
 Fulfills route's request with given response.
@@ -4671,7 +4661,7 @@ Contains the URL of the WebSocket.
 
 Returns the event data value.
 
-Waits for event to fire and passes its value into the predicate function. Resolves when the predicate returns truthy
+Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the webSocket is closed before the event is fired.
 
 ### class: TimeoutError
@@ -4802,7 +4792,7 @@ Returns the return value of `pageFunction`
 If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise
 to resolve and return its value.
 
-If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` resolves to
+If the function passed to the `worker.evaluate` returns a non-[Serializable] value, then `worker.evaluate` returns
 `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
 `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
@@ -4903,7 +4893,7 @@ A path where Playwright expects to find a bundled browser executable.
 #### browserType.launch([options])
 - `options` <[Object]>
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Note that Playwright only works with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, Playwright does not pass its own configurations args and only uses the ones from `args`. If an array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `proxy` <[Object]> Network proxy settings.
@@ -4953,7 +4943,7 @@ some differences for Linux users.
 - `userDataDir` <[string]> Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Command_Line_Options#User_Profile).
 - `options` <[Object]>
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
-  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `proxy` <[Object]> Network proxy settings.
@@ -5018,7 +5008,7 @@ context will automatically close the browser.
 - `options` <[Object]>
   - `headless` <[boolean]> Whether to run browser in headless mode. More details for [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the `devtools` option is `true`.
   - `port` <[number]> Port to use for the web socket. Defaults to 0 that picks any available port.
-  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). **BEWARE**: Playwright is only guaranteed to work with the bundled Chromium, Firefox or WebKit, use at your own risk.
+  - `executablePath` <[string]> Path to a browser executable to run instead of the bundled one. If `executablePath` is a relative path, then it is resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the bundled Chromium, Firefox or WebKit, use at your own risk.
   - `args` <[Array]<[string]>> Additional arguments to pass to the browser instance. The list of Chromium flags can be found [here](http://peter.sh/experiments/chromium-command-line-switches/).
   - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>> If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default arguments. Dangerous option; use with care. Defaults to `false`.
   - `proxy` <[Object]> Network proxy settings.
