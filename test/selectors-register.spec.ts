@@ -123,3 +123,21 @@ it('should handle errors', async ({playwright, page}) => {
   error = await playwright.selectors.register('css', createDummySelector).catch(e => e);
   expect(error.message).toBe('"css" is a predefined selector engine');
 });
+
+it('should not rely on engines working from the root', async ({ playwright, page }) => {
+  const createValueEngine = () => ({
+    create(root, target) {
+      return undefined;
+    },
+    query(root, selector) {
+      return root && root.value.includes(selector) ? root : undefined;
+    },
+    queryAll(root, selector) {
+      return root && root.value.includes(selector) ? [root] : [];
+    },
+  });
+
+  await playwright.selectors.register('__value', createValueEngine);
+  await page.setContent(`<input id=input1 value=value1><input id=input2 value=value2>`);
+  expect(await page.$eval('input >> __value=value2', e => e.id)).toBe('input2');
+});
