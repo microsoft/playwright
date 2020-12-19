@@ -135,6 +135,9 @@ DEPS['src/debug/'] = ['src/utils/', 'src/generated/', 'src/server/**', 'src/debu
 DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/electron/', 'src/trace/'];
 DEPS['src/service.ts'] = ['src/remote/'];
 
+// CLI should only use client-side features.
+DEPS['src/cli/'] = ['src/client/**', 'src/install/**'];
+
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);
   process.exit(1);

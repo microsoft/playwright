@@ -42,7 +42,7 @@ const installer = require(requireName + '/lib/install/installer');
       await browser.close();
     } catch (e) {
       console.error(`Should be able to launch ${browserType} from ${requireName}`);
-      console.error(err);
+      console.error(e);
       process.exit(1);
     }
   }
