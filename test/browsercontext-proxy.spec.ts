@@ -125,7 +125,9 @@ it('should authenticate', async ({contextFactory, contextOptions, server}) => {
   await browser.close();
 });
 
-it('should authenticate with empty password', async ({contextFactory, contextOptions, server}) => {
+it('should authenticate with empty password', (test, { browserName }) => {
+  test.flaky(browserName === 'firefox', 'Fails when runs afer previous test, see https://github.com/microsoft/playwright/issues/4789');
+}, async ({contextFactory, contextOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -145,6 +147,43 @@ it('should authenticate with empty password', async ({contextFactory, contextOpt
   await page.goto('http://non-existent.com/target.html');
   expect(await page.title()).toBe('Basic ' + Buffer.from('user:').toString('base64'));
   await browser.close();
+});
+
+
+it.only('should isolate proxy credentials between contexts', (test, { browserName }) => {
+  test.fixme(browserName === 'firefox', 'Credentials from the first context stick around');
+}, async ({contextFactory, contextOptions, server}) => {
+  server.setRoute('/target.html', async (req, res) => {
+    const auth = req.headers['proxy-authorization'];
+    if (!auth) {
+      res.writeHead(407, 'Proxy Authentication Required', {
+        'Proxy-Authenticate': 'Basic realm="Access to internal site"'
+      });
+      res.end();
+    } else {
+      res.end(`<html><title>${auth}</title></html>`);
+    }
+  });
+  {
+    const context = await contextFactory({
+      ...contextOptions,
+      proxy: { server: `localhost:${server.PORT}`, username: 'user1', password: 'secret1' }
+    });
+    const page = await context.newPage();
+    await page.goto('http://non-existent.com/target.html');
+    expect(await page.title()).toBe('Basic ' + Buffer.from('user1:secret1').toString('base64'));
+    await context.close();
+  }
+  {
+    const context = await contextFactory({
+      ...contextOptions,
+      proxy: { server: `localhost:${server.PORT}`, username: 'user2', password: 'secret2' }
+    });
+    const page = await context.newPage();
+    await page.goto('http://non-existent.com/target.html');
+    expect(await page.title()).toBe('Basic ' + Buffer.from('user2:secret2').toString('base64'));
+    await context.close();
+  }
 });
 
 it('should exclude patterns', (test, { browserName, headful }) => {
