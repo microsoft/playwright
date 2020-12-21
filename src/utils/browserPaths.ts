@@ -35,7 +35,13 @@ export const hostPlatform = ((): BrowserPlatform => {
     const macVersion = execSync('sw_vers -productVersion', {
       stdio: ['ignore', 'pipe', 'ignore']
     }).toString('utf8').trim().split('.').slice(0, 2).join('.');
-    const archSuffix = os.arch() === 'arm64' ? '-arm64' : '';
+    let arm64 = false;
+    if (!macVersion.startsWith('10.')) {
+      arm64 = execSync('sysctl -in hw.optional.arm64', {
+        stdio: ['ignore', 'pipe', 'ignore']
+      }).toString().trim() === '1';  
+    }
+    const archSuffix = arm64 ? '-arm64' : '';
     return `mac${macVersion}${archSuffix}` as BrowserPlatform;
   }
   if (platform === 'linux') {
