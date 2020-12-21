@@ -150,7 +150,7 @@ it('should authenticate with empty password', (test, { browserName }) => {
 });
 
 
-it.only('should isolate proxy credentials between contexts', (test, { browserName }) => {
+it('should isolate proxy credentials between contexts', (test, { browserName }) => {
   test.fixme(browserName === 'firefox', 'Credentials from the first context stick around');
 }, async ({contextFactory, contextOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
