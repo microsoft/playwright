@@ -593,6 +593,8 @@ class BrowserContext {
   }
 
   setProxy(proxy) {
+    // Clear AuthCache.
+    Services.obs.notifyObservers(null, "net:clear-active-logins");
     this._proxy = proxy;
   }
 
