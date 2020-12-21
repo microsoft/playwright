@@ -39,7 +39,7 @@ export const hostPlatform = ((): BrowserPlatform => {
     if (!macVersion.startsWith('10.')) {
       arm64 = execSync('sysctl -in hw.optional.arm64', {
         stdio: ['ignore', 'pipe', 'ignore']
-      }).toString().trim() === '1';  
+      }).toString().trim() === '1';
     }
     const archSuffix = arm64 ? '-arm64' : '';
     return `mac${macVersion}${archSuffix}` as BrowserPlatform;
