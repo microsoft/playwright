@@ -83,8 +83,6 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
           usedBrowserPaths.add(usedBrowserPath);
       }
     } catch (e) {
-      if (linkTarget)
-        browserFetcher.logPolitely('Failed to process descriptor at ' + linkTarget);
       await fsUnlinkAsync(linkPath).catch(e => {});
     }
   }
