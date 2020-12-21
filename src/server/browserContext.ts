@@ -265,8 +265,8 @@ export abstract class BrowserContext extends EventEmitter {
     if (!proxy)
       return;
     const { username, password } = proxy;
-    if (username && password)
-      this._options.httpCredentials = { username, password };
+    if (username)
+      this._options.httpCredentials = { username, password: password || '' };
   }
 
   async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
