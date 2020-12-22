@@ -101,11 +101,6 @@ export type LaunchServerOptions = {
 
 export type SelectorEngine = {
   /**
-   * Creates a selector that matches given target when queried at the root.
-   * Can return undefined if unable to create one.
-   */
-  create(root: HTMLElement, target: HTMLElement): string | undefined;
-  /**
    * Returns the first element matching given selector in the root's subtree.
    */
   query(root: HTMLElement, selector: string): HTMLElement | null;

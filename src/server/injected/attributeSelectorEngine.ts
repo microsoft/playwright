@@ -18,14 +18,6 @@ import { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 export function createAttributeEngine(attribute: string, shadow: boolean): SelectorEngine {
   const engine: SelectorEngine = {
-    create(root: SelectorRoot, target: Element): string | undefined {
-      const value = target.getAttribute(attribute);
-      if (!value)
-        return;
-      if (engine.query(root, value) === target)
-        return value;
-    },
-
     query(root: SelectorRoot, selector: string): Element | undefined {
       if (!shadow)
         return root.querySelector(`[${attribute}=${JSON.stringify(selector)}]`) || undefined;

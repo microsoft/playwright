@@ -14,27 +14,10 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
+import { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 export function createTextSelector(shadow: boolean): SelectorEngine {
   const engine: SelectorEngine = {
-    create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
-      const document = root instanceof Document ? root : root.ownerDocument;
-      if (!document)
-        return;
-      for (let child = targetElement.firstChild; child; child = child.nextSibling) {
-        if (child.nodeType === 3 /* Node.TEXT_NODE */) {
-          const text = child.nodeValue;
-          if (!text)
-            continue;
-          if (text.match(/^\s*[a-zA-Z0-9]+\s*$/) && engine.query(root, text.trim()) === targetElement)
-            return text.trim();
-          if (queryInternal(root, createMatcher(JSON.stringify(text)), shadow) === targetElement)
-            return JSON.stringify(text);
-        }
-      }
-    },
-
     query(root: SelectorRoot, selector: string): Element | undefined {
       return queryInternal(root, createMatcher(selector), shadow);
     },

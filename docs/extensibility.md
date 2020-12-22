@@ -20,12 +20,6 @@ An example of registering selector engine that queries elements based on a tag n
 ```js
 // Must be a function that evaluates to a selector engine instance.
 const createTagNameEngine = () => ({
-  // Creates a selector that matches given target when queried at the root.
-  // Can return undefined if unable to create one.
-  create(root, target) {
-    return root.querySelector(target.tagName) === target ? target.tagName : undefined;
-  },
-
   // Returns the first element matching given selector in the root's subtree.
   query(root, selector) {
     return root.querySelector(selector);

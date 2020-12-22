@@ -4224,12 +4224,6 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 (async () => {
   // Must be a function that evaluates to a selector engine instance.
   const createTagNameEngine = () => ({
-    // Creates a selector that matches given target when queried at the root.
-    // Can return undefined if unable to create one.
-    create(root, target) {
-      return root.querySelector(target.tagName) === target ? target.tagName : undefined;
-    },
-
     // Returns the first element matching given selector in the root's subtree.
     query(root, selector) {
       return root.querySelector(selector);
