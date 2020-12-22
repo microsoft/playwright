@@ -139,6 +139,9 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     engines: pwInternalJSON.engines,
     homepage: pwInternalJSON.homepage,
     main: 'index.js',
+    bin: {
+      playwright: './lib/cli/cli.js',
+    },
     exports: {
       // Root import: we have a wrapper ES Module to support the following syntax.
       // const { chromium } = require('playwright');

@@ -14,10 +14,5 @@
  * limitations under the License.
  */
 
-const { Playwright } = require('./lib/server/playwright');
-const { setupInProcess } = require('./lib/inprocess');
-
-const playwrightServer = new Playwright(__dirname, require('./browsers.json')['browsers']);
-const playwright = setupInProcess(playwrightServer);
-playwright.electron = playwright._electron;
-module.exports = playwright;
+module.exports = require('./lib/inprocess');
+module.exports.electron = module.exports._electron;
