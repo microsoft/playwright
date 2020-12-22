@@ -18,11 +18,11 @@ import { folio } from './fixtures';
 import * as path from 'path';
 import type { Page, Frame } from '..';
 
-const { installDebugControllerInContext } = require(path.join(__dirname, '..', 'lib', 'debug', 'debugController'));
+const { source } = require(path.join(__dirname, '..', 'lib', 'generated', 'consoleApiSource'));
 
 const fixtures = folio.extend();
-fixtures.context.override(async ({ context, toImpl }, run) => {
-  await installDebugControllerInContext(toImpl(context));
+fixtures.context.override(async ({ context }, run) => {
+  await (context as any)._extendInjectedScript(source);
   await run(context);
 });
 const { describe, it, expect } = fixtures.build();

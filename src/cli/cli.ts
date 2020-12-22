@@ -23,6 +23,7 @@ import * as program from 'commander';
 import * as os from 'os';
 import * as fs from 'fs';
 import { installBrowsersWithProgressBar } from '../install/installer';
+import * as consoleApiSource from '../generated/consoleApiSource';
 
 // TODO: we can import from '../..' instead, but that requires generating types
 // before build, and currently type generator depends on the build.
@@ -284,6 +285,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, false);
+  context._extendInjectedScript(consoleApiSource.source);
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));

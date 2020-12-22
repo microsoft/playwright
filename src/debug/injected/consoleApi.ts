@@ -22,6 +22,8 @@ export class ConsoleAPI {
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
+    if ((window as any).playwright)
+      return;
     (window as any).playwright = {
       $: (selector: string) => this._querySelector(selector),
       $$: (selector: string) => this._querySelectorAll(selector),
@@ -58,3 +60,5 @@ export class ConsoleAPI {
     return generateSelector(this._injectedScript, element).selector;
   }
 }
+
+export default ConsoleAPI;

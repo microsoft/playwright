@@ -15,10 +15,8 @@
  */
 
 import { BrowserContext, ContextListener, contextListeners } from '../server/browserContext';
-import * as frames from '../server/frames';
-import { Page } from '../server/page';
 import { isDebugMode } from '../utils/utils';
-import * as debugScriptSource from '../generated/debugScriptSource';
+import * as consoleApiSource from '../generated/consoleApiSource';
 
 export function installDebugController() {
   contextListeners.add(new DebugController());
@@ -27,25 +25,8 @@ export function installDebugController() {
 class DebugController implements ContextListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
-      installDebugControllerInContext(context);
+      context.extendInjectedScript(consoleApiSource.source);
   }
   async onContextWillDestroy(context: BrowserContext): Promise<void> {}
   async onContextDidDestroy(context: BrowserContext): Promise<void> {}
-}
-
-async function ensureInstalledInFrame(frame: frames.Frame) {
-  try {
-    await frame.extendInjectedScript(debugScriptSource.source);
-  } catch (e) {
-  }
-}
-
-async function installInPage(page: Page) {
-  page.on(Page.Events.FrameNavigated, ensureInstalledInFrame);
-  await Promise.all(page.frames().map(ensureInstalledInFrame));
-}
-
-export async function installDebugControllerInContext(context: BrowserContext) {
-  context.on(BrowserContext.Events.Page, installInPage);
-  await Promise.all(context.pages().map(installInPage));
 }

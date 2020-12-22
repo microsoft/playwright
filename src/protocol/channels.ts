@@ -556,6 +556,7 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
+  extendInjectedScript(params: BrowserContextExtendInjectedScriptParams, metadata?: Metadata): Promise<BrowserContextExtendInjectedScriptResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -697,6 +698,14 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
+export type BrowserContextExtendInjectedScriptParams = {
+  source: string,
+  arg: SerializedArgument,
+};
+export type BrowserContextExtendInjectedScriptOptions = {
+
+};
+export type BrowserContextExtendInjectedScriptResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };

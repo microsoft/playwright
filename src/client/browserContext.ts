@@ -29,6 +29,7 @@ import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState } from './types';
 import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
+import { serializeArgument } from './jsHandle';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
@@ -252,6 +253,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         return;
       throw e;
     }
+  }
+
+  async _extendInjectedScript<Arg>(source: string, arg?: Arg) {
+    await this._channel.extendInjectedScript({ source, arg: serializeArgument(arg) });
   }
 }
 

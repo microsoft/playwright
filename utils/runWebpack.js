@@ -20,7 +20,7 @@ const path = require('path');
 const files = [
   path.join('src', 'server', 'injected', 'injectedScript.webpack.config.js'),
   path.join('src', 'server', 'injected', 'utilityScript.webpack.config.js'),
-  path.join('src', 'debug', 'injected', 'debugScript.webpack.config.js'),
+  path.join('src', 'debug', 'injected', 'consoleApi.webpack.config.js'),
 ];
 
 function runOne(runner, file) {
