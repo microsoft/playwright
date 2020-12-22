@@ -213,6 +213,7 @@ async function run() {
       libversion: VERSION,
       chromiumVersion: browserVersions.chromium,
       firefoxVersion: browserVersions.firefox,
+      webkitVersion: browserVersions.webkit,
     })));
 
     messages.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
@@ -266,38 +267,18 @@ async function run() {
 }
 
 async function getBrowserVersions() {
-  const [chromium, firefox] = await Promise.all([
-    getChromeVersion(),
-    getFirefoxVersion(),
-  ])
-  return {
-    chromium,
-    firefox,
-  };
-}
-
-async function getChromeVersion() {
-  if (os.platform() === 'win32' || os.platform() === 'cygwin') {
-    const browser = await playwright.chromium.launch();
-    const page = await browser.newPage();
-    const userAgent = await page.evaluate('navigator.userAgent');
-    const [type] = userAgent.split(' ').filter(str => str.includes('Chrome'));
-    await browser.close();
-    return type.split('/')[1];
+  const names = ['chromium', 'firefox', 'webkit'];
+  const browsers = await Promise.all(names.map(name => playwright[name].launch()));
+  const result = {};
+  for (let i = 0; i < names.length; i++) {
+    result[names[i]] = browsers[i].version();
   }
-  const version = spawnSync(playwright.chromium.executablePath(), ['--version'], undefined).stdout.toString();
-  return version.trim().split(' ').pop();
+  await Promise.all(browsers.map(browser => browser.close()));
+  return result;
 }
 
 function getRepositoryFiles() {
   const out = spawnSync('git', ['ls-files'], {cwd: PROJECT_DIR});
   const files = out.stdout.toString().trim().split('\n').filter(f => !f.startsWith('docs-src'));
   return files.map(file => path.join(PROJECT_DIR, file));
-}
-
-async function getFirefoxVersion() {
-  const isWin = os.platform() === 'win32' || os.platform() === 'cygwin';
-  const out = spawnSync(playwright.firefox.executablePath(), [isWin ? '/version' : '--version'], undefined);
-  const version = out.stdout.toString();
-  return version.trim().split(' ').pop();
 }
