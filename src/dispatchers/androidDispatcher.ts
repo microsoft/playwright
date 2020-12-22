@@ -18,7 +18,6 @@ import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
 import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
-import { Events } from '../client/events';
 
 export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidInitializer> implements channels.AndroidChannel {
   constructor(scope: DispatcherScope, android: Android) {
@@ -176,8 +175,8 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
   constructor(scope: DispatcherScope, socket: SocketBackend) {
     super(scope, socket, 'AndroidSocket', {}, true);
-    socket.on(Events.AndroidSocket.Data, (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
-    socket.on(Events.AndroidSocket.Close, () => {
+    socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
+    socket.on('close', () => {
       this._dispatchEvent('close');
       this._dispose();
     });
