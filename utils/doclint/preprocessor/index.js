@@ -17,7 +17,7 @@
 const path = require('path');
 const Message = require('../Message');
 
-function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
+function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, webkitVersion}) {
   // Release version is everything that doesn't include "-".
   const isReleaseVersion = !libversion.includes('-');
 
@@ -47,6 +47,8 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion}) {
         newText = chromiumVersion;
       else if (commandName === 'firefox-version')
         newText = firefoxVersion;
+      else if (commandName === 'webkit-version')
+        newText = webkitVersion;
       else if (commandName === 'chromium-version-badge')
         newText = `[![Chromium version](https://img.shields.io/badge/chromium-${chromiumVersion}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)`;
       else if (commandName === 'firefox-version-badge')
