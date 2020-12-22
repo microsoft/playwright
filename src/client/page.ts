@@ -40,7 +40,18 @@ import { Waiter } from './waiter';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
-import { Size, URLMatch, Headers, LifecycleEvent, WaitForEventOptions, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions } from './types';
+import {
+  Size,
+  URLMatch,
+  Headers,
+  LifecycleEvent,
+  WaitForEventOptions,
+  SelectOption,
+  SelectOptionOptions,
+  FilePayload,
+  WaitForFunctionOptions,
+  TimeoutOptions
+} from './types';
 import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
@@ -351,7 +362,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async waitForLoadState(state?: LifecycleEvent, options?: { timeout?: number }): Promise<void> {
+  async waitForLoadState(state?: LifecycleEvent, options?: TimeoutOptions): Promise<void> {
     return this._attributeToPage(() => this._mainFrame.waitForLoadState(state, options));
   }
 
@@ -359,29 +370,30 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.waitForNavigation(options));
   }
 
-  async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
+  async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: TimeoutOptions = {}): Promise<Request> {
     const predicate = (request: Request) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(request.url(), urlOrPredicate);
       return urlOrPredicate(request);
     };
-    return this.waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout });
+    return this.waitForEvent(Events.Page.Request, { predicate, ...options });
   }
 
-  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
+  async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: TimeoutOptions = {}): Promise<Response> {
     const predicate = (response: Response) => {
       if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
         return urlMatches(response.url(), urlOrPredicate);
       return urlOrPredicate(response);
     };
-    return this.waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout });
+    return this.waitForEvent(Events.Page.Response, { predicate, ...options });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const timeoutErrorMessage = typeof optionsOrPredicate !== 'function' && optionsOrPredicate.timeoutMessage ? optionsOrPredicate.timeoutMessage : '';
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
-    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
+    waiter.rejectOnTimeout(timeout, `Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutErrorMessage}`);
     if (event !== Events.Page.Crash)
       waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
     if (event !== Events.Page.Close)

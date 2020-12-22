@@ -21,7 +21,7 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
 
   setDefaultTimeout(timeout: number): void;
   on(event: 'webview', handler: (webView: AndroidWebView<Page>) => void): this;
-  waitForEvent(event: string, optionsOrPredicate?: (data: any) => boolean | { timeout?: number, predicate?: (data: any) => boolean }): Promise<any>;
+  waitForEvent(event: string, optionsOrPredicate?: (data: any) => boolean | { timeout?: number, timeoutMessage: string, predicate?: (data: any) => boolean }): Promise<any>;
 
   serial(): string;
   model(): string;

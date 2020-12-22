@@ -243,9 +243,10 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
 
   async waitForEvent(event: string, optionsOrPredicate: types.WaitForEventOptions = {}): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const timeoutErrorMessage = typeof optionsOrPredicate !== 'function' && optionsOrPredicate.timeoutMessage ? optionsOrPredicate.timeoutMessage : '';
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
-    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
+    waiter.rejectOnTimeout(timeout, `Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutErrorMessage}`);
     if (event !== Events.AndroidDevice.Close)
       waiter.rejectOnEvent(this, Events.AndroidDevice.Close, new Error('Device closed'));
     const result = await waiter.waitForEvent(this, event, predicate as any);

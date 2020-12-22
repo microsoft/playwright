@@ -295,7 +295,7 @@ export class Page extends EventEmitter {
       const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
       await this._delegate.reload();
       return waitPromise;
-    }, this._timeoutSettings.navigationTimeout(options));
+    }, this._timeoutSettings.navigationTimeout(options), options.timeoutMessage);
     await this._doSlowMo();
     return response;
   }
@@ -310,7 +310,7 @@ export class Page extends EventEmitter {
         return null;
       }
       return waitPromise;
-    }, this._timeoutSettings.navigationTimeout(options));
+    }, this._timeoutSettings.navigationTimeout(options), options.timeoutMessage);
     await this._doSlowMo();
     return response;
   }
@@ -325,7 +325,7 @@ export class Page extends EventEmitter {
         return null;
       }
       return waitPromise;
-    }, this._timeoutSettings.navigationTimeout(options));
+    }, this._timeoutSettings.navigationTimeout(options), options.timeoutMessage);
     await this._doSlowMo();
     return response;
   }
@@ -399,7 +399,7 @@ export class Page extends EventEmitter {
   async screenshot(options: types.ScreenshotOptions = {}): Promise<Buffer> {
     return runAbortableTask(
         progress => this._screenshotter.screenshotPage(progress, options),
-        this._timeoutSettings.timeout(options));
+        this._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async close(options?: { runBeforeUnload?: boolean }) {

@@ -20,7 +20,7 @@ export type Point = { x: number, y: number };
 export type Rect = Size & Point;
 export type Quad = [ Point, Point, Point, Point ];
 
-export type TimeoutOptions = { timeout?: number };
+export type TimeoutOptions = { timeout?: number, timeoutMessage?: string; };
 
 export type WaitForElementOptions = TimeoutOptions & { state?: 'attached' | 'detached' | 'visible' | 'hidden' };
 
@@ -254,7 +254,7 @@ export type BrowserContextOptions = {
 
 export type EnvArray = { name: string, value: string }[];
 
-type LaunchOptionsBase = {
+type LaunchOptionsBase = TimeoutOptions &  {
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: string[],
@@ -262,7 +262,6 @@ type LaunchOptionsBase = {
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
   env?: EnvArray,
   headless?: boolean,
   devtools?: boolean,

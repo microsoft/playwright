@@ -48,20 +48,25 @@ it('should work with HTML 4 doctype', async ({page, server}) => {
 
 it('should respect timeout', async ({page, server, playwright}) => {
   const imgPath = '/img.png';
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // stall for image
   server.setRoute(imgPath, (req, res) => {});
   let error = null;
-  await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeout: 1}).catch(e => error = e);
+  await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeout, timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.setContent: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should respect default navigation timeout', async ({page, server, playwright}) => {
-  page.setDefaultNavigationTimeout(1);
   const imgPath = '/img.png';
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+  page.setDefaultNavigationTimeout(timeout);
   // stall for image
   server.setRoute(imgPath, (req, res) => {});
-  const error = await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`).catch(e => e);
-  expect(error.message).toContain('page.setContent: Timeout 1ms exceeded.');
+  const error = await page.setContent(`<img src="${server.PREFIX + imgPath}"></img>`, {timeoutMessage}).catch(e => e);
+  expect(error.message).toContain(`page.setContent: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 

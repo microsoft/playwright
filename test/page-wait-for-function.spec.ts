@@ -153,19 +153,23 @@ it('should accept ElementHandle arguments', async ({page}) => {
 });
 
 it('should respect timeout', async ({page, playwright}) => {
-  let error = null;
-  await page.waitForFunction('false', {}, {timeout: 10}).catch(e => error = e);
+  const timeout = 10;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+
+  const error = await page.waitForFunction('false', {}, {timeout, timeoutMessage}).catch(e => e);
   expect(error).toBeTruthy();
-  expect(error.message).toContain('page.waitForFunction: Timeout 10ms exceeded');
+  expect(error.message).toContain(`page.waitForFunction: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should respect default timeout', async ({page, playwright}) => {
-  page.setDefaultTimeout(1);
-  let error = null;
-  await page.waitForFunction('false').catch(e => error = e);
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+
+  page.setDefaultTimeout(timeout);
+  const error = await page.waitForFunction('false', undefined, {timeoutMessage}).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
-  expect(error.message).toContain('page.waitForFunction: Timeout 1ms exceeded');
+  expect(error.message).toContain(`page.waitForFunction: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
 });
 
 it('should disable timeout when its set to 0', async ({page}) => {

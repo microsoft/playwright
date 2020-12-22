@@ -16,6 +16,7 @@
 
 import { Logger, Page, JSHandle, ChromiumBrowserContext } from './types/types';
 import { BrowserWindow, BrowserWindowConstructorOptions } from 'electron';
+import { TimeoutOptions } from './src/server/electron/electron';
 
 export type ElectronLaunchOptions = {
   args?: string[],
@@ -33,11 +34,11 @@ export interface ElectronLauncher {
 export interface ElectronApplication {
   on(event: 'window', listener: (page : ElectronPage) => void): this;
   addListener(event: 'window', listener: (page : ElectronPage) => void): this;
-  waitForEvent(event: 'window', optionsOrPredicate?: { predicate?: (page : ElectronPage) => boolean, timeout?: number }): Promise<ElectronPage>;
+  waitForEvent(event: 'window', optionsOrPredicate?: TimeoutOptions & { predicate?: (page : ElectronPage) => boolean } ): Promise<ElectronPage>;
 
   on(event: 'close', listener: (exitCode? : number) => void): this;
   addListener(event: 'close', listener: (exitCode? : number) => void): this;
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (exitCode? : number) => boolean, timeout?: number }): Promise<number|undefined>;
+  waitForEvent(event: 'close', optionsOrPredicate?: TimeoutOptions & { predicate?: (exitCode? : number) => boolean }): Promise<number|undefined>;
 
   context(): ChromiumBrowserContext;
   windows(): ElectronPage[];

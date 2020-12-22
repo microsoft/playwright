@@ -35,9 +35,9 @@ export interface Progress {
   throwIfAborted(): void;
 }
 
-export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
+export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number, timeoutMessage?: string): Promise<T> {
   const controller = new ProgressController();
-  return controller.run(task, timeout);
+  return controller.run(task, timeout, timeoutMessage);
 }
 
 export class ProgressController {
@@ -75,7 +75,7 @@ export class ProgressController {
     this._listener = listener;
   }
 
-  async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number): Promise<T> {
+  async run<T>(task: (progress: Progress) => Promise<T>, timeout?: number, timeoutMessage: string = ''): Promise<T> {
     if (timeout) {
       this._timeout = timeout;
       this._deadline = timeout ? monotonicTime() + timeout : 0;
@@ -105,7 +105,7 @@ export class ProgressController {
       },
     };
 
-    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
+    const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded. ${timeoutMessage}`);
     const timer = setTimeout(() => this._forceAbort(timeoutError), progress.timeUntilDeadline());
     const startTime = monotonicTime();
     try {
@@ -168,4 +168,5 @@ function formatLogRecording(log: string[]): string {
   return `\n${'='.repeat(leftLength)}${header}${'='.repeat(rightLength)}\n${log.join('\n')}\n${'='.repeat(headerLength)}`;
 }
 
-class AbortedError extends Error {}
+class AbortedError extends Error {
+}

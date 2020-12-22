@@ -18,12 +18,24 @@ The default value can be changed by using the
 [`method: Page.setDefaultNavigationTimeout`]() or
 [`method: Page.setDefaultTimeout`]() methods.
 
+## navigation-timeoutMessage
+
+- `timeoutMessage` <[string]>
+
+Additional message to be appended to [TimeoutError].
+
 ## wait-for-timeout
 
 - `timeout` <[number]>
 
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
 value can be changed by using the [`method: BrowserContext.setDefaultTimeout`]().
+
+## wait-for-timeoutMessage
+
+- `timeoutMessage` <[string]>
+
+Additional message to be appended to [TimeoutError].
 
 ## input-timeout
 
@@ -32,6 +44,12 @@ value can be changed by using the [`method: BrowserContext.setDefaultTimeout`]()
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: BrowserContext.setDefaultTimeout`]() or
 [`method: Page.setDefaultTimeout`]() methods.
+
+## input-timeoutMessage
+
+- `timeoutMessage` <[string]>
+
+Additional message to be appended to [TimeoutError].
 
 ## input-no-wait-after
 

@@ -27,13 +27,21 @@ import { Page } from './page';
 import { EventEmitter } from 'events';
 import { Waiter } from './waiter';
 import { Events } from './events';
-import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kLifecycleEvents } from './types';
+import {
+  LifecycleEvent,
+  URLMatch,
+  SelectOption,
+  SelectOptionOptions,
+  FilePayload,
+  WaitForFunctionOptions,
+  kLifecycleEvents,
+  TimeoutOptions
+} from './types';
 import { urlMatches } from './clientHelper';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
-export type WaitForNavigationOptions = {
-  timeout?: number,
+export type WaitForNavigationOptions = TimeoutOptions & {
   waitUntil?: LifecycleEvent,
   url?: URLMatch,
 };
@@ -98,13 +106,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  private _setupNavigationWaiter(options: { timeout?: number }): Waiter {
+  private _setupNavigationWaiter(options: TimeoutOptions): Waiter {
     const waiter = new Waiter();
     waiter.rejectOnEvent(this._page!, Events.Page.Close, new Error('Navigation failed because page was closed!'));
     waiter.rejectOnEvent(this._page!, Events.Page.Crash, new Error('Navigation failed because page crashed!'));
     waiter.rejectOnEvent<Frame>(this._page!, Events.Page.FrameDetached, new Error('Navigating frame was detached!'), frame => frame === this);
     const timeout = this._page!._timeoutSettings.navigationTimeout(options);
-    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded.`);
+    waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded. ${options.timeoutMessage || ''}`);
 
     return waiter;
   }
@@ -144,7 +152,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async waitForLoadState(state: LifecycleEvent = 'load', options: { timeout?: number } = {}): Promise<void> {
+  async waitForLoadState(state: LifecycleEvent = 'load', options: TimeoutOptions = {}): Promise<void> {
     state = verifyLoadState('state', state);
     if (this._loadStates.has(state))
       return;

@@ -589,6 +589,7 @@ Event name, same one would pass into `browserContext.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -980,6 +981,8 @@ Shortcut for main frame's [`method: Frame.check`]().
 
 ### option: Page.check.timeout = %%-input-timeout-%%
 
+### option: Page.check.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.click
 
 This method clicks an element matching [`param: selector`]() by performing the following steps:
@@ -1011,6 +1014,8 @@ Shortcut for main frame's [`method: Frame.click`]().
 ### option: Page.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.click.timeout = %%-input-timeout-%%
+
+### option: Page.click.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Page.close
 
@@ -1077,6 +1082,8 @@ Shortcut for main frame's [`method: Frame.dblclick`]().
 
 ### option: Page.dblclick.timeout = %%-input-timeout-%%
 
+### option: Page.dblclick.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.dispatchEvent
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click`
@@ -1121,6 +1128,8 @@ DOM event type: `"click"`, `"dragstart"`, etc.
 Optional event-specific initialization properties.
 
 ### option: Page.dispatchEvent.timeout = %%-input-timeout-%%
+
+### option: Page.dispatchEvent.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Page.emulateMedia
 
@@ -1406,6 +1415,8 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Page.fill.timeout = %%-input-timeout-%%
 
+### option: Page.fill.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.focus
 
 This method fetches an element with [`param: selector`]() and focuses it. If there's no element matching [`param:
@@ -1416,6 +1427,8 @@ Shortcut for main frame's [`method: Frame.focus`]().
 ### param: Page.focus.selector = %%-input-selector-%%
 
 ### option: Page.focus.timeout = %%-input-timeout-%%
+
+### option: Page.focus.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## method: Page.frame
 - returns: <[null]|[Frame]>
@@ -1456,6 +1469,8 @@ Attribute name to get the value for.
 
 ### option: Page.getAttribute.timeout = %%-input-timeout-%%
 
+### option: Page.getAttribute.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.goBack
 - returns: <[null]|[Response]>
 
@@ -1465,6 +1480,8 @@ last redirect. If can not go back, returns `null`.
 Navigate to the previous page in history.
 
 ### option: Page.goBack.timeout = %%-navigation-timeout-%%
+
+### option: Page.goBack.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Page.goBack.waitUntil = %%-navigation-wait-until-%%
 
@@ -1477,6 +1494,8 @@ last redirect. If can not go forward, returns `null`.
 Navigate to the next page in history.
 
 ### option: Page.goForward.timeout = %%-navigation-timeout-%%
+
+### option: Page.goForward.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 
@@ -1511,6 +1530,8 @@ URL to navigate page to. The url should include scheme, e.g. `https://`.
 
 ### option: Page.goto.timeout = %%-navigation-timeout-%%
 
+### option: Page.goto.timeoutMessage = %%-navigation-timeoutMessage-%%
+
 ### option: Page.goto.waitUntil = %%-navigation-wait-until-%%
 
 ### option: Page.goto.referer
@@ -1543,6 +1564,8 @@ Shortcut for main frame's [`method: Frame.hover`]().
 
 ### option: Page.hover.timeout = %%-input-timeout-%%
 
+### option: Page.hover.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.innerHTML
 - returns: <[string]>
 
@@ -1552,6 +1575,8 @@ Returns `element.innerHTML`.
 
 ### option: Page.innerHTML.timeout = %%-input-timeout-%%
 
+### option: Page.innerHTML.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.innerText
 - returns: <[string]>
 
@@ -1560,6 +1585,8 @@ Returns `element.innerText`.
 ### param: Page.innerText.selector = %%-input-selector-%%
 
 ### option: Page.innerText.timeout = %%-input-timeout-%%
+
+### option: Page.innerText.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## method: Page.isClosed
 - returns: <[boolean]>
@@ -1760,6 +1787,8 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: Page.press.timeout = %%-input-timeout-%%
 
+### option: Page.press.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.reload
 - returns: <[null]|[Response]>
 
@@ -1767,6 +1796,8 @@ Returns the main resource response. In case of multiple redirects, the navigatio
 last redirect.
 
 ### option: Page.reload.timeout = %%-navigation-timeout-%%
+
+### option: Page.reload.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Page.reload.waitUntil = %%-navigation-wait-until-%%
 
@@ -1859,6 +1890,8 @@ Defaults to `false`.
 
 ### option: Page.screenshot.timeout = %%-input-timeout-%%
 
+### option: Page.screenshot.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.selectOption
 - returns: <[Array]<[string]>>
 
@@ -1897,6 +1930,8 @@ is considered matching if all specified properties match.
 
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 
+### option: Page.selectOption.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.setContent
 
 ### param: Page.setContent.html
@@ -1905,6 +1940,8 @@ is considered matching if all specified properties match.
 HTML markup to assign to the page.
 
 ### option: Page.setContent.timeout = %%-navigation-timeout-%%
+
+### option: Page.setContent.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Page.setContent.waitUntil = %%-navigation-wait-until-%%
 
@@ -1964,6 +2001,8 @@ are resolved relative to the the current working directory. For empty array, cle
 
 ### option: Page.setInputFiles.timeout = %%-input-timeout-%%
 
+### option: Page.setInputFiles.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.setViewportSize
 
 In the case of multiple pages in a single browser, each page can have its own viewport size. However, [`method:
@@ -2014,6 +2053,8 @@ Shortcut for main frame's [`method: Frame.tap`]().
 
 ### option: Page.tap.timeout = %%-input-timeout-%%
 
+### option: Page.tap.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.textContent
 - returns: <[null]|[string]>
 
@@ -2022,6 +2063,8 @@ Returns `element.textContent`.
 ### param: Page.textContent.selector = %%-input-selector-%%
 
 ### option: Page.textContent.timeout = %%-input-timeout-%%
+
+### option: Page.textContent.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Page.title
 - returns: <[string]>
@@ -2061,6 +2104,8 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Page.type.timeout = %%-input-timeout-%%
 
+### option: Page.type.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Page.uncheck
 
 This method unchecks an element matching [`param: selector`]() by performing the following steps:
@@ -2084,6 +2129,8 @@ Shortcut for main frame's [`method: Frame.uncheck`]().
 ### option: Page.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.uncheck.timeout = %%-input-timeout-%%
+
+### option: Page.uncheck.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Page.unroute
 
@@ -2132,6 +2179,7 @@ Event name, same one would pass into `page.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -2183,6 +2231,8 @@ would be executed. Defaults to `raf`.
 
 ### option: Page.waitForFunction.timeout = %%-wait-for-timeout-%%
 
+### option: Page.waitForFunction.timeoutMessage = %%-wait-for-timeoutMessage-%%
+
 ## async method: Page.waitForLoadState
 
 Returns when the required load state has been reached.
@@ -2217,6 +2267,8 @@ method resolves immediately. Optional.
 
 ### option: Page.waitForLoadState.timeout = %%-navigation-timeout-%%
 
+### option: Page.waitForLoadState.timeoutMessage = %%-navigation-timeoutMessage-%%
+
 ## async method: Page.waitForNavigation
 - returns: <[null]|[Response]>
 
@@ -2241,6 +2293,8 @@ considered a navigation.
 Shortcut for main frame's [`method: Frame.waitForNavigation`]().
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
+
+### option: Page.waitForNavigation.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Page.waitForNavigation.url
 - `url` <[string]|[RegExp]|[Function]>
@@ -2269,8 +2323,9 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 
 Request URL string, regex or predicate receiving [Request] object.
 
-### option: Page.waitForRequest.timeout
-- `timeout` <[number]>
+### option: Page.waitForRequest.timeout = %%-navigation-timeout-%%
+
+### option: Page.waitForRequest.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`]() method.
@@ -2291,8 +2346,9 @@ return finalResponse.ok();
 
 Request URL string, regex or predicate receiving [Response] object.
 
-### option: Page.waitForResponse.timeout
-- `timeout` <[number]>
+### option: Page.waitForResponse.timeout = %%-navigation-timeout-%%
+
+### option: Page.waitForResponse.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`]() or [`method: Page.setDefaultTimeout`]() methods.
@@ -2332,6 +2388,8 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 ### option: Page.waitForSelector.state = %%-wait-for-selector-state-%%
 
 ### option: Page.waitForSelector.timeout = %%-input-timeout-%%
+
+### option: Page.waitForSelector.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Page.waitForTimeout
 
@@ -2534,6 +2592,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.check.timeout = %%-input-timeout-%%
 
+### option: Frame.check.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## method: Frame.childFrames
 - returns: <[Array]<[Frame]>>
 
@@ -2566,6 +2626,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.click.timeout = %%-input-timeout-%%
+
+### option: Frame.click.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.content
 - returns: <[string]>
@@ -2601,6 +2663,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.dblclick.timeout = %%-input-timeout-%%
+
+### option: Frame.dblclick.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.dispatchEvent
 
@@ -2646,6 +2710,8 @@ DOM event type: `"click"`, `"dragstart"`, etc.
 Optional event-specific initialization properties.
 
 ### option: Frame.dispatchEvent.timeout = %%-input-timeout-%%
+
+### option: Frame.dispatchEvent.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.evaluate
 - returns: <[Serializable]>
@@ -2751,6 +2817,8 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: Frame.fill.timeout = %%-input-timeout-%%
 
+### option: Frame.fill.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.focus
 
 This method fetches an element with [`param: selector`]() and focuses it. If there's no element matching [`param:
@@ -2759,6 +2827,8 @@ selector`](), the method waits until a matching element appears in the DOM.
 ### param: Frame.focus.selector = %%-input-selector-%%
 
 ### option: Frame.focus.timeout = %%-input-timeout-%%
+
+### option: Frame.focus.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.frameElement
 - returns: <[ElementHandle]>
@@ -2790,6 +2860,8 @@ Attribute name to get the value for.
 
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 
+### option: Frame.getAttribute.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.goto
 - returns: <[null]|[Response]>
 
@@ -2818,6 +2890,8 @@ issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
 URL to navigate frame to. The url should include scheme, e.g. `https://`.
 
 ### option: Frame.goto.timeout = %%-navigation-timeout-%%
+
+### option: Frame.goto.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Frame.goto.waitUntil = %%-navigation-wait-until-%%
 
@@ -2849,6 +2923,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.hover.timeout = %%-input-timeout-%%
 
+### option: Frame.hover.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.innerHTML
 - returns: <[string]>
 
@@ -2858,6 +2934,8 @@ Returns `element.innerHTML`.
 
 ### option: Frame.innerHTML.timeout = %%-input-timeout-%%
 
+### option: Frame.innerHTML.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.innerText
 - returns: <[string]>
 
@@ -2866,6 +2944,8 @@ Returns `element.innerText`.
 ### param: Frame.innerText.selector = %%-input-selector-%%
 
 ### option: Frame.innerText.timeout = %%-input-timeout-%%
+
+### option: Frame.innerText.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## method: Frame.isDetached
 - returns: <[boolean]>
@@ -2928,6 +3008,8 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: Frame.press.timeout = %%-input-timeout-%%
 
+### option: Frame.press.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.selectOption
 - returns: <[Array]<[string]>>
 
@@ -2963,6 +3045,8 @@ is considered matching if all specified properties match.
 
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
 
+### option: Frame.selectOption.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.setContent
 
 ### param: Frame.setContent.html
@@ -2971,6 +3055,8 @@ is considered matching if all specified properties match.
 HTML markup to assign to the page.
 
 ### option: Frame.setContent.timeout = %%-navigation-timeout-%%
+
+### option: Frame.setContent.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Frame.setContent.waitUntil = %%-navigation-wait-until-%%
 
@@ -2989,6 +3075,8 @@ are resolved relative to the the current working directory. For empty array, cle
 ### option: Frame.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.setInputFiles.timeout = %%-input-timeout-%%
+
+### option: Frame.setInputFiles.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.tap
 
@@ -3016,6 +3104,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: Frame.tap.timeout = %%-input-timeout-%%
 
+### option: Frame.tap.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.textContent
 - returns: <[null]|[string]>
 
@@ -3024,6 +3114,8 @@ Returns `element.textContent`.
 ### param: Frame.textContent.selector = %%-input-selector-%%
 
 ### option: Frame.textContent.timeout = %%-input-timeout-%%
+
+### option: Frame.textContent.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.title
 - returns: <[string]>
@@ -3058,6 +3150,8 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: Frame.type.timeout = %%-input-timeout-%%
 
+### option: Frame.type.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: Frame.uncheck
 
 This method checks an element matching [`param: selector`]() by performing the following steps:
@@ -3079,6 +3173,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Frame.uncheck.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Frame.uncheck.timeout = %%-input-timeout-%%
+
+### option: Frame.uncheck.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## method: Frame.url
 - returns: <[string]>
@@ -3131,6 +3227,8 @@ would be executed. Defaults to `raf`.
 
 ### option: Frame.waitForFunction.timeout = %%-wait-for-timeout-%%
 
+### option: Frame.waitForFunction.timeoutMessage = %%-wait-for-timeoutMessage-%%
+
 ## async method: Frame.waitForLoadState
 
 Waits for the required load state to be reached.
@@ -3154,6 +3252,8 @@ method returns immediately. Optional.
 
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
 
+### option: Page.waitForLoadState.timeoutMessage = %%-navigation-timeoutMessage-%%
+
 ## async method: Frame.waitForNavigation
 - returns: <[null]|[Response]>
 
@@ -3175,6 +3275,8 @@ const [response] = await Promise.all([
 considered a navigation.
 
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
+
+### option: Frame.waitForNavigation.timeoutMessage = %%-navigation-timeoutMessage-%%
 
 ### option: Frame.waitForNavigation.url
 - `url` <[string]|[RegExp]|[Function]>
@@ -3218,6 +3320,8 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 ### option: Frame.waitForSelector.state = %%-wait-for-selector-state-%%
 
 ### option: Frame.waitForSelector.timeout = %%-input-timeout-%%
+
+### option: Frame.waitForSelector.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: Frame.waitForTimeout
 
@@ -3392,6 +3496,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.check.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.check.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.click
 
 This method clicks the element by performing the following steps:
@@ -3420,6 +3526,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.click.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: ElementHandle.click.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.click.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.contentFrame
 - returns: <[null]|[Frame]>
@@ -3454,6 +3562,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.dblclick.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: ElementHandle.dblclick.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.dblclick.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.dispatchEvent
 
@@ -3511,6 +3621,8 @@ Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ### option: ElementHandle.fill.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.fill.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.focus
 
 Calls [focus](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/focus) on the element.
@@ -3545,6 +3657,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.hover.force = %%-input-force-%%
 
 ### option: ElementHandle.hover.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.hover.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.innerHTML
 - returns: <[string]>
@@ -3597,6 +3711,8 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 ### option: ElementHandle.press.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.press.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.screenshot
 - returns: <[Buffer]>
 
@@ -3630,6 +3746,8 @@ Defaults to `false`.
 
 ### option: ElementHandle.screenshot.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.screenshot.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.scrollIntoViewIfNeeded
 
 This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is
@@ -3640,6 +3758,8 @@ Throws when ```elementHandle``` does not point to an element
 [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 ### option: ElementHandle.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.scrollIntoViewIfNeeded.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.selectOption
 - returns: <[Array]<[string]>>
@@ -3677,12 +3797,16 @@ is considered matching if all specified properties match.
 
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.selectOption.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.selectText
 
 This method waits for [actionability](./actionability.md) checks, then focuses the element and selects all its text
 content.
 
 ### option: ElementHandle.selectText.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.selectText.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.setInputFiles
 
@@ -3697,6 +3821,8 @@ are resolved relative to the the current working directory. For empty array, cle
 ### option: ElementHandle.setInputFiles.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: ElementHandle.setInputFiles.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.setInputFiles.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.tap
 
@@ -3722,6 +3848,8 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.tap.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: ElementHandle.tap.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.tap.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.textContent
 - returns: <[null]|[string]>
@@ -3764,6 +3892,8 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ### option: ElementHandle.type.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.type.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.uncheck
 
 This method checks the element by performing the following steps:
@@ -3785,6 +3915,8 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.uncheck.timeout = %%-input-timeout-%%
 
+### option: ElementHandle.uncheck.timeoutMessage = %%-input-timeoutMessage-%%
+
 ## async method: ElementHandle.waitForElementState
 
 Returns the element satisfies the [`param: state`]().
@@ -3805,6 +3937,8 @@ If the element does not satisfy the condition for the [`option: timeout`]() mill
 A state to wait for, see below for more details.
 
 ### option: ElementHandle.waitForElementState.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.waitForElementState.timeoutMessage = %%-input-timeoutMessage-%%
 
 ## async method: ElementHandle.waitForSelector
 - returns: <[null]|[ElementHandle]>
@@ -3831,6 +3965,8 @@ const span = await div.waitForSelector('span', { state: 'attached' });
 ### option: ElementHandle.waitForSelector.state = %%-wait-for-selector-state-%%
 
 ### option: ElementHandle.waitForSelector.timeout = %%-input-timeout-%%
+
+### option: ElementHandle.waitForSelector.timeoutMessage = %%-input-timeoutMessage-%%
 
 # class: JSHandle
 
@@ -4146,6 +4282,8 @@ they are resolved relative to the the current working directory. For empty array
 ### option: FileChooser.setFiles.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: FileChooser.setFiles.timeout = %%-input-timeout-%%
+
+### option: FileChooser.setFiles.timeoutMessage = %%-input-timeoutMessage-%%
 
 # class: Keyboard
 
@@ -4842,6 +4980,7 @@ Event name, same one would pass into `webSocket.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -5186,6 +5325,11 @@ Logger sink for Playwright logging.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
+### option: BrowserType.launch.timeoutMessage
+- `timeoutMessage` <[string]>
+
+additional message to be appended to [TimeoutError].
+
 ### option: BrowserType.launch.env
 - `env` <[Object]<[string], [string]|[number]|[boolean]>>
 
@@ -5284,6 +5428,11 @@ Close the browser process on SIGHUP. Defaults to `true`.
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
+
+### option: BrowserType.launchPersistentContext.timeoutMessage
+- `timeoutMessage` <[string]>
+
+additional message to be appended to [TimeoutError].
 
 ### option: BrowserType.launchPersistentContext.env
 - `env` <[Object]<[string], [string]|[number]|[boolean]>>
@@ -5408,6 +5557,11 @@ Logger sink for Playwright logging.
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
+
+### option: BrowserType.launchServer.timeoutMessage
+- `timeoutMessage` <[string]>
+
+additional message to be appended to [TimeoutError].
 
 ### option: BrowserType.launchServer.env
 - `env` <[Object]<[string], [string]|[number]|[boolean]>>

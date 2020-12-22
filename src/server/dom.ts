@@ -214,7 +214,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async scrollIntoViewIfNeeded(options: types.TimeoutOptions = {}) {
     return runAbortableTask(
         progress => this._waitAndScrollIntoViewIfNeeded(progress),
-        this._page._timeoutSettings.timeout(options));
+        this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   private async _clickablePoint(): Promise<types.Point | 'error:notvisible' | 'error:notinviewport'> {
@@ -392,7 +392,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._hover(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -403,7 +403,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._click(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   _click(progress: Progress, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -414,7 +414,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._dblclick(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -425,7 +425,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._tap(progress, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -436,7 +436,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._selectOption(progress, elements, values, options);
       return throwRetargetableDOMError(result);
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions): Promise<string[] | 'error:notconnected'> {
@@ -453,7 +453,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._fill(progress, value, options);
       assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _fill(progress: Progress, value: string, options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -491,14 +491,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const result = throwFatalDOMError(await pollHandler.finish());
       assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async setInputFiles(controller: ProgressController, files: types.FilePayload[], options: types.NavigatingActionWaitOptions) {
     return controller.run(async progress => {
       const result = await this._setInputFiles(progress, files, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _setInputFiles(progress: Progress, files: types.FilePayload[], options: types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -539,7 +539,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._type(progress, text, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _type(progress: Progress, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -558,7 +558,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._press(progress, key, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _press(progress: Progress, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -577,14 +577,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return controller.run(async progress => {
       const result = await this._setChecked(progress, true, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async uncheck(controller: ProgressController, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return controller.run(async progress => {
       const result = await this._setChecked(progress, false, options);
       return assertDone(throwRetargetableDOMError(result));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _setChecked(progress: Progress, state: boolean, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
@@ -605,7 +605,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async screenshot(options: types.ElementScreenshotOptions = {}): Promise<Buffer> {
     return runAbortableTask(
         progress => this._page._screenshotter.screenshotElement(progress, this, options),
-        this._page._timeoutSettings.timeout(options));
+        this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async $(selector: string): Promise<ElementHandle | null> {
@@ -677,7 +677,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return;
       }
       throw new Error(`state: expected one of (visible|hidden|stable|enabled)`);
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async waitForSelector(selector: string, options: types.WaitForElementOptions = {}): Promise<ElementHandle<Element> | null> {
@@ -698,7 +698,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       const handle = result.asElement() as ElementHandle<Element>;
       return handle._adoptTo(await this._context.frame._mainContext());
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _adoptTo(context: FrameExecutionContext): Promise<ElementHandle<T>> {

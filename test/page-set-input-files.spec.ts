@@ -125,23 +125,36 @@ it('should work with CSP', async ({page, server}) => {
 });
 
 it('should respect timeout', async ({page, playwright}) => {
-  let error = null;
-  await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+  const event = 'filechooser';
+
+  const error = await page.waitForEvent(event, {timeout, timeoutMessage}).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutMessage}`);
 });
 
 it('should respect default timeout when there is no custom timeout', async ({page, playwright}) => {
-  page.setDefaultTimeout(1);
-  let error = null;
-  await page.waitForEvent('filechooser').catch(e => error = e);
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+  const event = 'filechooser';
+
+  page.setDefaultTimeout(timeout);
+  const error = await page.waitForEvent(event, {timeoutMessage}).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutMessage}`);
 });
 
 it('should prioritize exact timeout over default timeout', async ({page, playwright}) => {
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+  const event = 'filechooser';
+
   page.setDefaultTimeout(0);
   let error = null;
-  await page.waitForEvent('filechooser', {timeout: 1}).catch(e => error = e);
+  await page.waitForEvent(event, {timeout, timeoutMessage}).catch(e => error = e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutMessage}`);
 });
 
 it('should work with no timeout', async ({page, server}) => {
@@ -201,15 +214,13 @@ it('should detect mime type', async ({page, server}) => {
     page.click('input[type=submit]'),
     server.waitForRequest('/upload'),
   ]);
-  const { file1, file2 } = files;
+  const {file1, file2} = files;
   expect(file1.name).toBe('file-to-upload.txt');
   expect(file1.type).toBe('text/plain');
-  expect(fs.readFileSync(file1.path).toString()).toBe(
-      fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString());
+  expect(fs.readFileSync(file1.path).toString()).toBe(fs.readFileSync(path.join(__dirname, '/assets/file-to-upload.txt')).toString());
   expect(file2.name).toBe('pptr.png');
   expect(file2.type).toBe('image/png');
-  expect(fs.readFileSync(file2.path).toString()).toBe(
-      fs.readFileSync(path.join(__dirname, '/assets/pptr.png')).toString());
+  expect(fs.readFileSync(file2.path).toString()).toBe(fs.readFileSync(path.join(__dirname, '/assets/pptr.png')).toString());
 });
 
 it('should be able to read selected file', async ({page, server}) => {

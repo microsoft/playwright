@@ -65,7 +65,7 @@ export abstract class BrowserType {
     controller.setLogName('browser');
     const browser = await controller.run(progress => {
       return this._innerLaunch(progress, options, undefined, helper.debugProtocolLogger(protocolLogger)).catch(e => { throw this._rewriteStartupError(e); });
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.timeout(options), options.timeoutMessage);
     return browser;
   }
 

@@ -223,69 +223,81 @@ it('should fail when main resources failed to load', async ({page, isChromium, i
 });
 
 it('should fail when exceeding maximum navigation timeout', async ({page, server, playwright}) => {
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
-  await page.goto(server.PREFIX + '/empty.html', {timeout: 1}).catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  await page.goto(server.PREFIX + '/empty.html', {timeout, timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.goto: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should fail when exceeding default maximum navigation timeout', async ({page, server, playwright}) => {
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
   page.context().setDefaultNavigationTimeout(2);
-  page.setDefaultNavigationTimeout(1);
-  await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  page.setDefaultNavigationTimeout(timeout);
+  await page.goto(server.PREFIX + '/empty.html', {timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.goto: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should fail when exceeding browser context navigation timeout', async ({page, server, playwright}) => {
+  const timeout = 2;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
-  page.context().setDefaultNavigationTimeout(2);
-  await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
+  page.context().setDefaultNavigationTimeout(timeout);
+  await page.goto(server.PREFIX + '/empty.html', {timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.goto: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should fail when exceeding default maximum timeout', async ({page, server, playwright}) => {
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
   page.context().setDefaultTimeout(2);
-  page.setDefaultTimeout(1);
-  await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  page.setDefaultTimeout(timeout);
+  await page.goto(server.PREFIX + '/empty.html', {timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.goto: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should fail when exceeding browser context timeout', async ({page, server, playwright}) => {
+  const timeout = 2;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
-  page.context().setDefaultTimeout(2);
-  await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 2ms exceeded.');
+  page.context().setDefaultTimeout(timeout);
+  await page.goto(server.PREFIX + '/empty.html', {timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.goto: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
 it('should prioritize default navigation timeout over default timeout', async ({page, server, playwright}) => {
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
   // Hang for request to the empty.html
   server.setRoute('/empty.html', (req, res) => { });
   let error = null;
   page.setDefaultTimeout(0);
-  page.setDefaultNavigationTimeout(1);
-  await page.goto(server.PREFIX + '/empty.html').catch(e => error = e);
-  expect(error.message).toContain('page.goto: Timeout 1ms exceeded.');
+  page.setDefaultNavigationTimeout(timeout);
+  await page.goto(server.PREFIX + '/empty.html', {timeoutMessage}).catch(e => error = e);
+  expect(error.message).toContain(`page.goto: Timeout ${timeout}ms exceeded. ${timeoutMessage}`);
   expect(error.message).toContain(server.PREFIX + '/empty.html');
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });

@@ -147,6 +147,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     handleSIGTERM: tOptional(tBoolean),
     handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     env: tOptional(tArray(tType('NameValue'))),
     headless: tOptional(tBoolean),
     devtools: tOptional(tBoolean),
@@ -171,6 +172,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     handleSIGTERM: tOptional(tBoolean),
     handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     env: tOptional(tArray(tType('NameValue'))),
     headless: tOptional(tBoolean),
     devtools: tOptional(tBoolean),
@@ -365,19 +367,23 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.PageGoBackParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
   });
   scheme.PageGoForwardParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
   });
   scheme.PageOpenerParams = tOptional(tObject({}));
   scheme.PageReloadParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
   });
   scheme.PageScreenshotParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
@@ -496,6 +502,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameClickParams = tObject({
     selector: tString,
@@ -507,6 +514,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     clickCount: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameContentParams = tOptional(tObject({}));
   scheme.FrameDblclickParams = tObject({
@@ -518,12 +526,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     delay: tOptional(tNumber),
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameDispatchEventParams = tObject({
     selector: tString,
     type: tString,
     eventInit: tType('SerializedArgument'),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameEvaluateExpressionParams = tObject({
     expression: tString,
@@ -541,21 +551,25 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     value: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.FrameFocusParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameFrameElementParams = tOptional(tObject({}));
   scheme.FrameGetAttributeParams = tObject({
     selector: tString,
     name: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameGotoParams = tObject({
     url: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
     referer: tOptional(tString),
   });
@@ -565,14 +579,17 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
     position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameInnerHTMLParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameInnerTextParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FramePressParams = tObject({
     selector: tString,
@@ -580,6 +597,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     delay: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameQuerySelectorParams = tObject({
     selector: tString,
@@ -596,11 +614,13 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       index: tOptional(tNumber),
     }))),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.FrameSetContentParams = tObject({
     html: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     waitUntil: tOptional(tEnum(['load', 'domcontentloaded', 'networkidle'])),
   });
   scheme.FrameSetInputFilesParams = tObject({
@@ -611,6 +631,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       buffer: tBinary,
     })),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.FrameTapParams = tObject({
@@ -620,10 +641,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
     position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameTextContentParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameTitleParams = tOptional(tObject({}));
   scheme.FrameTypeParams = tObject({
@@ -632,23 +655,27 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     delay: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameUncheckParams = tObject({
     selector: tString,
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.FrameWaitForFunctionParams = tObject({
     expression: tString,
     isFunction: tBoolean,
     arg: tType('SerializedArgument'),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     pollingInterval: tOptional(tNumber),
   });
   scheme.FrameWaitForSelectorParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });
   scheme.FrameExtendInjectedScriptParams = tObject({
@@ -704,6 +731,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleClickParams = tObject({
     force: tOptional(tBoolean),
@@ -714,6 +742,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     clickCount: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleContentFrameParams = tOptional(tObject({}));
   scheme.ElementHandleDblclickParams = tObject({
@@ -724,6 +753,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     delay: tOptional(tNumber),
     button: tOptional(tEnum(['left', 'right', 'middle'])),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleDispatchEventParams = tObject({
     type: tString,
@@ -732,6 +762,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.ElementHandleFillParams = tObject({
     value: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.ElementHandleFocusParams = tOptional(tObject({}));
@@ -743,6 +774,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
     position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
   scheme.ElementHandleInnerTextParams = tOptional(tObject({}));
@@ -751,6 +783,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     key: tString,
     delay: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.ElementHandleQuerySelectorParams = tObject({
@@ -761,12 +794,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleScreenshotParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     type: tOptional(tEnum(['png', 'jpeg'])),
     quality: tOptional(tNumber),
     omitBackground: tOptional(tBoolean),
   });
   scheme.ElementHandleScrollIntoViewIfNeededParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleSelectOptionParams = tObject({
     elements: tOptional(tArray(tChannel('ElementHandle'))),
@@ -776,10 +811,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       index: tOptional(tNumber),
     }))),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.ElementHandleSelectTextParams = tObject({
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleSetInputFilesParams = tObject({
     files: tArray(tObject({
@@ -788,6 +825,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       buffer: tBinary,
     })),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     noWaitAfter: tOptional(tBoolean),
   });
   scheme.ElementHandleTapParams = tObject({
@@ -796,6 +834,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'Meta', 'Shift']))),
     position: tOptional(tType('Point')),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleTextContentParams = tOptional(tObject({}));
   scheme.ElementHandleTypeParams = tObject({
@@ -803,19 +842,23 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     delay: tOptional(tNumber),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleUncheckParams = tObject({
     force: tOptional(tBoolean),
     noWaitAfter: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleWaitForElementStateParams = tObject({
     state: tEnum(['visible', 'hidden', 'stable', 'enabled', 'disabled']),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElementHandleWaitForSelectorParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
   });
   scheme.RequestResponseParams = tOptional(tObject({}));
@@ -882,6 +925,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     handleSIGTERM: tOptional(tBoolean),
     handleSIGHUP: tOptional(tBoolean),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.ElectronApplicationNewBrowserWindowParams = tObject({
     arg: tType('SerializedArgument'),
@@ -909,44 +953,52 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tType('AndroidSelector'),
     state: tOptional(tEnum(['gone'])),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceFillParams = tObject({
     selector: tType('AndroidSelector'),
     text: tString,
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceTapParams = tObject({
     selector: tType('AndroidSelector'),
     duration: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceDragParams = tObject({
     selector: tType('AndroidSelector'),
     dest: tType('Point'),
     speed: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceFlingParams = tObject({
     selector: tType('AndroidSelector'),
     direction: tEnum(['up', 'down', 'left', 'right']),
     speed: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceLongTapParams = tObject({
     selector: tType('AndroidSelector'),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDevicePinchCloseParams = tObject({
     selector: tType('AndroidSelector'),
     percent: tNumber,
     speed: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDevicePinchOpenParams = tObject({
     selector: tType('AndroidSelector'),
     percent: tNumber,
     speed: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceScrollParams = tObject({
     selector: tType('AndroidSelector'),
@@ -954,6 +1006,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     percent: tNumber,
     speed: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceSwipeParams = tObject({
     selector: tType('AndroidSelector'),
@@ -961,6 +1014,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     percent: tNumber,
     speed: tOptional(tNumber),
     timeout: tOptional(tNumber),
+    timeoutMessage: tOptional(tString),
   });
   scheme.AndroidDeviceInfoParams = tObject({
     selector: tType('AndroidSelector'),

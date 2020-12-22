@@ -283,6 +283,7 @@ BrowserType:
         handleSIGTERM: boolean?
         handleSIGHUP: boolean?
         timeout: number?
+        timeoutMessage: string?
         env:
           type: array?
           items: NameValue
@@ -317,6 +318,7 @@ BrowserType:
         handleSIGTERM: boolean?
         handleSIGHUP: boolean?
         timeout: number?
+        timeoutMessage: string?
         env:
           type: array?
           items: NameValue
@@ -695,6 +697,7 @@ Page:
     goBack:
       parameters:
         timeout: number?
+        timeoutMessage: string?
         waitUntil:
           type: enum?
           literals:
@@ -707,6 +710,7 @@ Page:
     goForward:
       parameters:
         timeout: number?
+        timeoutMessage: string?
         waitUntil:
           type: enum?
           literals:
@@ -723,6 +727,7 @@ Page:
     reload:
       parameters:
         timeout: number?
+        timeoutMessage: string?
         waitUntil:
           type: enum?
           literals:
@@ -735,6 +740,7 @@ Page:
     screenshot:
       parameters:
         timeout: number?
+        timeoutMessage: string?
         type:
           type: enum?
           literals:
@@ -1057,6 +1063,7 @@ Frame:
         force: boolean?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     click:
       parameters:
@@ -1082,6 +1089,7 @@ Frame:
           - middle
         clickCount: number?
         timeout: number?
+        timeoutMessage: string?
 
     content:
       returns:
@@ -1110,6 +1118,7 @@ Frame:
           - right
           - middle
         timeout: number?
+        timeoutMessage: string?
 
     dispatchEvent:
       parameters:
@@ -1117,6 +1126,7 @@ Frame:
         type: string
         eventInit: SerializedArgument
         timeout: number?
+        timeoutMessage: string?
 
     evaluateExpression:
       parameters:
@@ -1149,12 +1159,14 @@ Frame:
         selector: string
         value: string
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
 
     focus:
       parameters:
         selector: string
         timeout: number?
+        timeoutMessage: string?
 
     frameElement:
       returns:
@@ -1165,6 +1177,7 @@ Frame:
         selector: string
         name: string
         timeout: number?
+        timeoutMessage: string?
       returns:
         value: string?
 
@@ -1172,6 +1185,7 @@ Frame:
       parameters:
         url: string
         timeout: number?
+        timeoutMessage: string?
         waitUntil:
           type: enum?
           literals:
@@ -1197,11 +1211,13 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        timeoutMessage: string?
 
     innerHTML:
       parameters:
         selector: string
         timeout: number?
+        timeoutMessage: string?
       returns:
         value: string
 
@@ -1209,6 +1225,7 @@ Frame:
       parameters:
         selector: string
         timeout: number?
+        timeoutMessage: string?
       returns:
         value: string
 
@@ -1219,6 +1236,7 @@ Frame:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     querySelector:
       parameters:
@@ -1249,6 +1267,7 @@ Frame:
               label: string?
               index: number?
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
       returns:
         values:
@@ -1259,6 +1278,7 @@ Frame:
       parameters:
         html: string
         timeout: number?
+        timeoutMessage: string?
         waitUntil:
           type: enum?
           literals:
@@ -1278,6 +1298,7 @@ Frame:
               mimeType: string
               buffer: binary
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
 
     tap:
@@ -1296,11 +1317,13 @@ Frame:
             - Shift
         position: Point?
         timeout: number?
+        timeoutMessage: string?
 
     textContent:
       parameters:
         selector: string
         timeout: number?
+        timeoutMessage: string?
       returns:
         value: string?
 
@@ -1315,6 +1338,7 @@ Frame:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     uncheck:
       parameters:
@@ -1322,6 +1346,7 @@ Frame:
         force: boolean?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     waitForFunction:
       parameters:
@@ -1329,6 +1354,7 @@ Frame:
         isFunction: boolean
         arg: SerializedArgument
         timeout: number?
+        timeoutMessage: string?
         # When present, polls on interval. Otherwise, polls on raf.
         pollingInterval: number?
       returns:
@@ -1338,6 +1364,7 @@ Frame:
       parameters:
         selector: string
         timeout: number?
+        timeoutMessage: string?
         state:
           type: enum?
           literals:
@@ -1502,6 +1529,7 @@ ElementHandle:
         force: boolean?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     click:
       parameters:
@@ -1526,6 +1554,7 @@ ElementHandle:
           - middle
         clickCount: number?
         timeout: number?
+        timeoutMessage: string?
 
     contentFrame:
       returns:
@@ -1553,6 +1582,7 @@ ElementHandle:
           - right
           - middle
         timeout: number?
+        timeoutMessage: string?
 
     dispatchEvent:
       parameters:
@@ -1563,6 +1593,7 @@ ElementHandle:
       parameters:
         value: string
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
 
     focus:
@@ -1587,6 +1618,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        timeoutMessage: string?
 
     innerHTML:
       returns:
@@ -1605,6 +1637,7 @@ ElementHandle:
         key: string
         delay: number?
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
 
     querySelector:
@@ -1624,6 +1657,7 @@ ElementHandle:
     screenshot:
       parameters:
         timeout: number?
+        timeoutMessage: string?
         type:
           type: enum?
           literals:
@@ -1637,6 +1671,7 @@ ElementHandle:
     scrollIntoViewIfNeeded:
       parameters:
         timeout: number?
+        timeoutMessage: string?
 
     selectOption:
       parameters:
@@ -1652,6 +1687,7 @@ ElementHandle:
               label: string?
               index: number?
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
       returns:
         values:
@@ -1661,6 +1697,7 @@ ElementHandle:
     selectText:
       parameters:
         timeout: number?
+        timeoutMessage: string?
 
     setInputFiles:
       parameters:
@@ -1673,6 +1710,7 @@ ElementHandle:
               mimeType: string
               buffer: binary
         timeout: number?
+        timeoutMessage: string?
         noWaitAfter: boolean?
 
     tap:
@@ -1690,6 +1728,7 @@ ElementHandle:
             - Shift
         position: Point?
         timeout: number?
+        timeoutMessage: string?
 
     textContent:
       returns:
@@ -1701,12 +1740,14 @@ ElementHandle:
         delay: number?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     uncheck:
       parameters:
         force: boolean?
         noWaitAfter: boolean?
         timeout: number?
+        timeoutMessage: string?
 
     waitForElementState:
       parameters:
@@ -1719,11 +1760,13 @@ ElementHandle:
           - enabled
           - disabled
         timeout: number?
+        timeoutMessage: string?
 
     waitForSelector:
       parameters:
         selector: string
         timeout: number?
+        timeoutMessage: string?
         state:
           type: enum?
           literals:
@@ -2018,6 +2061,7 @@ Electron:
         handleSIGTERM: boolean?
         handleSIGHUP: boolean?
         timeout: number?
+        timeoutMessage: string?
       returns:
         electronApplication: ElectronApplication
 
@@ -2115,18 +2159,21 @@ AndroidDevice:
           literals:
           - gone
         timeout: number?
+        timeoutMessage: string?
 
     fill:
       parameters:
         selector: AndroidSelector
         text: string
         timeout: number?
+        timeoutMessage: string?
 
     tap:
       parameters:
         selector: AndroidSelector
         duration: number?
         timeout: number?
+        timeoutMessage: string?
 
     drag:
       parameters:
@@ -2134,6 +2181,7 @@ AndroidDevice:
         dest: Point
         speed: number?
         timeout: number?
+        timeoutMessage: string?
 
     fling:
       parameters:
@@ -2147,11 +2195,13 @@ AndroidDevice:
           - right
         speed: number?
         timeout: number?
+        timeoutMessage: string?
 
     longTap:
       parameters:
         selector: AndroidSelector
         timeout: number?
+        timeoutMessage: string?
 
     pinchClose:
       parameters:
@@ -2159,6 +2209,7 @@ AndroidDevice:
         percent: number
         speed: number?
         timeout: number?
+        timeoutMessage: string?
 
     pinchOpen:
       parameters:
@@ -2166,6 +2217,7 @@ AndroidDevice:
         percent: number
         speed: number?
         timeout: number?
+        timeoutMessage: string?
 
     scroll:
       parameters:
@@ -2180,6 +2232,7 @@ AndroidDevice:
         percent: number
         speed: number?
         timeout: number?
+        timeoutMessage: string?
 
     swipe:
       parameters:
@@ -2194,6 +2247,7 @@ AndroidDevice:
         percent: number
         speed: number?
         timeout: number?
+        timeoutMessage: string?
 
     info:
       parameters:

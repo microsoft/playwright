@@ -529,7 +529,7 @@ export class Frame extends EventEmitter {
       const response = request ? request._finalRequest().response() : null;
       await this._page._doSlowMo();
       return response;
-    }, this._page._timeoutSettings.navigationTimeout(options));
+    }, this._page._timeoutSettings.navigationTimeout(options), options.timeoutMessage);
   }
 
   async _waitForNavigation(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -616,7 +616,7 @@ export class Frame extends EventEmitter {
       }
       const handle = result.asElement() as dom.ElementHandle<Element>;
       return handle._adoptTo(await this._mainContext());
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async dispatchEvent(selector: string, type: string, eventInit?: Object, options: types.TimeoutOptions = {}): Promise<void> {
@@ -626,7 +626,7 @@ export class Frame extends EventEmitter {
       progress.log(`Dispatching "${type}" event on selector "${selector}"...`);
       // Note: we always dispatch events in the main world.
       await this._scheduleRerunnableTask(progress, 'main', task);
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
     await this._page._doSlowMo();
   }
 
@@ -685,7 +685,7 @@ export class Frame extends EventEmitter {
       }, { html, tag });
       await Promise.all([contentPromise, lifecyclePromise]);
       await this._page._doSlowMo();
-    }, this._page._timeoutSettings.navigationTimeout(options));
+    }, this._page._timeoutSettings.navigationTimeout(options), options.timeoutMessage);
   }
 
   name(): string {
@@ -859,31 +859,31 @@ export class Frame extends EventEmitter {
     action: (progress: Progress, handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     return runAbortableTask(async progress => {
       return this._retryWithProgressIfNotConnected(progress, selector, handle => action(progress, handle));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async click(controller: ProgressController, selector: string, options: types.MouseClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._click(progress, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async dblclick(controller: ProgressController, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._dblclick(progress, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async tap(controller: ProgressController, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._tap(progress, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async fill(controller: ProgressController, selector: string, value: string, options: types.NavigatingActionWaitOptions) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._fill(progress, value, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async focus(selector: string, options: types.TimeoutOptions = {}) {
@@ -897,7 +897,7 @@ export class Frame extends EventEmitter {
     return runAbortableTask(async progress => {
       progress.log(`  retrieving textContent from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async innerText(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
@@ -907,7 +907,7 @@ export class Frame extends EventEmitter {
       progress.log(`  retrieving innerText from "${selector}"`);
       const result = dom.throwFatalDOMError(await this._scheduleRerunnableTask(progress, info.world, task));
       return result.innerText;
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async innerHTML(selector: string, options: types.TimeoutOptions = {}): Promise<string> {
@@ -916,7 +916,7 @@ export class Frame extends EventEmitter {
     return runAbortableTask(async progress => {
       progress.log(`  retrieving innerHTML from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async getAttribute(selector: string, name: string, options: types.TimeoutOptions = {}): Promise<string | null> {
@@ -925,49 +925,49 @@ export class Frame extends EventEmitter {
     return runAbortableTask(async progress => {
       progress.log(`  retrieving attribute "${name}" from "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async hover(controller: ProgressController, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._hover(progress, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async selectOption(controller: ProgressController, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.NavigatingActionWaitOptions = {}): Promise<string[]> {
     return controller.run(async progress => {
       return await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._selectOption(progress, elements, values, options));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async setInputFiles(controller: ProgressController, selector: string, files: types.FilePayload[], options: types.NavigatingActionWaitOptions = {}): Promise<void> {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setInputFiles(progress, files, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async type(controller: ProgressController, selector: string, text: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._type(progress, text, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async press(controller: ProgressController, selector: string, key: string, options: { delay?: number } & types.NavigatingActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._press(progress, key, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async check(controller: ProgressController, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, true, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async uncheck(controller: ProgressController, selector: string, options: types.PointerActionWaitOptions & types.NavigatingActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._setChecked(progress, false, options)));
-    }, this._page._timeoutSettings.timeout(options));
+    }, this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async _waitForFunctionExpression<R>(expression: string, isFunction: boolean, arg: any, options: types.WaitForFunctionOptions = {}): Promise<js.SmartHandle<R>> {
@@ -982,7 +982,7 @@ export class Frame extends EventEmitter {
     }, { predicateBody, polling: options.pollingInterval, arg });
     return runAbortableTask(
         progress => this._scheduleRerunnableHandleTask(progress, 'main', task),
-        this._page._timeoutSettings.timeout(options));
+        this._page._timeoutSettings.timeout(options), options.timeoutMessage);
   }
 
   async title(): Promise<string> {

@@ -30,12 +30,12 @@ export type Headers = { [key: string]: string };
 export type Env = { [key: string]: string | number | boolean | undefined };
 export type URLMatch = string | RegExp | ((url: URL) => boolean);
 
-export type TimeoutOptions = { timeout?: number };
-export type WaitForEventOptions = Function | { predicate?: Function, timeout?: number };
-export type WaitForFunctionOptions = { timeout?: number, polling?: 'raf' | number };
+export type TimeoutOptions = { timeout?: number, timeoutMessage?: string };
+export type WaitForEventOptions = Function | TimeoutOptions & { predicate?: Function };
+export type WaitForFunctionOptions = TimeoutOptions & { polling?: 'raf' | number };
 
 export type SelectOption = { value?: string, label?: string, index?: number };
-export type SelectOptionOptions = { timeout?: number, noWaitAfter?: boolean };
+export type SelectOptionOptions = TimeoutOptions & { noWaitAfter?: boolean };
 export type FilePayload = { name: string, mimeType: string, buffer: Buffer };
 export type StorageState = {
   cookies: channels.NetworkCookie[],
@@ -76,14 +76,14 @@ export type ConnectOptions = {
   timeout?: number,
   logger?: Logger,
 };
-export type LaunchServerOptions = {
+
+export type LaunchServerOptions = TimeoutOptions & FirefoxUserPrefs & {
   executablePath?: string,
   args?: string[],
   ignoreDefaultArgs?: boolean | string[],
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
   env?: Env,
   headless?: boolean,
   devtools?: boolean,
@@ -97,7 +97,7 @@ export type LaunchServerOptions = {
   chromiumSandbox?: boolean,
   port?: number,
   logger?: Logger,
-} & FirefoxUserPrefs;
+};
 
 export type SelectorEngine = {
   /**

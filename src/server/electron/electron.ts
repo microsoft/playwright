@@ -34,14 +34,15 @@ import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 
-export type ElectronLaunchOptionsBase = {
+export type TimeoutOptions = { timeout?: number, timeoutMessage?: string };
+
+export type ElectronLaunchOptionsBase = TimeoutOptions & {
   args?: string[],
   cwd?: string,
   env?: types.EnvArray,
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
   handleSIGHUP?: boolean,
-  timeout?: number,
 };
 
 export interface ElectronPage extends Page {
@@ -201,7 +202,7 @@ export class Electron  {
       app = new ElectronApplication(browser, nodeConnection);
       await app._init();
       return app;
-    }, TimeoutSettings.timeout(options));
+    }, TimeoutSettings.timeout(options), options.timeoutMessage);
   }
 }
 

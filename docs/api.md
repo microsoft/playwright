@@ -745,6 +745,7 @@ Removes a route created with [`browserContext.route(url, handler)`](#browsercont
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Object]>>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy value. Will throw an error if the context closes before the event is fired. Returns the event data value.
@@ -1149,6 +1150,7 @@ Brings page to front (activates tab).
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method checks an element matching `selector` by performing the following steps:
@@ -1177,6 +1179,7 @@ Shortcut for main frame's [`frame.check(selector[, options])`](#framecheckselect
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method clicks an element matching `selector` by performing the following steps:
@@ -1229,6 +1232,7 @@ Browser-specific Coverage implementation, only available for Chromium atm. See [
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method double clicks an element matching `selector` by performing the following steps:
@@ -1250,6 +1254,7 @@ Shortcut for main frame's [`frame.dblclick(selector[, options])`](#framedblclick
 - `eventInit` <[EvaluationArgument]> Optional event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click` is dispatched. This is equivalend to calling [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
@@ -1500,6 +1505,7 @@ const fs = require('fs');
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. If the element matching `selector` is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to clear the input field.
@@ -1512,6 +1518,7 @@ Shortcut for main frame's [`frame.fill(selector, value[, options])`](#framefills
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method waits until a matching element appears in the DOM.
@@ -1544,6 +1551,7 @@ An array of all frames attached to the page.
 - `name` <[string]> Attribute name to get the value for.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[string]>>
 
 Returns element attribute value.
@@ -1551,6 +1559,7 @@ Returns element attribute value.
 #### page.goBack([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -1564,6 +1573,7 @@ Navigate to the previous page in history.
 #### page.goForward([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -1578,6 +1588,7 @@ Navigate to the next page in history.
 - `url` <[string]> URL to navigate page to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -1610,6 +1621,7 @@ Shortcut for main frame's [`frame.goto(url[, options])`](#framegotourl-options)
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method hovers over an element matching `selector` by performing the following steps:
@@ -1627,6 +1639,7 @@ Shortcut for main frame's [`frame.hover(selector[, options])`](#framehoverselect
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[string]>>
 
 Returns `element.innerHTML`.
@@ -1635,6 +1648,7 @@ Returns `element.innerHTML`.
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[string]>>
 
 Returns `element.innerText`.
@@ -1737,6 +1751,7 @@ The `format` options are:
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Focuses the element, and then uses [`keyboard.down(key)`](#keyboarddownkey) and [`keyboard.up(key)`](#keyboardupkey).
@@ -1768,6 +1783,7 @@ await browser.close();
 #### page.reload([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -1822,6 +1838,7 @@ Page routes take precedence over browser context routes (set up with [`browserCo
     - `height` <[number]> height of clipping area
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Buffer]>>
 
 Returns the buffer with the captured screenshot.
@@ -1837,6 +1854,7 @@ Returns the buffer with the captured screenshot.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Array]<[string]>>>
 
 Returns the array of option values that have been successfully selected.
@@ -1861,6 +1879,7 @@ Shortcut for main frame's [`frame.selectOption(selector, values[, options])`](#f
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -1904,6 +1923,7 @@ The extra HTTP headers will be sent with every request the page initiates.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method expects `selector` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
@@ -1939,6 +1959,7 @@ await page.goto('https://example.com');
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method taps an element matching `selector` by performing the following steps:
@@ -1958,6 +1979,7 @@ Shortcut for main frame's [`frame.tap(selector[, options])`](#frametapselector-o
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[string]>>
 
 Returns `element.textContent`.
@@ -1977,6 +1999,7 @@ Returns the page's title. Shortcut for main frame's [`frame.title()`](#frametitl
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send fine-grained keyboard events. To fill values in form fields, use [`page.fill(selector, value[, options])`](#pagefillselector-value-options).
@@ -1996,6 +2019,7 @@ Shortcut for main frame's [`frame.type(selector, text[, options])`](#frametypese
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method unchecks an element matching `selector` by performing the following steps:
@@ -2038,6 +2062,7 @@ Video object associated with this page.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Object]>>
 
 Returns the event data value.
@@ -2050,6 +2075,7 @@ Waits for event to fire and passes its value into the predicate function. Return
 - `options` <[Object]>
   - `polling` <[number]|"raf"> If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[JSHandle]>>
 
 Returns when the `pageFunction` returns a truthy value. It resolves to a JSHandle of the truthy value.
@@ -2085,6 +2111,7 @@ Shortcut for main frame's [`frame.waitForFunction(pageFunction[, arg, options])`
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Returns when the required load state has been reached.
@@ -2110,6 +2137,7 @@ Shortcut for main frame's [`frame.waitForLoadState([state, options])`](#framewai
 #### page.waitForNavigation([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
@@ -2135,7 +2163,8 @@ Shortcut for main frame's [`frame.waitForNavigation([options])`](#framewaitforna
 #### page.waitForRequest(urlOrPredicate[, options])
 - `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Request] object.
 - `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) method.
+  - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Request]>>
 
 Waits for the matching request and returns it.
@@ -2153,7 +2182,8 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 #### page.waitForResponse(urlOrPredicate[, options])
 - `urlOrPredicate` <[string]|[RegExp]|[function]\([Response]\):[boolean]> Request URL string, regex or predicate receiving [Response] object.
 - `options` <[Object]>
-  - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Response]>>
 
 Returns the matched response.
@@ -2173,6 +2203,7 @@ return finalResponse.ok();
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
 Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
@@ -2385,6 +2416,7 @@ Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<s
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method checks an element matching `selector` by performing the following steps:
@@ -2414,6 +2446,7 @@ When all steps combined have not finished during the specified `timeout`, this m
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method clicks an element matching `selector` by performing the following steps:
@@ -2442,6 +2475,7 @@ Gets the full HTML contents of the frame, including the doctype.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method double clicks an element matching `selector` by performing the following steps:
@@ -2461,6 +2495,7 @@ When all steps combined have not finished during the specified `timeout`, this m
 - `eventInit` <[EvaluationArgument]> Optional event-specific initialization properties.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 The snippet below dispatches the `click` event on the element. Regardless of the visibility state of the elment, `click` is dispatched. This is equivalend to calling [element.click()](https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement/click).
@@ -2557,6 +2592,7 @@ await resultHandle.dispose();
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method waits for an element matching `selector`, waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. If the element matching `selector` is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to clear the input field.
@@ -2567,6 +2603,7 @@ To send fine-grained keyboard events, use [`frame.type(selector, text[, options]
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method waits until a matching element appears in the DOM.
@@ -2591,6 +2628,7 @@ console.log(frame === contentFrame);  // -> true
 - `name` <[string]> Attribute name to get the value for.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[string]>>
 
 Returns element attribute value.
@@ -2599,6 +2637,7 @@ Returns element attribute value.
 - `url` <[string]> URL to navigate frame to. The url should include scheme, e.g. `https://`.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -2629,6 +2668,7 @@ Returns the main resource response. In case of multiple redirects, the navigatio
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method hovers over an element matching `selector` by performing the following steps:
@@ -2644,6 +2684,7 @@ When all steps combined have not finished during the specified `timeout`, this m
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[string]>>
 
 Returns `element.innerHTML`.
@@ -2652,6 +2693,7 @@ Returns `element.innerHTML`.
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[string]>>
 
 Returns `element.innerText`.
@@ -2687,6 +2729,7 @@ Parent frame, if any. Detached frames and main frames return `null`.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to generate the text for. A superset of the `key` values can be found [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
@@ -2710,6 +2753,7 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Array]<[string]>>>
 
 Returns the array of option values that have been successfully selected.
@@ -2731,6 +2775,7 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 - `html` <[string]> HTML markup to assign to the page.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     - `'load'` - consider operation to be finished when the `load` event is fired.
@@ -2746,6 +2791,7 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method expects `selector` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
@@ -2762,6 +2808,7 @@ Sets the value of the file input to these file paths or files. If some of the `f
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method taps an element matching `selector` by performing the following steps:
@@ -2779,6 +2826,7 @@ When all steps combined have not finished during the specified `timeout`, this m
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[string]>>
 
 Returns `element.textContent`.
@@ -2795,6 +2843,7 @@ Returns the page title.
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to send fine-grained keyboard events. To fill values in form fields, use [`frame.fill(selector, value[, options])`](#framefillselector-value-options).
@@ -2812,6 +2861,7 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method checks an element matching `selector` by performing the following steps:
@@ -2836,6 +2886,7 @@ Returns frame's url.
 - `options` <[Object]>
   - `polling` <[number]|"raf"> If `polling` is `'raf'`, then `pageFunction` is constantly executed in `requestAnimationFrame` callback. If `polling` is a number, then it is treated as an interval in milliseconds at which the function would be executed. Defaults to `raf`.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[JSHandle]>>
 
 Returns when the `pageFunction` returns a truthy value, returns that value.
@@ -2869,6 +2920,7 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
   - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Waits for the required load state to be reached.
@@ -2883,6 +2935,7 @@ await frame.waitForLoadState(); // Waits for 'load' state by default.
 #### frame.waitForNavigation([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
@@ -2912,6 +2965,7 @@ const [response] = await Promise.all([
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
 Returns when element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
@@ -3093,6 +3147,7 @@ await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method checks the element by performing the following steps:
@@ -3119,6 +3174,7 @@ When all steps combined have not finished during the specified `timeout`, this m
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method clicks the element by performing the following steps:
@@ -3147,6 +3203,7 @@ Returns the content frame for element handles referencing iframe nodes, or `null
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method double clicks the element by performing the following steps:
@@ -3196,6 +3253,7 @@ await elementHandle.dispatchEvent('dragstart', { dataTransfer });
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling. If the element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to clear the input field.
@@ -3219,6 +3277,7 @@ Returns element attribute value.
   - `modifiers` <[Array]<"Alt"|"Control"|"Meta"|"Shift">> Modifier keys to press. Ensures that only these modifiers are pressed during the operation, and then restores current modifiers back. If not specified, currently pressed modifiers are used.
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method hovers over the element by performing the following steps:
@@ -3252,6 +3311,7 @@ Returns the frame containing the given element.
   - `delay` <[number]> Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Focuses the element, and then uses [`keyboard.down(key)`](#keyboarddownkey) and [`keyboard.up(key)`](#keyboardupkey).
@@ -3275,6 +3335,7 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Buffer]>>
 
 Returns the buffer with the captured screenshot.
@@ -3284,6 +3345,7 @@ This method waits for the [actionability](./actionability.md) checks, then scrol
 #### elementHandle.scrollIntoViewIfNeeded([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
@@ -3298,6 +3360,7 @@ Throws when ```elementHandle``` does not point to an element [connected](https:/
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Array]<[string]>>>
 
 Returns the array of option values that have been successfully selected.
@@ -3321,6 +3384,7 @@ handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 #### elementHandle.selectText([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method waits for [actionability](./actionability.md) checks, then focuses the element and selects all its text content.
@@ -3333,6 +3397,7 @@ This method waits for [actionability](./actionability.md) checks, then focuses t
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method expects `elementHandle` to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
@@ -3348,6 +3413,7 @@ Sets the value of the file input to these file paths or files. If some of the `f
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method taps the element by performing the following steps:
@@ -3376,6 +3442,7 @@ Returns the `node.textContent`.
   - `delay` <[number]> Time to wait between key presses in milliseconds. Defaults to 0.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
@@ -3400,6 +3467,7 @@ await elementHandle.press('Enter');
   - `force` <[boolean]> Whether to bypass the [actionability](./actionability.md) checks. Defaults to `false`.
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 This method checks the element by performing the following steps:
@@ -3418,6 +3486,7 @@ When all steps combined have not finished during the specified `timeout`, this m
 - `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled"> A state to wait for, see below for more details.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Returns the element satisfies the `state`.
@@ -3440,6 +3509,7 @@ If the element does not satisfy the condition for the `timeout` milliseconds, th
     - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
     - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
 Returns element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
@@ -3753,6 +3823,7 @@ Returns page this file chooser belongs to.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
+  - `timeoutMessage` <[string]> Additional message to be appended to [TimeoutError].
 - returns: <[Promise]>
 
 Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then they are resolved relative to the the current working directory. For empty array, clears the selected files.
@@ -4396,6 +4467,7 @@ Contains the URL of the WebSocket.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
 - returns: <[Promise]<[Object]>>
 
 Returns the event data value.
@@ -4629,6 +4701,7 @@ A path where Playwright expects to find a bundled browser executable.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
@@ -4670,6 +4743,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
   - `handleSIGTERM` <[boolean]> Close the browser process on SIGTERM. Defaults to `true`.
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
@@ -4736,6 +4810,7 @@ Launches browser that uses persistent storage located at `userDataDir` and retur
   - `handleSIGHUP` <[boolean]> Close the browser process on SIGHUP. Defaults to `true`.
   - `logger` <[Logger]> Logger sink for Playwright logging.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `timeoutMessage` <[string]> additional message to be appended to [TimeoutError].
   - `env` <[Object]<[string], [string]|[number]|[boolean]>> Specify environment variables that will be visible to the browser. Defaults to `process.env`.
   - `devtools` <[boolean]> **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the `headless` option will be set `false`.
 - returns: <[Promise]<[BrowserServer]>>

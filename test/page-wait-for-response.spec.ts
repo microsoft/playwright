@@ -31,16 +31,23 @@ it('should work', async ({page, server}) => {
 });
 
 it('should respect timeout', async ({page, playwright}) => {
-  let error = null;
-  await page.waitForEvent('response', { predicate: () => false, timeout: 1 }).catch(e => error = e);
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+  const event = 'response';
+
+  const error = await page.waitForEvent(event, {predicate: () => false, timeout, timeoutMessage}).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutMessage}`);
 });
 
 it('should respect default timeout', async ({page, playwright}) => {
-  let error = null;
+  const timeout = 1;
+  const event = 'response';
+
   page.setDefaultTimeout(1);
-  await page.waitForEvent('response', () => false).catch(e => error = e);
+  const error = await page.waitForEvent(event, () => false).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}".`);
 });
 
 it('should work with predicate', async ({page, server}) => {
@@ -59,7 +66,7 @@ it('should work with predicate', async ({page, server}) => {
 it('should work with no timeout', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([
-    page.waitForResponse(server.PREFIX + '/digits/2.png', { timeout: 0 }),
+    page.waitForResponse(server.PREFIX + '/digits/2.png', {timeout: 0}),
     page.evaluate(() => setTimeout(() => {
       fetch('/digits/1.png');
       fetch('/digits/2.png');

@@ -46,16 +46,23 @@ it('should work with predicate', async ({page, server}) => {
 });
 
 it('should respect timeout', async ({page, playwright}) => {
-  let error = null;
-  await page.waitForEvent('request', { predicate: () => false, timeout: 1 }).catch(e => error = e);
+  const timeout = 1;
+  const timeoutMessage = 'Oh-oh, something is wrong';
+  const event = 'request';
+
+  const error = await page.waitForEvent(event, { predicate: () => false, timeout, timeoutMessage }).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutMessage}`);
 });
 
 it('should respect default timeout', async ({page, playwright}) => {
-  let error = null;
-  page.setDefaultTimeout(1);
-  await page.waitForEvent('request', () => false).catch(e => error = e);
+  const timeout = 1;
+  const event = 'request';
+
+  page.setDefaultTimeout(timeout);
+  const error = await page.waitForEvent(event, () => false).catch(e => e);
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
+  expect(error.message).toContain(`Timeout after ${timeout}ms while waiting for event "${event}".`);
 });
 
 it('should work with no timeout', async ({page, server}) => {

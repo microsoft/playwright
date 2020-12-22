@@ -100,9 +100,10 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+    const timeoutErrorMessage = typeof optionsOrPredicate !== 'function' && optionsOrPredicate.timeoutMessage ? optionsOrPredicate.timeoutMessage : '';
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
-    waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
+    waiter.rejectOnTimeout(timeout, `Timeout after ${timeout}ms while waiting for event "${event}". ${timeoutErrorMessage}`);
     if (event !== Events.ElectronApplication.Close)
       waiter.rejectOnEvent(this, Events.ElectronApplication.Close, new Error('Electron application closed'));
     const result = await waiter.waitForEvent(this, event, predicate as any);

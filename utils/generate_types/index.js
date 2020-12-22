@@ -186,7 +186,7 @@ function classBody(classDesc) {
       for (const {eventName, params, comment, type} of eventDescriptions) {
         if (comment)
           parts.push(writeComment(comment, '  '));
-        parts.push(`  ${member.name}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean, timeout?: number } | ((${params}) => boolean)): Promise<${type}>;\n`);
+        parts.push(`  ${member.name}(event: '${eventName}', optionsOrPredicate?: { predicate?: (${params}) => boolean, timeout?: number, timeoutMessage?: string } | ((${params}) => boolean)): Promise<${type}>;\n`);
       }
 
       return parts.join('\n');
