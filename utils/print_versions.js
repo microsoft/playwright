@@ -18,9 +18,16 @@
 const pw = require('..');
 const child_process = require('child_process');
 
-for (const browserType of [pw.chromium, pw.firefox]) {
-  const executablePath = browserType.executablePath();
-  const version = child_process.execSync(executablePath + ' --version').toString().trim();
-  console.log('- ' + version);
+
+async function browserVersion(browserType) {
+  const browser = await browserType.launch();
+  const result = browser.version();
+  await browser.close();
+  return result;
 }
-console.log('- WebKit 14.1');
+
+(async () => {
+  console.log('- Chromium ' + await browserVersion(pw.chromium));
+  console.log('- Mozilla Firefox ' + await browserVersion(pw.firefox));
+  console.log('- WebKit ' + await browserVersion(pw.webkit));
+})();
