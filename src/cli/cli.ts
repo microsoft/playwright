@@ -24,13 +24,14 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { installBrowsersWithProgressBar } from '../install/installer';
 import * as consoleApiSource from '../generated/consoleApiSource';
-
-// TODO: we can import from '../..' instead, but that requires generating types
-// before build, and currently type generator depends on the build.
-import type { Browser, BrowserContext, Page, BrowserType } from '../client/api';
-import type { Playwright } from '../client/playwright';
-import type { BrowserContextOptions, LaunchOptions } from '../client/types';
-const playwright = require('../inprocess') as Playwright;
+import { OutputMultiplexer, TerminalOutput, FileOutput } from './codegen/outputs';
+import { CodeGenerator, CodeGeneratorOutput } from './codegen/codeGenerator';
+import { JavaScriptLanguageGenerator, LanguageGenerator } from './codegen/languages';
+import { PythonLanguageGenerator } from './codegen/languages/python';
+import { CSharpLanguageGenerator } from './codegen/languages/csharp';
+import { RecorderController } from './codegen/recorderController';
+import type { Browser, BrowserContext, Page, BrowserType, BrowserContextOptions, LaunchOptions } from '../..';
+import * as playwright from '../..';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -79,6 +80,22 @@ for (const {alias, name, type} of browsers) {
         console.log(`  $ ${alias} https://example.com`);
       });
 }
+
+program
+    .command('codegen [url]')
+    .description('open page and generate code for user actions')
+    .option('-o, --output <file name>', 'saves the generated script to a file')
+    .option('--target <language>', `language to use, one of javascript, python, python-async, csharp`, process.env.PW_CLI_TARGET_LANG || 'javascript')
+    .action(function(url, command) {
+      codegen(command.parent, url, command.target, command.output);
+    }).on('--help', function() {
+      console.log('');
+      console.log('Examples:');
+      console.log('');
+      console.log('  $ codegen');
+      console.log('  $ codegen --target=python');
+      console.log('  $ -b webkit codegen https://example.com');
+    });
 
 program
     .command('screenshot <url> <filename>')
@@ -285,7 +302,36 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, false);
-  context._extendInjectedScript(consoleApiSource.source);
+  (context as any)._extendInjectedScript(consoleApiSource.source);
+  await openPage(context, url);
+  if (process.env.PWCLI_EXIT_FOR_TEST)
+    await Promise.all(context.pages().map(p => p.close()));
+}
+
+async function codegen(options: Options, url: string | undefined, target: string, outputFile?: string) {
+  let languageGenerator: LanguageGenerator;
+
+  switch (target) {
+    case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
+    case 'csharp': languageGenerator = new CSharpLanguageGenerator(); break;
+    case 'python':
+    case 'python-async': languageGenerator = new PythonLanguageGenerator(target === 'python-async'); break;
+    default: throw new Error(`Invalid target: '${target}'`);
+  }
+
+  const { context, browserName, launchOptions, contextOptions } = await launchContext(options, false);
+
+  if (process.env.PWTRACE)
+    contextOptions.recordVideo = { dir: path.join(process.cwd(), '.trace') };
+
+  const outputs: CodeGeneratorOutput[] = [new TerminalOutput(process.stdout, languageGenerator.highligherType())];
+  if (outputFile)
+    outputs.push(new FileOutput(outputFile));
+  const output = new OutputMultiplexer(outputs);
+
+  const generator = new CodeGenerator(browserName, launchOptions, contextOptions, output, languageGenerator, options.device, options.saveStorage);
+  new RecorderController(context, generator);
+  (context as any)._extendInjectedScript(consoleApiSource.source);
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
@@ -326,7 +372,7 @@ async function pdf(options: Options, captureOptions: CaptureOptions, url: string
   await browser.close();
 }
 
-function lookupBrowserType(options: Options): BrowserType {
+function lookupBrowserType(options: Options): BrowserType<Browser> {
   let name = options.browser;
   if (options.device) {
     const device = playwright.devices[options.device];
