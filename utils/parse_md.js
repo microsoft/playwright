@@ -49,7 +49,8 @@ function normalizeLines(content) {
 
 function buildTree(lines) {
   const root = {
-    h0: '<root>',
+    type: 'h0',
+    value: '<root>',
     children: []
   };
   const stack = [root];
@@ -60,13 +61,14 @@ function buildTree(lines) {
 
     if (line.startsWith('```')) {
       const node = {
-        code: [],
+        type: 'code',
+        lines: [],
         codeLang: line.substring(3)
       };
       stack[0].children.push(node);
       line = lines[++i];
       while (!line.startsWith('```')) {
-        node.code.push(line);
+        node.lines.push(line);
         line = lines[++i];
       }
       continue;
@@ -74,15 +76,16 @@ function buildTree(lines) {
 
     if (line.startsWith('<!-- GEN')) {
       const node = {
-        gen: [line]
+        type: 'gen',
+        lines: [line]
       };
       stack[0].children.push(node);
       line = lines[++i];
       while (!line.startsWith('<!-- GEN')) {
-        node.gen.push(line);
+        node.lines.push(line);
         line = lines[++i];
       }
-      node.gen.push(line);
+      node.lines.push(line);
       continue;
     }
 
@@ -90,10 +93,11 @@ function buildTree(lines) {
     if (header) {
       const node = { children: [] };
       const h = header[1].length;
-      node['h' + h] = line.substring(h + 1);
+      node.type = 'h' + h;
+      node.text = line.substring(h + 1);
 
       while (true) {
-        const lastH = +Object.keys(stack[0]).find(k => k.startsWith('h')).substring(1);
+        const lastH = +stack[0].type.substring(1);
         if (h <= lastH)
           stack.shift();
         else
@@ -109,7 +113,8 @@ function buildTree(lines) {
     const depth = list ? (list[1].length / 2) : 0;
     const node = {};
     if (list) {
-      node.li = line.substring(list[0].length);
+      node.type = 'li';
+      node.text = line.substring(list[0].length);
       if (line.trim().startsWith('1.'))
         node.liType = 'ordinal';
       else if (line.trim().startsWith('*'))
@@ -117,6 +122,7 @@ function buildTree(lines) {
       else 
         node.liType = 'default';
     } else {
+      node.type = 'text';
       node.text = line;
     }
     if (!liStack[depth].children)
@@ -147,43 +153,41 @@ function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
       result.push('');
   };
 
-  for (let i = 1; i < 10; ++i) {
-    if (node[`h${i}`]) {
-      newLine();
-      result.push(`${'#'.repeat(i)} ${node[`h${i}`]}`);
-      let lastNode = node;
-      for (const child of node.children) {
-        innerRenderMdNode(child, lastNode, result, maxColumns);
-        lastNode = child;
-      }
-      break;
+  if (node.type.startsWith('h')) {
+    newLine();
+    const depth = node.type.substring(1);
+    result.push(`${'#'.repeat(depth)} ${node.text}`);
+    let lastNode = node;
+    for (const child of node.children) {
+      innerRenderMdNode(child, lastNode, result, maxColumns);
+      lastNode = child;
     }
   }
 
-  if (node.text) {
-    const bothComments = node.text.startsWith('>') && lastNode && lastNode.text && lastNode.text.startsWith('>');
-    if (!bothComments && lastNode && (lastNode.text || lastNode.li || lastNode.h1 || lastNode.h2 || lastNode.h3 || lastNode.h4))
+  if (node.type === 'text') {
+    const bothComments = node.text.startsWith('>') && lastNode && lastNode.type === 'text' && lastNode.text.startsWith('>');
+    if (!bothComments && lastNode && lastNode.text)
       newLine();
       printText(node, result, maxColumns);
   }
 
-  if (node.code) {
+  if (node.type === 'code') {
     newLine();
     result.push('```' + node.codeLang);
-    for (const line of node.code)
+    for (const line of node.lines)
       result.push(line);
     result.push('```');
     newLine();
   }
 
-  if (node.gen) {
+  if (node.type === 'gen') {
     newLine();
-    for (const line of node.gen)
+    for (const line of node.lines)
       result.push(line);
     newLine();
   }
 
-  if (node.li) {
+  if (node.type === 'li') {
     const visit = (node, indent) => {
       let char;
       switch (node.liType) {
@@ -191,7 +195,7 @@ function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
         case 'default': char = '-'; break;
         case 'ordinal': char = '1.'; break;
       }
-      result.push(`${indent}${char} ${node.li}`);
+      result.push(`${indent}${char} ${node.text}`);
       for (const child of node.children || [])
         visit(child, indent + '  ');
     };
@@ -213,6 +217,55 @@ function printText(node, result, maxColumns) {
   }
   if (line.length)
     result.push(line);
+}
+
+function clone(node) {
+  const copy = { ...node };
+  copy.children = copy.children ? copy.children.map(c => clone(c)) : undefined;
+  return copy;
+}
+
+function applyTemplates(body, params) {
+  const paramsMap = new Map();
+  for (const node of params)
+    paramsMap.set('%%-' + node.text + '-%%', node);
+
+  const visit = (node, parent) => {
+    if (node.text && node.text.includes('-inline- = %%')) {
+      const [name, key] = node.text.split('-inline- = ');
+      const list = paramsMap.get(key);
+      if (!list)
+        throw new Error('Bad template: ' + key);
+      for (const prop of list.children) {
+        const template = paramsMap.get(prop.text);
+        if (!template)
+          throw new Error('Bad template: ' + prop.text);
+        const { name: argName } = parseArgument(template.children[0].text);
+        parent.children.push({
+          type: node.type,
+          text: name + argName,
+          children: template.children.map(c => clone(c))
+        });
+      }
+    } else if (node.text && node.text.includes(' = %%')) {
+      const [name, key] = node.text.split(' = ');
+      node.text = name;
+      const template = paramsMap.get(key);
+      if (!template)
+        throw new Error('Bad template: ' + key);
+      node.children.push(...template.children.map(c => clone(c)));
+    }
+    for (const child of node.children || []) {
+      visit(child, node);
+    }
+    if (node.children)
+      node.children = node.children.filter(child => !child.text || !child.text.includes('-inline- = %%'));
+  };
+
+  for (const node of body)
+    visit(node, null);
+
+  return body;
 }
 
 function parseArgument(line) {
@@ -238,4 +291,4 @@ function parseArgument(line) {
   throw new Error('Should not be reached');
 }
 
-module.exports = { parseMd, renderMd, parseArgument };
+module.exports = { parseMd, renderMd, parseArgument, applyTemplates };
