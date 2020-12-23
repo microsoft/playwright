@@ -205,7 +205,7 @@ function validateScreenshotOptions(options: types.ScreenshotOptions): 'png' | 'j
   if (!format)
     format = 'png';
 
-  if (options.quality) {
+  if (options.quality !== undefined) {
     assert(format === 'jpeg', 'options.quality is unsupported for the ' + format + ' screenshots');
     assert(typeof options.quality === 'number', 'Expected options.quality to be a number but found ' + (typeof options.quality));
     assert(Number.isInteger(options.quality), 'Expected options.quality to be an integer');
