@@ -292,6 +292,16 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(error.message).toContain('path: unsupported mime type "text/plain"');
   });
 
+  it.only('quality option should throw for png', async ({page}) => {
+    const error = await page.screenshot({ quality: 10 }).catch(e => e);
+    expect(error.message).toContain('options.quality is unsupported for the png');
+  });
+
+  it.only('zero quality option should throw for png', async ({page}) => {
+    const error = await page.screenshot({ quality: 0, type: 'png' }).catch(e => e);
+    expect(error.message).toContain('options.quality is unsupported for the png');
+  });
+
   it('should prefer type over extension', async ({page, testInfo}) => {
     const outputPath = testInfo.outputPath('file.png');
     const buffer = await page.screenshot({ path: outputPath, type: 'jpeg' });
