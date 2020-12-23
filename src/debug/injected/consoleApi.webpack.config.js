@@ -18,7 +18,7 @@ const path = require('path');
 const InlineSource = require('../../server/injected/webpack-inline-source-plugin');
 
 module.exports = {
-  entry: path.join(__dirname, 'debugScript.ts'),
+  entry: path.join(__dirname, 'consoleApi.ts'),
   devtool: 'source-map',
   module: {
     rules: [
@@ -37,10 +37,10 @@ module.exports = {
   },
   output: {
     libraryTarget: 'var',
-    filename: 'debugScriptSource.js',
+    filename: 'consoleApiSource.js',
     path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },
   plugins: [
-    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'debugScriptSource.ts')),
+    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'consoleApiSource.ts')),
   ]
 };

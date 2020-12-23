@@ -601,6 +601,12 @@ BrowserContext:
           type: array
           items: OriginStorage
 
+    extendInjectedScript:
+      experimental: True
+      parameters:
+        source: string
+        arg: SerializedArgument
+
     crNewCDPSession:
       parameters:
         page: Page

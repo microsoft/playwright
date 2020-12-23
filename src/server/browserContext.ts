@@ -378,6 +378,16 @@ export abstract class BrowserContext extends EventEmitter {
       await page.close();
     }
   }
+
+  async extendInjectedScript(source: string, arg?: any) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(e => {});
+    const installInPage = (page: Page) => {
+      page.on(Page.Events.FrameNavigated, installInFrame);
+      return Promise.all(page.frames().map(installInFrame));
+    };
+    this.on(BrowserContext.Events.Page, installInPage);
+    return Promise.all(this.pages().map(installInPage));
+  }
 }
 
 export function assertBrowserContextIsNotOwned(context: BrowserContext) {
