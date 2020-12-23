@@ -250,8 +250,18 @@ const NSActivityOptions ActivityOptions =
     if (_noStartupWindow)
         return;
 
-    [self createNewPage:0];
-    _initialURL = nil;
+    // Force creation of the default browser context.
+    [self defaultConfiguration];
+    // Creating the first NSWindow immediately makes it invisible in headless mode,
+    // so we postpone it for 50ms. Experiments show that 10ms is not enough, and 20ms is enough.
+    // We give it 50ms just in case.
+    [NSTimer scheduledTimerWithTimeInterval: 0.05
+                                    repeats: NO
+                                      block:(void *)^(NSTimer* timer)
+    {
+        [self createNewPage:0 withURL:_initialURL ? _initialURL : @"about:blank"];
+        _initialURL = nil;
+    }];
 }
 
 - (void)_updateNewWindowKeyEquivalents
@@ -278,7 +288,11 @@ const NSActivityOptions ActivityOptions =
 
 - (WKWebView *)createNewPage:(uint64_t)sessionID
 {
-    NSString* urlString = _initialURL ? _initialURL : @"about:blank";
+    return [self createNewPage:sessionID withURL:@"about:blank"];
+}
+
+- (WKWebView *)createNewPage:(uint64_t)sessionID withURL:(NSString*)urlString
+{
     WKWebViewConfiguration *configuration = [self sessionConfiguration:sessionID];
     if (_headless)
         return [self createHeadlessPage:configuration withURL:urlString];
