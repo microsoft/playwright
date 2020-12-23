@@ -297,7 +297,7 @@ describe('page screenshot', (suite, { browserName, headful }) => {
     expect(error.message).toContain('options.quality is unsupported for the png');
   });
 
-  it.only('zero quality option should throw for png', async ({page}) => {
+  it('zero quality option should throw for png', async ({page}) => {
     const error = await page.screenshot({ quality: 0, type: 'png' }).catch(e => e);
     expect(error.message).toContain('options.quality is unsupported for the png');
   });
