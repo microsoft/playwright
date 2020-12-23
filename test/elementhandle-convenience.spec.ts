@@ -71,7 +71,6 @@ it('textContent should work', async ({ page, server }) => {
 
 it('textContent should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
-    create(root, target) { },
     query(root, selector) {
       const result = root.querySelector(selector);
       if (result)
@@ -94,7 +93,6 @@ it('textContent should be atomic', async ({ playwright, page }) => {
 
 it('innerText should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
-    create(root, target) { },
     query(root: HTMLElement, selector: string) {
       const result = root.querySelector(selector);
       if (result)
@@ -117,7 +115,6 @@ it('innerText should be atomic', async ({ playwright, page }) => {
 
 it('innerHTML should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
-    create(root, target) { },
     query(root, selector) {
       const result = root.querySelector(selector);
       if (result)
@@ -140,7 +137,6 @@ it('innerHTML should be atomic', async ({ playwright, page }) => {
 
 it('getAttribute should be atomic', async ({ playwright, page }) => {
   const createDummySelector = () => ({
-    create(root, target) { },
     query(root: HTMLElement, selector: string) {
       const result = root.querySelector(selector);
       if (result)

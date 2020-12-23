@@ -219,7 +219,6 @@ it('should respect selectors', async ({playwright, launchPersistent}) => {
   const {page} = await launchPersistent();
 
   const defaultContextCSS = () => ({
-    create(root, target) {},
     query(root, selector) {
       return root.querySelector(selector);
     },

@@ -749,18 +749,12 @@ playwright.chromium.launch().then(async browser => {
 
   // Must be a function that evaluates to a selector engine instance.
   const createTagNameEngine = () => ({
-    // Creates a selector that matches given target when queried at the root.
-    // Can return undefined if unable to create one.
-    create(root: Element, target: Element) {
-      return root.querySelector(target.tagName) === target ? target.tagName : undefined;
-    },
-
-      // Returns the first element matching given selector in the root's subtree.
+    // Returns the first element matching given selector in the root's subtree.
     query(root: Element, selector: string) {
       return root.querySelector(selector);
     },
 
-      // Returns all elements matching given selector in the root's subtree.
+    // Returns all elements matching given selector in the root's subtree.
     queryAll(root: Element, selector: string) {
       return Array.from(root.querySelectorAll(selector));
     }

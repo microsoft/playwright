@@ -21,9 +21,6 @@ import path from 'path';
 
 it('should work', async ({playwright, browser}) => {
   const createTagSelector = () => ({
-    create(root, target) {
-      return target.nodeName;
-    },
     query(root, selector) {
       return root.querySelector(selector);
     },
@@ -64,7 +61,6 @@ it('should work with path', async ({playwright, page}) => {
 
 it('should work in main and isolated world', async ({playwright, page}) => {
   const createDummySelector = () => ({
-    create(root, target) { },
     query(root, selector) {
       return window['__answer'];
     },
@@ -99,9 +95,6 @@ it('should handle errors', async ({playwright, page}) => {
   expect(error.message).toContain('Unknown engine "neverregister" while parsing selector neverregister=ignored');
 
   const createDummySelector = () => ({
-    create(root, target) {
-      return target.nodeName;
-    },
     query(root, selector) {
       return root.querySelector('dummy');
     },
@@ -126,9 +119,6 @@ it('should handle errors', async ({playwright, page}) => {
 
 it('should not rely on engines working from the root', async ({ playwright, page }) => {
   const createValueEngine = () => ({
-    create(root, target) {
-      return undefined;
-    },
     query(root, selector) {
       return root && root.value.includes(selector) ? root : undefined;
     },

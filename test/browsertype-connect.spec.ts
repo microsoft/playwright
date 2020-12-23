@@ -165,7 +165,6 @@ describe('connect', (suite, { mode }) => {
 
   it('should respect selectors', async ({ playwright, browserType, remoteServer }) => {
     const mycss = () => ({
-      create(root, target) {},
       query(root, selector) {
         return root.querySelector(selector);
       },

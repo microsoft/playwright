@@ -25,23 +25,27 @@ export function installDebugController() {
 }
 
 class DebugController implements ContextListener {
-  private async ensureInstalledInFrame(frame: frames.Frame) {
-    try {
-      await frame.extendInjectedScript(debugScriptSource.source);
-    } catch (e) {
-    }
-  }
-
   async onContextCreated(context: BrowserContext): Promise<void> {
-    if (!isDebugMode())
-      return;
-    context.on(BrowserContext.Events.Page, (page: Page) => {
-      for (const frame of page.frames())
-        this.ensureInstalledInFrame(frame);
-      page.on(Page.Events.FrameNavigated, frame => this.ensureInstalledInFrame(frame));
-    });
+    if (isDebugMode())
+      installDebugControllerInContext(context);
   }
-
   async onContextWillDestroy(context: BrowserContext): Promise<void> {}
   async onContextDidDestroy(context: BrowserContext): Promise<void> {}
+}
+
+async function ensureInstalledInFrame(frame: frames.Frame) {
+  try {
+    await frame.extendInjectedScript(debugScriptSource.source);
+  } catch (e) {
+  }
+}
+
+async function installInPage(page: Page) {
+  page.on(Page.Events.FrameNavigated, ensureInstalledInFrame);
+  await Promise.all(page.frames().map(ensureInstalledInFrame));
+}
+
+export async function installDebugControllerInContext(context: BrowserContext) {
+  context.on(BrowserContext.Events.Page, installInPage);
+  await Promise.all(context.pages().map(installInPage));
 }

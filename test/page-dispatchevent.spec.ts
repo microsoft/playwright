@@ -105,7 +105,6 @@ it('should dispatch click when node is added in shadow dom', async ({page, serve
 
 it('should be atomic', async ({playwright, page}) => {
   const createDummySelector = () => ({
-    create(root, target) {},
     query(root, selector) {
       const result = root.querySelector(selector);
       if (result)
