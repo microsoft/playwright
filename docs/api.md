@@ -397,7 +397,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 * The [`browser.close()`](#browserclose) method was called.
 
 #### browserContext.on('page')
-- <[Page]>
+- type: <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also [page.on('popup')](#pageonpopup) to receive events about popups relevant to a specific page.
 
@@ -417,13 +417,13 @@ console.log(await page.evaluate('location.href'));
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]> **required**
   - `value` <[string]> **required**
-  - `url` <[string]> either url or domain / path are required
-  - `domain` <[string]> either url or domain / path are required
-  - `path` <[string]> either url or domain / path are required
-  - `expires` <[number]> Unix time in seconds.
-  - `httpOnly` <[boolean]>
-  - `secure` <[boolean]>
-  - `sameSite` <"Strict"|"Lax"|"None">
+  - `url` <[string]> either url or domain / path are required. Optional.
+  - `domain` <[string]> either url or domain / path are required Optional.
+  - `path` <[string]> either url or domain / path are required Optional.
+  - `expires` <[number]> Unix time in seconds. Optional.
+  - `httpOnly` <[boolean]> Optional.
+  - `secure` <[boolean]> Optional.
+  - `sameSite` <"Strict"|"Lax"|"None"> Optional.
 - returns: <[Promise]>
 
 Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be obtained via [`browserContext.cookies([urls])`](#browsercontextcookiesurls).
@@ -434,8 +434,8 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 
 #### browserContext.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw script content.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw script content. Optional.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
 
@@ -592,22 +592,22 @@ const crypto = require('crypto');
 
 #### browserContext.grantPermissions(permissions[, options])
 - `permissions` <[Array]<[string]>> A permission or an array of permissions to grant. Permissions can be one of the following values:
-  - `'geolocation'`
-  - `'midi'`
-  - `'midi-sysex'` (system-exclusive midi)
-  - `'notifications'`
-  - `'push'`
-  - `'camera'`
-  - `'microphone'`
-  - `'background-sync'`
-  - `'ambient-light-sensor'`
-  - `'accelerometer'`
-  - `'gyroscope'`
-  - `'magnetometer'`
-  - `'accessibility-events'`
-  - `'clipboard-read'`
-  - `'clipboard-write'`
-  - `'payment-handler'`
+  * `'geolocation'`
+  * `'midi'`
+  * `'midi-sysex'` (system-exclusive midi)
+  * `'notifications'`
+  * `'push'`
+  * `'camera'`
+  * `'microphone'`
+  * `'background-sync'`
+  * `'ambient-light-sensor'`
+  * `'accelerometer'`
+  * `'gyroscope'`
+  * `'magnetometer'`
+  * `'accessibility-events'`
+  * `'clipboard-read'`
+  * `'clipboard-write'`
+  * `'payment-handler'`
 - `options` <[Object]>
   - `origin` <[string]> The [origin] to grant permissions to, e.g. "https://example.com".
 - returns: <[Promise]>
@@ -889,7 +889,7 @@ page.removeListener('request', logRequest);
 Emitted when the page closes.
 
 #### page.on('console')
-- <[ConsoleMessage]>
+- type: <[ConsoleMessage]>
 
 Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also emitted if the page throws an error or a warning.
 
@@ -935,7 +935,7 @@ await new Promise((resolve, reject) => {
 ```
 
 #### page.on('dialog')
-- <[Dialog]>
+- type: <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond to the dialog via [`dialog.accept([promptText])`](#dialogacceptprompttext) or [`dialog.dismiss()`](#dialogdismiss) methods.
 
@@ -944,14 +944,14 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded) event is dispatched.
 
 #### page.on('download')
-- <[Download]>
+- type: <[Download]>
 
 Emitted when attachment download started. User can access basic file operations on downloaded content via the passed [Download] instance.
 
 > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
 
 #### page.on('filechooser')
-- <[FileChooser]>
+- type: <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can respond to it via setting the input files using [`fileChooser.setFiles(files[, options])`](#filechoosersetfilesfiles-options) that can be uploaded after that.
 
@@ -962,17 +962,17 @@ page.on('filechooser', async (fileChooser) => {
 ```
 
 #### page.on('frameattached')
-- <[Frame]>
+- type: <[Frame]>
 
 Emitted when a frame is attached.
 
 #### page.on('framedetached')
-- <[Frame]>
+- type: <[Frame]>
 
 Emitted when a frame is detached.
 
 #### page.on('framenavigated')
-- <[Frame]>
+- type: <[Frame]>
 
 Emitted when a frame is navigated to a new url.
 
@@ -981,12 +981,12 @@ Emitted when a frame is navigated to a new url.
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
 #### page.on('pageerror')
-- <[Error]> The exception message
+- type: <[Error]> The exception message
 
 Emitted when an uncaught exception happens within the page.
 
 #### page.on('popup')
-- <[Page]> Page corresponding to "popup" window
+- type: <[Page]> Page corresponding to "popup" window
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the [browserContext.on('page')](#browsercontextonpage), but only for popups relevant to this page.
 
@@ -1003,34 +1003,34 @@ console.log(await popup.evaluate('location.href'));
 > **NOTE** Use [`page.waitForLoadState([state, options])`](#pagewaitforloadstatestate-options) to wait until the page gets to a particular state (you should not need it in most cases).
 
 #### page.on('request')
-- <[Request]>
+- type: <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see [`page.route(url, handler)`](#pagerouteurl-handler) or [`browserContext.route(url, handler)`](#browsercontextrouteurl-handler).
 
 #### page.on('requestfailed')
-- <[Request]>
+- type: <[Request]>
 
 Emitted when a request fails, for example by timing out.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with [page.on('requestfinished')](#pageonrequestfinished) event and not with [page.on('requestfailed')](#pageonrequestfailed).
 
 #### page.on('requestfinished')
-- <[Request]>
+- type: <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### page.on('response')
-- <[Response]>
+- type: <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### page.on('websocket')
-- <[WebSocket]> websocket
+- type: <[WebSocket]> websocket
 
 Emitted when <[WebSocket]> request is sent.
 
 #### page.on('worker')
-- <[Worker]>
+- type: <[Worker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the page.
 
@@ -1087,12 +1087,12 @@ const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 1
 ```
 
 #### page.accessibility
-- returns: <[Accessibility]>
+- type: <[Accessibility]>
 
 #### page.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in the page.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw script content.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw script content. Optional.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
 
@@ -1117,10 +1117,10 @@ await page.addInitScript(preloadFile);
 
 #### page.addScriptTag(params)
 - `params` <[Object]>
-  - `url` <[string]> URL of a script to be added.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw JavaScript content to be injected into frame.
-  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
+  - `url` <[string]> URL of a script to be added. Optional.
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
+  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
 Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload fires or when the script content was injected into frame.
@@ -1129,9 +1129,9 @@ Shortcut for main frame's [`frame.addScriptTag(params)`](#frameaddscripttagparam
 
 #### page.addStyleTag(params)
 - `params` <[Object]>
-  - `url` <[string]> URL of the `<link>` tag.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw CSS content to be injected into frame.
+  - `url` <[string]> URL of the `<link>` tag. Optional.
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
@@ -1213,7 +1213,7 @@ Gets the full HTML contents of the page, including the doctype.
 Get the browser context that the page belongs to.
 
 #### page.coverage
-- returns: <[null]|[ChromiumCoverage]>
+- type: <[null]|[ChromiumCoverage]>
 
 Browser-specific Coverage implementation, only available for Chromium atm. See [ChromiumCoverage](#class-chromiumcoverage) for more details.
 
@@ -1279,8 +1279,8 @@ await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
 
 #### page.emulateMedia(params)
 - `params` <[Object]>
-  - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
-  - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
+  - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value. Optional.
+  - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value. Optional.
 - returns: <[Promise]>
 
 ```js
@@ -1317,7 +1317,7 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[Serializable]>>
 
-Returns the value of the `pageFunction` invacation.
+Returns the value of the `pageFunction` invocation.
 
 If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to resolve and return its value.
 
@@ -1355,7 +1355,7 @@ Shortcut for main frame's [`frame.evaluate(pageFunction[, arg])`](#frameevaluate
 - `arg` <[EvaluationArgument]> Optional argument to pass to `pageFunction`
 - returns: <[Promise]<[JSHandle]>>
 
-Returns the value of the `pageFunction` invacation as in-page object (JSHandle).
+Returns the value of the `pageFunction` invocation as in-page object (JSHandle).
 
 The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page object (JSHandle).
 
@@ -1520,8 +1520,8 @@ Shortcut for main frame's [`frame.focus(selector[, options])`](#framefocusselect
 
 #### page.frame(frameSelector)
 - `frameSelector` <[string]|[Object]> Frame name or other frame lookup options.
-  - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
-  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
+  - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
+  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
 - returns: <[null]|[Frame]>
 
 Returns frame matching the specified criteria. Either `name` or `url` must be specified.
@@ -1552,9 +1552,9 @@ Returns element attribute value.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If can not go back, returns `null`.
@@ -1565,9 +1565,9 @@ Navigate to the previous page in history.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. If can not go forward, returns `null`.
@@ -1580,9 +1580,9 @@ Navigate to the next page in history.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [`page.setExtraHTTPHeaders(headers)`](#pagesetextrahttpheadersheaders).
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
@@ -1645,7 +1645,7 @@ Returns `element.innerText`.
 Indicates that the page has been closed.
 
 #### page.keyboard
-- returns: <[Keyboard]>
+- type: <[Keyboard]>
 
 #### page.mainFrame()
 - returns: <[Frame]>
@@ -1653,7 +1653,7 @@ Indicates that the page has been closed.
 The page's main frame. Page is guaranteed to have a main frame which persists during navigations.
 
 #### page.mouse
-- returns: <[Mouse]>
+- type: <[Mouse]>
 
 #### page.opener()
 - returns: <[Promise]<[null]|[Page]>>
@@ -1666,11 +1666,11 @@ Returns the opener for popup pages and `null` for others. If the opener has been
   - `footerTemplate` <[string]> HTML template for the print footer. Should use the same format as the `headerTemplate`.
   - `format` <[string]> Paper format. If set, takes priority over `width` or `height` options. Defaults to 'Letter'.
   - `headerTemplate` <[string]> HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
-    - `'date'` formatted print date
-    - `'title'` document title
-    - `'url'` document location
-    - `'pageNumber'` current page number
-    - `'totalPages'` total pages in the document
+    * `'date'` formatted print date
+    * `'title'` document title
+    * `'url'` document location
+    * `'pageNumber'` current page number
+    * `'totalPages'` total pages in the document
   - `height` <[string]|[number]> Paper height, accepts values labeled with units.
   - `landscape` <[boolean]> Paper orientation. Defaults to `false`.
   - `margin` <[Object]> Paper margins, defaults to none.
@@ -1745,7 +1745,7 @@ Focuses the element, and then uses [`keyboard.down(key)`](#keyboarddownkey) and 
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
@@ -1769,9 +1769,9 @@ await browser.close();
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
@@ -1831,9 +1831,9 @@ Returns the buffer with the captured screenshot.
 #### page.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
-  - `value` <[string]> Matches by `option.value`.
-  - `label` <[string]> Matches by `option.label`.
-  - `index` <[number]> Matches by the index.
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[number]> Matches by the index. Optional.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
@@ -1862,9 +1862,9 @@ Shortcut for main frame's [`frame.selectOption(selector, values[, options])`](#f
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### page.setDefaultNavigationTimeout(timeout)
@@ -1968,7 +1968,7 @@ Returns `element.textContent`.
 Returns the page's title. Shortcut for main frame's [`frame.title()`](#frametitle).
 
 #### page.touchscreen
-- returns: <[Touchscreen]>
+- type: <[Touchscreen]>
 
 #### page.type(selector, text[, options])
 - `selector` <[string]> A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](#working-with-selectors) for more details.
@@ -2079,10 +2079,10 @@ await page.waitForFunction(selector => !!document.querySelector(selector), selec
 Shortcut for main frame's [`frame.waitForFunction(pageFunction[, arg, options])`](#framewaitforfunctionpagefunction-arg-options).
 
 #### page.waitForLoadState([state, options])
-- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Optional.
-  - `'load'` - wait for the `load` event to be fired.
-  - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+- `state` <"load"|"domcontentloaded"|"networkidle"> Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Can be one of:
+  * `'load'` - wait for the `load` event to be fired.
+  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -2112,9 +2112,9 @@ Shortcut for main frame's [`frame.waitForLoadState([state, options])`](#framewai
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
@@ -2168,10 +2168,10 @@ return finalResponse.ok();
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `state` <"attached"|"detached"|"visible"|"hidden"> Defaults to `'visible'`. Can be either:
-    - `'attached'` - wait for element to be present in DOM.
-    - `'detached'` - wait for element to not be present in DOM.
-    - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
-    - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
+    * `'attached'` - wait for element to be present in DOM.
+    * `'detached'` - wait for element to not be present in DOM.
+    * `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
+    * `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
@@ -2225,9 +2225,9 @@ This method returns all of the dedicated [WebWorkers](https://developer.mozilla.
 At every point of time, page exposes its current frame tree via the [`page.mainFrame()`](#pagemainframe) and [`frame.childFrames()`](#framechildframes) methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-- [page.on('frameattached')](#pageonframeattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
-- [page.on('framenavigated')](#pageonframenavigated) - fired when the frame commits navigation to a different URL.
-- [page.on('framedetached')](#pageonframedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
+* [page.on('frameattached')](#pageonframeattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+* [page.on('framenavigated')](#pageonframenavigated) - fired when the frame commits navigation to a different URL.
+* [page.on('framedetached')](#pageonframedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
 
 An example of dumping frame tree:
 
@@ -2358,10 +2358,10 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
 
 #### frame.addScriptTag(params)
 - `params` <[Object]>
-  - `url` <[string]> URL of a script to be added.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw JavaScript content to be injected into frame.
-  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
+  - `url` <[string]> URL of a script to be added. Optional.
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
+  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
 Returns the added tag when the script's onload fires or when the script content was injected into frame.
@@ -2370,9 +2370,9 @@ Adds a `<script>` tag into the page with the desired url or content.
 
 #### frame.addStyleTag(params)
 - `params` <[Object]>
-  - `url` <[string]> URL of the `<link>` tag.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw CSS content to be injected into frame.
+  - `url` <[string]> URL of the `<link>` tag. Optional.
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
 Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
@@ -2601,9 +2601,9 @@ Returns element attribute value.
   - `referer` <[string]> Referer header value. If provided it will take preference over the referer header value set by [`page.setExtraHTTPHeaders(headers)`](#pagesetextrahttpheadersheaders).
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
@@ -2693,7 +2693,7 @@ Parent frame, if any. Detached frames and main frames return `null`.
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
@@ -2704,9 +2704,9 @@ Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported a
 #### frame.selectOption(selector, values[, options])
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
-  - `value` <[string]> Matches by `option.value`.
-  - `label` <[string]> Matches by `option.label`.
-  - `index` <[number]> Matches by the index.
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[number]> Matches by the index. Optional.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
@@ -2732,9 +2732,9 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]>
 
 #### frame.setInputFiles(selector, files[, options])
@@ -2863,10 +2863,10 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
 ```
 
 #### frame.waitForLoadState([state, options])
-- `state` <"load"|"domcontentloaded"|"networkidle"> Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method returns immediately. Optional.
-  - `'load'` - wait for the `load` event to be fired.
-  - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+- `state` <"load"|"domcontentloaded"|"networkidle"> Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method returns immediately. Can be one of:
+  * `'load'` - wait for the `load` event to be fired.
+  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
@@ -2885,9 +2885,9 @@ await frame.waitForLoadState(); // Waits for 'load' state by default.
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultNavigationTimeout(timeout)`](#browsercontextsetdefaultnavigationtimeouttimeout), [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout), [`page.setDefaultNavigationTimeout(timeout)`](#pagesetdefaultnavigationtimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
   - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
-    - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-    - `'load'` - consider operation to be finished when the `load` event is fired.
-    - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+    * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+    * `'load'` - consider operation to be finished when the `load` event is fired.
+    * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 - returns: <[Promise]<[null]|[Response]>>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will resolve with `null`.
@@ -2907,10 +2907,10 @@ const [response] = await Promise.all([
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `state` <"attached"|"detached"|"visible"|"hidden"> Defaults to `'visible'`. Can be either:
-    - `'attached'` - wait for element to be present in DOM.
-    - `'detached'` - wait for element to not be present in DOM.
-    - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
-    - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
+    * `'attached'` - wait for element to be present in DOM.
+    * `'detached'` - wait for element to not be present in DOM.
+    * `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
+    * `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
@@ -3072,8 +3072,8 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 - returns: <[Promise]<[null]|[Object]>>
   - `x` <[number]> the x coordinate of the element in pixels.
   - `y` <[number]> the y coordinate of the element in pixels.
-  - width <[number]> the width of the element in pixels.
-  - height <[number]> the height of the element in pixels.
+  - `width` <[number]> the width of the element in pixels.
+  - `height` <[number]> the height of the element in pixels.
 
 This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is calculated relative to the main frame viewport - which is usually the same as the browser window.
 
@@ -3260,7 +3260,7 @@ Focuses the element, and then uses [`keyboard.down(key)`](#keyboarddownkey) and 
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
@@ -3288,13 +3288,13 @@ This method waits for the [actionability](./actionability.md) checks, then scrol
 
 This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is completely visible as defined by [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
 
-Throws when ```elementHandle``` does not point to an element [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
+Throws when `elementHandle` does not point to an element [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 #### elementHandle.selectOption(values[, options])
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>> Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option is considered matching if all specified properties match.
-  - `value` <[string]> Matches by `option.value`.
-  - `label` <[string]> Matches by `option.label`.
-  - `index` <[number]> Matches by the index.
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[number]> Matches by the index. Optional.
 - `options` <[Object]>
   - `noWaitAfter` <[boolean]> Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to inaccessible pages. Defaults to `false`.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
@@ -3435,10 +3435,10 @@ If the element does not satisfy the condition for the `timeout` milliseconds, th
 - `selector` <[string]> A selector to query for. See [working with selectors](#working-with-selectors) for more details.
 - `options` <[Object]>
   - `state` <"attached"|"detached"|"visible"|"hidden"> Defaults to `'visible'`. Can be either:
-    - `'attached'` - wait for element to be present in DOM.
-    - `'detached'` - wait for element to not be present in DOM.
-    - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
-    - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
+    * `'attached'` - wait for element to be present in DOM.
+    * `'detached'` - wait for element to not be present in DOM.
+    * `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
+    * `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout) or [`page.setDefaultTimeout(timeout)`](#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
@@ -3543,7 +3543,7 @@ Fetches a single property from the referenced object.
 #### jsHandle.jsonValue()
 - returns: <[Promise]<[Serializable]>>
 
-Returns a JSON representation of the object. If the object has a [`toJSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#toJSON()_behavior) function, it **will not be called**.
+Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
 
 > **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an error if the object has circular references.
 
@@ -3563,7 +3563,7 @@ Returns a JSON representation of the object. If the object has a [`toJSON`](http
 
 #### consoleMessage.location()
 - returns: <[Object]>
-  - `url` <[string]> URL of the resource if available, otherwise empty string.
+  - `url` <[string]> URL of the resource.
   - `lineNumber` <[number]> 0-based line number in the resource.
   - `columnNumber` <[number]> 0-based column number in the resource.
 
@@ -3813,7 +3813,7 @@ Dispatches a `keydown` event.
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
@@ -3847,7 +3847,7 @@ page.keyboard.insertText('嗨');
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
 
@@ -3977,9 +3977,9 @@ Dispatches a `touchstart` and `touchend` event with a single touch at the positi
 ### class: Request
 
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
-- [page.on('request')](#pageonrequest) emitted when the request is issued by the page.
-- [page.on('response')](#pageonresponse) emitted when/if the response status and headers are received for the request.
-- [page.on('requestfinished')](#pageonrequestfinished) emitted when the response body is downloaded and the request is complete.
+* [page.on('request')](#pageonrequest) emitted when the request is issued by the page.
+* [page.on('response')](#pageonresponse) emitted when/if the response status and headers are received for the request.
+* [page.on('requestfinished')](#pageonrequestfinished) emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  [page.on('requestfailed')](#pageonrequestfailed) event is emitted.
 
@@ -4210,8 +4210,8 @@ Selectors can be used to install custom selector engines. See [Working with sele
 #### selectors.register(name, script[, options])
 - `name` <[string]> Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
 - `script` <[function]|[string]|[Object]> Script that evaluates to a selector engine instance.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw script content.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw script content. Optional.
 - `options` <[Object]>
   - `contentScript` <[boolean]> Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content script is not guaranteed when this engine is used together with other registered engines.
 - returns: <[Promise]>
@@ -4266,20 +4266,20 @@ Whenever a network route is set up with [`page.route(url, handler)`](#pagerouteu
 
 #### route.abort([errorCode])
 - `errorCode` <[string]> Optional error code. Defaults to `failed`, could be one of the following:
-  - `'aborted'` - An operation was aborted (due to user action)
-  - `'accessdenied'` - Permission to access a resource, other than the network, was denied
-  - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified host or network.
-  - `'blockedbyclient'` - The client chose to block the request.
-  - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-  - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
-  - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
-  - `'connectionfailed'` - A connection attempt failed.
-  - `'connectionrefused'` - A connection attempt was refused.
-  - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
-  - `'internetdisconnected'` - The Internet connection has been lost.
-  - `'namenotresolved'` - The host name could not be resolved.
-  - `'timedout'` - An operation timed out.
-  - `'failed'` - A generic failure occurred.
+  * `'aborted'` - An operation was aborted (due to user action)
+  * `'accessdenied'` - Permission to access a resource, other than the network, was denied
+  * `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified host or network.
+  * `'blockedbyclient'` - The client chose to block the request.
+  * `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+  * `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
+  * `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
+  * `'connectionfailed'` - A connection attempt failed.
+  * `'connectionrefused'` - A connection attempt was refused.
+  * `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
+  * `'internetdisconnected'` - The Internet connection has been lost.
+  * `'namenotresolved'` - The host name could not be resolved.
+  * `'timedout'` - An operation timed out.
+  * `'failed'` - A generic failure occurred.
 - returns: <[Promise]>
 
 Aborts the route's request.
@@ -4359,19 +4359,19 @@ The [WebSocket] class represents websocket connections in the page.
 Fired when the websocket closes.
 
 #### webSocket.on('framereceived')
-- <[Object]> web socket frame data
+- type: <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
 #### webSocket.on('framesent')
-- <[Object]> web socket frame data
+- type: <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
 #### webSocket.on('socketerror')
-- <[String]> the error message
+- type: <[String]> the error message
 
 Fired when the websocket has an error.
 
@@ -4499,7 +4499,7 @@ for (const worker of page.workers())
 <!-- GEN:stop -->
 
 #### worker.on('close')
-- <[Worker]>
+- type: <[Worker]>
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
@@ -4593,7 +4593,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
-  - `logger` <[Logger]> Logger sink for Playwright logging.
+  - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 - returns: <[Promise]<[Browser]>>
 
@@ -4792,7 +4792,7 @@ Determines whether sink is interested in the logger with the given name and seve
 - `message` <[string]|[Error]> log message format
 - `args` <[Array]<[Object]>> message arguments
 - `hints` <[Object]> optional formatting hints
-  - `color` <[string]> preferred logger color
+  - `color` <[string]> Optional preferred logger color.
 
 ### class: ChromiumBrowser
 * extends: [Browser]
@@ -4886,14 +4886,14 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 <!-- GEN:stop -->
 
 #### chromiumBrowserContext.on('backgroundpage')
-- <[Page]>
+- type: <[Page]>
 
 Emitted when new background page is created in the context.
 
 > **NOTE** Only works with persistent context.
 
 #### chromiumBrowserContext.on('serviceworker')
-- <[Worker]>
+- type: <[Worker]>
 
 Emitted when new service worker is created in the context.
 

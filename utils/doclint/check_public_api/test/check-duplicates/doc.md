@@ -1,15 +1,17 @@
-### class: Bar
+# class: Bar
 
-### class: Foo
+# class: Foo
 
-#### foo.test()
+## method: Foo.test
 
-#### foo.test()
+## method: Foo.test
 
-#### foo.title(arg, arg)
+## method: Foo.title
+
+### param: Foo.title.arg
 - `arg` <[number]>
+
+### param: Foo.title.arg
 - `arg` <[number]>
 
-### class: Bar
-
-[number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
+# class: Bar

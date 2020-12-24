@@ -1,15 +1,15 @@
-### class: Foo
+# class: Foo
 
-#### foo.on('c')
+## event: Foo.c
 
-#### foo.on('a')
+## event: Foo.a
 
-#### foo.aaa()
+## method: Foo.aaa
 
-#### foo.on('b')
+## event: Foo.b
 
-#### foo.ddd
+## property: Foo.ddd
 
-#### foo.ccc()
+## method: Foo.ccc
 
-#### foo.bbb()
+## method: Foo.bbb

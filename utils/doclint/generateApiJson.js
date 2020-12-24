@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-const playwright = require('../..');
+const fs = require('fs');
 const path = require('path');
-const Source = require('./Source');
+const { parseMd, applyTemplates } = require('../parse_md');
 const mdBuilder = require('./check_public_api/MDBuilder');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
-(async () => {
-  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-  const browser = await playwright.chromium.launch();
-  const page = await browser.newPage();
-  const { documentation } = await mdBuilder(page, [api], false);
+{
+  const apiBody = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString());
+  const apiParams = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString());
+  const api = applyTemplates(apiBody, apiParams);
+  const { documentation } = mdBuilder(api, false);
   const result = serialize(documentation);
   console.log(JSON.stringify(result));
-  await browser.close();
-})()
+}
 
 function serialize(documentation) {
   const result = {};

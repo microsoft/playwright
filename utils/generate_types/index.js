@@ -17,12 +17,14 @@
 //@ts-check
 const path = require('path');
 const Source = require('../doclint/Source');
-const {chromium, devices} = require('../..');
+const {devices} = require('../..');
 const Documentation = require('../doclint/check_public_api/Documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const {parseOverrides} = require('./parseOverrides');
 const exported = require('./exported.json');
+const { parseMd, applyTemplates } = require('../parse_md');
+
 const objectDefinitions = [];
 const handledMethods = new Set();
 /** @type {Documentation} */
@@ -35,11 +37,10 @@ let hadChanges = false;
     fs.mkdirSync(typesDir)
   writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts'), 'utf8'));
   writeFile(path.join(typesDir, 'trace.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'trace', 'traceTypes.ts'), 'utf8'));
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-  const {documentation: mdDocumentation} = await require('../doclint/check_public_api/MDBuilder')(page, [api], true);
-  await browser.close();
+  const apiBody = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString());
+  const apiParams = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString());
+  const api = applyTemplates(apiBody, apiParams);
+  const {documentation: mdDocumentation} = require('../doclint/check_public_api/MDBuilder')(api, true);
   const sources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
   const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources);
   documentation = mergeDocumentation(mdDocumentation, jsDocumentation);
@@ -408,8 +409,6 @@ function memberJSDOC(member, indent) {
   if (member.comment)
     lines.push(...member.comment.split('\n'));
   lines.push(...member.argsArray.map(arg => `@param ${arg.name.replace(/\./g, '')} ${arg.comment.replace('\n', ' ')}`));
-  if (member.returnComment)
-    lines.push(`@returns ${member.returnComment}`);
   if (!lines.length)
     return indent;
   return writeComment(lines.join('\n'), indent) + '\n' + indent;

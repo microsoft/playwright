@@ -1,5 +1,5 @@
 class Foo {
-  bar(options: {x: number, y: number, maybe?: number, nullable: string|null, object?: {one: number, two?: number}}) {
+  bar(options?: {x?: number, y?: number, maybe?: number, nullable?: string|null, object?: {one: number, two?: number}}) {
 
   }
 

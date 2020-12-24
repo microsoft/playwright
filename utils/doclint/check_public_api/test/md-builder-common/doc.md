@@ -1,24 +1,23 @@
-### class: Foo
+# class: Foo
 
 This is a class.
 
-#### foo.on('frame')
-- <[Frame]>
+## event: Foo.frame
+- type: <[Frame]>
 
 This event is dispatched.
 
-#### foo.$(selector)
-- `selector` <[string]> A selector to query page for
+## method: Foo.$
 - returns: <[Promise]<[ElementHandle]>>
 
 The method runs document.querySelector.
 
-#### foo.url
-- <[string]>
+### param: Foo.$.selector
+- `selector` <[string]>
+
+A selector to query page for
+
+## property: Foo.url
+- type: <[string]>
 
 Contains the URL of the request.
-
-[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
-[Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
-[ElementHandle]: # "ElementHandle"
-[ElementHandle]: # "Frame"

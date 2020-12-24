@@ -1,5 +1,5 @@
-### class: Foo
+# class: Foo
 
-### class: Bar
+# class: Bar
 
-### class: Baz
+# class: Baz

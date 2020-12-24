@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+// @ts-check
+
+/** @typedef {{
+ *    type: 'text' | 'li' | 'code' | 'gen' | 'h1' | 'h2' | 'h3' | 'h4',
+ *    text?: string,
+ *    codeLang?: string,
+ *    lines?: string[],
+ *    liType?: 'default' | 'bullet' | 'ordinal',
+ *    children?: MarkdownNode[]
+ *  }} MarkdownNode */
+
 class Documentation {
   /**
    * @param {!Array<!Documentation.Class>} classesArray
@@ -32,15 +43,16 @@ Documentation.Class = class {
    * @param {string} name
    * @param {!Array<!Documentation.Member>} membersArray
    * @param {?string=} extendsName
-   * @param {string=} comment
+   * @param {MarkdownNode[]=} spec
    * @param {string[]=} templates
    */
-  constructor(name, membersArray, extendsName = null, comment = '', templates = []) {
+  constructor(name, membersArray, extendsName = null, spec = undefined, templates = []) {
     this.name = name;
     this.membersArray = membersArray;
-    this.comment = comment;
+    this.spec = spec;
     this.extends = extendsName;
     this.templates = templates;
+    this.comment =  '';
     this.index();
   }
 
@@ -51,6 +63,10 @@ Documentation.Class = class {
     this.properties = new Map();
     /** @type {!Array<!Documentation.Member>} */
     this.propertiesArray = [];
+    /** @type {!Map<string, !Documentation.Member>} */
+    this.options = new Map();
+    /** @type {!Array<!Documentation.Member>} */
+    this.optionsArray = [];
     /** @type {!Map<string, !Documentation.Member>} */
     this.methods = new Map();
     /** @type {!Array<!Documentation.Member>} */
@@ -118,6 +134,16 @@ Documentation.Class = class {
       }
     }
   }
+
+  visit(visitor) {
+    visitor(this);
+    for (const p of this.propertiesArray)
+      p.visit(visitor);
+    for (const m of this.methodsArray)
+      m.visit(visitor);
+    for (const e of this.eventsArray)
+      e.visit(visitor);
+  }
 };
 
 Documentation.Member = class {
@@ -126,20 +152,19 @@ Documentation.Member = class {
    * @param {string} name
    * @param {?Documentation.Type} type
    * @param {!Array<!Documentation.Member>} argsArray
-   * @param {string=} comment
-   * @param {string=} returnComment
+   * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
    * @param {string[]=} templates
    */
-  constructor(kind, name, type, argsArray, comment = '', returnComment = '', required = true, templates = []) {
+  constructor(kind, name, type, argsArray, spec = undefined, required = true, templates = []) {
     this.kind = kind;
     this.name = name;
     this.type = type;
-    this.comment = comment;
-    this.returnComment = returnComment;
+    this.spec = spec;
     this.argsArray = argsArray;
     this.required = required;
     this.templates = templates;
+    this.comment =  '';
     /** @type {!Map<string, !Documentation.Member>} */
     this.args = new Map();
     for (const arg of argsArray)
@@ -150,34 +175,41 @@ Documentation.Member = class {
    * @param {string} name
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {?Documentation.Type} returnType
-   * @param {string=} returnComment
-   * @param {string=} comment
+   * @param {MarkdownNode[]=} spec
    * @param {string[]=} templates
    * @return {!Documentation.Member}
    */
-  static createMethod(name, argsArray, returnType, returnComment, comment, templates) {
-    return new Documentation.Member('method', name, returnType, argsArray, comment, returnComment, undefined, templates);
+  static createMethod(name, argsArray, returnType, spec, templates) {
+    return new Documentation.Member('method', name, returnType, argsArray, spec, undefined, templates);
   }
 
   /**
    * @param {string} name
    * @param {!Documentation.Type} type
-   * @param {string=} comment
+   * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
    * @return {!Documentation.Member}
    */
-  static createProperty(name, type, comment, required) {
-    return new Documentation.Member('property', name, type, [], comment, undefined, required);
+  static createProperty(name, type, spec, required) {
+    return new Documentation.Member('property', name, type, [], spec, required);
   }
 
   /**
    * @param {string} name
    * @param {?Documentation.Type=} type
-   * @param {string=} comment
+   * @param {MarkdownNode[]=} spec
    * @return {!Documentation.Member}
    */
-  static createEvent(name, type = null, comment) {
-    return new Documentation.Member('event', name, type, [], comment);
+  static createEvent(name, type = null, spec) {
+    return new Documentation.Member('event', name, type, [], spec);
+  }
+
+  visit(visitor) {
+    visitor(this);
+    if (this.type)
+      this.type.visit(visitor);
+    for (const arg of this.argsArray)
+      arg.visit(visitor);
   }
 };
 
@@ -190,7 +222,11 @@ Documentation.Type = class {
     this.name = name;
     this.properties = properties;
   }
+
+  visit(visitor) {
+    for (const p of this.properties || [])
+      p.visit(visitor);
+  }
 };
 
 module.exports = Documentation;
-

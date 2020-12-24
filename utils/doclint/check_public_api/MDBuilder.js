@@ -14,326 +14,276 @@
  * limitations under the License.
  */
 
+// @ts-check
+
+const { parseArgument } = require('../../parse_md');
 const Documentation = require('./Documentation');
-const commonmark = require('commonmark');
+
+/** @typedef {import('./Documentation').MarkdownNode} MarkdownNode */
 
 class MDOutline {
   /**
-   * @param {!Page} page
-   * @param {string} text
-   * @return {!MDOutline}
+   * @param {MarkdownNode[]} api
    */
-  static async create(page, text) {
-    // Render markdown as HTML.
-    const reader = new commonmark.Parser();
-    const parsed = reader.parse(text);
-    const writer = new commonmark.HtmlRenderer();
-    const html = writer.render(parsed);
-
-    const logConsole = msg => console.log(msg.text());
-    page.on('console', logConsole);
-    // Extract headings.
-    await page.setContent(html);
-    const {classes, errors} = await page.evaluate(() => {
-      const classes = [];
-      const errors = [];
-      const headers = document.body.querySelectorAll('h3');
-      for (let i = 0; i < headers.length; i++) {
-        const fragment = extractSiblingsIntoFragment(headers[i], headers[i + 1]);
-        classes.push(parseClass(fragment));
-      }
-      return {classes, errors};
-
-      /**
-       * @param {HTMLLIElement} element
-       * @param {boolean} defaultRequired
-       */
-      function parseProperty(element, defaultRequired) {
-        const clone = element.cloneNode(true);
-        const ul = clone.querySelector(':scope > ul');
-        const str = parseComment(extractSiblingsIntoFragment(clone.firstChild, ul));
-        const name = str.substring(0, str.indexOf('<')).replace(/\`/g, '').trim();
-        let type = findType(str);
-        const literals = type.match(/("[^"]+"(\|"[^"]+")*)/);
-        if (literals) {
-          const sorted = literals[1].split('|').sort((a, b) => a.localeCompare(b)).join('|');
-          type = type.substring(0, literals.index) + sorted + type.substring(literals.index + literals[0].length);
-        }
-        const properties = [];
-        let comment = str.substring(str.indexOf('<') + type.length + 2).trim();
-        const hasNonEnumProperties = type.split('|').some(part => {
-          const basicTypes = new Set(['string', 'number', 'boolean']);
-          const arrayTypes = new Set([...basicTypes].map(type => `Array<${type}>`));
-          return !basicTypes.has(part) && !arrayTypes.has(part) && !(part.startsWith('"') && part.endsWith('"'));
-        });
-        if (hasNonEnumProperties) {
-          for (const childElement of element.querySelectorAll(':scope > ul > li')) {
-            const text = childElement.textContent;
-            if (text.startsWith(`"`) || text.startsWith(`'`))
-              continue;
-            const property = parseProperty(childElement, true);
-            property.required = defaultRequired;
-            if (property.comment.toLowerCase().includes('defaults to '))
-              property.required = false;
-            if (property.comment.startsWith('Optional '))
-              property.required = false;
-            if (property.comment.toLowerCase().includes('if applicable.'))
-              property.required = false;
-            if (property.comment.toLowerCase().includes('if available.'))
-              property.required = false;
-            if (property.comment.includes('**required**'))
-              property.required = true;
-            properties.push(property);
-          }
-        } else if (ul) {
-          comment += '\n' + parseComment(ul).split('\n').map(l => ` - ${l}`).join('\n');
-        }
-        return {
-          name,
-          type,
-          comment,
-          properties
-        };
-      }
-
-      /**
-       * @param {string} str
-       * @return {string}
-       */
-      function findType(str) {
-        const start = str.indexOf('<') + 1;
-        let count = 1;
-        for (let i = start; i < str.length; i++) {
-          if (str[i] === '<') count++;
-          if (str[i] === '>') count--;
-          if (!count)
-            return str.substring(start, i);
-        }
-        return 'unknown';
-      }
-
-      /**
-       * @param {DocumentFragment} content
-       */
-      function parseClass(content) {
-        const members = [];
-        const commentWalker = document.createTreeWalker(content, NodeFilter.SHOW_COMMENT | NodeFilter.SHOW_ELEMENT, {
-          acceptNode(node) {
-            if (node instanceof HTMLElement && node.tagName === 'H4')
-              return NodeFilter.FILTER_ACCEPT;
-            if (!(node instanceof Comment))
-              return NodeFilter.FILTER_REJECT;
-            if (node.data.trim().startsWith('GEN:toc'))
-              return NodeFilter.FILTER_ACCEPT;
-            return NodeFilter.FILTER_REJECT;
-          }
-        });
-        const commentEnd = commentWalker.nextNode();
-        const headers = content.querySelectorAll('h4');
-        const name = content.firstChild.textContent;
-        let extendsName = null;
-        let commentStart = content.firstChild.nextSibling;
-        const extendsElement = content.querySelector('ul');
-        if (extendsElement && extendsElement.textContent.trim().startsWith('extends:')) {
-          commentStart = extendsElement.nextSibling;
-          extendsName = extendsElement.querySelector('a').textContent;
-        }
-        const comment = parseComment(extractSiblingsIntoFragment(commentStart, commentEnd));
-        for (let i = 0; i < headers.length; i++) {
-          const fragment = extractSiblingsIntoFragment(headers[i], headers[i + 1]);
-          members.push(parseMember(fragment));
-        }
-        return {
-          name,
-          comment,
-          extendsName,
-          members
-        };
-      }
-
-      /**
-       * @param {Node} content
-       */
-      function parseComment(content) {
-        for (const code of content.querySelectorAll('pre > code'))
-          code.replaceWith('```' + code.className.substring('language-'.length) + '\n' + code.textContent + '```');
-        for (const code of content.querySelectorAll('code'))
-          code.replaceWith('`' + code.textContent + '`');
-        for (const strong of content.querySelectorAll('strong'))
-          strong.replaceWith('**' + parseComment(strong) + '**');
-        return content.textContent.trim();
-      }
-
-      /**
-       * @param {DocumentFragment} content
-       */
-      function parseMember(content) {
-        const name = content.firstChild.textContent;
-        const args = [];
-        let returnType = null;
-
-        const paramRegex = /^\w+\.[\w$]+\((.*)\)$/;
-        const matches = paramRegex.exec(name) || ['', ''];
-        const parameters = matches[1];
-        const optionalStartIndex = parameters.indexOf('[');
-        const optinalParamsStr = optionalStartIndex !== -1 ? parameters.substring(optionalStartIndex).replace(/[\[\]]/g, '') : '';
-        const optionalparams = new Set(optinalParamsStr.split(',').filter(x => x).map(x => x.trim()));
-        const ul = content.querySelector('ul');
-        for (const element of content.querySelectorAll('h4 + ul > li')) {
-          if (element.matches('li') && element.textContent.trim().startsWith('<')) {
-            returnType = parseProperty(element, element.textContent.trim().includes('data'));
-          } else if (element.matches('li') && element.firstChild.matches && element.firstChild.matches('code')) {
-            const property = parseProperty(element, false);
-            property.required = !optionalparams.has(property.name) && !property.name.startsWith('...');
-            args.push(property);
-          } else if (element.matches('li') && element.firstChild.nodeType === Element.TEXT_NODE && element.firstChild.textContent.toLowerCase().startsWith('return')) {
-            returnType = parseProperty(element, true);
-            const expectedText = 'returns: ';
-            let actualText = element.firstChild.textContent;
-            let angleIndex = actualText.indexOf('<');
-            let spaceIndex = actualText.indexOf(' ');
-            angleIndex = angleIndex === -1 ? actualText.length : angleIndex;
-            spaceIndex = spaceIndex === -1 ? actualText.length : spaceIndex + 1;
-            actualText = actualText.substring(0, Math.min(angleIndex, spaceIndex));
-            if (actualText !== expectedText)
-              errors.push(`${name} has mistyped 'return' type declaration: expected exactly '${expectedText}', found '${actualText}'.`);
-          }
-        }
-        const comment = parseComment(extractSiblingsIntoFragment(ul ? ul.nextSibling : content.querySelector('h4').nextSibling));
-        return {
-          name,
-          args,
-          returnType,
-          comment
-        };
-      }
-
-      /**
-       * @param {!Node} fromInclusive
-       * @param {!Node} toExclusive
-       * @return {!DocumentFragment}
-       */
-      function extractSiblingsIntoFragment(fromInclusive, toExclusive) {
-        const fragment = document.createDocumentFragment();
-        let node = fromInclusive;
-        while (node && node !== toExclusive) {
-          const next = node.nextSibling;
-          fragment.appendChild(node);
-          node = next;
-        }
-        return fragment;
-      }
-    });
-    page.off('console', logConsole);
-    return new MDOutline(classes, errors);
+  constructor(api) {
+    this.classesArray = /** @type {Documentation.Class[]} */ [];
+    this.classes = /** @type {Map<string, Documentation.Class>} */ new Map();
+    for (const clazz of api) {
+      const c = parseClass(clazz);
+      this.classesArray.push(c);
+      this.classes.set(c.name, c);
+    }
+    this.signatures = this._generateComments();
   }
 
-  constructor(classes, errors) {
-    this.classes = [];
-    this.errors = errors;
-    const classHeading = /^class: (\w+)$/;
-    const constructorRegex = /^new (\w+)\((.*)\)$/;
-    const methodRegex = /^(\w+)\.([\w$]+)\(([^']*)\)$/;
-    const propertyRegex = /^(\w+)\.(\w+)$/;
-    const eventRegex = /^.*\.on\('(\w+)'\)$/;
-    let currentClassName = null;
-    let currentClassMembers = [];
-    let currentClassComment = '';
-    let currentClassExtends = null;
-    for (const cls of classes) {
-      const match = cls.name.match(classHeading);
-      if (!match)
-        continue;
-      currentClassName = match[1];
-      currentClassComment = cls.comment;
-      currentClassExtends = cls.extendsName;
-      for (const member of cls.members) {
-        if (constructorRegex.test(member.name)) {
-          const match = member.name.match(constructorRegex);
-          handleMethod.call(this, member, match[1], 'constructor', match[2]);
-        } else if (methodRegex.test(member.name)) {
-          const match = member.name.match(methodRegex);
-          handleMethod.call(this, member, match[1], match[2], match[3]);
-        } else if (propertyRegex.test(member.name)) {
-          const match = member.name.match(propertyRegex);
-          handleProperty.call(this, member, match[1], match[2]);
-        } else if (eventRegex.test(member.name)) {
-          const match = member.name.match(eventRegex);
-          handleEvent.call(this, member, match[1]);
+  _generateComments() {
+    /**
+     * @type  {Map<string, string>}
+     */
+    const signatures = new Map();
+
+    for (const clazz of this.classesArray) {
+      for (const method of clazz.methodsArray) {
+        const tokens = [];
+        let hasOptional = false;
+        for (const arg of method.argsArray) {
+          const optional = !arg.required;
+          if (tokens.length) {
+            if (optional && !hasOptional)
+              tokens.push(`[, ${arg.name}`);
+            else
+              tokens.push(`, ${arg.name}`);
+          } else {
+            if (optional && !hasOptional)
+              tokens.push(`[${arg.name}`);
+            else
+              tokens.push(`${arg.name}`);
+          }
+          hasOptional = hasOptional || optional;
         }
+        if (hasOptional)
+          tokens.push(']');
+        const signature = tokens.join('');
+        const methodName = `${clazz.name}.${method.name}`;
+        signatures.set(methodName, signature);
       }
-      flushClassIfNeeded.call(this);
     }
 
-    function handleMethod(member, className, methodName, parameters) {
-      if (!currentClassName || !className || !methodName || className.toLowerCase() !== currentClassName.toLowerCase()) {
-        this.errors.push(`Failed to process header as method: ${member.name}`);
-        return;
-      }
-      parameters = parameters.trim().replace(/[\[\]]/g, '');
-      if (parameters !== member.args.map(arg => arg.name).join(', '))
-        this.errors.push(`Heading arguments for "${member.name}" do not match described ones, i.e. "${parameters}" != "${member.args.map(a => a.name).join(', ')}"`);
-      const args = member.args.map(createPropertyFromJSON);
-      let returnType = null;
-      let returnComment = '';
-      if (member.returnType) {
-        const returnProperty = createPropertyFromJSON(member.returnType);
-        returnType = returnProperty.type;
-        returnComment = returnProperty.comment;
-      }
-      const method = Documentation.Member.createMethod(methodName, args, returnType, returnComment, member.comment);
-      currentClassMembers.push(method);
-    }
-
-    function createPropertyFromJSON(payload) {
-      const type = new Documentation.Type(payload.type, payload.properties.map(createPropertyFromJSON));
-      const required = payload.required;
-      return Documentation.Member.createProperty(payload.name, type, payload.comment, required);
-    }
-
-    function handleProperty(member, className, propertyName) {
-      if (!currentClassName || !className || !propertyName || className.toLowerCase() !== currentClassName.toLowerCase()) {
-        this.errors.push(`Failed to process header as property: ${member.name}`);
-        return;
-      }
-      const type = member.returnType ? member.returnType.type : null;
-      const properties = member.returnType ? member.returnType.properties : [];
-      currentClassMembers.push(createPropertyFromJSON({type, name: propertyName, properties, comment: member.comment}));
-    }
-
-    function handleEvent(member, eventName) {
-      if (!currentClassName || !eventName) {
-        this.errors.push(`Failed to process header as event: ${member.name}`);
-        return;
-      }
-      currentClassMembers.push(Documentation.Member.createEvent(eventName, member.returnType && createPropertyFromJSON(member.returnType).type, member.comment));
-    }
-
-    function flushClassIfNeeded() {
-      if (currentClassName === null)
-        return;
-      this.classes.push(new Documentation.Class(currentClassName, currentClassMembers, currentClassExtends, currentClassComment));
-      currentClassName = null;
-      currentClassMembers = [];
-    }
+    for (const clazz of this.classesArray)
+      clazz.visit(item => item.comment = renderComments(item.spec, signatures));
+    return signatures;
   }
 }
 
 /**
- * @param {!Page} page
- * @param {!Array<!Source>} sources
- * @param {!boolean} copyDocsFromSuperClasses
- * @return {!Promise<{documentation: !Documentation, errors: !Array<string>}>}
+ * @param {MarkdownNode} node
+ * @returns {Documentation.Class}
  */
-module.exports = async function(page, sources, copyDocsFromSuperClasses) {
-  const classes = [];
-  const errors = [];
-  for (const source of sources) {
-    const outline = await MDOutline.create(page, source.text());
-    classes.push(...outline.classes);
-    errors.push(...outline.errors);
+function parseClass(node) {
+  const members = [];
+  let extendsName = null;
+  const name = node.text.substring('class: '.length);
+  for (const member of node.children) {
+    if (member.type === 'li' && member.text.startsWith('extends: [')) {
+      extendsName = member.text.substring('extends: ['.length, member.text.indexOf(']'));
+      continue;
+    }
+    if (member.type === 'h2')
+      members.push(parseMember(member));
   }
-  const documentation = new Documentation(classes);
+  return new Documentation.Class(name, members, extendsName, extractComments(node));
+}
+
+/**
+ * @param {MarkdownNode} item
+ * @returns {MarkdownNode[]}
+ */
+function extractComments(item) {
+  return (item.children || []).filter(c => c.type !== 'gen' && !c.type.startsWith('h'));
+}
+
+/**
+ * @param {MarkdownNode[]} spec
+ * @param {Map<string, string>} [signatures]
+ */
+function renderComments(spec, signatures) {
+  const result = [];
+  for (const node of spec || []) {
+    if (node.type === 'text') {
+      const text = patchSignatures(node.text, signatures);
+
+      // Render comments as text.
+      if (text.startsWith('> ')) {
+        result.push('');
+        result.push(text);
+      } else {
+        result.push(text);
+      }
+    }
+  
+    if (node.type === 'code') {
+      result.push('```' + node.codeLang);
+      for (const line of node.lines)
+        result.push(line);
+      result.push('```');
+    }
+  
+    if (node.type === 'gen') {
+      // Skip
+    }
+  
+    if (node.type === 'li' && node.liType !== 'default') {
+      if (node.text.startsWith('extends:'))
+        continue;
+      const visit = (node, indent) => {
+        result.push(`${indent}- ${patchSignatures(node.text, signatures)}`);
+        for (const child of node.children || [])
+          visit(child, indent + '  ');
+      };
+      visit(node, '');
+    }
+  }
+  return result.join('\n');
+}
+
+/**
+ * @param {string} comment
+ * @param {Map<string, string>} signatures
+ */
+function patchSignatures(comment, signatures) {
+  if (!signatures)
+    return comment;
+  comment = comment.replace(/\[`(event|method|property):\s(JS|CDP|[A-Z])([^.]+)\.([^`]+)`\]\(\)/g, (match, type, clazzPrefix, clazz, name) => {
+    const className = `${clazzPrefix.toLowerCase()}${clazz}`;
+    if (type === 'event')
+      return `\`${className}.on('${name}')\``;
+    if (type === 'method') {
+      const signature = signatures.get(`${clazzPrefix}${clazz}.${name}`) || '';
+      return `\`${className}.${name}(${signature})\``;
+    }
+    return `\`${className}.${name}\``;
+  });
+  comment = comment.replace(/\[`(?:param|option):\s([^`]+)`\]\(\)/g, '`$1`');
+  comment = comment.replace(/\[([^\]]+)\]\([^\)]*\)/g, '$1');
+  for (const link of outgoingLinks)
+    comment = comment.replace(new RegExp('\\[' + link + '\\]', 'g'), link);
+  return comment;
+}
+
+/**
+ * @param {MarkdownNode} member
+ * @returns {Documentation.Member}
+ */
+function parseMember(member) {
+  const args = [];
+  const match = member.text.match(/(event|method|property|async method|): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
+  const name = match[4];
+  let returnType = null;
+  const options = [];
+
+  for (const item of member.children || []) {
+    if (item.type === 'li' && item.liType === 'default')
+      returnType = parseType(item);
+  }
+  if (!returnType)
+    returnType = new Documentation.Type('void');
+  if (match[1] === 'async method')
+    returnType.name = `Promise<${returnType.name}>`;
+
+  if (match[1] === 'event')
+    return Documentation.Member.createEvent(name, returnType, extractComments(member));
+  if (match[1] === 'property')
+    return Documentation.Member.createProperty(name, returnType, extractComments(member), true);
+
+  for (const item of member.children || []) {
+    if (item.type === 'h3' && item.text.startsWith('param:'))
+      args.push(parseProperty(item));
+    if (item.type === 'h3' && item.text.startsWith('option:'))
+      options.push(parseProperty(item));
+  }
+
+  if (options.length) {
+    options.sort((o1, o2) => o1.name.localeCompare(o2.name));
+    for (const option of options)
+       option.required = false;
+    const type = new Documentation.Type('Object', options);
+    args.push(Documentation.Member.createProperty('options', type, undefined, false));
+  }
+  return Documentation.Member.createMethod(name, args, returnType, extractComments(member));
+}
+
+/**
+ * @param {MarkdownNode} spec
+ * @return {Documentation.Member}
+ */
+function parseProperty(spec) {
+  const param = spec.children[0];
+  const text = param.text;
+  const name = text.substring(0, text.indexOf('<')).replace(/\`/g, '').trim();
+  const comments = extractComments(spec);
+  return Documentation.Member.createProperty(name, parseType(param), comments, guessRequired(renderComments(comments)));
+}
+
+/**
+ * @param {MarkdownNode=} spec
+ * @return {Documentation.Type}
+ */
+function parseType(spec) {
+  const { type } = parseArgument(spec.text);
+  let typeName = type.replace(/[\[\]\\]/g, '');
+  const literals = typeName.match(/("[^"]+"(\|"[^"]+")*)/);
+  if (literals) {
+    const sorted = literals[1].split('|').sort((a, b) => a.localeCompare(b)).join('|');
+    typeName = typeName.substring(0, literals.index) + sorted + typeName.substring(literals.index + literals[0].length);
+  }
+  const properties = [];
+  const hasNonEnumProperties = typeName.split('|').some(part => {
+    const basicTypes = new Set(['string', 'number', 'boolean']);
+    const arrayTypes = new Set([...basicTypes].map(type => `Array<${type}>`));
+    return !basicTypes.has(part) && !arrayTypes.has(part) && !(part.startsWith('"') && part.endsWith('"'));
+  });
+  if (hasNonEnumProperties && spec) {
+    for (const child of spec.children || []) {
+      const { name, text } = parseArgument(child.text);
+      const patchedText = text.replace(/\. Optional\.$/, '.');
+      const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text: patchedText }]);
+      properties.push(Documentation.Member.createProperty(name, parseType(child), comments, guessRequired(text)));
+    }
+  }
+  return new Documentation.Type(typeName, properties);
+}
+
+/**
+ * @param {string} comment
+ */
+function guessRequired(comment) {
+  let required = true;
+  if (comment.toLowerCase().includes('defaults to '))
+    required = false;
+  if (comment.startsWith('Optional'))
+    required = false;
+  if (comment.endsWith('Optional.'))
+    required = false;
+  if (comment.toLowerCase().includes('if set'))
+    required = false;
+  if (comment.toLowerCase().includes('if applicable'))
+    required = false;
+  if (comment.toLowerCase().includes('if available'))
+    required = false;
+  if (comment.includes('**required**'))
+    required = true;
+  return required;
+}
+
+module.exports =
+/**
+ * @param {any} api
+ * @param {boolean} copyDocsFromSuperClasses
+ */
+ function(api, copyDocsFromSuperClasses) {
+  const errors = [];
+  const outline = new MDOutline(api);
+  const documentation = new Documentation(outline.classesArray);
 
   if (copyDocsFromSuperClasses) {
     // Push base class documentation to derived classes.
@@ -356,5 +306,7 @@ module.exports = async function(page, sources, copyDocsFromSuperClasses) {
       clazz.index();
     }
   }
-  return { documentation, errors };
+  return { documentation, errors, outline };
 };
+
+const outgoingLinks = ['AXNode', 'Accessibility', 'Array', 'Body', 'BrowserServer', 'BrowserContext', 'BrowserType', 'Browser', 'Buffer', 'ChildProcess', 'ChromiumBrowser', 'ChromiumBrowserContext', 'ChromiumCoverage', 'CDPSession', 'ConsoleMessage', 'Dialog', 'Download', 'ElementHandle', 'Element', 'Error', 'EvaluationArgument', 'File', 'FileChooser', 'FirefoxBrowser', 'Frame', 'JSHandle', 'Keyboard', 'Logger', 'Map', 'Mouse', 'Object', 'Page', 'Playwright', 'Promise', 'RegExp', 'Request', 'Response', 'Route', 'Selectors', 'Serializable', 'TimeoutError', 'Touchscreen', 'UIEvent.detail', 'URL', 'USKeyboardLayout', 'UnixTime', 'Video', 'WebKitBrowser', 'WebSocket', 'Worker', 'boolean', 'function', 'iterator', 'null', 'number', 'origin', 'selector', 'Readable', 'string', 'xpath'];

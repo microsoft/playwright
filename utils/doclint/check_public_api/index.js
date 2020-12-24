@@ -24,12 +24,10 @@ const EXCLUDE_PROPERTIES = new Set([
 ]);
 
 /**
- * @param {!Page} page
- * @param {!Array<!Source>} mdSources
  * @return {!Promise<!Array<!Message>>}
  */
-module.exports = async function lint(page, mdSources, jsSources) {
-  const mdResult = await mdBuilder(page, mdSources, true);
+module.exports = function lint(api, jsSources) {
+  const mdResult = mdBuilder(api, true);
   const jsResult = jsBuilder.checkSources(jsSources);
   const jsDocumentation = filterJSDocumentation(jsSources, jsResult.documentation);
   const mdDocumentation = mdResult.documentation;
@@ -120,12 +118,14 @@ function compareDocumentations(actual, expected) {
     for (const methodName of methodDiff.equal) {
       const actualMethod = actualClass.methods.get(methodName);
       const expectedMethod = expectedClass.methods.get(methodName);
-      if (!actualMethod.type !== !expectedMethod.type) {
-        if (actualMethod.type)
-          errors.push(`Method ${className}.${methodName} has unneeded description of return type`);
-        else
-          errors.push(`Method ${className}.${methodName} is missing return type description`);
-      } else if (actualMethod.type) {
+      const hasActualType = actualMethod.type && actualMethod.type.name !== 'void';
+      const hasExpectedType = expectedMethod.type && expectedMethod.type.name !== 'void';
+      if (hasActualType !== hasExpectedType) {
+        if (hasActualType)
+          errors.push(`Method ${className}.${methodName} has unneeded description of return type: `+ actualMethod.type.name);
+        else if (hasExpectedType)
+          errors.push(`Method ${className}.${methodName} is missing return type description: ` + expectedMethod.type.name);
+      } else if (hasActualType) {
         checkType(`Method ${className}.${methodName} has the wrong return type: `, actualMethod.type, expectedMethod.type);
       }
       const actualArgs = Array.from(actualMethod.args.keys());

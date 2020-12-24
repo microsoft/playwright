@@ -132,7 +132,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 * The [`method: Browser.close`]() method was called.
 
 ## event: BrowserContext.page
-- <[Page]>
+- type: <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
 also fire for popup pages. See also [`event: Page.popup`]() to receive events about popups relevant to a specific page.
@@ -165,13 +165,13 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 - `cookies` <[Array]<[Object]>>
   - `name` <[string]> **required**
   - `value` <[string]> **required**
-  - `url` <[string]> either url or domain / path are required
-  - `domain` <[string]> either url or domain / path are required
-  - `path` <[string]> either url or domain / path are required
-  - `expires` <[number]> Unix time in seconds.
-  - `httpOnly` <[boolean]>
-  - `secure` <[boolean]>
-  - `sameSite` <"Strict"|"Lax"|"None">
+  - `url` <[string]> either url or domain / path are required. Optional.
+  - `domain` <[string]> either url or domain / path are required Optional.
+  - `path` <[string]> either url or domain / path are required Optional.
+  - `expires` <[number]> Unix time in seconds. Optional.
+  - `httpOnly` <[boolean]> Optional.
+  - `secure` <[boolean]> Optional.
+  - `sameSite` <"Strict"|"Lax"|"None"> Optional.
 
 ## async method: BrowserContext.addInitScript
 
@@ -201,8 +201,8 @@ await browserContext.addInitScript({
 
 ### param: BrowserContext.addInitScript.script
 - `script` <[function]|[string]|[Object]>
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw script content.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw script content. Optional.
 
 Script to be evaluated in all pages in the browser context.
 
@@ -372,24 +372,24 @@ specified.
 
 ### param: BrowserContext.grantPermissions.permissions
 - `permissions` <[Array]<[string]>>
-  - `'geolocation'`
-  - `'midi'`
-  - `'midi-sysex'` (system-exclusive midi)
-  - `'notifications'`
-  - `'push'`
-  - `'camera'`
-  - `'microphone'`
-  - `'background-sync'`
-  - `'ambient-light-sensor'`
-  - `'accelerometer'`
-  - `'gyroscope'`
-  - `'magnetometer'`
-  - `'accessibility-events'`
-  - `'clipboard-read'`
-  - `'clipboard-write'`
-  - `'payment-handler'`
 
 A permission or an array of permissions to grant. Permissions can be one of the following values:
+  * `'geolocation'`
+  * `'midi'`
+  * `'midi-sysex'` (system-exclusive midi)
+  * `'notifications'`
+  * `'push'`
+  * `'camera'`
+  * `'microphone'`
+  * `'background-sync'`
+  * `'ambient-light-sensor'`
+  * `'accelerometer'`
+  * `'gyroscope'`
+  * `'magnetometer'`
+  * `'accessibility-events'`
+  * `'clipboard-read'`
+  * `'clipboard-write'`
+  * `'payment-handler'`
 
 ### option: BrowserContext.grantPermissions.origin
 - `origin` <[string]>
@@ -643,7 +643,7 @@ page.removeListener('request', logRequest);
 Emitted when the page closes.
 
 ## event: Page.console
-- <[ConsoleMessage]>
+- type: <[ConsoleMessage]>
 
 Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
 emitted if the page throws an error or a warning.
@@ -692,7 +692,7 @@ await new Promise((resolve, reject) => {
 ```
 
 ## event: Page.dialog
-- <[Dialog]>
+- type: <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
 to the dialog via [`method: Dialog.accept`]() or [`method: Dialog.dismiss`]() methods.
@@ -703,7 +703,7 @@ Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/e
 event is dispatched.
 
 ## event: Page.download
-- <[Download]>
+- type: <[Download]>
 
 Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
 [Download] instance.
@@ -713,7 +713,7 @@ downloaded content. If `acceptDownloads` is not set or set to `false`, download 
 download is not performed and user has no access to the downloaded files.
 
 ## event: Page.filechooser
-- <[FileChooser]>
+- type: <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
 respond to it via setting the input files using [`method: FileChooser.setFiles`]() that can be uploaded after that.
@@ -725,17 +725,17 @@ page.on('filechooser', async (fileChooser) => {
 ```
 
 ## event: Page.frameattached
-- <[Frame]>
+- type: <[Frame]>
 
 Emitted when a frame is attached.
 
 ## event: Page.framedetached
-- <[Frame]>
+- type: <[Frame]>
 
 Emitted when a frame is detached.
 
 ## event: Page.framenavigated
-- <[Frame]>
+- type: <[Frame]>
 
 Emitted when a frame is navigated to a new url.
 
@@ -744,12 +744,12 @@ Emitted when a frame is navigated to a new url.
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
 ## event: Page.pageerror
-- <[Error]> The exception message
+- type: <[Error]> The exception message
 
 Emitted when an uncaught exception happens within the page.
 
 ## event: Page.popup
-- <[Page]> Page corresponding to "popup" window
+- type: <[Page]> Page corresponding to "popup" window
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the [`event:
 BrowserContext.page`](), but only for popups relevant to this page.
@@ -770,13 +770,13 @@ console.log(await popup.evaluate('location.href'));
 need it in most cases).
 
 ## event: Page.request
-- <[Request]>
+- type: <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
 [`method: Page.route`]() or [`method: BrowserContext.route`]().
 
 ## event: Page.requestfailed
-- <[Request]>
+- type: <[Request]>
 
 Emitted when a request fails, for example by timing out.
 
@@ -784,24 +784,24 @@ Emitted when a request fails, for example by timing out.
 will complete with [`event: Page.requestfinished`]() event and not with [`event: Page.requestfailed`]().
 
 ## event: Page.requestfinished
-- <[Request]>
+- type: <[Request]>
 
 Emitted when a request finishes successfully after downloading the response body. For a successful response, the
 sequence of events is `request`, `response` and `requestfinished`.
 
 ## event: Page.response
-- <[Response]>
+- type: <[Response]>
 
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`.
 
 ## event: Page.websocket
-- <[WebSocket]> websocket
+- type: <[WebSocket]> websocket
 
 Emitted when <[WebSocket]> request is sent.
 
 ## event: Page.worker
-- <[Worker]>
+- type: <[Worker]>
 
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
@@ -885,8 +885,8 @@ Function to be evaluated in browser context
 
 Optional argument to pass to [`param: pageFunction`]()
 
-## namespace: Page.accessibility
-- returns: <[Accessibility]>
+## property: Page.accessibility
+- type: <[Accessibility]>
 
 ## async method: Page.addInitScript
 
@@ -913,8 +913,8 @@ await page.addInitScript(preloadFile);
 
 ### param: Page.addInitScript.script
 - `script` <[function]|[string]|[Object]>
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw script content.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw script content. Optional.
 
 Script to be evaluated in the page.
 
@@ -933,10 +933,10 @@ Shortcut for main frame's [`method: Frame.addScriptTag`]().
 
 ### param: Page.addScriptTag.params
 - `params` <[Object]>
-  - `url` <[string]> URL of a script to be added.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw JavaScript content to be injected into frame.
-  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
+  - `url` <[string]> URL of a script to be added. Optional.
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
+  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 
 ## async method: Page.addStyleTag
 - returns: <[ElementHandle]>
@@ -948,9 +948,9 @@ Shortcut for main frame's [`method: Frame.addStyleTag`]().
 
 ### param: Page.addStyleTag.params
 - `params` <[Object]>
-  - `url` <[string]> URL of the `<link>` tag.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw CSS content to be injected into frame.
+  - `url` <[string]> URL of the `<link>` tag. Optional.
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 
 ## async method: Page.bringToFront
 
@@ -1039,8 +1039,8 @@ Gets the full HTML contents of the page, including the doctype.
 
 Get the browser context that the page belongs to.
 
-## namespace: Page.coverage
-- returns: <[null]|[ChromiumCoverage]>
+## property: Page.coverage
+- type: <[null]|[ChromiumCoverage]>
 
 Browser-specific Coverage implementation, only available for Chromium atm. See
 [ChromiumCoverage](#class-chromiumcoverage) for more details.
@@ -1155,13 +1155,13 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 
 ### param: Page.emulateMedia.params
 - `params` <[Object]>
-  - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
-  - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value.
+  - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value. Optional.
+  - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value. Optional.
 
 ## async method: Page.evaluate
 - returns: <[Serializable]>
 
-Returns the value of the [`param: pageFunction`]() invacation.
+Returns the value of the [`param: pageFunction`]() invocation.
 
 If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to
 resolve and return its value.
@@ -1210,7 +1210,7 @@ Optional argument to pass to [`param: pageFunction`]()
 ## async method: Page.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the value of the [`param: pageFunction`]() invacation as in-page object (JSHandle).
+Returns the value of the [`param: pageFunction`]() invocation as in-page object (JSHandle).
 
 The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page
 object (JSHandle).
@@ -1432,8 +1432,8 @@ const frame = page.frame({ url: /.*domain.*/ });
 
 ### param: Page.frame.frameSelector
 - `frameSelector` <[string]|[Object]>
-  - `name` <[string]> frame name specified in the `iframe`'s `name` attribute
-  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object.
+  - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
+  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
 
@@ -1566,16 +1566,16 @@ Returns `element.innerText`.
 
 Indicates that the page has been closed.
 
-## namespace: Page.keyboard
-- returns: <[Keyboard]>
+## property: Page.keyboard
+- type: <[Keyboard]>
 
 ## method: Page.mainFrame
 - returns: <[Frame]>
 
 The page's main frame. Page is guaranteed to have a main frame which persists during navigations.
 
-## namespace: Page.mouse
-- returns: <[Mouse]>
+## property: Page.mouse
+- type: <[Mouse]>
 
 ## async method: Page.opener
 - returns: <[null]|[Page]>
@@ -1651,14 +1651,14 @@ Display header and footer. Defaults to `false`.
 
 ### option: Page.pdf.headerTemplate
 - `headerTemplate` <[string]>
-  - `'date'` formatted print date
-  - `'title'` document title
-  - `'url'` document location
-  - `'pageNumber'` current page number
-  - `'totalPages'` total pages in the document
 
 HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values
 into them:
+  * `'date'` formatted print date
+  * `'title'` document title
+  * `'url'` document location
+  * `'pageNumber'` current page number
+  * `'totalPages'` total pages in the document
 
 ### option: Page.pdf.footerTemplate
 - `footerTemplate` <[string]>
@@ -1722,7 +1722,7 @@ generate the text for. A superset of the [`param: key`]() values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
 
@@ -1885,9 +1885,9 @@ Shortcut for main frame's [`method: Frame.selectOption`]()
 
 ### param: Page.selectOption.values
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`.
-  - `label` <[string]> Matches by `option.label`.
-  - `index` <[number]> Matches by the index.
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[number]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -2028,8 +2028,8 @@ Returns `element.textContent`.
 
 Returns the page's title. Shortcut for main frame's [`method: Frame.title`]().
 
-## namespace: Page.touchscreen
-- returns: <[Touchscreen]>
+## property: Page.touchscreen
+- type: <[Touchscreen]>
 
 ## async method: Page.type
 
@@ -2208,12 +2208,12 @@ Shortcut for main frame's [`method: Frame.waitForLoadState`]().
 
 ### param: Page.waitForLoadState.state
 - `state` <"load"|"domcontentloaded"|"networkidle">
-  - `'load'` - wait for the `load` event to be fired.
-  - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
-Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
-method resolves immediately. Optional.
+Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
+method resolves immediately. Can be one of:
+  * `'load'` - wait for the `load` event to be fired.
+  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
 ### option: Page.waitForLoadState.timeout = %%-navigation-timeout-%%
 
@@ -2366,9 +2366,9 @@ At every point of time, page exposes its current frame tree via the [`method: Pa
 Frame.childFrames`]() methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-- [`event: Page.frameattached`]() - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
-- [`event: Page.framenavigated`]() - fired when the frame commits navigation to a different URL.
-- [`event: Page.framedetached`]() - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
+* [`event: Page.frameattached`]() - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+* [`event: Page.framenavigated`]() - fired when the frame commits navigation to a different URL.
+* [`event: Page.framedetached`]() - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
 
 An example of dumping frame tree:
 
@@ -2493,10 +2493,10 @@ Adds a `<script>` tag into the page with the desired url or content.
 
 ### param: Frame.addScriptTag.params
 - `params` <[Object]>
-  - `url` <[string]> URL of a script to be added.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw JavaScript content to be injected into frame.
-  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
+  - `url` <[string]> URL of a script to be added. Optional.
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
+  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 
 ## async method: Frame.addStyleTag
 - returns: <[ElementHandle]>
@@ -2508,9 +2508,9 @@ content.
 
 ### param: Frame.addStyleTag.params
 - `params` <[Object]>
-  - `url` <[string]> URL of the `<link>` tag.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw CSS content to be injected into frame.
+  - `url` <[string]> URL of the `<link>` tag. Optional.
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 
 ## async method: Frame.check
 
@@ -2902,7 +2902,7 @@ generate the text for. A superset of the [`param: key`]() values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
 
@@ -2951,9 +2951,9 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 
 ### param: Frame.selectOption.values
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`.
-  - `label` <[string]> Matches by `option.label`.
-  - `index` <[number]> Matches by the index.
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[number]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -3145,12 +3145,12 @@ await frame.waitForLoadState(); // Waits for 'load' state by default.
 
 ### param: Frame.waitForLoadState.state
 - `state` <"load"|"domcontentloaded"|"networkidle">
-  - `'load'` - wait for the `load` event to be fired.
-  - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
-Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
-method returns immediately. Optional.
+Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
+method returns immediately. Can be one of:
+  * `'load'` - wait for the `load` event to be fired.
+  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
 
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
 
@@ -3350,8 +3350,8 @@ Optional argument to pass to [`param: pageFunction`]()
 - returns: <[null]|[Object]>
   - `x` <[number]> the x coordinate of the element in pixels.
   - `y` <[number]> the y coordinate of the element in pixels.
-  - width <[number]> the width of the element in pixels.
-  - height <[number]> the height of the element in pixels.
+  - `width` <[number]> the width of the element in pixels.
+  - `height` <[number]> the height of the element in pixels.
 
 This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
 calculated relative to the main frame viewport - which is usually the same as the browser window.
@@ -3573,7 +3573,7 @@ generate the text for. A superset of the [`param: key`]() values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
 
@@ -3636,7 +3636,7 @@ This method waits for [actionability](./actionability.md) checks, then tries to 
 completely visible as defined by
 [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
 
-Throws when ```elementHandle``` does not point to an element
+Throws when `elementHandle` does not point to an element
 [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
 ### option: ElementHandle.scrollIntoViewIfNeeded.timeout = %%-input-timeout-%%
@@ -3665,9 +3665,9 @@ handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 
 ### param: ElementHandle.selectOption.values
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`.
-  - `label` <[string]> Matches by `option.label`.
-  - `index` <[number]> Matches by the index.
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[number]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -3939,9 +3939,7 @@ property to get
 ## async method: JSHandle.jsonValue
 - returns: <[Serializable]>
 
-Returns a JSON representation of the object. If the object has a
-[`toJSON`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#toJSON()_behavior)
-function, it **will not be called**.
+Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
 
 > **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an
 error if the object has circular references.
@@ -3958,7 +3956,7 @@ error if the object has circular references.
 
 ## method: ConsoleMessage.location
 - returns: <[Object]>
-  - `url` <[string]> URL of the resource if available, otherwise empty string.
+  - `url` <[string]> URL of the resource.
   - `lineNumber` <[number]> 0-based line number in the resource.
   - `columnNumber` <[number]> 0-based column number in the resource.
 
@@ -4202,7 +4200,7 @@ generate the text for. A superset of the [`param: key`]() values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
 
@@ -4248,7 +4246,7 @@ generate the text for. A superset of the [`param: key`]() values can be found
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
 `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
 
-Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
 Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
 
@@ -4414,9 +4412,9 @@ Dispatches a `touchstart` and `touchend` event with a single touch at the positi
 # class: Request
 
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
-- [`event: Page.request`]() emitted when the request is issued by the page.
-- [`event: Page.response`]() emitted when/if the response status and headers are received for the request.
-- [`event: Page.requestfinished`]() emitted when the response body is downloaded and the request is complete.
+* [`event: Page.request`]() emitted when the request is issued by the page.
+* [`event: Page.response`]() emitted when/if the response status and headers are received for the request.
+* [`event: Page.requestfinished`]() emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
 the  [`event: Page.requestfailed`]() event is emitted.
@@ -4676,8 +4674,8 @@ contain `[a-zA-Z0-9_]` characters.
 
 ### param: Selectors.register.script
 - `script` <[function]|[string]|[Object]>
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
-  - `content` <[string]> Raw script content.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `content` <[string]> Raw script content. Optional.
 
 Script that evaluates to a selector engine instance.
 
@@ -4702,22 +4700,22 @@ Aborts the route's request.
 
 ### param: Route.abort.errorCode
 - `errorCode` <[string]>
-  - `'aborted'` - An operation was aborted (due to user action)
-  - `'accessdenied'` - Permission to access a resource, other than the network, was denied
-  - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified host or network.
-  - `'blockedbyclient'` - The client chose to block the request.
-  - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-  - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
-  - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
-  - `'connectionfailed'` - A connection attempt failed.
-  - `'connectionrefused'` - A connection attempt was refused.
-  - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
-  - `'internetdisconnected'` - The Internet connection has been lost.
-  - `'namenotresolved'` - The host name could not be resolved.
-  - `'timedout'` - An operation timed out.
-  - `'failed'` - A generic failure occurred.
 
 Optional error code. Defaults to `failed`, could be one of the following:
+  * `'aborted'` - An operation was aborted (due to user action)
+  * `'accessdenied'` - Permission to access a resource, other than the network, was denied
+  * `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified host or network.
+  * `'blockedbyclient'` - The client chose to block the request.
+  * `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+  * `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
+  * `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
+  * `'connectionfailed'` - A connection attempt failed.
+  * `'connectionrefused'` - A connection attempt was refused.
+  * `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
+  * `'internetdisconnected'` - The Internet connection has been lost.
+  * `'namenotresolved'` - The host name could not be resolved.
+  * `'timedout'` - An operation timed out.
+  * `'failed'` - A generic failure occurred.
 
 ## async method: Route.continue
 
@@ -4793,19 +4791,19 @@ The [WebSocket] class represents websocket connections in the page.
 Fired when the websocket closes.
 
 ## event: WebSocket.framereceived
-- <[Object]> web socket frame data
+- type: <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
 ## event: WebSocket.framesent
-- <[Object]> web socket frame data
+- type: <[Object]> web socket frame data
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
 ## event: WebSocket.socketerror
-- <[String]> the error message
+- type: <[String]> the error message
 
 Fired when the websocket has an error.
 
@@ -4956,7 +4954,7 @@ for (const worker of page.workers())
 <!-- GEN:stop -->
 
 ## event: Worker.close
-- <[Worker]>
+- type: <[Worker]>
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
@@ -5065,7 +5063,7 @@ This methods attaches Playwright to an existing browser instance.
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
-  - `logger` <[Logger]> Logger sink for Playwright logging.
+  - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## method: BrowserType.executablePath
@@ -5475,7 +5473,7 @@ message arguments
 
 ### param: Logger.log.hints
 - `hints` <[Object]>
-  - `color` <[string]> preferred logger color
+  - `color` <[string]> Optional preferred logger color.
 
 optional formatting hints
 
@@ -5548,14 +5546,14 @@ const backgroundPage = await context.waitForEvent('backgroundpage');
 <!-- GEN:stop -->
 
 ## event: ChromiumBrowserContext.backgroundpage
-- <[Page]>
+- type: <[Page]>
 
 Emitted when new background page is created in the context.
 
 > **NOTE** Only works with persistent context.
 
 ## event: ChromiumBrowserContext.serviceworker
-- <[Worker]>
+- type: <[Worker]>
 
 Emitted when new service worker is created in the context.
 
