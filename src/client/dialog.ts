@@ -16,8 +16,9 @@
 
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
+import * as api from '../../types/types';
 
-export class Dialog extends ChannelOwner<channels.DialogChannel, channels.DialogInitializer> {
+export class Dialog extends ChannelOwner<channels.DialogChannel, channels.DialogInitializer> implements api.Dialog {
   static from(dialog: channels.DialogChannel): Dialog {
     return (dialog as any)._object;
   }

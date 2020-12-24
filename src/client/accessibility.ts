@@ -17,6 +17,7 @@
 
 import * as channels from '../protocol/channels';
 import { ElementHandle } from './elementHandle';
+import * as api from '../../types/types';
 
 type SerializedAXNode = Omit<channels.AXNode, 'valueString' | 'valueNumber' | 'children' | 'checked' | 'pressed'> & {
   value?: string|number,
@@ -38,7 +39,7 @@ function axNodeFromProtocol(axNode: channels.AXNode): SerializedAXNode {
   return result;
 }
 
-export class Accessibility {
+export class Accessibility implements api.Accessibility {
   private _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {

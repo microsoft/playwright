@@ -32,19 +32,21 @@ import { assert, makeWaitForNextTask, mkdirIfNeeded } from '../utils/utils';
 import { SelectorsOwner, sharedSelectors } from './selectors';
 import { kBrowserClosedError } from '../utils/errors';
 import { Stream } from './stream';
+import * as api from '../../types/types';
 
 export interface BrowserServerLauncher {
-  launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
+  launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
 }
 
-export interface BrowserServer {
+// This is here just for api generation and checking.
+export interface BrowserServer extends api.BrowserServer {
   process(): ChildProcess;
   wsEndpoint(): string;
   close(): Promise<void>;
   kill(): Promise<void>;
 }
 
-export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> {
+export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType<api.Browser> {
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
 
@@ -83,7 +85,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     }, logger);
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+  async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
     return this._serverLauncher.launchServer(options);

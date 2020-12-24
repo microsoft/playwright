@@ -15,6 +15,7 @@
  */
 
 import { Browser } from './browser';
+import * as api from '../../types/types';
 
-export class FirefoxBrowser extends Browser {
+export class FirefoxBrowser extends Browser implements api.FirefoxBrowser {
 }

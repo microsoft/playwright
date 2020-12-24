@@ -15,27 +15,12 @@
  */
 
 import * as channels from '../protocol/channels';
-import { ElementHandle } from './elementHandle';
 import { ChannelOwner } from './channelOwner';
 import { parseSerializedValue, serializeValue } from '../protocol/serializers';
+import * as api from '../../types/types';
+import * as structs from '../../types/structs';
 
-type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
-type Unboxed<Arg> =
-  Arg extends ElementHandle<infer T> ? T :
-  Arg extends JSHandle<infer T> ? T :
-  Arg extends NoHandles<Arg> ? Arg :
-  Arg extends [infer A0] ? [Unboxed<A0>] :
-  Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
-  Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
-  Arg extends Array<infer T> ? Array<Unboxed<T>> :
-  Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
-  Arg;
-export type Func0<R> = string | (() => R | Promise<R>);
-export type Func1<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
-export type FuncOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
-export type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
-
-export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, channels.JSHandleInitializer> {
+export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, channels.JSHandleInitializer> implements api.JSHandle {
   private _preview: string;
 
   static from(handle: channels.JSHandleChannel): JSHandle {
@@ -48,18 +33,14 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, ch
     this._channel.on('previewUpdated', ({preview}) => this._preview = preview);
   }
 
-  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<R> {
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return parseResult(result.value);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: FuncOn<T, void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<T, Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return JSHandle.from(result.handle) as SmartHandle<R>;
+    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 
   async getProperty(propertyName: string): Promise<JSHandle> {
@@ -78,8 +59,8 @@ export class JSHandle<T = any> extends ChannelOwner<channels.JSHandleChannel, ch
     return parseResult((await this._channel.jsonValue()).value);
   }
 
-  asElement(): ElementHandle | null {
-    return null;
+  asElement(): T extends Node ? api.ElementHandle<T> : null {
+    return null as any;
   }
 
   async dispose() {

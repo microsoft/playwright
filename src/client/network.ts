@@ -26,6 +26,7 @@ import { isString, headersObjectToArray, headersArrayToObject } from '../utils/u
 import { Events } from './events';
 import { Page } from './page';
 import { Waiter } from './waiter';
+import * as api from '../../types/types';
 
 export type NetworkCookie = {
   name: string,
@@ -50,7 +51,7 @@ export type SetNetworkCookieParam = {
   sameSite?: 'Strict' | 'Lax' | 'None'
 };
 
-export class Request extends ChannelOwner<channels.RequestChannel, channels.RequestInitializer> {
+export class Request extends ChannelOwner<channels.RequestChannel, channels.RequestInitializer> implements api.Request {
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
@@ -167,7 +168,7 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 }
 
-export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> {
+export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteInitializer> implements api.Route {
   static from(route: channels.RouteChannel): Route {
     return (route as any)._object;
   }
@@ -246,7 +247,7 @@ export type ResourceTiming = {
   responseEnd: number;
 };
 
-export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> {
+export class Response extends ChannelOwner<channels.ResponseChannel, channels.ResponseInitializer> implements api.Response {
   private _headers: Headers;
   private _request: Request;
 
@@ -316,7 +317,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 }
 
-export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.WebSocketInitializer> {
+export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.WebSocketInitializer> implements api.WebSocket {
   private _page: Page;
   private _isClosed: boolean;
 

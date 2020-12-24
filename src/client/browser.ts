@@ -21,8 +21,9 @@ import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
+import * as api from '../../types/types';
 
-export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> {
+export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;

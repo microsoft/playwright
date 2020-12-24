@@ -22,8 +22,9 @@ import { Browser } from './browser';
 import { BrowserContext } from './browserContext';
 import * as fs from 'fs';
 import { mkdirIfNeeded } from '../utils/utils';
+import * as api from '../../types/types';
 
-export class Download extends ChannelOwner<channels.DownloadChannel, channels.DownloadInitializer> {
+export class Download extends ChannelOwner<channels.DownloadChannel, channels.DownloadInitializer> implements api.Download {
   private _browser: Browser | null;
 
   static from(download: channels.DownloadChannel): Download {

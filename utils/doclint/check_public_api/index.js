@@ -200,7 +200,8 @@ function compareDocumentations(actual, expected) {
       [/Handle\<R\>/g, 'JSHandle'],
       [/JSHandle\<Object\>/g, 'JSHandle'],
       [/object/g, 'Object'],
-      [/Promise\<T\>/, 'Promise<Object>']
+      [/Promise\<T\>/, 'Promise<Object>'],
+      [/TextendsNode\?ElementHandle:null/, 'null|ElementHandle']
     ]
     let actualName = actual.name;
     for (const replacer of mdReplacers)
