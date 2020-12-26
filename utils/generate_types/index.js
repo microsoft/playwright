@@ -428,7 +428,10 @@ function mergeDocumentation(mdDoc, jsDoc) {
     else
       classes.push(mergeClasses(mdClass, jsClass));
   }
-
+  // Root module types are overridden.
+  const c = mdDoc.classes.get('Playwright');
+  mdDoc.classes.delete('Playwright');
+  mdDoc.classesArray.splice(mdDoc.classesArray.indexOf(c), 1);
   return mdDoc;
 }
 
