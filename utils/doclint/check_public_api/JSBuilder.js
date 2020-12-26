@@ -99,7 +99,7 @@ function checkSources(sources) {
           parent = parent.parent;
         className = path.basename(parent.fileName,  '.js');
       }
-      if (className && !excludeClasses.has(className) && !fileName.endsWith('/protocol.ts')) {
+      if (className && !excludeClasses.has(className) && !fileName.endsWith('/protocol.ts') && !fileName.endsWith('/protocol.d.ts') && !fileName.endsWith('/types.d.ts')) {
         excludeClasses.add(className);
         classes.push(serializeClass(className, symbol, node));
         inheritance.set(className, parentClasses(node));
