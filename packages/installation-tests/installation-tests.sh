@@ -22,6 +22,7 @@ PLAYWRIGHT_CHROMIUM_TGZ="$(node ${PACKAGE_BUILDER} playwright-chromium ./playwri
 PLAYWRIGHT_WEBKIT_TGZ="$(node ${PACKAGE_BUILDER} playwright-webkit ./playwright-webkit.tgz)"
 PLAYWRIGHT_FIREFOX_TGZ="$(node ${PACKAGE_BUILDER} playwright-firefox ./playwright-firefox.tgz)"
 PLAYWRIGHT_ELECTRON_TGZ="$(node ${PACKAGE_BUILDER} playwright-electron ./playwright-electron.tgz)"
+PLAYWRIGHT_ANDROID_TGZ="$(node ${PACKAGE_BUILDER} playwright-android ./playwright-android.tgz)"
 
 SCRIPTS_PATH="$(pwd -P)/.."
 TEST_ROOT="$(pwd -P)"
@@ -52,6 +53,7 @@ function run_tests {
   test_playwright_global_installation_cross_package
   test_playwright_electron_should_work
   test_electron_types
+  test_android_types
   test_playwright_cli_should_work
   test_playwright_cli_install_should_work
 }
@@ -309,6 +311,20 @@ function test_electron_types {
   npm install -D typescript@3.8
   npm install -D @types/node@10.17
   echo "import { Page, electron, ElectronApplication, ElectronLauncher } from 'playwright-electron';" > "test.ts"
+
+  echo "Running tsc"
+  npx tsc "test.ts"
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_android_types {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_ANDROID_TGZ}
+  npm install -D typescript@3.8
+  npm install -D @types/node@10.17
+  echo "import { AndroidDevice, android, AndroidWebView, Page } from 'playwright-android';" > "test.ts"
 
   echo "Running tsc"
   npx tsc "test.ts"

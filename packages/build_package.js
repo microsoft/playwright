@@ -62,13 +62,13 @@ const PACKAGES = {
     version: '0.4.0', // Manually manage playwright-electron version.
     description: 'A high-level API to automate Electron',
     browsers: [],
-    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'electron-types.d.ts'],
+    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES],
   },
   'playwright-android': {
     version: '0.0.8', // Manually manage playwright-android version.
     description: 'A high-level API to automate Chrome for Android',
     browsers: [],
-    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'android-types.d.ts', 'android-types-internal.d.ts', 'bin/android-driver.apk', 'bin/android-driver-target.apk'],
+    files: [...PLAYWRIGHT_CORE_FILES, ...FFMPEG_FILES, 'bin/android-driver.apk', 'bin/android-driver-target.apk'],
   },
 };
 
