@@ -1,10 +1,10 @@
-### class: Foo
+# class: Foo
 
-#### foo.$()
+## method: Foo.$
 
-#### foo.money$$money()
+## method: Foo.money$$money
 
-#### foo.proceed()
+## method: Foo.proceed
 
-#### foo.start()
+## method: Foo.start
 

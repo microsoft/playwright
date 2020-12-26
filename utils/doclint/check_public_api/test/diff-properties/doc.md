@@ -1,5 +1,5 @@
-### class: Foo
+# class: Foo
 
-#### foo.a
+## property: Foo.a
 
-#### foo.c
+## property: Foo.c

@@ -2,10 +2,10 @@ class Foo {
   foo(arg1: string, arg3 = {}) {
   }
 
-  test(...filePaths : string[]) {
+  test(filePaths : string[]) {
   }
 
-  bar(options: {visibility?: boolean}) {
+  bar(options?: {visibility?: boolean}) {
   }
 }
 export {Foo};

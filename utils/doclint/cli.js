@@ -18,12 +18,12 @@
 const playwright = require('../../');
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const Source = require('./Source');
 const Message = require('./Message');
 const { parseMd, renderMd, parseArgument, applyTemplates } = require('./../parse_md');
 const { spawnSync } = require('child_process');
 const preprocessor = require('./preprocessor');
+const mdBuilder = require('./check_public_api/MDBuilder');
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -62,7 +62,8 @@ async function run() {
     // Generate signatures
     {
       const nodes = applyTemplates(parseMd(body), parseMd(params));
-      const signatures = new Map();
+      const { outline } = mdBuilder(nodes);
+      const signatures = outline.signatures;
       for (const clazz of nodes) {
         clazz.type = 'h3';
         for (const member of clazz.children) {
@@ -70,7 +71,7 @@ async function run() {
             continue;
           member.type = 'h4';
 
-          let match = member.text.match(/(event|method|namespace|async method|): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
+          let match = member.text.match(/(event|method|property|async method|): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
           if (!match)
             continue;
 
@@ -89,9 +90,9 @@ async function run() {
               if (item.type === 'li' && item.liType === 'default') {
                 const { type } = parseArgument(item.text);
                 if (match[1] === 'method')
-                  item.text = `returns: ${type}`;
+                  item.text = `returns: <${type}>`;
                 else
-                  item.text = `returns: <[Promise]${type}>`;
+                  item.text = `returns: <[Promise]<${type}>>`;
                 returnContainer.push(item);
                 continue;
               }
@@ -103,6 +104,8 @@ async function run() {
                 const param = item.children[0];
                 if (item.children[1])
                   param.text += ' ' + item.children[1].text;
+                if (item.children.length > 2)
+                  param.children = item.children.slice(2);
                 args.push(parseArgument(param.text));
                 argChildren.push(param);
               }
@@ -121,6 +124,8 @@ async function run() {
                 const param = item.children[0];
                 if (item.children[1])
                   param.text += ' ' + item.children[1].text;
+                if (item.children.length > 2)
+                  param.children = item.children.slice(2);
                 optionsNode.children.push(param);
               }
             }
@@ -134,33 +139,13 @@ async function run() {
             if (optionsContainer[0])
               optionsContainer[0].children.sort((o1, o2) => o1.text.localeCompare(o2.text));
             member.children = [...argChildren, ...optionsContainer, ...returnContainer, ...nonArgChildren];
-
-            const tokens = [];
-            let hasOptional = false;
-            for (const arg of args) {
-              const optional = arg.name === 'options' || arg.text.includes('Optional');
-              if (tokens.length) {
-                if (optional && !hasOptional)
-                  tokens.push(`[, ${arg.name}`);
-                else
-                  tokens.push(`, ${arg.name}`);
-              } else {
-                if (optional && !hasOptional)
-                  tokens.push(`[${arg.name}`);
-                else
-                  tokens.push(`${arg.name}`);
-              }
-              hasOptional = hasOptional || optional;
-            }
-            if (hasOptional)
-              tokens.push(']');
-            const signature = tokens.join('');
-            const methodName = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
-            signatures.set(methodName, signature);
+            const signatureKey = match[2] + match[3] + '.' + match[4];
+            const methodName = match[2].toLowerCase() + match[3] + '.' + match[4];
+            const signature = signatures.get(signatureKey);
             member.text = `${methodName}(${signature})`;
           }
 
-          if (match[1] === 'namespace') {
+          if (match[1] === 'property') {
             member.text = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
             continue;
           }
@@ -187,12 +172,13 @@ async function run() {
     for (const source of mdSources.filter(source => source.hasUpdatedText()))
       messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
 
-    const browser = await playwright.chromium.launch();
-    const page = await browser.newPage();
+    const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
+    const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();  
+    const api = applyTemplates(parseMd(body), parseMd(params));
     const checkPublicAPI = require('./check_public_api');
+
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-    messages.push(...await checkPublicAPI(page, [api], jsSources));
-    await browser.close();
+    messages.push(...checkPublicAPI(api, jsSources));
 
     for (const source of mdSources) {
       if (!source.hasUpdatedText())

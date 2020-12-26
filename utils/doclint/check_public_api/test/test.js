@@ -16,20 +16,14 @@
 
 const fs = require('fs');
 const path = require('path');
-const playwright = require('../../../../');
 const checkPublicAPI = require('..');
 const Source = require('../../Source');
 const mdBuilder = require('../MDBuilder');
 const jsBuilder = require('../JSBuilder');
 const { folio } = require('folio');
+const { parseMd } = require('../../../parse_md');
 
 const fixtures = folio.extend();
-fixtures.page.init(async({}, test) => {
-  const browser = await playwright.chromium.launch();
-  const page = await browser.newPage();
-  await test(page);
-  await browser.close();
-}, { scope: 'worker' });
 const { describe, it, expect } = fixtures.build();
 
 describe('checkPublicAPI', function() {
@@ -49,22 +43,22 @@ describe('checkPublicAPI', function() {
 });
 
 async function testLint(name) {
-  it(name, async({page}) => {
+  it(name, async({}) => {
     const dirPath = path.join(__dirname, name);
-    const mdSources = await Source.readdir(dirPath, '.md');
+    const api = parseMd(fs.readFileSync(path.join(dirPath, 'doc.md')).toString());
     const tsSources = await Source.readdir(dirPath, '.ts');
     const jsSources = await Source.readdir(dirPath, '.js');
-    const messages = await checkPublicAPI(page, mdSources, jsSources.concat(tsSources));
+    const messages = await checkPublicAPI(api, jsSources.concat(tsSources));
     const errors = messages.map(message => message.text);
     expect(errors.join('\n')).toBe(fs.readFileSync(path.join(dirPath, 'result.txt')).toString());
   });
 }
 
 async function testMDBuilder(name) {
-  it(name, async({page}) => {
+  it(name, ({}) => {
     const dirPath = path.join(__dirname, name);
-    const sources = await Source.readdir(dirPath, '.md');
-    const {documentation} = await mdBuilder(page, sources, true);
+    const api = parseMd(fs.readFileSync(path.join(dirPath, 'doc.md')).toString());
+    const {documentation} = mdBuilder(api, true);
     expect(serialize(documentation)).toBe(fs.readFileSync(path.join(dirPath, 'result.txt')).toString());
   });
 }

@@ -193,7 +193,7 @@ function generateLinks(source, signatures, messages) {
       const linkOffset = offset + lineNumber + match.index;
       const hrefOffset = offset + lineNumber + match.index + 3 + name.length;
       let replacement;
-      const memberMatch = name.match(/`(event|method|namespace):\s(JS|CDP|[A-Z])([^.]+)\.(.*)`/m);
+      const memberMatch = name.match(/`(event|method|property):\s(JS|CDP|[A-Z])([^.]+)\.(.*)`/m);
       const paramMatch = name.match(/`(?:param|option):\s(.*)`/m);
       if (!memberMatch && !paramMatch) {
         messages.push(Message.error(`Bad link: ${source.filePath()}:${lineNumber + 1}: ${name}`));
@@ -203,10 +203,11 @@ function generateLinks(source, signatures, messages) {
         replacement = `${memberMatch[2].toLowerCase() + memberMatch[3]}.on('${memberMatch[4]}')`;
         sourceEdits.edit(linkOffset + 1, hrefOffset - 2, replacement);
       } else if (memberMatch && memberMatch[1] === 'method') {
+        const key = memberMatch[2] + memberMatch[3] + '.' + memberMatch[4];
         const method = memberMatch[2].toLowerCase() + memberMatch[3] + '.' + memberMatch[4];
-        let signature = signatures.get(method);
+        let signature = signatures.get(key);
         if (signature === undefined) {
-          messages.push(Message.error(`Bad method link: ${source.filePath()}:${lineNumber + 1}: ${method}`));
+          messages.push(Message.error(`Bad method link: ${source.filePath()}:${lineNumber + 1}: ${key}`));
           signature = '(\u2026)';
         }
         replacement = method + '(' + signature + ')';

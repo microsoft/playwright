@@ -80,7 +80,7 @@ function checkSources(sources) {
           visit(classesByName.get(parent));
       };
       visit(cls);
-      return new Documentation.Class(cls.name, Array.from(membersMap.values()), undefined, cls.comment, cls.templates);
+      return new Documentation.Class(cls.name, Array.from(membersMap.values()), undefined, undefined, cls.templates);
     });
   }
 
@@ -280,7 +280,7 @@ function checkSources(sources) {
     const parameters = signature.parameters.map((s, index) => serializeSymbol(s, [], index < minArgumentCount));
     const templates = signature.typeParameters ? signature.typeParameters.map(t => t.symbol.name) : [];
     const returnType = serializeType(signature.getReturnType());
-    return Documentation.Member.createMethod(name, parameters, returnType.name !== 'void' ? returnType : null, undefined, undefined, templates);
+    return Documentation.Member.createMethod(name, parameters, returnType.name !== 'void' ? returnType : null, undefined, templates);
   }
 
   /**

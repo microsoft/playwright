@@ -25,7 +25,7 @@
                 "name": "string"
               },
               "kind": "property",
-              "comment": "A multiline argument comment:\n - it could be this\n - or it could be that"
+              "comment": "A multiline argument comment:\n- it could be this\n- or it could be that"
             }
           ]
         }

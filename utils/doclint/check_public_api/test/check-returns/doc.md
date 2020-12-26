@@ -1,14 +1,11 @@
-### class: Foo
+# class: Foo
 
-#### foo.asyncFunction()
+## async method: Foo.asyncFunction
 
-#### foo.return42()
+## method: Foo.return42
 
-#### foo.returnNothing()
+## method: Foo.returnNothing
 - returns: <[number]>
 
-#### foo.www()
-- returns <[string]>
-
-[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
-[number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
+## method: Foo.www
+- returns: <[string]>

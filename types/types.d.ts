@@ -86,7 +86,7 @@ type BindingSource = { context: BrowserContext, page: Page, frame: Frame };
  */
 export interface Page {
   /**
-   * Returns the value of the `pageFunction` invacation.
+   * Returns the value of the `pageFunction` invocation.
    * If the function passed to the `page.evaluate` returns a Promise, then `page.evaluate` would wait for the promise to resolve and return its value.
    * If the function passed to the `page.evaluate` returns a non-Serializable value, then `page.evaluate` resolves to `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
    * Passing argument to `pageFunction`:
@@ -116,7 +116,7 @@ export interface Page {
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns the value of the `pageFunction` invacation as in-page object (JSHandle).
+   * Returns the value of the `pageFunction` invocation as in-page object (JSHandle).
    * The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page object (JSHandle).
    * If the function passed to the `page.evaluateHandle` returns a Promise, then `page.evaluateHandle` would wait for the promise to resolve and return its value.
    * A string can also be passed in instead of a function:
@@ -248,8 +248,7 @@ export interface Page {
    * The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
    * See `browserContext.exposeBinding(name, playwrightBinding[, options])` for the context-wide version.
    * 
-   * **NOTE** Functions installed via `page.exposeBinding` survive navigations.
-   * 
+   * > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
    * An example of exposing page URL to all frames in a page:
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -348,7 +347,7 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed Download instance.
    * 
-   * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
    */
   on(event: 'download', listener: (download: Download) => void): this;
 
@@ -388,7 +387,7 @@ export interface Page {
   on(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Emitted when the page opens a new tab or window. This event is emitted in addition to the browserContext.on('page'), but only for popups relevant to this page.
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the `browserContext.on('page')`, but only for popups relevant to this page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [popup] = await Promise.all([
@@ -398,19 +397,19 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
    */
   on(event: 'request', listener: (request: Request) => void): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with page.on('requestfinished') event and not with page.on('requestfailed').
+   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `page.on('requestfinished')` event and not with `page.on('requestfailed')`.
    */
   on(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -420,7 +419,7 @@ export interface Page {
   on(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Emitted when response status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
    */
   on(event: 'response', listener: (response: Response) => void): this;
 
@@ -492,7 +491,7 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed Download instance.
    * 
-   * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
    */
   once(event: 'download', listener: (download: Download) => void): this;
 
@@ -532,7 +531,7 @@ export interface Page {
   once(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Emitted when the page opens a new tab or window. This event is emitted in addition to the browserContext.on('page'), but only for popups relevant to this page.
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the `browserContext.on('page')`, but only for popups relevant to this page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [popup] = await Promise.all([
@@ -542,19 +541,19 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
    */
   once(event: 'request', listener: (request: Request) => void): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with page.on('requestfinished') event and not with page.on('requestfailed').
+   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `page.on('requestfinished')` event and not with `page.on('requestfailed')`.
    */
   once(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -564,7 +563,7 @@ export interface Page {
   once(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Emitted when response status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
    */
   once(event: 'response', listener: (response: Response) => void): this;
 
@@ -636,7 +635,7 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed Download instance.
    * 
-   * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
    */
   addListener(event: 'download', listener: (download: Download) => void): this;
 
@@ -676,7 +675,7 @@ export interface Page {
   addListener(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Emitted when the page opens a new tab or window. This event is emitted in addition to the browserContext.on('page'), but only for popups relevant to this page.
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the `browserContext.on('page')`, but only for popups relevant to this page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [popup] = await Promise.all([
@@ -686,19 +685,19 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
    */
   addListener(event: 'request', listener: (request: Request) => void): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with page.on('requestfinished') event and not with page.on('requestfailed').
+   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `page.on('requestfinished')` event and not with `page.on('requestfailed')`.
    */
   addListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -708,7 +707,7 @@ export interface Page {
   addListener(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Emitted when response status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
    */
   addListener(event: 'response', listener: (response: Response) => void): this;
 
@@ -780,7 +779,7 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed Download instance.
    * 
-   * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
    */
   removeListener(event: 'download', listener: (download: Download) => void): this;
 
@@ -820,7 +819,7 @@ export interface Page {
   removeListener(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Emitted when the page opens a new tab or window. This event is emitted in addition to the browserContext.on('page'), but only for popups relevant to this page.
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the `browserContext.on('page')`, but only for popups relevant to this page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [popup] = await Promise.all([
@@ -830,19 +829,19 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   removeListener(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
    */
   removeListener(event: 'request', listener: (request: Request) => void): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with page.on('requestfinished') event and not with page.on('requestfailed').
+   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `page.on('requestfinished')` event and not with `page.on('requestfailed')`.
    */
   removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -852,7 +851,7 @@ export interface Page {
   removeListener(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Emitted when response status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
    */
   removeListener(event: 'response', listener: (response: Response) => void): this;
 
@@ -924,7 +923,7 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed Download instance.
    * 
-   * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
    */
   off(event: 'download', listener: (download: Download) => void): this;
 
@@ -964,7 +963,7 @@ export interface Page {
   off(event: 'pageerror', listener: (error: Error) => void): this;
 
   /**
-   * Emitted when the page opens a new tab or window. This event is emitted in addition to the browserContext.on('page'), but only for popups relevant to this page.
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the `browserContext.on('page')`, but only for popups relevant to this page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [popup] = await Promise.all([
@@ -974,19 +973,19 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'popup', listener: (page: Page) => void): this;
 
   /**
-   * Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
    */
   off(event: 'request', listener: (request: Request) => void): this;
 
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with page.on('requestfinished') event and not with page.on('requestfailed').
+   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `page.on('requestfinished')` event and not with `page.on('requestfailed')`.
    */
   off(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -996,7 +995,7 @@ export interface Page {
   off(event: 'requestfinished', listener: (request: Request) => void): this;
 
   /**
-   * Emitted when response status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
    */
   off(event: 'response', listener: (response: Response) => void): this;
 
@@ -1014,10 +1013,8 @@ export interface Page {
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
-   * 
-   * Whenever the page is navigated.
-   * Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly attached frame.
-   * 
+   * - Whenever the page is navigated.
+   * - Whenever the child frame is attached or navigated. In this case, the script is evaluated in the context of the newly attached frame.
    * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend the JavaScript environment, e.g. to seed `Math.random`.
    * An example of overriding `Math.random` before the page loads:
    * ```js
@@ -1029,7 +1026,7 @@ export interface Page {
    * await page.addInitScript(preloadFile);
    * ```
    * 
-   * **NOTE** The order of evaluation of multiple scripts installed via `browserContext.addInitScript(script[, arg])` and `page.addInitScript(script[, arg])` is not defined.
+   * > **NOTE** The order of evaluation of multiple scripts installed via `browserContext.addInitScript(script[, arg])` and `page.addInitScript(script[, arg])` is not defined.
    * @param script Script to be evaluated in the page.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
@@ -1101,15 +1098,13 @@ export interface Page {
 
   /**
    * This method checks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * Ensure that the element is now checked. If not, this method rejects.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * - Ensure that the element is now checked. If not, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * Shortcut for main frame's `frame.check(selector[, options])`.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
@@ -1134,13 +1129,11 @@ export interface Page {
 
   /**
    * This method clicks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * Shortcut for main frame's `frame.click(selector[, options])`.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
@@ -1196,8 +1189,9 @@ export interface Page {
    * If `runBeforeUnload` is `false`, does not run any unload handlers and waits for the page to be closed. If `runBeforeUnload` is `true` the method will run unload handlers, but will **not** wait for the page to close.
    * By default, `page.close()` **does not** run `beforeunload` handlers.
    * 
-   * **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
-   * and should be handled manually via page.on('dialog') event.
+   * > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
+   * 
+   * > and should be handled manually via `page.on('dialog')` event.
    * @param options 
    */
   close(options?: {
@@ -1224,17 +1218,14 @@ export interface Page {
 
   /**
    * This method double clicks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to double click in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to double click in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * 
-   * **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
-   * 
+   * > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * Shortcut for main frame's `frame.dblclick(selector[, options])`.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
@@ -1287,15 +1278,13 @@ export interface Page {
    * ```
    * Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit` properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
    * Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
-   * 
-   * DragEvent
-   * FocusEvent
-   * KeyboardEvent
-   * MouseEvent
-   * PointerEvent
-   * TouchEvent
-   * Event
-   * 
+   * - DragEvent
+   * - FocusEvent
+   * - KeyboardEvent
+   * - MouseEvent
+   * - PointerEvent
+   * - TouchEvent
+   * - Event
    * You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
    * ```js
    * // Note you can only create DataTransfer in Chromium and Firefox
@@ -1361,8 +1350,7 @@ export interface Page {
    * If the `playwrightFunction` returns a Promise, it will be awaited.
    * See `browserContext.exposeFunction(name, playwrightFunction)` for context-wide exposed function.
    * 
-   * **NOTE** Functions installed via `page.exposeFunction` survive navigations.
-   * 
+   * > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
    * An example of adding an `md5` function to the page:
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -1461,7 +1449,7 @@ export interface Page {
    */
   frame(frameSelector: string|{
     /**
-     * frame name specified in the `iframe`'s `name` attribute
+     * Frame name specified in the `iframe`'s `name` attribute.
      */
     name?: string;
 
@@ -1502,9 +1490,9 @@ export interface Page {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
@@ -1522,9 +1510,9 @@ export interface Page {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
@@ -1532,18 +1520,16 @@ export interface Page {
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
    * `page.goto` will throw an error if:
-   * 
-   * there's an SSL error (e.g. in case of self-signed certificates).
-   * target URL is invalid.
-   * the `timeout` is exceeded during navigation.
-   * the remote server does not respond or is unreachable.
-   * the main resource failed to load.
-   * 
+   * - there's an SSL error (e.g. in case of self-signed certificates).
+   * - target URL is invalid.
+   * - the `timeout` is exceeded during navigation.
+   * - the remote server does not respond or is unreachable.
+   * - the main resource failed to load.
    * `page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling `response.status()`.
    * 
-   * **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
-   * **NOTE** Headless mode doesn't support navigation to a PDF document. See the upstream issue.
+   * > **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
    * 
+   * > **NOTE** Headless mode doesn't support navigation to a PDF document. See the upstream issue.
    * Shortcut for main frame's `frame.goto(url[, options])`
    * @param url URL to navigate page to. The url should include scheme, e.g. `https://`.
    * @param options 
@@ -1561,22 +1547,20 @@ export interface Page {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
 
   /**
    * This method hovers over an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to hover over the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to hover over the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * Shortcut for main frame's `frame.hover(selector[, options])`.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
@@ -1654,12 +1638,10 @@ export interface Page {
   /**
    * Returns the PDF buffer.
    * 
-   * **NOTE** Generating a pdf is currently only supported in Chromium headless.
-   * 
+   * > **NOTE** Generating a pdf is currently only supported in Chromium headless.
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call `page.emulateMedia(params)` before calling `page.pdf()`:
    * 
-   * **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the `-webkit-print-color-adjust` property to force rendering of exact colors.
-   * 
+   * > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the `-webkit-print-color-adjust` property to force rendering of exact colors.
    * ```js
    * // Generates a PDF with 'screen' media type.
    * await page.emulateMedia({media: 'screen'});
@@ -1667,37 +1649,32 @@ export interface Page {
    * ```
    * The `width`, `height`, and `margin` options accept values labeled with units. Unlabeled values are treated as pixels.
    * A few examples:
-   * 
-   * `page.pdf({width: 100})` - prints with width set to 100 pixels
-   * `page.pdf({width: '100px'})` - prints with width set to 100 pixels
-   * `page.pdf({width: '10cm'})` - prints with width set to 10 centimeters.
-   * 
+   * - `page.pdf({width: 100})` - prints with width set to 100 pixels
+   * - `page.pdf({width: '100px'})` - prints with width set to 100 pixels
+   * - `page.pdf({width: '10cm'})` - prints with width set to 10 centimeters.
    * All possible units are:
-   * 
-   * `px` - pixel
-   * `in` - inch
-   * `cm` - centimeter
-   * `mm` - millimeter
-   * 
+   * - `px` - pixel
+   * - `in` - inch
+   * - `cm` - centimeter
+   * - `mm` - millimeter
    * The `format` options are:
+   * - `Letter`: 8.5in x 11in
+   * - `Legal`: 8.5in x 14in
+   * - `Tabloid`: 11in x 17in
+   * - `Ledger`: 17in x 11in
+   * - `A0`: 33.1in x 46.8in
+   * - `A1`: 23.4in x 33.1in
+   * - `A2`: 16.54in x 23.4in
+   * - `A3`: 11.7in x 16.54in
+   * - `A4`: 8.27in x 11.7in
+   * - `A5`: 5.83in x 8.27in
+   * - `A6`: 4.13in x 5.83in
    * 
-   * `Letter`: 8.5in x 11in
-   * `Legal`: 8.5in x 14in
-   * `Tabloid`: 11in x 17in
-   * `Ledger`: 17in x 11in
-   * `A0`: 33.1in x 46.8in
-   * `A1`: 23.4in x 33.1in
-   * `A2`: 16.54in x 23.4in
-   * `A3`: 11.7in x 16.54in
-   * `A4`: 8.27in x 11.7in
-   * `A5`: 5.83in x 8.27in
-   * `A6`: 4.13in x 5.83in
+   * > **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
    * 
+   * > 1. Script tags inside templates are not evaluated.
    * 
-   * **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
-   * 
-   * Script tags inside templates are not evaluated.
-   * Page styles are not visible inside templates.
+   * > 2. Page styles are not visible inside templates.
    * @param options 
    */
   pdf(options?: {
@@ -1718,11 +1695,11 @@ export interface Page {
 
     /**
      * HTML template for the print header. Should be valid HTML markup with following classes used to inject printing values into them:
-     *  - `'date'` formatted print date
-     *  - `'title'` document title
-     *  - `'url'` document location
-     *  - `'pageNumber'` current page number
-     *  - `'totalPages'` total pages in the document
+     * - `'date'` formatted print date
+     * - `'title'` document title
+     * - `'url'` document location
+     * - `'pageNumber'` current page number
+     * - `'totalPages'` total pages in the document
      */
     headerTemplate?: string;
 
@@ -1796,7 +1773,7 @@ export interface Page {
    * Focuses the element, and then uses `keyboard.down(key)` and `keyboard.up(key)`.
    * `key` can specify the intended keyboardEvent.key value or a single character to generate the text for. A superset of the `key` values can be found here. Examples of the keys are:
    * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
@@ -1844,9 +1821,9 @@ export interface Page {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
@@ -1855,8 +1832,7 @@ export interface Page {
    * Routing provides the capability to modify network requests that are made by a page.
    * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    * 
-   * **NOTE** The handler will only be called for the first url if the response is a redirect.
-   * 
+   * > **NOTE** The handler will only be called for the first url if the response is a redirect.
    * An example of a naïve handler that aborts all image requests:
    * ```js
    * const page = await browser.newPage();
@@ -1873,7 +1849,7 @@ export interface Page {
    * ```
    * Page routes take precedence over browser context routes (set up with `browserContext.route(url, handler)`) when request matches both handlers.
    * 
-   * **NOTE** Enabling routing disables http cache.
+   * > **NOTE** Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving URL to match while routing.
    * @param handler handler function to route the request.
    */
@@ -1882,7 +1858,7 @@ export interface Page {
   /**
    * Returns the buffer with the captured screenshot.
    * 
-   * **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
+   * > **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for discussion.
    * @param options 
    */
   screenshot(options?: {
@@ -2015,25 +1991,23 @@ export interface Page {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<void>;
 
   /**
    * This setting will change the default maximum navigation time for the following methods and related shortcuts:
+   * - `page.goBack([options])`
+   * - `page.goForward([options])`
+   * - `page.goto(url[, options])`
+   * - `page.reload([options])`
+   * - `page.setContent(html[, options])`
+   * - `page.waitForNavigation([options])`
    * 
-   * `page.goBack([options])`
-   * `page.goForward([options])`
-   * `page.goto(url[, options])`
-   * `page.reload([options])`
-   * `page.setContent(html[, options])`
-   * `page.waitForNavigation([options])`
-   * 
-   * 
-   * **NOTE** `page.setDefaultNavigationTimeout(timeout)` takes priority over `page.setDefaultTimeout(timeout)`, `browserContext.setDefaultTimeout(timeout)` and `browserContext.setDefaultNavigationTimeout(timeout)`.
+   * > **NOTE** `page.setDefaultNavigationTimeout(timeout)` takes priority over `page.setDefaultTimeout(timeout)`, `browserContext.setDefaultTimeout(timeout)` and `browserContext.setDefaultNavigationTimeout(timeout)`.
    * @param timeout Maximum navigation time in milliseconds
    */
   setDefaultNavigationTimeout(timeout: number): void;
@@ -2041,7 +2015,7 @@ export interface Page {
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * 
-   * **NOTE** `page.setDefaultNavigationTimeout(timeout)` takes priority over `page.setDefaultTimeout(timeout)`.
+   * > **NOTE** `page.setDefaultNavigationTimeout(timeout)` takes priority over `page.setDefaultTimeout(timeout)`.
    * @param timeout Maximum time in milliseconds
    */
   setDefaultTimeout(timeout: number): void;
@@ -2049,7 +2023,7 @@ export interface Page {
   /**
    * The extra HTTP headers will be sent with every request the page initiates.
    * 
-   * **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
+   * > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
    * @param headers An object containing additional HTTP headers to be sent with every request. All header values must be strings.
    */
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
@@ -2130,17 +2104,14 @@ export interface Page {
 
   /**
    * This method taps an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.touchscreen to tap the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.touchscreen to tap the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * 
-   * **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
-   * 
+   * > **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * Shortcut for main frame's `frame.tap(selector[, options])`.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
@@ -2226,15 +2197,13 @@ export interface Page {
 
   /**
    * This method unchecks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * Ensure that the element is now unchecked. If not, this method rejects.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * - Ensure that the element is now unchecked. If not, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * Shortcut for main frame's `frame.uncheck(selector[, options])`.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
@@ -2344,7 +2313,7 @@ export interface Page {
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed Download instance.
    * 
-   * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
    */
   waitForEvent(event: 'download', optionsOrPredicate?: { predicate?: (download: Download) => boolean, timeout?: number } | ((download: Download) => boolean)): Promise<Download>;
 
@@ -2384,7 +2353,7 @@ export interface Page {
   waitForEvent(event: 'pageerror', optionsOrPredicate?: { predicate?: (error: Error) => boolean, timeout?: number } | ((error: Error) => boolean)): Promise<Error>;
 
   /**
-   * Emitted when the page opens a new tab or window. This event is emitted in addition to the browserContext.on('page'), but only for popups relevant to this page.
+   * Emitted when the page opens a new tab or window. This event is emitted in addition to the `browserContext.on('page')`, but only for popups relevant to this page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [popup] = await Promise.all([
@@ -2394,19 +2363,19 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'popup', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
-   * Emitted when a page issues a request. The request object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
+   * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see `page.route(url, handler)` or `browserContext.route(url, handler)`.
    */
   waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
 
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with page.on('requestfinished') event and not with page.on('requestfailed').
+   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `page.on('requestfinished')` event and not with `page.on('requestfailed')`.
    */
   waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
 
@@ -2416,7 +2385,7 @@ export interface Page {
   waitForEvent(event: 'requestfinished', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
 
   /**
-   * Emitted when response status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
+   * Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
    */
   waitForEvent(event: 'response', optionsOrPredicate?: { predicate?: (response: Response) => boolean, timeout?: number } | ((response: Response) => boolean)): Promise<Response>;
 
@@ -2447,9 +2416,9 @@ export interface Page {
    * console.log(await popup.title()); // Popup is ready to use.
    * ```
    * Shortcut for main frame's `frame.waitForLoadState([state, options])`.
-   * @param state Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Optional.  - `'load'` - wait for the `load` event to be fired.
-   *  - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-   *  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+   * @param state Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Can be one of: - `'load'` - wait for the `load` event to be fired.
+   * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+   * - `'networkidle'` - wait until there are no network connections for at least `500` ms.
    * @param options 
    */
   waitForLoadState(state?: "domcontentloaded"|"load"|"networkidle", options?: {
@@ -2485,9 +2454,9 @@ export interface Page {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
@@ -2544,18 +2513,16 @@ export interface Page {
   /**
    * This method returns all of the dedicated WebWorkers associated with the page.
    * 
-   * **NOTE** This does not contain ServiceWorkers
+   * > **NOTE** This does not contain ServiceWorkers
    */
   workers(): Array<Worker>;}
 
 /**
  * At every point of time, page exposes its current frame tree via the `page.mainFrame()` and `frame.childFrames()` methods.
  * Frame object's lifecycle is controlled by three events, dispatched on the page object:
- * 
- * page.on('frameattached') - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
- * page.on('framenavigated') - fired when the frame commits navigation to a different URL.
- * page.on('framedetached') - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
- * 
+ * - `page.on('frameattached')` - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+ * - `page.on('framenavigated')` - fired when the frame commits navigation to a different URL.
+ * - `page.on('framedetached')` - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
  * An example of dumping frame tree:
  * ```js
  * const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
@@ -2791,15 +2758,13 @@ export interface Frame {
 
   /**
    * This method checks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * Ensure that the element is now checked. If not, this method rejects.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * - Ensure that the element is now checked. If not, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
@@ -2825,13 +2790,11 @@ export interface Frame {
 
   /**
    * This method clicks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
@@ -2889,16 +2852,14 @@ export interface Frame {
 
   /**
    * This method double clicks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to double click in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to double click in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * 
-   * **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
+   * > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
    */
@@ -2950,15 +2911,13 @@ export interface Frame {
    * ```
    * Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit` properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
    * Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
-   * 
-   * DragEvent
-   * FocusEvent
-   * KeyboardEvent
-   * MouseEvent
-   * PointerEvent
-   * TouchEvent
-   * Event
-   * 
+   * - DragEvent
+   * - FocusEvent
+   * - KeyboardEvent
+   * - MouseEvent
+   * - PointerEvent
+   * - TouchEvent
+   * - Event
    * You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
    * ```js
    * // Note you can only create DataTransfer in Chromium and Firefox
@@ -3036,17 +2995,16 @@ export interface Frame {
   /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the last redirect.
    * `frame.goto` will throw an error if:
-   * 
-   * there's an SSL error (e.g. in case of self-signed certificates).
-   * target URL is invalid.
-   * the `timeout` is exceeded during navigation.
-   * the remote server does not respond or is unreachable.
-   * the main resource failed to load.
-   * 
+   * - there's an SSL error (e.g. in case of self-signed certificates).
+   * - target URL is invalid.
+   * - the `timeout` is exceeded during navigation.
+   * - the remote server does not respond or is unreachable.
+   * - the main resource failed to load.
    * `frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling `response.status()`.
    * 
-   * **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
-   * **NOTE** Headless mode doesn't support navigation to a PDF document. See the upstream issue.
+   * > **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
+   * 
+   * > **NOTE** Headless mode doesn't support navigation to a PDF document. See the upstream issue.
    * @param url URL to navigate frame to. The url should include scheme, e.g. `https://`.
    * @param options 
    */
@@ -3063,22 +3021,20 @@ export interface Frame {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
 
   /**
    * This method hovers over an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to hover over the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to hover over the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
@@ -3142,7 +3098,7 @@ export interface Frame {
    * Returns frame's name attribute as specified in the tag.
    * If the name is empty, returns the id attribute instead.
    * 
-   * **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed later.
+   * > **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed later.
    */
   name(): string;
 
@@ -3159,7 +3115,7 @@ export interface Frame {
   /**
    * `key` can specify the intended keyboardEvent.key value or a single character to generate the text for. A superset of the `key` values can be found here. Examples of the keys are:
    * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
@@ -3255,9 +3211,9 @@ export interface Frame {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<void>;
@@ -3313,16 +3269,14 @@ export interface Frame {
 
   /**
    * This method taps an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.touchscreen to tap the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.touchscreen to tap the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * 
-   * **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
+   * > **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
    */
@@ -3404,15 +3358,13 @@ export interface Frame {
 
   /**
    * This method checks an element matching `selector` by performing the following steps:
-   * 
-   * Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
-   * Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
-   * Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * Ensure that the element is now unchecked. If not, this method rejects.
-   * 
+   * - Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
+   * - Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+   * - Wait for actionability checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * - Ensure that the element is now unchecked. If not, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See working with selectors for more details.
    * @param options 
@@ -3446,9 +3398,9 @@ export interface Frame {
    * await frame.click('button'); // Click triggers navigation.
    * await frame.waitForLoadState(); // Waits for 'load' state by default.
    * ```
-   * @param state Load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method returns immediately. Optional.  - `'load'` - wait for the `load` event to be fired.
-   *  - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-   *  - `'networkidle'` - wait until there are no network connections for at least `500` ms.
+   * @param state Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method returns immediately. Can be one of: - `'load'` - wait for the `load` event to be fired.
+   * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+   * - `'networkidle'` - wait until there are no network connections for at least `500` ms.
    * @param options 
    */
   waitForLoadState(state?: "domcontentloaded"|"load"|"networkidle", options?: {
@@ -3483,9 +3435,9 @@ export interface Frame {
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
-     *  - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
-     *  - `'load'` - consider operation to be finished when the `load` event is fired.
-     *  - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
+     * - `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
+     * - `'load'` - consider operation to be finished when the `load` event is fired.
+     * - `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
      */
     waitUntil?: "domcontentloaded"|"load"|"networkidle";
   }): Promise<null|Response>;
@@ -3556,10 +3508,16 @@ export interface BrowserContext {
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   on(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -3569,14 +3527,20 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'page', listener: (page: Page) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   once(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -3586,14 +3550,20 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'page', listener: (page: Page) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   addListener(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -3603,14 +3573,20 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'page', listener: (page: Page) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   removeListener(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -3620,14 +3596,20 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   off(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -3637,7 +3619,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'page', listener: (page: Page) => void): this;
 
@@ -3660,17 +3642,17 @@ export interface BrowserContext {
     value: string;
 
     /**
-     * either url or domain / path are required
+     * either url or domain / path are required.
      */
     url?: string;
 
     /**
-     * either url or domain / path are required
+     * either url or domain / path are required Optional.
      */
     domain?: string;
 
     /**
-     * either url or domain / path are required
+     * either url or domain / path are required Optional.
      */
     path?: string;
 
@@ -3679,19 +3661,26 @@ export interface BrowserContext {
      */
     expires?: number;
 
+    /**
+     * Optional.
+     */
     httpOnly?: boolean;
 
+    /**
+     * Optional.
+     */
     secure?: boolean;
 
+    /**
+     * Optional.
+     */
     sameSite?: "Lax"|"None"|"Strict";
   }>): Promise<void>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
-   * 
-   * Whenever a page is created in the browser context or is navigated.
-   * Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is evaluated in the context of the newly attached frame.
-   * 
+   * - Whenever a page is created in the browser context or is navigated.
+   * - Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is evaluated in the context of the newly attached frame.
    * The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend the JavaScript environment, e.g. to seed `Math.random`.
    * An example of overriding `Math.random` before the page loads:
    * ```js
@@ -3705,7 +3694,7 @@ export interface BrowserContext {
    * });
    * ```
    * 
-   * **NOTE** The order of evaluation of multiple scripts installed via `browserContext.addInitScript(script[, arg])` and `page.addInitScript(script[, arg])` is not defined.
+   * > **NOTE** The order of evaluation of multiple scripts installed via `browserContext.addInitScript(script[, arg])` and `page.addInitScript(script[, arg])` is not defined.
    * @param script Script to be evaluated in all pages in the browser context.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
    */
@@ -3745,7 +3734,7 @@ export interface BrowserContext {
   /**
    * Closes the browser context. All the pages that belong to the browser context will be closed.
    * 
-   * **NOTE** the default browser context cannot be closed.
+   * > **NOTE** the default browser context cannot be closed.
    */
   close(): Promise<void>;
 
@@ -3788,22 +3777,22 @@ export interface BrowserContext {
 
   /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if specified.
-   * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values:  - `'geolocation'`
-   *  - `'midi'`
-   *  - `'midi-sysex'` (system-exclusive midi)
-   *  - `'notifications'`
-   *  - `'push'`
-   *  - `'camera'`
-   *  - `'microphone'`
-   *  - `'background-sync'`
-   *  - `'ambient-light-sensor'`
-   *  - `'accelerometer'`
-   *  - `'gyroscope'`
-   *  - `'magnetometer'`
-   *  - `'accessibility-events'`
-   *  - `'clipboard-read'`
-   *  - `'clipboard-write'`
-   *  - `'payment-handler'`
+   * @param permissions A permission or an array of permissions to grant. Permissions can be one of the following values: - `'geolocation'`
+   * - `'midi'`
+   * - `'midi-sysex'` (system-exclusive midi)
+   * - `'notifications'`
+   * - `'push'`
+   * - `'camera'`
+   * - `'microphone'`
+   * - `'background-sync'`
+   * - `'ambient-light-sensor'`
+   * - `'accelerometer'`
+   * - `'gyroscope'`
+   * - `'magnetometer'`
+   * - `'accessibility-events'`
+   * - `'clipboard-read'`
+   * - `'clipboard-write'`
+   * - `'payment-handler'`
    * @param options 
    */
   grantPermissions(permissions: Array<string>, options?: {
@@ -3843,7 +3832,7 @@ export interface BrowserContext {
    * ```
    * Page routes (set up with `page.route(url, handler)`) take precedence over browser context routes when request matches both handlers.
    * 
-   * **NOTE** Enabling routing disables http cache.
+   * > **NOTE** Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving URL to match while routing.
    * @param handler handler function to route the request.
    */
@@ -3851,16 +3840,14 @@ export interface BrowserContext {
 
   /**
    * This setting will change the default maximum navigation time for the following methods and related shortcuts:
+   * - `page.goBack([options])`
+   * - `page.goForward([options])`
+   * - `page.goto(url[, options])`
+   * - `page.reload([options])`
+   * - `page.setContent(html[, options])`
+   * - `page.waitForNavigation([options])`
    * 
-   * `page.goBack([options])`
-   * `page.goForward([options])`
-   * `page.goto(url[, options])`
-   * `page.reload([options])`
-   * `page.setContent(html[, options])`
-   * `page.waitForNavigation([options])`
-   * 
-   * 
-   * **NOTE** `page.setDefaultNavigationTimeout(timeout)` and `page.setDefaultTimeout(timeout)` take priority over `browserContext.setDefaultNavigationTimeout(timeout)`.
+   * > **NOTE** `page.setDefaultNavigationTimeout(timeout)` and `page.setDefaultTimeout(timeout)` take priority over `browserContext.setDefaultNavigationTimeout(timeout)`.
    * @param timeout Maximum navigation time in milliseconds
    */
   setDefaultNavigationTimeout(timeout: number): void;
@@ -3868,7 +3855,7 @@ export interface BrowserContext {
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * 
-   * **NOTE** `page.setDefaultNavigationTimeout(timeout)`, `page.setDefaultTimeout(timeout)` and `browserContext.setDefaultNavigationTimeout(timeout)` take priority over `browserContext.setDefaultTimeout(timeout)`.
+   * > **NOTE** `page.setDefaultNavigationTimeout(timeout)`, `page.setDefaultTimeout(timeout)` and `browserContext.setDefaultNavigationTimeout(timeout)` take priority over `browserContext.setDefaultTimeout(timeout)`.
    * @param timeout Maximum time in milliseconds
    */
   setDefaultTimeout(timeout: number): void;
@@ -3876,7 +3863,7 @@ export interface BrowserContext {
   /**
    * The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged with page-specific extra HTTP headers set with `page.setExtraHTTPHeaders(headers)`. If page overrides a particular header, page-specific header value will be used instead of the browser context header value.
    * 
-   * **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
+   * > **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
    * @param headers An object containing additional HTTP headers to be sent with every request. All header values must be strings.
    */
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
@@ -3887,7 +3874,7 @@ export interface BrowserContext {
    * await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
    * ```
    * 
-   * **NOTE** Consider using `browserContext.grantPermissions(permissions[, options])` to grant permissions for the browser context pages to read its geolocation.
+   * > **NOTE** Consider using `browserContext.grantPermissions(permissions[, options])` to grant permissions for the browser context pages to read its geolocation.
    * @param geolocation 
    */
   setGeolocation(geolocation: null|{
@@ -3910,7 +3897,7 @@ export interface BrowserContext {
   /**
    * Provide credentials for HTTP authentication.
    * 
-   * **NOTE** Browsers may cache credentials after successful authentication. Passing different credentials or passing `null` to disable authentication will be unreliable. To remove or replace credentials, create a new browser context instead.
+   * > **NOTE** Browsers may cache credentials after successful authentication. Passing different credentials or passing `null` to disable authentication will be unreliable. To remove or replace credentials, create a new browser context instead.
    * @param httpCredentials 
    */
   setHTTPCredentials(httpCredentials: null|{
@@ -3979,10 +3966,16 @@ export interface BrowserContext {
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -3992,7 +3985,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 }
@@ -4097,7 +4090,7 @@ export interface JSHandle<T = any> {
   /**
    * Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
    * 
-   * **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an error if the object has circular references.
+   * > **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an error if the object has circular references.
    */
   jsonValue(): Promise<T>;
   /**
@@ -4212,7 +4205,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * const span = await div.waitForSelector('span', { state: 'attached' });
    * ```
    * 
-   * **NOTE** This method does not work across navigations, use `page.waitForSelector(selector[, options])` instead.
+   * > **NOTE** This method does not work across navigations, use `page.waitForSelector(selector[, options])` instead.
    * @param selector A selector to query for. See working with selectors for more details.
    * @param options 
    */
@@ -4254,14 +4247,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method checks the element by performing the following steps:
-   * 
-   * Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
-   * Wait for actionability checks on the element, unless `force` option is set.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * Ensure that the element is now checked. If not, this method rejects.
-   * 
+   * - Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+   * - Wait for actionability checks on the element, unless `force` option is set.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * - Ensure that the element is now checked. If not, this method rejects.
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param options 
@@ -4285,12 +4276,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method clicks the element by performing the following steps:
-   * 
-   * Wait for actionability checks on the element, unless `force` option is set.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Wait for actionability checks on the element, unless `force` option is set.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param options 
@@ -4348,16 +4337,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method double clicks the element by performing the following steps:
-   * 
-   * Wait for actionability checks on the element, unless `force` option is set.
-   * Scroll the element into view if needed.
-   * Use page.mouse to double click in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
-   * 
+   * - Wait for actionability checks on the element, unless `force` option is set.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to double click in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * 
-   * **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
+   * > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * @param options 
    */
   dblclick(options?: {
@@ -4408,15 +4395,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    * Under the hood, it creates an instance of an event based on the given `type`, initializes it with `eventInit` properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
    * Since `eventInit` is event-specific, please refer to the events documentation for the lists of initial properties:
-   * 
-   * DragEvent
-   * FocusEvent
-   * KeyboardEvent
-   * MouseEvent
-   * PointerEvent
-   * TouchEvent
-   * Event
-   * 
+   * - DragEvent
+   * - FocusEvent
+   * - KeyboardEvent
+   * - MouseEvent
+   * - PointerEvent
+   * - TouchEvent
+   * - Event
    * You can also specify `JSHandle` as the property value if you want live objects to be passed into the event:
    * ```js
    * // Note you can only create DataTransfer in Chromium and Firefox
@@ -4458,12 +4443,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method hovers over the element by performing the following steps:
-   * 
-   * Wait for actionability checks on the element, unless `force` option is set.
-   * Scroll the element into view if needed.
-   * Use page.mouse to hover over the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Wait for actionability checks on the element, unless `force` option is set.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to hover over the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param options 
@@ -4513,7 +4496,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Focuses the element, and then uses `keyboard.down(key)` and `keyboard.up(key)`.
    * `key` can specify the intended keyboardEvent.key value or a single character to generate the text for. A superset of the `key` values can be found here. Examples of the keys are:
    * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
@@ -4570,7 +4553,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<Buffer>;
 
   /**
-   * This method waits for actionability checks, then tries to scroll element into view, unless it is completely visible as defined by IntersectionObserver's `ratio`.
+   * This method waits for actionability checks, then tries to scroll element into view, unless it is completely visible as defined by IntersectionObserver's ```ratio```.
    * Throws when `elementHandle` does not point to an element connected to a Document or a ShadowRoot.
    * @param options 
    */
@@ -4703,16 +4686,14 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method taps the element by performing the following steps:
-   * 
-   * Wait for actionability checks on the element, unless `force` option is set.
-   * Scroll the element into view if needed.
-   * Use page.touchscreen to tap in the center of the element, or the specified `position`.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * 
+   * - Wait for actionability checks on the element, unless `force` option is set.
+   * - Scroll the element into view if needed.
+   * - Use page.touchscreen to tap in the center of the element, or the specified `position`.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * 
-   * **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
+   * > **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * @param options 
    */
   tap(options?: {
@@ -4788,14 +4769,12 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method checks the element by performing the following steps:
-   * 
-   * Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
-   * Wait for actionability checks on the element, unless `force` option is set.
-   * Scroll the element into view if needed.
-   * Use page.mouse to click in the center of the element.
-   * Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
-   * Ensure that the element is now unchecked. If not, this method rejects.
-   * 
+   * - Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+   * - Wait for actionability checks on the element, unless `force` option is set.
+   * - Scroll the element into view if needed.
+   * - Use page.mouse to click in the center of the element.
+   * - Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
+   * - Ensure that the element is now unchecked. If not, this method rejects.
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a TimeoutError. Passing zero timeout disables this.
    * @param options 
@@ -4820,13 +4799,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * Returns the element satisfies the `state`.
    * Depending on the `state` parameter, this method waits for one of the actionability checks to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
-   * 
-   * `"visible"` Wait until the element is visible.
-   * `"hidden"` Wait until the element is not visible or not attached. Note that waiting for hidden does not throw when the element detaches.
-   * `"stable"` Wait until the element is both visible and stable.
-   * `"enabled"` Wait until the element is enabled.
-   * `"disabled"` Wait until the element is not enabled.
-   * 
+   * - `"visible"` Wait until the element is visible.
+   * - `"hidden"` Wait until the element is not visible or not attached. Note that waiting for hidden does not throw when the element detaches.
+   * - `"stable"` Wait until the element is both visible and stable.
+   * - `"enabled"` Wait until the element is enabled.
+   * - `"disabled"` Wait until the element is not enabled.
    * If the element does not satisfy the condition for the `timeout` milliseconds, this method will throw.
    * @param state A state to wait for, see below for more details.
    * @param options 
@@ -4874,10 +4851,16 @@ export interface BrowserType<Browser> {
    * });
    * ```
    * 
-   * **Chromium-only** Playwright can also be used to control the Chrome browser, but it works best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use `executablePath` option with extreme caution.
-   * If Google Chrome (rather than Chromium) is preferred, a Chrome Canary or Dev Channel build is suggested.
-   * In `browserType.launch([options])` above, any mention of Chromium also applies to Chrome.
-   * See `this article` for a description of the differences between Chromium and Chrome. `This article` describes some differences for Linux users.
+   * > **Chromium-only** Playwright can also be used to control the Chrome browser, but it works best with the version of Chromium it is bundled with. There is no guarantee it will work with any other version. Use `executablePath` option with extreme caution.
+   * >
+   * 
+   * > If Google Chrome (rather than Chromium) is preferred, a Chrome Canary or Dev Channel build is suggested.
+   * >
+   * 
+   * > In `browserType.launch([options])` above, any mention of Chromium also applies to Chrome.
+   * >
+   * 
+   * > See `this article` for a description of the differences between Chromium and Chrome. `This article` describes some differences for Linux users.
    * @param options 
    */
   launch(options?: LaunchOptions): Promise<Browser>;
@@ -5349,15 +5332,11 @@ export interface ChromiumBrowser extends Browser {
 
 /**
  * The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
- * 
- * protocol methods can be called with `session.send` method.
- * protocol events can be subscribed to with `session.on` method.
- * 
+ * - protocol methods can be called with `session.send` method.
+ * - protocol events can be subscribed to with `session.on` method.
  * Useful links:
- * 
- * Documentation on DevTools Protocol can be found here: DevTools Protocol Viewer.
- * Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
- * 
+ * - Documentation on DevTools Protocol can be found here: DevTools Protocol Viewer.
+ * - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
  * ```js
  * const client = await page.context().newCDPSession(page);
  * await client.send('Animation.enable');
@@ -5416,8 +5395,7 @@ export interface Accessibility {
   /**
    * Captures the current state of the accessibility tree. The returned object represents the root accessible node of the page.
    * 
-   * **NOTE** The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers. Playwright will discard them as well for an easier to process tree, unless `interestingOnly` is set to `false`.
-   * 
+   * > **NOTE** The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers. Playwright will discard them as well for an easier to process tree, unless `interestingOnly` is set to `false`.
    * An example of dumping the entire accessibility tree:
    * ```js
    * const snapshot = await page.accessibility.snapshot();
@@ -5506,14 +5484,39 @@ export {};
  * See ChromiumBrowser, FirefoxBrowser and WebKitBrowser for browser-specific features. Note that `browserType.connect(params)` and `browserType.launch([options])` always return a specific browser instance, based on the browser being connected to or launched.
  */
 export interface Browser extends EventEmitter {
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   on(event: 'disconnected', listener: () => void): this;
 
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   once(event: 'disconnected', listener: () => void): this;
 
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   addListener(event: 'disconnected', listener: () => void): this;
 
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   removeListener(event: 'disconnected', listener: () => void): this;
 
+  /**
+   * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   off(event: 'disconnected', listener: () => void): this;
 
   /**
@@ -5839,14 +5842,14 @@ export interface Browser extends EventEmitter {
 }
 
 /**
- * ConsoleMessage objects are dispatched by page via the page.on('console') event.
+ * ConsoleMessage objects are dispatched by page via the `page.on('console')` event.
  */
 export interface ConsoleMessage {
   args(): Array<JSHandle>;
 
   location(): {
     /**
-     * URL of the resource if available, otherwise empty string.
+     * URL of the resource.
      */
     url: string;
 
@@ -5870,7 +5873,7 @@ export interface ConsoleMessage {
 }
 
 /**
- * Dialog objects are dispatched by page via the page.on('dialog') event.
+ * Dialog objects are dispatched by page via the `page.on('dialog')` event.
  * An example of using `Dialog` class:
  * ```js
  * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -5916,7 +5919,7 @@ export interface Dialog {
 }
 
 /**
- * Download objects are dispatched by page via the page.on('download') event.
+ * Download objects are dispatched by page via the `page.on('download')` event.
  * All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded files are deleted when the browser closes.
  * Download event is emitted once the download starts. Download path becomes available once download completes:
  * ```js
@@ -5929,7 +5932,7 @@ export interface Dialog {
  * ...
  * ```
  * 
- * **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
+ * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual download is not performed and user has no access to the downloaded files.
  */
 export interface Download {
   /**
@@ -5983,7 +5986,7 @@ export interface Video {
 }
 
 /**
- * FileChooser objects are dispatched by the page in the page.on('filechooser') event.
+ * FileChooser objects are dispatched by the page in the `page.on('filechooser')` event.
  * ```js
  * page.on('filechooser', async (fileChooser) => {
  *   await fileChooser.setFiles('/tmp/myfile.pdf');
@@ -6089,13 +6092,13 @@ export interface Keyboard {
    * Dispatches a `keydown` event.
    * `key` can specify the intended keyboardEvent.key value or a single character to generate the text for. A superset of the `key` values can be found here. Examples of the keys are:
    * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
    * If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier active. To release the modifier key, use `keyboard.up(key)`.
    * After the key is pressed once, subsequent calls to `keyboard.down(key)` will have repeat set to true. To release the key, use `keyboard.up(key)`.
    * 
-   * **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+   * > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    */
   down(key: string): Promise<void>;
@@ -6106,7 +6109,7 @@ export interface Keyboard {
    * page.keyboard.insertText('嗨');
    * ```
    * 
-   * **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
+   * > **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
    * @param text Sets input to the specified text value.
    */
   insertText(text: string): Promise<void>;
@@ -6114,7 +6117,7 @@ export interface Keyboard {
   /**
    * `key` can specify the intended keyboardEvent.key value or a single character to generate the text for. A superset of the `key` values can be found here. Examples of the keys are:
    * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`, `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * Following modification shortcuts are also suported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
    * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
    * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective texts.
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the modifier, modifier is pressed and being held while the subsequent key is being pressed.
@@ -6148,7 +6151,7 @@ export interface Keyboard {
    * await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
    * ```
    * 
-   * **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+   * > **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
    * @param text A text to type into a focused element.
    * @param options 
    */
@@ -6282,15 +6285,12 @@ export interface Touchscreen {
 
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by Page:
+ * - `page.on('request')` emitted when the request is issued by the page.
+ * - `page.on('response')` emitted when/if the response status and headers are received for the request.
+ * - `page.on('requestfinished')` emitted when the response body is downloaded and the request is complete.
+ * If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  `page.on('requestfailed')` event is emitted.
  * 
- * page.on('request') emitted when the request is issued by the page.
- * page.on('response') emitted when/if the response status and headers are received for the request.
- * page.on('requestfinished') emitted when the response body is downloaded and the request is complete.
- * 
- * If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  page.on('requestfailed') event is emitted.
- * 
- * **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `'requestfinished'` event.
- * 
+ * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `'requestfinished'` event.
  * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new request is  issued to a redirected url.
  */
 export interface Request {
@@ -6573,20 +6573,20 @@ export interface Selectors {
 export interface Route {
   /**
    * Aborts the route's request.
-   * @param errorCode Optional error code. Defaults to `failed`, could be one of the following:  - `'aborted'` - An operation was aborted (due to user action)
-   *  - `'accessdenied'` - Permission to access a resource, other than the network, was denied
-   *  - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified host or network.
-   *  - `'blockedbyclient'` - The client chose to block the request.
-   *  - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-   *  - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
-   *  - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
-   *  - `'connectionfailed'` - A connection attempt failed.
-   *  - `'connectionrefused'` - A connection attempt was refused.
-   *  - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
-   *  - `'internetdisconnected'` - The Internet connection has been lost.
-   *  - `'namenotresolved'` - The host name could not be resolved.
-   *  - `'timedout'` - An operation timed out.
-   *  - `'failed'` - A generic failure occurred.
+   * @param errorCode Optional error code. Defaults to `failed`, could be one of the following: - `'aborted'` - An operation was aborted (due to user action)
+   * - `'accessdenied'` - Permission to access a resource, other than the network, was denied
+   * - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified host or network.
+   * - `'blockedbyclient'` - The client chose to block the request.
+   * - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+   * - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
+   * - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
+   * - `'connectionfailed'` - A connection attempt failed.
+   * - `'connectionrefused'` - A connection attempt was refused.
+   * - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
+   * - `'internetdisconnected'` - The Internet connection has been lost.
+   * - `'namenotresolved'` - The host name could not be resolved.
+   * - `'timedout'` - An operation timed out.
+   * - `'failed'` - A generic failure occurred.
    */
   abort(errorCode?: string): Promise<void>;
 
@@ -6975,7 +6975,7 @@ export interface Logger {
    */
   log(name: string, severity: "error"|"info"|"verbose"|"warning", message: string|Error, args: Array<Object>, hints: {
     /**
-     * preferred logger color
+     * Optional preferred logger color.
      */
     color?: string;
   }): void;
@@ -6991,7 +6991,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * **NOTE** Only works with persistent context.
+   * > **NOTE** Only works with persistent context.
    */
   on(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7000,10 +7000,16 @@ export interface ChromiumBrowserContext extends BrowserContext {
    */
   on(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   on(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -7013,14 +7019,14 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'page', listener: (page: Page) => void): this;
 
   /**
    * Emitted when new background page is created in the context.
    * 
-   * **NOTE** Only works with persistent context.
+   * > **NOTE** Only works with persistent context.
    */
   once(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7029,10 +7035,16 @@ export interface ChromiumBrowserContext extends BrowserContext {
    */
   once(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   once(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -7042,14 +7054,14 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'page', listener: (page: Page) => void): this;
 
   /**
    * Emitted when new background page is created in the context.
    * 
-   * **NOTE** Only works with persistent context.
+   * > **NOTE** Only works with persistent context.
    */
   addListener(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7058,10 +7070,16 @@ export interface ChromiumBrowserContext extends BrowserContext {
    */
   addListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   addListener(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -7071,14 +7089,14 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
    * Emitted when new background page is created in the context.
    * 
-   * **NOTE** Only works with persistent context.
+   * > **NOTE** Only works with persistent context.
    */
   removeListener(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7087,10 +7105,16 @@ export interface ChromiumBrowserContext extends BrowserContext {
    */
   removeListener(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   removeListener(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -7100,14 +7124,14 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   removeListener(event: 'page', listener: (page: Page) => void): this;
 
   /**
    * Emitted when new background page is created in the context.
    * 
-   * **NOTE** Only works with persistent context.
+   * > **NOTE** Only works with persistent context.
    */
   off(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7116,10 +7140,16 @@ export interface ChromiumBrowserContext extends BrowserContext {
    */
   off(event: 'serviceworker', listener: (worker: Worker) => void): this;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   off(event: 'close', listener: () => void): this;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -7129,7 +7159,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'page', listener: (page: Page) => void): this;
 
@@ -7152,7 +7182,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * **NOTE** Only works with persistent context.
+   * > **NOTE** Only works with persistent context.
    */
   waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
@@ -7161,10 +7191,16 @@ export interface ChromiumBrowserContext extends BrowserContext {
    */
   waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean, timeout?: number } | ((worker: Worker) => boolean)): Promise<Worker>;
 
+  /**
+   * Emitted when Browser context gets closed. This might happen because of one of the following:
+   * - Browser context is closed.
+   * - Browser application is closed or crashed.
+   * - The `browser.close()` method was called.
+   */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
 
   /**
-   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also page.on('popup') to receive events about popups relevant to a specific page.
+   * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also `page.on('popup')` to receive events about popups relevant to a specific page.
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
    * ```js
    * const [page] = await Promise.all([
@@ -7174,7 +7210,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
+   * > **NOTE** Use `page.waitForLoadState([state, options])` to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
@@ -7218,7 +7254,7 @@ export interface ChromiumCoverage {
   /**
    * Returns coverage is started
    * 
-   * **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
+   * > **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have `__playwright_evaluation_script__` as their URL.
    * @param options 
    */
   startJSCoverage(options?: {
@@ -7236,7 +7272,7 @@ export interface ChromiumCoverage {
   /**
    * Returns the array of coverage reports for all stylesheets
    * 
-   * **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
+   * > **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
    */
   stopCSSCoverage(): Promise<Array<{
     /**
@@ -7268,7 +7304,7 @@ export interface ChromiumCoverage {
   /**
    * Returns the array of coverage reports for all scripts
    * 
-   * **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are reported.
+   * > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are reported.
    */
   stopJSCoverage(): Promise<Array<{
     /**
@@ -7723,10 +7759,10 @@ export interface ConnectOptions {
 interface ElementHandleWaitForSelectorOptions {
   /**
    * Defaults to `'visible'`. Can be either:
-   *  - `'attached'` - wait for element to be present in DOM.
-   *  - `'detached'` - wait for element to not be present in DOM.
-   *  - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
-   *  - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
    */
   state?: "attached"|"detached"|"hidden"|"visible";
 
@@ -7760,10 +7796,10 @@ export interface Cookie {
 interface PageWaitForSelectorOptions {
   /**
    * Defaults to `'visible'`. Can be either:
-   *  - `'attached'` - wait for element to be present in DOM.
-   *  - `'detached'` - wait for element to not be present in DOM.
-   *  - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
-   *  - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
+   * - `'attached'` - wait for element to be present in DOM.
+   * - `'detached'` - wait for element to not be present in DOM.
+   * - `'visible'` - wait for element to have non-empty bounding box and no `visibility:hidden`. Note that element without any content or with `display:none` has an empty bounding box and is not considered visible.
+   * - `'hidden'` - wait for element to be either detached from DOM, or have an empty bounding box or `visibility:hidden`. This is opposite to the `'visible'` option.
    */
   state?: "attached"|"detached"|"hidden"|"visible";
 

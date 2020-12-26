@@ -268,16 +268,22 @@ function applyTemplates(body, params) {
   return body;
 }
 
+/**
+ * @param {string} line 
+ * @returns {{ name: string, type: string, text: string }}
+ */
 function parseArgument(line) {
-  let match = line.match(/`([^`]+)` (.*)/);
+  let match = line.match(/^`([^`]+)` (.*)/);
   if (!match)
-    match = line.match(/(returns): (.*)/);
+    match = line.match(/^(returns): (.*)/);
+  if (!match)
+    match = line.match(/^(type): (.*)/);
   if (!match)
     throw new Error('Invalid argument: ' + line);
   const name = match[1];
   const remainder = match[2];
   if (!remainder.startsWith('<'))
-    console.error('Bad argument:', remainder);
+    throw new Error('Bad argument: ' + remainder);
   let depth = 0;
   for (let i = 0; i < remainder.length; ++i) {
     const c = remainder.charAt(i);
@@ -286,9 +292,9 @@ function parseArgument(line) {
     if (c === '>')
       --depth;
     if (depth === 0)
-      return { name, type: remainder.substring(0, i + 1), text: remainder.substring(i + 2) };
+      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2) };
   }
   throw new Error('Should not be reached');
 }
 
-module.exports = { parseMd, renderMd, parseArgument, applyTemplates };
+module.exports = { parseMd, renderMd, parseArgument, applyTemplates, clone };

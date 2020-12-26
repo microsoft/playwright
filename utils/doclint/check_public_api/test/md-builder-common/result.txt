@@ -7,7 +7,7 @@
         {
           "name": "frame",
           "type": {
-            "name": "[Frame]"
+            "name": "Frame"
           },
           "kind": "event",
           "comment": "This event is dispatched."

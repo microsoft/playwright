@@ -1,14 +1,19 @@
-### class: Foo
-#### foo.bar(options)
-- `options` <[Object]>
-  - `visibility` <[boolean]>
-#### foo.foo(arg1, arg2)
+# class: Foo
+
+## method: Foo.bar
+
+### option: Foo.bar.visibility
+- `visibility` <[boolean]>
+
+## method: Foo.foo
+
+### param: Foo.foo.arg1
 - `arg1` <[string]>
+
+### param: Foo.foo.arg2
 - `arg2` <[string]>
 
-#### foo.test(...files)
-- `...filePaths` <...[string]>
+## method: Foo.test
 
-[Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
-[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
-[boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
+### param: Foo.test.filePaths
+- `filePaths` <[Array]<[string]>>
