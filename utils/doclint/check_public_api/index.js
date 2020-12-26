@@ -24,7 +24,7 @@ const EXCLUDE_PROPERTIES = new Set([
 ]);
 
 /**
- * @return {!Promise<!Array<!Message>>}
+ * @return {!Array<!Message>}
  */
 module.exports = function lint(api, jsSources) {
   const mdResult = mdBuilder(api, true);

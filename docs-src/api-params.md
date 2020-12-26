@@ -170,7 +170,7 @@ Whether or not to enable JavaScript in the context. Defaults to `true`.
 ## context-option-timezoneid
 - `timezoneId` <[string]>
 
-Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
 for a list of supported timezone IDs.
 
 ## context-option-geolocation
