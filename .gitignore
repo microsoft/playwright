@@ -12,7 +12,6 @@ yarn.lock
 /node6
 /src/generated/*
 lib/
-/types/*
 jest-report.json
 drivers/
 /docs/api.json
