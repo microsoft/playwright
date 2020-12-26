@@ -5,7 +5,7 @@
 ##### Table of Contents
 
 <!-- GEN:toc-top-level -->
-- [Playwright module](#playwright-module)
+- [class: Playwright](#class-playwright)
 - [class: Browser](#class-browser)
 - [class: BrowserContext](#class-browsercontext)
 - [class: Page](#class-page)
@@ -43,10 +43,11 @@
 - [Working with Chrome Extensions](#working-with-chrome-extensions)
 <!-- GEN:stop -->
 
-### Playwright module
 
-Playwright module provides a method to launch a browser instance.
-The following is a typical example of using Playwright to drive automation:
+### class: Playwright
+
+Playwright module provides a method to launch a browser instance. The following is a typical example of using Playwright to drive automation:
+
 ```js
 const { chromium, firefox, webkit } = require('playwright');
 
@@ -71,12 +72,12 @@ By default, the `playwright` NPM package automatically downloads browser executa
 <!-- GEN:stop -->
 
 #### playwright.chromium
-- returns: <[BrowserType]>
+- type: <[BrowserType]>
 
 This object can be used to launch or connect to Chromium, returning instances of [ChromiumBrowser].
 
 #### playwright.devices
-- returns: <[Object]>
+- type: <[Object]>
 
 Returns a list of devices to be used with [`browser.newContext([options])`](#browsernewcontextoptions) or [`browser.newPage([options])`](#browsernewpageoptions). Actual list of devices can be found in [src/server/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/server/deviceDescriptors.ts).
 
@@ -97,16 +98,15 @@ const iPhone = devices['iPhone 6'];
 ```
 
 #### playwright.errors
-- returns: <[Object]>
+- type: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [`page.waitForSelector(selector[, options])`](#pagewaitforselectorselector-options)
-might fail if the selector doesn't match any nodes during the given timeframe.
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [`page.waitForSelector(selector[, options])`](#pagewaitforselectorselector-options) might fail if the selector doesn't match any nodes during the given timeframe.
 
-For certain types of errors Playwright uses specific error classes.
-These classes are available via [`playwright.errors`](#playwrighterrors).
+For certain types of errors Playwright uses specific error classes. These classes are available via [`playwright.errors`](#playwrighterrors).
 
 An example of handling a timeout error:
+
 ```js
 try {
   await page.waitForSelector('.foo');
@@ -118,21 +118,19 @@ try {
 ```
 
 #### playwright.firefox
-- returns: <[BrowserType]>
+- type: <[BrowserType]>
 
 This object can be used to launch or connect to Firefox, returning instances of [FirefoxBrowser].
 
 #### playwright.selectors
-- returns: <[Selectors]>
+- type: <[Selectors]>
 
 Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
 
 #### playwright.webkit
-- returns: <[BrowserType]>
+- type: <[BrowserType]>
 
 This object can be used to launch or connect to WebKit, returning instances of [WebKitBrowser].
-
-
 
 ### class: Browser
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
