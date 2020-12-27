@@ -15,7 +15,7 @@
  */
 
 function normalizeLines(content) {
-  const inLines = content.split('\n');
+  const inLines = content.replace(/\r\n/g, '\n').split('\n');
   let inCodeBlock = false;
   const outLines = [];
   let outLineTokens = [];
