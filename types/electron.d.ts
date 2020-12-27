@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Logger, Page, JSHandle, ChromiumBrowserContext } from './types/types';
+import { Logger, Page, JSHandle, ChromiumBrowserContext } from './types';
 import { BrowserWindow, BrowserWindowConstructorOptions } from 'electron';
 
 export type ElectronLaunchOptions = {
@@ -27,9 +27,11 @@ export type ElectronLaunchOptions = {
   timeout?: number,
   logger?: Logger,
 };
+
 export interface ElectronLauncher {
   launch(executablePath: string, options?: ElectronLaunchOptions): Promise<ElectronApplication>;
 }
+
 export interface ElectronApplication {
   on(event: 'window', listener: (page : ElectronPage) => void): this;
   addListener(event: 'window', listener: (page : ElectronPage) => void): this;
@@ -44,9 +46,12 @@ export interface ElectronApplication {
   firstWindow(): Promise<ElectronPage>;
   newBrowserWindow(options?: BrowserWindowConstructorOptions): Promise<ElectronPage>;
   close(): Promise<void>;
-  evaluate: JSHandle<typeof import('electron')>['evaluate'];
-  evaluateHandle: JSHandle<typeof import('electron')>['evaluateHandle'];
+  evaluate: HandleToElectron['evaluate'];
+  evaluateHandle: HandleToElectron['evaluateHandle'];
 }
+
 export interface ElectronPage extends Page {
   browserWindow: JSHandle<BrowserWindow>;
 }
+
+type HandleToElectron = JSHandle<typeof import('electron')>;

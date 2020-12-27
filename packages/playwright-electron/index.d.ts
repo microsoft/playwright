@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ElectronLauncher } from './electron-types';
+import { ElectronLauncher } from './types/electron';
 export * from './types/types';
-export * from './electron-types';
+export * from './types/electron';
 export const electron: ElectronLauncher;

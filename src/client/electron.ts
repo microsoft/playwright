@@ -24,14 +24,18 @@ import { Waiter } from './waiter';
 import { Events } from './events';
 import { WaitForEventOptions, Env, Logger } from './types';
 import { envObjectToArray } from './clientHelper';
+import * as electronApi from '../../types/electron';
 import * as structs from '../../types/structs';
+import type { ChromiumBrowserContext } from './chromiumBrowserContext';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'> & {
   env?: Env,
   logger?: Logger,
 };
 
-export class Electron extends ChannelOwner<channels.ElectronChannel, channels.ElectronInitializer> {
+type ElectronAppType = typeof import('electron');
+
+export class Electron extends ChannelOwner<channels.ElectronChannel, channels.ElectronInitializer> implements electronApi.ElectronLauncher {
   static from(electron: channels.ElectronChannel): Electron {
     return (electron as any)._object;
   }
@@ -54,7 +58,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel, channels.El
   }
 }
 
-export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel, channels.ElectronApplicationInitializer> {
+export class ElectronApplication extends ChannelOwner<channels.ElectronApplicationChannel, channels.ElectronApplicationInitializer> implements electronApi.ElectronApplication {
   private _context?: BrowserContext;
   private _windows = new Set<Page>();
   private _timeoutSettings = new TimeoutSettings();
@@ -76,23 +80,24 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     this._channel.on('close', () => this.emit(Events.ElectronApplication.Close));
   }
 
-  windows(): Page[] {
-    return [...this._windows];
+  windows(): electronApi.ElectronPage[] {
+    // TODO: add ElectronPage class inherting from Page.
+    return [...this._windows] as any as electronApi.ElectronPage[];
   }
 
-  async firstWindow(): Promise<Page> {
+  async firstWindow(): Promise<electronApi.ElectronPage> {
     if (this._windows.size)
       return this._windows.values().next().value;
     return this.waitForEvent('window');
   }
 
-  async newBrowserWindow(options: any): Promise<Page> {
+  async newBrowserWindow(options: any): Promise<electronApi.ElectronPage> {
     const result = await this._channel.newBrowserWindow({ arg: serializeArgument(options) });
-    return Page.from(result.page);
+    return Page.from(result.page) as any as electronApi.ElectronPage;
   }
 
-  context(): BrowserContext {
-    return this._context!;
+  context(): ChromiumBrowserContext {
+    return this._context! as ChromiumBrowserContext;
   }
 
   async close() {
@@ -111,12 +116,12 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return result;
   }
 
-  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<R> {
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return parseResult(result.value);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }

@@ -8,7 +8,6 @@ src/server/firefox/protocol.ts
 src/server/webkit/protocol.ts
 /types/*
 /index.d.ts
-/electron-types.d.ts
 utils/generate_types/overrides.d.ts
 utils/generate_types/test/test.ts
 node_modules/

@@ -15,18 +15,24 @@
  */
 
 import { EventEmitter } from 'events';
+import { BrowserContextOptions, BrowserContext, Page } from './types';
 
-export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> extends EventEmitter {
+export interface Android extends EventEmitter {
+  setDefaultTimeout(timeout: number): void;
+  devices(): Promise<AndroidDevice[]>;
+}
+
+export interface AndroidDevice extends EventEmitter {
   input: AndroidInput;
 
   setDefaultTimeout(timeout: number): void;
-  on(event: 'webview', handler: (webView: AndroidWebView<Page>) => void): this;
+  on(event: 'webview', handler: (webView: AndroidWebView) => void): this;
   waitForEvent(event: string, optionsOrPredicate?: (data: any) => boolean | { timeout?: number, predicate?: (data: any) => boolean }): Promise<any>;
 
   serial(): string;
   model(): string;
-  webViews(): AndroidWebView<Page>[];
-  webView(selector: { pkg: string }, options?: { timeout?: number }): Promise<AndroidWebView<Page>>;
+  webViews(): AndroidWebView[];
+  webView(selector: { pkg: string }, options?: { timeout?: number }): Promise<AndroidWebView>;
   shell(command: string): Promise<Buffer>;
   open(command: string): Promise<AndroidSocket>;
   installApk(file: string | Buffer, options?: { args?: string[] }): Promise<void>;
@@ -53,8 +59,8 @@ export interface AndroidDevice<BrowserContextOptions, BrowserContext, Page> exte
 export interface AndroidSocket extends EventEmitter {
   on(event: 'data', handler: (data: Buffer) => void): this;
   on(event: 'close', handler: () => void): this;
-  write(data: Buffer): Promise<void>
-  close(): Promise<void>
+  write(data: Buffer): Promise<void>;
+  close(): Promise<void>;
 }
 
 export interface AndroidInput {
@@ -65,7 +71,7 @@ export interface AndroidInput {
   drag(from: { x: number, y: number }, to: { x: number, y: number }, steps: number): Promise<void>;
 }
 
-export interface AndroidWebView<Page> extends EventEmitter {
+export interface AndroidWebView extends EventEmitter {
   on(event: 'close', handler: () => void): this;
   pid(): number;
   pkg(): string;

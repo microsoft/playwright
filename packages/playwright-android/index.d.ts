@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Android } from './android-types';
+import { Android } from './types/android';
 export * from './types/types';
-export * from './android-types';
+export * from './types/android';
 export const android: Android;
