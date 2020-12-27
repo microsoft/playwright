@@ -33,8 +33,12 @@ test('missing docs', async ({}) => {
   const messages = missingDocs(api, tsSources, path.join(__dirname, 'test-api.ts'));
   const errors = messages.map(message => message.text);
   expect(errors).toEqual([
+    'Missing documentation for "Exists.exists2.extra"',
+    'Missing documentation for "Exists.exists2.options"',
     'Missing documentation for "Exists.extra"',
     'Missing documentation for "Extra"',
+    'Documented "Exists.exists.doesNotExist" not found is sources',
+    'Documented "Exists.exists.options" not found is sources',
     'Documented "Exists.doesNotExist" not found is sources',
     'Documented "DoesNotExist" not found in sources',
   ]);

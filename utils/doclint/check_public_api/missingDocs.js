@@ -19,6 +19,7 @@ const mdBuilder = require('./MDBuilder');
 const Message = require('../Message');
 const ts = require('typescript');
 const EventEmitter = require('events');
+const Documentation = require('./Documentation');
 
 /**
  * @return {!Array<!Message>}
@@ -27,15 +28,23 @@ module.exports = function lint(api, jsSources, apiFileName) {
   const documentation = mdBuilder(api, true).documentation;
   const apiMethods = listMethods(jsSources, apiFileName);
   const errors = [];
-  for (const [className, methodNames] of apiMethods) {
+  for (const [className, methods] of apiMethods) {
     const docClass = documentation.classes.get(className);
     if (!docClass) {
       errors.push(Message.error(`Missing documentation for "${className}"`));
       continue;
     }
-    for (const methodName of methodNames) {
-      if (!docClass.members.has(methodName))
+    for (const [methodName, params] of methods) {
+      const member = docClass.members.get(methodName);
+      if (!member) {
         errors.push(Message.error(`Missing documentation for "${className}.${methodName}"`));
+        continue;
+      }
+      const memberParams = paramsForMember(member);
+      for (const paramName of params) {
+        if (!memberParams.has(paramName))
+          errors.push(Message.error(`Missing documentation for "${className}.${methodName}.${paramName}"`));
+      }
     }
   }
   for (const cls of documentation.classesArray) {
@@ -45,12 +54,34 @@ module.exports = function lint(api, jsSources, apiFileName) {
       continue;
     }
     for (const member of cls.membersArray) {
-      if (member.kind !== 'event' && !methods.has(member.name))
+      if (member.kind === 'event')
+        continue;
+      const params = methods.get(member.name);
+      if (!params) {
         errors.push(Message.error(`Documented "${cls.name}.${member.name}" not found is sources`));
+        continue;
+      }
+      const memberParams = paramsForMember(member);
+      for (const paramName of memberParams) {
+        if (!params.has(paramName))
+          errors.push(Message.error(`Documented "${cls.name}.${member.name}.${paramName}" not found is sources`));
+      }
     }
   }
   return errors;
 };
+
+/**
+ * @param {!Documentation.Member} member
+ */
+function paramsForMember(member) {
+  if (member.kind !== 'method')
+    return [];
+  const paramNames = new Set(member.argsArray.map(a => a.name));
+  if (member.options)
+    paramNames.add('options');
+  return paramNames;
+}
 
 /**
  * @param {!Array<!import('../Source')>} sources
@@ -70,13 +101,28 @@ function listMethods(sources, apiFileName) {
   const apiSource = program.getSourceFiles().find(f => f.fileName === apiFileName);
 
   /**
+   * @param {ts.Type} type
+   */
+  function signatureForType(type) {
+    const signatures = type.getCallSignatures();
+    if (signatures.length)
+      return signatures[signatures.length - 1];
+    if (type.isUnion()) {
+      const innerTypes = type.types.filter(t => !(t.flags & ts.TypeFlags.Undefined));
+      if (innerTypes.length === 1)
+        return signatureForType(innerTypes[0]);
+    }
+    return null;
+  }
+
+  /**
    * @param {string} className
    * @param {!ts.Type} classType
    */
   function visitClass(className, classType) {
     let methods = apiMethods.get(className);
     if (!methods) {
-      methods = new Set();
+      methods = new Map();
       apiMethods.set(className, methods);
     }
     for (const [name, member] of classType.symbol.members || []) {
@@ -84,7 +130,12 @@ function listMethods(sources, apiFileName) {
         continue;
       if (EventEmitter.prototype.hasOwnProperty(name))
         continue;
-      methods.add(name);
+      const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
+      const signature = signatureForType(memberType);
+      if (signature)
+        methods.set(name, new Set(signature.parameters.map(p => p.escapedName)));
+      else
+        methods.set(name, new Set());
     }
     for (const baseType of classType.getBaseTypes() || []) {
       const baseTypeName = baseType.symbol ? baseType.symbol.name : '';

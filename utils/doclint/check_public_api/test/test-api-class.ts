@@ -15,7 +15,11 @@
  */
 
 export class Exists {
-  exists() {
+  exists(exists: boolean) {
+    return true;
+  }
+
+  exists2(extra: boolean, options: {}) {
     return true;
   }
 
