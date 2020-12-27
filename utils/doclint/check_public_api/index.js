@@ -191,16 +191,17 @@ function compareDocumentations(actual, expected) {
       [/\ /g, ''],
       // We shortcut ? to null|
       [/\?/g, 'null|'],
+      [/EvaluationArgument/g, 'Object'],
     ];
     const tsReplacers = [
       [/\ /g, ''],
-      [/ElementHandle\<Element\>/g, 'ElementHandle'],
-      [/ElementHandle\<Node\>/g, 'ElementHandle'],
-      [/ElementHandle\<T\>/g, 'ElementHandle'],
-      [/Handle\<R\>/g, 'JSHandle'],
-      [/JSHandle\<Object\>/g, 'JSHandle'],
+      [/Arg/g, 'Object'],
+      [/ChromiumBrowserContext/g, 'BrowserContext'],
+      [/ElementHandle<[^>]+>/g, 'ElementHandle'],
+      [/Handle<R>/g, 'JSHandle'],
+      [/JSHandle<Object>/g, 'JSHandle'],
       [/object/g, 'Object'],
-      [/Promise\<T\>/, 'Promise<Object>'],
+      [/Promise<T>/, 'Promise<Object>'],
       [/TextendsNode\?ElementHandle:null/, 'null|ElementHandle']
     ]
     let actualName = actual.name;
@@ -317,6 +318,8 @@ function normalizeType(type) {
       word += c;
     }
   }
+  if (word)
+    result.push(word);
   result.sort();
   return result.join('|');
 }

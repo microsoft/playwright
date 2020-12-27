@@ -219,7 +219,7 @@ function checkSources(sources) {
         innerTypeNames.push(innerType.name);
       }
       if (innerTypeNames.length === 0 || (innerTypeNames.length === 1 && innerTypeNames[0] === 'void'))
-        return new Documentation.Type(type.symbol.name);
+        return new Documentation.Type(type.symbol.name === 'Promise' ? 'Promise<void>' : type.symbol.name);
       return new Documentation.Type(`${type.symbol.name}<${innerTypeNames.join(', ')}>`, properties);
     }
     return new Documentation.Type(typeName, []);

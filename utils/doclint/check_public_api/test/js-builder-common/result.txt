@@ -24,7 +24,7 @@
         {
           "name": "method",
           "type": {
-            "name": "Promise"
+            "name": "Promise<void>"
           },
           "kind": "method",
           "args": [
