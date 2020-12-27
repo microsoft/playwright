@@ -15,6 +15,7 @@
  */
 
 import { Browser } from './browser';
+import * as api from '../../types/types';
 
-export class WebKitBrowser extends Browser {
+export class WebKitBrowser extends Browser implements api.WebKitBrowser {
 }

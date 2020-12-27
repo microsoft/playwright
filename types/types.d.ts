@@ -18,32 +18,7 @@ import { Protocol } from './protocol';
 import { ChildProcess } from 'child_process';
 import { EventEmitter } from 'events';
 import { Readable } from 'stream';
-
-/**
- * Can be converted to JSON
- */
-type Serializable = {};
-/**
- * Can be converted to JSON, but may also contain JSHandles.
- */
-type EvaluationArgument = {};
-
-type NoHandles<Arg> = Arg extends JSHandle ? never : (Arg extends object ? { [Key in keyof Arg]: NoHandles<Arg[Key]> } : Arg);
-type Unboxed<Arg> =
-  Arg extends ElementHandle<infer T> ? T :
-  Arg extends JSHandle<infer T> ? T :
-  Arg extends NoHandles<Arg> ? Arg :
-  Arg extends [infer A0] ? [Unboxed<A0>] :
-  Arg extends [infer A0, infer A1] ? [Unboxed<A0>, Unboxed<A1>] :
-  Arg extends [infer A0, infer A1, infer A2] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>] :
-  Arg extends [infer A0, infer A1, infer A2, infer A3] ? [Unboxed<A0>, Unboxed<A1>, Unboxed<A2>, Unboxed<A3>] :
-  Arg extends Array<infer T> ? Array<Unboxed<T>> :
-  Arg extends object ? { [Key in keyof Arg]: Unboxed<Arg[Key]> } :
-  Arg;
-type PageFunction<Arg, R> = string | ((arg: Unboxed<Arg>) => R | Promise<R>);
-type PageFunctionOn<On, Arg2, R> = string | ((on: On, arg2: Unboxed<Arg2>) => R | Promise<R>);
-type SmartHandle<T> = T extends Node ? ElementHandle<T> : JSHandle<T>;
-type ElementHandleForTag<K extends keyof HTMLElementTagNameMap> = ElementHandle<HTMLElementTagNameMap[K]>;
+import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state: 'visible'|'attached';
@@ -51,8 +26,6 @@ type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
 type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelectorOptions & {
   state: 'visible'|'attached';
 };
-
-type BindingSource = { context: BrowserContext, page: Page, frame: Frame };
 
 /**
  * Page provides methods to interact with a single tab in a Browser, or an extension background page in Chromium. One Browser instance might have multiple Page instances.

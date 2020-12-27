@@ -16,7 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import { Frame } from './frame';
-import { FuncOn, JSHandle, serializeArgument, parseResult } from './jsHandle';
+import { JSHandle, serializeArgument, parseResult } from './jsHandle';
 import { ChannelOwner } from './channelOwner';
 import { SelectOption, FilePayload, Rect, SelectOptionOptions } from './types';
 import * as fs from 'fs';
@@ -24,10 +24,12 @@ import * as mime from 'mime';
 import * as path from 'path';
 import * as util from 'util';
 import { assert, isString, mkdirIfNeeded } from '../utils/utils';
+import * as api from '../../types/types';
+import * as structs from '../../types/structs';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
-export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
+export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements api.ElementHandle {
   readonly _elementChannel: channels.ElementHandleChannel;
 
   static from(handle: channels.ElementHandleChannel): ElementHandle {
@@ -43,8 +45,8 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     this._elementChannel = this._channel as channels.ElementHandleChannel;
   }
 
-  asElement(): ElementHandle<T> | null {
-    return this;
+  asElement(): T extends Node ? ElementHandle<T> : null {
+    return this as any;
   }
 
   async ownerFrame(): Promise<Frame | null> {
@@ -121,7 +123,7 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async selectOption(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
+  async selectOption(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return this._wrapApiCall('elementHandle.selectOption', async () => {
       const result = await this._elementChannel.selectOption({ ...convertSelectOptionValues(values), ...options });
       return result.values;
@@ -198,31 +200,27 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async $(selector: string): Promise<ElementHandle<Element> | null> {
+  async $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return this._wrapApiCall('elementHandle.$', async () => {
-      return ElementHandle.fromNullable((await this._elementChannel.querySelector({ selector })).element) as ElementHandle<Element> | null;
+      return ElementHandle.fromNullable((await this._elementChannel.querySelector({ selector })).element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }
 
-  async $$(selector: string): Promise<ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
     return this._wrapApiCall('elementHandle.$$', async () => {
       const result = await this._elementChannel.querySelectorAll({ selector });
-      return result.elements.map(h => ElementHandle.from(h) as ElementHandle<Element>);
+      return result.elements.map(h => ElementHandle.from(h) as ElementHandle<SVGElement | HTMLElement>);
     });
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
     return this._wrapApiCall('elementHandle.$eval', async () => {
       const result = await this._elementChannel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
       return parseResult(result.value);
     });
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     return this._wrapApiCall('elementHandle.$$eval', async () => {
       const result = await this._elementChannel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
       return parseResult(result.value);
@@ -235,15 +233,17 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> {
     });
   }
 
-  async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
+  waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
+  waitForSelector(selector: string, options?: channels.ElementHandleWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
+  async waitForSelector(selector: string, options: channels.ElementHandleWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return this._wrapApiCall('elementHandle.waitForSelector', async () => {
       const result = await this._elementChannel.waitForSelector({ selector, ...options });
-      return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
+      return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }
 }
 
-export function convertSelectOptionValues(values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
+export function convertSelectOptionValues(values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null): { elements?: channels.ElementHandleChannel[], options?: SelectOption[] } {
   if (values === null)
     return {};
   if (!Array.isArray(values))

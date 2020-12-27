@@ -15,8 +15,9 @@
  */
 
 import * as channels from '../protocol/channels';
+import * as api from '../../types/types';
 
-export class ChromiumCoverage {
+export class ChromiumCoverage implements api.ChromiumCoverage {
   private _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {

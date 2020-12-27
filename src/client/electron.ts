@@ -18,12 +18,13 @@ import * as channels from '../protocol/channels';
 import { BrowserContext } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { Page } from './page';
-import { serializeArgument, FuncOn, parseResult, SmartHandle, JSHandle } from './jsHandle';
+import { serializeArgument, parseResult, JSHandle } from './jsHandle';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { Events } from './events';
 import { WaitForEventOptions, Env, Logger } from './types';
 import { envObjectToArray } from './clientHelper';
+import * as structs from '../../types/structs';
 
 type ElectronOptions = Omit<channels.ElectronLaunchOptions, 'env'> & {
   env?: Env,
@@ -110,17 +111,13 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
     return result;
   }
 
-  async evaluate<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: FuncOn<any, void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg: Arg): Promise<R> {
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return parseResult(result.value);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: FuncOn<any, void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: FuncOn<any, Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<any, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return JSHandle.from(result.handle) as SmartHandle<R>;
+    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }

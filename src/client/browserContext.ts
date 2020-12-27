@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { Page, BindingCall, FunctionWithSource } from './page';
+import { Page, BindingCall } from './page';
 import * as network from './network';
 import * as channels from '../protocol/channels';
 import * as util from 'util';
@@ -30,16 +30,18 @@ import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageS
 import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import { serializeArgument } from './jsHandle';
+import * as api from '../../types/types';
+import * as structs from '../../types/structs';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
-export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> {
+export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel, channels.BrowserContextInitializer> implements api.BrowserContext {
   _pages = new Set<Page>();
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | null = null;
   readonly _browserName: string;
-  readonly _bindings = new Map<string, FunctionWithSource>();
+  readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
@@ -182,7 +184,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async exposeBinding(name: string, playwrightBinding: FunctionWithSource, options: { handle?: boolean } = {}): Promise<void> {
+  async exposeBinding(name: string, playwrightBinding: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<void> {
     return this._wrapApiCall('browserContext.exposeBinding', async () => {
       await this._channel.exposeBinding({ name, needsHandle: options.handle });
       this._bindings.set(name, playwrightBinding);
@@ -192,7 +194,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
     return this._wrapApiCall('browserContext.exposeFunction', async () => {
       await this._channel.exposeBinding({ name });
-      const binding: FunctionWithSource = (source, ...args) => playwrightFunction(...args);
+      const binding = (source: structs.BindingSource, ...args: any[]) => playwrightFunction(...args);
       this._bindings.set(name, binding);
     });
   }
