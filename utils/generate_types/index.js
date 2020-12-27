@@ -16,7 +16,6 @@
 
 //@ts-check
 const path = require('path');
-const Source = require('../doclint/Source');
 const {devices} = require('../..');
 const Documentation = require('../doclint/check_public_api/Documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
@@ -40,10 +39,14 @@ let hadChanges = false;
   const apiBody = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString());
   const apiParams = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString());
   const api = applyTemplates(apiBody, apiParams);
-  const {documentation: mdDocumentation} = require('../doclint/check_public_api/MDBuilder')(api, true);
-  const sources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-  const {documentation: jsDocumentation} = await require('../doclint/check_public_api/JSBuilder').checkSources(sources);
-  documentation = mergeDocumentation(mdDocumentation, jsDocumentation);
+  const mdResult = require('../doclint/check_public_api/MDBuilder')(api, true);
+  documentation = mdResult.documentation;
+
+  // Root module types are overridden.
+  const playwrightClass = documentation.classes.get('Playwright');
+  documentation.classes.delete('Playwright');
+  documentation.classesArray.splice(documentation.classesArray.indexOf(playwrightClass), 1);
+
   const handledClasses = new Set();
 
   function docClassForName(name) {
@@ -124,8 +127,6 @@ function classToString(classDesc) {
   if (classDesc.comment) {
     parts.push(writeComment(classDesc.comment))
   }
-  if (classDesc.templates.length)
-    console.error(`expected an override for "${classDesc.name}" becasue it is templated`);
   parts.push(`export interface ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
   parts.push(classBody(classDesc));
   parts.push('}\n');
@@ -210,8 +211,6 @@ function classBody(classDesc) {
     // do this late, because we still want object definitions for overridden types
     if (!hasOwnMethod(classDesc, member.name))
       return '';
-    if (member.templates.length)
-      console.error(`expected an override for "${classDesc.name}.${member.name}" because it is templated`);
     return `${jsdoc}${member.name}${args}: ${type};`
   }).filter(x => x).join('\n\n'));
   return parts.join('\n');
@@ -412,27 +411,6 @@ function memberJSDOC(member, indent) {
   if (!lines.length)
     return indent;
   return writeComment(lines.join('\n'), indent) + '\n' + indent;
-}
-
-/**
- * @param {Documentation} mdDoc
- * @param {Documentation} jsDoc
- * @return {Documentation}
- */
-function mergeDocumentation(mdDoc, jsDoc) {
-  const classes = [];
-  for (const mdClass of mdDoc.classesArray) {
-    const jsClass = jsDoc.classes.get(mdClass.name);
-    if (!jsClass)
-      classes.push(mdClass);
-    else
-      classes.push(mergeClasses(mdClass, jsClass));
-  }
-  // Root module types are overridden.
-  const c = mdDoc.classes.get('Playwright');
-  mdDoc.classes.delete('Playwright');
-  mdDoc.classesArray.splice(mdDoc.classesArray.indexOf(c), 1);
-  return mdDoc;
 }
 
 /**
