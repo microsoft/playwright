@@ -1,6 +1,6 @@
 # Playwright CLI
 
-Playwright comes with a few command line tools that can be run with with `npx` or in `npm` scripts.
+Playwright comes with the command line tools that run via `npx` or as a part of the `npm` scripts.
 
 <!-- GEN:toc -->
 - [Usage](#usage)
