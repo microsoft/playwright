@@ -15,10 +15,8 @@
  */
 
 import { folio } from './fixtures';
-import * as path from 'path';
 import type { Page, Frame } from '..';
-
-const { source } = require(path.join(__dirname, '..', 'lib', 'generated', 'consoleApiSource'));
+import { source } from '../src/generated/consoleApiSource';
 
 const fixtures = folio.extend();
 fixtures.context.override(async ({ context }, run) => {
