@@ -158,7 +158,7 @@ function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
     const depth = node.type.substring(1);
     result.push(`${'#'.repeat(depth)} ${node.text}`);
     let lastNode = node;
-    for (const child of node.children) {
+    for (const child of node.children || []) {
       innerRenderMdNode(child, lastNode, result, maxColumns);
       lastNode = child;
     }
@@ -255,9 +255,8 @@ function applyTemplates(body, params) {
         throw new Error('Bad template: ' + key);
       node.children.push(...template.children.map(c => clone(c)));
     }
-    for (const child of node.children || []) {
+    for (const child of node.children || [])
       visit(child, node);
-    }
     if (node.children)
       node.children = node.children.filter(child => !child.text || !child.text.includes('-inline- = %%'));
   };

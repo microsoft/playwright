@@ -827,12 +827,12 @@ Emitted when a frame is navigated to a new url.
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
 ## event: Page.pageerror
-- type: <[Error]> The exception message
+- type: <[Error]>
 
 Emitted when an uncaught exception happens within the page.
 
 ## event: Page.popup
-- type: <[Page]> Page corresponding to "popup" window
+- type: <[Page]>
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the [`event:
 BrowserContext.page`](), but only for popups relevant to this page.
@@ -879,7 +879,7 @@ Emitted when [response] status and headers are received for a request. For a suc
 is `request`, `response` and `requestfinished`.
 
 ## event: Page.websocket
-- type: <[WebSocket]> websocket
+- type: <[WebSocket]>
 
 Emitted when <[WebSocket]> request is sent.
 
@@ -1046,7 +1046,7 @@ This method checks an element matching [`param: selector`]() by performing the f
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`property: Page.mouse`]() to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
@@ -1069,7 +1069,7 @@ This method clicks an element matching [`param: selector`]() by performing the f
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to click in the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -1134,7 +1134,7 @@ This method double clicks an element matching [`param: selector`]() by performin
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to double click in the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -1608,7 +1608,7 @@ This method hovers over an element matching [`param: selector`]() by performing 
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to hover over the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -2075,7 +2075,7 @@ This method taps an element matching [`param: selector`]() by performing the fol
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagetouchscreen#pagetouchscreen) to tap the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.touchscreen`]() to tap the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -2151,7 +2151,7 @@ This method unchecks an element matching [`param: selector`]() by performing the
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`property: Page.mouse`]() to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
@@ -2602,7 +2602,7 @@ This method checks an element matching [`param: selector`]() by performing the f
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`property: Page.mouse`]() to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
@@ -2626,7 +2626,7 @@ This method clicks an element matching [`param: selector`]() by performing the f
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to click in the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -2661,7 +2661,7 @@ This method double clicks an element matching [`param: selector`]() by performin
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to double click in the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -2916,7 +2916,7 @@ This method hovers over an element matching [`param: selector`]() by performing 
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to hover over the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -3079,7 +3079,7 @@ This method taps an element matching [`param: selector`]() by performing the fol
 1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagetouchscreen#pagetouchscreen) to tap the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.touchscreen`]() to tap the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 
 When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
@@ -3148,7 +3148,7 @@ This method checks an element matching [`param: selector`]() by performing the f
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`property: Page.mouse`]() to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
@@ -3460,7 +3460,7 @@ This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`property: Page.mouse`]() to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
@@ -3480,7 +3480,7 @@ When all steps combined have not finished during the specified [`option: timeout
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to click in the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3514,7 +3514,7 @@ Returns the content frame for element handles referencing iframe nodes, or `null
 This method double clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to double click in the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3613,7 +3613,7 @@ Attribute name to get the value for.
 This method hovers over the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`]() to hover over the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3786,7 +3786,7 @@ are resolved relative to the the current working directory. For empty array, cle
 This method taps the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagetouchscreen) to tap in the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.touchscreen`]() to tap the center of the element, or the specified [`option: position`]().
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3853,7 +3853,7 @@ This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`property: Page.mouse`]() to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
@@ -4399,7 +4399,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
-Every `page` object has its own Mouse, accessible with [page.mouse](#pagemouse).
+Every `page` object has its own Mouse, accessible with [`property: Page.mouse`]().
 
 ```js
 // Using ‘page.mouse’ to trace a 100x100 square.
@@ -4874,19 +4874,19 @@ The [WebSocket] class represents websocket connections in the page.
 Fired when the websocket closes.
 
 ## event: WebSocket.framereceived
-- type: <[Object]> web socket frame data
+- type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
 ## event: WebSocket.framesent
-- type: <[Object]> web socket frame data
+- type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
 ## event: WebSocket.socketerror
-- type: <[String]> the error message
+- type: <[String]>
 
 Fired when the websocket has an error.
 
@@ -4972,7 +4972,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
   - `haspopup` <[string]> What kind of popup is currently being shown for a node, if applicable.
   - `invalid` <[string]> Whether and in what way this node's value is invalid, if applicable.
   - `orientation` <[string]> Whether the node is oriented horizontally or vertically, if applicable.
-  - `children` <[Array]<[Object]>> Child [AXNode]s of this node, if any, if applicable.
+  - `children` <[Array]<[Object]>> Child nodes, if any, if applicable.
 
 Captures the current state of the accessibility tree. The returned object represents the root accessible node of the
 page.

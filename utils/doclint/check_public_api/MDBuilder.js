@@ -16,7 +16,7 @@
 
 // @ts-check
 
-const { parseArgument } = require('../../parse_md');
+const { parseArgument, renderMd, clone } = require('../../parse_md');
 const Documentation = require('./Documentation');
 
 /** @typedef {import('./Documentation').MarkdownNode} MarkdownNode */
@@ -24,8 +24,9 @@ const Documentation = require('./Documentation');
 class MDOutline {
   /**
    * @param {MarkdownNode[]} api
+   * @param {string=} links
    */
-  constructor(api) {
+  constructor(api, links = '') {
     this.classesArray = /** @type {Documentation.Class[]} */ [];
     this.classes = /** @type {Map<string, Documentation.Class>} */ new Map();
     for (const clazz of api) {
@@ -33,10 +34,20 @@ class MDOutline {
       this.classesArray.push(c);
       this.classes.set(c.name, c);
     }
-    this.signatures = this._generateComments();
+    const linksMap = new Map();
+    for (const link of links.replace(/\r\n/g, '\n').split('\n')) {
+      if (!link)
+        continue;
+      const match = link.match(/\[([^\]]+)\]: ([^"]+) "([^"]+)"/);
+      linksMap.set(new RegExp('\\[' + match[1] + '\\]', 'g'), { href: match[2], label: match[3] });
+    }
+    this.signatures = this._generateComments(linksMap);
   }
 
-  _generateComments() {
+  /**
+   * @param {Map<string, { href: string, label: string}>} linksMap
+   */
+  _generateComments(linksMap) {
     /**
      * @type  {Map<string, string>}
      */
@@ -70,7 +81,9 @@ class MDOutline {
     }
 
     for (const clazz of this.classesArray)
-      clazz.visit(item => item.comment = renderComments(item.spec, signatures));
+      clazz.visit(item => patchSignatures(item.spec, signatures));
+    for (const clazz of this.classesArray)
+      clazz.visit(item => item.comment = renderCommentsForSourceCode(item.spec, linksMap));
     return signatures;
   }
 }
@@ -99,75 +112,79 @@ function parseClass(node) {
  * @returns {MarkdownNode[]}
  */
 function extractComments(item) {
-  return (item.children || []).filter(c => c.type !== 'gen' && !c.type.startsWith('h'));
+  return (item.children || []).filter(c => !c.type.startsWith('h') && (c.type !== 'li' || c.liType !== 'default'));
+}
+
+/**
+ * @param {MarkdownNode[]} spec
+ * @param {Map<string, { href: string, label: string}>} linksMap
+ */
+function renderCommentsForSourceCode(spec, linksMap) {
+  const comments = (spec || []).filter(n => n.type !== 'gen' && !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => clone(c));
+  const visit = node => {
+    if (node.text) {
+      for (const [regex, { href, label }] of linksMap)
+        node.text = node.text.replace(regex, `[${label}](${href})`);
+      // Those with in `` can have nested [], hence twice twice.
+      node.text = node.text.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
+      node.text = node.text.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
+      node.text = node.text.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/$2)');
+      node.text = node.text.replace(/\[([^\]]+)\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
+    }
+    if (node.liType === 'bullet')
+      node.liType = 'default';
+    for (const child of node.children || [])
+      visit(child);
+  };
+  for (const node of comments)
+    visit(node);
+  return renderMd(comments, 10000);
+
+  // [`frame.waitForFunction(pageFunction[, arg, options])`](#framewaitforfunctionpagefunction-arg-options)
 }
 
 /**
  * @param {MarkdownNode[]} spec
  * @param {Map<string, string>} [signatures]
  */
-function renderComments(spec, signatures) {
-  const result = [];
+function patchSignatures(spec, signatures) {
   for (const node of spec || []) {
-    if (node.type === 'text') {
-      const text = patchSignatures(node.text, signatures);
-
-      // Render comments as text.
-      if (text.startsWith('> ')) {
-        result.push('');
-        result.push(text);
-      } else {
-        result.push(text);
-      }
-    }
-  
-    if (node.type === 'code') {
-      result.push('```' + node.codeLang);
-      for (const line of node.lines)
-        result.push(line);
-      result.push('```');
-    }
-  
-    if (node.type === 'gen') {
-      // Skip
-    }
-  
-    if (node.type === 'li' && node.liType !== 'default') {
-      if (node.text.startsWith('extends:'))
-        continue;
-      const visit = (node, indent) => {
-        result.push(`${indent}- ${patchSignatures(node.text, signatures)}`);
-        for (const child of node.children || [])
-          visit(child, indent + '  ');
-      };
-      visit(node, '');
+    if (node.type === 'text')
+      node.text = patchSignaturesInText(node.text, signatures);
+    if (node.type === 'li') {
+      node.text = patchSignaturesInText(node.text, signatures);
+      patchSignatures(node.children, signatures);
     }
   }
-  return result.join('\n');
+}
+
+/**
+ * @param {string} text 
+ * @returns {string}
+ */
+function createLink(text) {
+  const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
+  return `[\`${text}\`](#${anchor})`;
 }
 
 /**
  * @param {string} comment
  * @param {Map<string, string>} signatures
  */
-function patchSignatures(comment, signatures) {
+function patchSignaturesInText(comment, signatures) {
   if (!signatures)
     return comment;
   comment = comment.replace(/\[`(event|method|property):\s(JS|CDP|[A-Z])([^.]+)\.([^`]+)`\]\(\)/g, (match, type, clazzPrefix, clazz, name) => {
     const className = `${clazzPrefix.toLowerCase()}${clazz}`;
     if (type === 'event')
-      return `\`${className}.on('${name}')\``;
+      return createLink(`${className}.on('${name}')`);
     if (type === 'method') {
       const signature = signatures.get(`${clazzPrefix}${clazz}.${name}`) || '';
-      return `\`${className}.${name}(${signature})\``;
+      return createLink(`${className}.${name}(${signature})`);
     }
-    return `\`${className}.${name}\``;
+    return createLink(`${className}.${name}`);
   });
-  comment = comment.replace(/\[`(?:param|option):\s([^`]+)`\]\(\)/g, '`$1`');
-  comment = comment.replace(/\[([^\]]+)\]\([^\)]*\)/g, '$1');
-  for (const link of outgoingLinks)
-    comment = comment.replace(new RegExp('\\[' + link + '\\]', 'g'), link);
-  return comment;
+  return comment.replace(/\[`(?:param|option):\s([^`]+)`\]\(\)/g, '`$1`');
 }
 
 /**
@@ -221,7 +238,7 @@ function parseProperty(spec) {
   const text = param.text;
   const name = text.substring(0, text.indexOf('<')).replace(/\`/g, '').trim();
   const comments = extractComments(spec);
-  return Documentation.Member.createProperty(name, parseType(param), comments, guessRequired(renderComments(comments)));
+  return Documentation.Member.createProperty(name, parseType(param), comments, guessRequired(renderCommentsForSourceCode(comments, new Map())));
 }
 
 /**
@@ -233,8 +250,8 @@ function parseType(spec) {
   let typeName = type.replace(/[\[\]\\]/g, '');
   const literals = typeName.match(/("[^"]+"(\|"[^"]+")*)/);
   if (literals) {
-    const sorted = literals[1].split('|').sort((a, b) => a.localeCompare(b)).join('|');
-    typeName = typeName.substring(0, literals.index) + sorted + typeName.substring(literals.index + literals[0].length);
+    const assorted = literals[1];
+    typeName = typeName.substring(0, literals.index) + assorted + typeName.substring(literals.index + literals[0].length);
   }
   const properties = [];
   const hasNonEnumProperties = typeName.split('|').some(part => {
@@ -245,8 +262,7 @@ function parseType(spec) {
   if (hasNonEnumProperties && spec) {
     for (const child of spec.children || []) {
       const { name, text } = parseArgument(child.text);
-      const patchedText = text.replace(/\. Optional\.$/, '.');
-      const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text: patchedText }]);
+      const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       properties.push(Documentation.Member.createProperty(name, parseType(child), comments, guessRequired(text)));
     }
   }
@@ -278,11 +294,11 @@ function guessRequired(comment) {
 module.exports =
 /**
  * @param {any} api
- * @param {boolean} copyDocsFromSuperClasses
+ * @param {boolean=} copyDocsFromSuperClasses
  */
- function(api, copyDocsFromSuperClasses) {
+ function(api, copyDocsFromSuperClasses = false, links = '') {
   const errors = [];
-  const outline = new MDOutline(api);
+  const outline = new MDOutline(api, links);
   const documentation = new Documentation(outline.classesArray);
 
   if (copyDocsFromSuperClasses) {
@@ -308,5 +324,3 @@ module.exports =
   }
   return { documentation, errors, outline };
 };
-
-const outgoingLinks = ['AXNode', 'Accessibility', 'Array', 'Body', 'BrowserServer', 'BrowserContext', 'BrowserType', 'Browser', 'Buffer', 'ChildProcess', 'ChromiumBrowser', 'ChromiumBrowserContext', 'ChromiumCoverage', 'CDPSession', 'ConsoleMessage', 'Dialog', 'Download', 'ElementHandle', 'Element', 'Error', 'EvaluationArgument', 'File', 'FileChooser', 'FirefoxBrowser', 'Frame', 'JSHandle', 'Keyboard', 'Logger', 'Map', 'Mouse', 'Object', 'Page', 'Playwright', 'Promise', 'RegExp', 'Request', 'Response', 'Route', 'Selectors', 'Serializable', 'TimeoutError', 'Touchscreen', 'UIEvent.detail', 'URL', 'USKeyboardLayout', 'UnixTime', 'Video', 'WebKitBrowser', 'WebSocket', 'Worker', 'boolean', 'function', 'iterator', 'null', 'number', 'origin', 'selector', 'Readable', 'string', 'xpath'];

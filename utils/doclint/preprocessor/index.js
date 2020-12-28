@@ -180,49 +180,6 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
   }
 }
 
-function generateLinks(source, signatures, messages) {
-  const sourceEdits = new SourceEdits(source);
-  let offset = 0;
-
-  const lines = source.text().split('\n');
-  lines.forEach((line, lineNumber) => {
-    const linkRegex = /\[([^\]]+)\]\(\)/gm;
-    let match;
-    while (match = linkRegex.exec(line)) {
-      const [, name] = match;
-      const linkOffset = offset + lineNumber + match.index;
-      const hrefOffset = offset + lineNumber + match.index + 3 + name.length;
-      let replacement;
-      const memberMatch = name.match(/`(event|method|property):\s(JS|CDP|[A-Z])([^.]+)\.(.*)`/m);
-      const paramMatch = name.match(/`(?:param|option):\s(.*)`/m);
-      if (!memberMatch && !paramMatch) {
-        messages.push(Message.error(`Bad link: ${source.filePath()}:${lineNumber + 1}: ${name}`));
-        return;
-      }
-      if (memberMatch && memberMatch[1] === 'event') {
-        replacement = `${memberMatch[2].toLowerCase() + memberMatch[3]}.on('${memberMatch[4]}')`;
-        sourceEdits.edit(linkOffset + 1, hrefOffset - 2, replacement);
-      } else if (memberMatch && memberMatch[1] === 'method') {
-        const key = memberMatch[2] + memberMatch[3] + '.' + memberMatch[4];
-        const method = memberMatch[2].toLowerCase() + memberMatch[3] + '.' + memberMatch[4];
-        let signature = signatures.get(key);
-        if (signature === undefined) {
-          messages.push(Message.error(`Bad method link: ${source.filePath()}:${lineNumber + 1}: ${key}`));
-          signature = '(\u2026)';
-        }
-        replacement = method + '(' + signature + ')';
-        sourceEdits.edit(linkOffset + 2, hrefOffset - 3, replacement);
-      } else if (paramMatch) {
-        sourceEdits.edit(linkOffset, hrefOffset + 1, '`' + paramMatch[1] + '`');
-      }
-      if (replacement)
-        sourceEdits.edit(hrefOffset, hrefOffset, '#' + replacement.toLowerCase().replace(/[^a-z]/gm, ''));
-    }
-    offset += line.length;
-  });
-  sourceEdits.commit(messages);
-}
-
 class SourceEdits {
   constructor(source) {
     this._source = source;
@@ -328,4 +285,4 @@ function generateTableOfContentsForSuperclass(text, name) {
   return text;
 }
 
-module.exports = {autocorrectInvalidLinks, runCommands, generateLinks};
+module.exports = {autocorrectInvalidLinks, runCommands};

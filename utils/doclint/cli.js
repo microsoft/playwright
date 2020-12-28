@@ -15,15 +15,20 @@
  * limitations under the License.
  */
 
+//@ts-check
+
 const playwright = require('../../');
 const fs = require('fs');
 const path = require('path');
 const Source = require('./Source');
 const Message = require('./Message');
-const { parseMd, renderMd, parseArgument, applyTemplates } = require('./../parse_md');
+const { parseMd, renderMd, applyTemplates, clone } = require('./../parse_md');
 const { spawnSync } = require('child_process');
 const preprocessor = require('./preprocessor');
 const mdBuilder = require('./check_public_api/MDBuilder');
+
+/** @typedef {import('./check_public_api/Documentation').MarkdownNode} MarkdownNode */
+/** @typedef {import('./check_public_api/Documentation').Type} Type */
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -51,110 +56,72 @@ async function run() {
   const messages = [];
   let changedFiles = false;
 
+  const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
+  const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
+  const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
+  const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-links.md')).toString();
+  const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
+  const apiSpec = applyTemplates(parseMd(body), parseMd(params));
+
   // Produce api.md
   {
     const comment = '<!-- THIS FILE IS NOW GENERATED -->';
-    const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
-    const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
-    const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
-    const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
-
-    // Generate signatures
     {
-      const nodes = applyTemplates(parseMd(body), parseMd(params));
-      const { outline } = mdBuilder(nodes);
+      const { outline } = mdBuilder(apiSpec, false);
       const signatures = outline.signatures;
-      for (const clazz of nodes) {
-        clazz.type = 'h3';
-        for (const member of clazz.children) {
-          if (member.type !== 'h2')
-            continue;
-          member.type = 'h4';
+      const result = [];
+      for (const clazz of outline.classesArray) {
+        // Iterate over classes, create header node.
+        const classNode = { type: 'h3', text: `class: ${clazz.name}` };
+        const match = clazz.name.match(/(JS|CDP|[A-Z])(.*)/);
+        const varName = match[1].toLocaleLowerCase() + match[2];
+        result.push(classNode);
+        // Append link shortcut to resolve text like [Browser]
+        result.push({
+          type: 'text',
+          text: `[${clazz.name}]: #class-${clazz.name.toLowerCase()} "${clazz.name}"`
+        });
+        // Append class comments
+        classNode.children = (clazz.spec || []).map(c => clone(c));
 
-          let match = member.text.match(/(event|method|property|async method|): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
-          if (!match)
-            continue;
-
-          if (match[1] === 'event') {
-            member.text = `${match[2].toLowerCase() + match[3]}.on('${match[4]}')`;
-            continue;
-          }
-
-          if (match[1] === 'method' || match[1] === 'async method') {
-            const args = [];
-            const argChildren = [];
-            const returnContainer = [];
-            const nonArgChildren = [];
-            const optionsContainer = [];
-            for (const item of member.children) {
-              if (item.type === 'li' && item.liType === 'default') {
-                const { type } = parseArgument(item.text);
-                if (match[1] === 'method')
-                  item.text = `returns: <${type}>`;
-                else
-                  item.text = `returns: <[Promise]<${type}>>`;
-                returnContainer.push(item);
-                continue;
-              }
-              if (item.type !== 'h3') {
-                nonArgChildren.push(item);
-                continue;
-              }
-              if (item.text.startsWith('param:')) {
-                const param = item.children[0];
-                if (item.children[1])
-                  param.text += ' ' + item.children[1].text;
-                if (item.children.length > 2)
-                  param.children = item.children.slice(2);
-                args.push(parseArgument(param.text));
-                argChildren.push(param);
-              }
-              if (item.text.startsWith('option:')) {
-                let optionsNode = optionsContainer[0];
-                if (!optionsNode) {
-                  optionsNode = {
-                    type: 'li',
-                    text: '`options` <[Object]>',
-                    liType: 'default',
-                    children: [],
-                  };
-                  optionsContainer.push(optionsNode);
-                  args.push(parseArgument(optionsNode.text));
-                }
-                const param = item.children[0];
-                if (item.children[1])
-                  param.text += ' ' + item.children[1].text;
-                if (item.children.length > 2)
-                  param.children = item.children.slice(2);
-                optionsNode.children.push(param);
-              }
+        for (const member of clazz.membersArray) {
+          // Iterate members
+          const memberNode = { type: 'h4', children: [] };
+          if (member.kind === 'event') {
+            memberNode.text = `${varName}.on('${member.name}')`;
+          } else if (member.kind === 'property') {
+            memberNode.text = `${varName}.${member.name}`;
+          } else if (member.kind === 'method') {
+            // Patch method signatures
+            const signature = signatures.get(clazz.name + '.' + member.name);
+            memberNode.text = `${varName}.${member.name}(${signature})`;
+            for (const arg of member.argsArray) {
+              if (arg.type)
+               memberNode.children.push(renderProperty(`\`${arg.name}\``, arg.type, arg.spec));
             }
-            if (match[1] === 'async method' && !returnContainer[0]) {
-              returnContainer.push({
-                type: 'li',
-                text: 'returns: <[Promise]>',
-                liType: 'default'
-              });
-            }
-            if (optionsContainer[0])
-              optionsContainer[0].children.sort((o1, o2) => o1.text.localeCompare(o2.text));
-            member.children = [...argChildren, ...optionsContainer, ...returnContainer, ...nonArgChildren];
-            const signatureKey = match[2] + match[3] + '.' + match[4];
-            const methodName = match[2].toLowerCase() + match[3] + '.' + match[4];
-            const signature = signatures.get(signatureKey);
-            member.text = `${methodName}(${signature})`;
           }
 
-          if (match[1] === 'property') {
-            member.text = `${match[2].toLowerCase() + match[3]}.${match[4]}`;
-            continue;
+          // Append type
+          if (member.type && member.type.name !== 'void') {
+            let name;
+            switch (member.kind) {
+              case 'event': name = 'type:'; break;
+              case 'property': name = 'type:'; break;
+              case 'method': name = 'returns:'; break;
+            }
+            memberNode.children.push(renderProperty(name, member.type));
           }
+
+          // Append member doc
+          memberNode.children.push(...(member.spec || []).map(c => clone(c)));
+          classNode.children.push(memberNode);
         }
       }
-      api.setText([comment, header, renderMd(nodes, 10000), footer].join('\n'));
-
-      // Generate links
-      preprocessor.generateLinks(api, signatures, messages);
+      result.push({
+        type: 'text',
+        text: links
+      });    
+      api.setText([comment, header, renderMd(result, 10000), footer].join('\n'));
     }
   }
 
@@ -172,13 +139,10 @@ async function run() {
     for (const source of mdSources.filter(source => source.hasUpdatedText()))
       messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
 
-    const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
-    const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();  
-    const api = applyTemplates(parseMd(body), parseMd(params));
     const checkPublicAPI = require('./check_public_api');
 
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-    messages.push(...checkPublicAPI(api, jsSources));
+    messages.push(...checkPublicAPI(apiSpec, jsSources));
 
     for (const source of mdSources) {
       if (!source.hasUpdatedText())
@@ -234,4 +198,40 @@ function getRepositoryFiles() {
   const out = spawnSync('git', ['ls-files'], {cwd: PROJECT_DIR});
   const files = out.stdout.toString().trim().split('\n').filter(f => !f.startsWith('docs-src'));
   return files.map(file => path.join(PROJECT_DIR, file));
+}
+
+/**
+ * @param {string} name
+ * @param {Type} type
+ * @param {MarkdownNode[]} [spec]
+ */
+function renderProperty(name, type, spec) {
+  let comment = '';
+  if (spec && spec.length)
+    comment = spec[0].text;
+  let children;
+  if (type.properties && type.properties.length)
+    children = type.properties.map(p => renderProperty(`\`${p.name}\``, p.type, p.spec))
+  else if (spec && spec.length > 1)
+    children = spec.slice(1).map(s => clone(s));
+
+  const result = {
+    type: 'li',
+    liType: 'default',
+    text: `${name} <${renderType(type.name)}>${comment ? ' ' + comment : ''}`,
+    children
+  };
+  return result;
+}
+
+/**
+ * @param {string} type
+ */
+function renderType(type) {
+  if (type.includes('"'))
+    return type.replace(/,/g, '|').replace(/Array/, "[Array]").replace(/null/, "[null]").replace(/number/, "[number]");
+  const result = type.replace(/([\w]+)/g, '[$1]');
+  if (result === '[Promise]<[void]>')
+    return '[Promise]';
+  return result.replace(/[(]/g, '\\(').replace(/[)]/g, '\\)');
 }

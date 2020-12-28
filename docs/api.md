@@ -132,6 +132,8 @@ Selectors can be used to install custom selector engines. See [Working with sele
 
 This object can be used to launch or connect to WebKit, returning instances of [WebKitBrowser].
 
+[Playwright]: #class-playwright "Playwright"
+
 ### class: Browser
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
@@ -246,7 +248,7 @@ Indicates that the browser is connected.
       - `localStorage` <[Array]<[Object]>>
         - `name` <[string]>
         - `value` <[string]>
-  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `userAgent` <[string]> Specific user agent to use in this context.
   - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
@@ -321,7 +323,7 @@ Creates a new browser context. It won't share cookies/cache with other browser c
       - `localStorage` <[Array]<[Object]>>
         - `name` <[string]>
         - `value` <[string]>
-  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `userAgent` <[string]> Specific user agent to use in this context.
   - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
@@ -340,6 +342,8 @@ This is a convenience API that should only be used for the single-page scenarios
 - returns: <[string]>
 
 Returns the browser version.
+
+[Browser]: #class-browser "Browser"
 
 ### class: BrowserContext
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
@@ -397,7 +401,7 @@ Emitted when Browser context gets closed. This might happen because of one of th
 #### browserContext.on('page')
 - type: <[Page]>
 
-The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also [page.on('popup')](#pageonpopup) to receive events about popups relevant to a specific page.
+The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will also fire for popup pages. See also [`page.on('popup')`](#pageonpopup) to receive events about popups relevant to a specific page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
 
@@ -752,6 +756,8 @@ const context = await browser.newContext();
 await context.grantPermissions(['geolocation']);
 ```
 
+[BrowserContext]: #class-browsercontext "BrowserContext"
+
 ### class: Page
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
@@ -979,14 +985,14 @@ Emitted when a frame is navigated to a new url.
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
 #### page.on('pageerror')
-- type: <[Error]> The exception message
+- type: <[Error]>
 
 Emitted when an uncaught exception happens within the page.
 
 #### page.on('popup')
-- type: <[Page]> Page corresponding to "popup" window
+- type: <[Page]>
 
-Emitted when the page opens a new tab or window. This event is emitted in addition to the [browserContext.on('page')](#browsercontextonpage), but only for popups relevant to this page.
+Emitted when the page opens a new tab or window. This event is emitted in addition to the [`browserContext.on('page')`](#browsercontextonpage), but only for popups relevant to this page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is done and its response has started loading in the popup.
 
@@ -1010,7 +1016,7 @@ Emitted when a page issues a request. The [request] object is read-only. In orde
 
 Emitted when a request fails, for example by timing out.
 
-> **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with [page.on('requestfinished')](#pageonrequestfinished) event and not with [page.on('requestfailed')](#pageonrequestfailed).
+> **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with [`page.on('requestfinished')`](#pageonrequestfinished) event and not with [`page.on('requestfailed')`](#pageonrequestfailed).
 
 #### page.on('requestfinished')
 - type: <[Request]>
@@ -1023,7 +1029,7 @@ Emitted when a request finishes successfully after downloading the response body
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events is `request`, `response` and `requestfinished`.
 
 #### page.on('websocket')
-- type: <[WebSocket]> websocket
+- type: <[WebSocket]>
 
 Emitted when <[WebSocket]> request is sent.
 
@@ -1154,7 +1160,7 @@ This method checks an element matching `selector` by performing the following st
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
@@ -1181,7 +1187,7 @@ This method clicks an element matching `selector` by performing the following st
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -1198,7 +1204,7 @@ If `runBeforeUnload` is `false`, does not run any unload handlers and waits for 
 By default, `page.close()` **does not** run `beforeunload` handlers.
 
 > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
-> and should be handled manually via [page.on('dialog')](#pageondialog) event.
+> and should be handled manually via [`page.on('dialog')`](#pageondialog) event.
 
 #### page.content()
 - returns: <[Promise]<[string]>>
@@ -1233,7 +1239,7 @@ This method double clicks an element matching `selector` by performing the follo
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to double click in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -1614,7 +1620,7 @@ This method hovers over an element matching `selector` by performing the followi
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to hover over the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -1943,7 +1949,7 @@ This method taps an element matching `selector` by performing the following step
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagetouchscreen#pagetouchscreen) to tap the center of the element, or the specified `position`.
+1. Use [`page.touchscreen`](#pagetouchscreen) to tap the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -2001,7 +2007,7 @@ This method unchecks an element matching `selector` by performing the following 
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
@@ -2218,14 +2224,16 @@ This method returns all of the dedicated [WebWorkers](https://developer.mozilla.
 
 > **NOTE** This does not contain ServiceWorkers
 
+[Page]: #class-page "Page"
+
 ### class: Frame
 
 At every point of time, page exposes its current frame tree via the [`page.mainFrame()`](#pagemainframe) and [`frame.childFrames()`](#framechildframes) methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-* [page.on('frameattached')](#pageonframeattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
-* [page.on('framenavigated')](#pageonframenavigated) - fired when the frame commits navigation to a different URL.
-* [page.on('framedetached')](#pageonframedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
+* [`page.on('frameattached')`](#pageonframeattached) - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+* [`page.on('framenavigated')`](#pageonframenavigated) - fired when the frame commits navigation to a different URL.
+* [`page.on('framedetached')`](#pageonframedetached) - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
 
 An example of dumping frame tree:
 
@@ -2390,7 +2398,7 @@ This method checks an element matching `selector` by performing the following st
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
@@ -2418,7 +2426,7 @@ This method clicks an element matching `selector` by performing the following st
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -2446,7 +2454,7 @@ This method double clicks an element matching `selector` by performing the follo
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to double click in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -2633,7 +2641,7 @@ This method hovers over an element matching `selector` by performing the followi
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to hover over the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -2766,7 +2774,7 @@ This method taps an element matching `selector` by performing the following step
 1. Find an element match matching `selector`. If there is none, wait until a matching element is attached to the DOM.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagetouchscreen#pagetouchscreen) to tap the center of the element, or the specified `position`.
+1. Use [`page.touchscreen`](#pagetouchscreen) to tap the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError]. Passing zero timeout disables this.
@@ -2817,7 +2825,7 @@ This method checks an element matching `selector` by performing the following st
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the matched element, unless `force` option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
@@ -2942,6 +2950,8 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 Waits for the given `timeout` in milliseconds.
 
 Note that `frame.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to be flaky. Use signals such as network events, selectors becoming visible and others instead.
+
+[Frame]: #class-frame "Frame"
 
 ### class: ElementHandle
 * extends: [JSHandle]
@@ -3097,7 +3107,7 @@ This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
@@ -3122,7 +3132,7 @@ When all steps combined have not finished during the specified `timeout`, this m
 This method clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3150,7 +3160,7 @@ Returns the content frame for element handles referencing iframe nodes, or `null
 This method double clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to double click in the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to double click in the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3222,7 +3232,7 @@ Returns element attribute value.
 This method hovers over the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to hover over the center of the element, or the specified `position`.
+1. Use [`page.mouse`](#pagemouse) to hover over the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3351,7 +3361,7 @@ Sets the value of the file input to these file paths or files. If some of the `f
 This method taps the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.touchscreen](#pagetouchscreen) to tap in the center of the element, or the specified `position`.
+1. Use [`page.touchscreen`](#pagetouchscreen) to tap the center of the element, or the specified `position`.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
@@ -3404,7 +3414,7 @@ This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the element, unless `force` option is set.
 1. Scroll the element into view if needed.
-1. Use [page.mouse](#pagemouse) to click in the center of the element.
+1. Use [`page.mouse`](#pagemouse) to click in the center of the element.
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
@@ -3452,6 +3462,8 @@ const span = await div.waitForSelector('span', { state: 'attached' });
 ```
 
 > **NOTE** This method does not work across navigations, use [`page.waitForSelector(selector[, options])`](#pagewaitforselectorselector-options) instead.
+
+[ElementHandle]: #class-elementhandle "ElementHandle"
 
 ### class: JSHandle
 
@@ -3545,9 +3557,11 @@ Returns a JSON representation of the object. If the object has a `toJSON` functi
 
 > **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an error if the object has circular references.
 
+[JSHandle]: #class-jshandle "JSHandle"
+
 ### class: ConsoleMessage
 
-[ConsoleMessage] objects are dispatched by page via the [page.on('console')](#pageonconsole) event.
+[ConsoleMessage] objects are dispatched by page via the [`page.on('console')`](#pageonconsole) event.
 
 <!-- GEN:toc -->
 - [consoleMessage.args()](#consolemessageargs)
@@ -3573,9 +3587,11 @@ Returns a JSON representation of the object. If the object has a `toJSON` functi
 
 One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`, `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`, `'count'`, `'timeEnd'`.
 
+[ConsoleMessage]: #class-consolemessage "ConsoleMessage"
+
 ### class: Dialog
 
-[Dialog] objects are dispatched by page via the [page.on('dialog')](#pageondialog) event.
+[Dialog] objects are dispatched by page via the [`page.on('dialog')`](#pageondialog) event.
 
 An example of using `Dialog` class:
 
@@ -3628,9 +3644,11 @@ A message displayed in the dialog.
 
 Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
 
+[Dialog]: #class-dialog "Dialog"
+
 ### class: Download
 
-[Download] objects are dispatched by page via the [page.on('download')](#pageondownload) event.
+[Download] objects are dispatched by page via the [`page.on('download')`](#pageondownload) event.
 
 All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded files are deleted when the browser closes.
 
@@ -3694,6 +3712,8 @@ Returns suggested filename for this download. It is typically computed by the br
 
 Returns downloaded url.
 
+[Download]: #class-download "Download"
+
 ### class: Video
 
 When browser context is created with the `videosPath` option, each page has a video object associated with it.
@@ -3711,9 +3731,11 @@ console.log(await page.video().path());
 
 Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem upon closing the browser context.
 
+[Video]: #class-video "Video"
+
 ### class: FileChooser
 
-[FileChooser] objects are dispatched by the page in the [page.on('filechooser')](#pageonfilechooser) event.
+[FileChooser] objects are dispatched by the page in the [`page.on('filechooser')`](#pageonfilechooser) event.
 
 ```js
 page.on('filechooser', async (fileChooser) => {
@@ -3754,6 +3776,8 @@ Returns page this file chooser belongs to.
 - returns: <[Promise]>
 
 Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then they are resolved relative to the the current working directory. For empty array, clears the selected files.
+
+[FileChooser]: #class-filechooser "FileChooser"
 
 ### class: Keyboard
 
@@ -3890,11 +3914,13 @@ await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
 
 Dispatches a `keyup` event.
 
+[Keyboard]: #class-keyboard "Keyboard"
+
 ### class: Mouse
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
-Every `page` object has its own Mouse, accessible with [page.mouse](#pagemouse).
+Every `page` object has its own Mouse, accessible with [`page.mouse`](#pagemouse).
 
 ```js
 // Using ‘page.mouse’ to trace a 100x100 square.
@@ -3961,6 +3987,8 @@ Dispatches a `mousemove` event.
 
 Dispatches a `mouseup` event.
 
+[Mouse]: #class-mouse "Mouse"
+
 ### class: Touchscreen
 
 The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the touchscreen can only be used in browser contexts that have been intialized with `hasTouch` set to true.
@@ -3972,14 +4000,16 @@ The Touchscreen class operates in main-frame CSS pixels relative to the top-left
 
 Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
 
+[Touchscreen]: #class-touchscreen "Touchscreen"
+
 ### class: Request
 
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
-* [page.on('request')](#pageonrequest) emitted when the request is issued by the page.
-* [page.on('response')](#pageonresponse) emitted when/if the response status and headers are received for the request.
-* [page.on('requestfinished')](#pageonrequestfinished) emitted when the response body is downloaded and the request is complete.
+* [`page.on('request')`](#pageonrequest) emitted when the request is issued by the page.
+* [`page.on('response')`](#pageonresponse) emitted when/if the response status and headers are received for the request.
+* [`page.on('requestfinished')`](#pageonrequestfinished) emitted when the response body is downloaded and the request is complete.
 
-If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  [page.on('requestfailed')](#pageonrequestfailed) event is emitted.
+If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event), the  [`page.on('requestfailed')`](#pageonrequestfailed) event is emitted.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete with `'requestfinished'` event.
 
@@ -4122,6 +4152,8 @@ console.log(request.timing());
 
 URL of the request.
 
+[Request]: #class-request "Request"
+
 ### class: Response
 
 [Response] class represents responses which are received by page.
@@ -4197,6 +4229,8 @@ Returns the text representation of response body.
 
 Contains the URL of the response.
 
+[Response]: #class-response "Response"
+
 ### class: Selectors
 
 Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
@@ -4250,6 +4284,8 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
   await browser.close();
 })();
 ```
+
+[Selectors]: #class-selectors "Selectors"
 
 ### class: Route
 
@@ -4338,6 +4374,8 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 
 A request to be routed.
 
+[Route]: #class-route "Route"
+
 ### class: WebSocket
 
 The [WebSocket] class represents websocket connections in the page.
@@ -4357,19 +4395,19 @@ The [WebSocket] class represents websocket connections in the page.
 Fired when the websocket closes.
 
 #### webSocket.on('framereceived')
-- type: <[Object]> web socket frame data
+- type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket recieves a frame.
 
 #### webSocket.on('framesent')
-- type: <[Object]> web socket frame data
+- type: <[Object]>
   - `payload` <[string]|[Buffer]> frame payload
 
 Fired when the websocket sends a frame.
 
 #### webSocket.on('socketerror')
-- type: <[String]> the error message
+- type: <[String]>
 
 Fired when the websocket has an error.
 
@@ -4394,10 +4432,14 @@ Returns the event data value.
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy value. Will throw an error if the webSocket is closed before the event is fired.
 
+[WebSocket]: #class-websocket "WebSocket"
+
 ### class: TimeoutError
 * extends: [Error]
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`page.waitForSelector(selector[, options])`](#pagewaitforselectorselector-options) or [`browserType.launch([options])`](#browsertypelaunchoptions).
+
+[TimeoutError]: #class-timeouterror "TimeoutError"
 
 ### class: Accessibility
 
@@ -4434,8 +4476,8 @@ Most of the accessibility tree gets filtered out when converting from Blink AX T
   - `readonly` <[boolean]> Whether the node is read only, if applicable.
   - `required` <[boolean]> Whether the node is required, if applicable.
   - `selected` <[boolean]> Whether the node is selected in its parent node, if applicable.
-  - `checked` <[boolean]|"mixed"> Whether the checkbox is checked, or "mixed", if applicable.
-  - `pressed` <[boolean]|"mixed"> Whether the toggle button is checked, or "mixed", if applicable.
+  - `checked` <boolean|"mixed"> Whether the checkbox is checked, or "mixed", if applicable.
+  - `pressed` <boolean|"mixed"> Whether the toggle button is checked, or "mixed", if applicable.
   - `level` <[number]> The level of a heading, if applicable.
   - `valuemin` <[number]> The minimum value in a node, if applicable.
   - `valuemax` <[number]> The maximum value in a node, if applicable.
@@ -4443,7 +4485,7 @@ Most of the accessibility tree gets filtered out when converting from Blink AX T
   - `haspopup` <[string]> What kind of popup is currently being shown for a node, if applicable.
   - `invalid` <[string]> Whether and in what way this node's value is invalid, if applicable.
   - `orientation` <[string]> Whether the node is oriented horizontally or vertically, if applicable.
-  - `children` <[Array]<[Object]>> Child [AXNode]s of this node, if any, if applicable.
+  - `children` <[Array]<[Object]>> Child nodes, if any, if applicable.
 
 Captures the current state of the accessibility tree. The returned object represents the root accessible node of the page.
 
@@ -4473,6 +4515,8 @@ function findFocusedNode(node) {
   return null;
 }
 ```
+
+[Accessibility]: #class-accessibility "Accessibility"
 
 ### class: Worker
 
@@ -4526,6 +4570,8 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 #### worker.url()
 - returns: <[string]>
 
+[Worker]: #class-worker "Worker"
+
 ### class: BrowserServer
 
 <!-- GEN:toc -->
@@ -4561,6 +4607,8 @@ Spawned browser application process.
 Browser websocket url.
 
 Browser websocket endpoint which can be used as an argument to [`browserType.connect(params)`](#browsertypeconnectparams) to establish connection to the browser.
+
+[BrowserServer]: #class-browserserver "BrowserServer"
 
 ### class: BrowserType
 
@@ -4693,7 +4741,7 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
       - `height` <[number]> Video frame height.
   - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
   - `timeout` <[number]> Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
-  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU’s `metaZones.txt`](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
+  - `timezoneId` <[string]> Changes the timezone of the context. See [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1) for a list of supported timezone IDs.
   - `userAgent` <[string]> Specific user agent to use in this context.
   - `videoSize` <[Object]> **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled down if necessary to fit specified size.
     - `width` <[number]> Video frame width.
@@ -4754,6 +4802,8 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 
 Returns browser name. For example: `'chromium'`, `'webkit'` or `'firefox'`.
 
+[BrowserType]: #class-browsertype "BrowserType"
+
 ### class: Logger
 
 Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
@@ -4791,6 +4841,8 @@ Determines whether sink is interested in the logger with the given name and seve
 - `args` <[Array]<[Object]>> message arguments
 - `hints` <[Object]> optional formatting hints
   - `color` <[string]> Optional preferred logger color.
+
+[Logger]: #class-logger "Logger"
 
 ### class: ChromiumBrowser
 * extends: [Browser]
@@ -4838,6 +4890,8 @@ Only one trace can be active at a time per browser.
 - returns: <[Promise]<[Buffer]>>
 
 Returns the buffer with trace data.
+
+[ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
 
 ### class: ChromiumBrowserContext
 * extends: [BrowserContext]
@@ -4910,6 +4964,8 @@ Returns the newly created session.
 - returns: <[Array]<[Worker]>>
 
 All existing service workers in the context.
+
+[ChromiumBrowserContext]: #class-chromiumbrowsercontext "ChromiumBrowserContext"
 
 ### class: ChromiumCoverage
 
@@ -4990,6 +5046,8 @@ Returns the array of coverage reports for all scripts
 
 > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are reported.
 
+[ChromiumCoverage]: #class-chromiumcoverage "ChromiumCoverage"
+
 ### class: CDPSession
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
@@ -5027,6 +5085,8 @@ Detaches the CDPSession from the target. Once detached, the CDPSession object wo
 - `params` <[Object]> Optional method parameters
 - returns: <[Promise]<[Object]>>
 
+[CDPSession]: #class-cdpsession "CDPSession"
+
 ### class: FirefoxBrowser
 * extends: [Browser]
 
@@ -5042,6 +5102,8 @@ Firefox browser instance does not expose Firefox-specific features.
 - [browser.version()](#browserversion)
 <!-- GEN:stop -->
 
+[FirefoxBrowser]: #class-firefoxbrowser "FirefoxBrowser"
+
 ### class: WebKitBrowser
 * extends: [Browser]
 
@@ -5056,6 +5118,34 @@ WebKit browser instance does not expose WebKit-specific features.
 - [browser.newPage([options])](#browsernewpageoptions)
 - [browser.version()](#browserversion)
 <!-- GEN:stop -->
+
+[WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
+
+[Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
+[Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
+[ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
+[Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
+[Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
+[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
+[Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
+[Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
+[RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp "RegExp"
+[Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
+[UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
+[URL]: https://nodejs.org/api/url.html "URL"
+[USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"
+[UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
+[boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
+[function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
+[iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols "Iterator"
+[null]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null "null"
+[number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
+[origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin "Origin"
+[selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors "selector"
+[Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable "Readable"
+[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "string"
+[xpath]: https://developer.mozilla.org/en-US/docs/Web/XPath "xpath"
 
 ### EvaluationArgument
 
@@ -5214,63 +5304,3 @@ const { chromium } = require('playwright');
 > **NOTE** It is not yet possible to test extension popups or content scripts.
 
 
-[AXNode]: #accessibilitysnapshotoptions "AXNode"
-[Accessibility]: #class-accessibility "Accessibility"
-[Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
-[Body]: #class-body  "Body"
-[BrowserServer]: #class-browserserver  "BrowserServer"
-[BrowserContext]: #class-browsercontext  "BrowserContext"
-[BrowserType]: #class-browsertype "BrowserType"
-[Browser]: #class-browser  "Browser"
-[Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
-[ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
-[ChromiumBrowser]: #class-chromiumbrowser "ChromiumBrowser"
-[ChromiumBrowserContext]: #class-chromiumbrowsercontext "ChromiumBrowserContext"
-[ChromiumCoverage]: #class-chromiumcoverage "ChromiumCoverage"
-[CDPSession]: #class-cdpsession  "CDPSession"
-[ConsoleMessage]: #class-consolemessage "ConsoleMessage"
-[Dialog]: #class-dialog "Dialog"
-[Download]: #class-download "Download"
-[ElementHandle]: #class-elementhandle "ElementHandle"
-[Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
-[Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[EvaluationArgument]: #evaluationargument "Evaluation Argument"
-[File]: #class-file "https://developer.mozilla.org/en-US/docs/Web/API/File"
-[FileChooser]: #class-filechooser "FileChooser"
-[FirefoxBrowser]: #class-firefoxbrowser "FirefoxBrowser"
-[Frame]: #class-frame "Frame"
-[JSHandle]: #class-jshandle "JSHandle"
-[Keyboard]: #class-keyboard "Keyboard"
-[Logger]: #class-logger "Logger"
-[Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
-[Mouse]: #class-mouse "Mouse"
-[Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
-[Page]: #class-page "Page"
-[Playwright]: #class-playwright "Playwright"
-[Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
-[RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
-[Request]: #class-request  "Request"
-[Response]: #class-response  "Response"
-[Route]: #class-route  "Route"
-[Selectors]: #class-selectors  "Selectors"
-[Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
-[TimeoutError]: #class-timeouterror "TimeoutError"
-[Touchscreen]: #class-touchscreen "Touchscreen"
-[UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
-[URL]: https://nodejs.org/api/url.html
-[USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"
-[UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
-[Video]: #class-video "Video"
-[WebKitBrowser]: #class-webkitbrowser "WebKitBrowser"
-[WebSocket]: #class-websocket "WebSocket"
-[Worker]: #class-worker "Worker"
-[boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
-[function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
-[iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols "Iterator"
-[null]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null
-[number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
-[origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin "Origin"
-[selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors "selector"
-[Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable "Readable"
-[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "String"
-[xpath]: https://developer.mozilla.org/en-US/docs/Web/XPath "xpath"
