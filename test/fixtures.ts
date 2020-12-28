@@ -108,7 +108,7 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
   if (mode === 'driver') {
     require('../lib/utils/utils').setUnderTest();
     const connection = new Connection();
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'driver.js'), ['serve'], {
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'cli', 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
       detached: true,
     });

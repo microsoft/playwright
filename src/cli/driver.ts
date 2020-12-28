@@ -14,33 +14,26 @@
  * limitations under the License.
  */
 
+/* eslint-disable no-console */
+
 import * as fs from 'fs';
-import * as util from 'util';
-import { installDebugController } from './debug/debugController';
-import { DispatcherConnection } from './dispatchers/dispatcher';
-import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
-import { installBrowsersWithProgressBar } from './install/installer';
-import { Transport } from './protocol/transport';
-import { Playwright } from './server/playwright';
-import { gracefullyCloseAll } from './server/processLauncher';
-import { installHarTracer } from './trace/harTracer';
-import { installTracer } from './trace/tracer';
+import * as path from 'path';
+import { installDebugController } from '../debug/debugController';
+import { DispatcherConnection } from '../dispatchers/dispatcher';
+import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
+import { installBrowsersWithProgressBar } from '../install/installer';
+import { Transport } from '../protocol/transport';
+import { Playwright } from '../server/playwright';
+import { gracefullyCloseAll } from '../server/processLauncher';
+import { installHarTracer } from '../trace/harTracer';
+import { installTracer } from '../trace/tracer';
 
-
-const readFileAsync = util.promisify(fs.readFile);
-const writeFileAsync = util.promisify(fs.writeFile);
-
-export async function copyPrintDeps(destination: string) {
-  const content = await readFileAsync(require.resolve('../bin/PrintDeps.exe'));
-  await writeFileAsync(destination, content);
+export function printApiJson() {
+  console.log(JSON.stringify(require('../../api.json')));
 }
 
-export async function installWithProgressBar(location: string) {
-  await installBrowsersWithProgressBar(location);
-}
-
-export async function apiJson(): Promise<string> {
-  return (await readFileAsync(require.resolve('../docs/api.json'))).toString();
+export function printProtocol() {
+  console.log(fs.readFileSync(path.join(__dirname, '..', '..', 'protocol.yml'), 'utf8'));
 }
 
 export function runServer() {
@@ -62,9 +55,16 @@ export function runServer() {
     process.exit(0);
   };
 
-  const playwright = new Playwright(__dirname, require('../browsers.json')['browsers']);
+  const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
-if (process.argv[2] === 'serve')
-  runServer();
+export async function installBrowsers() {
+  let browsersJsonDir = path.dirname(process.execPath);
+  if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json'))) {
+    browsersJsonDir = path.join(__dirname, '..', '..');
+    if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json')))
+      throw new Error('Failed to find browsers.json in ' + browsersJsonDir);
+  }
+  await installBrowsersWithProgressBar(browsersJsonDir);
+}
