@@ -22,7 +22,6 @@ import * as path from 'path';
 import * as program from 'commander';
 import * as os from 'os';
 import * as fs from 'fs';
-import { installBrowsersWithProgressBar } from '../install/installer';
 import * as consoleApiSource from '../generated/consoleApiSource';
 import { OutputMultiplexer, TerminalOutput, FileOutput } from './codegen/outputs';
 import { CodeGenerator, CodeGeneratorOutput } from './codegen/codeGenerator';
@@ -30,6 +29,7 @@ import { JavaScriptLanguageGenerator, LanguageGenerator } from './codegen/langua
 import { PythonLanguageGenerator } from './codegen/languages/python';
 import { CSharpLanguageGenerator } from './codegen/languages/csharp';
 import { RecorderController } from './codegen/recorderController';
+import { runServer, printApiJson, installBrowsers } from './driver';
 import type { Browser, BrowserContext, Page, BrowserType, BrowserContextOptions, LaunchOptions } from '../..';
 import * as playwright from '../..';
 
@@ -130,19 +130,18 @@ program
     .command('install')
     .description('Ensure browsers necessary for this version of Playwright are installed')
     .action(function() {
-      let browsersJsonDir = path.dirname(process.execPath);
-      if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json'))) {
-        browsersJsonDir = path.join(__dirname, '..', '..');
-        if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json')))
-          throw new Error('Failed to find browsers.json in ' + browsersJsonDir);
-      }
-      installBrowsersWithProgressBar(browsersJsonDir).catch((e: any) => {
+      installBrowsers().catch((e: any) => {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
       });
     });
 
-program.parse(process.argv);
+if (process.argv[2] === 'run-driver')
+  runServer();
+else if (process.argv[2] === 'print-api-json')
+  printApiJson();
+else
+  program.parse(process.argv);
 
 
 type Options = {
