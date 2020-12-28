@@ -66,10 +66,10 @@ firefox.launch({ headless: false, slowMo: 50 });
 
 ## Record scripts
 
-[Playwright CLI](https://www.npmjs.com/package/playwright-cli) can be used to record user interactions and generate JavaScript code.
+[Playwright CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
 
-```
-npx playwright-cli codegen wikipedia.org
+```sh
+npx playwright codegen wikipedia.org
 ```
 
 ## TypeScript support
