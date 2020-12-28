@@ -16,9 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
-import * as path from 'path';
-
-const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
+import { selectorsV2Enabled } from '../src/server/common/selectorParser';
 
 it('should throw for non-string selector', async ({page}) => {
   const error = await page.$(null).catch(e => e);

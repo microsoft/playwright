@@ -15,10 +15,7 @@
  */
 
 import { it, expect } from './fixtures';
-import * as path from 'path';
-
-const { parseCSS, serializeSelector: serialize } =
-    require(path.join(__dirname, '..', 'lib', 'server', 'common', 'cssParser'));
+import { parseCSS, serializeSelector as serialize } from '../src/server/common/cssParser';
 
 const parse = (selector: string) => {
   return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'scope', 'right-of', 'scope', 'is'])).selector;
