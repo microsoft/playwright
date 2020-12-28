@@ -1,2 +1,0 @@
-[MarkDown] Method Foo.return42 is missing return type description: number
-[MarkDown] Method Foo.returnNothing has unneeded description of return type: number

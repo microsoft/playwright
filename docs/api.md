@@ -3001,7 +3001,6 @@ ElementHandle instances can be used as an argument in [`page.$eval(selector, pag
 - [elementHandle.setInputFiles(files[, options])](#elementhandlesetinputfilesfiles-options)
 - [elementHandle.tap([options])](#elementhandletapoptions)
 - [elementHandle.textContent()](#elementhandletextcontent)
-- [elementHandle.toString()](#elementhandletostring)
 - [elementHandle.type(text[, options])](#elementhandletypetext-options)
 - [elementHandle.uncheck([options])](#elementhandleuncheckoptions)
 - [elementHandle.waitForElementState(state[, options])](#elementhandlewaitforelementstatestate-options)
@@ -3374,9 +3373,6 @@ When all steps combined have not finished during the specified `timeout`, this m
 - returns: <[Promise]<[null]|[string]>>
 
 Returns the `node.textContent`.
-
-#### elementHandle.toString()
-- returns: <[string]>
 
 #### elementHandle.type(text[, options])
 - `text` <[string]> A text to type into a focused element.

@@ -3811,9 +3811,6 @@ When all steps combined have not finished during the specified [`option: timeout
 
 Returns the `node.textContent`.
 
-## method: ElementHandle.toString
-- returns: <[string]>
-
 ## async method: ElementHandle.type
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.

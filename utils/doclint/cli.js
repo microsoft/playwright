@@ -120,7 +120,7 @@ async function run() {
       result.push({
         type: 'text',
         text: links
-      });    
+      });
       api.setText([comment, header, renderMd(result, 10000), footer].join('\n'));
     }
   }
@@ -139,10 +139,9 @@ async function run() {
     for (const source of mdSources.filter(source => source.hasUpdatedText()))
       messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
 
-    const checkPublicAPI = require('./check_public_api');
-
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-    messages.push(...checkPublicAPI(apiSpec, jsSources));
+    const missingDocs = require('./check_public_api/missingDocs.js');
+    messages.push(...missingDocs(apiSpec, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
 
     for (const source of mdSources) {
       if (!source.hasUpdatedText())

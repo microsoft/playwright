@@ -1,3 +1,0 @@
-[MarkDown] Method Foo.foo() fails to describe its parameters:
-- Implemented but not documented argument: arg3
-- Documented but not implemented argument: arg2

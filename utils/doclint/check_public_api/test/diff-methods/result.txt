@@ -1,3 +1,0 @@
-[MarkDown] Documented but not implemented method: Foo.proceed()
-[MarkDown] Implemented but not documented method: Foo.stop()
-[MarkDown] Implemented but not documented property: Foo.zzz

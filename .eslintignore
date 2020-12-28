@@ -1,5 +1,4 @@
 test/assets/modernizr.js
-utils/doclint/check_public_api/test/
 lib/
 *.js
 src/generated/*

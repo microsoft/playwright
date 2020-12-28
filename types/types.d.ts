@@ -5120,8 +5120,6 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   textContent(): Promise<null|string>;
 
-  toString(): string;
-
   /**
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    * 

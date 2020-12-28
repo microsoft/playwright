@@ -1,4 +1,0 @@
-class Foo {
-}
-
-export {Foo};

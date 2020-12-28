@@ -18,7 +18,7 @@
     "tsc": "tsc -p .",
     "tsc-installer": "tsc -p ./src/install/tsconfig.json",
     "doc": "node utils/doclint/cli.js",
-    "test-infra": "folio utils/doclint/check_public_api/test/test.js && folio utils/doclint/preprocessor/test.js",
+    "test-infra": "folio utils/doclint/check_public_api/test/testMissingDocs.js && folio utils/doclint/preprocessor/test.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && npm run generate-channels && node utils/generate_types/ --check-clean && npm run test-types && npm run test-infra",
     "clean": "rimraf lib && rimraf types",
     "prepare": "node install-from-github.js",

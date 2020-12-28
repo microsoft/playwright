@@ -1,2 +1,0 @@
-[MarkDown] Documented but not implemented property: Foo.c
-[MarkDown] Implemented but not documented property: Foo.b
