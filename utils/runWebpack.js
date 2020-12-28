@@ -21,6 +21,7 @@ const files = [
   path.join('src', 'server', 'injected', 'injectedScript.webpack.config.js'),
   path.join('src', 'server', 'injected', 'utilityScript.webpack.config.js'),
   path.join('src', 'debug', 'injected', 'consoleApi.webpack.config.js'),
+  path.join('src', 'cli', 'injected', 'recorder.webpack.config.js'),
 ];
 
 function runOne(runner, file) {

@@ -54,8 +54,9 @@ function run_tests {
   test_playwright_electron_should_work
   test_electron_types
   test_android_types
-  test_playwright_cli_should_work
+  test_playwright_cli_screenshot_should_work
   test_playwright_cli_install_should_work
+  test_playwright_cli_codegen_should_work
 }
 
 function test_screencast {
@@ -332,7 +333,7 @@ function test_android_types {
   echo "${FUNCNAME[0]} success"
 }
 
-function test_playwright_cli_should_work {
+function test_playwright_cli_screenshot_should_work {
   initialize_test "${FUNCNAME[0]}"
 
   npm install ${PLAYWRIGHT_TGZ}
@@ -371,6 +372,36 @@ function test_playwright_cli_install_should_work {
   echo "Running sanity.js"
   node sanity.js playwright none
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright
+
+  echo "${FUNCNAME[0]} success"
+}
+
+function test_playwright_cli_codegen_should_work {
+  initialize_test "${FUNCNAME[0]}"
+
+  npm install ${PLAYWRIGHT_TGZ}
+
+  echo "Running playwright codegen"
+  OUTPUT=$(PWCLI_EXIT_FOR_TEST=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen")
+  if [[ "${OUTPUT}" != *"chromium.launch"* ]]; then
+    echo "ERROR: missing chromium.launch in the output"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"browser.close"* ]]; then
+    echo "ERROR: missing browser.close in the output"
+    exit 1
+  fi
+
+  echo "Running playwright codegen --target=python"
+  OUTPUT=$(PWCLI_EXIT_FOR_TEST=1 xvfb-run --auto-servernum -- bash -c "npx playwright codegen --target=python")
+  if [[ "${OUTPUT}" != *"chromium.launch"* ]]; then
+    echo "ERROR: missing chromium.launch in the output"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"browser.close"* ]]; then
+    echo "ERROR: missing browser.close in the output"
+    exit 1
+  fi
 
   echo "${FUNCNAME[0]} success"
 }
