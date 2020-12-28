@@ -16,7 +16,7 @@
 
 // @ts-check
 
-const { parseArgument, renderMd, clone } = require('../../parse_md');
+const { parseArgument, renderMd, clone } = require('../parse_md');
 const Documentation = require('./Documentation');
 
 /** @typedef {import('./Documentation').MarkdownNode} MarkdownNode */
@@ -159,7 +159,7 @@ function patchSignatures(spec, signatures) {
 }
 
 /**
- * @param {string} text 
+ * @param {string} text
  * @returns {string}
  */
 function createLink(text) {

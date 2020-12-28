@@ -17,7 +17,7 @@
 //@ts-check
 const path = require('path');
 const {devices} = require('../..');
-const Documentation = require('../doclint/check_public_api/Documentation');
+const Documentation = require('../doclint/Documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const {parseOverrides} = require('./parseOverrides');
@@ -39,7 +39,7 @@ let hadChanges = false;
   const apiBody = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString());
   const apiParams = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString());
   const api = applyTemplates(apiBody, apiParams);
-  const mdResult = require('../doclint/check_public_api/MDBuilder')(api, true);
+  const mdResult = require('../doclint/MDBuilder')(api, true);
   documentation = mdResult.documentation;
 
   // Root module types are overridden.

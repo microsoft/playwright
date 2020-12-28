@@ -15,13 +15,12 @@
  */
 
 const path = require('path');
-const Message = require('../Message');
 
 function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, webkitVersion}) {
   // Release version is everything that doesn't include "-".
   const isReleaseVersion = !libversion.includes('-');
 
-  const messages = [];
+  const errors = [];
   for (const source of sources) {
     const text = source.text();
     const commandStartRegex = /<!--\s*gen:([a-z-]+)\s*-->/ig;
@@ -34,8 +33,8 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, webk
       commandEndRegex.lastIndex = commandStartRegex.lastIndex;
       const end = commandEndRegex.exec(text);
       if (!end) {
-        messages.push(Message.error(`Failed to find 'gen:stop' for command ${start[0]}`));
-        return messages;
+        errors.push(`Failed to find 'gen:stop' for command ${start[0]}`);
+        return errors;
       }
       const commandName = start[1];
       const from = commandStartRegex.lastIndex;
@@ -63,13 +62,13 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, webk
         newText = generateTableOfContentsForSuperclass(source.text(), 'class: ' + commandName.substring('toc-extends-'.length));
 
       if (newText === null)
-        messages.push(Message.error(`Unknown command 'gen:${commandName}'`));
+        errors.push(`Unknown command 'gen:${commandName}'`);
       else
         sourceEdits.edit(from, to, newText);
     }
-    sourceEdits.commit(messages);
+    sourceEdits.commit(errors);
   }
-  return messages;
+  return errors;
 };
 
 function getTOCEntriesForText(text) {
@@ -117,7 +116,7 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
     pathToHashLinks.set(source.filePath(), hashLinks);
   }
 
-  const messages = [];
+  const errors = [];
   for (const source of sources) {
     const allRelativePaths = [];
     for (const filepath of allowedFilePaths) {
@@ -146,7 +145,7 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
           // Attempt to autocorrect
           const newRelativePath = autocorrectText(relativePath, allRelativePaths);
           if (!newRelativePath) {
-            messages.push(Message.error(`Bad link in ${source.projectPath()}:${lineNumber + 1}: file ${relativePath} does not exist`));
+            errors.push(`Bad link in ${source.projectPath()}:${lineNumber + 1}: file ${relativePath} does not exist`);
             continue;
           }
           resolvedPath = resolveLinkPath(source, newRelativePath);
@@ -161,15 +160,15 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
         if (newHashLink) {
           sourceEdits.edit(hashOffset, hashOffset + hash.length, newHashLink);
         } else {
-          messages.push(Message.error(`Bad link in ${source.projectPath()}:${lineNumber + 1}: hash "#${hash}" does not exist in "${path.relative(projectRoot, resolvedPath)}"`));
+          errors.push(`Bad link in ${source.projectPath()}:${lineNumber + 1}: hash "#${hash}" does not exist in "${path.relative(projectRoot, resolvedPath)}"`);
         }
       }
       offset += line.length;
     });
 
-    sourceEdits.commit(messages);
+    sourceEdits.commit(errors);
   }
-  return messages;
+  return errors;
 
   function resolveLinkPath(source, relativePath) {
     if (!relativePath)
@@ -190,19 +189,19 @@ class SourceEdits {
     this._edits.push({from, to, newText});
   }
 
-  commit(messages = []) {
+  commit(errors = []) {
     if (!this._edits.length)
       return;
     this._edits.sort((a, b) => a.from - b.from);
     for (const edit of this._edits) {
       if (edit.from > edit.to) {
-        messages.push(Message.error('INTERNAL ERROR: incorrect edit!'));
+        errors.push('INTERNAL ERROR: incorrect edit!');
         return;
       }
     }
     for (let i = 0; i < this._edits.length - 1; ++i) {
       if (this._edits[i].to > this._edits[i + 1].from) {
-        messages.push(Message.error('INTERNAL ERROR: edits are overlapping!'));
+        errors.push('INTERNAL ERROR: edits are overlapping!');
         return;
       }
     }

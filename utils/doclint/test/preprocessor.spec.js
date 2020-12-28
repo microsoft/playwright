@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const {runCommands} = require('.');
+const {runCommands} = require('../preprocessor');
 const Source = require('../Source');
 const { folio } = require('folio');
 const { describe, it, expect } = folio;
@@ -34,19 +34,18 @@ describe('runCommands', function() {
     const source = new Source('doc.md', `
       <!-- gen:unknown-command -->something<!-- gen:stop -->
     `);
-    const messages = runCommands([source], OPTIONS_REL);
+    const errors = runCommands([source], OPTIONS_REL);
     expect(source.hasUpdatedText()).toBe(false);
-    expect(messages.length).toBe(1);
-    expect(messages[0].type).toBe('error');
-    expect(messages[0].text).toContain('Unknown command');
+    expect(errors.length).toBe(1);
+    expect(errors[0]).toContain('Unknown command');
   });
   describe('gen:version', function() {
     it('should work', function() {
       const source = new Source('doc.md', `
         Playwright <!-- gen:version -->XXX<!-- gen:stop -->
       `);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:version -->v1.3.0<!-- gen:stop -->
@@ -56,8 +55,8 @@ describe('runCommands', function() {
       const source = new Source('doc.md', `
         Playwright <!-- gen:version -->XXX<!-- gen:stop -->
       `);
-      const messages = runCommands([source], OPTIONS_DEV);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_DEV);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:version -->Tip-Of-Tree<!-- gen:stop -->
@@ -71,11 +70,10 @@ describe('runCommands', function() {
     });
     it('should not tolerate missing gen:stop', function() {
       const source = new Source('doc.md', `<!--GEN:version-->`);
-      const messages = runCommands([source], OPTIONS_REL);
+      const errors = runCommands([source], OPTIONS_REL);
       expect(source.hasUpdatedText()).toBe(false);
-      expect(messages.length).toBe(1);
-      expect(messages[0].type).toBe('error');
-      expect(messages[0].text).toContain(`Failed to find 'gen:stop'`);
+      expect(errors.length).toBe(1);
+      expect(errors[0]).toContain(`Failed to find 'gen:stop'`);
     });
   });
   describe('gen:toc', function() {
@@ -84,8 +82,8 @@ describe('runCommands', function() {
         ### class: page
         #### page.$
         #### page.$$`);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`<!-- gen:toc -->
 - [class: page](#class-page)
@@ -104,8 +102,8 @@ describe('runCommands', function() {
         # yo comment
         \`\`\`
       `);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`<!-- gen:toc -->
 - [class: page](#class-page)
@@ -121,8 +119,8 @@ describe('runCommands', function() {
       const source = new Source('doc.md', `<!-- gen:toc -->XXX<!-- gen:stop -->
         ### some [link](#foobar) here
       `);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`<!-- gen:toc -->
 - [some link here](#some-link-here)
@@ -139,8 +137,8 @@ describe('runCommands', function() {
         #### first.2.1
         ## Second
       `);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         ## First
@@ -161,8 +159,8 @@ describe('runCommands', function() {
       <!-- gen:version -->xxx<!-- gen:stop -->
       <!-- gen:version -->zzz<!-- gen:stop -->
     `);
-    const messages = runCommands([source], OPTIONS_REL);
-    expect(messages.length).toBe(0);
+    const errors = runCommands([source], OPTIONS_REL);
+    expect(errors.length).toBe(0);
     expect(source.hasUpdatedText()).toBe(true);
     expect(source.text()).toBe(`
       <!-- gen:version -->v1.3.0<!-- gen:stop -->
@@ -174,8 +172,8 @@ describe('runCommands', function() {
       const source = new Source('doc.md', `
         Playwright <!-- gen:chromium-version -->XXX<!-- gen:stop -->
       `);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:chromium-version -->80.0.4004.0<!-- gen:stop -->
@@ -187,8 +185,8 @@ describe('runCommands', function() {
       const source = new Source('doc.md', `
         Playwright <!-- gen:firefox-version -->XXX<!-- gen:stop -->
       `);
-      const messages = runCommands([source], OPTIONS_REL);
-      expect(messages.length).toBe(0);
+      const errors = runCommands([source], OPTIONS_REL);
+      expect(errors.length).toBe(0);
       expect(source.hasUpdatedText()).toBe(true);
       expect(source.text()).toBe(`
         Playwright <!-- gen:firefox-version -->73.0b3<!-- gen:stop -->

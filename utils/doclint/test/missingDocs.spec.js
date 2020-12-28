@@ -18,9 +18,9 @@
 const fs = require('fs');
 const path = require('path');
 const missingDocs = require('../missingDocs');
-const Source = require('../../Source');
+const Source = require('../Source');
 const { folio } = require('folio');
-const { parseMd } = require('../../../parse_md');
+const { parseMd } = require('../../parse_md');
 
 const { test, expect } = folio;
 
@@ -30,8 +30,7 @@ test('missing docs', async ({}) => {
     await Source.readFile(path.join(__dirname, 'test-api.ts')),
     await Source.readFile(path.join(__dirname, 'test-api-class.ts')),
   ];
-  const messages = missingDocs(api, tsSources, path.join(__dirname, 'test-api.ts'));
-  const errors = messages.map(message => message.text);
+  const errors = missingDocs(api, tsSources, path.join(__dirname, 'test-api.ts'));
   expect(errors).toEqual([
     'Missing documentation for "Exists.exists2.extra"',
     'Missing documentation for "Exists.exists2.options"',

@@ -16,13 +16,12 @@
  */
 
 const mdBuilder = require('./MDBuilder');
-const Message = require('../Message');
 const ts = require('typescript');
 const EventEmitter = require('events');
 const Documentation = require('./Documentation');
 
 /**
- * @return {!Array<!Message>}
+ * @return {!Array<string>}
  */
 module.exports = function lint(api, jsSources, apiFileName) {
   const documentation = mdBuilder(api, true).documentation;
@@ -31,26 +30,26 @@ module.exports = function lint(api, jsSources, apiFileName) {
   for (const [className, methods] of apiMethods) {
     const docClass = documentation.classes.get(className);
     if (!docClass) {
-      errors.push(Message.error(`Missing documentation for "${className}"`));
+      errors.push(`Missing documentation for "${className}"`);
       continue;
     }
     for (const [methodName, params] of methods) {
       const member = docClass.members.get(methodName);
       if (!member) {
-        errors.push(Message.error(`Missing documentation for "${className}.${methodName}"`));
+        errors.push(`Missing documentation for "${className}.${methodName}"`);
         continue;
       }
       const memberParams = paramsForMember(member);
       for (const paramName of params) {
         if (!memberParams.has(paramName))
-          errors.push(Message.error(`Missing documentation for "${className}.${methodName}.${paramName}"`));
+          errors.push(`Missing documentation for "${className}.${methodName}.${paramName}"`);
       }
     }
   }
   for (const cls of documentation.classesArray) {
     const methods = apiMethods.get(cls.name);
     if (!methods) {
-      errors.push(Message.error(`Documented "${cls.name}" not found in sources`));
+      errors.push(`Documented "${cls.name}" not found in sources`);
       continue;
     }
     for (const member of cls.membersArray) {
@@ -58,13 +57,13 @@ module.exports = function lint(api, jsSources, apiFileName) {
         continue;
       const params = methods.get(member.name);
       if (!params) {
-        errors.push(Message.error(`Documented "${cls.name}.${member.name}" not found is sources`));
+        errors.push(`Documented "${cls.name}.${member.name}" not found is sources`);
         continue;
       }
       const memberParams = paramsForMember(member);
       for (const paramName of memberParams) {
         if (!params.has(paramName))
-          errors.push(Message.error(`Documented "${cls.name}.${member.name}.${paramName}" not found is sources`));
+          errors.push(`Documented "${cls.name}.${member.name}.${paramName}" not found is sources`);
       }
     }
   }
