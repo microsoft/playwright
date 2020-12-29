@@ -63,17 +63,36 @@ async function run() {
 
   // Produce api.md
   {
+    const createMemberLink = (text) => {
+      const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
+      return `[\`${text}\`](#${anchor})`;
+    };
+
+    outline.renderLinks(item => {
+      const { clazz, member, param, option } = item;
+      if (param)
+        return `\`${param}\``;
+      if (option)
+        return `\`${option}\``;
+      if (clazz)
+        return `[${clazz.name}]`;
+      if (member.kind === 'method')
+        return createMemberLink(`${member.clazz.varName}.${member.name}(${member.signature})`);
+      if (member.kind === 'event')
+        return createMemberLink(`${member.clazz.varName}.on('${member.name}')`);
+      if (member.kind === 'property')
+        return createMemberLink(`${member.clazz.varName}.${member.name}`);
+      throw new Error('Unknown member kind ' + member.kind);
+    });
+
     const comment = '<!-- THIS FILE IS NOW GENERATED -->';
     {
-      const signatures = outline.signatures;
       /** @type {MarkdownNode[]} */
       const result = [];
       for (const clazz of outline.classesArray) {
         // Iterate over classes, create header node.
         /** @type {MarkdownNode} */
         const classNode = { type: 'h3', text: `class: ${clazz.name}` };
-        const match = clazz.name.match(/(JS|CDP|[A-Z])(.*)/);
-        const varName = match[1].toLocaleLowerCase() + match[2];
         result.push(classNode);
         // Append link shortcut to resolve text like [Browser]
         result.push({
@@ -88,13 +107,12 @@ async function run() {
           /** @type {MarkdownNode} */
           const memberNode = { type: 'h4', children: [] };
           if (member.kind === 'event') {
-            memberNode.text = `${varName}.on('${member.name}')`;
+            memberNode.text = `${clazz.varName}.on('${member.name}')`;
           } else if (member.kind === 'property') {
-            memberNode.text = `${varName}.${member.name}`;
+            memberNode.text = `${clazz.varName}.${member.name}`;
           } else if (member.kind === 'method') {
             // Patch method signatures
-            const signature = signatures.get(clazz.name + '.' + member.name);
-            memberNode.text = `${varName}.${member.name}(${signature})`;
+            memberNode.text = `${clazz.varName}.${member.name}(${member.signature})`;
             for (const arg of member.argsArray) {
               if (arg.type)
                memberNode.children.push(renderProperty(`\`${arg.name}\``, arg.type, arg.spec));

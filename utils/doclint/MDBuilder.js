@@ -22,13 +22,19 @@ const Documentation = require('./Documentation');
 
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
+/** @typedef {function({
+ * clazz?: Documentation.Class,
+ * member?: Documentation.Member,
+ * param?: string,
+ * option?: string
+ * }): string} Renderer */
+
 class MDOutline {
   /**
    * @param {string} bodyPath
    * @param {string=} paramsPath
-   * @param {string=} links
    */
-  constructor(bodyPath, paramsPath, links = '') {
+  constructor(bodyPath, paramsPath) {
     const body = md.parse(fs.readFileSync(bodyPath).toString());
     const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : null;
     const api = params ? applyTemplates(body, params) : body;
@@ -39,14 +45,6 @@ class MDOutline {
       this.classesArray.push(c);
       this.classes.set(c.name, c);
     }
-    const linksMap = new Map();
-    for (const link of links.replace(/\r\n/g, '\n').split('\n')) {
-      if (!link)
-        continue;
-      const match = link.match(/\[([^\]]+)\]: ([^"]+) "([^"]+)"/);
-      linksMap.set(new RegExp('\\[' + match[1] + '\\]', 'g'), { href: match[2], label: match[3] });
-    }
-    this.signatures = this._generateComments(linksMap);
     this.documentation = new Documentation(this.classesArray);
   }
 
@@ -69,51 +67,33 @@ class MDOutline {
           errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
       }
 
-      clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
+      clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray.map(c => c.clone())];
       clazz.index();
     }
   }
-  /**
-   * @param {Map<string, { href: string, label: string}>} linksMap
-   */
-  _generateComments(linksMap) {
-    /**
-     * @type  {Map<string, string>}
-     */
-    const signatures = new Map();
 
+  /**
+   * @param {Renderer} linkRenderer
+   */
+  renderLinks(linkRenderer) {
+    const externalLinksMap = new Map();
+  
+    // @type {Map<string, Documentation.Class>}
+    const classesMap = new Map();
+    const membersMap = new Map();
     for (const clazz of this.classesArray) {
-      for (const method of clazz.methodsArray) {
-        const tokens = [];
-        let hasOptional = false;
-        for (const arg of method.argsArray) {
-          const optional = !arg.required;
-          if (tokens.length) {
-            if (optional && !hasOptional)
-              tokens.push(`[, ${arg.name}`);
-            else
-              tokens.push(`, ${arg.name}`);
-          } else {
-            if (optional && !hasOptional)
-              tokens.push(`[${arg.name}`);
-            else
-              tokens.push(`${arg.name}`);
-          }
-          hasOptional = hasOptional || optional;
-        }
-        if (hasOptional)
-          tokens.push(']');
-        const signature = tokens.join('');
-        const methodName = `${clazz.name}.${method.name}`;
-        signatures.set(methodName, signature);
-      }
+      classesMap.set(clazz.name, clazz);
+      for (const member of clazz.membersArray)
+        membersMap.set(`${member.kind}: ${clazz.name}.${member.name}`, member);
     }
 
     for (const clazz of this.classesArray)
-      clazz.visit(item => patchLinks(item.spec, signatures));
+      clazz.visit(item => patchLinks(item, item.spec, classesMap, membersMap, linkRenderer));
+  }
+
+  renderComments() {
     for (const clazz of this.classesArray)
-      clazz.visit(item => item.comment = renderCommentsForSourceCode(item.spec, linksMap));
-    return signatures;
+      clazz.visit(item => item.comment = renderLinksForSourceCode(item.spec));
   }
 }
 
@@ -146,20 +126,10 @@ function extractComments(item) {
 
 /**
  * @param {MarkdownNode[]} spec
- * @param {Map<string, { href: string, label: string}>} linksMap
  */
-function renderCommentsForSourceCode(spec, linksMap) {
+function renderLinksForSourceCode(spec) {
   const comments = (spec || []).filter(n => n.type !== 'gen' && !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
   md.visitAll(comments, node => {
-    if (node.text) {
-      for (const [regex, { href, label }] of linksMap)
-        node.text = node.text.replace(regex, `[${label}](${href})`);
-      // Those with in `` can have nested [], hence twice twice.
-      node.text = node.text.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
-      node.text = node.text.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
-      node.text = node.text.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/$2)');
-      node.text = node.text.replace(/\[([^\]]+)\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
-    }
     if (node.liType === 'bullet')
       node.liType = 'default';
   });
@@ -167,47 +137,39 @@ function renderCommentsForSourceCode(spec, linksMap) {
 }
 
 /**
+ * @param {Documentation.Class|Documentation.Member} item
  * @param {MarkdownNode[]} spec
- * @param {Map<string, string>} [signatures]
+ * @param {Map<string, Documentation.Class>} classesMap
+ * @param {Map<string, Documentation.Member>} membersMap
+ * @param {Renderer} linkRenderer
  */
-function patchLinks(spec, signatures) {
-  for (const node of spec || []) {
-    if (node.type === 'text')
-      node.text = patchLinksInText(node.text, signatures);
-    if (node.type === 'li') {
-      node.text = patchLinksInText(node.text, signatures);
-      patchLinks(node.children, signatures);
-    }
-  }
-}
-
-/**
- * @param {string} text
- * @returns {string}
- */
-function createLink(text) {
-  const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
-  return `[\`${text}\`](#${anchor})`;
-}
-
-/**
- * @param {string} comment
- * @param {Map<string, string>} signatures
- */
-function patchLinksInText(comment, signatures) {
-  if (!signatures)
-    return comment;
-  comment = comment.replace(/\[`(event|method|property):\s(JS|CDP|[A-Z])([^.]+)\.([^`]+)`\]\(\)/g, (match, type, clazzPrefix, clazz, name) => {
-    const className = `${clazzPrefix.toLowerCase()}${clazz}`;
-    if (type === 'event')
-      return createLink(`${className}.on('${name}')`);
-    if (type === 'method') {
-      const signature = signatures.get(`${clazzPrefix}${clazz}.${name}`) || '';
-      return createLink(`${className}.${name}(${signature})`);
-    }
-    return createLink(`${className}.${name}`);
+function patchLinks(item, spec, classesMap, membersMap, linkRenderer) {
+  if (!spec)
+    return;
+  md.visitAll(spec, node => {
+    if (!node.text)
+      return;
+    node.text = node.text.replace(/\[`((?:event|method|property): [^\]]+)`\]/g, (_, p1) => {
+      const member = membersMap.get(p1);
+      return linkRenderer({ member });
+    });
+    node.text = node.text.replace(/\[`(param|option): ([^\]]+)`\]/g, (_, p1, p2) => {
+      const context = {
+        clazz: item instanceof Documentation.Class ? item : undefined,
+        member: item instanceof Documentation.Member ? item : undefined,
+      };
+      if (p1 === 'param')
+        return linkRenderer({ ...context, param: p2 });
+      if (p1 === 'option')
+        return linkRenderer({ ...context, option: p2 });
+    });
+    node.text = node.text.replace(/\[([\w]+)\]/, (match, p1) => {
+      const clazz = classesMap.get(p1);
+      if (clazz)
+        return linkRenderer({ clazz });
+      return match;
+    });
   });
-  return comment.replace(/\[`(?:param|option):\s([^`]+)`\]\(\)/g, '`$1`');
 }
 
 /**
@@ -216,7 +178,7 @@ function patchLinksInText(comment, signatures) {
  */
 function parseMember(member) {
   const args = [];
-  const match = member.text.match(/(event|method|property|async method|): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
+  const match = member.text.match(/(event|method|property|async method): (JS|CDP|[A-Z])([^.]+)\.(.*)/);
   const name = match[4];
   let returnType = null;
   const options = [];
@@ -261,7 +223,7 @@ function parseProperty(spec) {
   const text = param.text;
   const name = text.substring(0, text.indexOf('<')).replace(/\`/g, '').trim();
   const comments = extractComments(spec);
-  return Documentation.Member.createProperty(name, parseType(param), comments, guessRequired(renderCommentsForSourceCode(comments, new Map())));
+  return Documentation.Member.createProperty(name, parseType(param), comments, guessRequired(md.render(comments)));
 }
 
 /**

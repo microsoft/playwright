@@ -62,6 +62,7 @@ function serializeMember(member) {
   const result = { ...member };
   sanitize(result);
   result.args = {};
+  delete member.clazz;
   for (const arg of member.argsArray)
     result.args[arg.name] = serializeProperty(arg);
   if (member.type)
