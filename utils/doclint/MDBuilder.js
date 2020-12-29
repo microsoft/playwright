@@ -91,9 +91,9 @@ class MDOutline {
       clazz.visit(item => patchLinks(item, item.spec, classesMap, membersMap, linkRenderer));
   }
 
-  renderComments() {
+  generateSourceCodeComments() {
     for (const clazz of this.classesArray)
-      clazz.visit(item => item.comment = renderLinksForSourceCode(item.spec));
+      clazz.visit(item => item.comment = generateSourceCodeComment(item.spec));
   }
 }
 
@@ -127,13 +127,13 @@ function extractComments(item) {
 /**
  * @param {MarkdownNode[]} spec
  */
-function renderLinksForSourceCode(spec) {
+function generateSourceCodeComment(spec) {
   const comments = (spec || []).filter(n => n.type !== 'gen' && !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
   md.visitAll(comments, node => {
     if (node.liType === 'bullet')
       node.liType = 'default';
   });
-  return md.render(comments);
+  return md.render(comments, 120);
 }
 
 /**
@@ -149,24 +149,24 @@ function patchLinks(item, spec, classesMap, membersMap, linkRenderer) {
   md.visitAll(spec, node => {
     if (!node.text)
       return;
-    node.text = node.text.replace(/\[`((?:event|method|property): [^\]]+)`\]/g, (_, p1) => {
+    node.text = node.text.replace(/\[`((?:event|method|property): [^\]]+)`\]/g, (match, p1) => {
       const member = membersMap.get(p1);
-      return linkRenderer({ member });
+      return linkRenderer({ member }) || match;
     });
-    node.text = node.text.replace(/\[`(param|option): ([^\]]+)`\]/g, (_, p1, p2) => {
+    node.text = node.text.replace(/\[`(param|option): ([^\]]+)`\]/g, (match, p1, p2) => {
       const context = {
         clazz: item instanceof Documentation.Class ? item : undefined,
         member: item instanceof Documentation.Member ? item : undefined,
       };
       if (p1 === 'param')
-        return linkRenderer({ ...context, param: p2 });
+        return linkRenderer({ ...context, param: p2 }) || match;
       if (p1 === 'option')
-        return linkRenderer({ ...context, option: p2 });
+        return linkRenderer({ ...context, option: p2 }) || match;
     });
     node.text = node.text.replace(/\[([\w]+)\]/, (match, p1) => {
       const clazz = classesMap.get(p1);
       if (clazz)
-        return linkRenderer({ clazz });
+        return linkRenderer({ clazz }) || match;
       return match;
     });
   });

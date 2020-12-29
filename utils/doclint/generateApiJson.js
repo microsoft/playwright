@@ -17,15 +17,29 @@
 // @ts-check
 
 const path = require('path');
+const Documentation = require('./Documentation');
 const { MDOutline } = require('./MDBuilder');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
 {
-  const { documentation } = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
-  const result = serialize(documentation);
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
+  outline.renderLinks(item => {
+    const { clazz, member, param, option } = item;
+    if (param)
+      return `\`${param}\``;
+    if (option)
+      return `\`${option}\``;
+    if (clazz)
+      return `\`${clazz.name}\``;
+  });
+  outline.generateSourceCodeComments();
+  const result = serialize(outline);
   console.log(JSON.stringify(result));
 }
 
+/**
+ * @param {Documentation} documentation
+ */
 function serialize(documentation) {
   const result = {};
   for (const clazz of documentation.classesArray)
@@ -33,6 +47,9 @@ function serialize(documentation) {
   return result;
 }
 
+/**
+ * @param {Documentation.Class} clazz
+ */
 function serializeClass(clazz) {
   const result = { name: clazz.name };
   if (clazz.extends)
@@ -58,11 +75,13 @@ function serializeClass(clazz) {
   return result;
 }
 
+/**
+ * @param {Documentation.Member} member
+ */
 function serializeMember(member) {
-  const result = { ...member };
+  const result = /** @type {any} */ ({ ...member });
   sanitize(result);
   result.args = {};
-  delete member.clazz;
   for (const arg of member.argsArray)
     result.args[arg.name] = serializeProperty(arg);
   if (member.type)
@@ -83,6 +102,7 @@ function sanitize(result) {
   delete result.args;
   delete result.argsArray;
   delete result.templates;
+  delete result.clazz;
   if (result.properties && !Object.keys(result.properties).length)
     delete result.properties;
   if (result.comment === '')
