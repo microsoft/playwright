@@ -14,6 +14,17 @@
  * limitations under the License.
  */
 
+// @ts-check
+
+/** @typedef {{
+ *    type: 'text' | 'li' | 'code' | 'gen' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4',
+ *    text?: string,
+ *    codeLang?: string,
+ *    lines?: string[],
+ *    liType?: 'default' | 'bullet' | 'ordinal',
+ *    children?: MarkdownNode[]
+ *  }} MarkdownNode */
+
 function normalizeLines(content) {
   const inLines = content.replace(/\r\n/g, '\n').split('\n');
   let inCodeBlock = false;
@@ -47,19 +58,26 @@ function normalizeLines(content) {
   return outLines;
 }
 
+/**
+ * @param {string[]} lines
+ */
 function buildTree(lines) {
+  /** @type {MarkdownNode} */
   const root = {
     type: 'h0',
-    value: '<root>',
+    text: '<root>',
     children: []
   };
+  /** @type {MarkdownNode[]} */
   const stack = [root];
+  /** @type {MarkdownNode[]} */
   let liStack = null;
 
   for (let i = 0; i < lines.length; ++i) {
     let line = lines[i];
 
     if (line.startsWith('```')) {
+      /** @type {MarkdownNode} */
       const node = {
         type: 'code',
         lines: [],
@@ -75,6 +93,7 @@ function buildTree(lines) {
     }
 
     if (line.startsWith('<!-- GEN')) {
+      /** @type {MarkdownNode} */
       const node = {
         type: 'gen',
         lines: [line]
@@ -91,10 +110,8 @@ function buildTree(lines) {
 
     const header = line.match(/^(#+)/);
     if (header) {
-      const node = { children: [] };
       const h = header[1].length;
-      node.type = 'h' + h;
-      node.text = line.substring(h + 1);
+      const node = /** @type {MarkdownNode} */({ type: 'h' + h, text: line.substring(h + 1), children: [] });
 
       while (true) {
         const lastH = +stack[0].type.substring(1);
@@ -111,7 +128,7 @@ function buildTree(lines) {
 
     const list = line.match(/^(\s*)(-|1.|\*) /);
     const depth = list ? (list[1].length / 2) : 0;
-    const node = {};
+    const node = /** @type {MarkdownNode} */({ type: 'text', text: line });
     if (list) {
       node.type = 'li';
       node.text = line.substring(list[0].length);
@@ -121,9 +138,6 @@ function buildTree(lines) {
         node.liType = 'bullet';
       else 
         node.liType = 'default';
-    } else {
-      node.type = 'text';
-      node.text = line;
     }
     if (!liStack[depth].children)
       liStack[depth].children = [];
@@ -133,21 +147,32 @@ function buildTree(lines) {
   return root.children;
 }
 
-function parseMd(content) {
+/**
+ * @param {string} content
+ */
+function parse(content) {
   return buildTree(normalizeLines(content));
 }
 
-function renderMd(nodes, maxColumns) {
+/**
+ * @param {MarkdownNode[]} nodes
+ */
+function render(nodes) {
   const result = [];
   let lastNode;
   for (let node of nodes) {
-    innerRenderMdNode(node, lastNode, result, maxColumns);
+    innerRenderMdNode(node, lastNode, result);
     lastNode = node;
   }
   return result.join('\n');
 }
 
-function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
+/**
+ * @param {MarkdownNode} node
+ * @param {MarkdownNode} lastNode
+ * @param {string[]} result
+ */
+function innerRenderMdNode(node, lastNode, result) {
   const newLine = () => {
     if (result[result.length - 1] !== '')
       result.push('');
@@ -155,11 +180,11 @@ function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
 
   if (node.type.startsWith('h')) {
     newLine();
-    const depth = node.type.substring(1);
+    const depth = +node.type.substring(1);
     result.push(`${'#'.repeat(depth)} ${node.text}`);
     let lastNode = node;
     for (const child of node.children || []) {
-      innerRenderMdNode(child, lastNode, result, maxColumns);
+      innerRenderMdNode(child, lastNode, result);
       lastNode = child;
     }
   }
@@ -168,7 +193,7 @@ function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
     const bothComments = node.text.startsWith('>') && lastNode && lastNode.type === 'text' && lastNode.text.startsWith('>');
     if (!bothComments && lastNode && lastNode.text)
       newLine();
-      printText(node, result, maxColumns);
+      result.push(node.text);
   }
 
   if (node.type === 'code') {
@@ -203,97 +228,32 @@ function innerRenderMdNode(node, lastNode, result, maxColumns = 120) {
   }
 }
 
-function printText(node, result, maxColumns) {
-  let line = node.text;
-  while (line.length > maxColumns) {
-    let index = line.lastIndexOf(' ', maxColumns);
-    if (index === -1) {
-      index = line.indexOf(' ', maxColumns);
-      if (index === -1)
-        break;
-    }
-    result.push(line.substring(0, index));
-    line = line.substring(index + 1);
-  }
-  if (line.length)
-    result.push(line);
-}
-
+/**
+ * @param {MarkdownNode} node
+ */
 function clone(node) {
   const copy = { ...node };
   copy.children = copy.children ? copy.children.map(c => clone(c)) : undefined;
   return copy;
 }
 
-function applyTemplates(body, params) {
-  const paramsMap = new Map();
-  for (const node of params)
-    paramsMap.set('%%-' + node.text + '-%%', node);
-
-  const visit = (node, parent) => {
-    if (node.text && node.text.includes('-inline- = %%')) {
-      const [name, key] = node.text.split('-inline- = ');
-      const list = paramsMap.get(key);
-      if (!list)
-        throw new Error('Bad template: ' + key);
-      for (const prop of list.children) {
-        const template = paramsMap.get(prop.text);
-        if (!template)
-          throw new Error('Bad template: ' + prop.text);
-        const { name: argName } = parseArgument(template.children[0].text);
-        parent.children.push({
-          type: node.type,
-          text: name + argName,
-          children: template.children.map(c => clone(c))
-        });
-      }
-    } else if (node.text && node.text.includes(' = %%')) {
-      const [name, key] = node.text.split(' = ');
-      node.text = name;
-      const template = paramsMap.get(key);
-      if (!template)
-        throw new Error('Bad template: ' + key);
-      node.children.push(...template.children.map(c => clone(c)));
-    }
-    for (const child of node.children || [])
-      visit(child, node);
-    if (node.children)
-      node.children = node.children.filter(child => !child.text || !child.text.includes('-inline- = %%'));
-  };
-
-  for (const node of body)
-    visit(node, null);
-
-  return body;
+/**
+ * @param {MarkdownNode[]} nodes
+ * @param {function(MarkdownNode): void} visitor
+ */
+function visitAll(nodes, visitor) {
+  for (const node of nodes)
+    visit(node, visitor);
 }
 
 /**
- * @param {string} line 
- * @returns {{ name: string, type: string, text: string }}
+ * @param {MarkdownNode} node
+ * @param {function(MarkdownNode): void} visitor
  */
-function parseArgument(line) {
-  let match = line.match(/^`([^`]+)` (.*)/);
-  if (!match)
-    match = line.match(/^(returns): (.*)/);
-  if (!match)
-    match = line.match(/^(type): (.*)/);
-  if (!match)
-    throw new Error('Invalid argument: ' + line);
-  const name = match[1];
-  const remainder = match[2];
-  if (!remainder.startsWith('<'))
-    throw new Error('Bad argument: ' + remainder);
-  let depth = 0;
-  for (let i = 0; i < remainder.length; ++i) {
-    const c = remainder.charAt(i);
-    if (c === '<')
-      ++depth;
-    if (c === '>')
-      --depth;
-    if (depth === 0)
-      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2) };
-  }
-  throw new Error('Should not be reached');
+function visit(node, visitor) {
+  visitor(node);
+  for (const n of node.children || [])
+    visit(n, visitor);
 }
 
-module.exports = { parseMd, renderMd, parseArgument, applyTemplates, clone };
+module.exports = { parse, render, clone, visitAll, visit };

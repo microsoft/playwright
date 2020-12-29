@@ -1,4 +1,10 @@
+# class: DoesNotExist
+
+## method: DoesNotExist.doesNotExist
+
 # class: Exists
+
+## method: Exists.doesNotExist
 
 ## method: Exists.exists
 
@@ -12,9 +18,3 @@
 - `option` <[number]>
 
 ## method: Exists.exists2
-
-## method: Exists.doesNotExist
-
-# class: DoesNotExist
-
-## method: DoesNotExist.doesNotExist

@@ -15,18 +15,20 @@
  * limitations under the License.
  */
 
-const mdBuilder = require('./MDBuilder');
 const ts = require('typescript');
 const EventEmitter = require('events');
 const Documentation = require('./Documentation');
 
+/** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
+
 /**
  * @return {!Array<string>}
  */
-module.exports = function lint(api, jsSources, apiFileName) {
-  const documentation = mdBuilder(api, true).documentation;
-  const apiMethods = listMethods(jsSources, apiFileName);
+module.exports = function lint(outline, jsSources, apiFileName) {
   const errors = [];
+  const documentation = outline.documentation;
+  outline.copyDocsFromSuperclasses(errors);
+  const apiMethods = listMethods(jsSources, apiFileName);
   for (const [className, methods] of apiMethods) {
     const docClass = documentation.classes.get(className);
     if (!docClass) {
@@ -75,11 +77,8 @@ module.exports = function lint(api, jsSources, apiFileName) {
  */
 function paramsForMember(member) {
   if (member.kind !== 'method')
-    return [];
-  const paramNames = new Set(member.argsArray.map(a => a.name));
-  if (member.options)
-    paramNames.add('options');
-  return paramNames;
+    return new Set();
+  return new Set(member.argsArray.map(a => a.name));
 }
 
 /**
@@ -124,10 +123,10 @@ function listMethods(sources, apiFileName) {
       methods = new Map();
       apiMethods.set(className, methods);
     }
-    for (const [name, member] of classType.symbol.members || []) {
+    for (const [name, member] of /** @type {any[]} */(classType.symbol.members || [])) {
       if (name.startsWith('_') || name === 'T' || name === 'toString')
         continue;
-      if (EventEmitter.prototype.hasOwnProperty(name))
+      if (/** @type {any} */(EventEmitter).prototype.hasOwnProperty(name))
         continue;
       const memberType = checker.getTypeOfSymbolAtLocation(member, member.valueDeclaration);
       const signature = signatureForType(memberType);
@@ -149,7 +148,7 @@ function listMethods(sources, apiFileName) {
   function visitMethods(node) {
     if (ts.isExportSpecifier(node)) {
       const className = node.name.text;
-      const exportSymbol = node.name ? checker.getSymbolAtLocation(node.name) : node.symbol;
+      const exportSymbol = node.name ? checker.getSymbolAtLocation(node.name) : /** @type {any} */ (node).symbol;
       const classType = checker.getDeclaredTypeOfSymbol(exportSymbol);
       if (!classType)
         throw new Error(`Cannot parse class "${className}"`);

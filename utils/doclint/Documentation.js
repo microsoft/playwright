@@ -16,14 +16,7 @@
 
 // @ts-check
 
-/** @typedef {{
- *    type: 'text' | 'li' | 'code' | 'gen' | 'h1' | 'h2' | 'h3' | 'h4',
- *    text?: string,
- *    codeLang?: string,
- *    lines?: string[],
- *    liType?: 'default' | 'bullet' | 'ordinal',
- *    children?: MarkdownNode[]
- *  }} MarkdownNode */
+/** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
 class Documentation {
   /**
@@ -63,10 +56,6 @@ Documentation.Class = class {
     this.properties = new Map();
     /** @type {!Array<!Documentation.Member>} */
     this.propertiesArray = [];
-    /** @type {!Map<string, !Documentation.Member>} */
-    this.options = new Map();
-    /** @type {!Array<!Documentation.Member>} */
-    this.optionsArray = [];
     /** @type {!Map<string, !Documentation.Member>} */
     this.methods = new Map();
     /** @type {!Array<!Documentation.Member>} */
@@ -135,6 +124,9 @@ Documentation.Class = class {
     }
   }
 
+  /** 
+   * @param {function(Documentation.Member|Documentation.Class): void} visitor
+   */
   visit(visitor) {
     visitor(this);
     for (const p of this.propertiesArray)
@@ -204,6 +196,9 @@ Documentation.Member = class {
     return new Documentation.Member('event', name, type, [], spec);
   }
 
+  /** 
+   * @param {function(Documentation.Member|Documentation.Class): void} visitor
+   */
   visit(visitor) {
     visitor(this);
     if (this.type)

@@ -16,17 +16,22 @@
 
 // @ts-check
 
-const { parseArgument, renderMd, clone } = require('../parse_md');
+const fs = require('fs');
+const md = require('../markdown');
 const Documentation = require('./Documentation');
 
-/** @typedef {import('./Documentation').MarkdownNode} MarkdownNode */
+/** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
 class MDOutline {
   /**
-   * @param {MarkdownNode[]} api
+   * @param {string} bodyPath
+   * @param {string=} paramsPath
    * @param {string=} links
    */
-  constructor(api, links = '') {
+  constructor(bodyPath, paramsPath, links = '') {
+    const body = md.parse(fs.readFileSync(bodyPath).toString());
+    const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : null;
+    const api = params ? applyTemplates(body, params) : body;
     this.classesArray = /** @type {Documentation.Class[]} */ [];
     this.classes = /** @type {Map<string, Documentation.Class>} */ new Map();
     for (const clazz of api) {
@@ -42,8 +47,32 @@ class MDOutline {
       linksMap.set(new RegExp('\\[' + match[1] + '\\]', 'g'), { href: match[2], label: match[3] });
     }
     this.signatures = this._generateComments(linksMap);
+    this.documentation = new Documentation(this.classesArray);
   }
 
+  /**
+   * @param {string[]} errors
+   */
+  copyDocsFromSuperclasses(errors) {
+    for (const [name, clazz] of this.documentation.classes.entries()) {
+      clazz.validateOrder(errors, clazz);
+
+      if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
+        continue;
+      const superClass = this.documentation.classes.get(clazz.extends);
+      if (!superClass) {
+        errors.push(`Undefined superclass: ${superClass} in ${name}`);
+        continue;
+      }
+      for (const memberName of clazz.members.keys()) {
+        if (superClass.members.has(memberName))
+          errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
+      }
+
+      clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
+      clazz.index();
+    }
+  }
   /**
    * @param {Map<string, { href: string, label: string}>} linksMap
    */
@@ -81,7 +110,7 @@ class MDOutline {
     }
 
     for (const clazz of this.classesArray)
-      clazz.visit(item => patchSignatures(item.spec, signatures));
+      clazz.visit(item => patchLinks(item.spec, signatures));
     for (const clazz of this.classesArray)
       clazz.visit(item => item.comment = renderCommentsForSourceCode(item.spec, linksMap));
     return signatures;
@@ -120,8 +149,8 @@ function extractComments(item) {
  * @param {Map<string, { href: string, label: string}>} linksMap
  */
 function renderCommentsForSourceCode(spec, linksMap) {
-  const comments = (spec || []).filter(n => n.type !== 'gen' && !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => clone(c));
-  const visit = node => {
+  const comments = (spec || []).filter(n => n.type !== 'gen' && !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
+  md.visitAll(comments, node => {
     if (node.text) {
       for (const [regex, { href, label }] of linksMap)
         node.text = node.text.replace(regex, `[${label}](${href})`);
@@ -133,27 +162,21 @@ function renderCommentsForSourceCode(spec, linksMap) {
     }
     if (node.liType === 'bullet')
       node.liType = 'default';
-    for (const child of node.children || [])
-      visit(child);
-  };
-  for (const node of comments)
-    visit(node);
-  return renderMd(comments, 10000);
-
-  // [`frame.waitForFunction(pageFunction[, arg, options])`](#framewaitforfunctionpagefunction-arg-options)
+  });
+  return md.render(comments);
 }
 
 /**
  * @param {MarkdownNode[]} spec
  * @param {Map<string, string>} [signatures]
  */
-function patchSignatures(spec, signatures) {
+function patchLinks(spec, signatures) {
   for (const node of spec || []) {
     if (node.type === 'text')
-      node.text = patchSignaturesInText(node.text, signatures);
+      node.text = patchLinksInText(node.text, signatures);
     if (node.type === 'li') {
-      node.text = patchSignaturesInText(node.text, signatures);
-      patchSignatures(node.children, signatures);
+      node.text = patchLinksInText(node.text, signatures);
+      patchLinks(node.children, signatures);
     }
   }
 }
@@ -171,7 +194,7 @@ function createLink(text) {
  * @param {string} comment
  * @param {Map<string, string>} signatures
  */
-function patchSignaturesInText(comment, signatures) {
+function patchLinksInText(comment, signatures) {
   if (!signatures)
     return comment;
   comment = comment.replace(/\[`(event|method|property):\s(JS|CDP|[A-Z])([^.]+)\.([^`]+)`\]\(\)/g, (match, type, clazzPrefix, clazz, name) => {
@@ -291,36 +314,79 @@ function guessRequired(comment) {
   return required;
 }
 
-module.exports =
 /**
- * @param {any} api
- * @param {boolean=} copyDocsFromSuperClasses
+ * @param {MarkdownNode[]} body
+ * @param {MarkdownNode[]} params
  */
- function(api, copyDocsFromSuperClasses = false, links = '') {
-  const errors = [];
-  const outline = new MDOutline(api, links);
-  const documentation = new Documentation(outline.classesArray);
+function applyTemplates(body, params) {
+  const paramsMap = new Map();
+  for (const node of params)
+    paramsMap.set('%%-' + node.text + '-%%', node);
 
-  if (copyDocsFromSuperClasses) {
-    // Push base class documentation to derived classes.
-    for (const [name, clazz] of documentation.classes.entries()) {
-      clazz.validateOrder(errors, clazz);
-
-      if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
-        continue;
-      const superClass = documentation.classes.get(clazz.extends);
-      if (!superClass) {
-        errors.push(`Undefined superclass: ${superClass} in ${name}`);
-        continue;
+  const visit = (node, parent) => {
+    if (node.text && node.text.includes('-inline- = %%')) {
+      const [name, key] = node.text.split('-inline- = ');
+      const list = paramsMap.get(key);
+      if (!list)
+        throw new Error('Bad template: ' + key);
+      for (const prop of list.children) {
+        const template = paramsMap.get(prop.text);
+        if (!template)
+          throw new Error('Bad template: ' + prop.text);
+        const { name: argName } = parseArgument(template.children[0].text);
+        parent.children.push({
+          type: node.type,
+          text: name + argName,
+          children: template.children.map(c => md.clone(c))
+        });
       }
-      for (const memberName of clazz.members.keys()) {
-        if (superClass.members.has(memberName))
-          errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
-      }
-
-      clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray];
-      clazz.index();
+    } else if (node.text && node.text.includes(' = %%')) {
+      const [name, key] = node.text.split(' = ');
+      node.text = name;
+      const template = paramsMap.get(key);
+      if (!template)
+        throw new Error('Bad template: ' + key);
+      node.children.push(...template.children.map(c => md.clone(c)));
     }
+    for (const child of node.children || [])
+      visit(child, node);
+    if (node.children)
+      node.children = node.children.filter(child => !child.text || !child.text.includes('-inline- = %%'));
+  };
+
+  for (const node of body)
+    visit(node, null);
+
+  return body;
+}
+
+/**
+ * @param {string} line 
+ * @returns {{ name: string, type: string, text: string }}
+ */
+function parseArgument(line) {
+  let match = line.match(/^`([^`]+)` (.*)/);
+  if (!match)
+    match = line.match(/^(returns): (.*)/);
+  if (!match)
+    match = line.match(/^(type): (.*)/);
+  if (!match)
+    throw new Error('Invalid argument: ' + line);
+  const name = match[1];
+  const remainder = match[2];
+  if (!remainder.startsWith('<'))
+    throw new Error('Bad argument: ' + remainder);
+  let depth = 0;
+  for (let i = 0; i < remainder.length; ++i) {
+    const c = remainder.charAt(i);
+    if (c === '<')
+      ++depth;
+    if (c === '>')
+      --depth;
+    if (depth === 0)
+      return { name, type: remainder.substring(1, i), text: remainder.substring(i + 2) };
   }
-  return { documentation, errors, outline };
-};
+  throw new Error('Should not be reached');
+}
+
+module.exports = { MDOutline };
