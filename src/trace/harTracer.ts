@@ -188,7 +188,7 @@ class HarContextTracer {
     const harEntry = this._entries.get(response.request())!;
     // Rewrite provisional headers with actual
     const request = response.request();
-    harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value })),
+    harEntry.request.headers = request.headers().map(header => ({ name: header.name, value: header.value }));
     harEntry.request.cookies = cookiesForHar(request.headerValue('cookie'), ';');
     harEntry.request.postData = postDataForHar(request) || undefined;
 

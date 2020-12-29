@@ -35,9 +35,9 @@ export class PipeTransport implements ConnectionTransport {
       this._closed = true;
       if (this.onclose)
         this.onclose.call(null);
-    }),
-    pipeRead.on('error', e => debugLogger.log('error', e)),
-    pipeWrite.on('error', e => debugLogger.log('error', e)),
+    });
+    pipeRead.on('error', e => debugLogger.log('error', e));
+    pipeWrite.on('error', e => debugLogger.log('error', e));
     this.onmessage = undefined;
     this.onclose = undefined;
   }
