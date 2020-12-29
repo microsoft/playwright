@@ -154,29 +154,46 @@ function revisionURL(browser: BrowserDescriptor, platform = browserPaths.hostPla
   return util.format(urlTemplate, serverHost, browser.revision);
 }
 
-export async function downloadBrowserWithProgressBar(browsersPath: string, browser: BrowserDescriptor): Promise<boolean> {
-  const browserPath = browserPaths.browserDirectory(browsersPath, browser);
-  const progressBarName = `${browser.name} v${browser.revision}`;
-  if (await existsAsync(browserPath)) {
-    // Already downloaded.
-    return false;
-  }
-
+export async function downloadBrowsersWithProgressBar(browsersPath: string, ...browsers: BrowserDescriptor[]): Promise<boolean[]> {
   let progressBar: ProgressBar;
   let lastDownloadedBytes = 0;
+  const totals = browsers.map(() => 0);
+  const currents = browsers.map(() => 0);
 
-  function progress(downloadedBytes: number, totalBytes: number) {
+  function progress(index: number, current: number, total: number) {
+    if (index === 2)
+      return;
+    if (index === 1)
+      return;
+    totals[index] = total;
+    currents[index] = current;
+    const totalBytes = totals.reduce((a, b) => a + b, 0);
+    const downloadedBytes = currents.reduce((a, b) => a + b, 0);
     if (!progressBar) {
-      progressBar = new ProgressBar(`Downloading ${progressBarName} - ${toMegabytes(totalBytes)} [:bar] :percent :etas `, {
+      progressBar = new ProgressBar(`Downloading browsers [:bar] :percent :etas `, {
         complete: '=',
+        head: '>',
         incomplete: ' ',
         width: 20,
         total: totalBytes,
       });
     }
     const delta = downloadedBytes - lastDownloadedBytes;
+    progressBar.total = totalBytes;
     lastDownloadedBytes = downloadedBytes;
     progressBar.tick(delta);
+  }
+  return Promise.all(browsers.map((browser, index) => {
+    return downloadBrowser(browsersPath, browser, progress.bind(null, index));
+  }));
+}
+
+
+async function downloadBrowser(browsersPath: string, browser: BrowserDescriptor, progress: (downloadedBytes: number, totalBytes: number) => void): Promise<boolean> {
+  const browserPath = browserPaths.browserDirectory(browsersPath, browser);
+  if (await existsAsync(browserPath)) {
+    // Already downloaded.
+    return false;
   }
 
   const url = revisionURL(browser);
@@ -192,7 +209,6 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
     if (await existsAsync(zipPath))
       await unlinkAsync(zipPath);
   }
-  logPolitely(`${progressBarName} downloaded to ${browserPath}`);
   return true;
 }
 

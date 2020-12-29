@@ -100,12 +100,11 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
 
   // 3. Install missing browsers for this package.
   const myBrowsersToDownload = await readBrowsersToDownload(packagePath);
-  for (const browser of myBrowsersToDownload) {
-    await browserFetcher.downloadBrowserWithProgressBar(browsersPath, browser).catch(e => {
-      throw new Error(`Failed to download ${browser.name}, caused by\n${e.stack}`);
-    });
+  await browserFetcher.downloadBrowsersWithProgressBar(browsersPath, ...myBrowsersToDownload).catch(e => {
+    throw new Error(`Failed to download browser, caused by\n${e.stack}`);
+  });
+  for (const browser of myBrowsersToDownload)
     await fsWriteFileAsync(browserPaths.markerFilePath(browsersPath, browser), '');
-  }
 }
 
 async function readBrowsersToDownload(packagePath: string) {
