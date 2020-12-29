@@ -111,7 +111,7 @@ export class JSHandle<T = any> {
   }
 
   async _evaluateExpression(expression: string, isFunction: boolean, returnByValue: boolean, arg: any) {
-    const value = await evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);1;
+    const value = await evaluateExpression(this._context, returnByValue, expression, isFunction, this, arg);
     await this._context.doSlowMo();
     return value;
   }
