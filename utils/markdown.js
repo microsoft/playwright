@@ -156,12 +156,13 @@ function parse(content) {
 
 /**
  * @param {MarkdownNode[]} nodes
+ * @param {number=} maxColumns
  */
-function render(nodes) {
+function render(nodes, maxColumns) {
   const result = [];
   let lastNode;
   for (let node of nodes) {
-    innerRenderMdNode(node, lastNode, result);
+    innerRenderMdNode(node, lastNode, result, maxColumns);
     lastNode = node;
   }
   return result.join('\n');
@@ -170,9 +171,10 @@ function render(nodes) {
 /**
  * @param {MarkdownNode} node
  * @param {MarkdownNode} lastNode
+ * @param {number=} maxColumns
  * @param {string[]} result
  */
-function innerRenderMdNode(node, lastNode, result) {
+function innerRenderMdNode(node, lastNode, result, maxColumns) {
   const newLine = () => {
     if (result[result.length - 1] !== '')
       result.push('');
@@ -184,7 +186,7 @@ function innerRenderMdNode(node, lastNode, result) {
     result.push(`${'#'.repeat(depth)} ${node.text}`);
     let lastNode = node;
     for (const child of node.children || []) {
-      innerRenderMdNode(child, lastNode, result);
+      innerRenderMdNode(child, lastNode, result, maxColumns);
       lastNode = child;
     }
   }
@@ -193,7 +195,7 @@ function innerRenderMdNode(node, lastNode, result) {
     const bothComments = node.text.startsWith('>') && lastNode && lastNode.type === 'text' && lastNode.text.startsWith('>');
     if (!bothComments && lastNode && lastNode.text)
       newLine();
-      result.push(node.text);
+      result.push(wrapText(node.text, maxColumns));
   }
 
   if (node.type === 'code') {
@@ -220,12 +222,51 @@ function innerRenderMdNode(node, lastNode, result) {
         case 'default': char = '-'; break;
         case 'ordinal': char = '1.'; break;
       }
-      result.push(`${indent}${char} ${node.text}`);
+      result.push(`${indent}${char} ${wrapText(node.text, maxColumns, indent + ' '.repeat(char.length + 1))}`);
       for (const child of node.children || [])
         visit(child, indent + '  ');
     };
     visit(node, '');
   }
+}
+
+/**
+ * @param {string} text
+ */
+function tokenizeText(text) {
+  const links = [];
+  // Don't wrap simple links with spaces.
+  text = text.replace(/\[[^\]]+\]/g, match => {
+    links.push(match);
+    return `[${links.length - 1}]`;
+  });
+  return text.split(' ').map(c => c.replace(/\[(\d+)\]/g, (_, p1) => links[+p1]));
+}
+
+/**
+ * @param {string} text
+ * @param {number=} maxColumns
+ * @param {string=} indent
+ */
+function wrapText(text, maxColumns = 0, indent = '') {
+  if (!maxColumns)
+    return text;
+  const lines = [];
+  maxColumns -= indent.length;
+  const words = tokenizeText(text);
+  let line = '';
+  for (const word of words) {
+    if (line.length && line.length + word.length < maxColumns) {
+      line += ' ' + word;
+    } else {
+      if (line)
+        lines.push(line);
+      line = (lines.length ? indent : '') + word;
+    }
+  }
+  if (line)
+    lines.push(line);
+  return lines.join('\n');
 }
 
 /**

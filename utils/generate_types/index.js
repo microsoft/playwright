@@ -58,7 +58,7 @@ let hadChanges = false;
       return createMemberLink(`${member.clazz.varName}.${member.name}`);
     throw new Error('Unknown member kind ' + member.kind);
   });
-  outline.renderComments();
+  outline.generateSourceCodeComments();
   documentation = outline.documentation;
 
   // Root module types are overridden.
