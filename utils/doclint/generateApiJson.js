@@ -17,7 +17,7 @@
 const fs = require('fs');
 const path = require('path');
 const { parseMd, applyTemplates } = require('../parse_md');
-const mdBuilder = require('./check_public_api/MDBuilder');
+const mdBuilder = require('./MDBuilder');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
 {

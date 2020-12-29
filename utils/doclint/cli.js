@@ -21,14 +21,13 @@ const playwright = require('../../');
 const fs = require('fs');
 const path = require('path');
 const Source = require('./Source');
-const Message = require('./Message');
 const { parseMd, renderMd, applyTemplates, clone } = require('./../parse_md');
 const { spawnSync } = require('child_process');
 const preprocessor = require('./preprocessor');
-const mdBuilder = require('./check_public_api/MDBuilder');
+const mdBuilder = require('./MDBuilder');
 
-/** @typedef {import('./check_public_api/Documentation').MarkdownNode} MarkdownNode */
-/** @typedef {import('./check_public_api/Documentation').Type} Type */
+/** @typedef {import('./Documentation').MarkdownNode} MarkdownNode */
+/** @typedef {import('./Documentation').Type} Type */
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -52,8 +51,8 @@ async function run() {
   const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
   const mdSources = [readme, binReadme, api, contributing, ...docs];
 
-  /** @type {!Array<!Message>} */
-  const messages = [];
+  /** @type {!Array<string>} */
+  const errors = [];
   let changedFiles = false;
 
   const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
@@ -128,20 +127,20 @@ async function run() {
   // Documentation checks.
   {
     const browserVersions = await getBrowserVersions();
-    messages.push(...(await preprocessor.runCommands(mdSources, {
+    errors.push(...(await preprocessor.runCommands(mdSources, {
       libversion: VERSION,
       chromiumVersion: browserVersions.chromium,
       firefoxVersion: browserVersions.firefox,
       webkitVersion: browserVersions.webkit,
     })));
 
-    messages.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
+    errors.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
     for (const source of mdSources.filter(source => source.hasUpdatedText()))
-      messages.push(Message.warning(`WARN: updated ${source.projectPath()}`));
+      errors.push(`WARN: updated ${source.projectPath()}`);
 
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-    const missingDocs = require('./check_public_api/missingDocs.js');
-    messages.push(...missingDocs(apiSpec, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
+    const missingDocs = require('./missingDocs.js');
+    errors.push(...missingDocs(apiSpec, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
 
     for (const source of mdSources) {
       if (!source.hasUpdatedText())
@@ -152,31 +151,19 @@ async function run() {
   }
 
   // Report results.
-  const errors = messages.filter(message => message.type === 'error');
   if (errors.length) {
-    console.log('DocLint Failures:');
     for (let i = 0; i < errors.length; ++i) {
-      let error = errors[i].text;
-      error = error.split('\n').join('\n      ');
+      const error = errors[i].split('\n').join('\n      ');
       console.log(`  ${i + 1}) ${RED_COLOR}${error}${RESET_COLOR}`);
     }
   }
-  const warnings = messages.filter(message => message.type === 'warning');
-  if (warnings.length) {
-    console.log('DocLint Warnings:');
-    for (let i = 0; i < warnings.length; ++i) {
-      let warning = warnings[i].text;
-      warning = warning.split('\n').join('\n      ');
-      console.log(`  ${i + 1}) ${YELLOW_COLOR}${warning}${RESET_COLOR}`);
-    }
-  }
-  let clearExit = messages.length === 0;
+  let clearExit = errors.length === 0;
   if (changedFiles) {
     if (clearExit)
       console.log(`${YELLOW_COLOR}Some files were updated.${RESET_COLOR}`);
     clearExit = false;
   }
-  console.log(`${errors.length} failures, ${warnings.length} warnings.`);
+  console.log(`${errors.length} failures.`);
   const runningTime = Date.now() - startTime;
   console.log(`DocLint Finished in ${runningTime / 1000} seconds`);
   process.exit(clearExit ? 0 : 1);
