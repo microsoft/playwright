@@ -424,7 +424,7 @@ it('should not throw "Invalid Interception Id" if the request was cancelled', as
   await page.setContent('<iframe></iframe>');
   let route = null;
   await page.route('**/*', async r => route = r);
-  page.$eval('iframe', (frame, url) => frame.src = url, server.EMPTY_PAGE),
+  page.$eval('iframe', (frame, url) => frame.src = url, server.EMPTY_PAGE);
   // Wait for request interception.
   await page.waitForEvent('request');
   // Delete frame to cause request to be canceled.

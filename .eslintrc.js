@@ -65,6 +65,7 @@ module.exports = {
         "radix": 2,
         "valid-typeof": 2,
         "no-implicit-globals": [2],
+        "no-unused-expressions": [2, { "allowShortCircuit": true, "allowTernary": true, "allowTaggedTemplates": true}],
 
         // es2015 features
         "require-yield": 2,

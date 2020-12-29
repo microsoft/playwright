@@ -111,7 +111,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     expect(selector).toBe('input[name="name"]');
 
     const messages: any[] = [];
-    page.on('console', message => messages.push(message)),
+    page.on('console', message => messages.push(message));
     await Promise.all([
       recorder.waitForActionPerformed(),
       recorder.waitForOutput('press'),
@@ -161,7 +161,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     const messages: any[] = [];
     page.on('console', message => {
       messages.push(message);
-    }),
+    });
     await Promise.all([
       recorder.waitForActionPerformed(),
       recorder.waitForOutput('press'),
@@ -182,7 +182,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     const messages: any[] = [];
     page.on('console', message => {
       messages.push(message);
-    }),
+    });
     await Promise.all([
       recorder.waitForActionPerformed(),
       recorder.waitForOutput('press'),
