@@ -21,13 +21,14 @@ const playwright = require('../../');
 const fs = require('fs');
 const path = require('path');
 const Source = require('./Source');
-const { parseMd, renderMd, applyTemplates, clone } = require('./../parse_md');
+const md = require('../markdown');
 const { spawnSync } = require('child_process');
 const preprocessor = require('./preprocessor');
-const mdBuilder = require('./MDBuilder');
+const { MDOutline } = require('./MDBuilder');
+const missingDocs = require('./missingDocs');
 
-/** @typedef {import('./Documentation').MarkdownNode} MarkdownNode */
 /** @typedef {import('./Documentation').Type} Type */
+/** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
@@ -56,21 +57,20 @@ async function run() {
   let changedFiles = false;
 
   const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
-  const body = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString();
   const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
   const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-links.md')).toString();
-  const params = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString();
-  const apiSpec = applyTemplates(parseMd(body), parseMd(params));
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
 
   // Produce api.md
   {
     const comment = '<!-- THIS FILE IS NOW GENERATED -->';
     {
-      const { outline } = mdBuilder(apiSpec, false);
       const signatures = outline.signatures;
+      /** @type {MarkdownNode[]} */
       const result = [];
       for (const clazz of outline.classesArray) {
         // Iterate over classes, create header node.
+        /** @type {MarkdownNode} */
         const classNode = { type: 'h3', text: `class: ${clazz.name}` };
         const match = clazz.name.match(/(JS|CDP|[A-Z])(.*)/);
         const varName = match[1].toLocaleLowerCase() + match[2];
@@ -81,10 +81,11 @@ async function run() {
           text: `[${clazz.name}]: #class-${clazz.name.toLowerCase()} "${clazz.name}"`
         });
         // Append class comments
-        classNode.children = (clazz.spec || []).map(c => clone(c));
+        classNode.children = (clazz.spec || []).map(c => md.clone(c));
 
         for (const member of clazz.membersArray) {
           // Iterate members
+          /** @type {MarkdownNode} */
           const memberNode = { type: 'h4', children: [] };
           if (member.kind === 'event') {
             memberNode.text = `${varName}.on('${member.name}')`;
@@ -112,7 +113,7 @@ async function run() {
           }
 
           // Append member doc
-          memberNode.children.push(...(member.spec || []).map(c => clone(c)));
+          memberNode.children.push(...(member.spec || []).map(c => md.clone(c)));
           classNode.children.push(memberNode);
         }
       }
@@ -120,7 +121,7 @@ async function run() {
         type: 'text',
         text: links
       });
-      api.setText([comment, header, renderMd(result, 10000), footer].join('\n'));
+      api.setText([comment, header, md.render(result), footer].join('\n'));
     }
   }
 
@@ -139,8 +140,7 @@ async function run() {
       errors.push(`WARN: updated ${source.projectPath()}`);
 
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-    const missingDocs = require('./missingDocs.js');
-    errors.push(...missingDocs(apiSpec, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
+    errors.push(...missingDocs(outline, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
 
     for (const source of mdSources) {
       if (!source.hasUpdatedText())
@@ -199,8 +199,9 @@ function renderProperty(name, type, spec) {
   if (type.properties && type.properties.length)
     children = type.properties.map(p => renderProperty(`\`${p.name}\``, p.type, p.spec))
   else if (spec && spec.length > 1)
-    children = spec.slice(1).map(s => clone(s));
+    children = spec.slice(1).map(s => md.clone(s));
 
+  /** @type {MarkdownNode} */
   const result = {
     type: 'li',
     liType: 'default',

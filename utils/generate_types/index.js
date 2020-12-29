@@ -22,7 +22,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const {parseOverrides} = require('./parseOverrides');
 const exported = require('./exported.json');
-const { parseMd, applyTemplates } = require('../parse_md');
+const { MDOutline } = require('../doclint/MDBuilder');
 
 const objectDefinitions = [];
 const handledMethods = new Set();
@@ -36,11 +36,9 @@ let hadChanges = false;
     fs.mkdirSync(typesDir)
   writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts'), 'utf8'));
   writeFile(path.join(typesDir, 'trace.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'trace', 'traceTypes.ts'), 'utf8'));
-  const apiBody = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString());
-  const apiParams = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString());
-  const api = applyTemplates(apiBody, apiParams);
-  const mdResult = require('../doclint/MDBuilder')(api, true);
-  documentation = mdResult.documentation;
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
+  outline.copyDocsFromSuperclasses([]);
+  documentation = outline.documentation;
 
   // Root module types are overridden.
   const playwrightClass = documentation.classes.get('Playwright');

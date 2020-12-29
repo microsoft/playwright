@@ -14,17 +14,14 @@
  * limitations under the License.
  */
 
-const fs = require('fs');
+// @ts-check
+
 const path = require('path');
-const { parseMd, applyTemplates } = require('../parse_md');
-const mdBuilder = require('./MDBuilder');
+const { MDOutline } = require('./MDBuilder');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
 {
-  const apiBody = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-body.md')).toString());
-  const apiParams = parseMd(fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-params.md')).toString());
-  const api = applyTemplates(apiBody, apiParams);
-  const { documentation } = mdBuilder(api, false);
+  const { documentation } = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
   const result = serialize(documentation);
   console.log(JSON.stringify(result));
 }
