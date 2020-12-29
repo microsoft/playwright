@@ -23,3 +23,31 @@ jobs:
     - run: npm ci
     - run: npm run build
     - run: npm run lint
+
+  build-driver-all64:
+    name: "build-driver-all64"
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: node utils/build/update_canary_version.js
+    - run: npm run build-driver-all64
+
+  build-driver-win32:
+    name: "build-driver-win32"
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 10.15
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: node utils/build/update_canary_version.js
+    - run: npm run build-driver-win32
