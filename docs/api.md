@@ -746,7 +746,7 @@ Removes a route created with [`browserContext.route(url, handler)`](#browsercont
 - `event` <[string]> Event name, same one would pass into `browserContext.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy value. Will throw an error if the context closes before the event is fired. Returns the event data value.
@@ -2041,7 +2041,7 @@ Video object associated with this page.
 - `event` <[string]> Event name, same one would pass into `page.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>>
 
 Returns the event data value.
@@ -4421,7 +4421,7 @@ Contains the URL of the WebSocket.
 - `event` <[string]> Event name, same one would pass into `webSocket.on(event)`.
 - `optionsOrPredicate` <[Function]|[Object]> Either a predicate that receives an event or an options object. Optional.
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`browserContext.setDefaultTimeout(timeout)`](#browsercontextsetdefaulttimeouttimeout).
 - returns: <[Promise]<[Object]>>
 
 Returns the event data value.

@@ -27,7 +27,7 @@ This object can be used to launch or connect to Chromium, returning instances of
 ## property: Playwright.devices
 - type: <[Object]>
 
-Returns a list of devices to be used with [`method: Browser.newContext`]() or [`method: Browser.newPage`](). Actual list of devices can be found in [src/server/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/server/deviceDescriptors.ts).
+Returns a list of devices to be used with [`method: Browser.newContext`] or [`method: Browser.newPage`]. Actual list of devices can be found in [src/server/deviceDescriptors.ts](https://github.com/Microsoft/playwright/blob/master/src/server/deviceDescriptors.ts).
 
 ```js
 const { webkit, devices } = require('playwright');
@@ -49,7 +49,7 @@ const iPhone = devices['iPhone 6'];
 - type: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 
-Playwright methods might throw errors if they are unable to fulfill a request. For example, [`method: Page.waitForSelector`]()
+Playwright methods might throw errors if they are unable to fulfill a request. For example, [`method: Page.waitForSelector`]
 might fail if the selector doesn't match any nodes during the given timeframe.
 
 For certain types of errors Playwright uses specific error classes.
@@ -84,8 +84,8 @@ This object can be used to launch or connect to WebKit, returning instances of [
 # class: Browser
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-A Browser is created when Playwright connects to a browser instance, either through [`method: BrowserType.launch`]() or
-[`method: BrowserType.connect`]().
+A Browser is created when Playwright connects to a browser instance, either through [`method: BrowserType.launch`] or
+[`method: BrowserType.connect`].
 
 An example of using a [Browser] to create a [Page]:
 
@@ -101,7 +101,7 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 ```
 
 See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [`method:
-BrowserType.connect`]() and [`method: BrowserType.launch`]() always return a specific browser instance, based on the
+BrowserType.connect`] and [`method: BrowserType.launch`] always return a specific browser instance, based on the
 browser being connected to or launched.
 
 <!-- GEN:toc -->
@@ -111,14 +111,14 @@ browser being connected to or launched.
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
 * Browser application is closed or crashed.
-* The [`method: Browser.close`]() method was called.
+* The [`method: Browser.close`] method was called.
 
 ## async method: Browser.close
 
-In case this browser is obtained using [`method: BrowserType.launch`](), closes the browser and all of its pages (if any
+In case this browser is obtained using [`method: BrowserType.launch`], closes the browser and all of its pages (if any
 were opened).
 
-In case this browser is obtained using [`method: BrowserType.connect`](), clears all created contexts belonging to this
+In case this browser is obtained using [`method: BrowserType.connect`], clears all created contexts belonging to this
 browser and disconnects from the browser server.
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
@@ -169,8 +169,8 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 Creates a new page in a new browser context. Closing this page will close the context as well.
 
 This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and
-testing frameworks should explicitly create [`method: Browser.newContext`]() followed by the [`method:
-BrowserContext.newPage`]() to control their exact life times.
+testing frameworks should explicitly create [`method: Browser.newContext`] followed by the [`method:
+BrowserContext.newPage`] to control their exact life times.
 
 ### option: Browser.newPage.-inline- = %%-shared-context-params-list-%%
 
@@ -212,13 +212,13 @@ await context.close();
 Emitted when Browser context gets closed. This might happen because of one of the following:
 * Browser context is closed.
 * Browser application is closed or crashed.
-* The [`method: Browser.close`]() method was called.
+* The [`method: Browser.close`] method was called.
 
 ## event: BrowserContext.page
 - type: <[Page]>
 
 The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
-also fire for popup pages. See also [`event: Page.popup`]() to receive events about popups relevant to a specific page.
+also fire for popup pages. See also [`event: Page.popup`] to receive events about popups relevant to a specific page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -232,13 +232,13 @@ const [page] = await Promise.all([
 console.log(await page.evaluate('location.href'));
 ```
 
-> **NOTE** Use [`method: Page.waitForLoadState`]() to wait until the page gets to a particular state (you should not
+> **NOTE** Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
 need it in most cases).
 
 ## async method: BrowserContext.addCookies
 
 Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
-obtained via [`method: BrowserContext.cookies`]().
+obtained via [`method: BrowserContext.cookies`].
 
 ```js
 await browserContext.addCookies([cookieObject1, cookieObject2]);
@@ -279,8 +279,8 @@ await browserContext.addInitScript({
 });
 ```
 
-> **NOTE** The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`]() and
-[`method: Page.addInitScript`]() is not defined.
+> **NOTE** The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
+[`method: Page.addInitScript`] is not defined.
 
 ### param: BrowserContext.addInitScript.script
 - `script` <[function]|[string]|[Object]>
@@ -292,7 +292,7 @@ Script to be evaluated in all pages in the browser context.
 ### param: BrowserContext.addInitScript.arg
 - `arg` <[Serializable]>
 
-Optional argument to pass to [`param: script`]() (only supported when passing a function).
+Optional argument to pass to [`param: script`] (only supported when passing a function).
 
 ## method: BrowserContext.browser
 - returns: <[null]|[Browser]>
@@ -341,14 +341,14 @@ Optional list of URLs.
 
 ## async method: BrowserContext.exposeBinding
 
-The method adds a function called [`param: name`]() on the `window` object of every frame in every page in the context.
-When called, the function executes [`param: playwrightBinding`]() and returns a [Promise] which resolves to the return
-value of [`param: playwrightBinding`](). If the [`param: playwrightBinding`]() returns a [Promise], it will be awaited.
+The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
+When called, the function executes [`param: playwrightBinding`] and returns a [Promise] which resolves to the return
+value of [`param: playwrightBinding`]. If the [`param: playwrightBinding`] returns a [Promise], it will be awaited.
 
-The first argument of the [`param: playwrightBinding`]() function contains information about the caller: `{
+The first argument of the [`param: playwrightBinding`] function contains information about the caller: `{
 browserContext: BrowserContext, page: Page, frame: Frame }`.
 
-See [`method: Page.exposeBinding`]() for page-only version.
+See [`method: Page.exposeBinding`] for page-only version.
 
 An example of exposing page URL to all frames in all pages in the context:
 
@@ -406,13 +406,13 @@ supported. When passing by value, multiple arguments are supported.
 
 ## async method: BrowserContext.exposeFunction
 
-The method adds a function called [`param: name`]() on the `window` object of every frame in every page in the context.
-When called, the function executes [`param: playwrightFunction`]() and returns a [Promise] which resolves to the return
-value of [`param: playwrightFunction`]().
+The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
+When called, the function executes [`param: playwrightFunction`] and returns a [Promise] which resolves to the return
+value of [`param: playwrightFunction`].
 
-If the [`param: playwrightFunction`]() returns a [Promise], it will be awaited.
+If the [`param: playwrightFunction`] returns a [Promise], it will be awaited.
 
-See [`method: Page.exposeFunction`]() for page-only version.
+See [`method: Page.exposeFunction`] for page-only version.
 
 An example of adding an `md5` function to all pages in the context:
 
@@ -488,7 +488,7 @@ Creates a new page in the browser context.
 - returns: <[Array]<[Page]>>
 
 Returns all open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can
-find them using [`method: ChromiumBrowserContext.backgroundPages`]().
+find them using [`method: ChromiumBrowserContext.backgroundPages`].
 
 ## async method: BrowserContext.route
 
@@ -515,7 +515,7 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
-Page routes (set up with [`method: Page.route`]()) take precedence over browser context routes when request matches both
+Page routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both
 handlers.
 
 > **NOTE** Enabling routing disables http cache.
@@ -533,15 +533,15 @@ handler function to route the request.
 ## method: BrowserContext.setDefaultNavigationTimeout
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
-* [`method: Page.goBack`]()
-* [`method: Page.goForward`]()
-* [`method: Page.goto`]()
-* [`method: Page.reload`]()
-* [`method: Page.setContent`]()
-* [`method: Page.waitForNavigation`]()
+* [`method: Page.goBack`]
+* [`method: Page.goForward`]
+* [`method: Page.goto`]
+* [`method: Page.reload`]
+* [`method: Page.setContent`]
+* [`method: Page.waitForNavigation`]
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`]() and [`method: Page.setDefaultTimeout`]() take priority over
-[`method: BrowserContext.setDefaultNavigationTimeout`]().
+> **NOTE** [`method: Page.setDefaultNavigationTimeout`] and [`method: Page.setDefaultTimeout`] take priority over
+[`method: BrowserContext.setDefaultNavigationTimeout`].
 
 ### param: BrowserContext.setDefaultNavigationTimeout.timeout
 - `timeout` <[number]>
@@ -550,10 +550,10 @@ Maximum navigation time in milliseconds
 
 ## method: BrowserContext.setDefaultTimeout
 
-This setting will change the default maximum time for all the methods accepting [`param: timeout`]() option.
+This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`](), [`method: Page.setDefaultTimeout`]() and [`method:
-BrowserContext.setDefaultNavigationTimeout`]() take priority over [`method: BrowserContext.setDefaultTimeout`]().
+> **NOTE** [`method: Page.setDefaultNavigationTimeout`], [`method: Page.setDefaultTimeout`] and [`method:
+BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: BrowserContext.setDefaultTimeout`].
 
 ### param: BrowserContext.setDefaultTimeout.timeout
 - `timeout` <[number]>
@@ -563,7 +563,7 @@ Maximum time in milliseconds
 ## async method: BrowserContext.setExtraHTTPHeaders
 
 The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged
-with page-specific extra HTTP headers set with [`method: Page.setExtraHTTPHeaders`](). If page overrides a particular
+with page-specific extra HTTP headers set with [`method: Page.setExtraHTTPHeaders`]. If page overrides a particular
 header, page-specific header value will be used instead of the browser context header value.
 
 > **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
@@ -581,7 +581,7 @@ Sets the context's geolocation. Passing `null` or `undefined` emulates position 
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
-> **NOTE** Consider using [`method: BrowserContext.grantPermissions`]() to grant permissions for the browser context
+> **NOTE** Consider using [`method: BrowserContext.grantPermissions`] to grant permissions for the browser context
 pages to read its geolocation.
 
 ### param: BrowserContext.setGeolocation.geolocation
@@ -632,25 +632,25 @@ Returns storage state for this browser context, contains current cookies and loc
 ### option: BrowserContext.storageState.path
 - `path` <[string]>
 
-The file path to save the storage state to. If [`option: path`]() is a relative path, then it is resolved relative to
+The file path to save the storage state to. If [`option: path`] is a relative path, then it is resolved relative to
 [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage
 state is still returned, but won't be saved to the disk.
 
 ## async method: BrowserContext.unroute
 
-Removes a route created with [`method: BrowserContext.route`](). When [`param: handler`]() is not specified, removes all
-routes for the [`param: url`]().
+Removes a route created with [`method: BrowserContext.route`]. When [`param: handler`] is not specified, removes all
+routes for the [`param: url`].
 
 ### param: BrowserContext.unroute.url
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [`method:
-BrowserContext.route`]().
+BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
 - `handler` <[function]\([Route], [Request]\)>
 
-Optional handler function used to register a routing with [`method: BrowserContext.route`]().
+Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ## async method: BrowserContext.waitForEvent
 - returns: <[Object]>
@@ -671,7 +671,7 @@ Event name, same one would pass into `browserContext.on(event)`.
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -778,7 +778,7 @@ await new Promise((resolve, reject) => {
 - type: <[Dialog]>
 
 Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
-to the dialog via [`method: Dialog.accept`]() or [`method: Dialog.dismiss`]() methods.
+to the dialog via [`method: Dialog.accept`] or [`method: Dialog.dismiss`] methods.
 
 ## event: Page.domcontentloaded
 
@@ -799,7 +799,7 @@ download is not performed and user has no access to the downloaded files.
 - type: <[FileChooser]>
 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
-respond to it via setting the input files using [`method: FileChooser.setFiles`]() that can be uploaded after that.
+respond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.
 
 ```js
 page.on('filechooser', async (fileChooser) => {
@@ -835,7 +835,7 @@ Emitted when an uncaught exception happens within the page.
 - type: <[Page]>
 
 Emitted when the page opens a new tab or window. This event is emitted in addition to the [`event:
-BrowserContext.page`](), but only for popups relevant to this page.
+BrowserContext.page`], but only for popups relevant to this page.
 
 The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
 popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -849,14 +849,14 @@ const [popup] = await Promise.all([
 console.log(await popup.evaluate('location.href'));
 ```
 
-> **NOTE** Use [`method: Page.waitForLoadState`]() to wait until the page gets to a particular state (you should not
+> **NOTE** Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
 need it in most cases).
 
 ## event: Page.request
 - type: <[Request]>
 
 Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-[`method: Page.route`]() or [`method: BrowserContext.route`]().
+[`method: Page.route`] or [`method: BrowserContext.route`].
 
 ## event: Page.requestfailed
 - type: <[Request]>
@@ -864,7 +864,7 @@ Emitted when a page issues a request. The [request] object is read-only. In orde
 Emitted when a request fails, for example by timing out.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-will complete with [`event: Page.requestfinished`]() event and not with [`event: Page.requestfailed`]().
+will complete with [`event: Page.requestfinished`] event and not with [`event: Page.requestfailed`].
 
 ## event: Page.requestfinished
 - type: <[Request]>
@@ -895,7 +895,7 @@ page.
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
 return value resolves to `null`.
 
-Shortcut for main frame's [`method: Frame.$`]().
+Shortcut for main frame's [`method: Frame.$`].
 
 ### param: Page.$.selector = %%-query-selector-%%
 
@@ -905,7 +905,7 @@ Shortcut for main frame's [`method: Frame.$`]().
 The method finds all elements matching the specified selector within the page. If no elements match the selector, the
 return value resolves to `[]`.
 
-Shortcut for main frame's [`method: Frame.$$`]().
+Shortcut for main frame's [`method: Frame.$$`].
 
 ### param: Page.$$.selector = %%-query-selector-%%
 
@@ -913,10 +913,10 @@ Shortcut for main frame's [`method: Frame.$$`]().
 - returns: <[Serializable]>
 
 The method finds an element matching the specified selector within the page and passes it as a first argument to
-[`param: pageFunction`](). If no elements match the selector, the method throws an error. Returns the value of [`param:
-pageFunction`]().
+[`param: pageFunction`]. If no elements match the selector, the method throws an error. Returns the value of [`param:
+pageFunction`].
 
-If [`param: pageFunction`]() returns a [Promise], then [`method: Page.$eval`]() would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then [`method: Page.$eval`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -927,7 +927,7 @@ const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
 const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
 ```
 
-Shortcut for main frame's [`method: Frame.$eval`]().
+Shortcut for main frame's [`method: Frame.$eval`].
 
 ### param: Page.$eval.selector = %%-query-selector-%%
 
@@ -939,15 +939,15 @@ Function to be evaluated in browser context
 ### param: Page.$eval.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Page.$$eval
 - returns: <[Serializable]>
 
 The method finds all elements matching the specified selector within the page and passes an array of matched elements as
-a first argument to [`param: pageFunction`](). Returns the result of [`param: pageFunction`]() invocation.
+a first argument to [`param: pageFunction`]. Returns the result of [`param: pageFunction`] invocation.
 
-If [`param: pageFunction`]() returns a [Promise], then [`method: Page.$$eval`]() would wait for the promise to resolve and return
+If [`param: pageFunction`] returns a [Promise], then [`method: Page.$$eval`] would wait for the promise to resolve and return
 its value.
 
 Examples:
@@ -966,7 +966,7 @@ Function to be evaluated in browser context
 ### param: Page.$$eval.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## property: Page.accessibility
 - type: <[Accessibility]>
@@ -991,8 +991,8 @@ const preloadFile = fs.readFileSync('./preload.js', 'utf8');
 await page.addInitScript(preloadFile);
 ```
 
-> **NOTE** The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`]() and
-[`method: Page.addInitScript`]() is not defined.
+> **NOTE** The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
+[`method: Page.addInitScript`] is not defined.
 
 ### param: Page.addInitScript.script
 - `script` <[function]|[string]|[Object]>
@@ -1004,7 +1004,7 @@ Script to be evaluated in the page.
 ### param: Page.addInitScript.arg
 - `arg` <[Serializable]>
 
-Optional argument to pass to [`param: script`]() (only supported when passing a function).
+Optional argument to pass to [`param: script`] (only supported when passing a function).
 
 ## async method: Page.addScriptTag
 - returns: <[ElementHandle]>
@@ -1012,7 +1012,7 @@ Optional argument to pass to [`param: script`]() (only supported when passing a 
 Adds a `<script>` tag into the page with the desired url or content. Returns the added tag when the script's onload
 fires or when the script content was injected into frame.
 
-Shortcut for main frame's [`method: Frame.addScriptTag`]().
+Shortcut for main frame's [`method: Frame.addScriptTag`].
 
 ### param: Page.addScriptTag.params
 - `params` <[Object]>
@@ -1027,7 +1027,7 @@ Shortcut for main frame's [`method: Frame.addScriptTag`]().
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
 
-Shortcut for main frame's [`method: Frame.addStyleTag`]().
+Shortcut for main frame's [`method: Frame.addStyleTag`].
 
 ### param: Page.addStyleTag.params
 - `params` <[Object]>
@@ -1041,19 +1041,19 @@ Brings page to front (activates tab).
 
 ## async method: Page.check
 
-This method checks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
+This method checks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-Shortcut for main frame's [`method: Frame.check`]().
+Shortcut for main frame's [`method: Frame.check`].
 
 ### param: Page.check.selector = %%-input-selector-%%
 
@@ -1065,17 +1065,17 @@ Shortcut for main frame's [`method: Frame.check`]().
 
 ## async method: Page.click
 
-This method clicks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method clicks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-Shortcut for main frame's [`method: Frame.click`]().
+Shortcut for main frame's [`method: Frame.click`].
 
 ### param: Page.click.selector = %%-input-selector-%%
 
@@ -1097,14 +1097,14 @@ Shortcut for main frame's [`method: Frame.click`]().
 
 ## async method: Page.close
 
-If [`option: runBeforeUnload`]() is `false`, does not run any unload handlers and waits for the page to be closed. If
-[`option: runBeforeUnload`]() is `true` the method will run unload handlers, but will **not** wait for the page to
+If [`option: runBeforeUnload`] is `false`, does not run any unload handlers and waits for the page to be closed. If
+[`option: runBeforeUnload`] is `true` the method will run unload handlers, but will **not** wait for the page to
 close.
 
 By default, `page.close()` **does not** run `beforeunload` handlers.
 
-> **NOTE** if [`option: runBeforeUnload`]() is passed as true, a `beforeunload` dialog might be summoned
-> and should be handled manually via [`event: Page.dialog`]() event.
+> **NOTE** if [`option: runBeforeUnload`] is passed as true, a `beforeunload` dialog might be summoned
+> and should be handled manually via [`event: Page.dialog`] event.
 
 ### option: Page.close.runBeforeUnload
 - `runBeforeUnload` <[boolean]>
@@ -1130,19 +1130,19 @@ Browser-specific Coverage implementation, only available for Chromium atm. See
 
 ## async method: Page.dblclick
 
-This method double clicks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method double clicks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to double click in the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 
-Shortcut for main frame's [`method: Frame.dblclick`]().
+Shortcut for main frame's [`method: Frame.dblclick`].
 
 ### param: Page.dblclick.selector = %%-input-selector-%%
 
@@ -1170,10 +1170,10 @@ is dispatched. This is equivalend to calling
 await page.dispatchEvent('button#submit', 'click');
 ```
 
-Under the hood, it creates an instance of an event based on the given [`param: type`](), initializes it with [`param:
-eventInit`]() properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with [`param:
+eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
 
-Since [`param: eventInit`]() is event-specific, please refer to the events documentation for the lists of initial
+Since [`param: eventInit`] is event-specific, please refer to the events documentation for the lists of initial
 properties:
 * [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
 * [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
@@ -1244,7 +1244,7 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 ## async method: Page.evaluate
 - returns: <[Serializable]>
 
-Returns the value of the [`param: pageFunction`]() invocation.
+Returns the value of the [`param: pageFunction`] invocation.
 
 If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to
 resolve and return its value.
@@ -1253,7 +1253,7 @@ If the function passed to the `page.evaluate` returns a non-[Serializable] value
 `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
 `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
-Passing argument to [`param: pageFunction`]():
+Passing argument to [`param: pageFunction`]:
 
 ```js
 const result = await page.evaluate(([x, y]) => {
@@ -1278,7 +1278,7 @@ const html = await page.evaluate(([body, suffix]) => body.innerHTML + suffix, [b
 await bodyHandle.dispose();
 ```
 
-Shortcut for main frame's [`method: Frame.evaluate`]().
+Shortcut for main frame's [`method: Frame.evaluate`].
 
 ### param: Page.evaluate.pageFunction
 - `pageFunction` <[function]|[string]>
@@ -1288,12 +1288,12 @@ Function to be evaluated in the page context
 ### param: Page.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Page.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the value of the [`param: pageFunction`]() invocation as in-page object (JSHandle).
+Returns the value of the [`param: pageFunction`] invocation as in-page object (JSHandle).
 
 The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page
 object (JSHandle).
@@ -1324,18 +1324,18 @@ Function to be evaluated in the page context
 ### param: Page.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Page.exposeBinding
 
-The method adds a function called [`param: name`]() on the `window` object of every frame in this page. When called, the
-function executes [`param: playwrightBinding`]() and returns a [Promise] which resolves to the return value of [`param:
-playwrightBinding`](). If the [`param: playwrightBinding`]() returns a [Promise], it will be awaited.
+The method adds a function called [`param: name`] on the `window` object of every frame in this page. When called, the
+function executes [`param: playwrightBinding`] and returns a [Promise] which resolves to the return value of [`param:
+playwrightBinding`]. If the [`param: playwrightBinding`] returns a [Promise], it will be awaited.
 
-The first argument of the [`param: playwrightBinding`]() function contains information about the caller: `{
+The first argument of the [`param: playwrightBinding`] function contains information about the caller: `{
 browserContext: BrowserContext, page: Page, frame: Frame }`.
 
-See [`method: BrowserContext.exposeBinding`]() for the context-wide version.
+See [`method: BrowserContext.exposeBinding`] for the context-wide version.
 
 > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
 
@@ -1395,13 +1395,13 @@ supported. When passing by value, multiple arguments are supported.
 
 ## async method: Page.exposeFunction
 
-The method adds a function called [`param: name`]() on the `window` object of every frame in the page. When called, the
-function executes [`param: playwrightFunction`]() and returns a [Promise] which resolves to the return value of [`param:
-playwrightFunction`]().
+The method adds a function called [`param: name`] on the `window` object of every frame in the page. When called, the
+function executes [`param: playwrightFunction`] and returns a [Promise] which resolves to the return value of [`param:
+playwrightFunction`].
 
-If the [`param: playwrightFunction`]() returns a [Promise], it will be awaited.
+If the [`param: playwrightFunction`] returns a [Promise], it will be awaited.
 
-See [`method: BrowserContext.exposeFunction`]() for context-wide exposed function.
+See [`method: BrowserContext.exposeFunction`] for context-wide exposed function.
 
 > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
 
@@ -1469,14 +1469,14 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.fill
 
-This method waits for an element matching [`param: selector`](), waits for [actionability](./actionability.md) checks,
-focuses the element, fills it and triggers an `input` event after filling. If the element matching [`param: selector`]()
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks,
+focuses the element, fills it and triggers an `input` event after filling. If the element matching [`param: selector`]
 is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an
 empty string to clear the input field.
 
-To send fine-grained keyboard events, use [`method: Page.type`]().
+To send fine-grained keyboard events, use [`method: Page.type`].
 
-Shortcut for main frame's [`method: Frame.fill`]()
+Shortcut for main frame's [`method: Frame.fill`]
 
 ### param: Page.fill.selector = %%-input-selector-%%
 
@@ -1491,10 +1491,10 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Page.focus
 
-This method fetches an element with [`param: selector`]() and focuses it. If there's no element matching [`param:
-selector`](), the method waits until a matching element appears in the DOM.
+This method fetches an element with [`param: selector`] and focuses it. If there's no element matching [`param:
+selector`], the method waits until a matching element appears in the DOM.
 
-Shortcut for main frame's [`method: Frame.focus`]().
+Shortcut for main frame's [`method: Frame.focus`].
 
 ### param: Page.focus.selector = %%-input-selector-%%
 
@@ -1572,20 +1572,20 @@ last redirect.
 `page.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
 * target URL is invalid.
-* the [`option: timeout`]() is exceeded during navigation.
+* the [`option: timeout`] is exceeded during navigation.
 * the remote server does not respond or is unreachable.
 * the main resource failed to load.
 
 `page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
 Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [`method:
-Response.status`]().
+Response.status`].
 
 > **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
 `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
 > **NOTE** Headless mode doesn't support navigation to a PDF document. See the [upstream
 issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
 
-Shortcut for main frame's [`method: Frame.goto`]()
+Shortcut for main frame's [`method: Frame.goto`]
 
 ### param: Page.goto.url
 - `url` <[string]>
@@ -1600,21 +1600,21 @@ URL to navigate page to. The url should include scheme, e.g. `https://`.
 - `referer` <[string]>
 
 Referer header value. If provided it will take preference over the referer header value set by [`method:
-Page.setExtraHTTPHeaders`]().
+Page.setExtraHTTPHeaders`].
 
 ## async method: Page.hover
 
-This method hovers over an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method hovers over an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to hover over the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-Shortcut for main frame's [`method: Frame.hover`]().
+Shortcut for main frame's [`method: Frame.hover`].
 
 ### param: Page.hover.selector = %%-input-selector-%%
 
@@ -1673,7 +1673,7 @@ Returns the PDF buffer.
 > **NOTE** Generating a pdf is currently only supported in Chromium headless.
 
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [`method:
-Page.emulateMedia`]() before calling `page.pdf()`:
+Page.emulateMedia`] before calling `page.pdf()`:
 
 > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
 [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to
@@ -1685,7 +1685,7 @@ await page.emulateMedia({media: 'screen'});
 await page.pdf({path: 'page.pdf'});
 ```
 
-The [`option: width`](), [`option: height`](), and [`option: margin`]() options accept values labeled with units.
+The [`option: width`], [`option: height`], and [`option: margin`] options accept values labeled with units.
 Unlabeled values are treated as pixels.
 
 A few examples:
@@ -1699,7 +1699,7 @@ All possible units are:
 * `cm` - centimeter
 * `mm` - millimeter
 
-The [`option: format`]() options are:
+The [`option: format`] options are:
 * `Letter`: 8.5in x 11in
 * `Legal`: 8.5in x 14in
 * `Tabloid`: 11in x 17in
@@ -1712,14 +1712,14 @@ The [`option: format`]() options are:
 * `A5`: 5.83in x 8.27in
 * `A6`: 4.13in x 5.83in
 
-> **NOTE** [`option: headerTemplate`]() and [`option: footerTemplate`]() markup have the following limitations:
+> **NOTE** [`option: headerTemplate`] and [`option: footerTemplate`] markup have the following limitations:
 > 1. Script tags inside templates are not evaluated.
 > 2. Page styles are not visible inside templates.
 
 ### option: Page.pdf.path
 - `path` <[string]>
 
-The file path to save the PDF to. If [`option: path`]() is a relative path, then it is resolved relative to the current
+The file path to save the PDF to. If [`option: path`] is a relative path, then it is resolved relative to the current
 working directory. If no path is provided, the PDF won't be saved to the disk.
 
 ### option: Page.pdf.scale
@@ -1746,7 +1746,7 @@ into them:
 ### option: Page.pdf.footerTemplate
 - `footerTemplate` <[string]>
 
-HTML template for the print footer. Should use the same format as the [`option: headerTemplate`]().
+HTML template for the print footer. Should use the same format as the [`option: headerTemplate`].
 
 ### option: Page.pdf.printBackground
 - `printBackground` <[boolean]>
@@ -1766,7 +1766,7 @@ Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, whic
 ### option: Page.pdf.format
 - `format` <[string]>
 
-Paper format. If set, takes priority over [`option: width`]() or [`option: height`]() options. Defaults to 'Letter'.
+Paper format. If set, takes priority over [`option: width`] or [`option: height`] options. Defaults to 'Letter'.
 
 ### option: Page.pdf.width
 - `width` <[string]|[number]>
@@ -1790,16 +1790,16 @@ Paper margins, defaults to none.
 ### option: Page.pdf.preferCSSPageSize
 - `preferCSSPageSize` <[boolean]>
 
-Give any CSS `@page` size declared in the page priority over what is declared in [`option: width`]() and [`option:
-height`]() or [`option: format`]() options. Defaults to `false`, which will scale the content to fit the paper size.
+Give any CSS `@page` size declared in the page priority over what is declared in [`option: width`] and [`option:
+height`] or [`option: format`] options. Defaults to `false`, which will scale the content to fit the paper size.
 
 ## async method: Page.press
 
-Focuses the element, and then uses [`method: Keyboard.down`]() and [`method: Keyboard.up`]().
+Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
-[`param: key`]() can specify the intended
+[`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
-generate the text for. A superset of the [`param: key`]() values can be found
+generate the text for. A superset of the [`param: key`] values can be found
 [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
@@ -1807,9 +1807,9 @@ generate the text for. A superset of the [`param: key`]() values can be found
 
 Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
-Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
+Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
-If [`param: key`]() is a single character, it is case-sensitive, so the values `a` and `A` will generate different
+If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
 Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
@@ -1879,7 +1879,7 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
-Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]()) when request
+Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request
 matches both handlers.
 
 > **NOTE** Enabling routing disables http cache.
@@ -1905,7 +1905,7 @@ discussion.
 ### option: Page.screenshot.path
 - `path` <[string]>
 
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`]() is a
+The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
 saved to the disk.
 
@@ -1948,7 +1948,7 @@ Defaults to `false`.
 Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`](), the method throws an error.
+matching [`param: selector`], the method throws an error.
 
 ```js
 // single selection matching the value
@@ -1962,7 +1962,7 @@ page.selectOption('select#colors', ['red', 'green', 'blue']);
 
 ```
 
-Shortcut for main frame's [`method: Frame.selectOption`]()
+Shortcut for main frame's [`method: Frame.selectOption`]
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
 
@@ -1994,15 +1994,15 @@ HTML markup to assign to the page.
 ## method: Page.setDefaultNavigationTimeout
 
 This setting will change the default maximum navigation time for the following methods and related shortcuts:
-* [`method: Page.goBack`]()
-* [`method: Page.goForward`]()
-* [`method: Page.goto`]()
-* [`method: Page.reload`]()
-* [`method: Page.setContent`]()
-* [`method: Page.waitForNavigation`]()
+* [`method: Page.goBack`]
+* [`method: Page.goForward`]
+* [`method: Page.goto`]
+* [`method: Page.reload`]
+* [`method: Page.setContent`]
+* [`method: Page.waitForNavigation`]
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`]() takes priority over [`method: Page.setDefaultTimeout`](),
-[`method: BrowserContext.setDefaultTimeout`]() and [`method: BrowserContext.setDefaultNavigationTimeout`]().
+> **NOTE** [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`],
+[`method: BrowserContext.setDefaultTimeout`] and [`method: BrowserContext.setDefaultNavigationTimeout`].
 
 ### param: Page.setDefaultNavigationTimeout.timeout
 - `timeout` <[number]>
@@ -2011,9 +2011,9 @@ Maximum navigation time in milliseconds
 
 ## method: Page.setDefaultTimeout
 
-This setting will change the default maximum time for all the methods accepting [`param: timeout`]() option.
+This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`]() takes priority over [`method: Page.setDefaultTimeout`]().
+> **NOTE** [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`].
 
 ### param: Page.setDefaultTimeout.timeout
 - `timeout` <[number]>
@@ -2033,7 +2033,7 @@ An object containing additional HTTP headers to be sent with every request. All 
 
 ## async method: Page.setInputFiles
 
-This method expects [`param: selector`]() to point to an [input
+This method expects [`param: selector`] to point to an [input
 element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
@@ -2050,7 +2050,7 @@ are resolved relative to the the current working directory. For empty array, cle
 ## async method: Page.setViewportSize
 
 In the case of multiple pages in a single browser, each page can have its own viewport size. However, [`method:
-Browser.newContext`]() allows to set viewport size (and more) for all pages in the context at once.
+Browser.newContext`] allows to set viewport size (and more) for all pages in the context at once.
 
 `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
 viewport size before navigating to the page.
@@ -2071,19 +2071,19 @@ await page.goto('https://example.com');
 
 ## async method: Page.tap
 
-This method taps an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method taps an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.touchscreen`]() to tap the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
 
-Shortcut for main frame's [`method: Frame.tap`]().
+Shortcut for main frame's [`method: Frame.tap`].
 
 ### param: Page.tap.selector = %%-input-selector-%%
 
@@ -2109,7 +2109,7 @@ Returns `element.textContent`.
 ## async method: Page.title
 - returns: <[string]>
 
-Returns the page's title. Shortcut for main frame's [`method: Frame.title`]().
+Returns the page's title. Shortcut for main frame's [`method: Frame.title`].
 
 ## property: Page.touchscreen
 - type: <[Touchscreen]>
@@ -2117,16 +2117,16 @@ Returns the page's title. Shortcut for main frame's [`method: Frame.title`]().
 ## async method: Page.type
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
-fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`]().
+fine-grained keyboard events. To fill values in form fields, use [`method: Page.fill`].
 
-To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`]().
+To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
 ```js
 await page.type('#mytextarea', 'Hello'); // Types instantly
 await page.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
 ```
 
-Shortcut for main frame's [`method: Frame.type`]().
+Shortcut for main frame's [`method: Frame.type`].
 
 ### param: Page.type.selector = %%-input-selector-%%
 
@@ -2146,19 +2146,19 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Page.uncheck
 
-This method unchecks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
+This method unchecks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-Shortcut for main frame's [`method: Frame.uncheck`]().
+Shortcut for main frame's [`method: Frame.uncheck`].
 
 ### param: Page.uncheck.selector = %%-input-selector-%%
 
@@ -2170,8 +2170,8 @@ Shortcut for main frame's [`method: Frame.uncheck`]().
 
 ## async method: Page.unroute
 
-Removes a route created with [`method: Page.route`](). When [`param: handler`]() is not specified, removes all routes
-for the [`param: url`]().
+Removes a route created with [`method: Page.route`]. When [`param: handler`] is not specified, removes all routes
+for the [`param: url`].
 
 ### param: Page.unroute.url
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
@@ -2186,7 +2186,7 @@ Optional handler function to route the request.
 ## method: Page.url
 - returns: <[string]>
 
-Shortcut for main frame's [`method: Frame.url`]().
+Shortcut for main frame's [`method: Frame.url`].
 
 ## method: Page.video
 - returns: <[null]|[Video]>
@@ -2214,14 +2214,14 @@ Event name, same one would pass into `page.on(event)`.
 ### param: Page.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
 ## async method: Page.waitForFunction
 - returns: <[JSHandle]>
 
-Returns when the [`param: pageFunction`]() returns a truthy value. It resolves to a JSHandle of the truthy value.
+Returns when the [`param: pageFunction`] returns a truthy value. It resolves to a JSHandle of the truthy value.
 
 The `waitForFunction` can be used to observe viewport size change:
 
@@ -2245,7 +2245,7 @@ const selector = '.foo';
 await page.waitForFunction(selector => !!document.querySelector(selector), selector);
 ```
 
-Shortcut for main frame's [`method: Frame.waitForFunction`]().
+Shortcut for main frame's [`method: Frame.waitForFunction`].
 
 ### param: Page.waitForFunction.pageFunction
 - `pageFunction` <[function]|[string]>
@@ -2255,13 +2255,13 @@ Function to be evaluated in browser context
 ### param: Page.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ### option: Page.waitForFunction.polling
 - `polling` <[number]|"raf">
 
-If [`option: polling`]() is `'raf'`, then [`param: pageFunction`]() is constantly executed in `requestAnimationFrame`
-callback. If [`option: polling`]() is a number, then it is treated as an interval in milliseconds at which the function
+If [`option: polling`] is `'raf'`, then [`param: pageFunction`] is constantly executed in `requestAnimationFrame`
+callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
 would be executed. Defaults to `raf`.
 
 ### option: Page.waitForFunction.timeout = %%-wait-for-timeout-%%
@@ -2287,7 +2287,7 @@ await popup.waitForLoadState('domcontentloaded'); // The promise resolves after 
 console.log(await popup.title()); // Popup is ready to use.
 ```
 
-Shortcut for main frame's [`method: Frame.waitForLoadState`]().
+Shortcut for main frame's [`method: Frame.waitForLoadState`].
 
 ### param: Page.waitForLoadState.state
 - `state` <"load"|"domcontentloaded"|"networkidle">
@@ -2321,7 +2321,7 @@ const [response] = await Promise.all([
 **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
 considered a navigation.
 
-Shortcut for main frame's [`method: Frame.waitForNavigation`]().
+Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
@@ -2356,7 +2356,7 @@ Request URL string, regex or predicate receiving [Request] object.
 - `timeout` <[number]>
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
-changed by using the [`method: Page.setDefaultTimeout`]() method.
+changed by using the [`method: Page.setDefaultTimeout`] method.
 
 ## async method: Page.waitForResponse
 - returns: <[Response]>
@@ -2378,17 +2378,17 @@ Request URL string, regex or predicate receiving [Response] object.
 - `timeout` <[number]>
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
-changed by using the [`method: BrowserContext.setDefaultTimeout`]() or [`method: Page.setDefaultTimeout`]() methods.
+changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
 
 ## async method: Page.waitForSelector
 - returns: <[null]|[ElementHandle]>
 
-Returns when element specified by selector satisfies [`option: state`]() option. Returns `null` if waiting for `hidden`
+Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden`
 or `detached`.
 
-Wait for the [`param: selector`]() to satisfy [`option: state`]() option (either appear/disappear from dom, or become
-visible/hidden). If at the moment of calling the method [`param: selector`]() already satisfies the condition, the
-method will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`]()
+Wait for the [`param: selector`] to satisfy [`option: state`] option (either appear/disappear from dom, or become
+visible/hidden). If at the moment of calling the method [`param: selector`] already satisfies the condition, the
+method will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`]
 milliseconds, the function will throw.
 
 This method works across navigations:
@@ -2418,7 +2418,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 
 ## async method: Page.waitForTimeout
 
-Waits for the given [`param: timeout`]() in milliseconds.
+Waits for the given [`param: timeout`] in milliseconds.
 
 Note that `page.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to be
 flaky. Use signals such as network events, selectors becoming visible and others instead.
@@ -2428,7 +2428,7 @@ flaky. Use signals such as network events, selectors becoming visible and others
 await page.waitForTimeout(1000);
 ```
 
-Shortcut for main frame's [`method: Frame.waitForTimeout`]().
+Shortcut for main frame's [`method: Frame.waitForTimeout`].
 
 ### param: Page.waitForTimeout.timeout
 - `timeout` <[number]>
@@ -2445,13 +2445,13 @@ associated with the page.
 
 # class: Frame
 
-At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`]() and [`method:
-Frame.childFrames`]() methods.
+At every point of time, page exposes its current frame tree via the [`method: Page.mainFrame`] and [`method:
+Frame.childFrames`] methods.
 
 [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
-* [`event: Page.frameattached`]() - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
-* [`event: Page.framenavigated`]() - fired when the frame commits navigation to a different URL.
-* [`event: Page.framedetached`]() - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
+* [`event: Page.frameattached`] - fired when the frame gets attached to the page. A Frame can be attached to the page only once.
+* [`event: Page.framenavigated`] - fired when the frame commits navigation to a different URL.
+* [`event: Page.framedetached`] - fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
 
 An example of dumping frame tree:
 
@@ -2508,13 +2508,13 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 ## async method: Frame.$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
-[`param: pageFunction`](). See [Working with selectors](#working-with-selectors) for more details. If no elements match
+[`param: pageFunction`]. See [Working with selectors](#working-with-selectors) for more details. If no elements match
 the selector, the method throws an error.
 
-If [`param: pageFunction`]() returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
+If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
 its value.
 
 Examples:
@@ -2535,18 +2535,18 @@ Function to be evaluated in browser context
 ### param: Frame.$eval.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Frame.$$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-as a first argument to [`param: pageFunction`](). See [Working with selectors](#working-with-selectors) for more
+as a first argument to [`param: pageFunction`]. See [Working with selectors](#working-with-selectors) for more
 details.
 
-If [`param: pageFunction`]() returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
+If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
 its value.
 
 Examples:
@@ -2565,7 +2565,7 @@ Function to be evaluated in browser context
 ### param: Frame.$$eval.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Frame.addScriptTag
 - returns: <[ElementHandle]>
@@ -2597,16 +2597,16 @@ content.
 
 ## async method: Frame.check
 
-This method checks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
+This method checks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.check.selector = %%-input-selector-%%
@@ -2622,14 +2622,14 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: Frame.click
 
-This method clicks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method clicks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.click.selector = %%-input-selector-%%
@@ -2657,14 +2657,14 @@ Gets the full HTML contents of the frame, including the doctype.
 
 ## async method: Frame.dblclick
 
-This method double clicks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method double clicks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to double click in the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
@@ -2695,10 +2695,10 @@ is dispatched. This is equivalend to calling
 await frame.dispatchEvent('button#submit', 'click');
 ```
 
-Under the hood, it creates an instance of an event based on the given [`param: type`](), initializes it with [`param:
-eventInit`]() properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with [`param:
+eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
 
-Since [`param: eventInit`]() is event-specific, please refer to the events documentation for the lists of initial
+Since [`param: eventInit`] is event-specific, please refer to the events documentation for the lists of initial
 properties:
 * [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
 * [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
@@ -2733,7 +2733,7 @@ Optional event-specific initialization properties.
 ## async method: Frame.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
 If the function passed to the `frame.evaluate` returns a [Promise], then `frame.evaluate` would wait for the promise to
 resolve and return its value.
@@ -2771,12 +2771,12 @@ Function to be evaluated in browser context
 ### param: Frame.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Frame.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: pageFunction`]() as in-page object (JSHandle).
+Returns the return value of [`param: pageFunction`] as in-page object (JSHandle).
 
 The only difference between `frame.evaluate` and `frame.evaluateHandle` is that `frame.evaluateHandle` returns in-page
 object (JSHandle).
@@ -2812,16 +2812,16 @@ Function to be evaluated in the page context
 ### param: Frame.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Frame.fill
 
-This method waits for an element matching [`param: selector`](), waits for [actionability](./actionability.md) checks,
-focuses the element, fills it and triggers an `input` event after filling. If the element matching [`param: selector`]()
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks,
+focuses the element, fills it and triggers an `input` event after filling. If the element matching [`param: selector`]
 is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an
 empty string to clear the input field.
 
-To send fine-grained keyboard events, use [`method: Frame.type`]().
+To send fine-grained keyboard events, use [`method: Frame.type`].
 
 ### param: Frame.fill.selector = %%-input-selector-%%
 
@@ -2836,8 +2836,8 @@ Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
 
 ## async method: Frame.focus
 
-This method fetches an element with [`param: selector`]() and focuses it. If there's no element matching [`param:
-selector`](), the method waits until a matching element appears in the DOM.
+This method fetches an element with [`param: selector`] and focuses it. If there's no element matching [`param:
+selector`], the method waits until a matching element appears in the DOM.
 
 ### param: Frame.focus.selector = %%-input-selector-%%
 
@@ -2848,7 +2848,7 @@ selector`](), the method waits until a matching element appears in the DOM.
 
 Returns the `frame` or `iframe` element handle which corresponds to this frame.
 
-This is an inverse of [`method: ElementHandle.contentFrame`](). Note that returned handle actually belongs to the parent
+This is an inverse of [`method: ElementHandle.contentFrame`]. Note that returned handle actually belongs to the parent
 frame.
 
 This method throws an error if the frame has been detached before `frameElement()` returns.
@@ -2882,13 +2882,13 @@ last redirect.
 `frame.goto` will throw an error if:
 * there's an SSL error (e.g. in case of self-signed certificates).
 * target URL is invalid.
-* the [`option: timeout`]() is exceeded during navigation.
+* the [`option: timeout`] is exceeded during navigation.
 * the remote server does not respond or is unreachable.
 * the main resource failed to load.
 
 `frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404
 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [`method:
-Response.status`]().
+Response.status`].
 
 > **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation
 to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
@@ -2908,18 +2908,18 @@ URL to navigate frame to. The url should include scheme, e.g. `https://`.
 - `referer` <[string]>
 
 Referer header value. If provided it will take preference over the referer header value set by [`method:
-Page.setExtraHTTPHeaders`]().
+Page.setExtraHTTPHeaders`].
 
 ## async method: Frame.hover
 
-This method hovers over an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method hovers over an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to hover over the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.hover.selector = %%-input-selector-%%
@@ -2977,9 +2977,9 @@ Parent frame, if any. Detached frames and main frames return `null`.
 
 ## async method: Frame.press
 
-[`param: key`]() can specify the intended
+[`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
-generate the text for. A superset of the [`param: key`]() values can be found
+generate the text for. A superset of the [`param: key`] values can be found
 [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
@@ -2987,9 +2987,9 @@ generate the text for. A superset of the [`param: key`]() values can be found
 
 Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
-Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
+Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
-If [`param: key`]() is a single character, it is case-sensitive, so the values `a` and `A` will generate different
+If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
 Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
@@ -3017,7 +3017,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 Returns the array of option values that have been successfully selected.
 
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
-matching [`param: selector`](), the method throws an error.
+matching [`param: selector`], the method throws an error.
 
 ```js
 // single selection matching the value
@@ -3059,7 +3059,7 @@ HTML markup to assign to the page.
 
 ## async method: Frame.setInputFiles
 
-This method expects [`param: selector`]() to point to an [input
+This method expects [`param: selector`] to point to an [input
 element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
@@ -3075,14 +3075,14 @@ are resolved relative to the the current working directory. For empty array, cle
 
 ## async method: Frame.tap
 
-This method taps an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+This method taps an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.touchscreen`]() to tap the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
@@ -3116,9 +3116,9 @@ Returns the page title.
 ## async method: Frame.type
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
-send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`]().
+send fine-grained keyboard events. To fill values in form fields, use [`method: Frame.fill`].
 
-To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`]().
+To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
 ```js
 await frame.type('#mytextarea', 'Hello'); // Types instantly
@@ -3143,16 +3143,16 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 ## async method: Frame.uncheck
 
-This method checks an element matching [`param: selector`]() by performing the following steps:
-1. Find an element match matching [`param: selector`](). If there is none, wait until a matching element is attached to the DOM.
+This method checks an element matching [`param: selector`] by performing the following steps:
+1. Find an element match matching [`param: selector`]. If there is none, wait until a matching element is attached to the DOM.
 1. Ensure that matched element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`]() option is set. If the element is detached during the checks, the whole action is retried.
+1. Wait for [actionability](./actionability.md) checks on the matched element, unless [`option: force`] option is set. If the element is detached during the checks, the whole action is retried.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### param: Frame.uncheck.selector = %%-input-selector-%%
@@ -3171,7 +3171,7 @@ Returns frame's url.
 ## async method: Frame.waitForFunction
 - returns: <[JSHandle]>
 
-Returns when the [`param: pageFunction`]() returns a truthy value, returns that value.
+Returns when the [`param: pageFunction`] returns a truthy value, returns that value.
 
 The `waitForFunction` can be used to observe viewport size change:
 
@@ -3203,13 +3203,13 @@ Function to be evaluated in browser context
 ### param: Frame.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ### option: Frame.waitForFunction.polling
 - `polling` <[number]|"raf">
 
-If [`option: polling`]() is `'raf'`, then [`param: pageFunction`]() is constantly executed in `requestAnimationFrame`
-callback. If [`option: polling`]() is a number, then it is treated as an interval in milliseconds at which the function
+If [`option: polling`] is `'raf'`, then [`param: pageFunction`] is constantly executed in `requestAnimationFrame`
+callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
 would be executed. Defaults to `raf`.
 
 ### option: Frame.waitForFunction.timeout = %%-wait-for-timeout-%%
@@ -3269,12 +3269,12 @@ URL string, URL regex pattern or predicate receiving [URL] to match while waitin
 ## async method: Frame.waitForSelector
 - returns: <[null]|[ElementHandle]>
 
-Returns when element specified by selector satisfies [`option: state`]() option. Returns `null` if waiting for `hidden`
+Returns when element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden`
 or `detached`.
 
-Wait for the [`param: selector`]() to satisfy [`option: state`]() option (either appear/disappear from dom, or become
-visible/hidden). If at the moment of calling the method [`param: selector`]() already satisfies the condition, the
-method will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`]()
+Wait for the [`param: selector`] to satisfy [`option: state`] option (either appear/disappear from dom, or become
+visible/hidden). If at the moment of calling the method [`param: selector`] already satisfies the condition, the
+method will return immediately. If the selector doesn't satisfy the condition for the [`option: timeout`]
 milliseconds, the function will throw.
 
 This method works across navigations:
@@ -3304,7 +3304,7 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 
 ## async method: Frame.waitForTimeout
 
-Waits for the given [`param: timeout`]() in milliseconds.
+Waits for the given [`param: timeout`] in milliseconds.
 
 Note that `frame.waitForTimeout()` should only be used for debugging. Tests using the timer in production are going to
 be flaky. Use signals such as network events, selectors becoming visible and others instead.
@@ -3317,7 +3317,7 @@ A timeout to wait for
 # class: ElementHandle
 * extends: [JSHandle]
 
-ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.$`]() method.
+ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.$`] method.
 
 ```js
 const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -3333,9 +3333,9 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 ```
 
 ElementHandle prevents DOM element from garbage collection unless the handle is disposed with [`method:
-JSHandle.dispose`](). ElementHandles are auto-disposed when their origin frame gets navigated.
+JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
 
-ElementHandle instances can be used as an argument in [`method: Page.$eval`]() and [`method: Page.evaluate`]() methods.
+ElementHandle instances can be used as an argument in [`method: Page.$eval`] and [`method: Page.evaluate`] methods.
 
 <!-- GEN:toc -->
 <!-- GEN:stop -->
@@ -3362,13 +3362,13 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 ## async method: ElementHandle.$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: pageFunction`](). See [Working with selectors](#working-with-selectors) for more details. If no
+argument to [`param: pageFunction`]. See [Working with selectors](#working-with-selectors) for more details. If no
 elements match the selector, the method throws an error.
 
-If [`param: pageFunction`]() returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
+If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
 its value.
 
 Examples:
@@ -3389,18 +3389,18 @@ Function to be evaluated in browser context
 ### param: ElementHandle.$eval.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: ElementHandle.$$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
-matched elements as a first argument to [`param: pageFunction`](). See [Working with selectors](#working-with-selectors)
+matched elements as a first argument to [`param: pageFunction`]. See [Working with selectors](#working-with-selectors)
 for more details.
 
-If [`param: pageFunction`]() returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
+If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
 its value.
 
 Examples:
@@ -3427,7 +3427,7 @@ Function to be evaluated in browser context
 ### param: ElementHandle.$$eval.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: ElementHandle.boundingBox
 - returns: <[null]|[Object]>
@@ -3458,15 +3458,15 @@ await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
+1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now checked. If not, this method rejects.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.check.force = %%-input-force-%%
@@ -3478,14 +3478,14 @@ When all steps combined have not finished during the specified [`option: timeout
 ## async method: ElementHandle.click
 
 This method clicks the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
+1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.click.button = %%-input-button-%%
@@ -3512,14 +3512,14 @@ Returns the content frame for element handles referencing iframe nodes, or `null
 ## async method: ElementHandle.dblclick
 
 This method double clicks the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
+1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to double click in the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
@@ -3548,10 +3548,10 @@ is dispatched. This is equivalend to calling
 await elementHandle.dispatchEvent('click');
 ```
 
-Under the hood, it creates an instance of an event based on the given [`param: type`](), initializes it with [`param:
-eventInit`]() properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with [`param:
+eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
 
-Since [`param: eventInit`]() is event-specific, please refer to the events documentation for the lists of initial
+Since [`param: eventInit`] is event-specific, please refer to the events documentation for the lists of initial
 properties:
 * [DragEvent](https://developer.mozilla.org/en-US/docs/Web/API/DragEvent/DragEvent)
 * [FocusEvent](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent/FocusEvent)
@@ -3611,14 +3611,14 @@ Attribute name to get the value for.
 ## async method: ElementHandle.hover
 
 This method hovers over the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
+1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to hover over the center of the element, or the specified [`option: position`]().
+1. Use [`property: Page.mouse`] to hover over the center of the element, or the specified [`option: position`].
 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.hover.position = %%-input-position-%%
@@ -3646,11 +3646,11 @@ Returns the frame containing the given element.
 
 ## async method: ElementHandle.press
 
-Focuses the element, and then uses [`method: Keyboard.down`]() and [`method: Keyboard.up`]().
+Focuses the element, and then uses [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
-[`param: key`]() can specify the intended
+[`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
-generate the text for. A superset of the [`param: key`]() values can be found
+generate the text for. A superset of the [`param: key`] values can be found
 [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
@@ -3658,9 +3658,9 @@ generate the text for. A superset of the [`param: key`]() values can be found
 
 Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
-Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
+Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
-If [`param: key`]() is a single character, it is case-sensitive, so the values `a` and `A` will generate different
+If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
 Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
@@ -3691,7 +3691,7 @@ screenshot. If the element is detached from DOM, the method throws an error.
 ### option: ElementHandle.screenshot.path
 - `path` <[string]>
 
-The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`]() is a
+The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
 saved to the disk.
 
@@ -3784,14 +3784,14 @@ are resolved relative to the the current working directory. For empty array, cle
 ## async method: ElementHandle.tap
 
 This method taps the element by performing the following steps:
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
+1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.touchscreen`]() to tap the center of the element, or the specified [`option: position`]().
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.touchscreen`] to tap the center of the element, or the specified [`option: position`].
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 > **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
@@ -3815,7 +3815,7 @@ Returns the `node.textContent`.
 
 Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
-To press a special key, like `Control` or `ArrowDown`, use [`method: ElementHandle.press`]().
+To press a special key, like `Control` or `ArrowDown`, use [`method: ElementHandle.press`].
 
 ```js
 await elementHandle.type('Hello'); // Types instantly
@@ -3848,15 +3848,15 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 
 This method checks the element by performing the following steps:
 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
-1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`]() option is set.
+1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
-1. Use [`property: Page.mouse`]() to click in the center of the element.
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`]() option is set.
+1. Use [`property: Page.mouse`] to click in the center of the element.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set.
 1. Ensure that the element is now unchecked. If not, this method rejects.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
-When all steps combined have not finished during the specified [`option: timeout`](), this method rejects with a
+When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
 ### option: ElementHandle.uncheck.force = %%-input-force-%%
@@ -3867,9 +3867,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.waitForElementState
 
-Returns the element satisfies the [`param: state`]().
+Returns the element satisfies the [`param: state`].
 
-Depending on the [`param: state`]() parameter, this method waits for one of the [actionability](./actionability.md)
+Depending on the [`param: state`] parameter, this method waits for one of the [actionability](./actionability.md)
 checks to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
 * `"visible"` Wait until the element is [visible](./actionability.md#visible).
 * `"hidden"` Wait until the element is [not visible](./actionability.md#visible) or [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
@@ -3877,7 +3877,7 @@ checks to pass. This method throws when the element is detached while waiting, u
 * `"enabled"` Wait until the element is [enabled](./actionability.md#enabled).
 * `"disabled"` Wait until the element is [not enabled](./actionability.md#enabled).
 
-If the element does not satisfy the condition for the [`option: timeout`]() milliseconds, this method will throw.
+If the element does not satisfy the condition for the [`option: timeout`] milliseconds, this method will throw.
 
 ### param: ElementHandle.waitForElementState.state
 - `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled">
@@ -3889,13 +3889,13 @@ A state to wait for, see below for more details.
 ## async method: ElementHandle.waitForSelector
 - returns: <[null]|[ElementHandle]>
 
-Returns element specified by selector satisfies [`option: state`]() option. Returns `null` if waiting for `hidden` or
+Returns element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
 `detached`.
 
-Wait for the [`param: selector`]() relative to the element handle to satisfy [`option: state`]() option (either
-appear/disappear from dom, or become visible/hidden). If at the moment of calling the method [`param: selector`]()
+Wait for the [`param: selector`] relative to the element handle to satisfy [`option: state`] option (either
+appear/disappear from dom, or become visible/hidden). If at the moment of calling the method [`param: selector`]
 already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for
-the [`option: timeout`]() milliseconds, the function will throw.
+the [`option: timeout`] milliseconds, the function will throw.
 
 ```js
 await page.setContent(`<div><span></span></div>`);
@@ -3904,7 +3904,7 @@ const div = await page.$('div');
 const span = await div.waitForSelector('span', { state: 'attached' });
 ```
 
-> **NOTE** This method does not work across navigations, use [`method: Page.waitForSelector`]() instead.
+> **NOTE** This method does not work across navigations, use [`method: Page.waitForSelector`] instead.
 
 ### param: ElementHandle.waitForSelector.selector = %%-query-selector-%%
 
@@ -3914,7 +3914,7 @@ const span = await div.waitForSelector('span', { state: 'attached' });
 
 # class: JSHandle
 
-JSHandle represents an in-page JavaScript object. JSHandles can be created with the [`method: Page.evaluateHandle`]()
+JSHandle represents an in-page JavaScript object. JSHandles can be created with the [`method: Page.evaluateHandle`]
 method.
 
 ```js
@@ -3923,11 +3923,11 @@ const windowHandle = await page.evaluateHandle(() => window);
 ```
 
 JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with [`method:
-JSHandle.dispose`](). JSHandles are auto-disposed when their origin frame gets navigated or the parent context gets
+JSHandle.dispose`]. JSHandles are auto-disposed when their origin frame gets navigated or the parent context gets
 destroyed.
 
-JSHandle instances can be used as an argument in [`method: Page.$eval`](), [`method: Page.evaluate`]() and [`method:
-Page.evaluateHandle`]() methods.
+JSHandle instances can be used as an argument in [`method: Page.$eval`], [`method: Page.evaluate`] and [`method:
+Page.evaluateHandle`] methods.
 
 <!-- GEN:toc -->
 <!-- GEN:stop -->
@@ -3944,11 +3944,11 @@ The `jsHandle.dispose` method stops referencing the element handle.
 ## async method: JSHandle.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
-This method passes this handle as the first argument to [`param: pageFunction`]().
+This method passes this handle as the first argument to [`param: pageFunction`].
 
-If [`param: pageFunction`]() returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and
+If [`param: pageFunction`] returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and
 return its value.
 
 Examples:
@@ -3966,14 +3966,14 @@ Function to be evaluated in browser context
 ### param: JSHandle.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: JSHandle.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: pageFunction`]() as in-page object (JSHandle).
+Returns the return value of [`param: pageFunction`] as in-page object (JSHandle).
 
-This method passes this handle as the first argument to [`param: pageFunction`]().
+This method passes this handle as the first argument to [`param: pageFunction`].
 
 The only difference between `jsHandle.evaluate` and `jsHandle.evaluateHandle` is that `jsHandle.evaluateHandle` returns
 in-page object (JSHandle).
@@ -3981,7 +3981,7 @@ in-page object (JSHandle).
 If the function passed to the `jsHandle.evaluateHandle` returns a [Promise], then `jsHandle.evaluateHandle` would wait
 for the promise to resolve and return its value.
 
-See [`method: Page.evaluateHandle`]() for more details.
+See [`method: Page.evaluateHandle`] for more details.
 
 ### param: JSHandle.evaluateHandle.pageFunction
 - `pageFunction` <[function]|[string]>
@@ -3991,7 +3991,7 @@ Function to be evaluated
 ### param: JSHandle.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: JSHandle.getProperties
 - returns: <[Map]<[string], [JSHandle]>>
@@ -4026,7 +4026,7 @@ error if the object has circular references.
 
 # class: ConsoleMessage
 
-[ConsoleMessage] objects are dispatched by page via the [`event: Page.console`]() event.
+[ConsoleMessage] objects are dispatched by page via the [`event: Page.console`] event.
 
 <!-- GEN:toc -->
 <!-- GEN:stop -->
@@ -4052,7 +4052,7 @@ One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'
 
 # class: Dialog
 
-[Dialog] objects are dispatched by page via the [`event: Page.dialog`]() event.
+[Dialog] objects are dispatched by page via the [`event: Page.dialog`] event.
 
 An example of using `Dialog` class:
 
@@ -4104,7 +4104,7 @@ Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prom
 
 # class: Download
 
-[Download] objects are dispatched by page via the [`event: Page.download`]() event.
+[Download] objects are dispatched by page via the [`event: Page.download`] event.
 
 All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
 files are deleted when the browser closes.
@@ -4188,7 +4188,7 @@ upon closing the browser context.
 
 # class: FileChooser
 
-[FileChooser] objects are dispatched by the page in the [`event: Page.filechooser`]() event.
+[FileChooser] objects are dispatched by the page in the [`event: Page.filechooser`] event.
 
 ```js
 page.on('filechooser', async (fileChooser) => {
@@ -4227,11 +4227,11 @@ they are resolved relative to the the current working directory. For empty array
 
 # class: Keyboard
 
-Keyboard provides an api for managing a virtual keyboard. The high level api is [`method: Keyboard.type`](), which takes
+Keyboard provides an api for managing a virtual keyboard. The high level api is [`method: Keyboard.type`], which takes
 raw characters and generates proper keydown, keypress/input, and keyup events on your page.
 
-For finer control, you can use [`method: Keyboard.down`](), [`method: Keyboard.up`](), and [`method:
-Keyboard.insertText`]() to manually fire events as if they were generated from a real keyboard.
+For finer control, you can use [`method: Keyboard.down`], [`method: Keyboard.up`], and [`method:
+Keyboard.insertText`] to manually fire events as if they were generated from a real keyboard.
 
 An example of holding down `Shift` in order to select and delete some text:
 
@@ -4272,9 +4272,9 @@ await page.keyboard.press('Meta+A');
 
 Dispatches a `keydown` event.
 
-[`param: key`]() can specify the intended
+[`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
-generate the text for. A superset of the [`param: key`]() values can be found
+generate the text for. A superset of the [`param: key`] values can be found
 [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
@@ -4282,17 +4282,17 @@ generate the text for. A superset of the [`param: key`]() values can be found
 
 Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
-Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
+Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
-If [`param: key`]() is a single character, it is case-sensitive, so the values `a` and `A` will generate different
+If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
-If [`param: key`]() is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with
-that modifier active. To release the modifier key, use [`method: Keyboard.up`]().
+If [`param: key`] is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with
+that modifier active. To release the modifier key, use [`method: Keyboard.up`].
 
-After the key is pressed once, subsequent calls to [`method: Keyboard.down`]() will have
+After the key is pressed once, subsequent calls to [`method: Keyboard.down`] will have
 [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
-[`method: Keyboard.up`]().
+[`method: Keyboard.up`].
 
 > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
 
@@ -4318,9 +4318,9 @@ Sets input to the specified text value.
 
 ## async method: Keyboard.press
 
-[`param: key`]() can specify the intended
+[`param: key`] can specify the intended
 [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) value or a single character to
-generate the text for. A superset of the [`param: key`]() values can be found
+generate the text for. A superset of the [`param: key`] values can be found
 [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
 
 `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
@@ -4328,9 +4328,9 @@ generate the text for. A superset of the [`param: key`]() values can be found
 
 Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
 
-Holding down `Shift` will type the text that corresponds to the [`param: key`]() in the upper case.
+Holding down `Shift` will type the text that corresponds to the [`param: key`] in the upper case.
 
-If [`param: key`]() is a single character, it is case-sensitive, so the values `a` and `A` will generate different
+If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
 Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
@@ -4348,7 +4348,7 @@ await page.screenshot({ path: 'O.png' });
 await browser.close();
 ```
 
-Shortcut for [`method: Keyboard.down`]() and [`method: Keyboard.up`]().
+Shortcut for [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
 ### param: Keyboard.press.key
 - `key` <[string]>
@@ -4364,7 +4364,7 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
 Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
 
-To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`]().
+To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.press`].
 
 ```js
 await page.keyboard.type('Hello'); // Types instantly
@@ -4396,7 +4396,7 @@ Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
 
-Every `page` object has its own Mouse, accessible with [`property: Page.mouse`]().
+Every `page` object has its own Mouse, accessible with [`property: Page.mouse`].
 
 ```js
 // Using ‘page.mouse’ to trace a 100x100 square.
@@ -4414,7 +4414,7 @@ await page.mouse.up();
 
 ## async method: Mouse.click
 
-Shortcut for [`method: Mouse.move`](), [`method: Mouse.down`](), [`method: Mouse.up`]().
+Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].
 
 ### param: Mouse.click.x
 - `x` <[number]>
@@ -4430,8 +4430,8 @@ Shortcut for [`method: Mouse.move`](), [`method: Mouse.down`](), [`method: Mouse
 
 ## async method: Mouse.dblclick
 
-Shortcut for [`method: Mouse.move`](), [`method: Mouse.down`](), [`method: Mouse.up`](), [`method: Mouse.down`]() and
-[`method: Mouse.up`]().
+Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`], [`method: Mouse.down`] and
+[`method: Mouse.up`].
 
 ### param: Mouse.dblclick.x
 - `x` <[number]>
@@ -4481,7 +4481,7 @@ touchscreen can only be used in browser contexts that have been intialized with 
 
 ## async method: Touchscreen.tap
 
-Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`](),[`param: y`]()).
+Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`],[`param: y`]).
 
 ### param: Touchscreen.tap.x
 - `x` <[number]>
@@ -4492,12 +4492,12 @@ Dispatches a `touchstart` and `touchend` event with a single touch at the positi
 # class: Request
 
 Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
-* [`event: Page.request`]() emitted when the request is issued by the page.
-* [`event: Page.response`]() emitted when/if the response status and headers are received for the request.
-* [`event: Page.requestfinished`]() emitted when the response body is downloaded and the request is complete.
+* [`event: Page.request`] emitted when the request is issued by the page.
+* [`event: Page.response`] emitted when/if the response status and headers are received for the request.
+* [`event: Page.requestfinished`] emitted when the response body is downloaded and the request is complete.
 
 If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
-the  [`event: Page.requestfailed`]() event is emitted.
+the  [`event: Page.requestfailed`] event is emitted.
 
 > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
 will complete with `'requestfinished'` event.
@@ -4588,7 +4588,7 @@ console.log(response.request().redirectedFrom()); // null
 
 New request issued by the browser if the server responded with redirect.
 
-This method is the opposite of [`method: Request.redirectedFrom`]():
+This method is the opposite of [`method: Request.redirectedFrom`]:
 
 ```js
 console.log(request.redirectedFrom().redirectedTo() === request); // true
@@ -4768,7 +4768,7 @@ guaranteed when this engine is used together with other registered engines.
 
 # class: Route
 
-Whenever a network route is set up with [`method: Page.route`]() or [`method: BrowserContext.route`](), the `Route`
+Whenever a network route is set up with [`method: Page.route`] or [`method: BrowserContext.route`], the `Route`
 object allows to handle the route.
 
 <!-- GEN:toc -->
@@ -4913,7 +4913,7 @@ Event name, same one would pass into `webSocket.on(event)`.
 ### param: WebSocket.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](#browsercontextsetdefaulttimeouttimeout).
+  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -4921,7 +4921,7 @@ Either a predicate that receives an event or an options object. Optional.
 * extends: [Error]
 
 TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g. [`method:
-Page.waitForSelector`]() or [`method: BrowserType.launch`]().
+Page.waitForSelector`] or [`method: BrowserType.launch`].
 
 # class: Accessibility
 
@@ -4975,7 +4975,7 @@ Captures the current state of the accessibility tree. The returned object repres
 page.
 
 > **NOTE** The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers.
-Playwright will discard them as well for an easier to process tree, unless [`option: interestingOnly`]() is set to
+Playwright will discard them as well for an easier to process tree, unless [`option: interestingOnly`] is set to
 `false`.
 
 An example of dumping the entire accessibility tree:
@@ -5041,7 +5041,7 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 ## async method: Worker.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]()
+Returns the return value of [`param: pageFunction`]
 
 If the function passed to the `worker.evaluate` returns a [Promise], then `worker.evaluate` would wait for the promise
 to resolve and return its value.
@@ -5058,12 +5058,12 @@ Function to be evaluated in the worker context
 ### param: Worker.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Worker.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: pageFunction`]() as in-page object (JSHandle).
+Returns the return value of [`param: pageFunction`] as in-page object (JSHandle).
 
 The only difference between `worker.evaluate` and `worker.evaluateHandle` is that `worker.evaluateHandle` returns
 in-page object (JSHandle).
@@ -5079,7 +5079,7 @@ Function to be evaluated in the page context
 ### param: Worker.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]()
+Optional argument to pass to [`param: pageFunction`]
 
 ## method: Worker.url
 - returns: <[string]>
@@ -5111,7 +5111,7 @@ Spawned browser application process.
 
 Browser websocket url.
 
-Browser websocket endpoint which can be used as an argument to [`method: BrowserType.connect`]() to establish connection
+Browser websocket endpoint which can be used as an argument to [`method: BrowserType.connect`] to establish connection
 to the browser.
 
 # class: BrowserType
@@ -5156,7 +5156,7 @@ A path where Playwright expects to find a bundled browser executable.
 
 Returns the browser instance.
 
-You can use [`option: ignoreDefaultArgs`]() to filter out `--mute-audio` from default arguments:
+You can use [`option: ignoreDefaultArgs`] to filter out `--mute-audio` from default arguments:
 
 ```js
 const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
@@ -5165,14 +5165,14 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 ```
 
 > **Chromium-only** Playwright can also be used to control the Chrome browser, but it works best with the version of
-Chromium it is bundled with. There is no guarantee it will work with any other version. Use [`option: executablePath`]()
+Chromium it is bundled with. There is no guarantee it will work with any other version. Use [`option: executablePath`]
 option with extreme caution.
 >
 > If Google Chrome (rather than Chromium) is preferred, a [Chrome
 Canary](https://www.google.com/chrome/browser/canary.html) or [Dev
 Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
 >
-> In [`method: BrowserType.launch`]() above, any mention of Chromium also applies to Chrome.
+> In [`method: BrowserType.launch`] above, any mention of Chromium also applies to Chrome.
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for
 a description of the differences between Chromium and Chrome. [`This
@@ -5185,12 +5185,12 @@ some differences for Linux users.
 Whether to run browser in headless mode. More details for
 [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
 [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-[`option: devtools`]() option is `true`.
+[`option: devtools`] option is `true`.
 
 ### option: BrowserType.launch.executablePath
 - `executablePath` <[string]>
 
-Path to a browser executable to run instead of the bundled one. If [`option: executablePath`]() is a relative path, then
+Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
 it is resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium,
 Firefox or WebKit, use at your own risk.
 
@@ -5203,7 +5203,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 ### option: BrowserType.launch.ignoreDefaultArgs
 - `ignoreDefaultArgs` <[boolean]|[Array]<[string]>>
 
-If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`](). If an
+If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`]. If an
 array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
 
 ### option: BrowserType.launch.proxy
@@ -5267,7 +5267,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
 - `devtools` <[boolean]>
 
 **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the [`option:
-headless`]() option will be set `false`.
+headless`] option will be set `false`.
 
 ### option: BrowserType.launch.slowMo
 - `slowMo` <[number]>
@@ -5279,7 +5279,7 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 
 Returns the persistent browser context instance.
 
-Launches browser that uses persistent storage located at [`param: userDataDir`]() and returns the only context. Closing
+Launches browser that uses persistent storage located at [`param: userDataDir`] and returns the only context. Closing
 this context will automatically close the browser.
 
 ### param: BrowserType.launchPersistentContext.userDataDir
@@ -5295,12 +5295,12 @@ Path to a User Data Directory, which stores browser session data like cookies an
 Whether to run browser in headless mode. More details for
 [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
 [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-[`option: devtools`]() option is `true`.
+[`option: devtools`] option is `true`.
 
 ### option: BrowserType.launchPersistentContext.executablePath
 - `executablePath` <[string]>
 
-Path to a browser executable to run instead of the bundled one. If [`option: executablePath`]() is a relative path, then
+Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
 it is resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the
 bundled Chromium, Firefox or WebKit, use at your own risk.
 
@@ -5366,7 +5366,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
 - `devtools` <[boolean]>
 
 **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the [`option:
-headless`]() option will be set `false`.
+headless`] option will be set `false`.
 
 ### option: BrowserType.launchPersistentContext.slowMo
 - `slowMo` <[number]>
@@ -5403,7 +5403,7 @@ const { chromium } = require('playwright');  // Or 'webkit' or 'firefox'.
 Whether to run browser in headless mode. More details for
 [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
 [Firefox](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Headless_mode). Defaults to `true` unless the
-[`option: devtools`]() option is `true`.
+[`option: devtools`] option is `true`.
 
 ### option: BrowserType.launchServer.port
 - `port` <[number]>
@@ -5413,7 +5413,7 @@ Port to use for the web socket. Defaults to 0 that picks any available port.
 ### option: BrowserType.launchServer.executablePath
 - `executablePath` <[string]>
 
-Path to a browser executable to run instead of the bundled one. If [`option: executablePath`]() is a relative path, then
+Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
 it is resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the
 bundled Chromium, Firefox or WebKit, use at your own risk.
 
@@ -5490,7 +5490,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
 - `devtools` <[boolean]>
 
 **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the [`option:
-headless`]() option will be set `false`.
+headless`] option will be set `false`.
 
 ## method: BrowserType.name
 - returns: <[string]>
@@ -5561,7 +5561,7 @@ optional formatting hints
 * extends: [Browser]
 
 Chromium-specific features including Tracing, service worker support, etc. You can use [`method:
-ChromiumBrowser.startTracing`]() and [`method: ChromiumBrowser.stopTracing`]() to create a trace file which can be
+ChromiumBrowser.startTracing`] and [`method: ChromiumBrowser.stopTracing`] to create a trace file which can be
 opened in Chrome DevTools or [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
 
 ```js
@@ -5700,7 +5700,7 @@ Whether to reset coverage on every navigation. Defaults to `true`.
 Returns coverage is started
 
 > **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created
-on the page using `eval` or `new Function`. If [`option: reportAnonymousScripts`]() is set to `true`, anonymous scripts
+on the page using `eval` or `new Function`. If [`option: reportAnonymousScripts`] is set to `true`, anonymous scripts
 will have `__playwright_evaluation_script__` as their URL.
 
 ### option: ChromiumCoverage.startJSCoverage.resetOnNavigation

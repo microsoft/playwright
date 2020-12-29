@@ -47,6 +47,8 @@ Documentation.Class = class {
     this.templates = templates;
     this.comment =  '';
     this.index();
+    const match = name.match(/(JS|CDP|[A-Z])(.*)/);
+    this.varName = match[1].toLowerCase() + match[2];
   }
 
   index() {
@@ -77,6 +79,7 @@ Documentation.Class = class {
         this.events.set(member.name, member);
         this.eventsArray.push(member);
       }
+      member.clazz = this;
     }
   }
 
@@ -161,6 +164,13 @@ Documentation.Member = class {
     this.args = new Map();
     for (const arg of argsArray)
       this.args.set(arg.name, arg);
+    /** @type {!Documentation.Class} */
+    this.clazz = null;
+    this.signature = this._createSignature();
+  }
+
+  clone() {
+    return new Documentation.Member(this.kind, this.name, this.type, this.argsArray, this.spec, this.required, this.templates);
   }
 
   /**
@@ -205,6 +215,29 @@ Documentation.Member = class {
       this.type.visit(visitor);
     for (const arg of this.argsArray)
       arg.visit(visitor);
+  }
+
+  _createSignature() {
+    const tokens = [];
+    let hasOptional = false;
+    for (const arg of this.argsArray) {
+      const optional = !arg.required;
+      if (tokens.length) {
+        if (optional && !hasOptional)
+          tokens.push(`[, ${arg.name}`);
+        else
+          tokens.push(`, ${arg.name}`);
+      } else {
+        if (optional && !hasOptional)
+          tokens.push(`[${arg.name}`);
+        else
+          tokens.push(`${arg.name}`);
+      }
+      hasOptional = hasOptional || optional;
+    }
+    if (hasOptional)
+      tokens.push(']');
+    return tokens.join('');
   }
 };
 

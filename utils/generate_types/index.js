@@ -38,6 +38,27 @@ let hadChanges = false;
   writeFile(path.join(typesDir, 'trace.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'trace', 'traceTypes.ts'), 'utf8'));
   const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
   outline.copyDocsFromSuperclasses([]);
+  const createMemberLink = (text) => {
+    const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
+    return `[\`${text}\`](https://github.com/microsoft/playwright/blob/master/docs/api.md#${anchor})`;
+  };
+  outline.renderLinks(item => {
+    const { clazz, member, param, option } = item;
+    if (param)
+      return `\`${param}\``;
+    if (option)
+      return `\`${option}\``;
+    if (clazz)
+      return `[${clazz.name}]`;
+    if (member.kind === 'method')
+      return createMemberLink(`${member.clazz.varName}.${member.name}(${member.signature})`);
+    if (member.kind === 'event')
+      return createMemberLink(`${member.clazz.varName}.on('${member.name}')`);
+    if (member.kind === 'property')
+      return createMemberLink(`${member.clazz.varName}.${member.name}`);
+    throw new Error('Unknown member kind ' + member.kind);
+  });
+  outline.renderComments();
   documentation = outline.documentation;
 
   // Root module types are overridden.
@@ -239,6 +260,12 @@ function parentClass(classDesc) {
 
 function writeComment(comment, indent = '') {
   const parts = [];
+  
+  comment = comment.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
+  comment = comment.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
+  comment = comment.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/$2)');
+  comment = comment.replace(/\[([^\]]+)\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
+
   parts.push(indent + '/**');
   parts.push(...comment.split('\n').map(line => indent + ' * ' + line.replace(/\*\//g, '*\\/')));
   parts.push(indent + ' */');
@@ -409,18 +436,6 @@ function memberJSDOC(member, indent) {
   if (!lines.length)
     return indent;
   return writeComment(lines.join('\n'), indent) + '\n' + indent;
-}
-
-/**
- * @param {Documentation.Class} mdClass
- * @param {Documentation.Class} jsClass
- * @return {Documentation.Class}
- */
-function mergeClasses(mdClass, jsClass) {
-  mdClass.templates = jsClass.templates;
-  for (const member of mdClass.membersArray)
-    member.templates = jsClass.members.get(member.name).templates;
-  return mdClass;
 }
 
 function generateDevicesTypes() {
