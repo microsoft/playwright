@@ -16,9 +16,6 @@ const { chromium, firefox, webkit } = require('playwright');
 
 By default, the `playwright` NPM package automatically downloads browser executables during installation. The `playwright-core` NPM package can be used to skip automatic downloads.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## property: Playwright.chromium
 - type: <[BrowserType]>
 
@@ -103,9 +100,6 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [`method:
 BrowserType.connect`] and [`method: BrowserType.launch`] always return a specific browser instance, based on the
 browser being connected to or launched.
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## event: Browser.disconnected
 
@@ -203,9 +197,6 @@ await page.goto('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## event: BrowserContext.close
 
@@ -717,9 +708,6 @@ page.on('request', logRequest);
 // Sometime later...
 page.removeListener('request', logRequest);
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## event: Page.close
 
@@ -2482,9 +2470,6 @@ const text = await frame.$eval('.selector', element => element.textContent);
 console.log(text);
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## async method: Frame.$
 - returns: <[null]|[ElementHandle]>
 
@@ -3337,12 +3322,6 @@ JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame get
 
 ElementHandle instances can be used as an argument in [`method: Page.$eval`] and [`method: Page.evaluate`] methods.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
-<!-- GEN:toc-extends-JSHandle -->
-<!-- GEN:stop -->
-
 ## async method: ElementHandle.$
 - returns: <[null]|[ElementHandle]>
 
@@ -3929,9 +3908,6 @@ destroyed.
 JSHandle instances can be used as an argument in [`method: Page.$eval`], [`method: Page.evaluate`] and [`method:
 Page.evaluateHandle`] methods.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## method: JSHandle.asElement
 - returns: <[null]|[ElementHandle]>
 
@@ -4028,9 +4004,6 @@ error if the object has circular references.
 
 [ConsoleMessage] objects are dispatched by page via the [`event: Page.console`] event.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## method: ConsoleMessage.args
 - returns: <[Array]<[JSHandle]>>
 
@@ -4070,9 +4043,6 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   page.evaluate(() => alert('1'));
 })();
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: Dialog.accept
 
@@ -4125,9 +4095,6 @@ const path = await download.path();
 downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
 download is not performed and user has no access to the downloaded files.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## async method: Download.createReadStream
 - returns: <[null]|[Readable]>
 
@@ -4177,9 +4144,6 @@ When browser context is created with the `videosPath` option, each page has a vi
 console.log(await page.video().path());
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## async method: Video.path
 - returns: <[string]>
 
@@ -4195,9 +4159,6 @@ page.on('filechooser', async (fileChooser) => {
   await fileChooser.setFiles('/tmp/myfile.pdf');
 });
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## method: FileChooser.element
 - returns: <[ElementHandle]>
@@ -4264,9 +4225,6 @@ await page.keyboard.press('Control+A');
 // on macOS
 await page.keyboard.press('Meta+A');
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: Keyboard.down
 
@@ -4409,9 +4367,6 @@ await page.mouse.move(0, 0);
 await page.mouse.up();
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## async method: Mouse.click
 
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].
@@ -4504,9 +4459,6 @@ will complete with `'requestfinished'` event.
 
 If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
 request is  issued to a redirected url.
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## method: Request.failure
 - returns: <[null]|[Object]>
@@ -4639,9 +4591,6 @@ URL of the request.
 
 [Response] class represents responses which are received by page.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## async method: Response.body
 - returns: <[Buffer]>
 
@@ -4703,9 +4652,6 @@ Contains the URL of the response.
 
 Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more
 information.
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: Selectors.register
 
@@ -4770,9 +4716,6 @@ guaranteed when this engine is used together with other registered engines.
 
 Whenever a network route is set up with [`method: Page.route`] or [`method: BrowserContext.route`], the `Route`
 object allows to handle the route.
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: Route.abort
 
@@ -4863,9 +4806,6 @@ A request to be routed.
 
 The [WebSocket] class represents websocket connections in the page.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## event: WebSocket.close
 
 Fired when the websocket closes.
@@ -4938,9 +4878,6 @@ platform-specific APIs. Accessibility namespace gives users access to the Blink 
 Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by
 assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the
 "interesting" nodes of the tree.
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: Accessibility.snapshot
 - returns: <[null]|[Object]>
@@ -5030,9 +4967,6 @@ for (const worker of page.workers())
   console.log('  ' + worker.url());
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## event: Worker.close
 - type: <[Worker]>
 
@@ -5086,9 +5020,6 @@ Optional argument to pass to [`param: pageFunction`]
 
 # class: BrowserServer
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## event: BrowserServer.close
 
 Emitted when the browser server closes.
@@ -5130,9 +5061,6 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
   await browser.close();
 })();
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: BrowserType.connect
 - returns: <[Browser]>
@@ -5515,9 +5443,6 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 })();
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## method: Logger.isEnabled
 - returns: <[boolean]>
 
@@ -5570,12 +5495,6 @@ await page.goto('https://www.google.com');
 await browser.stopTracing();
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
-<!-- GEN:toc-extends-Browser -->
-<!-- GEN:stop -->
-
 ## async method: ChromiumBrowser.newBrowserCDPSession
 - returns: <[CDPSession]>
 
@@ -5618,12 +5537,6 @@ Chromium-specific features including background pages, service worker support, e
 ```js
 const backgroundPage = await context.waitForEvent('backgroundpage');
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
-<!-- GEN:toc-extends-BrowserContext -->
-<!-- GEN:stop -->
 
 ## event: ChromiumBrowserContext.backgroundpage
 - type: <[Page]>
@@ -5682,9 +5595,6 @@ const v8toIstanbul = require('v8-to-istanbul');
   await browser.close();
 })();
 ```
-
-<!-- GEN:toc -->
-<!-- GEN:stop -->
 
 ## async method: ChromiumCoverage.startCSSCoverage
 
@@ -5765,9 +5675,6 @@ await client.send('Animation.setPlaybackRate', {
 });
 ```
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
 ## async method: CDPSession.detach
 
 Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be used to
@@ -5791,13 +5698,7 @@ Optional method parameters
 
 Firefox browser instance does not expose Firefox-specific features.
 
-<!-- GEN:toc-extends-Browser -->
-<!-- GEN:stop -->
-
 # class: WebKitBrowser
 * extends: [Browser]
 
 WebKit browser instance does not expose WebKit-specific features.
-
-<!-- GEN:toc-extends-Browser -->
-<!-- GEN:stop -->
