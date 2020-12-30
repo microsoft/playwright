@@ -108,7 +108,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.evaluate(pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatepagefunction-arg).
+   * [frame.evaluate(pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatepagefunction-arg).
    * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -150,7 +150,7 @@ export interface Page {
    * return value resolves to `null`.
    * 
    * Shortcut for main frame's
-   * [`frame.$(selector)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselector).
+   * [frame.$(selector)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselector).
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
@@ -161,7 +161,7 @@ export interface Page {
    * return value resolves to `[]`.
    * 
    * Shortcut for main frame's
-   * [`frame.$$(selector)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselector).
+   * [frame.$$(selector)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselector).
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
@@ -172,7 +172,7 @@ export interface Page {
    * `pageFunction`. If no elements match the selector, the method throws an error. Returns the value of `pageFunction`.
    * 
    * If `pageFunction` returns a [Promise], then
-   * [`page.$eval(selector, pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg)
+   * [page.$eval(selector, pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg)
    * would wait for the promise to resolve and return its value.
    * 
    * Examples:
@@ -184,7 +184,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.$eval(selector, pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevalselector-pagefunction-arg).
+   * [frame.$eval(selector, pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevalselector-pagefunction-arg).
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
@@ -199,7 +199,7 @@ export interface Page {
    * a first argument to `pageFunction`. Returns the result of `pageFunction` invocation.
    * 
    * If `pageFunction` returns a [Promise], then
-   * [`page.$$eval(selector, pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg)
+   * [page.$$eval(selector, pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg)
    * would wait for the promise to resolve and return its value.
    * 
    * Examples:
@@ -243,7 +243,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.waitForFunction(pageFunction[, arg, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitforfunctionpagefunction-arg-options).
+   * [frame.waitForFunction(pageFunction[, arg, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitforfunctionpagefunction-arg-options).
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    * @param options 
@@ -295,7 +295,7 @@ export interface Page {
    * BrowserContext, page: Page, frame: Frame }`.
    * 
    * See
-   * [`browserContext.exposeBinding(name, playwrightBinding[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposebindingname-playwrightbinding-options)
+   * [browserContext.exposeBinding(name, playwrightBinding[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposebindingname-playwrightbinding-options)
    * for the context-wide version.
    * 
    * > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
@@ -404,8 +404,8 @@ export interface Page {
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
    * to the dialog via
-   * [`dialog.accept([promptText])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext)
-   * or [`dialog.dismiss()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
+   * [dialog.accept([promptText])](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
    */
   on(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -428,7 +428,7 @@ export interface Page {
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
    * respond to it via setting the input files using
-   * [`fileChooser.setFiles(files[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
+   * [fileChooser.setFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
    * that can be uploaded after that.
    * 
    * ```js
@@ -467,7 +467,7 @@ export interface Page {
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
-   * [`browserContext.on('page')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
+   * [browserContext.on('page')](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
    * only for popups relevant to this page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -483,15 +483,15 @@ export interface Page {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'popup', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   on(event: 'request', listener: (request: Request) => void): this;
 
@@ -500,9 +500,9 @@ export interface Page {
    * 
    * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
    * will complete with
-   * [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+   * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
-   * [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
+   * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
    */
   on(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -589,8 +589,8 @@ export interface Page {
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
    * to the dialog via
-   * [`dialog.accept([promptText])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext)
-   * or [`dialog.dismiss()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
+   * [dialog.accept([promptText])](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
    */
   once(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -613,7 +613,7 @@ export interface Page {
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
    * respond to it via setting the input files using
-   * [`fileChooser.setFiles(files[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
+   * [fileChooser.setFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
    * that can be uploaded after that.
    * 
    * ```js
@@ -652,7 +652,7 @@ export interface Page {
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
-   * [`browserContext.on('page')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
+   * [browserContext.on('page')](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
    * only for popups relevant to this page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -668,15 +668,15 @@ export interface Page {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'popup', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   once(event: 'request', listener: (request: Request) => void): this;
 
@@ -685,9 +685,9 @@ export interface Page {
    * 
    * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
    * will complete with
-   * [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+   * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
-   * [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
+   * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
    */
   once(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -774,8 +774,8 @@ export interface Page {
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
    * to the dialog via
-   * [`dialog.accept([promptText])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext)
-   * or [`dialog.dismiss()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
+   * [dialog.accept([promptText])](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
    */
   addListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -798,7 +798,7 @@ export interface Page {
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
    * respond to it via setting the input files using
-   * [`fileChooser.setFiles(files[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
+   * [fileChooser.setFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
    * that can be uploaded after that.
    * 
    * ```js
@@ -837,7 +837,7 @@ export interface Page {
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
-   * [`browserContext.on('page')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
+   * [browserContext.on('page')](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
    * only for popups relevant to this page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -853,15 +853,15 @@ export interface Page {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'popup', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   addListener(event: 'request', listener: (request: Request) => void): this;
 
@@ -870,9 +870,9 @@ export interface Page {
    * 
    * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
    * will complete with
-   * [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+   * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
-   * [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
+   * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
    */
   addListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -959,8 +959,8 @@ export interface Page {
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
    * to the dialog via
-   * [`dialog.accept([promptText])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext)
-   * or [`dialog.dismiss()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
+   * [dialog.accept([promptText])](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
    */
   removeListener(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -983,7 +983,7 @@ export interface Page {
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
    * respond to it via setting the input files using
-   * [`fileChooser.setFiles(files[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
+   * [fileChooser.setFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
    * that can be uploaded after that.
    * 
    * ```js
@@ -1022,7 +1022,7 @@ export interface Page {
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
-   * [`browserContext.on('page')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
+   * [browserContext.on('page')](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
    * only for popups relevant to this page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -1038,15 +1038,15 @@ export interface Page {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   removeListener(event: 'popup', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   removeListener(event: 'request', listener: (request: Request) => void): this;
 
@@ -1055,9 +1055,9 @@ export interface Page {
    * 
    * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
    * will complete with
-   * [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+   * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
-   * [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
+   * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
    */
   removeListener(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1144,8 +1144,8 @@ export interface Page {
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
    * to the dialog via
-   * [`dialog.accept([promptText])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext)
-   * or [`dialog.dismiss()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
+   * [dialog.accept([promptText])](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
    */
   off(event: 'dialog', listener: (dialog: Dialog) => void): this;
 
@@ -1168,7 +1168,7 @@ export interface Page {
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
    * respond to it via setting the input files using
-   * [`fileChooser.setFiles(files[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
+   * [fileChooser.setFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
    * that can be uploaded after that.
    * 
    * ```js
@@ -1207,7 +1207,7 @@ export interface Page {
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
-   * [`browserContext.on('page')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
+   * [browserContext.on('page')](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
    * only for popups relevant to this page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -1223,15 +1223,15 @@ export interface Page {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'popup', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   off(event: 'request', listener: (request: Request) => void): this;
 
@@ -1240,9 +1240,9 @@ export interface Page {
    * 
    * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
    * will complete with
-   * [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+   * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
-   * [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
+   * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
    */
   off(event: 'requestfailed', listener: (request: Request) => void): this;
 
@@ -1292,9 +1292,9 @@ export interface Page {
    * ```
    * 
    * > **NOTE** The order of evaluation of multiple scripts installed via
-   * [`browserContext.addInitScript(script[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextaddinitscriptscript-arg)
+   * [browserContext.addInitScript(script[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextaddinitscriptscript-arg)
    * and
-   * [`page.addInitScript(script[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageaddinitscriptscript-arg)
+   * [page.addInitScript(script[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageaddinitscriptscript-arg)
    * is not defined.
    * @param script Script to be evaluated in the page.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
@@ -1317,7 +1317,7 @@ export interface Page {
    * fires or when the script content was injected into frame.
    * 
    * Shortcut for main frame's
-   * [`frame.addScriptTag(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameaddscripttagparams).
+   * [frame.addScriptTag(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameaddscripttagparams).
    * @param params 
    */
   addScriptTag(params: {
@@ -1349,7 +1349,7 @@ export interface Page {
    * content. Returns the added tag when the stylesheet's onload fires or when the CSS content was injected into frame.
    * 
    * Shortcut for main frame's
-   * [`frame.addStyleTag(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameaddstyletagparams).
+   * [frame.addStyleTag(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameaddstyletagparams).
    * @param params 
    */
   addStyleTag(params: {
@@ -1383,7 +1383,7 @@ export interface Page {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 1. Ensure that the element is now checked. If not, this method rejects.
@@ -1392,7 +1392,7 @@ export interface Page {
    * Passing zero timeout disables this.
    * 
    * Shortcut for main frame's
-   * [`frame.check(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framecheckselector-options).
+   * [frame.check(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framecheckselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -1412,9 +1412,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1426,7 +1426,7 @@ export interface Page {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -1434,7 +1434,7 @@ export interface Page {
    * Passing zero timeout disables this.
    * 
    * Shortcut for main frame's
-   * [`frame.click(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameclickselector-options).
+   * [frame.click(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameclickselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -1485,9 +1485,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1501,7 +1501,7 @@ export interface Page {
    * 
    * > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
    * > and should be handled manually via
-   * [`page.on('dialog')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
+   * [page.on('dialog')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
    * @param options 
    */
   close(options?: {
@@ -1534,10 +1534,10 @@ export interface Page {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to double click in the
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to double click in the
    *    center of the element, or the specified `position`.
-   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first
-   *    click of the `dblclick()` triggers a navigation event, this method will reject.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
+   *    first click of the `dblclick()` triggers a navigation event, this method will reject.
    * 
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
@@ -1545,7 +1545,7 @@ export interface Page {
    * > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * 
    * Shortcut for main frame's
-   * [`frame.dblclick(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framedblclickselector-options).
+   * [frame.dblclick(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framedblclickselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -1591,9 +1591,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1637,9 +1637,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1700,7 +1700,7 @@ export interface Page {
    * If the `playwrightFunction` returns a [Promise], it will be awaited.
    * 
    * See
-   * [`browserContext.exposeFunction(name, playwrightFunction)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposefunctionname-playwrightfunction)
+   * [browserContext.exposeFunction(name, playwrightFunction)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposefunctionname-playwrightfunction)
    * for context-wide exposed function.
    * 
    * > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
@@ -1769,10 +1769,10 @@ export interface Page {
    * clear the input field.
    * 
    * To send fine-grained keyboard events, use
-   * [`page.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetypeselector-text-options).
+   * [page.type(selector, text[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetypeselector-text-options).
    * 
    * Shortcut for main frame's
-   * [`frame.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options)
+   * [frame.fill(selector, value[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options)
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
@@ -1788,9 +1788,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1801,7 +1801,7 @@ export interface Page {
    * waits until a matching element appears in the DOM.
    * 
    * Shortcut for main frame's
-   * [`frame.focus(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefocusselector-options).
+   * [frame.focus(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefocusselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -1809,9 +1809,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1857,9 +1857,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1876,11 +1876,11 @@ export interface Page {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1905,11 +1905,11 @@ export interface Page {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1936,7 +1936,7 @@ export interface Page {
    * 
    * `page.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404 "Not
    * Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
-   * [`response.status()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#responsestatus).
+   * [response.status()](https://github.com/microsoft/playwright/blob/master/docs/api.md#responsestatus).
    * 
    * > **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
    * `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
@@ -1944,25 +1944,25 @@ export interface Page {
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
    * 
    * Shortcut for main frame's
-   * [`frame.goto(url[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framegotourl-options)
+   * [frame.goto(url[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framegotourl-options)
    * @param url URL to navigate page to. The url should include scheme, e.g. `https://`.
    * @param options 
    */
   goto(url: string, options?: {
     /**
      * Referer header value. If provided it will take preference over the referer header value set by
-     * [`page.setExtraHTTPHeaders(headers)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheadersheaders).
+     * [page.setExtraHTTPHeaders(headers)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheadersheaders).
      */
     referer?: string;
 
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -1982,7 +1982,7 @@ export interface Page {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to hover over the
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to hover over the
    *    center of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -1990,7 +1990,7 @@ export interface Page {
    * Passing zero timeout disables this.
    * 
    * Shortcut for main frame's
-   * [`frame.hover(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framehoverselector-options).
+   * [frame.hover(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framehoverselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -2019,9 +2019,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2036,9 +2036,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2053,9 +2053,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2086,7 +2086,7 @@ export interface Page {
    * > **NOTE** Generating a pdf is currently only supported in Chromium headless.
    * 
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
-   * [`page.emulateMedia(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams)
+   * [page.emulateMedia(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams)
    * before calling `page.pdf()`:
    * 
    * > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
@@ -2227,8 +2227,8 @@ export interface Page {
 
   /**
    * Focuses the element, and then uses
-   * [`keyboard.down(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) and
-   * [`keyboard.up(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
+   * [keyboard.down(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) and
+   * [keyboard.up(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
    * 
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
    * value or a single character to generate the text for. A superset of the `key` values can be found
@@ -2279,9 +2279,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2296,11 +2296,11 @@ export interface Page {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2340,7 +2340,7 @@ export interface Page {
    * ```
    * 
    * Page routes take precedence over browser context routes (set up with
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler))
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler))
    * when request matches both handlers.
    * 
    * > **NOTE** Enabling routing disables http cache.
@@ -2409,9 +2409,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2441,7 +2441,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.selectOption(selector, values[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselectoptionselector-values-options)
+   * [frame.selectOption(selector, values[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselectoptionselector-values-options)
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
@@ -2488,9 +2488,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2504,11 +2504,11 @@ export interface Page {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2524,20 +2524,20 @@ export interface Page {
 
   /**
    * This setting will change the default maximum navigation time for the following methods and related shortcuts:
-   * - [`page.goBack([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegobackoptions)
-   * - [`page.goForward([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegoforwardoptions)
-   * - [`page.goto(url[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegotourl-options)
-   * - [`page.reload([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagereloadoptions)
-   * - [`page.setContent(html[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetcontenthtml-options)
-   * - [`page.waitForNavigation([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitfornavigationoptions)
+   * - [page.goBack([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegobackoptions)
+   * - [page.goForward([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegoforwardoptions)
+   * - [page.goto(url[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegotourl-options)
+   * - [page.reload([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagereloadoptions)
+   * - [page.setContent(html[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetcontenthtml-options)
+   * - [page.waitForNavigation([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitfornavigationoptions)
    * 
    * > **NOTE**
-   * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+   * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
    * takes priority over
-   * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout),
-   * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+   * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout),
+   * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
    * and
-   * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout).
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout).
    * @param timeout Maximum navigation time in milliseconds
    */
   setDefaultNavigationTimeout(timeout: number): void;
@@ -2546,9 +2546,9 @@ export interface Page {
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * 
    * > **NOTE**
-   * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+   * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
    * takes priority over
-   * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout).
+   * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout).
    * @param timeout Maximum time in milliseconds
    */
   setDefaultTimeout(timeout: number): void;
@@ -2612,9 +2612,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2622,7 +2622,7 @@ export interface Page {
 
   /**
    * In the case of multiple pages in a single browser, each page can have its own viewport size. However,
-   * [`browser.newContext([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsernewcontextoptions)
+   * [browser.newContext([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsernewcontextoptions)
    * allows to set viewport size (and more) for all pages in the context at once.
    * 
    * `page.setViewportSize` will resize the page. A lot of websites don't expect phones to change size, so you should set the
@@ -2657,7 +2657,7 @@ export interface Page {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.touchscreen`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetouchscreen) to tap the
+   * 1. Use [page.touchscreen](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetouchscreen) to tap the
    *    center of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -2667,7 +2667,7 @@ export interface Page {
    * > **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * 
    * Shortcut for main frame's
-   * [`frame.tap(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametapselector-options).
+   * [frame.tap(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametapselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -2703,9 +2703,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2720,9 +2720,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2730,7 +2730,7 @@ export interface Page {
 
   /**
    * Returns the page's title. Shortcut for main frame's
-   * [`frame.title()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametitle).
+   * [frame.title()](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametitle).
    */
   title(): Promise<string>;
 
@@ -2739,10 +2739,10 @@ export interface Page {
   /**
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `page.type` can be used to send
    * fine-grained keyboard events. To fill values in form fields, use
-   * [`page.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagefillselector-value-options).
+   * [page.fill(selector, value[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagefillselector-value-options).
    * 
    * To press a special key, like `Control` or `ArrowDown`, use
-   * [`keyboard.press(key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options).
+   * [keyboard.press(key[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options).
    * 
    * ```js
    * await page.type('#mytextarea', 'Hello'); // Types instantly
@@ -2750,7 +2750,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options).
+   * [frame.type(selector, text[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options 
@@ -2771,9 +2771,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2787,7 +2787,7 @@ export interface Page {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 1. Ensure that the element is now unchecked. If not, this method rejects.
@@ -2796,7 +2796,7 @@ export interface Page {
    * Passing zero timeout disables this.
    * 
    * Shortcut for main frame's
-   * [`frame.uncheck(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameuncheckselector-options).
+   * [frame.uncheck(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameuncheckselector-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -2816,9 +2816,9 @@ export interface Page {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -2826,7 +2826,7 @@ export interface Page {
 
   /**
    * Removes a route created with
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler). When
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler). When
    * `handler` is not specified, removes all routes for the `url`.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler Optional handler function to route the request.
@@ -2834,7 +2834,7 @@ export interface Page {
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
   /**
-   * Shortcut for main frame's [`frame.url()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameurl).
+   * Shortcut for main frame's [frame.url()](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameurl).
    */
   url(): string;
 
@@ -2915,8 +2915,8 @@ export interface Page {
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
    * to the dialog via
-   * [`dialog.accept([promptText])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext)
-   * or [`dialog.dismiss()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
+   * [dialog.accept([promptText])](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogacceptprompttext) or
+   * [dialog.dismiss()](https://github.com/microsoft/playwright/blob/master/docs/api.md#dialogdismiss) methods.
    */
   waitForEvent(event: 'dialog', optionsOrPredicate?: { predicate?: (dialog: Dialog) => boolean, timeout?: number } | ((dialog: Dialog) => boolean)): Promise<Dialog>;
 
@@ -2939,7 +2939,7 @@ export interface Page {
   /**
    * Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
    * respond to it via setting the input files using
-   * [`fileChooser.setFiles(files[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
+   * [fileChooser.setFiles(files[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#filechoosersetfilesfiles-options)
    * that can be uploaded after that.
    * 
    * ```js
@@ -2978,7 +2978,7 @@ export interface Page {
 
   /**
    * Emitted when the page opens a new tab or window. This event is emitted in addition to the
-   * [`browserContext.on('page')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
+   * [browserContext.on('page')](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextonpage), but
    * only for popups relevant to this page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
@@ -2994,15 +2994,15 @@ export interface Page {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'popup', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
    * Emitted when a page issues a request. The [request] object is read-only. In order to intercept and mutate requests, see
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   waitForEvent(event: 'request', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
 
@@ -3011,9 +3011,9 @@ export interface Page {
    * 
    * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
    * will complete with
-   * [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+   * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
-   * [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
+   * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
    */
   waitForEvent(event: 'requestfailed', optionsOrPredicate?: { predicate?: (request: Request) => boolean, timeout?: number } | ((request: Request) => boolean)): Promise<Request>;
 
@@ -3062,7 +3062,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitforloadstatestate-options).
+   * [frame.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitforloadstatestate-options).
    * @param state Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the method resolves immediately. Can be one of:
    * - `'load'` - wait for the `load` event to be fired.
    * - `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
@@ -3073,11 +3073,11 @@ export interface Page {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3103,18 +3103,18 @@ export interface Page {
    * considered a navigation.
    * 
    * Shortcut for main frame's
-   * [`frame.waitForNavigation([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitfornavigationoptions).
+   * [frame.waitForNavigation([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitfornavigationoptions).
    * @param options 
    */
   waitForNavigation(options?: {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3153,7 +3153,7 @@ export interface Page {
     /**
      * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
      * changed by using the
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * method.
      */
     timeout?: number;
@@ -3175,9 +3175,9 @@ export interface Page {
     /**
      * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3195,7 +3195,7 @@ export interface Page {
    * ```
    * 
    * Shortcut for main frame's
-   * [`frame.waitForTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitfortimeouttimeout).
+   * [frame.waitForTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#framewaitfortimeouttimeout).
    * @param timeout A timeout to wait for
    */
   waitForTimeout(timeout: number): Promise<void>;
@@ -3210,15 +3210,15 @@ export interface Page {
 
 /**
  * At every point of time, page exposes its current frame tree via the
- * [`page.mainFrame()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemainframe) and
- * [`frame.childFrames()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framechildframes) methods.
+ * [page.mainFrame()](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemainframe) and
+ * [frame.childFrames()](https://github.com/microsoft/playwright/blob/master/docs/api.md#framechildframes) methods.
  * 
  * [Frame] object's lifecycle is controlled by three events, dispatched on the page object:
- * - [`page.on('frameattached')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonframeattached) -
+ * - [page.on('frameattached')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonframeattached) -
  *   fired when the frame gets attached to the page. A Frame can be attached to the page only once.
- * - [`page.on('framenavigated')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonframenavigated) -
+ * - [page.on('framenavigated')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonframenavigated) -
  *   fired when the frame commits navigation to a different URL.
- * - [`page.on('framedetached')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonframedetached) -
+ * - [page.on('framedetached')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonframedetached) -
  *   fired when the frame gets detached from the page.  A Frame can be detached from the page only once.
  * 
  * An example of dumping frame tree:
@@ -3523,7 +3523,7 @@ export interface Frame {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 1. Ensure that the element is now checked. If not, this method rejects.
@@ -3549,9 +3549,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3565,7 +3565,7 @@ export interface Frame {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -3621,9 +3621,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3640,10 +3640,10 @@ export interface Frame {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to double click in the
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to double click in the
    *    center of the element, or the specified `position`.
-   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first
-   *    click of the `dblclick()` triggers a navigation event, this method will reject.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
+   *    first click of the `dblclick()` triggers a navigation event, this method will reject.
    * 
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
@@ -3694,9 +3694,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3740,9 +3740,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3755,7 +3755,7 @@ export interface Frame {
    * clear the input field.
    * 
    * To send fine-grained keyboard events, use
-   * [`frame.type(selector, text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options).
+   * [frame.type(selector, text[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
@@ -3771,9 +3771,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3789,9 +3789,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3801,7 +3801,7 @@ export interface Frame {
    * Returns the `frame` or `iframe` element handle which corresponds to this frame.
    * 
    * This is an inverse of
-   * [`elementHandle.contentFrame()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlecontentframe).
+   * [elementHandle.contentFrame()](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlecontentframe).
    * Note that returned handle actually belongs to the parent frame.
    * 
    * This method throws an error if the frame has been detached before `frameElement()` returns.
@@ -3825,9 +3825,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3846,7 +3846,7 @@ export interface Frame {
    * 
    * `frame.goto` will not throw an error when any valid HTTP status code is returned by the remote server, including 404
    * "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
-   * [`response.status()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#responsestatus).
+   * [response.status()](https://github.com/microsoft/playwright/blob/master/docs/api.md#responsestatus).
    * 
    * > **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation
    * to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
@@ -3858,18 +3858,18 @@ export interface Frame {
   goto(url: string, options?: {
     /**
      * Referer header value. If provided it will take preference over the referer header value set by
-     * [`page.setExtraHTTPHeaders(headers)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheadersheaders).
+     * [page.setExtraHTTPHeaders(headers)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheadersheaders).
      */
     referer?: string;
 
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3889,7 +3889,7 @@ export interface Frame {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to hover over the
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to hover over the
    *    center of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -3923,9 +3923,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3940,9 +3940,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -3957,9 +3957,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4027,9 +4027,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4098,9 +4098,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4114,11 +4114,11 @@ export interface Frame {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4183,9 +4183,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4197,7 +4197,7 @@ export interface Frame {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.touchscreen`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetouchscreen) to tap the
+   * 1. Use [page.touchscreen](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetouchscreen) to tap the
    *    center of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -4240,9 +4240,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4257,9 +4257,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4273,10 +4273,10 @@ export interface Frame {
   /**
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text. `frame.type` can be used to
    * send fine-grained keyboard events. To fill values in form fields, use
-   * [`frame.fill(selector, value[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options).
+   * [frame.fill(selector, value[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options).
    * 
    * To press a special key, like `Control` or `ArrowDown`, use
-   * [`keyboard.press(key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options).
+   * [keyboard.press(key[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options).
    * 
    * ```js
    * await frame.type('#mytextarea', 'Hello'); // Types instantly
@@ -4303,9 +4303,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4319,7 +4319,7 @@ export interface Frame {
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the matched element, unless `force` option is set. If the
    *    element is detached during the checks, the whole action is retried.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 1. Ensure that the element is now unchecked. If not, this method rejects.
@@ -4345,9 +4345,9 @@ export interface Frame {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4379,11 +4379,11 @@ export interface Frame {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4412,11 +4412,11 @@ export interface Frame {
     /**
      * Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be
      * changed by using the
-     * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
-     * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+     * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout),
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout),
+     * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -4476,7 +4476,7 @@ export interface BrowserContext {
    * BrowserContext, page: Page, frame: Frame }`.
    * 
    * See
-   * [`page.exposeBinding(name, playwrightBinding[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposebindingname-playwrightbinding-options)
+   * [page.exposeBinding(name, playwrightBinding[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposebindingname-playwrightbinding-options)
    * for page-only version.
    * 
    * An example of exposing page URL to all frames in all pages in the context:
@@ -4527,7 +4527,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   on(event: 'close', listener: () => void): this;
@@ -4535,8 +4535,8 @@ export interface BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -4551,7 +4551,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'page', listener: (page: Page) => void): this;
@@ -4560,7 +4560,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   once(event: 'close', listener: () => void): this;
@@ -4568,8 +4568,8 @@ export interface BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -4584,7 +4584,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'page', listener: (page: Page) => void): this;
@@ -4593,7 +4593,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   addListener(event: 'close', listener: () => void): this;
@@ -4601,8 +4601,8 @@ export interface BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -4617,7 +4617,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'page', listener: (page: Page) => void): this;
@@ -4626,7 +4626,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   removeListener(event: 'close', listener: () => void): this;
@@ -4634,8 +4634,8 @@ export interface BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -4650,7 +4650,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   removeListener(event: 'page', listener: (page: Page) => void): this;
@@ -4659,7 +4659,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   off(event: 'close', listener: () => void): this;
@@ -4667,8 +4667,8 @@ export interface BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -4683,7 +4683,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'page', listener: (page: Page) => void): this;
@@ -4691,7 +4691,7 @@ export interface BrowserContext {
   /**
    * Adds cookies into this browser context. All pages within this context will have these cookies installed. Cookies can be
    * obtained via
-   * [`browserContext.cookies([urls])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextcookiesurls).
+   * [browserContext.cookies([urls])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextcookiesurls).
    * 
    * ```js
    * await browserContext.addCookies([cookieObject1, cookieObject2]);
@@ -4770,9 +4770,9 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** The order of evaluation of multiple scripts installed via
-   * [`browserContext.addInitScript(script[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextaddinitscriptscript-arg)
+   * [browserContext.addInitScript(script[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextaddinitscriptscript-arg)
    * and
-   * [`page.addInitScript(script[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageaddinitscriptscript-arg)
+   * [page.addInitScript(script[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageaddinitscriptscript-arg)
    * is not defined.
    * @param script Script to be evaluated in all pages in the browser context.
    * @param arg Optional argument to pass to `script` (only supported when passing a function).
@@ -4835,7 +4835,7 @@ export interface BrowserContext {
    * If the `playwrightFunction` returns a [Promise], it will be awaited.
    * 
    * See
-   * [`page.exposeFunction(name, playwrightFunction)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunctionname-playwrightfunction)
+   * [page.exposeFunction(name, playwrightFunction)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunctionname-playwrightfunction)
    * for page-only version.
    * 
    * An example of adding an `md5` function to all pages in the context:
@@ -4903,7 +4903,7 @@ export interface BrowserContext {
   /**
    * Returns all open pages in the context. Non visible pages, such as `"background_page"`, will not be listed here. You can
    * find them using
-   * [`chromiumBrowserContext.backgroundPages()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#chromiumbrowsercontextbackgroundpages).
+   * [chromiumBrowserContext.backgroundPages()](https://github.com/microsoft/playwright/blob/master/docs/api.md#chromiumbrowsercontextbackgroundpages).
    */
   pages(): Array<Page>;
 
@@ -4932,7 +4932,7 @@ export interface BrowserContext {
    * ```
    * 
    * Page routes (set up with
-   * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler)) take
+   * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler)) take
    * precedence over browser context routes when request matches both handlers.
    * 
    * > **NOTE** Enabling routing disables http cache.
@@ -4943,19 +4943,19 @@ export interface BrowserContext {
 
   /**
    * This setting will change the default maximum navigation time for the following methods and related shortcuts:
-   * - [`page.goBack([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegobackoptions)
-   * - [`page.goForward([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegoforwardoptions)
-   * - [`page.goto(url[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegotourl-options)
-   * - [`page.reload([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagereloadoptions)
-   * - [`page.setContent(html[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetcontenthtml-options)
-   * - [`page.waitForNavigation([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitfornavigationoptions)
+   * - [page.goBack([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegobackoptions)
+   * - [page.goForward([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegoforwardoptions)
+   * - [page.goto(url[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagegotourl-options)
+   * - [page.reload([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagereloadoptions)
+   * - [page.setContent(html[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetcontenthtml-options)
+   * - [page.waitForNavigation([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitfornavigationoptions)
    * 
    * > **NOTE**
-   * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
+   * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout)
    * and
-   * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+   * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
    * take priority over
-   * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout).
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout).
    * @param timeout Maximum navigation time in milliseconds
    */
   setDefaultNavigationTimeout(timeout: number): void;
@@ -4964,12 +4964,12 @@ export interface BrowserContext {
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * 
    * > **NOTE**
-   * [`page.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout),
-   * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+   * [page.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeouttimeout),
+   * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
    * and
-   * [`browserContext.setDefaultNavigationTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout)
+   * [browserContext.setDefaultNavigationTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeouttimeout)
    * take priority over
-   * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout).
+   * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout).
    * @param timeout Maximum time in milliseconds
    */
   setDefaultTimeout(timeout: number): void;
@@ -4977,7 +4977,7 @@ export interface BrowserContext {
   /**
    * The extra HTTP headers will be sent with every request initiated by any page in the context. These headers are merged
    * with page-specific extra HTTP headers set with
-   * [`page.setExtraHTTPHeaders(headers)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheadersheaders).
+   * [page.setExtraHTTPHeaders(headers)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheadersheaders).
    * If page overrides a particular header, page-specific header value will be used instead of the browser context header
    * value.
    * 
@@ -4994,7 +4994,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Consider using
-   * [`browserContext.grantPermissions(permissions[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
+   * [browserContext.grantPermissions(permissions[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
    * to grant permissions for the browser context pages to read its geolocation.
    * @param geolocation 
    */
@@ -5086,10 +5086,10 @@ export interface BrowserContext {
 
   /**
    * Removes a route created with
-   * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    * When `handler` is not specified, removes all routes for the `url`.
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
-   * @param handler Optional handler function used to register a routing with [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
+   * @param handler Optional handler function used to register a routing with [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler).
    */
   unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => void)): Promise<void>;
 
@@ -5097,7 +5097,7 @@ export interface BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
@@ -5105,8 +5105,8 @@ export interface BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -5121,7 +5121,7 @@ export interface BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
@@ -5202,7 +5202,7 @@ export interface Worker {
 
 /**
  * JSHandle represents an in-page JavaScript object. JSHandles can be created with the
- * [`page.evaluateHandle(pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandlepagefunction-arg)
+ * [page.evaluateHandle(pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandlepagefunction-arg)
  * method.
  * 
  * ```js
@@ -5211,14 +5211,14 @@ export interface Worker {
  * ```
  * 
  * JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with
- * [`jsHandle.dispose()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#jshandledispose). JSHandles are
+ * [jsHandle.dispose()](https://github.com/microsoft/playwright/blob/master/docs/api.md#jshandledispose). JSHandles are
  * auto-disposed when their origin frame gets navigated or the parent context gets destroyed.
  * 
  * JSHandle instances can be used as an argument in
- * [`page.$eval(selector, pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg),
- * [`page.evaluate(pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg)
+ * [page.$eval(selector, pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg),
+ * [page.evaluate(pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg)
  * and
- * [`page.evaluateHandle(pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandlepagefunction-arg)
+ * [page.evaluateHandle(pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandlepagefunction-arg)
  * methods.
  */
 export interface JSHandle<T = any> {
@@ -5255,7 +5255,7 @@ export interface JSHandle<T = any> {
    * for the promise to resolve and return its value.
    * 
    * See
-   * [`page.evaluateHandle(pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandlepagefunction-arg)
+   * [page.evaluateHandle(pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandlepagefunction-arg)
    * for more details.
    * @param pageFunction Function to be evaluated
    * @param arg Optional argument to pass to `pageFunction`
@@ -5303,7 +5303,7 @@ export interface JSHandle<T = any> {
  * - extends: [JSHandle]
  * 
  * ElementHandle represents an in-page DOM element. ElementHandles can be created with the
- * [`page.$(selector)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageselector) method.
+ * [page.$(selector)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageselector) method.
  * 
  * ```js
  * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -5319,13 +5319,13 @@ export interface JSHandle<T = any> {
  * ```
  * 
  * ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
- * [`jsHandle.dispose()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#jshandledispose). ElementHandles
+ * [jsHandle.dispose()](https://github.com/microsoft/playwright/blob/master/docs/api.md#jshandledispose). ElementHandles
  * are auto-disposed when their origin frame gets navigated.
  * 
  * ElementHandle instances can be used as an argument in
- * [`page.$eval(selector, pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg)
+ * [page.$eval(selector, pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevalselector-pagefunction-arg)
  * and
- * [`page.evaluate(pageFunction[, arg])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg)
+ * [page.evaluate(pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatepagefunction-arg)
  * methods.
  */
 export interface ElementHandle<T=Node> extends JSHandle<T> {
@@ -5420,7 +5420,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    * 
    * > **NOTE** This method does not work across navigations, use
-   * [`page.waitForSelector(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforselectorselector-options)
+   * [page.waitForSelector(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforselectorselector-options)
    * instead.
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
    * @param options 
@@ -5473,11 +5473,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method checks the element by performing the following steps:
-   * 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked,
-   *    this method returns immediately.
+   * 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   *    checked, this method returns immediately.
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 1. Ensure that the element is now checked. If not, this method rejects.
@@ -5504,9 +5504,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5516,7 +5516,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * This method clicks the element by performing the following steps:
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -5573,9 +5573,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5590,10 +5590,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * This method double clicks the element by performing the following steps:
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to double click in the
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to double click in the
    *    center of the element, or the specified `position`.
-   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the first
-   *    click of the `dblclick()` triggers a navigation event, this method will reject.
+   * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set. Note that if the
+   *    first click of the `dblclick()` triggers a navigation event, this method will reject.
    * 
    * If the element is detached from the DOM at any moment during the action, this method rejects.
    * 
@@ -5645,9 +5645,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5705,9 +5705,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5728,7 +5728,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * This method hovers over the element by performing the following steps:
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to hover over the
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to hover over the
    *    center of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -5763,9 +5763,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5788,8 +5788,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * Focuses the element, and then uses
-   * [`keyboard.down(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) and
-   * [`keyboard.up(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
+   * [keyboard.down(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) and
+   * [keyboard.up(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
    * 
    * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
    * value or a single character to generate the text for. A superset of the `key` values can be found
@@ -5826,9 +5826,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5863,9 +5863,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5889,9 +5889,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5962,9 +5962,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -5979,9 +5979,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -6037,9 +6037,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -6049,7 +6049,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * This method taps the element by performing the following steps:
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.touchscreen`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetouchscreen) to tap the
+   * 1. Use [page.touchscreen](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetouchscreen) to tap the
    *    center of the element, or the specified `position`.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 
@@ -6093,9 +6093,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -6110,7 +6110,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    * 
    * To press a special key, like `Control` or `ArrowDown`, use
-   * [`elementHandle.press(key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlepresskey-options).
+   * [elementHandle.press(key[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#elementhandlepresskey-options).
    * 
    * ```js
    * await elementHandle.type('Hello'); // Types instantly
@@ -6144,9 +6144,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -6154,11 +6154,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method checks the element by performing the following steps:
-   * 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked,
-   *    this method returns immediately.
+   * 1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   *    unchecked, this method returns immediately.
    * 1. Wait for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks on the element, unless `force` option is set.
    * 1. Scroll the element into view if needed.
-   * 1. Use [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
+   * 1. Use [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse) to click in the center
    *    of the element.
    * 1. Wait for initiated navigations to either succeed or fail, unless `noWaitAfter` option is set.
    * 1. Ensure that the element is now unchecked. If not, this method rejects.
@@ -6185,9 +6185,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -6214,9 +6214,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -6272,7 +6272,7 @@ export interface BrowserType<Browser> {
    * [Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
    * >
    * > In
-   * [`browserType.launch([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions)
+   * [browserType.launch([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions)
    * above, any mention of Chromium also applies to Chrome.
    * >
    * > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for
@@ -6316,8 +6316,8 @@ export interface BrowserType<Browser> {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [`page.emulateMedia(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams)
-     * for more details. Defaults to '`light`'.
+     * [page.emulateMedia(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams) for
+     * more details. Defaults to '`light`'.
      */
     colorScheme?: "light"|"dark"|"no-preference";
 
@@ -6449,7 +6449,7 @@ export interface BrowserType<Browser> {
 
     /**
      * A list of permissions to grant to all pages in this context. See
-     * [`browserContext.grantPermissions(permissions[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
+     * [browserContext.grantPermissions(permissions[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
      * for more details.
      */
     permissions?: Array<string>;
@@ -6483,7 +6483,7 @@ export interface BrowserType<Browser> {
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
      * specified, the HAR is not recorded. Make sure to await
-     * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for the
+     * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for the
      * HAR to be saved.
      */
     recordHar?: {
@@ -6501,8 +6501,8 @@ export interface BrowserType<Browser> {
     /**
      * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
      * sure to await
-     * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-     * videos to be saved.
+     * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for videos
+     * to be saved.
      */
     recordVideo?: {
       /**
@@ -6573,8 +6573,8 @@ export interface BrowserType<Browser> {
     /**
      * **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
      * `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-     * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-     * videos to be saved.
+     * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for videos
+     * to be saved.
      */
     videosPath?: string;
 
@@ -6738,9 +6738,9 @@ export interface BrowserType<Browser> {
  * - extends: [Browser]
  * 
  * Chromium-specific features including Tracing, service worker support, etc. You can use
- * [`chromiumBrowser.startTracing([page, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#chromiumbrowserstarttracingpage-options)
+ * [chromiumBrowser.startTracing([page, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#chromiumbrowserstarttracingpage-options)
  * and
- * [`chromiumBrowser.stopTracing()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#chromiumbrowserstoptracing)
+ * [chromiumBrowser.stopTracing()](https://github.com/microsoft/playwright/blob/master/docs/api.md#chromiumbrowserstoptracing)
  * to create a trace file which can be opened in Chrome DevTools or
  * [timeline viewer](https://chromedevtools.github.io/timeline-viewer/).
  * 
@@ -6824,7 +6824,8 @@ export interface ChromiumBrowser extends Browser {
  * Useful links:
  * - Documentation on DevTools Protocol can be found here:
  *   [DevTools Protocol Viewer](https://chromedevtools.github.io/devtools-protocol/).
- * - Getting Started with DevTools Protocol: https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
+ * - Getting Started with DevTools Protocol:
+ *   https://github.com/aslushnikov/getting-started-with-cdp/blob/master/README.md
  * 
  * ```js
  * const client = await page.context().newCDPSession(page);
@@ -6873,9 +6874,9 @@ export namespace errors {
  * - extends: [Error]
  * 
  * TimeoutError is emitted whenever certain operations are terminated due to timeout, e.g.
- * [`page.waitForSelector(selector[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforselectorselector-options)
+ * [page.waitForSelector(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforselectorselector-options)
  * or
- * [`browserType.launch([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions).
+ * [browserType.launch([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions).
  */
 class TimeoutError extends Error {}
 
@@ -6984,9 +6985,9 @@ export {};
  * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
  * 
  * A Browser is created when Playwright connects to a browser instance, either through
- * [`browserType.launch([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions)
+ * [browserType.launch([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions)
  * or
- * [`browserType.connect(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams).
+ * [browserType.connect(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams).
  * 
  * An example of using a [Browser] to create a [Page]:
  * 
@@ -7002,16 +7003,16 @@ export {};
  * ```
  * 
  * See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
- * [`browserType.connect(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams)
+ * [browserType.connect(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams)
  * and
- * [`browserType.launch([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions)
+ * [browserType.launch([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions)
  * always return a specific browser instance, based on the browser being connected to or launched.
  */
 export interface Browser extends EventEmitter {
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   on(event: 'disconnected', listener: () => void): this;
@@ -7019,7 +7020,7 @@ export interface Browser extends EventEmitter {
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   once(event: 'disconnected', listener: () => void): this;
@@ -7027,7 +7028,7 @@ export interface Browser extends EventEmitter {
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   addListener(event: 'disconnected', listener: () => void): this;
@@ -7035,7 +7036,7 @@ export interface Browser extends EventEmitter {
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   removeListener(event: 'disconnected', listener: () => void): this;
@@ -7043,18 +7044,18 @@ export interface Browser extends EventEmitter {
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   off(event: 'disconnected', listener: () => void): this;
 
   /**
    * In case this browser is obtained using
-   * [`browserType.launch([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions),
+   * [browserType.launch([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunchoptions),
    * closes the browser and all of its pages (if any were opened).
    * 
    * In case this browser is obtained using
-   * [`browserType.connect(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams),
+   * [browserType.connect(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams),
    * clears all created contexts belonging to this browser and disconnects from the browser server.
    * 
    * The [Browser] object itself is considered to be disposed and cannot be used anymore.
@@ -7103,9 +7104,9 @@ export interface Browser extends EventEmitter {
    * 
    * This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and
    * testing frameworks should explicitly create
-   * [`browser.newContext([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsernewcontextoptions)
+   * [browser.newContext([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsernewcontextoptions)
    * followed by the
-   * [`browserContext.newPage()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextnewpage) to
+   * [browserContext.newPage()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextnewpage) to
    * control their exact life times.
    * @param options 
    */
@@ -7122,8 +7123,8 @@ export interface Browser extends EventEmitter {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [`page.emulateMedia(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams)
-     * for more details. Defaults to '`light`'.
+     * [page.emulateMedia(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams) for
+     * more details. Defaults to '`light`'.
      */
     colorScheme?: "light"|"dark"|"no-preference";
 
@@ -7202,7 +7203,7 @@ export interface Browser extends EventEmitter {
 
     /**
      * A list of permissions to grant to all pages in this context. See
-     * [`browserContext.grantPermissions(permissions[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
+     * [browserContext.grantPermissions(permissions[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
      * for more details.
      */
     permissions?: Array<string>;
@@ -7238,7 +7239,7 @@ export interface Browser extends EventEmitter {
     /**
      * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
      * specified, the HAR is not recorded. Make sure to await
-     * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for the
+     * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for the
      * HAR to be saved.
      */
     recordHar?: {
@@ -7256,8 +7257,8 @@ export interface Browser extends EventEmitter {
     /**
      * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
      * sure to await
-     * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-     * videos to be saved.
+     * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for videos
+     * to be saved.
      */
     recordVideo?: {
       /**
@@ -7286,7 +7287,7 @@ export interface Browser extends EventEmitter {
     /**
      * Populates context with given storage state. This method can be used to initialize context with logged-in information
      * obtained via
-     * [`browserContext.storageState([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextstoragestateoptions).
+     * [browserContext.storageState([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextstoragestateoptions).
      * Either a path to the file with saved storage, or an object with the following fields:
      */
     storageState?: string|{
@@ -7387,8 +7388,8 @@ export interface Browser extends EventEmitter {
     /**
      * **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
      * `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-     * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-     * videos to be saved.
+     * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for videos
+     * to be saved.
      */
     videosPath?: string;
 
@@ -7416,7 +7417,7 @@ export interface Browser extends EventEmitter {
 
 /**
  * [ConsoleMessage] objects are dispatched by page via the
- * [`page.on('console')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonconsole) event.
+ * [page.on('console')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonconsole) event.
  */
 export interface ConsoleMessage {
   args(): Array<JSHandle>;
@@ -7450,7 +7451,7 @@ export interface ConsoleMessage {
 
 /**
  * [Dialog] objects are dispatched by page via the
- * [`page.on('dialog')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
+ * [page.on('dialog')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
  * 
  * An example of using `Dialog` class:
  * 
@@ -7500,7 +7501,7 @@ export interface Dialog {
 
 /**
  * [Download] objects are dispatched by page via the
- * [`page.on('download')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondownload) event.
+ * [page.on('download')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondownload) event.
  * 
  * All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
  * files are deleted when the browser closes.
@@ -7580,7 +7581,7 @@ export interface Video {
 
 /**
  * [FileChooser] objects are dispatched by the page in the
- * [`page.on('filechooser')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonfilechooser) event.
+ * [page.on('filechooser')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonfilechooser) event.
  * 
  * ```js
  * page.on('filechooser', async (fileChooser) => {
@@ -7652,9 +7653,9 @@ export interface FileChooser {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the
-     * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+     * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
      * or
-     * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+     * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
      * methods.
      */
     timeout?: number;
@@ -7663,13 +7664,13 @@ export interface FileChooser {
 
 /**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
- * [`keyboard.type(text[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardtypetext-options),
+ * [keyboard.type(text[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardtypetext-options),
  * which takes raw characters and generates proper keydown, keypress/input, and keyup events on your page.
  * 
  * For finer control, you can use
- * [`keyboard.down(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey),
- * [`keyboard.up(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey), and
- * [`keyboard.insertText(text)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardinserttexttext) to
+ * [keyboard.down(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey),
+ * [keyboard.up(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey), and
+ * [keyboard.insertText(text)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardinserttexttext) to
  * manually fire events as if they were generated from a real keyboard.
  * 
  * An example of holding down `Shift` in order to select and delete some text:
@@ -7725,12 +7726,12 @@ export interface Keyboard {
    * 
    * If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier
    * active. To release the modifier key, use
-   * [`keyboard.up(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
+   * [keyboard.up(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
    * 
    * After the key is pressed once, subsequent calls to
-   * [`keyboard.down(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) will have
+   * [keyboard.down(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) will have
    * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
-   * [`keyboard.up(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
+   * [keyboard.up(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
    * 
    * > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
@@ -7779,8 +7780,8 @@ export interface Keyboard {
    * await browser.close();
    * ```
    * 
-   * Shortcut for [`keyboard.down(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) and
-   * [`keyboard.up(key)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
+   * Shortcut for [keyboard.down(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddownkey) and
+   * [keyboard.up(key)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardupkey).
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options 
    */
@@ -7795,7 +7796,7 @@ export interface Keyboard {
    * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
    * 
    * To press a special key, like `Control` or `ArrowDown`, use
-   * [`keyboard.press(key[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options).
+   * [keyboard.press(key[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpresskey-options).
    * 
    * ```js
    * await page.keyboard.type('Hello'); // Types instantly
@@ -7824,7 +7825,7 @@ export interface Keyboard {
  * The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
  * 
  * Every `page` object has its own Mouse, accessible with
- * [`page.mouse`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse).
+ * [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse).
  * 
  * ```js
  * // Using ‘page.mouse’ to trace a 100x100 square.
@@ -7841,9 +7842,9 @@ export interface Keyboard {
 export interface Mouse {
   /**
    * Shortcut for
-   * [`mouse.move(x, y[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemovex-y-options),
-   * [`mouse.down([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedownoptions),
-   * [`mouse.up([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseupoptions).
+   * [mouse.move(x, y[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemovex-y-options),
+   * [mouse.down([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedownoptions),
+   * [mouse.up([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseupoptions).
    * @param x 
    * @param y 
    * @param options 
@@ -7867,11 +7868,11 @@ export interface Mouse {
 
   /**
    * Shortcut for
-   * [`mouse.move(x, y[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemovex-y-options),
-   * [`mouse.down([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedownoptions),
-   * [`mouse.up([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseupoptions),
-   * [`mouse.down([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedownoptions) and
-   * [`mouse.up([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseupoptions).
+   * [mouse.move(x, y[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemovex-y-options),
+   * [mouse.down([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedownoptions),
+   * [mouse.up([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseupoptions),
+   * [mouse.down([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedownoptions) and
+   * [mouse.up([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseupoptions).
    * @param x 
    * @param y 
    * @param options 
@@ -7949,15 +7950,15 @@ export interface Touchscreen {
 
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
- * - [`page.on('request')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequest) emitted when the
+ * - [page.on('request')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequest) emitted when the
  *   request is issued by the page.
- * - [`page.on('response')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonresponse) emitted
+ * - [page.on('response')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonresponse) emitted
  *   when/if the response status and headers are received for the request.
- * - [`page.on('requestfinished')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+ * - [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
  *   emitted when the response body is downloaded and the request is complete.
  * 
  * If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
- * the  [`page.on('requestfailed')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed)
+ * the  [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed)
  * event is emitted.
  * 
  * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
@@ -8052,7 +8053,7 @@ export interface Request {
    * New request issued by the browser if the server responded with redirect.
    * 
    * This method is the opposite of
-   * [`request.redirectedFrom()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#requestredirectedfrom):
+   * [request.redirectedFrom()](https://github.com/microsoft/playwright/blob/master/docs/api.md#requestredirectedfrom):
    * 
    * ```js
    * console.log(request.redirectedFrom().redirectedTo() === request); // true
@@ -8280,8 +8281,8 @@ export interface Selectors {
 
 /**
  * Whenever a network route is set up with
- * [`page.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
- * [`browserContext.route(url, handler)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler),
+ * [page.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagerouteurl-handler) or
+ * [browserContext.route(url, handler)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextrouteurl-handler),
  * the `Route` object allows to handle the route.
  */
 export interface Route {
@@ -8663,7 +8664,7 @@ export interface BrowserServer {
    * Browser websocket url.
    * 
    * Browser websocket endpoint which can be used as an argument to
-   * [`browserType.connect(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams)
+   * [browserType.connect(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnectparams)
    * to establish connection to the browser.
    */
   wsEndpoint(): string;
@@ -8737,7 +8738,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   on(event: 'close', listener: () => void): this;
@@ -8745,8 +8746,8 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -8761,7 +8762,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   on(event: 'page', listener: (page: Page) => void): this;
@@ -8782,7 +8783,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   once(event: 'close', listener: () => void): this;
@@ -8790,8 +8791,8 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -8806,7 +8807,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   once(event: 'page', listener: (page: Page) => void): this;
@@ -8827,7 +8828,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   addListener(event: 'close', listener: () => void): this;
@@ -8835,8 +8836,8 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -8851,7 +8852,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   addListener(event: 'page', listener: (page: Page) => void): this;
@@ -8872,7 +8873,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   removeListener(event: 'close', listener: () => void): this;
@@ -8880,8 +8881,8 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -8896,7 +8897,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   removeListener(event: 'page', listener: (page: Page) => void): this;
@@ -8917,7 +8918,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   off(event: 'close', listener: () => void): this;
@@ -8925,8 +8926,8 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -8941,7 +8942,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   off(event: 'page', listener: (page: Page) => void): this;
@@ -8978,7 +8979,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * Emitted when Browser context gets closed. This might happen because of one of the following:
    * - Browser context is closed.
    * - Browser application is closed or crashed.
-   * - The [`browser.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
+   * - The [browser.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browserclose) method was
    *   called.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
@@ -8986,8 +8987,8 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
    * also fire for popup pages. See also
-   * [`page.on('popup')`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events
-   * about popups relevant to a specific page.
+   * [page.on('popup')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonpopup) to receive events about
+   * popups relevant to a specific page.
    * 
    * The earliest moment that page is available is when it has navigated to the initial url. For example, when opening a
    * popup with `window.open('http://example.com')`, this event will fire when the network request to "http://example.com" is
@@ -9002,7 +9003,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * ```
    * 
    * > **NOTE** Use
-   * [`page.waitForLoadState([state, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
+   * [page.waitForLoadState([state, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstatestate-options)
    * to wait until the page gets to a particular state (you should not need it in most cases).
    */
   waitForEvent(event: 'page', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
@@ -9171,8 +9172,8 @@ export interface BrowserContextOptions {
 
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-   * [`page.emulateMedia(params)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams)
-   * for more details. Defaults to '`light`'.
+   * [page.emulateMedia(params)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemediaparams) for
+   * more details. Defaults to '`light`'.
    */
   colorScheme?: "light"|"dark"|"no-preference";
 
@@ -9232,7 +9233,7 @@ export interface BrowserContextOptions {
 
   /**
    * A list of permissions to grant to all pages in this context. See
-   * [`browserContext.grantPermissions(permissions[, options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
+   * [browserContext.grantPermissions(permissions[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissionspermissions-options)
    * for more details.
    */
   permissions?: Array<string>;
@@ -9268,7 +9269,7 @@ export interface BrowserContextOptions {
   /**
    * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
    * specified, the HAR is not recorded. Make sure to await
-   * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for the
+   * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for the
    * HAR to be saved.
    */
   recordHar?: {
@@ -9286,8 +9287,8 @@ export interface BrowserContextOptions {
   /**
    * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
    * sure to await
-   * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-   * videos to be saved.
+   * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for videos
+   * to be saved.
    */
   recordVideo?: {
     /**
@@ -9316,7 +9317,7 @@ export interface BrowserContextOptions {
   /**
    * Populates context with given storage state. This method can be used to initialize context with logged-in information
    * obtained via
-   * [`browserContext.storageState([options])`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextstoragestateoptions).
+   * [browserContext.storageState([options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextstoragestateoptions).
    * Either a path to the file with saved storage, or an object with the following fields:
    */
   storageState?: string|{
@@ -9417,8 +9418,8 @@ export interface BrowserContextOptions {
   /**
    * **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
    * `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-   * [`browserContext.close()`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-   * videos to be saved.
+   * [browserContext.close()](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for videos
+   * to be saved.
    */
   videosPath?: string;
 
@@ -9616,9 +9617,9 @@ interface ElementHandleWaitForSelectorOptions {
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
    * using the
-   * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+   * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
    * or
-   * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+   * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
    * methods.
    */
   timeout?: number;
@@ -9660,9 +9661,9 @@ interface PageWaitForSelectorOptions {
   /**
    * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
    * using the
-   * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
+   * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout)
    * or
-   * [`page.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
+   * [page.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeouttimeout)
    * methods.
    */
   timeout?: number;
@@ -9678,7 +9679,7 @@ interface PageWaitForFunctionOptions {
   /**
    * maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
    * value can be changed by using the
-   * [`browserContext.setDefaultTimeout(timeout)`](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout).
+   * [browserContext.setDefaultTimeout(timeout)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeouttimeout).
    */
   timeout?: number;
 }

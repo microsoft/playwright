@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+//@ts-check
+
 const path = require('path');
 
 function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, webkitVersion}) {
@@ -58,13 +60,11 @@ function runCommands(sources, {libversion, chromiumVersion, firefoxVersion, webk
         newText = generateTableOfContents(source.text(), to, false /* topLevelOnly */);
       else if (commandName === 'toc-top-level')
         newText = generateTableOfContents(source.text(), to, true /* topLevelOnly */);
-      else if (commandName.startsWith('toc-extends-'))
-        newText = generateTableOfContentsForSuperclass(source.text(), 'class: ' + commandName.substring('toc-extends-'.length));
 
       if (newText === null)
         errors.push(`Unknown command 'gen:${commandName}'`);
       else
-        sourceEdits.edit(from, to, newText);
+        sourceEdits.edit(from, to, newText);      
     }
     sourceEdits.commit(errors);
   }
@@ -105,10 +105,7 @@ function getTOCEntriesForText(text) {
   return tocEntries;
 }
 
-/**
- * @param {string} text
- */
-function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
+function findInvalidLinks(projectRoot, sources, allowedFilePaths) {
   const pathToHashLinks = new Map();
   for (const source of sources) {
     const text = source.text();
@@ -123,7 +120,6 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
       allRelativePaths.push('/' + path.relative(projectRoot, filepath));
       allRelativePaths.push(path.relative(path.dirname(source.filePath()), filepath));
     }
-    const sourceEdits = new SourceEdits(source);
     let offset = 0;
 
     const lines = source.text().split('\n');
@@ -136,37 +132,25 @@ function autocorrectInvalidLinks(projectRoot, sources, allowedFilePaths) {
         if (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('mailto:'))
           continue;
         const [relativePath, hash] = href.split('#');
-        const hashOffset = hrefOffset + relativePath.length + 1;
-
         let resolvedPath = resolveLinkPath(source, relativePath);
         let hashLinks = pathToHashLinks.get(resolvedPath);
 
         if (!hashLinks) {
-          // Attempt to autocorrect
           const newRelativePath = autocorrectText(relativePath, allRelativePaths);
-          if (!newRelativePath) {
-            errors.push(`Bad link in ${source.projectPath()}:${lineNumber + 1}: file ${relativePath} does not exist`);
-            continue;
-          }
-          resolvedPath = resolveLinkPath(source, newRelativePath);
-          hashLinks = pathToHashLinks.get(resolvedPath);
-          sourceEdits.edit(hrefOffset, hrefOffset + relativePath.length, newRelativePath);
+          if (relativePath !== newRelativePath)
+            errors.push(`Bad link in ${source.projectPath()}:${lineNumber + 1}: file ${relativePath} does not exist, did you mean ${newRelativePath}?`);
+          continue;
         }
 
         if (!hash || hashLinks.has(hash))
           continue;
 
         const newHashLink = autocorrectText(hash, [...hashLinks]);
-        if (newHashLink) {
-          sourceEdits.edit(hashOffset, hashOffset + hash.length, newHashLink);
-        } else {
-          errors.push(`Bad link in ${source.projectPath()}:${lineNumber + 1}: hash "#${hash}" does not exist in "${path.relative(projectRoot, resolvedPath)}"`);
-        }
+        if (hash !== newHashLink)
+          errors.push(`Bad link in ${source.projectPath()}:${lineNumber + 1}: hash "#${hash}" does not exist in "${path.relative(projectRoot, resolvedPath)}", did you mean ${newHashLink}?`);
       }
       offset += line.length;
     });
-
-    sourceEdits.commit(errors);
   }
   return errors;
 
@@ -272,16 +256,4 @@ function generateTableOfContents(text, offset, topLevelOnly) {
   }).join('\n') + '\n';
 }
 
-function generateTableOfContentsForSuperclass(text, name) {
-  const allTocEntries = getTOCEntriesForText(text);
-
-  for (const tocEntry of allTocEntries) {
-    if (tocEntry.name !== name)
-      continue;
-    const offset = text.indexOf('<!-- GEN:stop -->', tocEntry.offset);
-    return generateTableOfContents(text, offset, false);
-  }
-  return text;
-}
-
-module.exports = {autocorrectInvalidLinks, runCommands};
+module.exports = {findInvalidLinks, runCommands};

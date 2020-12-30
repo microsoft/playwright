@@ -75,9 +75,7 @@ class MDOutline {
   /**
    * @param {Renderer} linkRenderer
    */
-  renderLinks(linkRenderer) {
-    const externalLinksMap = new Map();
-  
+  setLinkRenderer(linkRenderer) {
     // @type {Map<string, Documentation.Class>}
     const classesMap = new Map();
     const membersMap = new Map();
@@ -86,10 +84,21 @@ class MDOutline {
       for (const member of clazz.membersArray)
         membersMap.set(`${member.kind}: ${clazz.name}.${member.name}`, member);
     }
+    this._patchLinks = nodes => patchLinks(nodes, classesMap, membersMap, linkRenderer);
 
     for (const clazz of this.classesArray)
-      clazz.visit(item => patchLinks(item, item.spec, classesMap, membersMap, linkRenderer));
+      clazz.visit(item => this._patchLinks(item.spec));
   }
+
+  /**
+   * @param {string} content
+   * @return {string}
+   */
+  renderLinksInText(content) {
+    const nodes = md.parse(content);
+    this._patchLinks(nodes);
+    return md.render(nodes, 80);
+}
 
   generateSourceCodeComments() {
     for (const clazz of this.classesArray)
@@ -128,7 +137,7 @@ function extractComments(item) {
  * @param {MarkdownNode[]} spec
  */
 function generateSourceCodeComment(spec) {
-  const comments = (spec || []).filter(n => n.type !== 'gen' && !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
+  const comments = (spec || []).filter(n => !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
   md.visitAll(comments, node => {
     if (node.liType === 'bullet')
       node.liType = 'default';
@@ -137,13 +146,12 @@ function generateSourceCodeComment(spec) {
 }
 
 /**
- * @param {Documentation.Class|Documentation.Member} item
  * @param {MarkdownNode[]} spec
  * @param {Map<string, Documentation.Class>} classesMap
  * @param {Map<string, Documentation.Member>} membersMap
  * @param {Renderer} linkRenderer
  */
-function patchLinks(item, spec, classesMap, membersMap, linkRenderer) {
+function patchLinks(spec, classesMap, membersMap, linkRenderer) {
   if (!spec)
     return;
   md.visitAll(spec, node => {
@@ -151,17 +159,15 @@ function patchLinks(item, spec, classesMap, membersMap, linkRenderer) {
       return;
     node.text = node.text.replace(/\[`((?:event|method|property): [^\]]+)`\]/g, (match, p1) => {
       const member = membersMap.get(p1);
+      if (!member)
+        throw new Error('Undefined member references: ' + match);
       return linkRenderer({ member }) || match;
     });
     node.text = node.text.replace(/\[`(param|option): ([^\]]+)`\]/g, (match, p1, p2) => {
-      const context = {
-        clazz: item instanceof Documentation.Class ? item : undefined,
-        member: item instanceof Documentation.Member ? item : undefined,
-      };
       if (p1 === 'param')
-        return linkRenderer({ ...context, param: p2 }) || match;
+        return linkRenderer({ param: p2 }) || match;
       if (p1 === 'option')
-        return linkRenderer({ ...context, option: p2 }) || match;
+        return linkRenderer({ option: p2 }) || match;
     });
     node.text = node.text.replace(/\[([\w]+)\]/, (match, p1) => {
       const clazz = classesMap.get(p1);
