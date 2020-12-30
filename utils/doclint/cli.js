@@ -26,6 +26,7 @@ const { spawnSync } = require('child_process');
 const preprocessor = require('./preprocessor');
 const { MDOutline } = require('./MDBuilder');
 const missingDocs = require('./missingDocs');
+const Documentation = require('./Documentation');
 
 /** @typedef {import('./Documentation').Type} Type */
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
@@ -63,11 +64,6 @@ async function run() {
 
   // Produce api.md
   {
-    const createMemberLink = (text) => {
-      const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
-      return `[\`${text}\`](#${anchor})`;
-    };
-
     outline.renderLinks(item => {
       const { clazz, member, param, option } = item;
       if (param)
@@ -101,6 +97,15 @@ async function run() {
         });
         // Append class comments
         classNode.children = (clazz.spec || []).map(c => md.clone(c));
+        classNode.children.push({
+          type: 'text',
+          text: '<!-- TOC -->'
+        });
+        classNode.children.push(...generateToc(clazz));
+        if (clazz.extends && clazz.extends !== 'EventEmitter' && clazz.extends !== 'Error') {
+          const superClass = outline.documentation.classes.get(clazz.extends);
+          classNode.children.push(...generateToc(superClass));
+        }
 
         for (const member of clazz.membersArray) {
           // Iterate members
@@ -204,6 +209,57 @@ function getRepositoryFiles() {
   return files.map(file => path.join(PROJECT_DIR, file));
 }
 
+
+const memberLinks = new Map();
+const rMemberLinks = new Map();
+
+/**
+ * @param {string} text
+ */
+function createMemberLink(text) {
+  if (memberLinks.has(text))
+    return memberLinks.get(text);
+  const baseAnchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
+  let anchor = baseAnchor;
+  let index = 0;
+  while (rMemberLinks.has(anchor))
+    anchor = baseAnchor + '-' + (++index);
+  const result = `[${text}](#${anchor})`;
+  memberLinks.set(text, result);
+  rMemberLinks.set(anchor, text);
+  return result;
+};
+
+/**
+ * @param {Documentation.Class} clazz
+ * @return {MarkdownNode[]}
+ */
+function generateToc(clazz) {
+  /** @type {MarkdownNode[]} */
+  const result = [];
+  for (const member of clazz.membersArray) {
+    if (member.kind === 'property') {
+      result.push({
+        type: 'li',
+        liType: 'default',
+        text: createMemberLink(`${clazz.varName}.${member.name}`)
+      });
+    } else if (member.kind === 'event') {
+      result.push({
+        type: 'li',
+        liType: 'default',
+        text: createMemberLink(`${clazz.varName}.on('${member.name}')`)
+      });
+    } else if (member.kind === 'method') {
+      result.push({
+        type: 'li',
+        liType: 'default',
+        text: createMemberLink(`${clazz.varName}.${member.name}(${member.signature})`)
+      });
+    }
+  }
+  return result;
+}
 /**
  * @param {string} name
  * @param {Type} type
