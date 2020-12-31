@@ -50,7 +50,6 @@ class Source {
     this._name = path.basename(filePath);
     this._text = text;
     this._originalText = text;
-    this._hasUpdatedText = false;
   }
 
   /**

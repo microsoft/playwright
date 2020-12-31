@@ -38,6 +38,9 @@ const RED_COLOR = '\x1b[31m';
 const YELLOW_COLOR = '\x1b[33m';
 const RESET_COLOR = '\x1b[0m';
 
+const links = new Map();
+const rLinks = new Map();
+
 run().catch(e => {
   console.error(e);
   process.exit(1);
@@ -46,25 +49,22 @@ run().catch(e => {
 async function run() {
   const startTime = Date.now();
 
-  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-  const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
-  const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
-  const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
-  const docs = await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md');
-  const mdSources = [readme, binReadme, api, contributing, ...docs];
-
   /** @type {!Array<string>} */
   const errors = [];
   let changedFiles = false;
 
   const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
-  const footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
+  let footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
   const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-links.md')).toString();
   const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
+  const generatedComment = '<!-- THIS FILE IS NOW GENERATED -->';
+  let generatedLinksSuffix;
+  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
+  const docs = await (await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md')).filter(s => s.name() !== 'api.md');
 
   // Produce api.md
   {
-    outline.renderLinks(item => {
+    outline.setLinkRenderer(item => {
       const { clazz, member, param, option } = item;
       if (param)
         return `\`${param}\``;
@@ -72,16 +72,16 @@ async function run() {
         return `\`${option}\``;
       if (clazz)
         return `[${clazz.name}]`;
-      if (member.kind === 'method')
-        return createMemberLink(`${member.clazz.varName}.${member.name}(${member.signature})`);
-      if (member.kind === 'event')
-        return createMemberLink(`${member.clazz.varName}.on('${member.name}')`);
-      if (member.kind === 'property')
-        return createMemberLink(`${member.clazz.varName}.${member.name}`);
-      throw new Error('Unknown member kind ' + member.kind);
+      return createMemberLink(member);
     });
 
-    const comment = '<!-- THIS FILE IS NOW GENERATED -->';
+    {
+      const localLinks = [];
+      for (const clazz of outline.classesArray)
+        localLinks.push(`[${clazz.name}]: api.md#class-${clazz.name.toLowerCase()} "${clazz.name}"`);
+      generatedLinksSuffix = localLinks.join('\n') + '\n' + links;
+    }
+
     {
       /** @type {MarkdownNode[]} */
       const result = [];
@@ -90,16 +90,11 @@ async function run() {
         /** @type {MarkdownNode} */
         const classNode = { type: 'h3', text: `class: ${clazz.name}` };
         result.push(classNode);
-        // Append link shortcut to resolve text like [Browser]
-        result.push({
-          type: 'text',
-          text: `[${clazz.name}]: #class-${clazz.name.toLowerCase()} "${clazz.name}"`
-        });
         // Append class comments
         classNode.children = (clazz.spec || []).map(c => md.clone(c));
         classNode.children.push({
           type: 'text',
-          text: '<!-- TOC -->'
+          text: ''
         });
         classNode.children.push(...generateToc(clazz));
         if (clazz.extends && clazz.extends !== 'EventEmitter' && clazz.extends !== 'Error') {
@@ -140,16 +135,28 @@ async function run() {
           classNode.children.push(memberNode);
         }
       }
-      result.push({
-        type: 'text',
-        text: links
-      });
-      api.setText([comment, header, md.render(result), footer].join('\n'));
+      footer = outline.renderLinksInText(footer);
+      api.setText([generatedComment, header, md.render(result), footer, generatedLinksSuffix].join('\n'));
+    }
+  }
+
+  // Produce other docs
+  {
+    for (const doc of docs) {
+      if (!fs.existsSync(path.join(PROJECT_DIR, 'docs-src', doc.name())))
+        continue;
+      const content = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', doc.name())).toString();
+      doc.setText([generatedComment, outline.renderLinksInText(content), generatedLinksSuffix].join('\n'));
     }
   }
 
   // Documentation checks.
   {
+    const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
+    const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
+    const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
+    const mdSources = [readme, binReadme, api, contributing, ...docs];
+
     const browserVersions = await getBrowserVersions();
     errors.push(...(await preprocessor.runCommands(mdSources, {
       libversion: VERSION,
@@ -158,10 +165,7 @@ async function run() {
       webkitVersion: browserVersions.webkit,
     })));
 
-    errors.push(...preprocessor.autocorrectInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
-    for (const source of mdSources.filter(source => source.hasUpdatedText()))
-      errors.push(`WARN: updated ${source.projectPath()}`);
-
+    errors.push(...preprocessor.findInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
     const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
     errors.push(...missingDocs(outline, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
 
@@ -209,26 +213,40 @@ function getRepositoryFiles() {
   return files.map(file => path.join(PROJECT_DIR, file));
 }
 
-
-const memberLinks = new Map();
-const rMemberLinks = new Map();
-
 /**
+ * @param {string} file
  * @param {string} text
  */
-function createMemberLink(text) {
-  if (memberLinks.has(text))
-    return memberLinks.get(text);
-  const baseAnchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
-  let anchor = baseAnchor;
+function createLink(file, text) {
+  const key = file + '#' + text;
+  if (links.has(key))
+    return links.get(key);
+  const baseLink = file + '#' + text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
+  let link = baseLink;
   let index = 0;
-  while (rMemberLinks.has(anchor))
-    anchor = baseAnchor + '-' + (++index);
-  const result = `[${text}](#${anchor})`;
-  memberLinks.set(text, result);
-  rMemberLinks.set(anchor, text);
+  while (rLinks.has(link))
+    link = baseLink + '-' + (++index);
+  const result = `[${text}](${link})`;
+  links.set(key, result);
+  rLinks.set(link, text);
   return result;
 };
+
+/**
+ * @param {Documentation.Member} member
+ * @return {string}
+ */
+function createMemberLink(member) {
+  const file = `./api.md`;
+  if (member.kind === 'property')
+    return createLink(file, `${member.clazz.varName}.${member.name}`);
+
+  if (member.kind === 'event')
+    return createLink(file, `${member.clazz.varName}.on('${member.name}')`);
+
+  if (member.kind === 'method')
+    return createLink(file, `${member.clazz.varName}.${member.name}(${member.signature})`);
+}
 
 /**
  * @param {Documentation.Class} clazz
@@ -238,28 +256,15 @@ function generateToc(clazz) {
   /** @type {MarkdownNode[]} */
   const result = [];
   for (const member of clazz.membersArray) {
-    if (member.kind === 'property') {
-      result.push({
-        type: 'li',
-        liType: 'default',
-        text: createMemberLink(`${clazz.varName}.${member.name}`)
-      });
-    } else if (member.kind === 'event') {
-      result.push({
-        type: 'li',
-        liType: 'default',
-        text: createMemberLink(`${clazz.varName}.on('${member.name}')`)
-      });
-    } else if (member.kind === 'method') {
-      result.push({
-        type: 'li',
-        liType: 'default',
-        text: createMemberLink(`${clazz.varName}.${member.name}(${member.signature})`)
-      });
-    }
+    result.push({
+      type: 'li',
+      liType: 'default',
+      text: createMemberLink(member)
+    });
   }
   return result;
 }
+
 /**
  * @param {string} name
  * @param {Type} type

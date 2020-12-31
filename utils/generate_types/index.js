@@ -40,9 +40,9 @@ let hadChanges = false;
   outline.copyDocsFromSuperclasses([]);
   const createMemberLink = (text) => {
     const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
-    return `[\`${text}\`](https://github.com/microsoft/playwright/blob/master/docs/api.md#${anchor})`;
+    return `[${text}](https://github.com/microsoft/playwright/blob/master/docs/api.md#${anchor})`;
   };
-  outline.renderLinks(item => {
+  outline.setLinkRenderer(item => {
     const { clazz, member, param, option } = item;
     if (param)
       return `\`${param}\``;
@@ -261,9 +261,9 @@ function parentClass(classDesc) {
 function writeComment(comment, indent = '') {
   const parts = [];
   
-  comment = comment.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
+  comment = comment.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
   comment = comment.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
-  comment = comment.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[`$1`](https://github.com/microsoft/playwright/blob/master/docs/$2)');
+  comment = comment.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
   comment = comment.replace(/\[([^\]]+)\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
 
   parts.push(indent + '/**');

@@ -23,7 +23,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
 
 {
   const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
-  outline.renderLinks(item => {
+  outline.setLinkRenderer(item => {
     const { clazz, member, param, option } = item;
     if (param)
       return `\`${param}\``;

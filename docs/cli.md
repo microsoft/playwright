@@ -1,6 +1,9 @@
+<!-- THIS FILE IS NOW GENERATED -->
+
 # Playwright CLI
 
-Playwright comes with the command line tools that run via `npx` or as a part of the `npm` scripts.
+Playwright comes with the command line tools that run via `npx` or as a part of
+the `npm` scripts.
 
 <!-- GEN:toc -->
 - [Usage](#usage)
@@ -26,6 +29,7 @@ $ npx playwright --help
 ```
 
 Running from `package.json` script
+
 ```json
 {
   "scripts": {
@@ -40,13 +44,18 @@ Running from `package.json` script
 $ npx playwright codegen wikipedia.org
 ```
 
-Run `codegen` and perform actions in the browser. Playwright CLI will generate JavaScript code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
+Run `codegen` and perform actions in the browser. Playwright CLI will generate
+JavaScript code for the user interactions. `codegen` will attempt to generate
+resilient text-based selectors.
 
-<img src="https://user-images.githubusercontent.com/284612/92536033-7e7ebe00-f1ed-11ea-9e1a-7cbd912e3391.gif">
+<img
+src="https://user-images.githubusercontent.com/284612/92536033-7e7ebe00-f1ed-11ea-9e1a-7cbd912e3391.gif">
 
 ## Open pages
 
-With `open`, you can use Playwright bundled browsers to browse web pages. Playwright provides cross-platform WebKit builds that can be used to reproduce Safari rendering across Windows, Linux and macOS.
+With `open`, you can use Playwright bundled browsers to browse web pages.
+Playwright provides cross-platform WebKit builds that can be used to reproduce
+Safari rendering across Windows, Linux and macOS.
 
 ```sh
 # Open page in Chromium
@@ -59,7 +68,9 @@ npx playwright wk example.com
 ```
 
 ### Emulate devices
-`open` can emulate mobile and tablet devices ([see all devices](https://github.com/microsoft/playwright/blob/master/src/server/deviceDescriptors.ts)).
+
+`open` can emulate mobile and tablet devices
+([see all devices](https://github.com/microsoft/playwright/blob/master/src/server/deviceDescriptors.ts)).
 
 ```sh
 # Emulate iPhone 11.
@@ -67,12 +78,14 @@ npx playwright --device="iPhone 11" open wikipedia.org
 ```
 
 ### Emulate color scheme and viewport size
+
 ```sh
 # Emulate screen size and color scheme.
 npx playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
 ```
 
 ### Emulate geolocation, language and timezone
+
 ```sh
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
@@ -80,13 +93,17 @@ npx playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --la
 ```
 
 ## Inspect selectors
-During `open` or `codegen`, you can use following API inside the developer tools console of any browser.
 
-<img src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png">
+During `open` or `codegen`, you can use following API inside the developer tools
+console of any browser.
+
+<img
+src="https://user-images.githubusercontent.com/284612/92536317-37dd9380-f1ee-11ea-875d-daf1b206dd56.png">
 
 #### playwright.$(selector)
 
-Query Playwright selector, using the actual Playwright query engine, for example:
+Query Playwright selector, using the actual Playwright query engine, for
+example:
 
 ```js
 > playwright.$('.auth-form >> text=Log in');
@@ -106,7 +123,8 @@ Same as `playwright.$`, but returns all matching elements.
 
 #### playwright.inspect(selector)
 
-Reveal element in the Elements panel (if DevTools of the respective browser supports it).
+Reveal element in the Elements panel (if DevTools of the respective browser
+supports it).
 
 ```js
 > playwright.inspect('text=Log in')
@@ -154,4 +172,63 @@ $ npx playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 ```
 
 ## Known limitations
-Opening WebKit Web Inspector will disconnect Playwright from the browser. In such cases, code generation will stop.
+
+Opening WebKit Web Inspector will disconnect Playwright from the browser. In
+such cases, code generation will stop.
+[Playwright]: api.md#class-playwright "Playwright"
+[Browser]: api.md#class-browser "Browser"
+[BrowserContext]: api.md#class-browsercontext "BrowserContext"
+[Page]: api.md#class-page "Page"
+[Frame]: api.md#class-frame "Frame"
+[ElementHandle]: api.md#class-elementhandle "ElementHandle"
+[JSHandle]: api.md#class-jshandle "JSHandle"
+[ConsoleMessage]: api.md#class-consolemessage "ConsoleMessage"
+[Dialog]: api.md#class-dialog "Dialog"
+[Download]: api.md#class-download "Download"
+[Video]: api.md#class-video "Video"
+[FileChooser]: api.md#class-filechooser "FileChooser"
+[Keyboard]: api.md#class-keyboard "Keyboard"
+[Mouse]: api.md#class-mouse "Mouse"
+[Touchscreen]: api.md#class-touchscreen "Touchscreen"
+[Request]: api.md#class-request "Request"
+[Response]: api.md#class-response "Response"
+[Selectors]: api.md#class-selectors "Selectors"
+[Route]: api.md#class-route "Route"
+[WebSocket]: api.md#class-websocket "WebSocket"
+[TimeoutError]: api.md#class-timeouterror "TimeoutError"
+[Accessibility]: api.md#class-accessibility "Accessibility"
+[Worker]: api.md#class-worker "Worker"
+[BrowserServer]: api.md#class-browserserver "BrowserServer"
+[BrowserType]: api.md#class-browsertype "BrowserType"
+[Logger]: api.md#class-logger "Logger"
+[ChromiumBrowser]: api.md#class-chromiumbrowser "ChromiumBrowser"
+[ChromiumBrowserContext]: api.md#class-chromiumbrowsercontext "ChromiumBrowserContext"
+[ChromiumCoverage]: api.md#class-chromiumcoverage "ChromiumCoverage"
+[CDPSession]: api.md#class-cdpsession "CDPSession"
+[FirefoxBrowser]: api.md#class-firefoxbrowser "FirefoxBrowser"
+[WebKitBrowser]: api.md#class-webkitbrowser "WebKitBrowser"
+[Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
+[Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
+[ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
+[Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
+[Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
+[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
+[Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
+[Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
+[RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp "RegExp"
+[Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
+[UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
+[URL]: https://nodejs.org/api/url.html "URL"
+[USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"
+[UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
+[boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
+[function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
+[iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols "Iterator"
+[null]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null "null"
+[number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
+[origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin "Origin"
+[selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors "selector"
+[Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable "Readable"
+[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "string"
+[xpath]: https://developer.mozilla.org/en-US/docs/Web/XPath "xpath"

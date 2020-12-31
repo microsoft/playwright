@@ -1,14 +1,18 @@
+<!-- THIS FILE IS NOW GENERATED -->
+
 # Authentication
+
 Playwright can be used to automate scenarios that require authentication.
 
-Tests written with Playwright execute in isolated clean-slate environments called
-[browser contexts](./core-concepts.md#browser-contexts). This isolation model
-improves reproducibility and prevents cascading test failures. New browser
+Tests written with Playwright execute in isolated clean-slate environments
+called [browser contexts](./core-concepts.md#browser-contexts). This isolation
+model improves reproducibility and prevents cascading test failures. New browser
 contexts can load existing authentication state. This eliminates the need to
 login in every context and speeds up test execution.
 
 > Note: This guide covers cookie/token-based authentication (logging in via the
-app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)
+app UI). For
+[HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)
 use [`browser.newContext`](./network.md#http-authentication).
 
 <!-- GEN:toc -->
@@ -53,17 +57,18 @@ existing authentication state in new browser contexts.
 ## Reuse authentication state
 
 Web apps use cookie-based or token-based authentication, where authenticated
-state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
-or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage).
-The Playwright API can be used to retrieve this state from authenticated contexts
+state is stored as
+[cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) or in
+[local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage). The
+Playwright API can be used to retrieve this state from authenticated contexts
 and then load it into new contexts.
 
-Cookies and local storage state can be used across different browsers. They depend
-on your application's authentication model: some apps might require both cookies
-and local storage.
+Cookies and local storage state can be used across different browsers. They
+depend on your application's authentication model: some apps might require both
+cookies and local storage.
 
-The following code snippets retrieve state from an authenticated page/context and
-load them into a new context.
+The following code snippets retrieve state from an authenticated page/context
+and load them into a new context.
 
 ### Cookies
 
@@ -78,7 +83,9 @@ await context.addCookies(deserializedCookies);
 ```
 
 ### Local storage
-Local storage ([`window.localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage))
+
+Local storage
+([`window.localStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage))
 is specific to a particular domain.
 
 ```js
@@ -99,7 +106,9 @@ await context.addInitScript(storage => {
 ```
 
 ### Session storage
-Session storage ([`window.sessionStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage))
+
+Session storage
+([`window.sessionStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage))
 is specific to a particular domain.
 
 ```js
@@ -123,14 +132,15 @@ await context.addInitScript(storage => {
 
 Logging in via the UI and then reusing authentication state can be combined to
 implement **login once and run multiple scenarios**. The lifecycle looks like:
-
 1. Run tests (for example, with `npm run test`).
-2. Login via UI and retrieve authentication state.
-    * In Jest, this can be executed in [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
-3. In each test, load authentication state in `beforeEach` or `beforeAll` step.
+1. Login via UI and retrieve authentication state.
+   * In Jest, this can be executed in
+     [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
+1. In each test, load authentication state in `beforeEach` or `beforeAll`
+   step.
 
-This approach will also **work in CI environments**, since it does not rely
-on any external state.
+This approach will also **work in CI environments**, since it does not rely on
+any external state.
 
 ### Example
 
@@ -138,20 +148,23 @@ on any external state.
 Chromium, and then reuses the logged in cookie state in WebKit.
 
 ### API reference
-- [class `BrowserContext`](./api.md#class-browsercontext)
-- [`browserContext.cookies`](./api.md#browsercontextcookiesurls)
-- [`browserContext.addCookies`](./api.md#browsercontextaddcookiescookies)
-- [`page.evaluate`](./api.md#pageevaluatepagefunction-arg)
-- [`browserContext.addInitScript`](./api.md#browsercontextaddinitscriptscript-arg)
+- [BrowserContext]
+- [browserContext.cookies([urls])](./api.md#browsercontextcookiesurls)
+- [browserContext.addCookies(cookies)](./api.md#browsercontextaddcookiescookies)
+- [page.evaluate(pageFunction[, arg])](./api.md#pageevaluatepagefunction-arg)
+- [browserContext.addInitScript(script[, arg])](./api.md#browsercontextaddinitscriptscript-arg)
 
 ## Multi-factor authentication
-Accounts with multi-factor authentication (MFA) cannot be fully automated, and need
-manual intervention. Persistent authentication can be used to partially automate
-MFA scenarios.
+
+Accounts with multi-factor authentication (MFA) cannot be fully automated, and
+need manual intervention. Persistent authentication can be used to partially
+automate MFA scenarios.
 
 ### Persistent authentication
+
 Web browsers use a directory on disk to store user history, cookies, IndexedDB
-and other local state. This disk location is called the [User data directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
+and other local state. This disk location is called the
+[User data directory](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md).
 
 Note that persistent authentication is not suited for CI environments since it
 relies on a disk location. User data directories are specific to browser types
@@ -168,11 +181,67 @@ const context = await chromium.launchPersistentContext(userDataDir, { headless: 
 ```
 
 ### Lifecycle
-
-1. Create a user data directory on disk
-2. Launch a persistent context with the user data directory and login the MFA account.
-3. Reuse user data directory to run automation scenarios.
+1. Create a user data directory on disk 2. Launch a persistent context with
+   the user data directory and login the MFA account. 3. Reuse user data
+   directory to run automation scenarios.
 
 ### API reference
-- [class `BrowserContext`](./api.md#class-browsercontext)
-- [`browserType.launchPersistentContext`](./api.md#browsertypelaunchpersistentcontextuserdatadir-options)
+- [BrowserContext]
+- [browserType.launchPersistentContext(userDataDir[, options])](./api.md#browsertypelaunchpersistentcontextuserdatadir-options)
+[Playwright]: api.md#class-playwright "Playwright"
+[Browser]: api.md#class-browser "Browser"
+[BrowserContext]: api.md#class-browsercontext "BrowserContext"
+[Page]: api.md#class-page "Page"
+[Frame]: api.md#class-frame "Frame"
+[ElementHandle]: api.md#class-elementhandle "ElementHandle"
+[JSHandle]: api.md#class-jshandle "JSHandle"
+[ConsoleMessage]: api.md#class-consolemessage "ConsoleMessage"
+[Dialog]: api.md#class-dialog "Dialog"
+[Download]: api.md#class-download "Download"
+[Video]: api.md#class-video "Video"
+[FileChooser]: api.md#class-filechooser "FileChooser"
+[Keyboard]: api.md#class-keyboard "Keyboard"
+[Mouse]: api.md#class-mouse "Mouse"
+[Touchscreen]: api.md#class-touchscreen "Touchscreen"
+[Request]: api.md#class-request "Request"
+[Response]: api.md#class-response "Response"
+[Selectors]: api.md#class-selectors "Selectors"
+[Route]: api.md#class-route "Route"
+[WebSocket]: api.md#class-websocket "WebSocket"
+[TimeoutError]: api.md#class-timeouterror "TimeoutError"
+[Accessibility]: api.md#class-accessibility "Accessibility"
+[Worker]: api.md#class-worker "Worker"
+[BrowserServer]: api.md#class-browserserver "BrowserServer"
+[BrowserType]: api.md#class-browsertype "BrowserType"
+[Logger]: api.md#class-logger "Logger"
+[ChromiumBrowser]: api.md#class-chromiumbrowser "ChromiumBrowser"
+[ChromiumBrowserContext]: api.md#class-chromiumbrowsercontext "ChromiumBrowserContext"
+[ChromiumCoverage]: api.md#class-chromiumcoverage "ChromiumCoverage"
+[CDPSession]: api.md#class-cdpsession "CDPSession"
+[FirefoxBrowser]: api.md#class-firefoxbrowser "FirefoxBrowser"
+[WebKitBrowser]: api.md#class-webkitbrowser "WebKitBrowser"
+[Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
+[Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
+[ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
+[Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
+[Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
+[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
+[Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
+[Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"
+[RegExp]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp "RegExp"
+[Serializable]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#Description "Serializable"
+[UIEvent.detail]: https://developer.mozilla.org/en-US/docs/Web/API/UIEvent/detail "UIEvent.detail"
+[URL]: https://nodejs.org/api/url.html "URL"
+[USKeyboardLayout]: ../src/usKeyboardLayout.ts "USKeyboardLayout"
+[UnixTime]: https://en.wikipedia.org/wiki/Unix_time "Unix Time"
+[boolean]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Boolean_type "Boolean"
+[function]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function "Function"
+[iterator]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols "Iterator"
+[null]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null "null"
+[number]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#Number_type "Number"
+[origin]: https://developer.mozilla.org/en-US/docs/Glossary/Origin "Origin"
+[selector]: https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Selectors "selector"
+[Readable]: https://nodejs.org/api/stream.html#stream_class_stream_readable "Readable"
+[string]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Data_structures#String_type "string"
+[xpath]: https://developer.mozilla.org/en-US/docs/Web/XPath "xpath"
