@@ -71,7 +71,7 @@ This object can be used to launch or connect to Firefox, returning instances of 
 ## property: Playwright.selectors
 - type: <[Selectors]>
 
-Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more information.
+Selectors can be used to install custom selector engines. See [Working with selectors](./selectors.md#working-with-selectors) for more information.
 
 ## property: Playwright.webkit
 - type: <[BrowserType]>
@@ -2476,7 +2476,7 @@ console.log(text);
 Returns the ElementHandle pointing to the frame element.
 
 The method finds an element matching the specified selector within the frame. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, returns `null`.
+selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector, returns `null`.
 
 ### param: Frame.$.selector = %%-query-selector-%%
 
@@ -2486,7 +2486,7 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 Returns the ElementHandles pointing to the frame elements.
 
 The method finds all elements matching the specified selector within the frame. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, returns empty array.
+selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector, returns empty array.
 
 ### param: Frame.$$.selector = %%-query-selector-%%
 
@@ -2496,7 +2496,7 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
-[`param: pageFunction`]. See [Working with selectors](#working-with-selectors) for more details. If no elements match
+[`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match
 the selector, the method throws an error.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
@@ -2528,7 +2528,7 @@ Optional argument to pass to [`param: pageFunction`]
 Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-as a first argument to [`param: pageFunction`]. See [Working with selectors](#working-with-selectors) for more
+as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more
 details.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
@@ -3326,7 +3326,7 @@ ElementHandle instances can be used as an argument in [`method: Page.$eval`] and
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, returns `null`.
+selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector, returns `null`.
 
 ### param: ElementHandle.$.selector = %%-query-selector-%%
 
@@ -3334,7 +3334,7 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See [Working with
-selectors](#working-with-selectors) for more details. If no elements match the selector, returns empty array.
+selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector, returns empty array.
 
 ### param: ElementHandle.$$.selector = %%-query-selector-%%
 
@@ -3344,7 +3344,7 @@ selectors](#working-with-selectors) for more details. If no elements match the s
 Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: pageFunction`]. See [Working with selectors](#working-with-selectors) for more details. If no
+argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more details. If no
 elements match the selector, the method throws an error.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
@@ -3376,7 +3376,7 @@ Optional argument to pass to [`param: pageFunction`]
 Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
-matched elements as a first argument to [`param: pageFunction`]. See [Working with selectors](#working-with-selectors)
+matched elements as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors)
 for more details.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
@@ -4650,7 +4650,7 @@ Contains the URL of the response.
 
 # class: Selectors
 
-Selectors can be used to install custom selector engines. See [Working with selectors](#working-with-selectors) for more
+Selectors can be used to install custom selector engines. See [Working with selectors](./selectors.md#working-with-selectors) for more
 information.
 
 ## async method: Selectors.register

@@ -1,9 +1,60 @@
+---
+id: class-video
+title: "class: Video"
+---
+
+
+When browser context is created with the `videosPath` option, each page has a video object associated with it.
+
+```js
+console.log(await page.video().path());
+```
+
+
+- [video.path()](api/class-video.md#videopath)
+
+#### video.path()
+- returns: <[Promise]<[string]>>
+
+Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem upon closing the browser context.
+[Playwright]: api/class-playwright.md "Playwright"
+[Browser]: api/class-browser.md "Browser"
+[BrowserContext]: api/class-browsercontext.md "BrowserContext"
+[Page]: api/class-page.md "Page"
+[Frame]: api/class-frame.md "Frame"
+[ElementHandle]: api/class-elementhandle.md "ElementHandle"
+[JSHandle]: api/class-jshandle.md "JSHandle"
+[ConsoleMessage]: api/class-consolemessage.md "ConsoleMessage"
+[Dialog]: api/class-dialog.md "Dialog"
+[Download]: api/class-download.md "Download"
+[Video]: api/class-video.md "Video"
+[FileChooser]: api/class-filechooser.md "FileChooser"
+[Keyboard]: api/class-keyboard.md "Keyboard"
+[Mouse]: api/class-mouse.md "Mouse"
+[Touchscreen]: api/class-touchscreen.md "Touchscreen"
+[Request]: api/class-request.md "Request"
+[Response]: api/class-response.md "Response"
+[Selectors]: api/class-selectors.md "Selectors"
+[Route]: api/class-route.md "Route"
+[WebSocket]: api/class-websocket.md "WebSocket"
+[TimeoutError]: api/class-timeouterror.md "TimeoutError"
+[Accessibility]: api/class-accessibility.md "Accessibility"
+[Worker]: api/class-worker.md "Worker"
+[BrowserServer]: api/class-browserserver.md "BrowserServer"
+[BrowserType]: api/class-browsertype.md "BrowserType"
+[Logger]: api/class-logger.md "Logger"
+[ChromiumBrowser]: api/class-chromiumbrowser.md "ChromiumBrowser"
+[ChromiumBrowserContext]: api/class-chromiumbrowsercontext.md "ChromiumBrowserContext"
+[ChromiumCoverage]: api/class-chromiumcoverage.md "ChromiumCoverage"
+[CDPSession]: api/class-cdpsession.md "CDPSession"
+[FirefoxBrowser]: api/class-firefoxbrowser.md "FirefoxBrowser"
+[WebKitBrowser]: api/class-webkitbrowser.md "WebKitBrowser"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Evaluation Argument]: ./core-concepts.md#evaluationargument "Evaluation Argument"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"

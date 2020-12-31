@@ -1,28 +1,18 @@
-<!-- THIS FILE IS NOW GENERATED -->
+---
+id: test-runners
+title: "Test Runners"
+---
 
-# Test Runners
+With a few lines of code, you can hook up Playwright to your favorite JavaScript test runner.
 
-With a few lines of code, you can hook up Playwright to your favorite JavaScript
-test runner.
-
-<!-- GEN:toc -->
 - [Jest / Jasmine](#jest--jasmine)
 - [AVA](#ava)
 - [Mocha](#mocha)
 - [Multiple Browsers](#multiple-browsers)
-<!-- GEN:stop -->
-
-<br>
-
-<br>
 
 ## Jest / Jasmine
 
-For Jest,
-[jest-playwright](https://github.com/playwright-community/jest-playwright) can
-be used. However for a light-weight solution, requiring playwright directly
-works fine. Jest shares it's syntax with Jasmine, so this applies to Jasmine as
-well.
+For Jest, [jest-playwright](https://github.com/playwright-community/jest-playwright) can be used. However for a light-weight solution, requiring playwright directly works fine. Jest shares it's syntax with Jasmine, so this applies to Jasmine as well.
 
 ```js
 const {chromium} = require('playwright');
@@ -52,8 +42,7 @@ it('should work', async () => {
 
 ## AVA
 
-Tests run concurrently in AVA, so a single page variable cannot be shared
-between tests. Instead, create new pages with a macro function.
+Tests run concurrently in AVA, so a single page variable cannot be shared between tests. Instead, create new pages with a macro function.
 
 ```js
 const {chromium} = require('playwright');
@@ -80,8 +69,7 @@ test('should work', pageMacro, async (t, page) => {
 
 ## Mocha
 
-Mocha looks very similar to the Jest/Jasmine setup, and functions in the same
-way.
+Mocha looks very similar to the Jest/Jasmine setup, and functions in the same way.
 
 ```js
 const {chromium} = require('playwright');
@@ -111,8 +99,7 @@ it('should work', async () => {
 
 ## Multiple Browsers
 
-These simple examples can be extended to support multiple browsers using an
-environment variable.
+These simple examples can be extended to support multiple browsers using an environment variable.
 
 ```js
 const {chromium, webkit, firefox} = require('playwright');
@@ -124,44 +111,44 @@ beforeAll(async() => {
 ```
 
 Then set `BROWSER=firefox` to run your tests with firefox, or any other browser.
-[Playwright]: api.md#class-playwright "Playwright"
-[Browser]: api.md#class-browser "Browser"
-[BrowserContext]: api.md#class-browsercontext "BrowserContext"
-[Page]: api.md#class-page "Page"
-[Frame]: api.md#class-frame "Frame"
-[ElementHandle]: api.md#class-elementhandle "ElementHandle"
-[JSHandle]: api.md#class-jshandle "JSHandle"
-[ConsoleMessage]: api.md#class-consolemessage "ConsoleMessage"
-[Dialog]: api.md#class-dialog "Dialog"
-[Download]: api.md#class-download "Download"
-[Video]: api.md#class-video "Video"
-[FileChooser]: api.md#class-filechooser "FileChooser"
-[Keyboard]: api.md#class-keyboard "Keyboard"
-[Mouse]: api.md#class-mouse "Mouse"
-[Touchscreen]: api.md#class-touchscreen "Touchscreen"
-[Request]: api.md#class-request "Request"
-[Response]: api.md#class-response "Response"
-[Selectors]: api.md#class-selectors "Selectors"
-[Route]: api.md#class-route "Route"
-[WebSocket]: api.md#class-websocket "WebSocket"
-[TimeoutError]: api.md#class-timeouterror "TimeoutError"
-[Accessibility]: api.md#class-accessibility "Accessibility"
-[Worker]: api.md#class-worker "Worker"
-[BrowserServer]: api.md#class-browserserver "BrowserServer"
-[BrowserType]: api.md#class-browsertype "BrowserType"
-[Logger]: api.md#class-logger "Logger"
-[ChromiumBrowser]: api.md#class-chromiumbrowser "ChromiumBrowser"
-[ChromiumBrowserContext]: api.md#class-chromiumbrowsercontext "ChromiumBrowserContext"
-[ChromiumCoverage]: api.md#class-chromiumcoverage "ChromiumCoverage"
-[CDPSession]: api.md#class-cdpsession "CDPSession"
-[FirefoxBrowser]: api.md#class-firefoxbrowser "FirefoxBrowser"
-[WebKitBrowser]: api.md#class-webkitbrowser "WebKitBrowser"
+[Playwright]: api/class-playwright.md "Playwright"
+[Browser]: api/class-browser.md "Browser"
+[BrowserContext]: api/class-browsercontext.md "BrowserContext"
+[Page]: api/class-page.md "Page"
+[Frame]: api/class-frame.md "Frame"
+[ElementHandle]: api/class-elementhandle.md "ElementHandle"
+[JSHandle]: api/class-jshandle.md "JSHandle"
+[ConsoleMessage]: api/class-consolemessage.md "ConsoleMessage"
+[Dialog]: api/class-dialog.md "Dialog"
+[Download]: api/class-download.md "Download"
+[Video]: api/class-video.md "Video"
+[FileChooser]: api/class-filechooser.md "FileChooser"
+[Keyboard]: api/class-keyboard.md "Keyboard"
+[Mouse]: api/class-mouse.md "Mouse"
+[Touchscreen]: api/class-touchscreen.md "Touchscreen"
+[Request]: api/class-request.md "Request"
+[Response]: api/class-response.md "Response"
+[Selectors]: api/class-selectors.md "Selectors"
+[Route]: api/class-route.md "Route"
+[WebSocket]: api/class-websocket.md "WebSocket"
+[TimeoutError]: api/class-timeouterror.md "TimeoutError"
+[Accessibility]: api/class-accessibility.md "Accessibility"
+[Worker]: api/class-worker.md "Worker"
+[BrowserServer]: api/class-browserserver.md "BrowserServer"
+[BrowserType]: api/class-browsertype.md "BrowserType"
+[Logger]: api/class-logger.md "Logger"
+[ChromiumBrowser]: api/class-chromiumbrowser.md "ChromiumBrowser"
+[ChromiumBrowserContext]: api/class-chromiumbrowsercontext.md "ChromiumBrowserContext"
+[ChromiumCoverage]: api/class-chromiumcoverage.md "ChromiumCoverage"
+[CDPSession]: api/class-cdpsession.md "CDPSession"
+[FirefoxBrowser]: api/class-firefoxbrowser.md "FirefoxBrowser"
+[WebKitBrowser]: api/class-webkitbrowser.md "WebKitBrowser"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Evaluation Argument]: ./core-concepts.md#evaluationargument "Evaluation Argument"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"

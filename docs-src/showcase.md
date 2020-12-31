@@ -1,4 +1,7 @@
-# Community Showcase
+---
+id: showcase
+title: "Community Showcase"
+---
 
 ## Users
 

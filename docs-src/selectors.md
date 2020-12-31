@@ -1,9 +1,85 @@
-# Element selectors
+---
+id: selectors
+title: "Element selectors"
+---
 
 Selectors query elements on the web page for interactions, like [`method: Page.click`], and to obtain `ElementHandle` through [`method: Page.$`]. Built-in selectors auto-pierce [shadow DOM](https://developer.mozilla.org/en-US/docs/Web/Web_Components/Using_shadow_DOM).
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
+
+## Working with selectors
+
+Selector describes an element in the page. It can be used to obtain `ElementHandle` (see [`method: Page.$`] for example) or shortcut element operations to avoid intermediate handle (see [`method: Page.click`] for example).
+
+Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported [selector engines](./selectors.md) (e.g. `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
+
+Playwright also supports the following CSS extensions:
+* `:text("string")` - Matches elements that contain specific text node. Learn more about [text selector](./selectors.md#css-extension-text).
+* `:visible` - Matches only visible elements. Learn more about [visible selector](./selectors.md#css-extension-visible).
+* `:light(selector)` - Matches in the light DOM only as opposite to piercing open shadow roots. Learn more about [shadow piercing](./selectors.md#shadow-piercing).
+<!--
+* `:right-of(selector)`, `:left-of(selector)`, `:above(selector)`, `:below(selector)`, `:near(selector)`, `:within(selector)` - Match elements based on their relative position to another element. Learn more about [proximity selectors](./selectors.md#css-extension-proximity).
+-->
+
+For convenience, selectors in the wrong format are heuristically converted to the right format:
+- selector starting with `//` or `..` is assumed to be `xpath=selector`;
+- selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`;
+- otherwise selector is assumed to be `css=selector`.
+
+```js
+// queries 'div' css selector
+const handle = await page.$('css=div');
+
+// queries '//html/body/div' xpath selector
+const handle = await page.$('xpath=//html/body/div');
+
+// queries '"foo"' text selector
+const handle = await page.$('text="foo"');
+
+// queries 'span' css selector inside the result of '//html/body/div' xpath selector
+const handle = await page.$('xpath=//html/body/div >> css=span');
+
+// converted to 'css=div'
+const handle = await page.$('div');
+
+// converted to 'xpath=//html/body/div'
+const handle = await page.$('//html/body/div');
+
+// converted to 'text="foo"'
+const handle = await page.$('"foo"');
+
+// queries '../span' xpath selector starting with the result of 'div' css selector
+const handle = await page.$('div >> ../span');
+
+// queries 'span' css selector inside the div handle
+const handle = await divHandle.$('css=span');
+```
+
+### Working with Chrome Extensions
+
+Playwright can be used for testing Chrome Extensions.
+
+> **NOTE** Extensions in Chrome / Chromium currently only work in non-headless mode.
+
+The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
+```js
+const { chromium } = require('playwright');
+
+(async () => {
+  const pathToExtension = require('path').join(__dirname, 'my-extension');
+  const userDataDir = '/tmp/test-user-data-dir';
+  const browserContext = await chromium.launchPersistentContext(userDataDir,{
+    headless: false,
+    args: [
+      `--disable-extensions-except=${pathToExtension}`,
+      `--load-extension=${pathToExtension}`
+    ]
+  });
+  const backgroundPage = browserContext.backgroundPages()[0];
+  // Test the background page as you would any other page.
+  await browserContext.close();
+})();
+```
 
 ## Syntax
 Selectors are defined by selector engine name and selector body, `engine=body`.

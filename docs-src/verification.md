@@ -1,9 +1,9 @@
-# Verification
+---
+id: verification
+title: "Verification"
+---
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
-
-<br/>
+<!-- TOC -->
 
 ## Videos
 

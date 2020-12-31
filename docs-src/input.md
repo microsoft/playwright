@@ -1,9 +1,9 @@
-# Input
+---
+id: input
+title: "Input"
+---
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
-
-<br/>
+<!-- TOC -->
 
 ## Text input
 

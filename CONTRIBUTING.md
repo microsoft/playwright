@@ -1,6 +1,5 @@
 # Contributing
 
-<!-- gen:toc -->
 - [How to Contribute](#how-to-contribute)
   * [Getting Code](#getting-code)
   * [Code reviews](#code-reviews)
@@ -13,7 +12,6 @@
   * [Public API Coverage](#public-api-coverage)
 - [Contributor License Agreement](#contributor-license-agreement)
   * [Code of Conduct](#code-of-conduct)
-<!-- gen:stop -->
 
 ## How to Contribute
 

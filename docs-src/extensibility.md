@@ -1,7 +1,9 @@
-# Extensibility
+---
+id: extensibility
+title: "Extensibility"
+---
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Custom selector engines
 

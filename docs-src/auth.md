@@ -1,4 +1,8 @@
-# Authentication
+---
+id: auth
+title: "Authentication"
+---
+
 Playwright can be used to automate scenarios that require authentication.
 
 Tests written with Playwright execute in isolated clean-slate environments called
@@ -11,8 +15,7 @@ login in every context and speeds up test execution.
 app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)
 use [`browser.newContext`](./network.md#http-authentication).
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Automate logging in
 

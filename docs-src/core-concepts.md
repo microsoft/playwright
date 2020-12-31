@@ -1,4 +1,7 @@
-# Core concepts
+---
+id: core-concepts
+title: "Core concepts"
+---
 
 Playwright provides a set of APIs to automate Chromium, Firefox and WebKit
 browsers. By using the Playwright API, you can write JavaScript code to create
@@ -8,8 +11,7 @@ Along with a test runner Playwright can be used to automate user interactions to
 validate and test web applications. The Playwright API enables this through
 the following primitives.
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 <br/>
 
@@ -245,10 +247,53 @@ const status = await page.evaluate(async () => {
 });
 ```
 
-### Evaluation
+## Evaluation Argument
 
-Functions passed inside [`method: Page.evaluate`] can accept parameters. These parameters are
-serialized and sent into your web page over the wire. You can pass primitive types, JSON-alike objects and remote object handles received from the page.
+Playwright evaluation methods like [`method: Page.evaluate`] take a single optional argument. This argument can be a mix of [Serializable] values and [JSHandle] or [ElementHandle] instances. Handles are automatically converted to the value they represent.
+
+```js
+// A primitive value.
+await page.evaluate(num => num, 42);
+
+// An array.
+await page.evaluate(array => array.length, [1, 2, 3]);
+
+// An object.
+await page.evaluate(object => object.foo, { foo: 'bar' });
+
+// A single handle.
+const button = await page.$('button');
+await page.evaluate(button => button.textContent, button);
+
+// Alternative notation using elementHandle.evaluate.
+await button.evaluate((button, from) => button.textContent.substring(from), 5);
+
+// Object with multiple handles.
+const button1 = await page.$('.button1');
+const button2 = await page.$('.button2');
+await page.evaluate(
+    o => o.button1.textContent + o.button2.textContent,
+    { button1, button2 });
+
+// Object destructuring works. Note that property names must match
+// between the destructured object and the argument.
+// Also note the required parenthesis.
+await page.evaluate(
+    ({ button1, button2 }) => button1.textContent + button2.textContent,
+    { button1, button2 });
+
+// Array works as well. Arbitrary names can be used for destructuring.
+// Note the required parenthesis.
+await page.evaluate(
+    ([b1, b2]) => b1.textContent + b2.textContent,
+    [button1, button2]);
+
+// Any non-cyclic mix of serializables and handles works.
+await page.evaluate(
+    x => x.button1.textContent + x.list[0].textContent + String(x.foo),
+    { button1, list: [button2], foo: null });
+```
+
 
 Right:
 

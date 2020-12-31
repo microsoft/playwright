@@ -1,10 +1,12 @@
-# Continuous Integration
+---
+id: ci
+title: "Continuous Integration"
+---
 
 Playwright tests can be executed in CI environments. We have created sample
 configurations for common CI providers.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Introduction
 

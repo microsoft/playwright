@@ -2,7 +2,6 @@
 
 [Dockerfile.bionic](Dockerfile.bionic) and [Dockerfile.focal](Dockerfile.focal) can be used to run Playwright scripts in Docker environments. These images includes all the dependencies needed to run browsers in a Docker container, including browsers.
 
-<!-- GEN:toc -->
 - [Usage](#usage)
   * [Pull the image](#pull-the-image)
   * [Run the image](#run-the-image)
@@ -17,7 +16,6 @@
   * [Ubuntu 20](#ubuntu-20)
   * [Ubuntu 18](#ubuntu-18)
   * [Alpine](#alpine)
-<!-- GEN:stop -->
 
 ## Usage
 

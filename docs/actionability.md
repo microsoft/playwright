@@ -1,18 +1,13 @@
-<!-- THIS FILE IS NOW GENERATED -->
+---
+id: actionability
+title: "Actionability"
+---
 
-# Actionability
+Playwright does a range of actionability checks on the elements before performing certain actions. These checks ensure that action behaves as expected, for example Playwright does not click on a disabled button.
 
-Playwright does a range of actionability checks on the elements before
-performing certain actions. These checks ensure that action behaves as expected,
-for example Playwright does not click on a disabled button.
+Playwright waits until all the relevant actionability checks pass before performing an action. This means that action will fail with `TimeoutError` if checks do not pass within the specified `timeout`.
 
-Playwright waits until all the relevant actionability checks pass before
-performing an action. This means that action will fail with `TimeoutError` if
-checks do not pass within the specified `timeout`.
-
-Some actions like `page.click()` support `{force: true}` option that disable
-non-essential actionability checks, for example passing `force` to `click()`
-method will not check that the target element actually receives click events.
+Some actions like `page.click()` support `{force: true}` option that disable non-essential actionability checks, for example passing `force` to `click()` method will not check that the target element actually receives click events.
 
 | Actions | Performed checks |
 | ------ | ------- |
@@ -26,19 +21,15 @@ method will not check that the target element actually receives click events.
 
 ### Visible
 
-Element is considered visible when it has non-empty bounding box and does not
-have `visibility:hidden` computed style. Note that elements of zero size or with
-`display:none` are not considered visible.
+Element is considered visible when it has non-empty bounding box and does not have `visibility:hidden` computed style. Note that elements of zero size or with `display:none` are not considered visible.
 
 ### Stable
 
-Element is considered stable when it has maintained the same bounding box for at
-least two consecutive animation frames.
+Element is considered stable when it has maintained the same bounding box for at least two consecutive animation frames.
 
 ### Enabled
 
-Element is considered enabled when it is not a `<button>`, `<select>` or
-`<input>` with a `disabled` property set.
+Element is considered enabled when it is not a `<button>`, `<select>` or `<input>` with a `disabled` property set.
 
 ### Editable
 
@@ -46,30 +37,19 @@ Element is considered editable when it does not have `readonly` property set.
 
 ### Receiving events
 
-Element is considered receiving pointer events when it is the hit target of the
-pointer event at the action point. For example, when clicking at the point
-`(10;10)`, Playwright checks whether some other element (usually an overlay)
-will instead capture the click at `(10;10)`.
+Element is considered receiving pointer events when it is the hit target of the pointer event at the action point. For example, when clicking at the point `(10;10)`, Playwright checks whether some other element (usually an overlay) will instead capture the click at `(10;10)`.
 
 ### Attached
 
-Element is considered attached when it is
-[connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected)
-to a Document or a ShadowRoot.
+Element is considered attached when it is [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
-Attached check differs between selector-based and handle-based actions, like
-`page.click(selector, options)` as opposite to `elementHandle.click(options)`:
-- For selector-based actions, Playwright first waits for an element matching
-  `selector` to be attached to the DOM, and then checks that element is still
-  attached before performing the action. If element was detached, the action
-  is retried from the start.
+Attached check differs between selector-based and handle-based actions, like `page.click(selector, options)` as opposite to `elementHandle.click(options)`:
+- For selector-based actions, Playwright first waits for an element matching `selector` to be attached to the DOM, and then checks that element is still attached before performing the action. If element was detached, the action is retried from the start.
 - For handle-based actions, Playwright throws if the element is not attached.
 
-For example, consider a scenario where Playwright will click `Sign Up` button
-regardless of when the `page.click()` call was made:
+For example, consider a scenario where Playwright will click `Sign Up` button regardless of when the `page.click()` call was made:
 - page is checking that user name is unique and `Sign Up` button is disabled;
-- after checking with the server, the disabled `Sign Up` button is replaced
-  with another one that is now enabled.
+- after checking with the server, the disabled `Sign Up` button is replaced with another one that is now enabled.
 
 [Visible]: #visible "Visible"
 [Stable]: #stable "Stable"
@@ -77,44 +57,44 @@ regardless of when the `page.click()` call was made:
 [Editable]: #editable "Editable"
 [Receiving Events]: #receiving-events "Receiving Events"
 [Attached]: #attached "Attached"
-[Playwright]: api.md#class-playwright "Playwright"
-[Browser]: api.md#class-browser "Browser"
-[BrowserContext]: api.md#class-browsercontext "BrowserContext"
-[Page]: api.md#class-page "Page"
-[Frame]: api.md#class-frame "Frame"
-[ElementHandle]: api.md#class-elementhandle "ElementHandle"
-[JSHandle]: api.md#class-jshandle "JSHandle"
-[ConsoleMessage]: api.md#class-consolemessage "ConsoleMessage"
-[Dialog]: api.md#class-dialog "Dialog"
-[Download]: api.md#class-download "Download"
-[Video]: api.md#class-video "Video"
-[FileChooser]: api.md#class-filechooser "FileChooser"
-[Keyboard]: api.md#class-keyboard "Keyboard"
-[Mouse]: api.md#class-mouse "Mouse"
-[Touchscreen]: api.md#class-touchscreen "Touchscreen"
-[Request]: api.md#class-request "Request"
-[Response]: api.md#class-response "Response"
-[Selectors]: api.md#class-selectors "Selectors"
-[Route]: api.md#class-route "Route"
-[WebSocket]: api.md#class-websocket "WebSocket"
-[TimeoutError]: api.md#class-timeouterror "TimeoutError"
-[Accessibility]: api.md#class-accessibility "Accessibility"
-[Worker]: api.md#class-worker "Worker"
-[BrowserServer]: api.md#class-browserserver "BrowserServer"
-[BrowserType]: api.md#class-browsertype "BrowserType"
-[Logger]: api.md#class-logger "Logger"
-[ChromiumBrowser]: api.md#class-chromiumbrowser "ChromiumBrowser"
-[ChromiumBrowserContext]: api.md#class-chromiumbrowsercontext "ChromiumBrowserContext"
-[ChromiumCoverage]: api.md#class-chromiumcoverage "ChromiumCoverage"
-[CDPSession]: api.md#class-cdpsession "CDPSession"
-[FirefoxBrowser]: api.md#class-firefoxbrowser "FirefoxBrowser"
-[WebKitBrowser]: api.md#class-webkitbrowser "WebKitBrowser"
+[Playwright]: api/class-playwright.md "Playwright"
+[Browser]: api/class-browser.md "Browser"
+[BrowserContext]: api/class-browsercontext.md "BrowserContext"
+[Page]: api/class-page.md "Page"
+[Frame]: api/class-frame.md "Frame"
+[ElementHandle]: api/class-elementhandle.md "ElementHandle"
+[JSHandle]: api/class-jshandle.md "JSHandle"
+[ConsoleMessage]: api/class-consolemessage.md "ConsoleMessage"
+[Dialog]: api/class-dialog.md "Dialog"
+[Download]: api/class-download.md "Download"
+[Video]: api/class-video.md "Video"
+[FileChooser]: api/class-filechooser.md "FileChooser"
+[Keyboard]: api/class-keyboard.md "Keyboard"
+[Mouse]: api/class-mouse.md "Mouse"
+[Touchscreen]: api/class-touchscreen.md "Touchscreen"
+[Request]: api/class-request.md "Request"
+[Response]: api/class-response.md "Response"
+[Selectors]: api/class-selectors.md "Selectors"
+[Route]: api/class-route.md "Route"
+[WebSocket]: api/class-websocket.md "WebSocket"
+[TimeoutError]: api/class-timeouterror.md "TimeoutError"
+[Accessibility]: api/class-accessibility.md "Accessibility"
+[Worker]: api/class-worker.md "Worker"
+[BrowserServer]: api/class-browserserver.md "BrowserServer"
+[BrowserType]: api/class-browsertype.md "BrowserType"
+[Logger]: api/class-logger.md "Logger"
+[ChromiumBrowser]: api/class-chromiumbrowser.md "ChromiumBrowser"
+[ChromiumBrowserContext]: api/class-chromiumbrowsercontext.md "ChromiumBrowserContext"
+[ChromiumCoverage]: api/class-chromiumcoverage.md "ChromiumCoverage"
+[CDPSession]: api/class-cdpsession.md "CDPSession"
+[FirefoxBrowser]: api/class-firefoxbrowser.md "FirefoxBrowser"
+[WebKitBrowser]: api/class-webkitbrowser.md "WebKitBrowser"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Evaluation Argument]: ./core-concepts.md#evaluationargument "Evaluation Argument"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"

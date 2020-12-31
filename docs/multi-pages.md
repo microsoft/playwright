@@ -1,23 +1,18 @@
-<!-- THIS FILE IS NOW GENERATED -->
+---
+id: multi-pages
+title: "Multi-page scenarios"
+---
 
-# Multi-page scenarios
+Playwright can automate scenarios that span multiple browser contexts or multiple tabs in a browser window.
 
-Playwright can automate scenarios that span multiple browser contexts or
-multiple tabs in a browser window.
-
-<!-- GEN:toc-top-level -->
 - [Multiple contexts](#multiple-contexts)
 - [Multiple pages](#multiple-pages)
 - [Handling new pages](#handling-new-pages)
 - [Handling popups](#handling-popups)
-<!-- GEN:stop -->
 
 ## Multiple contexts
 
-[Browser contexts](core-concepts.md#browser-contexts) are isolated environments
-on a single browser instance. Playwright can create multiple browser contexts
-within a single scenario. This is useful when you want to test for multi-user
-functionality, like chat.
+[Browser contexts](core-concepts.md#browser-contexts) are isolated environments on a single browser instance. Playwright can create multiple browser contexts within a single scenario. This is useful when you want to test for multi-user functionality, like chat.
 
 ```js
 const { chromium } = require('playwright');
@@ -36,16 +31,14 @@ await adminContext.addCookies(adminCookies);
 
 #### API reference
 - [BrowserContext]
-- [browser.newContext([options])](./api.md#browsernewcontextoptions)
-- [browserContext.addCookies(cookies)](./api.md#browsercontextaddcookiescookies)
+- [browser.newContext([options])](api/class-browser.md#browsernewcontextoptions)
+- [browserContext.addCookies(cookies)](api/class-browsercontext.md#browsercontextaddcookiescookies)
 
 ## Multiple pages
 
 Each browser context can host multiple pages (tabs).
-* Each page behaves like a focused, active page. Bringing the page to front is
-  not required.
-* Pages inside a context respect context-level emulation, like viewport sizes,
-  custom network routes or browser locale.
+* Each page behaves like a focused, active page. Bringing the page to front is not required.
+* Pages inside a context respect context-level emulation, like viewport sizes, custom network routes or browser locale.
 
 ```js
 // Create two pages
@@ -58,14 +51,12 @@ const allPages = context.pages();
 
 #### API reference
 - [Page]
-- [browserContext.newPage()](./api.md#browsercontextnewpage)
-- [browserContext.pages()](./api.md#browsercontextpages)
+- [browserContext.newPage()](api/class-browsercontext.md#browsercontextnewpage)
+- [browserContext.pages()](api/class-browsercontext.md#browsercontextpages)
 
 ## Handling new pages
 
-The `page` event on browser contexts can be used to get new pages that are
-created in the context. This can be used to handle new pages opened by
-`target="_blank"` links.
+The `page` event on browser contexts can be used to get new pages that are created in the context. This can be used to handle new pages opened by `target="_blank"` links.
 
 ```js
 // Get page after a specific action (e.g. clicking a link)
@@ -77,8 +68,7 @@ await newPage.waitForLoadState();
 console.log(await newPage.title());
 ```
 
-If the action that triggers the new page is unknown, the following pattern can
-be used.
+If the action that triggers the new page is unknown, the following pattern can be used.
 
 ```js
 // Get all new pages (including popups) in the context
@@ -89,15 +79,13 @@ context.on('page', async page => {
 ```
 
 #### API reference
-- [browserContext.on('page')](./api.md#browsercontextonpage)
+- [browserContext.on('page')](api/class-browsercontext.md#browsercontextonpage)
 
 ## Handling popups
 
-If the page opens a pop-up, you can get a reference to it by listening to the
-`popup` event on the page.
+If the page opens a pop-up, you can get a reference to it by listening to the `popup` event on the page.
 
-This event is emitted in addition to the `browserContext.on('page')` event, but
-only for popups relevant to this page.
+This event is emitted in addition to the `browserContext.on('page')` event, but only for popups relevant to this page.
 
 ```js
 // Get popup after a specific action (e.g., click)
@@ -109,8 +97,7 @@ await popup.waitForLoadState();
 await popup.title();
 ```
 
-If the action that triggers the popup is unknown, the following pattern can be
-used.
+If the action that triggers the popup is unknown, the following pattern can be used.
 
 ```js
 // Get all popups when they open
@@ -121,45 +108,45 @@ page.on('popup', async popup => {
 ```
 
 #### API reference
-- [page.on('popup')](./api.md#pageonpopup)
-[Playwright]: api.md#class-playwright "Playwright"
-[Browser]: api.md#class-browser "Browser"
-[BrowserContext]: api.md#class-browsercontext "BrowserContext"
-[Page]: api.md#class-page "Page"
-[Frame]: api.md#class-frame "Frame"
-[ElementHandle]: api.md#class-elementhandle "ElementHandle"
-[JSHandle]: api.md#class-jshandle "JSHandle"
-[ConsoleMessage]: api.md#class-consolemessage "ConsoleMessage"
-[Dialog]: api.md#class-dialog "Dialog"
-[Download]: api.md#class-download "Download"
-[Video]: api.md#class-video "Video"
-[FileChooser]: api.md#class-filechooser "FileChooser"
-[Keyboard]: api.md#class-keyboard "Keyboard"
-[Mouse]: api.md#class-mouse "Mouse"
-[Touchscreen]: api.md#class-touchscreen "Touchscreen"
-[Request]: api.md#class-request "Request"
-[Response]: api.md#class-response "Response"
-[Selectors]: api.md#class-selectors "Selectors"
-[Route]: api.md#class-route "Route"
-[WebSocket]: api.md#class-websocket "WebSocket"
-[TimeoutError]: api.md#class-timeouterror "TimeoutError"
-[Accessibility]: api.md#class-accessibility "Accessibility"
-[Worker]: api.md#class-worker "Worker"
-[BrowserServer]: api.md#class-browserserver "BrowserServer"
-[BrowserType]: api.md#class-browsertype "BrowserType"
-[Logger]: api.md#class-logger "Logger"
-[ChromiumBrowser]: api.md#class-chromiumbrowser "ChromiumBrowser"
-[ChromiumBrowserContext]: api.md#class-chromiumbrowsercontext "ChromiumBrowserContext"
-[ChromiumCoverage]: api.md#class-chromiumcoverage "ChromiumCoverage"
-[CDPSession]: api.md#class-cdpsession "CDPSession"
-[FirefoxBrowser]: api.md#class-firefoxbrowser "FirefoxBrowser"
-[WebKitBrowser]: api.md#class-webkitbrowser "WebKitBrowser"
+- [page.on('popup')](api/class-page.md#pageonpopup)
+[Playwright]: api/class-playwright.md "Playwright"
+[Browser]: api/class-browser.md "Browser"
+[BrowserContext]: api/class-browsercontext.md "BrowserContext"
+[Page]: api/class-page.md "Page"
+[Frame]: api/class-frame.md "Frame"
+[ElementHandle]: api/class-elementhandle.md "ElementHandle"
+[JSHandle]: api/class-jshandle.md "JSHandle"
+[ConsoleMessage]: api/class-consolemessage.md "ConsoleMessage"
+[Dialog]: api/class-dialog.md "Dialog"
+[Download]: api/class-download.md "Download"
+[Video]: api/class-video.md "Video"
+[FileChooser]: api/class-filechooser.md "FileChooser"
+[Keyboard]: api/class-keyboard.md "Keyboard"
+[Mouse]: api/class-mouse.md "Mouse"
+[Touchscreen]: api/class-touchscreen.md "Touchscreen"
+[Request]: api/class-request.md "Request"
+[Response]: api/class-response.md "Response"
+[Selectors]: api/class-selectors.md "Selectors"
+[Route]: api/class-route.md "Route"
+[WebSocket]: api/class-websocket.md "WebSocket"
+[TimeoutError]: api/class-timeouterror.md "TimeoutError"
+[Accessibility]: api/class-accessibility.md "Accessibility"
+[Worker]: api/class-worker.md "Worker"
+[BrowserServer]: api/class-browserserver.md "BrowserServer"
+[BrowserType]: api/class-browsertype.md "BrowserType"
+[Logger]: api/class-logger.md "Logger"
+[ChromiumBrowser]: api/class-chromiumbrowser.md "ChromiumBrowser"
+[ChromiumBrowserContext]: api/class-chromiumbrowsercontext.md "ChromiumBrowserContext"
+[ChromiumCoverage]: api/class-chromiumcoverage.md "ChromiumCoverage"
+[CDPSession]: api/class-cdpsession.md "CDPSession"
+[FirefoxBrowser]: api/class-firefoxbrowser.md "FirefoxBrowser"
+[WebKitBrowser]: api/class-webkitbrowser.md "WebKitBrowser"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Evaluation Argument]: ./core-concepts.md#evaluationargument "Evaluation Argument"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"

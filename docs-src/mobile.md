@@ -1,4 +1,9 @@
-# Experimental support for Chrome for Android
+---
+id: mobile
+title: "Experimental support for Chrome for Android"
+---
+
+<!-- TOC -->
 
 You can try Playwright against Chrome for Android today. This support is experimental. Support for devices is tracked in the issue [#1122](https://github.com/microsoft/playwright/issues/1122).
 

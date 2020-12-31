@@ -18,7 +18,6 @@
 const fs = require('fs');
 const path = require('path');
 const missingDocs = require('../missingDocs');
-const Source = require('../Source');
 const { folio } = require('folio');
 const { MDOutline } = require('../MDBuilder');
 
@@ -27,8 +26,8 @@ const { test, expect } = folio;
 test('missing docs', async ({}) => {
   const outline = new MDOutline(path.join(__dirname, 'test-api.md'));
   const tsSources = [
-    await Source.readFile(path.join(__dirname, 'test-api.ts')),
-    await Source.readFile(path.join(__dirname, 'test-api-class.ts')),
+    path.join(__dirname, 'test-api.ts'),
+    path.join(__dirname, 'test-api-class.ts'),
   ];
   const errors = missingDocs(outline, tsSources, path.join(__dirname, 'test-api.ts'));
   expect(errors).toEqual([

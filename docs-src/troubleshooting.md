@@ -1,7 +1,9 @@
-# Troubleshooting
+---
+id: troubleshooting
+title: "Troubleshooting"
+---
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Browser dependencies
 

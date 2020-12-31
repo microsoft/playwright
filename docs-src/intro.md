@@ -1,7 +1,9 @@
-# Getting Started
+---
+id: intro
+title: "Getting Started"
+---
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Installation
 

@@ -1,9 +1,11 @@
-# Navigations
+---
+id: navigations
+title: "Navigations"
+---
 
 Playwright can navigate to URLs and handle navigations caused by page interactions. This guide covers common scenarios to wait for page navigations and loading to complete.
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Navigation lifecycle
 Playwright splits the process of showing a new document in a page into **navigation** and **loading**.
