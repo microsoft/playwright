@@ -91,14 +91,11 @@ class MDOutline {
   }
 
   /**
-   * @param {string} content
-   * @return {string}
+   * @param {MarkdownNode[]} nodes
    */
-  renderLinksInText(content) {
-    const nodes = md.parse(content);
+  renderLinksInText(nodes) {
     this._patchLinks(nodes);
-    return md.render(nodes, 80);
-}
+  }
 
   generateSourceCodeComments() {
     for (const clazz of this.classesArray)

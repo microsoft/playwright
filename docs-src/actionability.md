@@ -1,4 +1,7 @@
-# Actionability
+---
+id: actionability
+title: "Actionability"
+---
 
 Playwright does a range of actionability checks on the elements before performing certain actions. These checks ensure that action behaves as expected, for example Playwright does not click on a disabled button.
 

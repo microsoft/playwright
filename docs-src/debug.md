@@ -1,11 +1,13 @@
-# Debugging tools
+---
+id: debug
+title: "Debugging tools"
+---
 
 Playwright scripts work with existing debugging tools, like Node.js debuggers
 and browser developer tools. Playwright also introduces new debugging features
 for browser automation.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Run in headful mode
 

@@ -82,16 +82,16 @@ function paramsForMember(member) {
 }
 
 /**
- * @param {!Array<!import('../Source')>} sources
+ * @param {string[]} rootNames
  */
-function listMethods(sources, apiFileName) {
+function listMethods(rootNames, apiFileName) {
   const program = ts.createProgram({
     options: {
       allowJs: true,
       target: ts.ScriptTarget.ESNext,
       strict: true
     },
-    rootNames: sources.map(source => source.filePath())
+    rootNames
   });
   const checker = program.getTypeChecker();
   const apiClassNames = new Set();

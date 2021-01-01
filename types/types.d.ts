@@ -151,7 +151,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.$(selector)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselector).
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
   $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
@@ -162,7 +162,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.$$(selector)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselector).
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
@@ -185,7 +185,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.$eval(selector, pageFunction[, arg])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevalselector-pagefunction-arg).
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -208,7 +208,7 @@ export interface Page {
    * const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -278,7 +278,7 @@ export interface Page {
    * })();
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
@@ -1393,7 +1393,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.check(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framecheckselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   check(selector: string, options?: {
@@ -1435,7 +1435,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.click(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameclickselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   click(selector: string, options?: {
@@ -1546,7 +1546,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.dblclick(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framedblclickselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   dblclick(selector: string, options?: {
@@ -1628,7 +1628,7 @@ export interface Page {
    * await page.dispatchEvent('#source', 'dragstart', { dataTransfer });
    * ```
    * 
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options 
@@ -1773,7 +1773,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.fill(selector, value[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefillselector-value-options)
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
    */
@@ -1802,7 +1802,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.focus(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framefocusselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   focus(selector: string, options?: {
@@ -1849,7 +1849,7 @@ export interface Page {
 
   /**
    * Returns element attribute value.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param name Attribute name to get the value for.
    * @param options 
    */
@@ -1991,7 +1991,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.hover(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#framehoverselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   hover(selector: string, options?: {
@@ -2029,7 +2029,7 @@ export interface Page {
 
   /**
    * Returns `element.innerHTML`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   innerHTML(selector: string, options?: {
@@ -2046,7 +2046,7 @@ export interface Page {
 
   /**
    * Returns `element.innerText`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   innerText(selector: string, options?: {
@@ -2259,7 +2259,7 @@ export interface Page {
    * await browser.close();
    * ```
    * 
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options 
    */
@@ -2442,7 +2442,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.selectOption(selector, values[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameselectoptionselector-values-options)
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
    * @param options 
@@ -2567,7 +2567,7 @@ export interface Page {
    * 
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param files 
    * @param options 
    */
@@ -2668,7 +2668,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.tap(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametapselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   tap(selector: string, options?: {
@@ -2713,7 +2713,7 @@ export interface Page {
 
   /**
    * Returns `element.textContent`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   textContent(selector: string, options?: {
@@ -2751,7 +2751,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.type(selector, text[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options 
    */
@@ -2797,7 +2797,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.uncheck(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameuncheckselector-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   uncheck(selector: string, options?: {
@@ -3328,8 +3328,9 @@ export interface Frame {
    * Returns the ElementHandle pointing to the frame element.
    * 
    * The method finds an element matching the specified selector within the frame. See
-   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details. If no elements match the selector, returns `null`.
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details. If no elements match the selector,
+   * returns `null`.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
   $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
@@ -3338,9 +3339,9 @@ export interface Frame {
    * Returns the ElementHandles pointing to the frame elements.
    * 
    * The method finds all elements matching the specified selector within the frame. See
-   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details. If no elements match the selector, returns empty
-   * array.
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details. If no elements match the selector,
+   * returns empty array.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
@@ -3349,8 +3350,8 @@ export interface Frame {
    * Returns the return value of `pageFunction`
    * 
    * The method finds an element matching the specified selector within the frame and passes it as a first argument to
-   * `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details. If no elements match the
-   * selector, the method throws an error.
+   * `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details. If no elements
+   * match the selector, the method throws an error.
    * 
    * If `pageFunction` returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its value.
    * 
@@ -3362,7 +3363,7 @@ export interface Frame {
    * const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -3375,7 +3376,8 @@ export interface Frame {
    * Returns the return value of `pageFunction`
    * 
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-   * as a first argument to `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * as a first argument to `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more
+   * details.
    * 
    * If `pageFunction` returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its value.
    * 
@@ -3385,7 +3387,7 @@ export interface Frame {
    * const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 10);
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -3453,7 +3455,7 @@ export interface Frame {
    * })();
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: PageWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
@@ -3530,7 +3532,7 @@ export interface Frame {
    * 
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   check(selector: string, options?: {
@@ -3571,7 +3573,7 @@ export interface Frame {
    * 
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   click(selector: string, options?: {
@@ -3649,7 +3651,7 @@ export interface Frame {
    * Passing zero timeout disables this.
    * 
    * > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   dblclick(selector: string, options?: {
@@ -3731,7 +3733,7 @@ export interface Frame {
    * await frame.dispatchEvent('#source', 'dragstart', { dataTransfer });
    * ```
    * 
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param type DOM event type: `"click"`, `"dragstart"`, etc.
    * @param eventInit Optional event-specific initialization properties.
    * @param options 
@@ -3756,7 +3758,7 @@ export interface Frame {
    * 
    * To send fine-grained keyboard events, use
    * [frame.type(selector, text[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametypeselector-text-options).
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param value Value to fill for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
    */
@@ -3782,7 +3784,7 @@ export interface Frame {
   /**
    * This method fetches an element with `selector` and focuses it. If there's no element matching `selector`, the method
    * waits until a matching element appears in the DOM.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   focus(selector: string, options?: {
@@ -3817,7 +3819,7 @@ export interface Frame {
 
   /**
    * Returns element attribute value.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param name Attribute name to get the value for.
    * @param options 
    */
@@ -3895,7 +3897,7 @@ export interface Frame {
    * 
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   hover(selector: string, options?: {
@@ -3933,7 +3935,7 @@ export interface Frame {
 
   /**
    * Returns `element.innerHTML`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   innerHTML(selector: string, options?: {
@@ -3950,7 +3952,7 @@ export interface Frame {
 
   /**
    * Returns `element.innerText`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   innerText(selector: string, options?: {
@@ -4007,7 +4009,7 @@ export interface Frame {
    * 
    * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
    * modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    * @param options 
    */
@@ -4052,7 +4054,7 @@ export interface Frame {
    * frame.selectOption('select#colors', 'red', 'green', 'blue');
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
    * is considered matching if all specified properties match.
    * @param options 
@@ -4138,7 +4140,7 @@ export interface Frame {
    * 
    * Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
    * are resolved relative to the the current working directory. For empty array, clears the selected files.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param files 
    * @param options 
    */
@@ -4205,7 +4207,7 @@ export interface Frame {
    * Passing zero timeout disables this.
    * 
    * > **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   tap(selector: string, options?: {
@@ -4250,7 +4252,7 @@ export interface Frame {
 
   /**
    * Returns `element.textContent`.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   textContent(selector: string, options?: {
@@ -4283,7 +4285,7 @@ export interface Frame {
    * await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a user
    * ```
    * 
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param text A text to type into a focused element.
    * @param options 
    */
@@ -4326,7 +4328,7 @@ export interface Frame {
    * 
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
-   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   uncheck(selector: string, options?: {
@@ -5331,17 +5333,18 @@ export interface JSHandle<T = any> {
 export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
-   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details. If no elements match the selector, returns `null`.
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details. If no elements match the selector,
+   * returns `null`.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    */
   $<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K> | null>;
   $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
 
   /**
    * The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
-   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details. If no elements match the selector, returns empty
-   * array.
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details. If no elements match the selector,
+   * returns empty array.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    */
   $$<K extends keyof HTMLElementTagNameMap>(selector: K): Promise<ElementHandleForTag<K>[]>;
   $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]>;
@@ -5350,8 +5353,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Returns the return value of `pageFunction`
    * 
    * The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-   * argument to `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details. If no elements match
-   * the selector, the method throws an error.
+   * argument to `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details. If no
+   * elements match the selector, the method throws an error.
    * 
    * If `pageFunction` returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its value.
    * 
@@ -5363,7 +5366,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -5376,8 +5379,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Returns the return value of `pageFunction`
    * 
    * The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
-   * matched elements as a first argument to `pageFunction`. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more
-   * details.
+   * matched elements as a first argument to `pageFunction`. See
+   * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * 
    * If `pageFunction` returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its value.
    * 
@@ -5395,7 +5398,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
    * ```
    * 
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param pageFunction Function to be evaluated in browser context
    * @param arg Optional argument to pass to `pageFunction`
    */
@@ -5422,7 +5425,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * > **NOTE** This method does not work across navigations, use
    * [page.waitForSelector(selector[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforselectorselector-options)
    * instead.
-   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more details.
+   * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
   waitForSelector<K extends keyof HTMLElementTagNameMap>(selector: K, options?: ElementHandleWaitForSelectorOptionsNotHidden): Promise<ElementHandleForTag<K>>;
@@ -8212,8 +8215,8 @@ export interface Response {
 }
 
 /**
- * Selectors can be used to install custom selector engines. See [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/api.md#working-with-selectors) for more
- * information.
+ * Selectors can be used to install custom selector engines. See
+ * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more information.
  */
 export interface Selectors {
   /**

@@ -20,26 +20,19 @@
 const playwright = require('../../');
 const fs = require('fs');
 const path = require('path');
-const Source = require('./Source');
 const md = require('../markdown');
-const { spawnSync } = require('child_process');
-const preprocessor = require('./preprocessor');
 const { MDOutline } = require('./MDBuilder');
-const missingDocs = require('./missingDocs');
 const Documentation = require('./Documentation');
+const missingDocs = require('./missingDocs');
 
 /** @typedef {import('./Documentation').Type} Type */
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
-const VERSION = require(path.join(PROJECT_DIR, 'package.json')).version;
-
-const RED_COLOR = '\x1b[31m';
-const YELLOW_COLOR = '\x1b[33m';
-const RESET_COLOR = '\x1b[0m';
 
 const links = new Map();
 const rLinks = new Map();
+const dirtyFiles = new Set();
 
 run().catch(e => {
   console.error(e);
@@ -47,153 +40,160 @@ run().catch(e => {
 });;
 
 async function run() {
-  const startTime = Date.now();
-
-  /** @type {!Array<string>} */
-  const errors = [];
-  let changedFiles = false;
-
-  const header = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-header.md')).toString();
-  let footer = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-footer.md')).toString();
-  const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'api-links.md')).toString();
   const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
-  const generatedComment = '<!-- THIS FILE IS NOW GENERATED -->';
+  outline.setLinkRenderer(item => {
+    const { clazz, member, param, option } = item;
+    if (param)
+      return `\`${param}\``;
+    if (option)
+      return `\`${option}\``;
+    if (clazz)
+      return `[${clazz.name}]`;
+    return createMemberLink(member);
+  });
+
   let generatedLinksSuffix;
-  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-  const docs = await (await Source.readdir(path.join(PROJECT_DIR, 'docs'), '.md')).filter(s => s.name() !== 'api.md');
+  {
+    const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'links.md')).toString();
+    const localLinks = [];
+    for (const clazz of outline.classesArray)
+      localLinks.push(`[${clazz.name}]: api/class-${clazz.name.toLowerCase()}.md "${clazz.name}"`);
+    generatedLinksSuffix = localLinks.join('\n') + '\n' + links;
+  }
 
   // Produce api.md
   {
-    outline.setLinkRenderer(item => {
-      const { clazz, member, param, option } = item;
-      if (param)
-        return `\`${param}\``;
-      if (option)
-        return `\`${option}\``;
-      if (clazz)
-        return `[${clazz.name}]`;
-      return createMemberLink(member);
-    });
-
-    {
-      const localLinks = [];
-      for (const clazz of outline.classesArray)
-        localLinks.push(`[${clazz.name}]: api.md#class-${clazz.name.toLowerCase()} "${clazz.name}"`);
-      generatedLinksSuffix = localLinks.join('\n') + '\n' + links;
-    }
-
-    {
+    for (const clazz of outline.classesArray) {
       /** @type {MarkdownNode[]} */
       const result = [];
-      for (const clazz of outline.classesArray) {
-        // Iterate over classes, create header node.
-        /** @type {MarkdownNode} */
-        const classNode = { type: 'h3', text: `class: ${clazz.name}` };
-        result.push(classNode);
-        // Append class comments
-        classNode.children = (clazz.spec || []).map(c => md.clone(c));
-        classNode.children.push({
-          type: 'text',
-          text: ''
-        });
-        classNode.children.push(...generateToc(clazz));
-        if (clazz.extends && clazz.extends !== 'EventEmitter' && clazz.extends !== 'Error') {
-          const superClass = outline.documentation.classes.get(clazz.extends);
-          classNode.children.push(...generateToc(superClass));
-        }
-
-        for (const member of clazz.membersArray) {
-          // Iterate members
-          /** @type {MarkdownNode} */
-          const memberNode = { type: 'h4', children: [] };
-          if (member.kind === 'event') {
-            memberNode.text = `${clazz.varName}.on('${member.name}')`;
-          } else if (member.kind === 'property') {
-            memberNode.text = `${clazz.varName}.${member.name}`;
-          } else if (member.kind === 'method') {
-            // Patch method signatures
-            memberNode.text = `${clazz.varName}.${member.name}(${member.signature})`;
-            for (const arg of member.argsArray) {
-              if (arg.type)
-               memberNode.children.push(renderProperty(`\`${arg.name}\``, arg.type, arg.spec));
-            }
-          }
-
-          // Append type
-          if (member.type && member.type.name !== 'void') {
-            let name;
-            switch (member.kind) {
-              case 'event': name = 'type:'; break;
-              case 'property': name = 'type:'; break;
-              case 'method': name = 'returns:'; break;
-            }
-            memberNode.children.push(renderProperty(name, member.type));
-          }
-
-          // Append member doc
-          memberNode.children.push(...(member.spec || []).map(c => md.clone(c)));
-          classNode.children.push(memberNode);
-        }
+      result.push({
+        type: 'text',
+        text: `---
+id: class-${clazz.name.toLowerCase()}
+title: "class: ${clazz.name}"
+---
+`});
+      result.push(...(clazz.spec || []).map(c => md.clone(c)));
+      result.push({
+        type: 'text',
+        text: ''
+      });
+      result.push(...generateClassToc(clazz));
+      if (clazz.extends && clazz.extends !== 'EventEmitter' && clazz.extends !== 'Error') {
+        const superClass = outline.documentation.classes.get(clazz.extends);
+        result.push(...generateClassToc(superClass));
       }
-      footer = outline.renderLinksInText(footer);
-      api.setText([generatedComment, header, md.render(result), footer, generatedLinksSuffix].join('\n'));
+
+      for (const member of clazz.membersArray) {
+        // Iterate members
+        /** @type {MarkdownNode} */
+        const memberNode = { type: 'h4', children: [] };
+        if (member.kind === 'event') {
+          memberNode.text = `${clazz.varName}.on('${member.name}')`;
+        } else if (member.kind === 'property') {
+          memberNode.text = `${clazz.varName}.${member.name}`;
+        } else if (member.kind === 'method') {
+          // Patch method signatures
+          memberNode.text = `${clazz.varName}.${member.name}(${member.signature})`;
+          for (const arg of member.argsArray) {
+            if (arg.type)
+              memberNode.children.push(renderProperty(`\`${arg.name}\``, arg.type, arg.spec));
+          }
+        }
+
+        // Append type
+        if (member.type && member.type.name !== 'void') {
+          let name;
+          switch (member.kind) {
+            case 'event': name = 'type:'; break;
+            case 'property': name = 'type:'; break;
+            case 'method': name = 'returns:'; break;
+          }
+          memberNode.children.push(renderProperty(name, member.type));
+        }
+
+        // Append member doc
+        memberNode.children.push(...(member.spec || []).map(c => md.clone(c)));
+        result.push(memberNode);
+      }
+      writeAssumeNoop(path.join(PROJECT_DIR, 'docs', `class-${clazz.name.toLowerCase()}.md`), [md.render(result), generatedLinksSuffix].join('\n'), dirtyFiles);
     }
   }
 
   // Produce other docs
   {
-    for (const doc of docs) {
-      if (!fs.existsSync(path.join(PROJECT_DIR, 'docs-src', doc.name())))
+    for (const name of fs.readdirSync(path.join(PROJECT_DIR, 'docs-src'))) {
+      if (name === 'links.md' || name.startsWith('api-'))
         continue;
-      const content = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', doc.name())).toString();
-      doc.setText([generatedComment, outline.renderLinksInText(content), generatedLinksSuffix].join('\n'));
+      const content = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', name)).toString();
+      const nodes = md.parse(content);
+      outline.renderLinksInText(nodes);
+      for (const node of nodes) {
+        if (node.text === '<!-- TOC -->')
+          node.text = md.generateToc(nodes);
+      }
+      writeAssumeNoop(path.join(PROJECT_DIR, 'docs', name), [md.render(nodes), generatedLinksSuffix].join('\n'), dirtyFiles);
     }
   }
 
-  // Documentation checks.
+  // Patch README.md
   {
-    const readme = await Source.readFile(path.join(PROJECT_DIR, 'README.md'));
-    const binReadme = await Source.readFile(path.join(PROJECT_DIR, 'bin', 'README.md'));
-    const contributing = await Source.readFile(path.join(PROJECT_DIR, 'CONTRIBUTING.md'));
-    const mdSources = [readme, binReadme, api, contributing, ...docs];
+    const versions = await getBrowserVersions();
+    const params = new Map();
+    const { chromium, firefox, webkit } = versions;
+    params.set('chromium-version', chromium);
+    params.set('firefox-version', firefox);
+    params.set('webkit-version', webkit);
+    params.set('chromium-version-badge', `[![Chromium version](https://img.shields.io/badge/chromium-${chromium}-blue.svg?logo=google-chrome)](https://www.chromium.org/Home)`);
+    params.set('firefox-version-badge', `[![Firefox version](https://img.shields.io/badge/firefox-${firefox}-blue.svg?logo=mozilla-firefox)](https://www.mozilla.org/en-US/firefox/new/)`);
+    params.set('webkit-version-badge', `[![WebKit version](https://img.shields.io/badge/webkit-${webkit}-blue.svg?logo=safari)](https://webkit.org/)`);
 
-    const browserVersions = await getBrowserVersions();
-    errors.push(...(await preprocessor.runCommands(mdSources, {
-      libversion: VERSION,
-      chromiumVersion: browserVersions.chromium,
-      firefoxVersion: browserVersions.firefox,
-      webkitVersion: browserVersions.webkit,
-    })));
+    let content = fs.readFileSync(path.join(PROJECT_DIR, 'README.md')).toString();
+    content = content.replace(/<!-- GEN:([^ ]+) -->([^<]*)<!-- GEN:stop -->/ig, (match, p1) => {
+      if (!params.has(p1)) {
+        console.log(`ERROR: Invalid generate parameter "${p1}" in "${match}"`);
+        process.exit(1);
+      }
+      return `<!-- GEN:${p1} -->${params.get(p1)}<!-- GEN:stop -->`;
+    });
+    writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
+  }
 
-    errors.push(...preprocessor.findInvalidLinks(PROJECT_DIR, mdSources, getRepositoryFiles()));
-    const jsSources = await Source.readdir(path.join(PROJECT_DIR, 'src', 'client'), '', []);
-    errors.push(...missingDocs(outline, jsSources, path.join(PROJECT_DIR, 'src', 'client', 'api.ts')));
-
-    for (const source of mdSources) {
-      if (!source.hasUpdatedText())
-        continue;
-      await source.save();
-      changedFiles = true;
+  // Check for missing docs
+  {
+    const srcClient = path.join(PROJECT_DIR, 'src', 'client');
+    const sources = fs.readdirSync(srcClient).map(n => path.join(srcClient, n));
+    const errors = missingDocs(outline, sources, path.join(srcClient, 'api.ts'));
+    if (errors.length) {
+      console.log('============================');
+      console.log('ERROR: missing documentation:');
+      errors.forEach(e => console.log(e));
+      console.log('============================')
+      process.exit(1);
     }
   }
 
-  // Report results.
-  if (errors.length) {
-    for (let i = 0; i < errors.length; ++i) {
-      const error = errors[i].split('\n').join('\n      ');
-      console.log(`  ${i + 1}) ${RED_COLOR}${error}${RESET_COLOR}`);
-    }
+  if (dirtyFiles.size) {
+    console.log('============================')
+    console.log('ERROR: generated markdown files have changed, this is only error if happens in CI:');
+    [...dirtyFiles].forEach(f => console.log(f));
+    console.log('============================')
+    process.exit(1);
   }
-  let clearExit = errors.length === 0;
-  if (changedFiles) {
-    if (clearExit)
-      console.log(`${YELLOW_COLOR}Some files were updated.${RESET_COLOR}`);
-    clearExit = false;
+  process.exit(0);
+}
+
+/**
+ * @param {string} name
+ * @param {string} content
+ * @param {Set<string>} dirtyFiles
+ */
+function writeAssumeNoop(name, content, dirtyFiles) {
+  const oldContent = fs.readFileSync(name).toString();
+  if (oldContent !== content) {
+    fs.writeFileSync(name, content);
+    dirtyFiles.add(name);
   }
-  console.log(`${errors.length} failures.`);
-  const runningTime = Date.now() - startTime;
-  console.log(`DocLint Finished in ${runningTime / 1000} seconds`);
-  process.exit(clearExit ? 0 : 1);
 }
 
 async function getBrowserVersions() {
@@ -205,12 +205,6 @@ async function getBrowserVersions() {
   }
   await Promise.all(browsers.map(browser => browser.close()));
   return result;
-}
-
-function getRepositoryFiles() {
-  const out = spawnSync('git', ['ls-files'], {cwd: PROJECT_DIR});
-  const files = out.stdout.toString().trim().split('\n').filter(f => !f.startsWith('docs-src'));
-  return files.map(file => path.join(PROJECT_DIR, file));
 }
 
 /**
@@ -237,7 +231,7 @@ function createLink(file, text) {
  * @return {string}
  */
 function createMemberLink(member) {
-  const file = `./api.md`;
+  const file = `api/class-${member.clazz.name.toLowerCase()}.md`;
   if (member.kind === 'property')
     return createLink(file, `${member.clazz.varName}.${member.name}`);
 
@@ -252,7 +246,7 @@ function createMemberLink(member) {
  * @param {Documentation.Class} clazz
  * @return {MarkdownNode[]}
  */
-function generateToc(clazz) {
+function generateClassToc(clazz) {
   /** @type {MarkdownNode[]} */
   const result = [];
   for (const member of clazz.membersArray) {

@@ -17,7 +17,7 @@
 // @ts-check
 
 /** @typedef {{
- *    type: 'text' | 'li' | 'code' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4',
+ *    type: 'text' | 'li' | 'code' | 'properties' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4',
  *    text?: string,
  *    codeLang?: string,
  *    lines?: string[],
@@ -42,7 +42,7 @@ function flattenWrappedLines(content) {
       || trimmedLine.startsWith('*')
       || line.match(/\[[^\]]+\]:.*/)
       || singleLineExpression;
-    if (trimmedLine.startsWith('```')) {
+    if (trimmedLine.startsWith('```') || trimmedLine.startsWith('---')) {
       inCodeBlock = !inCodeBlock;
       flushLastParagraph = true;
     }
@@ -133,6 +133,23 @@ function buildTree(lines) {
       continue;
     }
 
+    if (content.startsWith('---')) {
+      /** @type {MarkdownNode} */
+      const node = {
+        type: 'properties',
+        lines: [],
+      };
+      line = lines[++i];
+      while (!line.trim().startsWith('---')) {
+        if (!line.startsWith(indent))
+          throw new Error('Bad header block ' + line);
+        node.lines.push(line.substring(indent.length));
+        line = lines[++i];
+      }
+      appendNode(indent, node);
+      continue;
+    }
+
     const liType = content.match(/^(-|1.|\*) /);
     const node = /** @type {MarkdownNode} */({ type: 'text', text: content });
     if (liType) {
@@ -203,6 +220,7 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
     if (!bothTables && !bothGen && !bothComments && !bothLinks && lastNode && lastNode.text)
       newLine();
       result.push(wrapText(node.text, maxColumns, indent));
+    return;
   }
 
   if (node.type === 'code') {
@@ -212,6 +230,16 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
       result.push(indent + line);
     result.push(`${indent}\`\`\``);
     newLine();
+    return;
+  }
+
+  if (node.type === 'properties') {
+    result.push(`${indent}---`);
+    for (const line of node.lines)
+      result.push(indent + line);
+    result.push(`${indent}---`);
+    newLine();
+    return;
   }
 
   if (node.type === 'li') {
@@ -283,7 +311,7 @@ function clone(node) {
 
 /**
  * @param {MarkdownNode[]} nodes
- * @param {function(MarkdownNode): void} visitor
+ * @param {function(MarkdownNode, number): void} visitor
  */
 function visitAll(nodes, visitor) {
   for (const node of nodes)
@@ -292,12 +320,29 @@ function visitAll(nodes, visitor) {
 
 /**
  * @param {MarkdownNode} node
- * @param {function(MarkdownNode): void} visitor
+ * @param {function(MarkdownNode, number): void} visitor
  */
-function visit(node, visitor) {
-  visitor(node);
+function visit(node, visitor, depth = 0) {
+  visitor(node, depth);
   for (const n of node.children || [])
-    visit(n, visitor);
+    visit(n, visitor, depth + 1);
 }
 
-module.exports = { parse, render, clone, visitAll, visit };
+/**
+ * @param {MarkdownNode[]} nodes
+ * @returns {string}
+ */
+function generateToc(nodes) {
+  const result = [];
+  visitAll(nodes, (node, depth) => {
+    if (node.type === 'h1' || node.type === 'h2') {
+      let link = node.text.toLowerCase();
+      link = link.replace(/[ ]+/g, '-');
+      link = link.replace(/[^\w-]/g, '');
+      result.push(`${' '.repeat(depth * 2)}- [${node.text}](#${link})`);
+    }
+  });
+  return result.join('\n');
+}
+
+module.exports = { parse, render, clone, visitAll, visit, generateToc };

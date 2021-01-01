@@ -1,9 +1,11 @@
-# Supported languages
+---
+id: languages
+title: "Supported languages"
+---
 
 The Playwright API is available in multiple languages.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## JavaScript and TypeScript
 

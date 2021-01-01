@@ -1,9 +1,9 @@
-# Advanced installation
+---
+id: installation
+title: "Advanced installation"
+---
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
-<br>
+<!-- TOC -->
 
 ## Managing browser binaries
 

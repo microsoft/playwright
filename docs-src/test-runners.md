@@ -1,13 +1,11 @@
-# Test Runners
+---
+id: test-runners
+title: "Test Runners"
+---
 
 With a few lines of code, you can hook up Playwright to your favorite JavaScript test runner.
 
-<!-- GEN:toc -->
-<!-- GEN:stop -->
-
-<br>
-
-<br>
+<!-- TOC -->
 
 ## Jest / Jasmine
 

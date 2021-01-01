@@ -16,21 +16,20 @@
  * limitations under the License.
  */
 
+const fs = require('fs');
 const ts = require('typescript');
 const path = require('path');
-const Source = require('./doclint/Source');
 
 async function checkDeps() {
   const root = path.normalize(path.join(__dirname, '..'));
   const src = path.normalize(path.join(__dirname, '..', 'src'));
-  const sources = await Source.readdir(src);
   const program = ts.createProgram({
     options: {
       allowJs: true,
       target: ts.ScriptTarget.ESNext,
       strict: true,
     },
-    rootNames: sources.map(source => source.filePath()),
+    rootNames: listAllFiles(src),
   });
   const sourceFiles = program.getSourceFiles();
   const errors = [];
@@ -90,6 +89,19 @@ async function checkDeps() {
     }
     return false;
   }
+}
+
+function listAllFiles(dir) {
+  const dirs = fs.readdirSync(dir, { withFileTypes: true });
+  const  result = [];
+  dirs.map(d => {
+    const res = path.resolve(dir, d.name);
+    if (d.isDirectory())
+      result.push(...listAllFiles(res));
+    else
+      result.push(res);
+  });
+  return result;
 }
 
 const DEPS = {};

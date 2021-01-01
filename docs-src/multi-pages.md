@@ -1,10 +1,12 @@
-# Multi-page scenarios
+---
+id: multi-pages
+title: "Multi-page scenarios"
+---
 
 Playwright can automate scenarios that span multiple browser contexts or multiple
 tabs in a browser window.
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 ## Multiple contexts
 

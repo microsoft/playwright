@@ -1,11 +1,13 @@
-# Network
+---
+id: network
+title: "Network"
+---
 
 Playwright provides APIs to **monitor** and **modify** network traffic, both HTTP and HTTPS.
 Any requests that page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
 [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and handled.
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 <br/>
 

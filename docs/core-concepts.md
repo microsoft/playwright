@@ -1,33 +1,26 @@
-<!-- THIS FILE IS NOW GENERATED -->
+---
+id: core-concepts
+title: "Core concepts"
+---
 
-# Core concepts
+Playwright provides a set of APIs to automate Chromium, Firefox and WebKit browsers. By using the Playwright API, you can write JavaScript code to create new browser pages, navigate to URLs and then interact with elements on a page.
 
-Playwright provides a set of APIs to automate Chromium, Firefox and WebKit
-browsers. By using the Playwright API, you can write JavaScript code to create
-new browser pages, navigate to URLs and then interact with elements on a page.
+Along with a test runner Playwright can be used to automate user interactions to validate and test web applications. The Playwright API enables this through the following primitives.
 
-Along with a test runner Playwright can be used to automate user interactions to
-validate and test web applications. The Playwright API enables this through the
-following primitives.
-
-<!-- GEN:toc-top-level -->
 - [Browser](#browser)
 - [Browser contexts](#browser-contexts)
 - [Pages and frames](#pages-and-frames)
 - [Selectors](#selectors)
 - [Auto-waiting](#auto-waiting)
 - [Execution contexts: Node.js and Browser](#execution-contexts-nodejs-and-browser)
+- [Evaluation Argument](#evaluation-argument)
 - [Object & Element handles](#object--element-handles)
-<!-- GEN:stop -->
 
 <br/>
 
 ## Browser
 
-A [Browser] refers to an instance of Chromium, Firefox or WebKit. Playwright
-scripts generally start with launching a browser instance and end with closing
-the browser. Browser instances can be launched in headless (without a GUI) or
-headful mode.
+A [Browser] refers to an instance of Chromium, Firefox or WebKit. Playwright scripts generally start with launching a browser instance and end with closing the browser. Browser instances can be launched in headless (without a GUI) or headful mode.
 
 ```js
 const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -36,8 +29,7 @@ const browser = await chromium.launch({ headless: false });
 await browser.close();
 ```
 
-Launching a browser instance can be expensive, and Playwright is designed to
-maximize what a single instance can do through multiple browser contexts.
+Launching a browser instance can be expensive, and Playwright is designed to maximize what a single instance can do through multiple browser contexts.
 
 #### API reference
 - [Browser]
@@ -46,17 +38,14 @@ maximize what a single instance can do through multiple browser contexts.
 
 ## Browser contexts
 
-A [BrowserContext] is an isolated incognito-alike session within a browser
-instance. Browser contexts are fast and cheap to create. Browser contexts can be
-used to parallelize isolated test executions.
+A [BrowserContext] is an isolated incognito-alike session within a browser instance. Browser contexts are fast and cheap to create. Browser contexts can be used to parallelize isolated test executions.
 
 ```js
 const browser = await chromium.launch();
 const context = await browser.newContext();
 ```
 
-Browser contexts can also be used to emulate multi-page scenarios involving
-mobile devices, permissions, locale and color scheme.
+Browser contexts can also be used to emulate multi-page scenarios involving mobile devices, permissions, locale and color scheme.
 
 ```js
 const { devices } = require('playwright');
@@ -73,15 +62,13 @@ const context = await browser.newContext({
 
 #### API reference
 - [BrowserContext]
-- [browser.newContext([options])](./api.md#browsernewcontextoptions)
+- [browser.newContext([options])](api/class-browser.md#browsernewcontextoptions)
 
 <br/>
 
 ## Pages and frames
 
-A Browser context can have multiple pages. A [Page] refers to a single tab or a
-popup window within a browser context. It should be used to navigate to URLs and
-interact with the page content.
+A Browser context can have multiple pages. A [Page] refers to a single tab or a popup window within a browser context. It should be used to navigate to URLs and interact with the page content.
 
 ```js
 // Create a page.
@@ -103,12 +90,9 @@ window.location.href = 'https://example.com';
 
 > Read more on [page navigation and loading](./navigations.md).
 
-A page can have one or more [Frame] objects attached to it. Each page has a main
-frame and page-level interactions (like `click`) are assumed to operate in the
-main frame.
+A page can have one or more [Frame] objects attached to it. Each page has a main frame and page-level interactions (like `click`) are assumed to operate in the main frame.
 
-A page can have additional frames attached with the `iframe` HTML tag. These
-frames can be accessed for interactions inside the frame.
+A page can have additional frames attached with the `iframe` HTML tag. These frames can be accessed for interactions inside the frame.
 
 ```js
 // Get frame using the frame's name attribute
@@ -128,21 +112,17 @@ await frame.fill('#username-input', 'John');
 #### API reference
 - [Page]
 - [Frame]
-- [page.frame(frameSelector)](./api.md#pageframeframeselector)
+- [page.frame(frameSelector)](api/class-page.md#pageframeframeselector)
 
 <br/>
 
 ## Selectors
 
-Playwright can search for elements using CSS selectors, XPath selectors, HTML
-attributes like `id`, `data-test-id` and even text content.
+Playwright can search for elements using CSS selectors, XPath selectors, HTML attributes like `id`, `data-test-id` and even text content.
 
-You can explicitly specify the selector engine you are using or let Playwright
-detect it.
+You can explicitly specify the selector engine you are using or let Playwright detect it.
 
-All selector engines except for XPath pierce shadow DOM by default. If you want
-to enforce regular DOM selection, you can use the `*:light` versions of the
-selectors. You don't typically need to though.
+All selector engines except for XPath pierce shadow DOM by default. If you want to enforce regular DOM selection, you can use the `*:light` versions of the selectors. You don't typically need to though.
 
 Learn more about selectors and selector engines [here](./selectors.md).
 
@@ -175,8 +155,7 @@ await page.click('xpath=//html/body/div');
 await page.click('css:light=div');
 ```
 
-Selectors using the same or different engines can be combined using the `>>`
-separator. For example,
+Selectors using the same or different engines can be combined using the `>>` separator. For example,
 
 ```js
 // Click an element with text 'Sign Up' inside of a #free-month-promo.
@@ -192,15 +171,12 @@ const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.te
 
 ## Auto-waiting
 
-Actions like `click` and `fill` auto-wait for the element to be visible and
-[actionable](./actionability.md). For example, click will:
+Actions like `click` and `fill` auto-wait for the element to be visible and [actionable](./actionability.md). For example, click will:
 - wait for an element with the given selector to appear in the DOM
-- wait for it to become visible: have non-empty bounding box and no
-  `visibility:hidden`
+- wait for it to become visible: have non-empty bounding box and no `visibility:hidden`
 - wait for it to stop moving: for example, wait until css transition finishes
 - scroll the element into view
-- wait for it to receive pointer events at the action point: for example, wait
-  until element becomes non-obscured by other elements
+- wait for it to receive pointer events at the action point: for example, wait until element becomes non-obscured by other elements
 - retry if the element is detached during any of the above checks
 
 ```js
@@ -214,8 +190,7 @@ await page.fill('#search', 'query');
 await page.click('#search');
 ```
 
-You can explicitly wait for an element to appear in the DOM or to become
-visible:
+You can explicitly wait for an element to appear in the DOM or to become visible:
 
 ```js
 // Wait for #search to appear in the DOM.
@@ -234,30 +209,23 @@ await page.waitForSelector('#promo', { state: 'detached' });
 ```
 
 #### API reference
-- [page.click(selector[, options])](./api.md#pageclickselector-options)
-- [page.fill(selector, value[, options])](./api.md#pagefillselector-value-options)
-- [page.waitForSelector(selector[, options])](./api.md#pagewaitforselectorselector-options)
+- [page.click(selector[, options])](api/class-page.md#pageclickselector-options)
+- [page.fill(selector, value[, options])](api/class-page.md#pagefillselector-value-options)
+- [page.waitForSelector(selector[, options])](api/class-page.md#pagewaitforselectorselector-options)
 
 <br/>
 
 ## Execution contexts: Node.js and Browser
 
-Playwright scripts run in your Node.js environment. Your page scripts run in the
-browser page environment. Those environments don't intersect, they are running
-in different virtual machines in different processes and even potentially on
-different computers.
+Playwright scripts run in your Node.js environment. Your page scripts run in the browser page environment. Those environments don't intersect, they are running in different virtual machines in different processes and even potentially on different computers.
 
-The [page.evaluate(pageFunction[, arg])](./api.md#pageevaluatepagefunction-arg)
-API can run a JavaScript function in the context of the web page and bring
-results back to the Node.js environment. Browser globals like `window` and
-`document` can be used in `evaluate`.
+The [page.evaluate(pageFunction[, arg])](api/class-page.md#pageevaluatepagefunction-arg) API can run a JavaScript function in the context of the web page and bring results back to the Node.js environment. Browser globals like `window` and `document` can be used in `evaluate`.
 
 ```js
 const href = await page.evaluate(() => document.location.href);
 ```
 
-If the result is a Promise or if the function is asynchronous evaluate will
-automatically wait until it's resolved:
+If the result is a Promise or if the function is asynchronous evaluate will automatically wait until it's resolved:
 
 ```js
 const status = await page.evaluate(async () => {
@@ -266,13 +234,52 @@ const status = await page.evaluate(async () => {
 });
 ```
 
-### Evaluation
+## Evaluation Argument
 
-Functions passed inside
-[page.evaluate(pageFunction[, arg])](./api.md#pageevaluatepagefunction-arg) can
-accept parameters. These parameters are serialized and sent into your web page
-over the wire. You can pass primitive types, JSON-alike objects and remote
-object handles received from the page.
+Playwright evaluation methods like [page.evaluate(pageFunction[, arg])](api/class-page.md#pageevaluatepagefunction-arg) take a single optional argument. This argument can be a mix of [Serializable] values and [JSHandle] or [ElementHandle] instances. Handles are automatically converted to the value they represent.
+
+```js
+// A primitive value.
+await page.evaluate(num => num, 42);
+
+// An array.
+await page.evaluate(array => array.length, [1, 2, 3]);
+
+// An object.
+await page.evaluate(object => object.foo, { foo: 'bar' });
+
+// A single handle.
+const button = await page.$('button');
+await page.evaluate(button => button.textContent, button);
+
+// Alternative notation using elementHandle.evaluate.
+await button.evaluate((button, from) => button.textContent.substring(from), 5);
+
+// Object with multiple handles.
+const button1 = await page.$('.button1');
+const button2 = await page.$('.button2');
+await page.evaluate(
+    o => o.button1.textContent + o.button2.textContent,
+    { button1, button2 });
+
+// Object destructuring works. Note that property names must match
+// between the destructured object and the argument.
+// Also note the required parenthesis.
+await page.evaluate(
+    ({ button1, button2 }) => button1.textContent + button2.textContent,
+    { button1, button2 });
+
+// Array works as well. Arbitrary names can be used for destructuring.
+// Note the required parenthesis.
+await page.evaluate(
+    ([b1, b2]) => b1.textContent + b2.textContent,
+    [button1, button2]);
+
+// Any non-cyclic mix of serializables and handles works.
+await page.evaluate(
+    x => x.button1.textContent + x.list[0].textContent + String(x.foo),
+    { button1, list: [button2], foo: null });
+```
 
 Right:
 
@@ -295,39 +302,27 @@ const result = await page.evaluate(() => {
 ```
 
 #### API reference
-- [page.evaluate(pageFunction[, arg])](./api.md#pageevaluatepagefunction-arg)
-- [frame.evaluate(pageFunction[, arg])](./api.md#frameevaluatepagefunction-arg)
+- [page.evaluate(pageFunction[, arg])](api/class-page.md#pageevaluatepagefunction-arg)
+- [frame.evaluate(pageFunction[, arg])](api/class-frame.md#frameevaluatepagefunction-arg)
 - [EvaluationArgument]
 
 <br/>
 
 ## Object & Element handles
 
-Playwright can create Node-side handles to the page DOM elements or any other
-objects inside the page. These handles live in the Node.js process, whereas the
-actual objects reside in browser.
+Playwright can create Node-side handles to the page DOM elements or any other objects inside the page. These handles live in the Node.js process, whereas the actual objects reside in browser.
 
 There are two types of handles:
 - [JSHandle] to reference any JavaScript objects in the page
 - [ElementHandle] to reference DOM elements in the page
 
-Note that since any DOM element in the page is also a JavaScript object,
-Playwright's [ElementHandle] extends [JSHandle].
+Note that since any DOM element in the page is also a JavaScript object, Playwright's [ElementHandle] extends [JSHandle].
 
 ### Handles Lifecycle
-- Handles can be acquired using the page methods
-  [page.evaluateHandle(pageFunction[, arg])](./api.md#pageevaluatehandlepagefunction-arg),
-  [page.$(selector)](./api.md#pageselector) or
-  [page.$$(selector)](./api.md#pageselector-1) or their frame counterparts
-  [frame.evaluateHandle(pageFunction[, arg])](./api.md#frameevaluatehandlepagefunction-arg),
-  [frame.$(selector)](./api.md#frameselector) or
-  [frame.$$(selector)](./api.md#frameselector-1).
-- Once created, handles will retain object from
-  [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management).
-- Handles will be **automatically disposed** once the page or frame they
-  belong to navigates or closes.
-- Handles can be **manually disposed** using
-  [jsHandle.dispose()](./api.md#jshandledispose) method.
+- Handles can be acquired using the page methods [page.evaluateHandle(pageFunction[, arg])](api/class-page.md#pageevaluatehandlepagefunction-arg), [page.$(selector)](api/class-page.md#pageselector) or [page.$$(selector)](api/class-page.md#pageselector-1) or their frame counterparts [frame.evaluateHandle(pageFunction[, arg])](api/class-frame.md#frameevaluatehandlepagefunction-arg), [frame.$(selector)](api/class-frame.md#frameselector) or [frame.$$(selector)](api/class-frame.md#frameselector-1).
+- Once created, handles will retain object from [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management).
+- Handles will be **automatically disposed** once the page or frame they belong to navigates or closes.
+- Handles can be **manually disposed** using [jsHandle.dispose()](api/class-jshandle.md#jshandledispose) method.
 
 ### Example: ElementHandle
 
@@ -337,9 +332,7 @@ const ulElementHandle = await page.$('ul');
 await ulElementHandle.evaluate(ulElement => getComputedStyle(ulElement).getPropertyValue('display'));
 ```
 
-Handles can also be passed as arguments to
-[page.evaluate(pageFunction[, arg])](./api.md#pageevaluatepagefunction-arg)
-function:
+Handles can also be passed as arguments to [page.evaluate(pageFunction[, arg])](api/class-page.md#pageevaluatepagefunction-arg) function:
 
 ```js
 // In the page API, you can pass handle as a parameter.
@@ -379,48 +372,48 @@ await myArrayHandle.dispose();
 #### API reference
 - [JSHandle]
 - [ElementHandle]
-- [page.evaluateHandle(pageFunction[, arg])](./api.md#pageevaluatehandlepagefunction-arg)
-- [page.$(selector)](./api.md#pageselector)
-- [page.$$(selector)](./api.md#pageselector-1)
-- [jsHandle.evaluate(pageFunction[, arg])](./api.md#jshandleevaluatepagefunction-arg)
-[Playwright]: api.md#class-playwright "Playwright"
-[Browser]: api.md#class-browser "Browser"
-[BrowserContext]: api.md#class-browsercontext "BrowserContext"
-[Page]: api.md#class-page "Page"
-[Frame]: api.md#class-frame "Frame"
-[ElementHandle]: api.md#class-elementhandle "ElementHandle"
-[JSHandle]: api.md#class-jshandle "JSHandle"
-[ConsoleMessage]: api.md#class-consolemessage "ConsoleMessage"
-[Dialog]: api.md#class-dialog "Dialog"
-[Download]: api.md#class-download "Download"
-[Video]: api.md#class-video "Video"
-[FileChooser]: api.md#class-filechooser "FileChooser"
-[Keyboard]: api.md#class-keyboard "Keyboard"
-[Mouse]: api.md#class-mouse "Mouse"
-[Touchscreen]: api.md#class-touchscreen "Touchscreen"
-[Request]: api.md#class-request "Request"
-[Response]: api.md#class-response "Response"
-[Selectors]: api.md#class-selectors "Selectors"
-[Route]: api.md#class-route "Route"
-[WebSocket]: api.md#class-websocket "WebSocket"
-[TimeoutError]: api.md#class-timeouterror "TimeoutError"
-[Accessibility]: api.md#class-accessibility "Accessibility"
-[Worker]: api.md#class-worker "Worker"
-[BrowserServer]: api.md#class-browserserver "BrowserServer"
-[BrowserType]: api.md#class-browsertype "BrowserType"
-[Logger]: api.md#class-logger "Logger"
-[ChromiumBrowser]: api.md#class-chromiumbrowser "ChromiumBrowser"
-[ChromiumBrowserContext]: api.md#class-chromiumbrowsercontext "ChromiumBrowserContext"
-[ChromiumCoverage]: api.md#class-chromiumcoverage "ChromiumCoverage"
-[CDPSession]: api.md#class-cdpsession "CDPSession"
-[FirefoxBrowser]: api.md#class-firefoxbrowser "FirefoxBrowser"
-[WebKitBrowser]: api.md#class-webkitbrowser "WebKitBrowser"
+- [page.evaluateHandle(pageFunction[, arg])](api/class-page.md#pageevaluatehandlepagefunction-arg)
+- [page.$(selector)](api/class-page.md#pageselector)
+- [page.$$(selector)](api/class-page.md#pageselector-1)
+- [jsHandle.evaluate(pageFunction[, arg])](api/class-jshandle.md#jshandleevaluatepagefunction-arg)
+[Playwright]: api/class-playwright.md "Playwright"
+[Browser]: api/class-browser.md "Browser"
+[BrowserContext]: api/class-browsercontext.md "BrowserContext"
+[Page]: api/class-page.md "Page"
+[Frame]: api/class-frame.md "Frame"
+[ElementHandle]: api/class-elementhandle.md "ElementHandle"
+[JSHandle]: api/class-jshandle.md "JSHandle"
+[ConsoleMessage]: api/class-consolemessage.md "ConsoleMessage"
+[Dialog]: api/class-dialog.md "Dialog"
+[Download]: api/class-download.md "Download"
+[Video]: api/class-video.md "Video"
+[FileChooser]: api/class-filechooser.md "FileChooser"
+[Keyboard]: api/class-keyboard.md "Keyboard"
+[Mouse]: api/class-mouse.md "Mouse"
+[Touchscreen]: api/class-touchscreen.md "Touchscreen"
+[Request]: api/class-request.md "Request"
+[Response]: api/class-response.md "Response"
+[Selectors]: api/class-selectors.md "Selectors"
+[Route]: api/class-route.md "Route"
+[WebSocket]: api/class-websocket.md "WebSocket"
+[TimeoutError]: api/class-timeouterror.md "TimeoutError"
+[Accessibility]: api/class-accessibility.md "Accessibility"
+[Worker]: api/class-worker.md "Worker"
+[BrowserServer]: api/class-browserserver.md "BrowserServer"
+[BrowserType]: api/class-browsertype.md "BrowserType"
+[Logger]: api/class-logger.md "Logger"
+[ChromiumBrowser]: api/class-chromiumbrowser.md "ChromiumBrowser"
+[ChromiumBrowserContext]: api/class-chromiumbrowsercontext.md "ChromiumBrowserContext"
+[ChromiumCoverage]: api/class-chromiumcoverage.md "ChromiumCoverage"
+[CDPSession]: api/class-cdpsession.md "CDPSession"
+[FirefoxBrowser]: api/class-firefoxbrowser.md "FirefoxBrowser"
+[WebKitBrowser]: api/class-webkitbrowser.md "WebKitBrowser"
 [Array]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array "Array"
 [Buffer]: https://nodejs.org/api/buffer.html#buffer_class_buffer "Buffer"
 [ChildProcess]: https://nodejs.org/api/child_process.html "ChildProcess"
 [Element]: https://developer.mozilla.org/en-US/docs/Web/API/element "Element"
 [Error]: https://nodejs.org/api/errors.html#errors_class_error "Error"
-[EvaluationArgument]: #evaluationargument "Evaluation Argument"
+[Evaluation Argument]: ./core-concepts.md#evaluationargument "Evaluation Argument"
 [Map]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map "Map"
 [Object]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object "Object"
 [Promise]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise "Promise"

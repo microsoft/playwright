@@ -1,4 +1,7 @@
-# Device and environment emulation
+---
+id: emulation
+title: "Device and environment emulation"
+---
 
 Playwright allows overriding various parameters of the device where the browser is running:
   - viewport size, device scale factor, touch support
@@ -8,8 +11,7 @@ Playwright allows overriding various parameters of the device where the browser 
 
 Most of these parameters are configured during the browser context construction, but some of them such as viewport size can be changed for individual pages.
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
+<!-- TOC -->
 
 <br/>
 

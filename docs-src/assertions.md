@@ -1,14 +1,14 @@
-# Assertions
+---
+id: assertions
+title: "Assertions"
+---
 
 The Playwright API can be used to read element contents and properties for test assertions. These values are fetched from the browser page and asserted in
 Node.js.
 
 The examples in this guide use the built-in [`assert` module](https://nodejs.org/api/assert.html), but they can be used with any assertion library (like [Expect](https://www.npmjs.com/package/expect) or [Chai](https://www.npmjs.com/package/chai)). See [Test runners](test-runners.md) for more info.
 
-<!-- GEN:toc-top-level -->
-<!-- GEN:stop -->
-
-<br/>
+<!-- TOC -->
 
 ## Common patterns
 
