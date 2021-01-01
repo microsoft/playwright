@@ -6,7 +6,7 @@ on:
       - master
       - release-*
     paths:
-      - docs/docker/**
+      - utils/docker/**
       - browsers.json
       - .github/workflows/publish_canary_docker.yml
 
@@ -29,12 +29,12 @@ jobs:
         node-version: 10.15
     - run: npm ci
     - run: npm run build
-    - run: ./docs/docker/build.sh bionic playwright:localbuild-bionic
-    - run: ./docs/docker/build.sh focal playwright:localbuild-focal
+    - run: ./utils/docker/build.sh bionic playwright:localbuild-bionic
+    - run: ./utils/docker/build.sh focal playwright:localbuild-focal
     - name: tag & publish
       run: |
-        ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next
-        ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next-bionic
-        ./docs/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
-        ./docs/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:next-focal
+        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next
+        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:next-bionic
+        ./utils/docker/tag_and_push.sh playwright:localbuild-bionic playwright.azurecr.io/public/playwright:sha-${{ github.sha }}
+        ./utils/docker/tag_and_push.sh playwright:localbuild-focal playwright.azurecr.io/public/playwright:next-focal
 

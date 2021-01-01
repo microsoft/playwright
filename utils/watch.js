@@ -26,8 +26,8 @@ process.on('exit', () => spawns.forEach(s => s.kill()));
 
 runOnChanges(['src/protocol/protocol.yml'], 'utils/generate_channels.js');
 runOnChanges([
-  'docs-src/api-body.md',
-  'docs-src/api-params.md',
+  'docs/src/api-body.md',
+  'docs/src/api-params.md',
   'utils/generate_types/overrides.d.ts',
   'utils/generate_types/exported.json',
   'src/server/chromium/protocol.ts',
