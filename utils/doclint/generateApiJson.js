@@ -22,7 +22,7 @@ const { MDOutline } = require('./MDBuilder');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
 {
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api-body.md'), path.join(PROJECT_DIR, 'docs', 'src', 'api-params.md'));
   outline.setLinkRenderer(item => {
     const { clazz, member, param, option } = item;
     if (param)

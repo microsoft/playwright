@@ -40,7 +40,7 @@ run().catch(e => {
 });;
 
 async function run() {
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs-src', 'api-body.md'), path.join(PROJECT_DIR, 'docs-src', 'api-params.md'));
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api-body.md'), path.join(PROJECT_DIR, 'docs', 'src', 'api-params.md'));
   outline.setLinkRenderer(item => {
     const { clazz, member, param, option } = item;
     if (param)
@@ -54,11 +54,11 @@ async function run() {
 
   let generatedLinksSuffix;
   {
-    const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', 'links.md')).toString();
+    const links = fs.readFileSync(path.join(PROJECT_DIR, 'docs', 'src', 'links.md')).toString();
     const localLinks = [];
     for (const clazz of outline.classesArray)
       localLinks.push(`[${clazz.name}]: api/class-${clazz.name.toLowerCase()}.md "${clazz.name}"`);
-    generatedLinksSuffix = localLinks.join('\n') + '\n' + links;
+    generatedLinksSuffix = '\n' + localLinks.join('\n') + '\n' + links;
   }
 
   // Produce api.md
@@ -70,7 +70,7 @@ async function run() {
         type: 'text',
         text: `---
 id: class-${clazz.name.toLowerCase()}
-title: "class: ${clazz.name}"
+title: "${clazz.name}"
 ---
 `});
       result.push(...(clazz.spec || []).map(c => md.clone(c)));
@@ -87,7 +87,7 @@ title: "class: ${clazz.name}"
       for (const member of clazz.membersArray) {
         // Iterate members
         /** @type {MarkdownNode} */
-        const memberNode = { type: 'h4', children: [] };
+        const memberNode = { type: 'h2', children: [] };
         if (member.kind === 'event') {
           memberNode.text = `${clazz.varName}.on('${member.name}')`;
         } else if (member.kind === 'property') {
@@ -95,10 +95,8 @@ title: "class: ${clazz.name}"
         } else if (member.kind === 'method') {
           // Patch method signatures
           memberNode.text = `${clazz.varName}.${member.name}(${member.signature})`;
-          for (const arg of member.argsArray) {
-            if (arg.type)
-              memberNode.children.push(renderProperty(`\`${arg.name}\``, arg.type, arg.spec));
-          }
+          for (const arg of member.argsArray)
+            memberNode.children.push(renderProperty(`\`${arg.name}\``, arg.type, arg.spec));
         }
 
         // Append type
@@ -116,23 +114,23 @@ title: "class: ${clazz.name}"
         memberNode.children.push(...(member.spec || []).map(c => md.clone(c)));
         result.push(memberNode);
       }
-      writeAssumeNoop(path.join(PROJECT_DIR, 'docs', `class-${clazz.name.toLowerCase()}.md`), [md.render(result), generatedLinksSuffix].join('\n'), dirtyFiles);
+      writeAssumeNoop(path.join(PROJECT_DIR, 'docs', 'out', 'api', `class-${clazz.name.toLowerCase()}.md`), [md.render(result), generatedLinksSuffix].join('\n'), dirtyFiles);
     }
   }
 
   // Produce other docs
   {
-    for (const name of fs.readdirSync(path.join(PROJECT_DIR, 'docs-src'))) {
+    for (const name of fs.readdirSync(path.join(PROJECT_DIR, 'docs', 'src'))) {
       if (name === 'links.md' || name.startsWith('api-'))
         continue;
-      const content = fs.readFileSync(path.join(PROJECT_DIR, 'docs-src', name)).toString();
+      const content = fs.readFileSync(path.join(PROJECT_DIR, 'docs', 'src', name)).toString();
       const nodes = md.parse(content);
       outline.renderLinksInText(nodes);
       for (const node of nodes) {
         if (node.text === '<!-- TOC -->')
           node.text = md.generateToc(nodes);
       }
-      writeAssumeNoop(path.join(PROJECT_DIR, 'docs', name), [md.render(nodes), generatedLinksSuffix].join('\n'), dirtyFiles);
+      writeAssumeNoop(path.join(PROJECT_DIR, 'docs', 'out', name), [md.render(nodes), generatedLinksSuffix].join('\n'), dirtyFiles);
     }
   }
 
@@ -189,7 +187,8 @@ title: "class: ${clazz.name}"
  * @param {Set<string>} dirtyFiles
  */
 function writeAssumeNoop(name, content, dirtyFiles) {
-  const oldContent = fs.readFileSync(name).toString();
+  fs.mkdirSync(path.dirname(name), { recursive: true });
+  const oldContent = fs.existsSync(name) ? fs.readFileSync(name).toString() : '';
   if (oldContent !== content) {
     fs.writeFileSync(name, content);
     dirtyFiles.add(name);
