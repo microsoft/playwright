@@ -184,17 +184,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     });
   }
 
-  async exposeBinding(name: string, playwrightBinding: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<void> {
+  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<void> {
     return this._wrapApiCall('browserContext.exposeBinding', async () => {
       await this._channel.exposeBinding({ name, needsHandle: options.handle });
-      this._bindings.set(name, playwrightBinding);
+      this._bindings.set(name, callback);
     });
   }
 
-  async exposeFunction(name: string, playwrightFunction: Function): Promise<void> {
+  async exposeFunction(name: string, callback: Function): Promise<void> {
     return this._wrapApiCall('browserContext.exposeFunction', async () => {
       await this._channel.exposeBinding({ name });
-      const binding = (source: structs.BindingSource, ...args: any[]) => playwrightFunction(...args);
+      const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
       this._bindings.set(name, binding);
     });
   }

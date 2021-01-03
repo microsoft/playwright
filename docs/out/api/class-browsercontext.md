@@ -31,8 +31,8 @@ await context.close();
 - [browserContext.clearPermissions()](api/class-browsercontext.md#browsercontextclearpermissions)
 - [browserContext.close()](api/class-browsercontext.md#browsercontextclose)
 - [browserContext.cookies([urls])](api/class-browsercontext.md#browsercontextcookiesurls)
-- [browserContext.exposeBinding(name, playwrightBinding[, options])](api/class-browsercontext.md#browsercontextexposebindingname-playwrightbinding-options)
-- [browserContext.exposeFunction(name, playwrightFunction)](api/class-browsercontext.md#browsercontextexposefunctionname-playwrightfunction)
+- [browserContext.exposeBinding(name, callback[, options])](api/class-browsercontext.md#browsercontextexposebindingname-callback-options)
+- [browserContext.exposeFunction(name, callback)](api/class-browsercontext.md#browsercontextexposefunctionname-callback)
 - [browserContext.grantPermissions(permissions[, options])](api/class-browsercontext.md#browsercontextgrantpermissionspermissions-options)
 - [browserContext.newPage()](api/class-browsercontext.md#browsercontextnewpage)
 - [browserContext.pages()](api/class-browsercontext.md#browsercontextpages)
@@ -92,7 +92,7 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 
 ## browserContext.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
@@ -162,18 +162,18 @@ Closes the browser context. All the pages that belong to the browser context wil
 
 If no URLs are specified, this method returns all cookies. If URLs are specified, only cookies that affect those URLs are returned.
 
-## browserContext.exposeBinding(name, playwrightBinding[, options])
+## browserContext.exposeBinding(name, callback[, options])
 - `name` <[string]> Name of the function on the window object.
-- `playwrightBinding` <[function]> Callback function that will be called in the Playwright's context.
+- `callback` <[function]> Callback function that will be called in the Playwright's context.
 - `options` <[Object]>
   - `handle` <[boolean]> Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is supported. When passing by value, multiple arguments are supported.
 - returns: <[Promise]>
 
-The method adds a function called `name` on the `window` object of every frame in every page in the context. When called, the function executes `playwrightBinding` and returns a [Promise] which resolves to the return value of `playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will be awaited.
+The method adds a function called `name` on the `window` object of every frame in every page in the context. When called, the function executes `callback` and returns a [Promise] which resolves to the return value of `callback`. If the `callback` returns a [Promise], it will be awaited.
 
-The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
+The first argument of the `callback` function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
 
-See [page.exposeBinding(name, playwrightBinding[, options])](api/class-page.md#pageexposebindingname-playwrightbinding-options) for page-only version.
+See [page.exposeBinding(name, callback[, options])](api/class-page.md#pageexposebindingname-callback-options) for page-only version.
 
 An example of exposing page URL to all frames in all pages in the context:
 
@@ -213,16 +213,16 @@ await page.setContent(`
 `);
 ```
 
-## browserContext.exposeFunction(name, playwrightFunction)
+## browserContext.exposeFunction(name, callback)
 - `name` <[string]> Name of the function on the window object.
-- `playwrightFunction` <[function]> Callback function that will be called in the Playwright's context.
+- `callback` <[function]> Callback function that will be called in the Playwright's context.
 - returns: <[Promise]>
 
-The method adds a function called `name` on the `window` object of every frame in every page in the context. When called, the function executes `playwrightFunction` and returns a [Promise] which resolves to the return value of `playwrightFunction`.
+The method adds a function called `name` on the `window` object of every frame in every page in the context. When called, the function executes `callback` and returns a [Promise] which resolves to the return value of `callback`.
 
-If the `playwrightFunction` returns a [Promise], it will be awaited.
+If the `callback` returns a [Promise], it will be awaited.
 
-See [page.exposeFunction(name, playwrightFunction)](api/class-page.md#pageexposefunctionname-playwrightfunction) for page-only version.
+See [page.exposeFunction(name, callback)](api/class-page.md#pageexposefunctionname-callback) for page-only version.
 
 An example of adding an `md5` function to all pages in the context:
 
@@ -372,7 +372,7 @@ Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-U
 
 ## browserContext.storageState([options])
 - `options` <[Object]>
-  - `path` <[string]> The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
+  - `path` <[path]> The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
 - returns: <[Promise]<[Object]>>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>

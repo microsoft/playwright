@@ -81,8 +81,8 @@ page.removeListener('request', logRequest);
 - [page.emulateMedia(params)](api/class-page.md#pageemulatemediaparams)
 - [page.evaluate(pageFunction[, arg])](api/class-page.md#pageevaluatepagefunction-arg)
 - [page.evaluateHandle(pageFunction[, arg])](api/class-page.md#pageevaluatehandlepagefunction-arg)
-- [page.exposeBinding(name, playwrightBinding[, options])](api/class-page.md#pageexposebindingname-playwrightbinding-options)
-- [page.exposeFunction(name, playwrightFunction)](api/class-page.md#pageexposefunctionname-playwrightfunction)
+- [page.exposeBinding(name, callback[, options])](api/class-page.md#pageexposebindingname-callback-options)
+- [page.exposeFunction(name, callback)](api/class-page.md#pageexposefunctionname-callback)
 - [page.fill(selector, value[, options])](api/class-page.md#pagefillselector-value-options)
 - [page.focus(selector[, options])](api/class-page.md#pagefocusselector-options)
 - [page.frame(frameSelector)](api/class-page.md#pageframeframeselector)
@@ -338,7 +338,7 @@ const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 1
 
 ## page.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in the page.
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
@@ -365,7 +365,7 @@ await page.addInitScript(preloadFile);
 ## page.addScriptTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 - returns: <[Promise]<[ElementHandle]>>
@@ -377,7 +377,7 @@ Shortcut for main frame's [frame.addScriptTag(params)](api/class-frame.md#framea
 ## page.addStyleTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
@@ -623,18 +623,18 @@ console.log(await resultHandle.jsonValue());
 await resultHandle.dispose();
 ```
 
-## page.exposeBinding(name, playwrightBinding[, options])
+## page.exposeBinding(name, callback[, options])
 - `name` <[string]> Name of the function on the window object.
-- `playwrightBinding` <[function]> Callback function that will be called in the Playwright's context.
+- `callback` <[function]> Callback function that will be called in the Playwright's context.
 - `options` <[Object]>
   - `handle` <[boolean]> Whether to pass the argument as a handle, instead of passing by value. When passing a handle, only one argument is supported. When passing by value, multiple arguments are supported.
 - returns: <[Promise]>
 
-The method adds a function called `name` on the `window` object of every frame in this page. When called, the function executes `playwrightBinding` and returns a [Promise] which resolves to the return value of `playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will be awaited.
+The method adds a function called `name` on the `window` object of every frame in this page. When called, the function executes `callback` and returns a [Promise] which resolves to the return value of `callback`. If the `callback` returns a [Promise], it will be awaited.
 
-The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
+The first argument of the `callback` function contains information about the caller: `{ browserContext: BrowserContext, page: Page, frame: Frame }`.
 
-See [browserContext.exposeBinding(name, playwrightBinding[, options])](api/class-browsercontext.md#browsercontextexposebindingname-playwrightbinding-options) for the context-wide version.
+See [browserContext.exposeBinding(name, callback[, options])](api/class-browsercontext.md#browsercontextexposebindingname-callback-options) for the context-wide version.
 
 > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
 
@@ -676,16 +676,16 @@ await page.setContent(`
 `);
 ```
 
-## page.exposeFunction(name, playwrightFunction)
+## page.exposeFunction(name, callback)
 - `name` <[string]> Name of the function on the window object
-- `playwrightFunction` <[function]> Callback function which will be called in Playwright's context.
+- `callback` <[function]> Callback function which will be called in Playwright's context.
 - returns: <[Promise]>
 
-The method adds a function called `name` on the `window` object of every frame in the page. When called, the function executes `playwrightFunction` and returns a [Promise] which resolves to the return value of `playwrightFunction`.
+The method adds a function called `name` on the `window` object of every frame in the page. When called, the function executes `callback` and returns a [Promise] which resolves to the return value of `callback`.
 
-If the `playwrightFunction` returns a [Promise], it will be awaited.
+If the `callback` returns a [Promise], it will be awaited.
 
-See [browserContext.exposeFunction(name, playwrightFunction)](api/class-browsercontext.md#browsercontextexposefunctionname-playwrightfunction) for context-wide exposed function.
+See [browserContext.exposeFunction(name, callback)](api/class-browsercontext.md#browsercontextexposefunctionname-callback) for context-wide exposed function.
 
 > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
 
@@ -768,7 +768,7 @@ Shortcut for main frame's [frame.focus(selector[, options])](api/class-frame.md#
 ## page.frame(frameSelector)
 - `frameSelector` <[string]|[Object]> Frame name or other frame lookup options.
   - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
-  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+  - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
 - returns: <[null]|[Frame]>
 
 Returns frame matching the specified criteria. Either `name` or `url` must be specified.
@@ -926,7 +926,7 @@ Returns the opener for popup pages and `null` for others. If the opener has been
     - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units. Defaults to `0`.
     - `left` <[string]|[number]> Left margin, accepts values labeled with units. Defaults to `0`.
   - `pageRanges` <[string]> Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
-  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the PDF won't be saved to the disk.
+  - `path` <[path]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the PDF won't be saved to the disk.
   - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
   - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
   - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
@@ -1065,7 +1065,7 @@ Page routes take precedence over browser context routes (set up with [browserCon
     - `height` <[number]> height of clipping area
   - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
-  - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
+  - `path` <[path]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) methods.
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.
@@ -1357,7 +1357,7 @@ Shortcut for main frame's [frame.waitForLoadState([state, options])](api/class-f
 ## page.waitForNavigation([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](api/class-page.md#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) methods.
-  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+  - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     * `'load'` - consider operation to be finished when the `load` event is fired.
@@ -1380,7 +1380,7 @@ const [response] = await Promise.all([
 Shortcut for main frame's [frame.waitForNavigation([options])](api/class-frame.md#framewaitfornavigationoptions).
 
 ## page.waitForRequest(urlOrPredicate[, options])
-- `urlOrPredicate` <[string]|[RegExp]|[Function]> Request URL string, regex or predicate receiving [Request] object.
+- `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]> Request URL string, regex or predicate receiving [Request] object.
 - `options` <[Object]>
   - `timeout` <[number]> Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be changed by using the [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) method.
 - returns: <[Promise]<[Request]>>

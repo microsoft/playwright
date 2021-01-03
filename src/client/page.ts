@@ -304,18 +304,18 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.addStyleTag(params));
   }
 
-  async exposeFunction(name: string, playwrightFunction: Function) {
+  async exposeFunction(name: string, callback: Function) {
     return this._wrapApiCall('page.exposeFunction', async () => {
       await this._channel.exposeBinding({ name });
-      const binding = (source: structs.BindingSource, ...args: any[]) => playwrightFunction(...args);
+      const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
       this._bindings.set(name, binding);
     });
   }
 
-  async exposeBinding(name: string, playwrightBinding: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}) {
+  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}) {
     return this._wrapApiCall('page.exposeBinding', async () => {
       await this._channel.exposeBinding({ name, needsHandle: options.handle });
-      this._bindings.set(name, playwrightBinding);
+      this._bindings.set(name, callback);
     });
   }
 

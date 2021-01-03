@@ -288,14 +288,14 @@ export interface Page {
 
   /**
    * The method adds a function called `name` on the `window` object of every frame in this page. When called, the function
-   * executes `playwrightBinding` and returns a [Promise] which resolves to the return value of `playwrightBinding`. If the
-   * `playwrightBinding` returns a [Promise], it will be awaited.
+   * executes `callback` and returns a [Promise] which resolves to the return value of `callback`. If the `callback` returns
+   * a [Promise], it will be awaited.
    * 
-   * The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext:
-   * BrowserContext, page: Page, frame: Frame }`.
+   * The first argument of the `callback` function contains information about the caller: `{ browserContext: BrowserContext,
+   * page: Page, frame: Frame }`.
    * 
    * See
-   * [browserContext.exposeBinding(name, playwrightBinding[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposebindingname-playwrightbinding-options)
+   * [browserContext.exposeBinding(name, callback[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposebindingname-callback-options)
    * for the context-wide version.
    * 
    * > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
@@ -339,7 +339,7 @@ export interface Page {
    * ```
    * 
    * @param name Name of the function on the window object.
-   * @param playwrightBinding Callback function that will be called in the Playwright's context.
+   * @param callback Callback function that will be called in the Playwright's context.
    * @param options 
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
@@ -1695,12 +1695,12 @@ export interface Page {
 
   /**
    * The method adds a function called `name` on the `window` object of every frame in the page. When called, the function
-   * executes `playwrightFunction` and returns a [Promise] which resolves to the return value of `playwrightFunction`.
+   * executes `callback` and returns a [Promise] which resolves to the return value of `callback`.
    * 
-   * If the `playwrightFunction` returns a [Promise], it will be awaited.
+   * If the `callback` returns a [Promise], it will be awaited.
    * 
    * See
-   * [browserContext.exposeFunction(name, playwrightFunction)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposefunctionname-playwrightfunction)
+   * [browserContext.exposeFunction(name, callback)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposefunctionname-callback)
    * for context-wide exposed function.
    * 
    * > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
@@ -1758,9 +1758,9 @@ export interface Page {
    * ```
    * 
    * @param name Name of the function on the window object
-   * @param playwrightFunction Callback function which will be called in Playwright's context.
+   * @param callback Callback function which will be called in Playwright's context.
    */
-  exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks, focuses the
@@ -1839,7 +1839,7 @@ export interface Page {
     /**
      * A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
      */
-    url?: string|RegExp|Function;
+    url?: string|RegExp|((url: URL) => boolean);
   }): null|Frame;
 
   /**
@@ -3122,7 +3122,7 @@ export interface Page {
     /**
      * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
      */
-    url?: string|RegExp|Function;
+    url?: string|RegExp|((url: URL) => boolean);
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
@@ -3149,7 +3149,7 @@ export interface Page {
    * @param urlOrPredicate Request URL string, regex or predicate receiving [Request] object.
    * @param options 
    */
-  waitForRequest(urlOrPredicate: string|RegExp|Function, options?: {
+  waitForRequest(urlOrPredicate: string|RegExp|((request: Request) => boolean), options?: {
     /**
      * Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
      * changed by using the
@@ -4426,7 +4426,7 @@ export interface Frame {
     /**
      * URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
      */
-    url?: string|RegExp|Function;
+    url?: string|RegExp|((url: URL) => boolean);
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
@@ -4471,14 +4471,14 @@ export interface Frame {
 export interface BrowserContext {
   /**
    * The method adds a function called `name` on the `window` object of every frame in every page in the context. When
-   * called, the function executes `playwrightBinding` and returns a [Promise] which resolves to the return value of
-   * `playwrightBinding`. If the `playwrightBinding` returns a [Promise], it will be awaited.
+   * called, the function executes `callback` and returns a [Promise] which resolves to the return value of `callback`. If
+   * the `callback` returns a [Promise], it will be awaited.
    * 
-   * The first argument of the `playwrightBinding` function contains information about the caller: `{ browserContext:
-   * BrowserContext, page: Page, frame: Frame }`.
+   * The first argument of the `callback` function contains information about the caller: `{ browserContext: BrowserContext,
+   * page: Page, frame: Frame }`.
    * 
    * See
-   * [page.exposeBinding(name, playwrightBinding[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposebindingname-playwrightbinding-options)
+   * [page.exposeBinding(name, callback[, options])](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposebindingname-callback-options)
    * for page-only version.
    * 
    * An example of exposing page URL to all frames in all pages in the context:
@@ -4520,7 +4520,7 @@ export interface BrowserContext {
    * ```
    * 
    * @param name Name of the function on the window object.
-   * @param playwrightBinding Callback function that will be called in the Playwright's context.
+   * @param callback Callback function that will be called in the Playwright's context.
    * @param options 
    */
   exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
@@ -4831,13 +4831,12 @@ export interface BrowserContext {
 
   /**
    * The method adds a function called `name` on the `window` object of every frame in every page in the context. When
-   * called, the function executes `playwrightFunction` and returns a [Promise] which resolves to the return value of
-   * `playwrightFunction`.
+   * called, the function executes `callback` and returns a [Promise] which resolves to the return value of `callback`.
    * 
-   * If the `playwrightFunction` returns a [Promise], it will be awaited.
+   * If the `callback` returns a [Promise], it will be awaited.
    * 
    * See
-   * [page.exposeFunction(name, playwrightFunction)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunctionname-playwrightfunction)
+   * [page.exposeFunction(name, callback)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunctionname-callback)
    * for page-only version.
    * 
    * An example of adding an `md5` function to all pages in the context:
@@ -4865,9 +4864,9 @@ export interface BrowserContext {
    * ```
    * 
    * @param name Name of the function on the window object.
-   * @param playwrightFunction Callback function that will be called in the Playwright's context.
+   * @param callback Callback function that will be called in the Playwright's context.
    */
-  exposeFunction(name: string, playwrightFunction: Function): Promise<void>;
+  exposeFunction(name: string, callback: Function): Promise<void>;
 
   /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if

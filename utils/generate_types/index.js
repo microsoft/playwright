@@ -393,6 +393,8 @@ function stringifySimpleType(parsedType) {
   } else if (parsedType.name === 'function') {
     out = 'Function';
   }
+  if (out === 'path')
+    return 'string';
   if (parsedType.nullable)
     out = 'null|' + out;
   if (parsedType.template)

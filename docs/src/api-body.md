@@ -275,7 +275,7 @@ await browserContext.addInitScript({
 
 ### param: BrowserContext.addInitScript.script
 - `script` <[function]|[string]|[Object]>
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 
 Script to be evaluated in all pages in the browser context.
@@ -333,10 +333,10 @@ Optional list of URLs.
 ## async method: BrowserContext.exposeBinding
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
-When called, the function executes [`param: playwrightBinding`] and returns a [Promise] which resolves to the return
-value of [`param: playwrightBinding`]. If the [`param: playwrightBinding`] returns a [Promise], it will be awaited.
+When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return
+value of [`param: callback`]. If the [`param: callback`] returns a [Promise], it will be awaited.
 
-The first argument of the [`param: playwrightBinding`] function contains information about the caller: `{
+The first argument of the [`param: callback`] function contains information about the caller: `{
 browserContext: BrowserContext, page: Page, frame: Frame }`.
 
 See [`method: Page.exposeBinding`] for page-only version.
@@ -384,8 +384,8 @@ await page.setContent(`
 
 Name of the function on the window object.
 
-### param: BrowserContext.exposeBinding.playwrightBinding
-- `playwrightBinding` <[function]>
+### param: BrowserContext.exposeBinding.callback
+- `callback` <[function]>
 
 Callback function that will be called in the Playwright's context.
 
@@ -398,10 +398,10 @@ supported. When passing by value, multiple arguments are supported.
 ## async method: BrowserContext.exposeFunction
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
-When called, the function executes [`param: playwrightFunction`] and returns a [Promise] which resolves to the return
-value of [`param: playwrightFunction`].
+When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return
+value of [`param: callback`].
 
-If the [`param: playwrightFunction`] returns a [Promise], it will be awaited.
+If the [`param: callback`] returns a [Promise], it will be awaited.
 
 See [`method: Page.exposeFunction`] for page-only version.
 
@@ -434,8 +434,8 @@ const crypto = require('crypto');
 
 Name of the function on the window object.
 
-### param: BrowserContext.exposeFunction.playwrightFunction
-- `playwrightFunction` <[function]>
+### param: BrowserContext.exposeFunction.callback
+- `callback` <[function]>
 
 Callback function that will be called in the Playwright's context.
 
@@ -621,7 +621,7 @@ Whether to emulate network being offline for the browser context.
 Returns storage state for this browser context, contains current cookies and local storage snapshot.
 
 ### option: BrowserContext.storageState.path
-- `path` <[string]>
+- `path` <[path]>
 
 The file path to save the storage state to. If [`option: path`] is a relative path, then it is resolved relative to
 [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage
@@ -984,7 +984,7 @@ await page.addInitScript(preloadFile);
 
 ### param: Page.addInitScript.script
 - `script` <[function]|[string]|[Object]>
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 
 Script to be evaluated in the page.
@@ -1005,7 +1005,7 @@ Shortcut for main frame's [`method: Frame.addScriptTag`].
 ### param: Page.addScriptTag.params
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 
@@ -1020,7 +1020,7 @@ Shortcut for main frame's [`method: Frame.addStyleTag`].
 ### param: Page.addStyleTag.params
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 
 ## async method: Page.bringToFront
@@ -1317,10 +1317,10 @@ Optional argument to pass to [`param: pageFunction`]
 ## async method: Page.exposeBinding
 
 The method adds a function called [`param: name`] on the `window` object of every frame in this page. When called, the
-function executes [`param: playwrightBinding`] and returns a [Promise] which resolves to the return value of [`param:
-playwrightBinding`]. If the [`param: playwrightBinding`] returns a [Promise], it will be awaited.
+function executes [`param: callback`] and returns a [Promise] which resolves to the return value of [`param:
+callback`]. If the [`param: callback`] returns a [Promise], it will be awaited.
 
-The first argument of the [`param: playwrightBinding`] function contains information about the caller: `{
+The first argument of the [`param: callback`] function contains information about the caller: `{
 browserContext: BrowserContext, page: Page, frame: Frame }`.
 
 See [`method: BrowserContext.exposeBinding`] for the context-wide version.
@@ -1370,8 +1370,8 @@ await page.setContent(`
 
 Name of the function on the window object.
 
-### param: Page.exposeBinding.playwrightBinding
-- `playwrightBinding` <[function]>
+### param: Page.exposeBinding.callback
+- `callback` <[function]>
 
 Callback function that will be called in the Playwright's context.
 
@@ -1384,10 +1384,10 @@ supported. When passing by value, multiple arguments are supported.
 ## async method: Page.exposeFunction
 
 The method adds a function called [`param: name`] on the `window` object of every frame in the page. When called, the
-function executes [`param: playwrightFunction`] and returns a [Promise] which resolves to the return value of [`param:
-playwrightFunction`].
+function executes [`param: callback`] and returns a [Promise] which resolves to the return value of [`param:
+callback`].
 
-If the [`param: playwrightFunction`] returns a [Promise], it will be awaited.
+If the [`param: callback`] returns a [Promise], it will be awaited.
 
 See [`method: BrowserContext.exposeFunction`] for context-wide exposed function.
 
@@ -1450,8 +1450,8 @@ const fs = require('fs');
 
 Name of the function on the window object
 
-### param: Page.exposeFunction.playwrightFunction
-- `playwrightFunction` <[function]>
+### param: Page.exposeFunction.callback
+- `callback` <[function]>
 
 Callback function which will be called in Playwright's context.
 
@@ -1504,7 +1504,7 @@ const frame = page.frame({ url: /.*domain.*/ });
 ### param: Page.frame.frameSelector
 - `frameSelector` <[string]|[Object]>
   - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
-  - `url` <[string]|[RegExp]|[Function]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+  - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
 
@@ -1705,7 +1705,7 @@ The [`option: format`] options are:
 > 2. Page styles are not visible inside templates.
 
 ### option: Page.pdf.path
-- `path` <[string]>
+- `path` <[path]>
 
 The file path to save the PDF to. If [`option: path`] is a relative path, then it is resolved relative to the current
 working directory. If no path is provided, the PDF won't be saved to the disk.
@@ -1891,7 +1891,7 @@ Returns the buffer with the captured screenshot.
 discussion.
 
 ### option: Page.screenshot.path
-- `path` <[string]>
+- `path` <[path]>
 
 The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
@@ -2314,7 +2314,7 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ### option: Page.waitForNavigation.url
-- `url` <[string]|[RegExp]|[Function]>
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
 
@@ -2336,7 +2336,7 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 ```
 
 ### param: Page.waitForRequest.urlOrPredicate
-- `urlOrPredicate` <[string]|[RegExp]|[Function]>
+- `urlOrPredicate` <[string]|[RegExp]|[function]\([Request]\):[boolean]>
 
 Request URL string, regex or predicate receiving [Request] object.
 
@@ -2562,7 +2562,7 @@ Adds a `<script>` tag into the page with the desired url or content.
 ### param: Frame.addScriptTag.params
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 
@@ -2577,7 +2577,7 @@ content.
 ### param: Frame.addStyleTag.params
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 
 ## async method: Frame.check
@@ -3245,7 +3245,7 @@ considered a navigation.
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
 
 ### option: Frame.waitForNavigation.url
-- `url` <[string]|[RegExp]|[Function]>
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
 
@@ -3668,7 +3668,7 @@ This method waits for the [actionability](./actionability.md) checks, then scrol
 screenshot. If the element is detached from DOM, the method throws an error.
 
 ### option: ElementHandle.screenshot.path
-- `path` <[string]>
+- `path` <[path]>
 
 The file path to save the image to. The screenshot type will be inferred from file extension. If [`option: path`] is a
 relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be
@@ -4119,7 +4119,7 @@ Returns path to the downloaded file in case of successful download.
 Saves the download to a user-specified path.
 
 ### param: Download.saveAs.path
-- `path` <[string]>
+- `path` <[path]>
 
 Path where the download should be saved.
 
@@ -4700,7 +4700,7 @@ contain `[a-zA-Z0-9_]` characters.
 
 ### param: Selectors.register.script
 - `script` <[function]|[string]|[Object]>
-  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 
 Script that evaluates to a selector engine instance.
@@ -4793,7 +4793,7 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
   - `headers` <[Object]<[string], [string]>> Optional response headers. Header values will be converted to a string.
   - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
   - `body` <[string]|[Buffer]> Optional response body.
-  - `path` <[string]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory.
+  - `path` <[path]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory.
 
 Response that will fulfill this route's request.
 
@@ -5116,7 +5116,7 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launch.executablePath
-- `executablePath` <[string]>
+- `executablePath` <[path]>
 
 Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
 it is resolved relative to the current working directory. Note that Playwright only works with the bundled Chromium,
@@ -5144,7 +5144,7 @@ array is given, then filters out the given default arguments. Dangerous option; 
 Network proxy settings.
 
 ### option: BrowserType.launch.downloadsPath
-- `downloadsPath` <[string]>
+- `downloadsPath` <[path]>
 
 If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
 deleted when browser is closed.
@@ -5211,7 +5211,7 @@ Launches browser that uses persistent storage located at [`param: userDataDir`] 
 this context will automatically close the browser.
 
 ### param: BrowserType.launchPersistentContext.userDataDir
-- `userDataDir` <[string]>
+- `userDataDir` <[path]>
 
 Path to a User Data Directory, which stores browser session data like cookies and local storage. More details for
 [Chromium](https://chromium.googlesource.com/chromium/src/+/master/docs/user_data_dir.md) and
@@ -5226,7 +5226,7 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launchPersistentContext.executablePath
-- `executablePath` <[string]>
+- `executablePath` <[path]>
 
 Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
 it is resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the
@@ -5254,7 +5254,7 @@ arguments. Dangerous option; use with care. Defaults to `false`.
 Network proxy settings.
 
 ### option: BrowserType.launchPersistentContext.downloadsPath
-- `downloadsPath` <[string]>
+- `downloadsPath` <[path]>
 
 If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
 deleted when browser is closed.
@@ -5339,7 +5339,7 @@ Whether to run browser in headless mode. More details for
 Port to use for the web socket. Defaults to 0 that picks any available port.
 
 ### option: BrowserType.launchServer.executablePath
-- `executablePath` <[string]>
+- `executablePath` <[path]>
 
 Path to a browser executable to run instead of the bundled one. If [`option: executablePath`] is a relative path, then
 it is resolved relative to the current working directory. **BEWARE**: Playwright is only guaranteed to work with the
@@ -5367,7 +5367,7 @@ arguments. Dangerous option; use with care. Defaults to `false`.
 Network proxy settings.
 
 ### option: BrowserType.launchServer.downloadsPath
-- `downloadsPath` <[string]>
+- `downloadsPath` <[path]>
 
 If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and is
 deleted when browser is closed.
@@ -5510,7 +5510,7 @@ Only one trace can be active at a time per browser.
 Optional, if specified, tracing includes screenshots of the given page.
 
 ### option: ChromiumBrowser.startTracing.path
-- `path` <[string]>
+- `path` <[path]>
 
 A path to write the trace file to.
 

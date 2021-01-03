@@ -140,7 +140,7 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
 ## frame.addScriptTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 - returns: <[Promise]<[ElementHandle]>>
@@ -152,7 +152,7 @@ Adds a `<script>` tag into the page with the desired url or content.
 ## frame.addStyleTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
@@ -664,7 +664,7 @@ await frame.waitForLoadState(); // Waits for 'load' state by default.
 ## frame.waitForNavigation([options])
 - `options` <[Object]>
   - `timeout` <[number]> Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultNavigationTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaultnavigationtimeouttimeout), [browserContext.setDefaultTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaulttimeouttimeout), [page.setDefaultNavigationTimeout(timeout)](api/class-page.md#pagesetdefaultnavigationtimeouttimeout) or [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) methods.
-  - `url` <[string]|[RegExp]|[Function]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+  - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> URL string, URL regex pattern or predicate receiving [URL] to match while waiting for the navigation.
   - `waitUntil` <"load"|"domcontentloaded"|"networkidle"> When to consider operation succeeded, defaults to `load`. Events can be either:
     * `'domcontentloaded'` - consider operation to be finished when the `DOMContentLoaded` event is fired.
     * `'load'` - consider operation to be finished when the `load` event is fired.
