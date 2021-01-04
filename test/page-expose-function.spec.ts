@@ -17,6 +17,7 @@
 
 import { it, expect } from './fixtures';
 import { attachFrame } from './utils';
+import type { ElementHandle } from '..';
 
 it('exposeBinding should work', async ({page}) => {
   let bindingSource;
@@ -264,3 +265,19 @@ it('should work with internal bindings', (test, { mode, browserName }) => {
   expect(foo).toBe(789);
 });
 
+it('exposeBinding(handle) should work with element handles', async ({ page}) => {
+  let cb;
+  const promise = new Promise(f => cb = f);
+  await page.exposeBinding('clicked', async (source, element: ElementHandle) => {
+    cb(await element.innerText().catch(e => e));
+  }, { handle: true });
+  await page.goto('about:blank');
+  await page.setContent(`
+    <script>
+      document.addEventListener('click', event => window.clicked(event.target));
+    </script>
+    <div id="a1">Click me</div>
+  `);
+  await page.click('#a1');
+  expect(await promise).toBe('Click me');
+});

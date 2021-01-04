@@ -176,6 +176,8 @@ export class DispatcherConnection {
     }
     try {
       const validated = this._validateParams(dispatcher._type, method, params);
+      if (typeof (dispatcher as any)[method] !== 'function')
+        throw new Error(`Mismatching dispatcher: "${dispatcher._type}" does not implement "${method}"`);
       const result = await (dispatcher as any)[method](validated, this._validateMetadata(metadata));
       this.onmessage({ id, result: this._replaceDispatchersWithGuids(result) });
     } catch (e) {
