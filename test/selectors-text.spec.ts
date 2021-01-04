@@ -16,7 +16,6 @@
  */
 
 import { it, expect } from './fixtures';
-import { selectorsV2Enabled } from '../src/server/common/selectorParser';
 
 it('should work', async ({page}) => {
   await page.setContent(`<div>yo</div><div>ya</div><div>\nye  </div>`);
@@ -108,8 +107,6 @@ it('should work', async ({page}) => {
 });
 
 it('should work in v2', async ({page}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.setContent(`<div>yo</div><div>ya</div><div>\nHELLO   \n world  </div>`);
   expect(await page.$eval(`:text("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');
   expect(await page.$eval(`:text-is("ya")`, e => e.outerHTML)).toBe('<div>ya</div>');

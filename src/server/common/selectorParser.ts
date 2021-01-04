@@ -26,28 +26,21 @@ export type ParsedSelector = {
   capture?: number,
 };
 
-export function selectorsV2Enabled() {
-  return true;
-}
-
 const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is']);
 
 export function parseSelector(selector: string): ParsedSelector {
   const result = parseSelectorV1(selector);
-
-  if (selectorsV2Enabled()) {
-    result.parts = result.parts.map(part => {
-      if (Array.isArray(part))
-        return part;
-      if (part.name === 'css' || part.name === 'css:light') {
-        if (part.name === 'css:light')
-          part.body = ':light(' + part.body + ')';
-        const parsedCSS = parseCSS(part.body, customCSSNames);
-        return parsedCSS.selector;
-      }
+  result.parts = result.parts.map(part => {
+    if (Array.isArray(part))
       return part;
-    });
-  }
+    if (part.name === 'css' || part.name === 'css:light') {
+      if (part.name === 'css:light')
+        part.body = ':light(' + part.body + ')';
+      const parsedCSS = parseCSS(part.body, customCSSNames);
+      return parsedCSS.selector;
+    }
+    return part;
+  });
   return {
     parts: result.parts,
     capture: result.capture,
