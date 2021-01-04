@@ -3846,7 +3846,7 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ## async method: ElementHandle.waitForElementState
 
-Returns the element satisfies the [`param: state`].
+Returns when the element satisfies the [`param: state`].
 
 Depending on the [`param: state`] parameter, this method waits for one of the [actionability](./actionability.md)
 checks to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
@@ -3868,7 +3868,7 @@ A state to wait for, see below for more details.
 ## async method: ElementHandle.waitForSelector
 - returns: <[null]|[ElementHandle]>
 
-Returns element specified by selector satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
+Returns element specified by selector when it satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
 `detached`.
 
 Wait for the [`param: selector`] relative to the element handle to satisfy [`option: state`] option (either
