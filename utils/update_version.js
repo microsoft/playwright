@@ -17,6 +17,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execSync } = require('child_process');
 
 const SCRIPT_NAME = path.basename(__filename);
 const USAGE = `
@@ -48,7 +49,10 @@ if (version === '--next') {
   version = packageJSON.version;
   if (!version.includes('-'))
     version += '-next';
-  version += '.' + Date.now();
+  const timestamp = execSync('git show -s --format=%ct HEAD', {
+    stdio: ['ignore', 'pipe', 'ignore']
+  }).toString('utf8').trim() + '000';
+  version += '.' + timestamp;
   console.log('Setting version to ' + version);
 } else {
   if (!version || !version.match(/^v\d+\.\d+\.\d+(-next)?$/)) {
