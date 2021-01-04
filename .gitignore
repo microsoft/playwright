@@ -14,7 +14,7 @@ yarn.lock
 lib/
 jest-report.json
 drivers/
-/docs/api.json
 .android-sdk/
 .gradle/
 nohup.out
+api.json
