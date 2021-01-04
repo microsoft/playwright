@@ -18,6 +18,17 @@
 
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
+/**
+ * @typedef {{
+  *   name: string,
+  *   args: ParsedType | null,
+  *   retType: ParsedType | null,
+  *   template: ParsedType | null,
+  *   union: ParsedType | null,
+  *   next: ParsedType | null,
+  * }} ParsedType
+  */
+ 
 class Documentation {
   /**
    * @param {!Array<!Documentation.Class>} classesArray
@@ -243,18 +254,185 @@ Documentation.Member = class {
 
 Documentation.Type = class {
   /**
+   * @param {string} expression
+   * @param {!Array<!Documentation.Member>=} properties
+   * @return {Documentation.Type}
+   */
+  static parse(expression, properties = []) {
+    expression = expression.replace(/\\\(/g, '(').replace(/\\\)/g, ')');
+    const type = Documentation.Type.fromParsedType(parseTypeExpression(expression));
+    if (!properties.length)
+      return type;
+    const types = [];
+    type._collectAllTypes(types);
+    let success = false;
+    for (const t of types) {
+      if (t.name === 'Object') {
+        t.properties = properties;
+        success = true;
+      }
+    }
+    if (!success)
+      throw new Error('Nested properties given, but there are no objects in type expression: ' + expression);
+    return type;
+  }
+
+  /**
+   * @param {ParsedType} parsedType
+   * @return {Documentation.Type}
+   */
+  static fromParsedType(parsedType, inUnion = false) {
+    if (!inUnion && parsedType.union) {
+      const type = new Documentation.Type('union');
+      type.union = [];
+      for (let t = parsedType; t; t = t.union)
+        type.union.push(Documentation.Type.fromParsedType(t, true));
+      return type;
+    }
+
+    if (parsedType.args) {
+      const type = new Documentation.Type('function');
+      type.args = [];
+      for (let t = parsedType.args; t; t = t.next)
+        type.args.push(Documentation.Type.fromParsedType(t));
+      type.returnType = parsedType.retType ? Documentation.Type.fromParsedType(parsedType.retType) : null;
+      return type;
+    }
+
+    if (parsedType.template) {
+      const type = new Documentation.Type(parsedType.name);
+      type.templates = [];
+      for (let t = parsedType.template; t; t = t.next)
+        type.templates.push(Documentation.Type.fromParsedType(t));
+      return type;
+    }
+    return new Documentation.Type(parsedType.name);
+  }
+
+  /**
    * @param {string} name
    * @param {!Array<!Documentation.Member>=} properties
    */
-  constructor(name, properties = []) {
-    this.name = name;
-    this.properties = properties;
+  constructor(name, properties) {
+    this.name = name.replace(/^\[/, '').replace(/\]$/, '');
+    this.properties = this.name === 'Object' ? properties : undefined;
+    /** @type {Documentation.Type[]} | undefined */
+    this.union;
+    /** @type {Documentation.Type[]} | undefined */
+    this.args;
+    /** @type {Documentation.Type} | undefined */
+    this.returnType;
+    /** @type {Documentation.Type[]} | undefined */
+    this.templates;
   }
 
   visit(visitor) {
-    for (const p of this.properties || [])
-      p.visit(visitor);
+    const types = [];
+    this._collectAllTypes(types);
+    for (const type of types) {
+      for (const p of type.properties || [])
+        p.visit(visitor);
+    }
+  }
+
+  /**
+   * @returns {Documentation.Member[]}
+   */
+  deepProperties() {
+    const types = [];
+    this._collectAllTypes(types);
+    for (const type of types) {
+      if (type.properties && type.properties.length)
+        return type.properties;
+    }
+    return [];
+  }
+
+  /**
+   * @param {Documentation.Type[]} result
+   */
+  _collectAllTypes(result) {
+    result.push(this);
+    for (const t of this.union || [])
+      t._collectAllTypes(result);
+    for (const t of this.args || [])
+      t._collectAllTypes(result);
+    for (const t of this.templates || [])
+      t._collectAllTypes(result);
+    if (this.returnType)
+      this.returnType._collectAllTypes(result);
   }
 };
+
+/**
+ * @param {string} type
+ * @returns {ParsedType}
+ */
+function parseTypeExpression(type) {
+  type = type.trim();
+  let name = type;
+  let next = null;
+  let template = null;
+  let args = null;
+  let retType = null;
+  let firstTypeLength = type.length;
+
+  for (let i = 0; i < type.length; i++) {
+    if (type[i] === '<') {
+      name = type.substring(0, i);
+      const matching = matchingBracket(type.substring(i), '<', '>');
+      template = parseTypeExpression(type.substring(i + 1, i + matching - 1));
+      firstTypeLength = i + matching;
+      break;
+    }
+    if (type[i] === '(') {
+      name = type.substring(0, i);
+      const matching = matchingBracket(type.substring(i), '(', ')');
+      args = parseTypeExpression(type.substring(i + 1, i + matching - 1));
+      i = i + matching;
+      if (type[i] === ':') {
+        retType = parseTypeExpression(type.substring(i + 1));
+        next = retType.next;
+        retType.next = null;
+        break;
+      }
+    }
+    if (type[i] === '|' || type[i] === ',') {
+      name = type.substring(0, i);
+      firstTypeLength = i;
+      break;
+    }
+  }
+  let union = null;
+  if (type[firstTypeLength] === '|')
+    union = parseTypeExpression(type.substring(firstTypeLength + 1));
+  else if (type[firstTypeLength] === ',')
+    next = parseTypeExpression(type.substring(firstTypeLength + 1));
+  return {
+    name,
+    args,
+    retType,
+    template,
+    union,
+    next
+  };
+}
+
+/**
+ * @param {string} str
+ * @param {any} open
+ * @param {any} close
+ */
+function matchingBracket(str, open, close) {
+  let count = 1;
+  let i = 1;
+  for (; i < str.length && count; i++) {
+    if (str[i] === open)
+      count++;
+    else if (str[i] === close)
+      count--;
+  }
+  return i;
+}
 
 module.exports = Documentation;

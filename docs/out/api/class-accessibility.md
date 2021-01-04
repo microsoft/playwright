@@ -36,8 +36,8 @@ Most of the accessibility tree gets filtered out when converting from Blink AX T
   - `readonly` <[boolean]> Whether the node is read only, if applicable.
   - `required` <[boolean]> Whether the node is required, if applicable.
   - `selected` <[boolean]> Whether the node is selected in its parent node, if applicable.
-  - `checked` <boolean|"mixed"> Whether the checkbox is checked, or "mixed", if applicable.
-  - `pressed` <boolean|"mixed"> Whether the toggle button is checked, or "mixed", if applicable.
+  - `checked` <[boolean]|"mixed"> Whether the checkbox is checked, or "mixed", if applicable.
+  - `pressed` <[boolean]|"mixed"> Whether the toggle button is checked, or "mixed", if applicable.
   - `level` <[number]> The level of a heading, if applicable.
   - `valuemin` <[number]> The minimum value in a node, if applicable.
   - `valuemax` <[number]> The maximum value in a node, if applicable.

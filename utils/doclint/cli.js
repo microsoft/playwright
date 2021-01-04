@@ -268,29 +268,37 @@ function renderProperty(name, type, spec) {
   if (spec && spec.length)
     comment = spec[0].text;
   let children;
-  if (type.properties && type.properties.length)
-    children = type.properties.map(p => renderProperty(`\`${p.name}\``, p.type, p.spec))
+  const properties = type.deepProperties();
+  if (properties && properties.length)
+    children = properties.map(p => renderProperty(`\`${p.name}\``, p.type, p.spec))
   else if (spec && spec.length > 1)
     children = spec.slice(1).map(s => md.clone(s));
+
+  let typeText = renderType(type);
+  if (typeText === '[Promise]<[void]>')
+    typeText = '[Promise]';
 
   /** @type {MarkdownNode} */
   const result = {
     type: 'li',
     liType: 'default',
-    text: `${name} <${renderType(type.name)}>${comment ? ' ' + comment : ''}`,
+    text: `${name} <${typeText}>${comment ? ' ' + comment : ''}`,
     children
   };
   return result;
 }
 
 /**
- * @param {string} type
+ * @param {Documentation.Type} type
  */
 function renderType(type) {
-  if (type.includes('"'))
-    return type.replace(/,/g, '|').replace(/Array/, "[Array]").replace(/null/, "[null]").replace(/number/, "[number]");
-  const result = type.replace(/([\w]+)/g, '[$1]');
-  if (result === '[Promise]<[void]>')
-    return '[Promise]';
-  return result.replace(/[(]/g, '\\(').replace(/[)]/g, '\\)');
+  if (type.union)
+    return type.union.map(l => renderType(l)).join('|');
+  if (type.templates)
+    return `[${type.name}]<${type.templates.map(l => renderType(l)).join(', ')}>`;
+  if (type.args)
+    return `[function]\\(${type.args.map(l => renderType(l)).join(', ')}\\)${type.returnType ? ':' + renderType(type.returnType) : ''}`;
+  if (type.name.startsWith('"'))
+    return type.name;
+  return `[${type.name}]`;
 }

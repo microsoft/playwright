@@ -278,19 +278,7 @@ function writeComment(comment, indent = '') {
 function stringifyComplexType(type, indent, ...namespace) {
   if (!type)
     return 'void';
-  let typeString = stringifySimpleType(parseType(type.name));
-  if (type.properties.length && typeString.indexOf('Object') !== -1) {
-    const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
-    const shouldExport = exported[name];
-    objectDefinitions.push({name, properties: type.properties});
-    if (shouldExport) {
-      typeString = typeString.replace(/Object/g, name);
-    } else {
-      const objType = stringifyObjectType(type.properties, name, indent);
-      typeString = typeString.replace(/Object/g, objType);
-    }
-  }
-  return typeString;
+  return stringifySimpleType(type, indent, ...namespace);
 }
 
 function stringifyObjectType(properties, name, indent = '') {
@@ -302,120 +290,45 @@ function stringifyObjectType(properties, name, indent = '') {
 }
 
 /**
- * @param {string} type
+ * @param {Documentation.Type=} type
+ * @returns{string}
  */
-function parseType(type) {
-  type = type.trim();
-  if (type.startsWith('?')) {
-    const parsed = parseType(type.substring(1));
-    parsed.nullable = true;
-    return parsed;
-  }
-  if (type.startsWith('...'))
-    return parseType('Array<' + type.substring(3) + '>');
-  let name = type;
-  let next = null;
-  let template = null;
-  let args = null;
-  let retType = null;
-  let firstTypeLength = type.length;
-  for (let i = 0; i < type.length; i++) {
-    if (type[i] === '<') {
-      name = type.substring(0, i);
-      const matching = matchingBracket(type.substring(i), '<', '>');
-      template = parseType(type.substring(i + 1, i + matching - 1));
-      firstTypeLength = i + matching;
-      break;
-    }
-    if (type[i] === '(') {
-      name = type.substring(0, i);
-      const matching = matchingBracket(type.substring(i), '(', ')');
-      args = parseType(type.substring(i + 1, i + matching - 1));
-      i = i + matching;
-      if (type[i] === ':') {
-        retType = parseType(type.substring(i + 1));
-        next = retType.next;
-        retType.next = null;
-        break;
-      }
-    }
-    if (type[i] === '|' || type[i] === ',') {
-      name = type.substring(0, i);
-      firstTypeLength = i;
-      break;
-    }
-  }
-  let pipe = null;
-  if (type[firstTypeLength] === '|')
-    pipe = parseType(type.substring(firstTypeLength + 1));
-  else if (type[firstTypeLength] === ',')
-    next = parseType(type.substring(firstTypeLength + 1));
-  if (name === 'Promise' && !template)
-    template = parseType('void');
-  return {
-    name,
-    args,
-    retType,
-    template,
-    pipe,
-    next
-  };
-}
-
-/**
- * @return {string}
- */
-function stringifySimpleType(parsedType) {
-  if (!parsedType)
+function stringifySimpleType(type, indent = '', ...namespace) {
+  if (!type)
     return 'void';
-  if (parsedType.name === 'Object' && parsedType.template) {
-    const keyType = stringifySimpleType({
-      ...parsedType.template,
-      next: null
-    });
-    const valueType = stringifySimpleType(parsedType.template.next);
+  if (type.name === 'Object' && type.templates) {
+    const keyType = stringifySimpleType(type.templates[0], indent, ...namespace);
+    const valueType = stringifySimpleType(type.templates[1], indent, ...namespace);
     return `{ [key: ${keyType}]: ${valueType}; }`;
   }
-  let out = parsedType.name;
-  if (parsedType.args) {
-    let args = parsedType.args;
-    const stringArgs = [];
-    while (args) {
-      const arg = args;
-      args = args.next;
-      arg.next = null;
-      stringArgs.push({
-        type: stringifySimpleType(arg),
-        name: arg.name.toLowerCase()
-      });
+  let out = type.name;
+  if (type.name === 'Object' && type.properties && type.properties.length) {
+    const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
+    const shouldExport = exported[name];
+    objectDefinitions.push({name, properties: type.properties});
+    if (shouldExport) {
+      out = name;
+    } else {
+      out = stringifyObjectType(type.properties, name, indent);
     }
-    out = `((${stringArgs.map(({name, type}) => `${name}: ${type}`).join(', ')}) => ${stringifySimpleType(parsedType.retType)})`;
-  } else if (parsedType.name === 'function') {
+  }
+
+  if (type.args) {
+    const stringArgs = type.args.map(a => ({
+      type: stringifySimpleType(a, indent, ...namespace),
+      name: a.name.toLowerCase()
+    }));
+    out = `((${stringArgs.map(({name, type}) => `${name}: ${type}`).join(', ')}) => ${stringifySimpleType(type.returnType, indent, ...namespace)})`;
+  } else if (type.name === 'function') {
     out = 'Function';
   }
   if (out === 'path')
     return 'string';
-  if (parsedType.nullable)
-    out = 'null|' + out;
-  if (parsedType.template)
-    out += '<' + stringifySimpleType(parsedType.template) + '>';
-  if (parsedType.pipe)
-    out += '|' + stringifySimpleType(parsedType.pipe);
-  if (parsedType.next)
-    out += ', ' + stringifySimpleType(parsedType.next);
+  if (type.templates)
+    out += '<' + type.templates.map(t => stringifySimpleType(t, indent, ...namespace)).join(', ') + '>';
+  if (type.union)
+    out = type.union.map(t => stringifySimpleType(t, indent, ...namespace)).join('|');
   return out.trim();
-}
-
-function matchingBracket(str, open, close) {
-  let count = 1;
-  let i = 1;
-  for (; i < str.length && count; i++) {
-    if (str[i] === open)
-      count++;
-    else if (str[i] === close)
-      count--;
-  }
-  return i;
 }
 
 /**

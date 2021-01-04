@@ -57,22 +57,7 @@ function serializeClass(clazz) {
     result.extends = clazz.extends;
   if (clazz.comment)
     result.comment = clazz.comment;
-  result.methods = {};
-  result.events = {};
-  result.properties = {};
-  for (const member of clazz.membersArray) {
-    let map;
-    if (member.kind === 'event') {
-      map = result.events;
-    } else if (member.kind === 'method') {
-      map = result.methods;
-    } else if (member.kind === 'property') {
-      map = result.properties;
-    } else {
-      throw new Error('Unexpected member kind: ' + member.kind + ' ' + member.name + ' ' + member.type);
-    }
-    map[member.name] = serializeMember(member);
-  }
+  result.members = clazz.membersArray.map(serializeMember);
   return result;
 }
 
@@ -82,9 +67,7 @@ function serializeClass(clazz) {
 function serializeMember(member) {
   const result = /** @type {any} */ ({ ...member });
   sanitize(result);
-  result.args = {};
-  for (const arg of member.argsArray)
-    result.args[arg.name] = serializeProperty(arg);
+  result.args = member.argsArray.map(serializeProperty);
   if (member.type)
     result.type = serializeType(member.type)
   return result;
@@ -99,27 +82,27 @@ function serializeProperty(arg) {
 }
 
 function sanitize(result) {
-  delete result.kind;
   delete result.args;
   delete result.argsArray;
-  delete result.templates;
   delete result.clazz;
-  if (result.properties && !Object.keys(result.properties).length)
-    delete result.properties;
-  if (result.comment === '')
-    delete result.comment;
-  if (result.returnComment === '')
-    delete result.returnComment;
+  delete result.spec;
 }
 
+/**
+ * @param {Documentation.Type} type
+ */
 function serializeType(type) {
+  /** @type {any} */
   const result = { ...type };
-  if (type.properties && type.properties.length) {
-    result.properties = {};
-    for (const prop of type.properties)
-      result.properties[prop.name] = serializeProperty(prop);
-  } else {
-    delete result.properties;
-  }
+  if (type.properties)
+    result.properties = type.properties.map(serializeProperty);
+  if (type.union)
+    result.union = type.union.map(serializeType);
+  if (type.templates)
+    result.templates = type.templates.map(serializeType);
+  if (type.args)
+    result.args = type.args.map(serializeType);
+  if (type.returnType)
+    result.returnType = serializeType(type.returnType);
   return result;
 }
