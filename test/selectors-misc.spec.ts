@@ -16,7 +16,6 @@
  */
 
 import { it, expect } from './fixtures';
-import { selectorsV2Enabled } from '../src/server/common/selectorParser';
 
 it('should work for open shadow roots', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
@@ -29,8 +28,6 @@ it('should work for open shadow roots', async ({page, server}) => {
 });
 
 it('should work with :visible', async ({page}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -53,9 +50,6 @@ it('should work with :visible', async ({page}) => {
 it('should work with proximity selectors', test => {
   test.skip('Not ready yet');
 }, async ({page}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
-
   /*
 
        +--+  +--+
