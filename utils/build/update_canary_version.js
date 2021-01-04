@@ -23,6 +23,6 @@ const timestamp = execSync('git show -s --format=%ct HEAD', {
   stdio: ['ignore', 'pipe', 'ignore']
 }).toString('utf8').trim() + '000';
 const packageJSON = require('../../package.json');
-packageJSON.version = packageJSON.version + '.' + timestamp;
+packageJSON.version = packageJSON.version + '-' + timestamp;
 console.log('Setting version to ' + packageJSON.version);
 fs.writeFileSync(path.join(__dirname, '..', '..', 'package.json'), JSON.stringify(packageJSON, undefined, 2) + '\n');

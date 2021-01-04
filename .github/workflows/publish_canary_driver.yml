@@ -1,0 +1,29 @@
+name: "devrelease:driver"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+
+jobs:
+  publish-canary-driver:
+    name: "publish playwright driver to CDN"
+    runs-on: ubuntu-20.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+        registry-url: 'https://registry.npmjs.org'
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: node utils/build/update_canary_version.js
+    - run: utils/build/build-playwright-driver.sh
+    - run: utils/build/upload-playwright-driver.sh
+      env:
+        AZ_UPLOAD_FOLDER: driver/next
+        AZ_ACCOUNT_KEY: ${{ secrets.AZ_ACCOUNT_KEY }}
+        AZ_ACCOUNT_NAME: ${{ secrets.AZ_ACCOUNT_NAME }}
