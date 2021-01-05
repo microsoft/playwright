@@ -469,7 +469,7 @@ When all steps combined have not finished during the specified `timeout`, this m
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]>
 
-Returns the element satisfies the `state`.
+Returns when the element satisfies the `state`.
 
 Depending on the `state` parameter, this method waits for one of the [actionability](./actionability.md) checks to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
 * `"visible"` Wait until the element is [visible](./actionability.md#visible).
@@ -491,7 +491,7 @@ If the element does not satisfy the condition for the `timeout` milliseconds, th
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) methods.
 - returns: <[Promise]<[null]|[ElementHandle]>>
 
-Returns element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
+Returns element specified by selector when it satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
 
 Wait for the `selector` relative to the element handle to satisfy `state` option (either appear/disappear from dom, or become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the `timeout` milliseconds, the function will throw.
 
