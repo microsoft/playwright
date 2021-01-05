@@ -15,6 +15,6 @@
 - `doesNotExist` <[boolean]>
 
 ### option: Exists.exists.option
-- `option` <[number]>
+- `option` <[int]>
 
 ## method: Exists.exists2

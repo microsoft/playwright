@@ -300,5 +300,9 @@ function renderType(type) {
     return `[function]\\(${type.args.map(l => renderType(l)).join(', ')}\\)${type.returnType ? ':' + renderType(type.returnType) : ''}`;
   if (type.name.startsWith('"'))
     return type.name;
+  if (type.name === 'int' || type.name === 'float')
+    return '[number]';
+  if (type.name === 'path')
+    return '[string]';
   return `[${type.name}]`;
 }

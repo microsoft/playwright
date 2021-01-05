@@ -140,7 +140,7 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
 ## frame.addScriptTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 - returns: <[Promise]<[ElementHandle]>>
@@ -152,7 +152,7 @@ Adds a `<script>` tag into the page with the desired url or content.
 ## frame.addStyleTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
