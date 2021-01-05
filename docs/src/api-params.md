@@ -7,7 +7,7 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 
 ## navigation-timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout.
 The default value can be changed by using the
@@ -17,13 +17,13 @@ The default value can be changed by using the
 [`method: Page.setDefaultTimeout`] methods.
 
 ## wait-for-timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
 value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 ## input-timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: BrowserContext.setDefaultTimeout`] or
@@ -49,8 +49,8 @@ A selector to search for element. If there are multiple elements satisfying the 
 
 ## input-position
 - `position` <[Object]>
-  - `x` <[number]>
-  - `y` <[number]>
+  - `x` <[float]>
+  - `y` <[float]>
 
 A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
 element.
@@ -73,12 +73,12 @@ Defaults to `left`.
   - `buffer` <[Buffer]> File content **required**
 
 ## input-down-up-delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
 
 ## input-click-count
-- `clickCount` <[number]>
+- `clickCount` <[int]>
 
 defaults to 1. See [UIEvent.detail].
 
@@ -106,7 +106,7 @@ Defaults to `'visible'`. Can be either:
     - `url` <[string]> Optional either url or domain / path are required
     - `domain` <[string]> Optional either url or domain / path are required
     - `path` <[string]> Optional either url or domain / path are required
-    - `expires` <[number]> Optional Unix time in seconds.
+    - `expires` <[float]> Optional Unix time in seconds.
     - `httpOnly` <[boolean]> Optional httpOnly flag
     - `secure` <[boolean]> Optional secure flag
     - `sameSite` <"Strict"|"Lax"|"None"> Optional sameSite flag
@@ -136,8 +136,8 @@ Toggles bypassing page's Content-Security-Policy.
 
 ## context-option-viewport
 - `viewport` <[null]|[Object]>
-  - `width` <[number]> page width in pixels.
-  - `height` <[number]> page height in pixels.
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
 
 Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
 
@@ -147,7 +147,7 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `nul
 Specific user agent to use in this context.
 
 ## context-option-devicescalefactor
-- `deviceScaleFactor` <[number]>
+- `deviceScaleFactor` <[float]>
 
 Specify device scale factor (can be thought of as dpr). Defaults to `1`.
 
@@ -175,9 +175,9 @@ for a list of supported timezone IDs.
 
 ## context-option-geolocation
 - `geolocation` <[Object]>
-  - `latitude` <[number]> Latitude between -90 and 90.
-  - `longitude` <[number]> Longitude between -180 and 180.
-  - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
+  - `latitude` <[float]> Latitude between -90 and 90.
+  - `longitude` <[float]> Longitude between -180 and 180.
+  - `accuracy` <[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## context-option-locale
 - `locale` <[string]>
@@ -220,15 +220,15 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 Logger sink for Playwright logging.
 
 ## context-option-videospath
-- `videosPath` <[string]>
+- `videosPath` <[path]>
 
 **NOTE** Use [`option: recordVideo`] instead, it takes precedence over [`option: videosPath`]. Enables video recording for all pages to [`option: videosPath`] directory. If not specified, videos are not recorded. Make sure to await
 [`method: BrowserContext.close`] for videos to be saved.
 
 ## context-option-videosize
 - `videoSize` <[Object]>
-  - `width` <[number]> Video frame width.
-  - `height` <[number]> Video frame height.
+  - `width` <[int]> Video frame width.
+  - `height` <[int]> Video frame height.
 
 **NOTE** Use [`option: recordVideo`] instead, it takes precedence over [`option: videoSize`]. Specifies dimensions of the automatically
 recorded video. Can only be used if [`option: videosPath`] is set. If not specified the size will be equal to `viewport`. If
@@ -239,7 +239,7 @@ down if necessary to fit specified size.
 - `recordHar` <[Object]>
   - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
-  - `path` <[string]> Path on the filesystem to write the HAR file to.
+  - `path` <[path]> Path on the filesystem to write the HAR file to.
 
 Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file. If not
 specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be
@@ -247,12 +247,12 @@ saved.
 
 ## context-option-recordvideo
 - `recordVideo` <[Object]>
-  - `dir` <[string]> Path to the directory to put videos into.
+  - `dir` <[path]> Path to the directory to put videos into.
   - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
     If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be
     scaled down if necessary to fit the specified size.
-    - `width` <[number]> Video frame width.
-    - `height` <[number]> Video frame height.
+    - `width` <[int]> Video frame width.
+    - `height` <[int]> Video frame height.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.

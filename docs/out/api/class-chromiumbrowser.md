@@ -34,7 +34,7 @@ Returns the newly created browser session.
 - `page` <[Page]> Optional, if specified, tracing includes screenshots of the given page.
 - `options` <[Object]>
   - `categories` <[Array]<[string]>> specify custom categories to use instead of default.
-  - `path` <[path]> A path to write the trace file to.
+  - `path` <[string]> A path to write the trace file to.
   - `screenshots` <[boolean]> captures screenshots in the trace.
 - returns: <[Promise]>
 

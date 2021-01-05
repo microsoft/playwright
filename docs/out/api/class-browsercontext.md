@@ -92,7 +92,7 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 
 ## browserContext.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in all pages in the browser context.
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
@@ -372,7 +372,7 @@ Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-U
 
 ## browserContext.storageState([options])
 - `options` <[Object]>
-  - `path` <[path]> The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
+  - `path` <[string]> The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage state is still returned, but won't be saved to the disk.
 - returns: <[Promise]<[Object]>>
   - `cookies` <[Array]<[Object]>>
     - `name` <[string]>

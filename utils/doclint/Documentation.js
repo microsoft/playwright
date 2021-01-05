@@ -261,6 +261,9 @@ Documentation.Type = class {
   static parse(expression, properties = []) {
     expression = expression.replace(/\\\(/g, '(').replace(/\\\)/g, ')');
     const type = Documentation.Type.fromParsedType(parseTypeExpression(expression));
+    type.expression = expression;
+    if (type.name === 'number')
+      throw new Error('Number types should be either int or float, not number in: ' + expression);
     if (!properties.length)
       return type;
     const types = [];
@@ -324,6 +327,8 @@ Documentation.Type = class {
     this.returnType;
     /** @type {Documentation.Type[]} | undefined */
     this.templates;
+    /** @type {string | undefined } */
+    this.expression;
   }
 
   visit(visitor) {

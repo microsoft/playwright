@@ -42,10 +42,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
  * @param {Documentation} documentation
  */
 function serialize(documentation) {
-  const result = {};
-  for (const clazz of documentation.classesArray)
-    result[clazz.name] = serializeClass(clazz);
-  return result;
+  return documentation.classesArray.map(serializeClass);
 }
 
 /**

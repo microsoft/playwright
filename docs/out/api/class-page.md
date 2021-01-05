@@ -338,7 +338,7 @@ const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 1
 
 ## page.addInitScript(script[, arg])
 - `script` <[function]|[string]|[Object]> Script to be evaluated in the page.
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[string]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 - `arg` <[Serializable]> Optional argument to pass to `script` (only supported when passing a function).
 - returns: <[Promise]>
@@ -365,7 +365,7 @@ await page.addInitScript(preloadFile);
 ## page.addScriptTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[string]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
   - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
 - returns: <[Promise]<[ElementHandle]>>
@@ -377,7 +377,7 @@ Shortcut for main frame's [frame.addScriptTag(params)](api/class-frame.md#framea
 ## page.addStyleTag(params)
 - `params` <[Object]>
   - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[string]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw CSS content to be injected into frame. Optional.
 - returns: <[Promise]<[ElementHandle]>>
 
@@ -926,7 +926,7 @@ Returns the opener for popup pages and `null` for others. If the opener has been
     - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units. Defaults to `0`.
     - `left` <[string]|[number]> Left margin, accepts values labeled with units. Defaults to `0`.
   - `pageRanges` <[string]> Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, which means print all pages.
-  - `path` <[path]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the PDF won't be saved to the disk.
+  - `path` <[string]> The file path to save the PDF to. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the PDF won't be saved to the disk.
   - `preferCSSPageSize` <[boolean]> Give any CSS `@page` size declared in the page priority over what is declared in `width` and `height` or `format` options. Defaults to `false`, which will scale the content to fit the paper size.
   - `printBackground` <[boolean]> Print background graphics. Defaults to `false`.
   - `scale` <[number]> Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
@@ -1065,7 +1065,7 @@ Page routes take precedence over browser context routes (set up with [browserCon
     - `height` <[number]> height of clipping area
   - `fullPage` <[boolean]> When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Defaults to `false`.
   - `omitBackground` <[boolean]> Hides default white background and allows capturing screenshots with transparency. Not applicable to `jpeg` images. Defaults to `false`.
-  - `path` <[path]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
+  - `path` <[string]> The file path to save the image to. The screenshot type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory. If no path is provided, the image won't be saved to the disk.
   - `quality` <[number]> The quality of the image, between 0-100. Not applicable to `png` images.
   - `timeout` <[number]> Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by using the [browserContext.setDefaultTimeout(timeout)](api/class-browsercontext.md#browsercontextsetdefaulttimeouttimeout) or [page.setDefaultTimeout(timeout)](api/class-page.md#pagesetdefaulttimeouttimeout) methods.
   - `type` <"png"|"jpeg"> Specify screenshot type, defaults to `png`.

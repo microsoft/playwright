@@ -242,7 +242,7 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
   - `url` <[string]> either url or domain / path are required. Optional.
   - `domain` <[string]> either url or domain / path are required Optional.
   - `path` <[string]> either url or domain / path are required Optional.
-  - `expires` <[number]> Unix time in seconds. Optional.
+  - `expires` <[float]> Unix time in seconds. Optional.
   - `httpOnly` <[boolean]> Optional.
   - `secure` <[boolean]> Optional.
   - `sameSite` <"Strict"|"Lax"|"None"> Optional.
@@ -317,7 +317,7 @@ Closes the browser context. All the pages that belong to the browser context wil
   - `value` <[string]>
   - `domain` <[string]>
   - `path` <[string]>
-  - `expires` <[number]> Unix time in seconds.
+  - `expires` <[float]> Unix time in seconds.
   - `httpOnly` <[boolean]>
   - `secure` <[boolean]>
   - `sameSite` <"Strict"|"Lax"|"None">
@@ -535,7 +535,7 @@ This setting will change the default maximum navigation time for the following m
 [`method: BrowserContext.setDefaultNavigationTimeout`].
 
 ### param: BrowserContext.setDefaultNavigationTimeout.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum navigation time in milliseconds
 
@@ -547,7 +547,7 @@ This setting will change the default maximum time for all the methods accepting 
 BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: BrowserContext.setDefaultTimeout`].
 
 ### param: BrowserContext.setDefaultTimeout.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds
 
@@ -577,9 +577,9 @@ pages to read its geolocation.
 
 ### param: BrowserContext.setGeolocation.geolocation
 - `geolocation` <[null]|[Object]>
-  - `latitude` <[number]> Latitude between -90 and 90. **required**
-  - `longitude` <[number]> Longitude between -180 and 180. **required**
-  - `accuracy` <[number]> Non-negative accuracy value. Defaults to `0`.
+  - `latitude` <[float]> Latitude between -90 and 90. **required**
+  - `longitude` <[float]> Longitude between -180 and 180. **required**
+  - `accuracy` <[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## async method: BrowserContext.setHTTPCredentials
 
@@ -608,7 +608,7 @@ Whether to emulate network being offline for the browser context.
     - `value` <[string]>
     - `domain` <[string]>
     - `path` <[string]>
-    - `expires` <[number]> Unix time in seconds.
+    - `expires` <[float]> Unix time in seconds.
     - `httpOnly` <[boolean]>
     - `secure` <[boolean]>
     - `sameSite` <"Strict"|"Lax"|"None">
@@ -662,7 +662,7 @@ Event name, same one would pass into `browserContext.on(event)`.
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -1711,7 +1711,7 @@ The file path to save the PDF to. If [`option: path`] is a relative path, then i
 working directory. If no path is provided, the PDF won't be saved to the disk.
 
 ### option: Page.pdf.scale
-- `scale` <[number]>
+- `scale` <[float]>
 
 Scale of the webpage rendering. Defaults to `1`. Scale amount must be between 0.1 and 2.
 
@@ -1757,21 +1757,21 @@ Paper ranges to print, e.g., '1-5, 8, 11-13'. Defaults to the empty string, whic
 Paper format. If set, takes priority over [`option: width`] or [`option: height`] options. Defaults to 'Letter'.
 
 ### option: Page.pdf.width
-- `width` <[string]|[number]>
+- `width` <[string]|[float]>
 
 Paper width, accepts values labeled with units.
 
 ### option: Page.pdf.height
-- `height` <[string]|[number]>
+- `height` <[string]|[float]>
 
 Paper height, accepts values labeled with units.
 
 ### option: Page.pdf.margin
 - `margin` <[Object]>
-  - `top` <[string]|[number]> Top margin, accepts values labeled with units. Defaults to `0`.
-  - `right` <[string]|[number]> Right margin, accepts values labeled with units. Defaults to `0`.
-  - `bottom` <[string]|[number]> Bottom margin, accepts values labeled with units. Defaults to `0`.
-  - `left` <[string]|[number]> Left margin, accepts values labeled with units. Defaults to `0`.
+  - `top` <[string]|[float]> Top margin, accepts values labeled with units. Defaults to `0`.
+  - `right` <[string]|[float]> Right margin, accepts values labeled with units. Defaults to `0`.
+  - `bottom` <[string]|[float]> Bottom margin, accepts values labeled with units. Defaults to `0`.
+  - `left` <[string]|[float]> Left margin, accepts values labeled with units. Defaults to `0`.
 
 Paper margins, defaults to none.
 
@@ -1823,7 +1823,7 @@ await browser.close();
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: Page.press.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
@@ -1903,7 +1903,7 @@ saved to the disk.
 Specify screenshot type, defaults to `png`.
 
 ### option: Page.screenshot.quality
-- `quality` <[number]>
+- `quality` <[int]>
 
 The quality of the image, between 0-100. Not applicable to `png` images.
 
@@ -1915,10 +1915,10 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 
 ### option: Page.screenshot.clip
 - `clip` <[Object]>
-  - `x` <[number]> x-coordinate of top-left corner of clip area
-  - `y` <[number]> y-coordinate of top-left corner of clip area
-  - `width` <[number]> width of clipping area
-  - `height` <[number]> height of clipping area
+  - `x` <[float]> x-coordinate of top-left corner of clip area
+  - `y` <[float]> y-coordinate of top-left corner of clip area
+  - `width` <[float]> width of clipping area
+  - `height` <[float]> height of clipping area
 
 An object which specifies clipping of the resulting image. Should have the following fields:
 
@@ -1958,7 +1958,7 @@ Shortcut for main frame's [`method: Frame.selectOption`]
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
   - `value` <[string]> Matches by `option.value`. Optional.
   - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[number]> Matches by the index. Optional.
+  - `index` <[int]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -1993,7 +1993,7 @@ This setting will change the default maximum navigation time for the following m
 [`method: BrowserContext.setDefaultTimeout`] and [`method: BrowserContext.setDefaultNavigationTimeout`].
 
 ### param: Page.setDefaultNavigationTimeout.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum navigation time in milliseconds
 
@@ -2004,7 +2004,7 @@ This setting will change the default maximum time for all the methods accepting 
 > **NOTE** [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`].
 
 ### param: Page.setDefaultTimeout.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds
 
@@ -2054,8 +2054,8 @@ await page.goto('https://example.com');
 
 ### param: Page.setViewportSize.viewportSize
 - `viewportSize` <[Object]>
-  - `width` <[number]> page width in pixels. **required**
-  - `height` <[number]> page height in pixels. **required**
+  - `width` <[int]> page width in pixels. **required**
+  - `height` <[int]> page height in pixels. **required**
 
 ## async method: Page.tap
 
@@ -2124,7 +2124,7 @@ Shortcut for main frame's [`method: Frame.type`].
 A text to type into a focused element.
 
 ### option: Page.type.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
@@ -2183,8 +2183,8 @@ Video object associated with this page.
 
 ## method: Page.viewportSize
 - returns: <[null]|[Object]>
-  - `width` <[number]> page width in pixels.
-  - `height` <[number]> page height in pixels.
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
 
 ## async method: Page.waitForEvent
 - returns: <[Object]>
@@ -2202,7 +2202,7 @@ Event name, same one would pass into `page.on(event)`.
 ### param: Page.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -2246,7 +2246,7 @@ Function to be evaluated in browser context
 Optional argument to pass to [`param: pageFunction`]
 
 ### option: Page.waitForFunction.polling
-- `polling` <[number]|"raf">
+- `polling` <[float]|"raf">
 
 If [`option: polling`] is `'raf'`, then [`param: pageFunction`] is constantly executed in `requestAnimationFrame`
 callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
@@ -2341,7 +2341,7 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 Request URL string, regex or predicate receiving [Request] object.
 
 ### option: Page.waitForRequest.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
@@ -2363,7 +2363,7 @@ return finalResponse.ok();
 Request URL string, regex or predicate receiving [Response] object.
 
 ### option: Page.waitForResponse.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
@@ -2419,7 +2419,7 @@ await page.waitForTimeout(1000);
 Shortcut for main frame's [`method: Frame.waitForTimeout`].
 
 ### param: Page.waitForTimeout.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 A timeout to wait for
 
@@ -2988,7 +2988,7 @@ modifier, modifier is pressed and being held while the subsequent key is being p
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: Frame.press.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
@@ -3021,7 +3021,7 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
   - `value` <[string]> Matches by `option.value`. Optional.
   - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[number]> Matches by the index. Optional.
+  - `index` <[int]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -3118,7 +3118,7 @@ await frame.type('#mytextarea', 'World', {delay: 100}); // Types slower, like a 
 A text to type into a focused element.
 
 ### option: Frame.type.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
@@ -3191,7 +3191,7 @@ Function to be evaluated in browser context
 Optional argument to pass to [`param: pageFunction`]
 
 ### option: Frame.waitForFunction.polling
-- `polling` <[number]|"raf">
+- `polling` <[float]|"raf">
 
 If [`option: polling`] is `'raf'`, then [`param: pageFunction`] is constantly executed in `requestAnimationFrame`
 callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
@@ -3295,7 +3295,7 @@ Note that `frame.waitForTimeout()` should only be used for debugging. Tests usin
 be flaky. Use signals such as network events, selectors becoming visible and others instead.
 
 ### param: Frame.waitForTimeout.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 A timeout to wait for
 
@@ -3410,10 +3410,10 @@ Optional argument to pass to [`param: pageFunction`]
 
 ## async method: ElementHandle.boundingBox
 - returns: <[null]|[Object]>
-  - `x` <[number]> the x coordinate of the element in pixels.
-  - `y` <[number]> the y coordinate of the element in pixels.
-  - `width` <[number]> the width of the element in pixels.
-  - `height` <[number]> the height of the element in pixels.
+  - `x` <[float]> the x coordinate of the element in pixels.
+  - `y` <[float]> the y coordinate of the element in pixels.
+  - `width` <[float]> the width of the element in pixels.
+  - `height` <[float]> the height of the element in pixels.
 
 This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
 calculated relative to the main frame viewport - which is usually the same as the browser window.
@@ -3651,7 +3651,7 @@ modifier, modifier is pressed and being held while the subsequent key is being p
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: ElementHandle.press.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
@@ -3680,7 +3680,7 @@ saved to the disk.
 Specify screenshot type, defaults to `png`.
 
 ### option: ElementHandle.screenshot.quality
-- `quality` <[number]>
+- `quality` <[int]>
 
 The quality of the image, between 0-100. Not applicable to `png` images.
 
@@ -3729,7 +3729,7 @@ handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
   - `value` <[string]> Matches by `option.value`. Optional.
   - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[number]> Matches by the index. Optional.
+  - `index` <[int]> Matches by the index. Optional.
 
 Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -3815,7 +3815,7 @@ await elementHandle.press('Enter');
 A text to type into a focused element.
 
 ### option: ElementHandle.type.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
@@ -4010,8 +4010,8 @@ error if the object has circular references.
 ## method: ConsoleMessage.location
 - returns: <[Object]>
   - `url` <[string]> URL of the resource.
-  - `lineNumber` <[number]> 0-based line number in the resource.
-  - `columnNumber` <[number]> 0-based column number in the resource.
+  - `lineNumber` <[int]> 0-based line number in the resource.
+  - `columnNumber` <[int]> 0-based column number in the resource.
 
 ## method: ConsoleMessage.text
 - returns: <[string]>
@@ -4314,7 +4314,7 @@ Shortcut for [`method: Keyboard.down`] and [`method: Keyboard.up`].
 Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
 
 ### option: Keyboard.press.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 
@@ -4337,7 +4337,7 @@ await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
 A text to type into a focused element.
 
 ### option: Keyboard.type.delay
-- `delay` <[number]>
+- `delay` <[float]>
 
 Time to wait between key presses in milliseconds. Defaults to 0.
 
@@ -4372,10 +4372,10 @@ await page.mouse.up();
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].
 
 ### param: Mouse.click.x
-- `x` <[number]>
+- `x` <[float]>
 
 ### param: Mouse.click.y
-- `y` <[number]>
+- `y` <[float]>
 
 ### option: Mouse.click.button = %%-input-button-%%
 
@@ -4389,10 +4389,10 @@ Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`
 [`method: Mouse.up`].
 
 ### param: Mouse.dblclick.x
-- `x` <[number]>
+- `x` <[float]>
 
 ### param: Mouse.dblclick.y
-- `y` <[number]>
+- `y` <[float]>
 
 ### option: Mouse.dblclick.button = %%-input-button-%%
 
@@ -4411,13 +4411,13 @@ Dispatches a `mousedown` event.
 Dispatches a `mousemove` event.
 
 ### param: Mouse.move.x
-- `x` <[number]>
+- `x` <[float]>
 
 ### param: Mouse.move.y
-- `y` <[number]>
+- `y` <[float]>
 
 ### option: Mouse.move.steps
-- `steps` <[number]>
+- `steps` <[int]>
 
 defaults to 1. Sends intermediate `mousemove` events.
 
@@ -4439,10 +4439,10 @@ touchscreen can only be used in browser contexts that have been intialized with 
 Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`],[`param: y`]).
 
 ### param: Touchscreen.tap.x
-- `x` <[number]>
+- `x` <[float]>
 
 ### param: Touchscreen.tap.y
-- `y` <[number]>
+- `y` <[float]>
 
 # class: Request
 
@@ -4560,15 +4560,15 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 
 ## method: Request.timing
 - returns: <[Object]>
-  - `startTime` <[number]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
-  - `domainLookupStart` <[number]> Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `domainLookupEnd` <[number]> Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `connectStart` <[number]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `secureConnectionStart` <[number]> Time immediately before the browser starts the handshake process to secure the current connection. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `connectEnd` <[number]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `requestStart` <[number]> Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `responseStart` <[number]> Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `responseEnd` <[number]> Time immediately after the browser receives the last byte of the resource or immediately before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+  - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `domainLookupEnd` <[float]> Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectStart` <[float]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `secureConnectionStart` <[float]> Time immediately before the browser starts the handshake process to secure the current connection. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectEnd` <[float]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `requestStart` <[float]> Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseStart` <[float]> Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseEnd` <[float]> Time immediately after the browser receives the last byte of the resource or immediately before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not available.
 
 Returns resource timing information for given request. Most of the timing values become available upon the response,
 `responseEnd` becomes available when request finishes. Find more information at [Resource Timing
@@ -4629,7 +4629,7 @@ Contains a boolean stating whether the response was successful (status in the ra
 Returns the matching [Request] object.
 
 ## method: Response.status
-- returns: <[number]>
+- returns: <[int]>
 
 Contains the status code of the response (e.g., 200 for a success).
 
@@ -4789,7 +4789,7 @@ await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.js
 
 ### param: Route.fulfill.response
 - `response` <[Object]>
-  - `status` <[number]> Response status code, defaults to `200`.
+  - `status` <[int]> Response status code, defaults to `200`.
   - `headers` <[Object]<[string], [string]>> Optional response headers. Header values will be converted to a string.
   - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
   - `body` <[string]|[Buffer]> Optional response body.
@@ -4853,7 +4853,7 @@ Event name, same one would pass into `webSocket.on(event)`.
 ### param: WebSocket.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[number]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -4883,7 +4883,7 @@ assistive technologies themselves. By default, Playwright tries to approximate t
 - returns: <[null]|[Object]>
   - `role` <[string]> The [role](https://www.w3.org/TR/wai-aria/#usage_intro).
   - `name` <[string]> A human readable name for the node.
-  - `value` <[string]|[number]> The current value of the node, if applicable.
+  - `value` <[string]|[float]> The current value of the node, if applicable.
   - `description` <[string]> An additional human readable description of the node, if applicable.
   - `keyshortcuts` <[string]> Keyboard shortcuts associated with this node, if applicable.
   - `roledescription` <[string]> A human readable alternative to the role, if applicable.
@@ -4899,9 +4899,9 @@ assistive technologies themselves. By default, Playwright tries to approximate t
   - `selected` <[boolean]> Whether the node is selected in its parent node, if applicable.
   - `checked` <[boolean]|"mixed"> Whether the checkbox is checked, or "mixed", if applicable.
   - `pressed` <[boolean]|"mixed"> Whether the toggle button is checked, or "mixed", if applicable.
-  - `level` <[number]> The level of a heading, if applicable.
-  - `valuemin` <[number]> The minimum value in a node, if applicable.
-  - `valuemax` <[number]> The maximum value in a node, if applicable.
+  - `level` <[int]> The level of a heading, if applicable.
+  - `valuemin` <[float]> The minimum value in a node, if applicable.
+  - `valuemax` <[float]> The maximum value in a node, if applicable.
   - `autocomplete` <[string]> What kind of autocomplete is supported by a control, if applicable.
   - `haspopup` <[string]> What kind of popup is currently being shown for a node, if applicable.
   - `invalid` <[string]> Whether and in what way this node's value is invalid, if applicable.
@@ -5070,9 +5070,9 @@ This methods attaches Playwright to an existing browser instance.
 ### param: BrowserType.connect.params
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
-  - `slowMo` <[number]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
+  - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
-  - `timeout` <[number]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## method: BrowserType.executablePath
 - returns: <[string]>
@@ -5155,7 +5155,7 @@ deleted when browser is closed.
 Enable Chromium sandboxing. Defaults to `false`.
 
 ### option: BrowserType.launch.firefoxUserPrefs
-- `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>>
+- `firefoxUserPrefs` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at
 [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
@@ -5181,13 +5181,13 @@ Close the browser process on SIGHUP. Defaults to `true`.
 Logger sink for Playwright logging.
 
 ### option: BrowserType.launch.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
 ### option: BrowserType.launch.env
-- `env` <[Object]<[string], [string]|[number]|[boolean]>>
+- `env` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
 
@@ -5198,7 +5198,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
 headless`] option will be set `false`.
 
 ### option: BrowserType.launch.slowMo
-- `slowMo` <[number]>
+- `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
 
@@ -5280,13 +5280,13 @@ Close the browser process on SIGTERM. Defaults to `true`.
 Close the browser process on SIGHUP. Defaults to `true`.
 
 ### option: BrowserType.launchPersistentContext.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
 ### option: BrowserType.launchPersistentContext.env
-- `env` <[Object]<[string], [string]|[number]|[boolean]>>
+- `env` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
 
@@ -5297,7 +5297,7 @@ Specify environment variables that will be visible to the browser. Defaults to `
 headless`] option will be set `false`.
 
 ### option: BrowserType.launchPersistentContext.slowMo
-- `slowMo` <[number]>
+- `slowMo` <[float]>
 
 Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on.
 Defaults to 0.
@@ -5334,7 +5334,7 @@ Whether to run browser in headless mode. More details for
 [`option: devtools`] option is `true`.
 
 ### option: BrowserType.launchServer.port
-- `port` <[number]>
+- `port` <[int]>
 
 Port to use for the web socket. Defaults to 0 that picks any available port.
 
@@ -5378,7 +5378,7 @@ deleted when browser is closed.
 Enable Chromium sandboxing. Defaults to `true`.
 
 ### option: BrowserType.launchServer.firefoxUserPrefs
-- `firefoxUserPrefs` <[Object]<[string], [string]|[number]|[boolean]>>
+- `firefoxUserPrefs` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Firefox user preferences. Learn more about the Firefox user preferences at
 [`about:config`](https://support.mozilla.org/en-US/kb/about-config-editor-firefox).
@@ -5404,13 +5404,13 @@ Close the browser process on SIGHUP. Defaults to `true`.
 Logger sink for Playwright logging.
 
 ### option: BrowserType.launchServer.timeout
-- `timeout` <[number]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
 ### option: BrowserType.launchServer.env
-- `env` <[Object]<[string], [string]|[number]|[boolean]>>
+- `env` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
 
@@ -5628,8 +5628,8 @@ Whether anonymous scripts generated by the page should be reported. Defaults to 
   - `url` <[string]> StyleSheet URL
   - `text` <[string]> StyleSheet content, if available.
   - `ranges` <[Array]<[Object]>> StyleSheet ranges that were used. Ranges are sorted and non-overlapping.
-    - `start` <[number]> A start offset in text, inclusive
-    - `end` <[number]> An end offset in text, exclusive
+    - `start` <[int]> A start offset in text, inclusive
+    - `end` <[int]> An end offset in text, exclusive
 
 Returns the array of coverage reports for all stylesheets
 
@@ -5644,9 +5644,9 @@ Returns the array of coverage reports for all stylesheets
     - `functionName` <[string]>
     - `isBlockCoverage` <[boolean]>
     - `ranges` <[Array]<[Object]>>
-      - `count` <[number]>
-      - `startOffset` <[number]>
-      - `endOffset` <[number]>
+      - `count` <[int]>
+      - `startOffset` <[int]>
+      - `endOffset` <[int]>
 
 Returns the array of coverage reports for all scripts
 

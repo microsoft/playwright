@@ -302,6 +302,9 @@ function stringifySimpleType(type, indent = '', ...namespace) {
     return `{ [key: ${keyType}]: ${valueType}; }`;
   }
   let out = type.name;
+  if (out === 'int' || out === 'float')
+    out = 'number';
+
   if (type.name === 'Object' && type.properties && type.properties.length) {
     const name = namespace.map(n => n[0].toUpperCase() + n.substring(1)).join('');
     const shouldExport = exported[name];
