@@ -18225,7 +18225,7 @@ index 830b971a4818ab500e7dc07b152c656c97645b8a..79105332b3df7d51bd915b67d5cab07f
  
  # Finalize the value for all options. Do not attempt to use an option before
 diff --git a/Source/cmake/OptionsWPE.cmake b/Source/cmake/OptionsWPE.cmake
-index bbb1bc783000214ca469ea232314637dd4063573..20866bbcc6cec6d6df7cb44ff3da95c31a69587f 100644
+index fd24a41ff19075b1e509197f18140e5a8034c9e1..0ee68ebd7439711b635a14a85c4e90e3027d1d9f 100644
 --- a/Source/cmake/OptionsWPE.cmake
 +++ b/Source/cmake/OptionsWPE.cmake
 @@ -3,6 +3,7 @@ include(VersioningUtils)
