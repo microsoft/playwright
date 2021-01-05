@@ -70,10 +70,6 @@ elif [[ "$(uname)" == "Linux" ]]; then
     build_wpe
   fi
 elif [[ "$(uname)" == MINGW* ]]; then
-  /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwin.bat)" ||
-  # Run build step twice on Windows to work around adjust-angle-include-paths.py not
-  # being called at right time. See
-  # https://github.com/WebKit/WebKit/commit/e9a19fe7e3c245252be6ed70c86639d09227a6dc
   /c/Windows/System32/cmd.exe "/c $(cygpath -w ${SCRIPT_FOLDER}/buildwin.bat)"
 else
   echo "ERROR: cannot upload on this platform!" 1>&2
