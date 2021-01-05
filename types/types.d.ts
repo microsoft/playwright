@@ -5407,7 +5407,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   $$eval<R, E extends SVGElement | HTMLElement = SVGElement | HTMLElement>(selector: string, pageFunction: PageFunctionOn<E[], void, R>, arg?: any): Promise<R>;
 
   /**
-   * Returns element specified by selector satisfies `state` option. Returns `null` if waiting for `hidden` or `detached`.
+   * Returns element specified by selector when it satisfies `state` option. Returns `null` if waiting for `hidden` or
+   * `detached`.
    * 
    * Wait for the `selector` relative to the element handle to satisfy `state` option (either appear/disappear from dom, or
    * become visible/hidden). If at the moment of calling the method `selector` already satisfies the condition, the method
@@ -6196,7 +6197,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   }): Promise<void>;
 
   /**
-   * Returns the element satisfies the `state`.
+   * Returns when the element satisfies the `state`.
    * 
    * Depending on the `state` parameter, this method waits for one of the [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks to pass.
    * This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
