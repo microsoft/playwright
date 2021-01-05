@@ -39,6 +39,24 @@ Run `codegen` and perform actions in the browser. Playwright CLI will generate J
 
 <img src="https://user-images.githubusercontent.com/284612/92536033-7e7ebe00-f1ed-11ea-9e1a-7cbd912e3391.gif"></img>
 
+### Preserve authenticated state
+
+Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end. This is useful to separately record authentication step and reuse it later.
+
+```sh
+$ npx playwright --save-storage=auth.json codegen
+# Perform authentication and exit.
+# auth.json will contain the storage state.
+```
+
+Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state.
+
+```sh
+$ npx playwright --load-storage=auth.json open my.web.app
+$ npx playwright --load-storage=auth.json codegen my.web.app
+# Perform actions in authenticated state.
+```
+
 ## Open pages
 
 With `open`, you can use Playwright bundled browsers to browse web pages. Playwright provides cross-platform WebKit builds that can be used to reproduce Safari rendering across Windows, Linux and macOS.
