@@ -18888,10 +18888,18 @@ index bacc141154331b79d1a3ced681c7f948988b9066..2510aeebae530265918f7bd08e114faa
 +
  } // namespace WTR
 diff --git a/Tools/gtk/install-dependencies b/Tools/gtk/install-dependencies
-index 3d428cc63cc396f82e05b8794a7a1f33facd4e80..6f92d7643acbe7b347ccf15918fb2e9527509e8e 100755
+index 3d428cc63cc396f82e05b8794a7a1f33facd4e80..5092ab450eb0ca9c01d1e169b99554ffea225864 100755
 --- a/Tools/gtk/install-dependencies
 +++ b/Tools/gtk/install-dependencies
-@@ -149,6 +149,7 @@ function installDependenciesWithApt {
+@@ -142,6 +142,7 @@ function installDependenciesWithApt {
+         libupower-glib-dev \
+         libwebp-dev \
+         libwoff-dev \
++        libxcb-glx0-dev \
+         libxcomposite-dev \
+         libxt-dev \
+         libxtst-dev \
+@@ -149,6 +150,7 @@ function installDependenciesWithApt {
          libwayland-dev \
          ninja-build \
          patch \
@@ -18973,10 +18981,15 @@ index c09b6f39f894943f11b7a453428fab7d6f6e68fb..bc21acb648562ee0380811599b08f7d2
      static cairo_user_data_key_t bufferKey;
      cairo_surface_set_user_data(m_snapshot, &bufferKey, buffer,
 diff --git a/Tools/wpe/install-dependencies b/Tools/wpe/install-dependencies
-index 4d51f0d0f9a9105ec5f9f50f6a2a86f879e41a85..d84068e9e89b6dd66e47872633b0467b68685139 100755
+index 4d51f0d0f9a9105ec5f9f50f6a2a86f879e41a85..4f0885f0dfce172d4ed9a3d48e0f5925f1b1b7f2 100755
 --- a/Tools/wpe/install-dependencies
 +++ b/Tools/wpe/install-dependencies
-@@ -90,6 +90,7 @@ function installDependenciesWithApt {
+@@ -86,10 +86,12 @@ function installDependenciesWithApt {
+         libtool \
+         libwebp-dev \
+         libwoff-dev \
++        libxcb-glx0-dev \
+         libxml2-dev \
          libxslt1-dev \
          ninja-build \
          patch \
