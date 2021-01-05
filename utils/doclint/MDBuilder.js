@@ -22,12 +22,14 @@ const Documentation = require('./Documentation');
 
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
-/** @typedef {function({
- * clazz?: Documentation.Class,
- * member?: Documentation.Member,
- * param?: string,
- * option?: string
- * }): string} Renderer */
+/**
+ * @typedef {function({
+ *   clazz?: Documentation.Class,
+ *   member?: Documentation.Member,
+ *   param?: string,
+ *   option?: string
+ * }): string} Renderer
+ */
 
 class MDOutline {
   /**
@@ -192,8 +194,12 @@ function parseMember(member) {
   }
   if (!returnType)
     returnType = new Documentation.Type('void');
-  if (match[1] === 'async method')
-    returnType.name = `Promise<${returnType.name}>`;
+
+  if (match[1] === 'async method') {
+    const templates = [ returnType ];
+    returnType = new Documentation.Type('Promise');
+    returnType.templates = templates;
+  }
 
   if (match[1] === 'event')
     return Documentation.Member.createEvent(name, returnType, extractComments(member));
@@ -234,27 +240,14 @@ function parseProperty(spec) {
  * @return {Documentation.Type}
  */
 function parseType(spec) {
-  const { type } = parseArgument(spec.text);
-  let typeName = type.replace(/[\[\]\\]/g, '');
-  const literals = typeName.match(/("[^"]+"(\|"[^"]+")*)/);
-  if (literals) {
-    const assorted = literals[1];
-    typeName = typeName.substring(0, literals.index) + assorted + typeName.substring(literals.index + literals[0].length);
-  }
+  const arg = parseArgument(spec.text);
   const properties = [];
-  const hasNonEnumProperties = typeName.split('|').some(part => {
-    const basicTypes = new Set(['string', 'number', 'boolean']);
-    const arrayTypes = new Set([...basicTypes].map(type => `Array<${type}>`));
-    return !basicTypes.has(part) && !arrayTypes.has(part) && !(part.startsWith('"') && part.endsWith('"'));
-  });
-  if (hasNonEnumProperties && spec) {
-    for (const child of spec.children || []) {
-      const { name, text } = parseArgument(child.text);
-      const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
-      properties.push(Documentation.Member.createProperty(name, parseType(child), comments, guessRequired(text)));
-    }
+  for (const child of spec.children || []) {
+    const { name, text } = parseArgument(child.text);
+    const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
+    properties.push(Documentation.Member.createProperty(name, parseType(child), comments, guessRequired(text)));
   }
-  return new Documentation.Type(typeName, properties);
+  return Documentation.Type.parse(arg.type, properties);
 }
 
 /**
