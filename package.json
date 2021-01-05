@@ -25,7 +25,7 @@
     "watch": "node utils/watch.js",
     "test-types": "node utils/generate_types/ && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && tsc -p ./test/",
     "generate-channels": "node utils/generate_channels.js",
-    "generate-api-json": "node utils/doclint/generateApiJson.js > api.json",
+    "generate-api-json": "node utils/doclint/generateApiJson.js",
     "roll-browser": "node utils/roll_browser.js",
     "coverage": "node test/checkCoverage.js",
     "check-deps": "node utils/check_deps.js",

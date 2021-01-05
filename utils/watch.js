@@ -33,6 +33,10 @@ runOnChanges([
   'src/server/chromium/protocol.ts',
   'src/trace/traceTypes.ts',
 ], 'utils/generate_types/index.js');
+runOnChanges([
+  'docs/src/api-body.md',
+  'docs/src/api-params.md',
+], 'utils/doclint/generateApiJson.js');
 
 /**
  * @param {string[][]} paths
