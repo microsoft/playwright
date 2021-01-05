@@ -26,7 +26,7 @@ import { installHarTracer } from './trace/harTracer';
 import * as path from 'path';
 
 function setupInProcess(): PlaywrightAPI {
-  const playwright = new PlaywrightImpl(path.join(__dirname, '..'), require(path.join(__dirname, '..', 'browsers.json'))['browsers']);
+  const playwright = new PlaywrightImpl(path.join(__dirname, '..'), require('../browsers.json')['browsers']);
 
   installDebugController();
   installTracer();
