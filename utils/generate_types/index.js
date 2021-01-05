@@ -16,6 +16,7 @@
 
 //@ts-check
 const path = require('path');
+const os = require('os');
 const {devices} = require('../..');
 const Documentation = require('../doclint/Documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
@@ -108,6 +109,8 @@ ${generateDevicesTypes()}
 });
 
 function writeFile(filePath, content) {
+  if (os.platform() === 'win32')
+    content = content.replace(/\r\n/g, '\n').replace(/\n/g, '\r\n');
   const existing = fs.readFileSync(filePath, 'utf8');
   if (existing === content)
     return;
@@ -260,7 +263,7 @@ function parentClass(classDesc) {
 
 function writeComment(comment, indent = '') {
   const parts = [];
-  
+
   comment = comment.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
   comment = comment.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
   comment = comment.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
