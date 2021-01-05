@@ -178,7 +178,7 @@ index 040c7b124dec6bb254563bbe74fe50012cb077a3..b4e6b8132786af70e8ad0dce88b67c28
    const transportProvider = {
      setListener(upgradeListener) {
 diff --git a/docshell/base/nsDocShell.cpp b/docshell/base/nsDocShell.cpp
-index 512ea9dbd97b60218366dfd2dc84fffe5feb7cd6..724348f6afe20638c73de839cc5823353e707f7a 100644
+index d91d83620089ede3316ba62740256634b063c792..cf53db6e1a244fd649b461ef86da62a52275312a 100644
 --- a/docshell/base/nsDocShell.cpp
 +++ b/docshell/base/nsDocShell.cpp
 @@ -15,6 +15,12 @@
@@ -461,7 +461,7 @@ index 512ea9dbd97b60218366dfd2dc84fffe5feb7cd6..724348f6afe20638c73de839cc582335
    if (RefPtr<PresShell> presShell = GetPresShell()) {
      presShell->SetIsActive(isActive);
    }
-@@ -8483,6 +8698,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
+@@ -8486,6 +8701,12 @@ nsresult nsDocShell::PerformRetargeting(nsDocShellLoadState* aLoadState) {
                       true,  // aForceNoOpener
                       getter_AddRefs(newBC));
        MOZ_ASSERT(!newBC);
@@ -474,7 +474,7 @@ index 512ea9dbd97b60218366dfd2dc84fffe5feb7cd6..724348f6afe20638c73de839cc582335
        return rv;
      }
  
-@@ -12402,6 +12623,9 @@ class OnLinkClickEvent : public Runnable {
+@@ -12405,6 +12626,9 @@ class OnLinkClickEvent : public Runnable {
        mHandler->OnLinkClickSync(mContent, mLoadState, mNoOpenerImplied,
                                  mTriggeringPrincipal);
      }
@@ -484,7 +484,7 @@ index 512ea9dbd97b60218366dfd2dc84fffe5feb7cd6..724348f6afe20638c73de839cc582335
      return NS_OK;
    }
  
-@@ -12487,6 +12711,8 @@ nsresult nsDocShell::OnLinkClick(
+@@ -12490,6 +12714,8 @@ nsresult nsDocShell::OnLinkClick(
    nsCOMPtr<nsIRunnable> ev =
        new OnLinkClickEvent(this, aContent, loadState, noOpenerImplied,
                             aIsTrusted, aTriggeringPrincipal);
@@ -1416,7 +1416,7 @@ index 8b1b46d69f2c90d851d292c285a1ba9bdbd4d9b7..dea5259b0a82e5e6d3c431fc78e60d5d
  
  bool IsWorkerGlobal(JSObject* global);
 diff --git a/dom/workers/WorkerPrivate.cpp b/dom/workers/WorkerPrivate.cpp
-index b8fc16b9c03a71fbfc4fb32536897670b9f56ff8..9b993b3436203da0eeff7d35353a4164140d6954 100644
+index a1434c6b43e57abbccf3003540ce50f5bf6bb5bd..178583e81354d957bcf0058a4c3a416072c99526 100644
 --- a/dom/workers/WorkerPrivate.cpp
 +++ b/dom/workers/WorkerPrivate.cpp
 @@ -660,6 +660,18 @@ class UpdateContextOptionsRunnable final : public WorkerControlRunnable {
