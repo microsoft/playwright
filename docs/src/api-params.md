@@ -67,7 +67,7 @@ modifiers back. If not specified, currently pressed modifiers are used.
 Defaults to `left`.
 
 ## input-files
-- `files` <[string]|[Array]<[string]>|[Object]|[Array]<[Object]>>
+- `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
   - `name` <[string]> [File] name **required**
   - `mimeType` <[string]> [File] type **required**
   - `buffer` <[Buffer]> File content **required**
@@ -99,7 +99,7 @@ Defaults to `'visible'`. Can be either:
   This is opposite to the `'visible'` option.
 
 ## context-option-storage-state
-- `storageState` <[string]|[Object]>
+- `storageState` <[path]|[Object]>
   - `cookies` <[Array]<[Object]>> Optional cookies to set for context
     - `name` <[string]> **required**
     - `value` <[string]> **required**
