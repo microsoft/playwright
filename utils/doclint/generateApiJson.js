@@ -17,6 +17,7 @@
 // @ts-check
 
 const path = require('path');
+const fs = require('fs');
 const Documentation = require('./Documentation');
 const { MDOutline } = require('./MDBuilder');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
@@ -35,7 +36,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
   outline.copyDocsFromSuperclasses([]);
   outline.generateSourceCodeComments();
   const result = serialize(outline);
-  console.log(JSON.stringify(result));
+  fs.writeFileSync(path.join(PROJECT_DIR, 'api.json'), JSON.stringify(result));
 }
 
 /**
