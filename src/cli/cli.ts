@@ -30,6 +30,7 @@ import { PythonLanguageGenerator } from './codegen/languages/python';
 import { CSharpLanguageGenerator } from './codegen/languages/csharp';
 import { RecorderController } from './codegen/recorderController';
 import { runServer, printApiJson, installBrowsers } from './driver';
+import { showTraceViewer } from './traceViewer/traceViewer';
 import type { Browser, BrowserContext, Page, BrowserType, BrowserContextOptions, LaunchOptions } from '../..';
 import * as playwright from '../..';
 
@@ -135,6 +136,22 @@ program
         process.exit(1);
       });
     });
+
+if (process.env.PWTRACE) {
+  program
+      .command('show-trace <trace>')
+      .description('Show trace viewer')
+      .option('--resources <dir>', 'Directory with the shared trace artifacts')
+      .action(function(trace, command) {
+        showTraceViewer(command.resources, trace);
+      }).on('--help', function() {
+        console.log('');
+        console.log('Examples:');
+        console.log('');
+        console.log('  $ show-trace --resources=resources trace/file.trace');
+        console.log('  $ show-trace trace/directory');
+      });
+}
 
 if (process.argv[2] === 'run-driver')
   runServer();

@@ -1,0 +1,110 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.timeline-view {
+  flex: none;
+  flex-basis: 60px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  padding: 20px 0 5px;
+  cursor: text;
+}
+
+.timeline-divider {
+  position: absolute;
+  width: 1px;
+  top: 0;
+  bottom: 0;
+  background-color: rgb(0 0 0 / 10%);
+}
+
+.timeline-label {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  font-size: 80%;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.timeline-lane {
+  pointer-events: none;
+  overflow: hidden;
+  flex: none;
+  flex-basis: 20px;
+  position: relative;
+}
+
+.timeline-grid {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+
+.timeline-lane.timeline-action-labels {
+  margin-top: 10px;
+}
+
+.timeline-lane.timeline-actions {
+  margin-bottom: 10px;
+}
+
+.timeline-action {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background-color: red;
+  border-radius: 3px;
+}
+
+.timeline-action.click {
+  background-color: var(--green);
+}
+
+.timeline-action.fill,
+.timeline-action.press {
+  background-color: var(--orange);
+}
+
+.timeline-action.goto {
+  background-color: var(--blue);
+}
+
+.timeline-action-label {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  margin-left: 2px;
+  background-color: #fffffff0;
+}
+
+.timeline-time-bar {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: black;
+  pointer-events: none;
+}
+
+.timeline-time-bar.timeline-time-bar-hover {
+  background-color: var(--light-pink);
+}

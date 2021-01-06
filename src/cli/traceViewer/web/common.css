@@ -1,0 +1,122 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+:root {
+  --light-background: #f3f2f1;
+  --background: #edebe9;
+  --active-background: #333333;
+  --color: #252423;
+  --red: #F44336;
+  --green: #4CAF50;
+  --purple: #9C27B0;
+  --yellow: #FFC107;
+  --blue: #2196F3;
+  --orange: #d24726;
+  --black: #1E1E1E;
+  --gray: #888888;
+  --separator: #80808059;
+  --focus-ring: #0E639CCC;
+  --inactive-focus-ring: #80808059;
+  --layout-gap: 10px;
+  --selection: #074771;
+  --control-background: #3C3C3C;
+  --settings: #E7E7E7;
+  --sidebar-width: 250px;
+  --light-pink: #ff69b460;
+  --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  display: flex;
+  background: var(--background);
+  overscroll-behavior-x: none;
+}
+
+* {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+}
+
+*[hidden] {
+  display: none !important;
+}
+
+.codicon {
+  color: #C5C5C5;
+}
+
+svg {
+  fill: currentColor;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--color);
+  font-size: 14px;
+  font-family: SegoeUI-SemiBold-final,Segoe UI Semibold,SegoeUI-Regular-final,Segoe UI,"Segoe UI Web (West European)",Segoe,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,Tahoma,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+.platform-windows {
+  --monospace-font: Consolas, Inconsolata, "Courier New", monospace;
+}
+
+.platform-linux {
+  --monospace-font:"Droid Sans Mono", Inconsolata, "Courier New", monospace, "Droid Sans Fallback";
+}
+
+.platform-mac {
+  --monospace-font: "SF Mono",Monaco,Menlo,Inconsolata,"Courier New",monospace;
+}
+
+.vbox {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  position: relative;
+}
+
+.hbox {
+  display: flex;
+  flex: auto;
+  position: relative;
+}
+
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 1px solid #ccc;
+  background-color: var(--light-background);
+}
+
+::-webkit-scrollbar-corner {
+  background-color: var(--background);
+}

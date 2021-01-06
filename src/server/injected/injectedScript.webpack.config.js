@@ -20,6 +20,7 @@ const InlineSource = require('./webpack-inline-source-plugin.js');
 module.exports = {
   entry: path.join(__dirname, 'injectedScript.ts'),
   devtool: 'source-map',
+  mode: 'development',
   module: {
     rules: [
       {
