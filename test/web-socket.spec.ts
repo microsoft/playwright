@@ -153,3 +153,30 @@ it('should reject waitForEvent on page close', async ({page, server}) => {
   await page.close();
   expect((await error).message).toContain('Page closed');
 });
+
+it('should turn off when offline', test => {
+  test.fixme();
+}, async ({page, webSocketServer}) => {
+  const address = webSocketServer.address();
+  const [socket, wsHandle] = await Promise.all([
+    new Promise<import('ws')>(x => webSocketServer.once('connection', x)),
+    page.evaluateHandle(async address => {
+      const ws = new WebSocket(`ws://${address}/`);
+      await new Promise(x => ws.onopen = x);
+      return ws;
+    }, typeof address === 'string' ? address : 'localhost:' + address.port),
+  ]);
+  const failurePromise = new Promise(x => socket.on('message', data => x(data)));
+  const closePromise = wsHandle.evaluate(async ws => {
+    if (ws.readyState !== WebSocket.CLOSED)
+      await new Promise(x => ws.onclose = x);
+    return 'successfully closed';
+  });
+  const result = Promise.race([
+    failurePromise,
+    closePromise
+  ]);
+  await page.context().setOffline(true);
+  await wsHandle.evaluate(ws => ws.send('if this arrives it failed'));
+  expect(await result).toBe('successfully closed');
+});

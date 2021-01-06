@@ -17,6 +17,7 @@
 import { folio as base } from 'folio';
 import path from 'path';
 import socks from 'socksv5';
+import { Server as WebSocketServer } from 'ws';
 import { TestServer } from '../utils/testserver';
 
 type HttpWorkerFixtures = {
@@ -28,6 +29,7 @@ type HttpWorkerFixtures = {
 type HttpTestFixtures = {
   server: TestServer;
   httpsServer: TestServer;
+  webSocketServer: WebSocketServer;
 };
 
 const fixtures = base.extend<HttpTestFixtures, HttpWorkerFixtures>();
@@ -35,7 +37,7 @@ fixtures.httpService.init(async ({ testWorkerIndex }, test) => {
   const assetsPath = path.join(__dirname, 'assets');
   const cachedPath = path.join(__dirname, 'assets', 'cached');
 
-  const port = 8907 + testWorkerIndex * 2;
+  const port = 8907 + testWorkerIndex * 3;
   const server = await TestServer.create(assetsPath, port);
   server.enableHTTPCache(cachedPath);
 
@@ -63,6 +65,14 @@ fixtures.server.init(async ({ httpService }, test) => {
 fixtures.httpsServer.init(async ({ httpService }, test) => {
   httpService.httpsServer.reset();
   await test(httpService.httpsServer);
+});
+
+fixtures.webSocketServer.init(async ({ testWorkerIndex }, run) => {
+  const webSocketServer = new WebSocketServer({
+    port: 8907 + testWorkerIndex * 3 + 2,
+  });
+  await run(webSocketServer);
+  await new Promise(x => webSocketServer.close(x));
 });
 
 fixtures.socksPort.init(async ({ testWorkerIndex }, run) => {
