@@ -96,11 +96,11 @@ Body format is assumed to ignore leading and trailing white spaces, so that extr
 ### Short-forms
 For convenience, common selectors have short-forms:
 - Selector starting with `//` or `..` is assumed to be `xpath=selector`
-  - Example: `page.click('//html')` is converted to `page.click('xpath=//html')`.
+  - Example: `'//html'` is converted to `'xpath=//html'`.
 - Selector starting and ending with a quote (either `"` or `'`) is assumed to be `text=selector`
-  - Example: `page.click('"foo"')` is converted to `page.click('text="foo"')`.
+  - Example: `'"foo"'` is converted to `'text="foo"'`.
 - Otherwise, selector is assumed to be `css=selector`
-  - Example: `page.click('div')` is converted to `page.click('css=div')`.
+  - Example: `'div'` is converted to `'css=div'`.
 
 ### Chaining selectors
 Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, next one is queried relative to the previous one's result.
@@ -206,7 +206,7 @@ const handle = await divHandle.$('css=span');
 ## Selector engines
 ### css and css:light
 
-`css` is a default engine - any malformed selector not starting with `//` nor starting and ending with a quote is assumed to be a css selector. For example, Playwright converts `page.$('span > button')` to `page.$('css=span > button')`.
+`css` is a default engine - any malformed selector not starting with `//` nor starting and ending with a quote is assumed to be a css selector. For example, Playwright converts `'span > button'` to `'css=span > button'`.
 
 Playwright augments standard CSS selectors in two ways, see below for more details:
 * `css` engine pierces open shadow DOM by default.
@@ -312,7 +312,7 @@ await page.click('button:near(.promo-card)');
 
 XPath engine is equivalent to [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate). Example: `xpath=//html/body`.
 
-Malformed selector starting with `//` or `..` is assumed to be an xpath selector. For example, Playwright converts `page.$('//html/body')` to `page.$('xpath=//html/body')`.
+Malformed selector starting with `//` or `..` is assumed to be an xpath selector. For example, Playwright converts `'//html/body'` to `'xpath=//html/body'`.
 
 Note that `xpath` does not pierce shadow roots.
 
