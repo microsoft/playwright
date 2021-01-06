@@ -48,4 +48,5 @@ describe('electron window', (suite, { browserName }) => {
     await window.keyboard.type(text);
     expect(await window.evaluate(() => document.querySelector('textarea').value)).toBe(text);
   });
+
 });
