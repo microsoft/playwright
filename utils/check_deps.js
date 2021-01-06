@@ -62,6 +62,8 @@ async function checkDeps() {
   function allowImport(from, to) {
     if (!to.startsWith(src + path.sep))
       return true;
+    if (!fs.existsSync(to))
+      return true;
     from = path.relative(root, from).replace(/\\/g, '/');
     to = path.relative(root, to).replace(/\\/g, '/');
     const fromDirectory = from.substring(0, from.lastIndexOf('/') + 1);
