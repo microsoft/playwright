@@ -6,8 +6,6 @@ title: "Assertions"
 The Playwright API can be used to read element contents and properties for test assertions. These values are fetched from the browser page and asserted in
 Node.js.
 
-The examples in this guide use the built-in [`assert` module](https://nodejs.org/api/assert.html), but they can be used with any assertion library (like [Expect](https://www.npmjs.com/package/expect) or [Chai](https://www.npmjs.com/package/chai)). See [Test runners](test-runners.md) for more info.
-
 <!-- TOC -->
 
 ## Common patterns
@@ -17,6 +15,9 @@ text content of an element. These APIs require a [selector](./selectors.md) to l
 the element.
 
 ```js
+// This example uses the Node.js's built-in `assert` module,
+// but any assertion library (Expect, Chai, etc.) will work.
+
 // Assert text content
 const content = await page.textContent('nav:first-child');
 assert(content === 'home');
@@ -52,7 +53,7 @@ assert(checked);
 [ElementHandle] objects represent in-page DOM
 elements. They can be used to assert for multiple properties of the element.
 
-It is recommended to fetch the `ElementHandle` object with
+It is recommended to fetch the [ElementHandle] object with
 [`method: Page.waitForSelector`] or [`method: Frame.waitForSelector`]. These
 APIs wait for the element to be visible and then return an `ElementHandle`.
 

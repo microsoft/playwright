@@ -182,7 +182,8 @@ const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.te
 
 ## Auto-waiting
 
-Actions like `click` and `fill` auto-wait for the element to be visible and [actionable](./actionability.md). For example, click will:
+Actions like [`method: Page.click`] and [`method: Page.fill`] auto-wait for the element to be visible
+and [actionable](./actionability.md). For example, click will:
 - wait for an element with the given selector to appear in the DOM
 - wait for it to become visible: have non-empty bounding box and no `visibility:hidden`
 - wait for it to stop moving: for example, wait until css transition finishes

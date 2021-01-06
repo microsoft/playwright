@@ -31,7 +31,7 @@ steps:
     run: npm test
 ```
 
-We run [our tests](/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
+We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
 
 ### Docker
 

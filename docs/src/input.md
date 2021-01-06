@@ -166,7 +166,7 @@ await page.type('#area', 'Hello World!');
 
 This method will emit all the necessary keyboard events, with all the `keydown`, `keyup`, `keypress` events in place. You can even specify the optional `delay` between the key presses to simulate real user behavior.
 
-> **NOTE** that most of the time, [`page.fill`](#text-input) will just work. You only need to type characters if there is special keyboard handling on the page.
+> **NOTE** that most of the time, [`method: Page.fill`] will just work. You only need to type characters if there is special keyboard handling on the page.
 
 #### API reference
 
@@ -247,7 +247,7 @@ await page.setInputFiles('input#upload', {
 });
 ```
 
-You can select input files for upload using the `page.setInputFiles` method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Empty array clears the selected files.
+You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Empty array clears the selected files.
 
 #### Example
 

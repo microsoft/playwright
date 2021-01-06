@@ -12,8 +12,7 @@ contexts can load existing authentication state. This eliminates the need to
 login in every context and speeds up test execution.
 
 > Note: This guide covers cookie/token-based authentication (logging in via the
-app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication)
-use [`browser.newContext`](./network.md#http-authentication).
+app UI). For [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication) use [`method: Browser.newContext`].
 
 <!-- TOC -->
 
@@ -125,8 +124,8 @@ on any external state.
 
 ### Example
 
-[This example script](examples/authentication.js) logs in on GitHub.com with
-Chromium, and then reuses the logged in cookie state in WebKit.
+[This example script](https://github.com/microsoft/playwright/blob/master/docs/examples/authentication.js) logs in
+on GitHub.com with Chromium, and then reuses the logged in cookie state in WebKit.
 
 ### API reference
 - [BrowserContext]
@@ -148,7 +147,7 @@ Note that persistent authentication is not suited for CI environments since it
 relies on a disk location. User data directories are specific to browser types
 and cannot be shared across browser types.
 
-User data directories can be used with the `launchPersistentContext` API.
+User data directories can be used with the [`method: BrowserType.launchPersistentContext`] API.
 
 ```js
 const { chromium } = require('playwright');
