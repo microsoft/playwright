@@ -77,6 +77,32 @@ it('should return background pages', (test, { browserName }) => {
   await context.close();
 });
 
+it.only('should return background pages when recording video', (test, { browserName }) => {
+  test.skip(browserName !== 'chromium');
+}, async ({browserType, testInfo, browserOptions, createUserDataDir}) => {
+  const userDataDir = await createUserDataDir();
+  const extensionPath = path.join(__dirname, '..', 'assets', 'simple-extension');
+  const extensionOptions = {...browserOptions,
+    headless: false,
+    args: [
+      `--disable-extensions-except=${extensionPath}`,
+      `--load-extension=${extensionPath}`,
+    ],
+    recordVideo: {
+      dir: testInfo.outputPath(''),
+    },
+  };
+  const context = await browserType.launchPersistentContext(userDataDir, extensionOptions) as ChromiumBrowserContext;
+  const backgroundPages = context.backgroundPages();
+  const backgroundPage = backgroundPages.length
+    ? backgroundPages[0]
+    : await context.waitForEvent('backgroundpage');
+  expect(backgroundPage).toBeTruthy();
+  expect(context.backgroundPages()).toContain(backgroundPage);
+  expect(context.pages()).not.toContain(backgroundPage);
+  await context.close();
+});
+
 it('should not create pages automatically', (test, { browserName }) => {
   test.skip(browserName !== 'chromium');
 }, async ({browserType, browserOptions}) => {
