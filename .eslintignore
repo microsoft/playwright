@@ -5,6 +5,7 @@ src/generated/*
 src/server/chromium/protocol.ts
 src/server/firefox/protocol.ts
 src/server/webkit/protocol.ts
+src/third_party/
 /types/*
 /index.d.ts
 utils/generate_types/overrides.d.ts

@@ -17,7 +17,7 @@
 import * as fs from 'fs';
 import * as querystring from 'querystring';
 import { Writable } from 'stream';
-import { highlight } from 'highlight.js';
+import * as hljs from '../../third_party/highlightjs/highlightjs';
 import { CodeGeneratorOutput } from './codeGenerator';
 
 export class OutputMultiplexer implements CodeGeneratorOutput {
@@ -73,7 +73,7 @@ export class TerminalOutput implements CodeGeneratorOutput {
   }
 
   private _highlight(text: string) {
-    let highlightedCode = highlight(this._language, text).value;
+    let highlightedCode = hljs.highlight(this._language, text).value;
     highlightedCode = querystring.unescape(highlightedCode);
     highlightedCode = highlightedCode.replace(/<span class="hljs-keyword">/g, '\x1b[38;5;205m');
     highlightedCode = highlightedCode.replace(/<span class="hljs-built_in">/g, '\x1b[38;5;220m');
