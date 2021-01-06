@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-set +x
+set -x
 
 trap "cd $(pwd -P)" EXIT
 SCRIPT_PATH="$(cd "$(dirname "$0")" ; pwd -P)"
@@ -25,7 +25,7 @@ function build {
   cd ${SCRIPT_PATH}
 
   mkdir -p ./output/playwright-${SUFFIX}
-  tar -xzvf ./output/playwright.tgz -C ./output/playwright-${SUFFIX}/
+  tar -xzf ./output/playwright.tgz -C ./output/playwright-${SUFFIX}/
 
   curl ${NODE_URL} -o ./output/${NODE_DIR}.${ARCHIVE}
   NPM_PATH=""
@@ -36,7 +36,7 @@ function build {
     cp ./output/${NODE_DIR}/node.exe ./output/playwright-${SUFFIX}/
     NPM_PATH="node_modules/npm/bin/npm-cli.js"
   elif [[ "${ARCHIVE}" == "tar.gz" ]]; then
-    tar -xzvf ./output/${NODE_DIR}.tar.gz -C ./output/
+    tar -xzf ./output/${NODE_DIR}.tar.gz -C ./output/
     cp ./output/${NODE_DIR}/bin/node ./output/playwright-${SUFFIX}/
     NPM_PATH="lib/node_modules/npm/bin/npm-cli.js"
   else
