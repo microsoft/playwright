@@ -77,7 +77,7 @@ it('should return background pages', (test, { browserName }) => {
   await context.close();
 });
 
-it.only('should return background pages when recording video', (test, { browserName }) => {
+it('should return background pages when recording video', (test, { browserName }) => {
   test.skip(browserName !== 'chromium');
 }, async ({browserType, testInfo, browserOptions, createUserDataDir}) => {
   const userDataDir = await createUserDataDir();
