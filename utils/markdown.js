@@ -26,7 +26,7 @@
  *  }} MarkdownNode */
 
 function flattenWrappedLines(content) {
-  const inLines = content.replace(/\r\n/g, '\n').split('\n');
+  const inLines = content.split('\n');
   let inCodeBlock = false;
   const outLines = [];
   let outLineTokens = [];
@@ -159,7 +159,7 @@ function buildTree(lines) {
         node.liType = 'ordinal';
       else if (content.startsWith('*'))
         node.liType = 'bullet';
-      else 
+      else
         node.liType = 'default';
     }
     appendNode(indent, node);
