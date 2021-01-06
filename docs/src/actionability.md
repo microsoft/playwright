@@ -11,26 +11,26 @@ Some actions like [`method: Page.click`] support `force` option that disables no
 
 | Action | [Attached] | [Visible] | [Stable] | [Receiving Events] | [Enabled] | [Editable] |
 | :- | :-: | :-: | :-: | :-: | :-: | :-: |
-| [`method: ElementHandle.check`] | Yes | Yes | Yes | Yes | Yes | - |
-| [`method: ElementHandle.click`] | Yes | Yes | Yes | Yes | Yes | - |
-| [`method: ElementHandle.dblclick`] | Yes | Yes | Yes | Yes | Yes | - |
-| [`method: ElementHandle.tap`] | Yes | Yes | Yes | Yes | Yes | - |
-| [`method: ElementHandle.uncheck`] | Yes | Yes | Yes | Yes | Yes | - |
-| [`method: ElementHandle.hover`] | Yes | Yes | Yes | Yes | - | - |
-| [`method: ElementHandle.scrollIntoViewIfNeeded`] | Yes | Yes | Yes | - | - | - |
-| [`method: ElementHandle.screenshot`] | Yes | Yes | Yes | - | - | - |
-| [`method: ElementHandle.fill`] | Yes | Yes | - | - | Yes | Yes |
-| [`method: ElementHandle.selectText`] | Yes | Yes | - | - | - | - |
-| [`method: ElementHandle.getAttribute`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.dispatchEvent`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.focus`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.innerText`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.innerHTML`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.press`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.setInputFiles`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.selectOption`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.textContent`] | Yes | - | - | - | - | - |
-| [`method: ElementHandle.type`] | Yes | - | - | - | - | - |
+| check | Yes | Yes | Yes | Yes | Yes | - |
+| click | Yes | Yes | Yes | Yes | Yes | - |
+| dblclick | Yes | Yes | Yes | Yes | Yes | - |
+| tap | Yes | Yes | Yes | Yes | Yes | - |
+| uncheck | Yes | Yes | Yes | Yes | Yes | - |
+| hover | Yes | Yes | Yes | Yes | - | - |
+| scrollIntoViewIfNeeded | Yes | Yes | Yes | - | - | - |
+| screenshot | Yes | Yes | Yes | - | - | - |
+| fill | Yes | Yes | - | - | Yes | Yes |
+| selectText | Yes | Yes | - | - | - | - |
+| dispatchEvent | Yes | - | - | - | - | - |
+| focus | Yes | - | - | - | - | - |
+| getAttribute | Yes | - | - | - | - | - |
+| innerText | Yes | - | - | - | - | - |
+| innerHTML | Yes | - | - | - | - | - |
+| press | Yes | - | - | - | - | - |
+| setInputFiles | Yes | - | - | - | - | - |
+| selectOption | Yes | - | - | - | - | - |
+| textContent | Yes | - | - | - | - | - |
+| type | Yes | - | - | - | - | - |
 
 <br/>
 

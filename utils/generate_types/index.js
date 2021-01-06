@@ -51,7 +51,7 @@ let hadChanges = false;
     if (clazz)
       return `[${clazz.name}]`;
     if (member.kind === 'method')
-      return createMemberLink(`${member.clazz.varName}.${member.name}(${member.signature})`);
+      return createMemberLink(`${member.clazz.varName}.${member.name}(…)`);
     if (member.kind === 'event')
       return createMemberLink(`${member.clazz.varName}.on('${member.name}')`);
     if (member.kind === 'property')

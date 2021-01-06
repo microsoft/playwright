@@ -177,7 +177,6 @@ Documentation.Member = class {
       this.args.set(arg.name, arg);
     /** @type {!Documentation.Class} */
     this.clazz = null;
-    this.signature = this._createSignature();
   }
 
   clone() {
@@ -226,29 +225,6 @@ Documentation.Member = class {
       this.type.visit(visitor);
     for (const arg of this.argsArray)
       arg.visit(visitor);
-  }
-
-  _createSignature() {
-    const tokens = [];
-    let hasOptional = false;
-    for (const arg of this.argsArray) {
-      const optional = !arg.required;
-      if (tokens.length) {
-        if (optional && !hasOptional)
-          tokens.push(`[, ${arg.name}`);
-        else
-          tokens.push(`, ${arg.name}`);
-      } else {
-        if (optional && !hasOptional)
-          tokens.push(`[${arg.name}`);
-        else
-          tokens.push(`${arg.name}`);
-      }
-      hasOptional = hasOptional || optional;
-    }
-    if (hasOptional)
-      tokens.push(']');
-    return tokens.join('');
   }
 };
 
