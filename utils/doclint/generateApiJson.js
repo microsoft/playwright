@@ -33,7 +33,6 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
     if (clazz)
       return `\`${clazz.name}\``;
   });
-  outline.copyDocsFromSuperclasses([]);
   outline.generateSourceCodeComments();
   const result = serialize(outline);
   fs.writeFileSync(path.join(PROJECT_DIR, 'api.json'), JSON.stringify(result));
