@@ -578,6 +578,26 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     timeout: tOptional(tNumber),
   });
+  scheme.FrameIsDisabledParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsEnabledParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsHiddenParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsVisibleParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsEditableParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
   scheme.FramePressParams = tObject({
     selector: tString,
     key: tString,
@@ -750,6 +770,11 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
   scheme.ElementHandleInnerTextParams = tOptional(tObject({}));
+  scheme.ElementHandleIsDisabledParams = tOptional(tObject({}));
+  scheme.ElementHandleIsEditableParams = tOptional(tObject({}));
+  scheme.ElementHandleIsEnabledParams = tOptional(tObject({}));
+  scheme.ElementHandleIsHiddenParams = tOptional(tObject({}));
+  scheme.ElementHandleIsVisibleParams = tOptional(tObject({}));
   scheme.ElementHandleOwnerFrameParams = tOptional(tObject({}));
   scheme.ElementHandlePressParams = tObject({
     key: tString,
@@ -814,7 +839,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleWaitForElementStateParams = tObject({
-    state: tEnum(['visible', 'hidden', 'stable', 'enabled', 'disabled']),
+    state: tEnum(['visible', 'hidden', 'stable', 'enabled', 'disabled', 'editable']),
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleWaitForSelectorParams = tObject({

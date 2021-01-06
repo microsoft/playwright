@@ -969,6 +969,51 @@ Returns `element.innerText`.
 
 Indicates that the page has been closed.
 
+## async method: Page.isDisabled
+- returns: <[boolean]>
+
+Returns whether the element is disabled, the opposite of [enabled](./actionability.md#enabled).
+
+### param: Page.isDisabled.selector = %%-input-selector-%%
+
+### option: Page.isDisabled.timeout = %%-input-timeout-%%
+
+## async method: Page.isEditable
+- returns: <[boolean]>
+
+Returns whether the element is [editable](./actionability.md#editable).
+
+### param: Page.isEditable.selector = %%-input-selector-%%
+
+### option: Page.isEditable.timeout = %%-input-timeout-%%
+
+## async method: Page.isEnabled
+- returns: <[boolean]>
+
+Returns whether the element is [enabled](./actionability.md#enabled).
+
+### param: Page.isEnabled.selector = %%-input-selector-%%
+
+### option: Page.isEnabled.timeout = %%-input-timeout-%%
+
+## async method: Page.isHidden
+- returns: <[boolean]>
+
+Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
+
+### param: Page.isHidden.selector = %%-input-selector-%%
+
+### option: Page.isHidden.timeout = %%-input-timeout-%%
+
+## async method: Page.isVisible
+- returns: <[boolean]>
+
+Returns whether the element is [visible](./actionability.md#visible).
+
+### param: Page.isVisible.selector = %%-input-selector-%%
+
+### option: Page.isVisible.timeout = %%-input-timeout-%%
+
 ## property: Page.keyboard
 - type: <[Keyboard]>
 

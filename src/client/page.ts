@@ -530,6 +530,26 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.getAttribute(selector, name, options));
   }
 
+  async isDisabled(selector: string, options?: channels.FrameIsDisabledOptions): Promise<boolean> {
+    return this._attributeToPage(() => this._mainFrame.isDisabled(selector, options));
+  }
+
+  async isEditable(selector: string, options?: channels.FrameIsEditableOptions): Promise<boolean> {
+    return this._attributeToPage(() => this._mainFrame.isEditable(selector, options));
+  }
+
+  async isEnabled(selector: string, options?: channels.FrameIsEnabledOptions): Promise<boolean> {
+    return this._attributeToPage(() => this._mainFrame.isEnabled(selector, options));
+  }
+
+  async isHidden(selector: string, options?: channels.FrameIsHiddenOptions): Promise<boolean> {
+    return this._attributeToPage(() => this._mainFrame.isHidden(selector, options));
+  }
+
+  async isVisible(selector: string, options?: channels.FrameIsVisibleOptions): Promise<boolean> {
+    return this._attributeToPage(() => this._mainFrame.isVisible(selector, options));
+  }
+
   async hover(selector: string, options?: channels.FrameHoverOptions) {
     return this._attributeToPage(() => this._mainFrame.hover(selector, options));
   }

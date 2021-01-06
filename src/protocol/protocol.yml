@@ -1218,6 +1218,41 @@ Frame:
       returns:
         value: string
 
+    isDisabled:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isEnabled:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isHidden:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isVisible:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isEditable:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
     press:
       parameters:
         selector: string
@@ -1602,6 +1637,26 @@ ElementHandle:
       returns:
         value: string
 
+    isDisabled:
+      returns:
+        value: boolean
+
+    isEditable:
+      returns:
+        value: boolean
+
+    isEnabled:
+      returns:
+        value: boolean
+
+    isHidden:
+      returns:
+        value: boolean
+
+    isVisible:
+      returns:
+        value: boolean
+
     ownerFrame:
       returns:
         frame: Frame?
@@ -1724,6 +1779,7 @@ ElementHandle:
           - stable
           - enabled
           - disabled
+          - editable
         timeout: number?
 
     waitForSelector:

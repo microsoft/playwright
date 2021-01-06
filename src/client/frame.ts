@@ -362,6 +362,36 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async isDisabled(selector: string, options: channels.FrameIsDisabledOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isDisabled'), async () => {
+      return (await this._channel.isDisabled({ selector, ...options })).value;
+    });
+  }
+
+  async isEditable(selector: string, options: channels.FrameIsEditableOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isEditable'), async () => {
+      return (await this._channel.isEditable({ selector, ...options })).value;
+    });
+  }
+
+  async isEnabled(selector: string, options: channels.FrameIsEnabledOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isEnabled'), async () => {
+      return (await this._channel.isEnabled({ selector, ...options })).value;
+    });
+  }
+
+  async isHidden(selector: string, options: channels.FrameIsHiddenOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isHidden'), async () => {
+      return (await this._channel.isHidden({ selector, ...options })).value;
+    });
+  }
+
+  async isVisible(selector: string, options: channels.FrameIsVisibleOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isVisible'), async () => {
+      return (await this._channel.isVisible({ selector, ...options })).value;
+    });
+  }
+
   async hover(selector: string, options: channels.FrameHoverOptions = {}) {
     return this._wrapApiCall(this._apiName('hover'), async () => {
       await this._channel.hover({ selector, ...options });

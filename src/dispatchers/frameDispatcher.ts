@@ -159,6 +159,26 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return { value: value === null ? undefined : value };
   }
 
+  async isDisabled(params: channels.FrameIsDisabledParams): Promise<channels.FrameIsDisabledResult> {
+    return { value: await this._frame.isDisabled(params.selector, params) };
+  }
+
+  async isEditable(params: channels.FrameIsEditableParams): Promise<channels.FrameIsEditableResult> {
+    return { value: await this._frame.isEditable(params.selector, params) };
+  }
+
+  async isEnabled(params: channels.FrameIsEnabledParams): Promise<channels.FrameIsEnabledResult> {
+    return { value: await this._frame.isEnabled(params.selector, params) };
+  }
+
+  async isHidden(params: channels.FrameIsHiddenParams): Promise<channels.FrameIsHiddenResult> {
+    return { value: await this._frame.isHidden(params.selector, params) };
+  }
+
+  async isVisible(params: channels.FrameIsVisibleParams): Promise<channels.FrameIsVisibleResult> {
+    return { value: await this._frame.isVisible(params.selector, params) };
+  }
+
   async hover(params: channels.FrameHoverParams, metadata?: channels.Metadata): Promise<void> {
     return runAction(async controller => {
       return await this._frame.hover(controller, params.selector, params);

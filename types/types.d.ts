@@ -2038,6 +2038,86 @@ export interface Page {
    */
   isClosed(): boolean;
 
+  /**
+   * Returns whether the element is disabled, the opposite of [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isDisabled(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [editable](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#editable).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isEditable(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isEnabled(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is hidden, the opposite of [visible](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#visible).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isHidden(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [visible](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#visible).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isVisible(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
   keyboard: Keyboard;
 
   /**
@@ -3917,6 +3997,86 @@ export interface Frame {
   isDetached(): boolean;
 
   /**
+   * Returns whether the element is disabled, the opposite of [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isDisabled(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [editable](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#editable).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isEditable(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isEnabled(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is hidden, the opposite of [visible](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#visible).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isHidden(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [visible](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#visible).
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isVisible(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
    * Returns frame's name attribute as specified in the tag.
    * 
    * If the name is empty, returns the id attribute instead.
@@ -5698,6 +5858,31 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   innerText(): Promise<string>;
 
   /**
+   * Returns whether the element is disabled, the opposite of [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   */
+  isDisabled(): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [editable](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#editable).
+   */
+  isEditable(): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   */
+  isEnabled(): Promise<boolean>;
+
+  /**
+   * Returns whether the element is hidden, the opposite of [visible](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#visible).
+   */
+  isHidden(): Promise<boolean>;
+
+  /**
+   * Returns whether the element is [visible](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#visible).
+   */
+  isVisible(): Promise<boolean>;
+
+  /**
    * Returns the frame containing the given element.
    */
   ownerFrame(): Promise<null|Frame>;
@@ -6112,12 +6297,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    *   [stable](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#stable).
    * - `"enabled"` Wait until the element is [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
    * - `"disabled"` Wait until the element is [not enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).
+   * - `"editable"` Wait until the element is [editable](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#editable).
    * 
    * If the element does not satisfy the condition for the `timeout` milliseconds, this method will throw.
    * @param state A state to wait for, see below for more details.
    * @param options 
    */
-  waitForElementState(state: "visible"|"hidden"|"stable"|"enabled"|"disabled", options?: {
+  waitForElementState(state: "visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable", options?: {
     /**
      * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
      * using the

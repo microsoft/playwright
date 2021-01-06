@@ -66,6 +66,26 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     return { value: await this._elementHandle.innerHTML() };
   }
 
+  async isDisabled(): Promise<channels.ElementHandleIsDisabledResult> {
+    return { value: await this._elementHandle.isDisabled() };
+  }
+
+  async isEditable(): Promise<channels.ElementHandleIsEditableResult> {
+    return { value: await this._elementHandle.isEditable() };
+  }
+
+  async isEnabled(): Promise<channels.ElementHandleIsEnabledResult> {
+    return { value: await this._elementHandle.isEnabled() };
+  }
+
+  async isHidden(): Promise<channels.ElementHandleIsHiddenResult> {
+    return { value: await this._elementHandle.isHidden() };
+  }
+
+  async isVisible(): Promise<channels.ElementHandleIsVisibleResult> {
+    return { value: await this._elementHandle.isVisible() };
+  }
+
   async dispatchEvent(params: channels.ElementHandleDispatchEventParams): Promise<void> {
     await this._elementHandle.dispatchEvent(params.type, parseArgument(params.eventInit));
   }

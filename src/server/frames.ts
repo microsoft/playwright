@@ -928,6 +928,41 @@ export class Frame extends EventEmitter {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async isVisible(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.visibleTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking visibility of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async isHidden(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    return !(await this.isVisible(selector, options));
+  }
+
+  async isDisabled(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.disabledTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking disabled state of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async isEnabled(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    return !(await this.isDisabled(selector, options));
+  }
+
+  async isEditable(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.editableTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking editable state of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   async hover(controller: ProgressController, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._hover(progress, options)));

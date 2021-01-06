@@ -1190,6 +1190,11 @@ export interface FrameChannel extends Channel {
   hover(params: FrameHoverParams, metadata?: Metadata): Promise<FrameHoverResult>;
   innerHTML(params: FrameInnerHTMLParams, metadata?: Metadata): Promise<FrameInnerHTMLResult>;
   innerText(params: FrameInnerTextParams, metadata?: Metadata): Promise<FrameInnerTextResult>;
+  isDisabled(params: FrameIsDisabledParams, metadata?: Metadata): Promise<FrameIsDisabledResult>;
+  isEnabled(params: FrameIsEnabledParams, metadata?: Metadata): Promise<FrameIsEnabledResult>;
+  isHidden(params: FrameIsHiddenParams, metadata?: Metadata): Promise<FrameIsHiddenResult>;
+  isVisible(params: FrameIsVisibleParams, metadata?: Metadata): Promise<FrameIsVisibleResult>;
+  isEditable(params: FrameIsEditableParams, metadata?: Metadata): Promise<FrameIsEditableResult>;
   press(params: FramePressParams, metadata?: Metadata): Promise<FramePressResult>;
   querySelector(params: FrameQuerySelectorParams, metadata?: Metadata): Promise<FrameQuerySelectorResult>;
   querySelectorAll(params: FrameQuerySelectorAllParams, metadata?: Metadata): Promise<FrameQuerySelectorAllResult>;
@@ -1440,6 +1445,56 @@ export type FrameInnerTextOptions = {
 };
 export type FrameInnerTextResult = {
   value: string,
+};
+export type FrameIsDisabledParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameIsDisabledOptions = {
+  timeout?: number,
+};
+export type FrameIsDisabledResult = {
+  value: boolean,
+};
+export type FrameIsEnabledParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameIsEnabledOptions = {
+  timeout?: number,
+};
+export type FrameIsEnabledResult = {
+  value: boolean,
+};
+export type FrameIsHiddenParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameIsHiddenOptions = {
+  timeout?: number,
+};
+export type FrameIsHiddenResult = {
+  value: boolean,
+};
+export type FrameIsVisibleParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameIsVisibleOptions = {
+  timeout?: number,
+};
+export type FrameIsVisibleResult = {
+  value: boolean,
+};
+export type FrameIsEditableParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameIsEditableOptions = {
+  timeout?: number,
+};
+export type FrameIsEditableResult = {
+  value: boolean,
 };
 export type FramePressParams = {
   selector: string,
@@ -1728,6 +1783,11 @@ export interface ElementHandleChannel extends JSHandleChannel {
   hover(params: ElementHandleHoverParams, metadata?: Metadata): Promise<ElementHandleHoverResult>;
   innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: Metadata): Promise<ElementHandleInnerHTMLResult>;
   innerText(params?: ElementHandleInnerTextParams, metadata?: Metadata): Promise<ElementHandleInnerTextResult>;
+  isDisabled(params?: ElementHandleIsDisabledParams, metadata?: Metadata): Promise<ElementHandleIsDisabledResult>;
+  isEditable(params?: ElementHandleIsEditableParams, metadata?: Metadata): Promise<ElementHandleIsEditableResult>;
+  isEnabled(params?: ElementHandleIsEnabledParams, metadata?: Metadata): Promise<ElementHandleIsEnabledResult>;
+  isHidden(params?: ElementHandleIsHiddenParams, metadata?: Metadata): Promise<ElementHandleIsHiddenResult>;
+  isVisible(params?: ElementHandleIsVisibleParams, metadata?: Metadata): Promise<ElementHandleIsVisibleResult>;
   ownerFrame(params?: ElementHandleOwnerFrameParams, metadata?: Metadata): Promise<ElementHandleOwnerFrameResult>;
   press(params: ElementHandlePressParams, metadata?: Metadata): Promise<ElementHandlePressResult>;
   querySelector(params: ElementHandleQuerySelectorParams, metadata?: Metadata): Promise<ElementHandleQuerySelectorResult>;
@@ -1882,6 +1942,31 @@ export type ElementHandleInnerTextOptions = {};
 export type ElementHandleInnerTextResult = {
   value: string,
 };
+export type ElementHandleIsDisabledParams = {};
+export type ElementHandleIsDisabledOptions = {};
+export type ElementHandleIsDisabledResult = {
+  value: boolean,
+};
+export type ElementHandleIsEditableParams = {};
+export type ElementHandleIsEditableOptions = {};
+export type ElementHandleIsEditableResult = {
+  value: boolean,
+};
+export type ElementHandleIsEnabledParams = {};
+export type ElementHandleIsEnabledOptions = {};
+export type ElementHandleIsEnabledResult = {
+  value: boolean,
+};
+export type ElementHandleIsHiddenParams = {};
+export type ElementHandleIsHiddenOptions = {};
+export type ElementHandleIsHiddenResult = {
+  value: boolean,
+};
+export type ElementHandleIsVisibleParams = {};
+export type ElementHandleIsVisibleOptions = {};
+export type ElementHandleIsVisibleResult = {
+  value: boolean,
+};
 export type ElementHandleOwnerFrameParams = {};
 export type ElementHandleOwnerFrameOptions = {};
 export type ElementHandleOwnerFrameResult = {
@@ -2027,7 +2112,7 @@ export type ElementHandleUncheckOptions = {
 };
 export type ElementHandleUncheckResult = void;
 export type ElementHandleWaitForElementStateParams = {
-  state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled',
+  state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable',
   timeout?: number,
 };
 export type ElementHandleWaitForElementStateOptions = {
