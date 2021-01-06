@@ -31,7 +31,7 @@ function build {
   NPM_PATH=""
   if [[ "${ARCHIVE}" == "zip" ]]; then
     cd ./output
-    unzip ./${NODE_DIR}.zip
+    unzip -q ./${NODE_DIR}.zip
     cd ..
     cp ./output/${NODE_DIR}/node.exe ./output/playwright-${SUFFIX}/
     NPM_PATH="node_modules/npm/bin/npm-cli.js"
@@ -60,7 +60,7 @@ function build {
     echo "Unsupported RUN_DRIVER ${RUN_DRIVER}"
     exit 1
   fi
-  zip -r ../playwright-${PACKAGE_VERSION}-${SUFFIX}.zip .
+  zip -q -r ../playwright-${PACKAGE_VERSION}-${SUFFIX}.zip .
 }
 
 build "node-v12.20.1-darwin-x64" "mac" "tar.gz" "run-driver-posix.sh"
