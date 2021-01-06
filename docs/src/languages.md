@@ -51,3 +51,20 @@ go get github.com/mxschmitt/playwright-go
 
 * [GitHub repo](https://github.com/mxschmitt/playwright-go)
 * [Documentation](https://pkg.go.dev/github.com/mxschmitt/playwright-go?tab=doc)
+
+## Crystal
+
+Playwright for Crystal is available in preview.
+
+1. Add the dependency to your `shard.yml`:
+
+   ```yaml
+   dependencies:
+     playwright:
+       github: naqvis/playwright-cr
+   ```
+
+2. Run `shards install`
+
+* [GitHub repo](https://github.com/naqvis/playwright-cr)
+* [Documentation](https://naqvis.github.io/playwright-cr/)
