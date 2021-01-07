@@ -288,13 +288,23 @@ const browser = await chromium.launch({ headless: false });
 ```
 
 ```python-async
-# Works across chromium, firefox and webkit
-browser = await playwright.chromium.launch(headless=False)
+import asyncio
+from playwright import async_playwright
+
+async def main():
+    async with async_playwright() as p:
+         # Works across chromium, firefox and webkit
+         browser = await p.chromium.launch(headless=False)
+
+asyncio.get_event_loop().run_until_complete(main())
 ```
 
 ```python-sync
-# Works across chromium, firefox and webkit
-browser = playwright.chromium.launch(headless=False)
+from playwright import sync_playwright
+
+with sync_playwright() as p:
+   # Works across chromium, firefox and webkit
+   browser = p.chromium.launch(headless=False)
 ```
 
 On Linux agents, headful execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headful mode with Xvfb, add `xvfb-run` before the Node.js command.

@@ -29,6 +29,26 @@ const browser = await chromium.launch({ headless: false });
 await browser.close();
 ```
 
+```python-async
+import asyncio
+from playwright import async_playwright
+
+async def main():
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=False)
+        await browser.close()
+
+asyncio.get_event_loop().run_until_complete(main())
+```
+
+```python-sync
+from playwright import sync_playwright
+
+with sync_playwright() as p:
+    browser = p.chromium.launch(headless=False)
+    browser.close()
+```
+
 Launching a browser instance can be expensive, and Playwright is designed to
 maximize what a single instance can do through multiple browser contexts.
 
@@ -49,6 +69,16 @@ const browser = await chromium.launch();
 const context = await browser.newContext();
 ```
 
+```python-async
+browser = await playwright.chromium.launch()
+context = await browser.new_context()
+```
+
+```python-sync
+browser = playwright.chromium.launch()
+context = browser.new_context()
+```
+
 Browser contexts can also be used to emulate multi-page scenarios involving
 mobile devices, permissions, locale and color scheme.
 
@@ -63,6 +93,42 @@ const context = await browser.newContext({
   colorScheme: 'dark',
   locale: 'de-DE'
 });
+```
+
+```python-async
+import asyncio
+from playwright import async_playwright
+
+async def main():
+    async with async_playwright() as p:
+        iphone_11 = p.devices['iPhone 11 Pro']
+        browser = await p.chromium.launch()
+        context = await browser.new_context(
+            **iphone_11,
+            locale='de-DE',
+            geolocation={ 'longitude': 12.492507, 'latitude': 41.889938 },
+            permissions=['geolocation'],
+            color_scheme='dark',
+        )
+        page = await browser.newPage()
+        await browser.close()
+
+asyncio.get_event_loop().run_until_complete(main())
+```
+
+```python-sync
+from playwright import sync_playwright
+
+with sync_playwright() as p:
+    iphone_11 = p.devices['iPhone 11 Pro']
+    browser = p.webkit.launch(headless=False)
+    context = browser.new_context(
+        **iphone_11,
+        locale='de-DE',
+        geolocation={ 'longitude': 12.492507, 'latitude': 41.889938 },
+        permissions=['geolocation']
+    )
+    browser.close()
 ```
 
 #### API reference
@@ -95,6 +161,40 @@ console.log(page.url());
 window.location.href = 'https://example.com';
 ```
 
+```python-async
+page = await context.new_page()
+
+# Navigate explicitly, similar to entering a URL in the browser.
+await page.goto('http://example.com')
+# Fill an input.
+await page.fill('#search', 'query')
+
+# Navigate implicitly by clicking a link.
+await page.click('#submit')
+# Expect a new url.
+print(page.url)
+
+# Page can navigate from the script - this will be picked up by Playwright.
+# window.location.href = 'https://example.com'
+```
+
+```python-sync
+page = context.new_page()
+
+# Navigate explicitly, similar to entering a URL in the browser.
+page.goto('http://example.com')
+# Fill an input.
+page.fill('#search', 'query')
+
+# Navigate implicitly by clicking a link.
+page.click('#submit')
+# Expect a new url.
+print(page.url)
+
+# Page can navigate from the script - this will be picked up by Playwright.
+# window.location.href = 'https://example.com'
+```
+
 > Read more on [page navigation and loading](./navigations.md).
 
 A page can have one or more [Frame] objects attached to
@@ -117,6 +217,36 @@ const frame = await frameElementHandle.contentFrame();
 
 // Interact with the frame
 await frame.fill('#username-input', 'John');
+```
+
+```python-async
+# Get frame using the frame's name attribute
+frame = page.frame('frame-login')
+
+# Get frame using frame's URL
+frame = page.frame(url=r'.*domain.*')
+
+# Get frame using any other selector
+frame_element_handle = await page.query_selector('.frame-class')
+frame = await frame_element_handle.content_frame()
+
+# Interact with the frame
+await frame.fill('#username-input', 'John')
+```
+
+```python-sync
+# Get frame using the frame's name attribute
+frame = page.frame('frame-login')
+
+# Get frame using frame's URL
+frame = page.frame(url=r'.*domain.*')
+
+# Get frame using any other selector
+frame_element_handle = page.query_selector('.frame-class')
+frame = frame_element_handle.content_frame()
+
+# Interact with the frame
+frame.fill('#username-input', 'John')
 ```
 
 #### API reference
@@ -144,15 +274,47 @@ Some examples below:
 await page.click('data-test-id=foo');
 ```
 
+```python-async
+# Using data-test-id= selector engine
+await page.click('data-test-id=foo')
+```
+
+```python-sync
+# Using data-test-id= selector engine
+page.click('data-test-id=foo')
+```
+
 ```js
 // CSS and XPath selector engines are automatically detected
 await page.click('div');
 await page.click('//html/body/div');
 ```
 
+```python-async
+# CSS and XPath selector engines are automatically detected
+await page.click('div')
+await page.click('//html/body/div')
+```
+
+```python-sync
+# CSS and XPath selector engines are automatically detected
+page.click('div')
+page.click('//html/body/div')
+```
+
 ```js
 // Find node by text substring
 await page.click('text=Hello w');
+```
+
+```python-async
+# Find node by text substring
+await page.click('text=Hello w')
+```
+
+```python-sync
+# Find node by text substring
+page.click('text=Hello w')
 ```
 
 ```js
@@ -161,9 +323,31 @@ await page.click('css=div');
 await page.click('xpath=//html/body/div');
 ```
 
+```python-async
+# Explicit CSS and XPath notation
+await page.click('css=div')
+await page.click('xpath=//html/body/div')
+```
+
+```python-sync
+# Explicit CSS and XPath notation
+page.click('css=div')
+page.click('xpath=//html/body/div')
+```
+
 ```js
 // Only search light DOM, outside WebComponent shadow DOM:
 await page.click('css:light=div');
+```
+
+```python-async
+# Only search light DOM, outside WebComponent shadow DOM:
+await page.click('css:light=div')
+```
+
+```python-sync
+# Only search light DOM, outside WebComponent shadow DOM:
+page.click('css:light=div')
 ```
 
 Selectors using the same or different engines can be combined using the `>>` separator. For example,
@@ -173,9 +357,29 @@ Selectors using the same or different engines can be combined using the `>>` sep
 await page.click('#free-month-promo >> text=Sign Up');
 ```
 
+```python-async
+# Click an element with text 'Sign Up' inside of a #free-month-promo.
+await page.click('#free-month-promo >> text=Sign Up')
+```
+
+```python-sync
+# Click an element with text 'Sign Up' inside of a #free-month-promo.
+page.click('#free-month-promo >> text=Sign Up')
+```
+
 ```js
 // Capture textContent of a section that contains an element with text 'Selectors'.
 const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.textContent);
+```
+
+```python-async
+# Capture textContent of a section that contains an element with text 'Selectors'.
+section_text = await page.eval_on_selector('*css=section >> text=Selectors', 'e => e.textContent')
+```
+
+```python-sync
+# Capture textContent of a section that contains an element with text 'Selectors'.
+section_text = page.eval_on_selector('*css=section >> text=Selectors', 'e => e.textContent')
 ```
 
 <br/>
@@ -196,10 +400,33 @@ and [actionable](./actionability.md). For example, click will:
 // Playwright waits for #search element to be in the DOM
 await page.fill('#search', 'query');
 ```
+
+```python-async
+# Playwright waits for #search element to be in the DOM
+await page.fill('#search', 'query')
+```
+
+```python-sync
+# Playwright waits for #search element to be in the DOM
+page.fill('#search', 'query')
+```
+
 ```js
 // Playwright waits for element to stop animating
 // and accept clicks.
 await page.click('#search');
+```
+
+```python-async
+# Playwright waits for element to stop animating
+# and accept clicks.
+await page.click('#search')
+```
+
+```python-sync
+# Playwright waits for element to stop animating
+# and accept clicks.
+page.click('#search')
 ```
 
 You can explicitly wait for an element to appear in the DOM or to become visible:
@@ -211,6 +438,20 @@ await page.waitForSelector('#search', { state: 'attached' });
 await page.waitForSelector('#promo');
 ```
 
+```python-async
+# Wait for #search to appear in the DOM.
+await page.wait_for_selector('#search', state='attached')
+# Wait for #promo to become visible, for example with `visibility:visible`.
+await page.wait_for_selector('#promo')
+```
+
+```python-sync
+# Wait for #search to appear in the DOM.
+page.wait_for_selector('#search', state='attached')
+# Wait for #promo to become visible, for example with `visibility:visible`.
+page.wait_for_selector('#promo')
+```
+
 ... or to become hidden or detached
 
 ```js
@@ -218,6 +459,20 @@ await page.waitForSelector('#promo');
 await page.waitForSelector('#details', { state: 'hidden' });
 // Wait for #promo to be removed from the DOM.
 await page.waitForSelector('#promo', { state: 'detached' });
+```
+
+```python-async
+# Wait for #details to become hidden, for example with `display:none`.
+await page.wait_for_selector('#details', state='hidden')
+# Wait for #promo to be removed from the DOM.
+await page.wait_for_selector('#promo', state='detached')
+```
+
+```python-sync
+# Wait for #details to become hidden, for example with `display:none`.
+page.wait_for_selector('#details', state='hidden')
+# Wait for #promo to be removed from the DOM.
+page.wait_for_selector('#promo', state='detached')
 ```
 
 #### API reference
@@ -240,12 +495,35 @@ of the web page and bring results back to the Node.js environment. Browser globa
 const href = await page.evaluate(() => document.location.href);
 ```
 
+```python-async
+href = await page.evaluate('() => document.location.href')
+```
+
+```python-sync
+href = page.evaluate('() => document.location.href')
+```
+
 If the result is a Promise or if the function is asynchronous evaluate will automatically wait until it's resolved:
+
 ```js
 const status = await page.evaluate(async () => {
   const response = await fetch(location.href);
   return response.status;
 });
+```
+
+```python-async
+status = await page.evaluate("""async () => {
+  response = await fetch(location.href)
+  return response.status
+}""")
+```
+
+```python-sync
+status = page.evaluate("""async () => {
+  response = fetch(location.href)
+  return response.status
+}""")
 ```
 
 ## Evaluation Argument
@@ -295,6 +573,90 @@ await page.evaluate(
     { button1, list: [button2], foo: null });
 ```
 
+```python-async
+# A primitive value.
+await page.evaluate('num => num', 42)
+
+# An array.
+await page.evaluate('array => array.length', [1, 2, 3])
+
+# An object.
+await page.evaluate('object => object.foo', { 'foo': 'bar' })
+
+# A single handle.
+button = await page.query_selctor('button')
+await page.evaluate('button => button.textContent', button)
+
+# Alternative notation using elementHandle.evaluate.
+await button.evaluate('(button, from) => button.textContent.substring(from)', 5)
+
+# Object with multiple handles.
+button1 = await page.query_selector('.button1')
+button2 = await page.query_selector('.button2')
+await page.evaluate("""
+    o => o.button1.textContent + o.button2.textContent""",
+    { 'button1': button1, 'button2': button2 })
+
+# Object destructuring works. Note that property names must match
+# between the destructured object and the argument.
+# Also note the required parenthesis.
+await page.evaluate("""
+    ({ button1, button2 }) => button1.textContent + button2.textContent""",
+    { 'button1': button1, 'button2': button2 })
+
+# Array works as well. Arbitrary names can be used for destructuring.
+# Note the required parenthesis.
+await page.evaluate("""
+    ([b1, b2]) => b1.textContent + b2.textContent""",
+    [button1, button2])
+
+# Any non-cyclic mix of serializables and handles works.
+await page.evaluate("""
+    x => x.button1.textContent + x.list[0].textContent + String(x.foo)""",
+    { 'button1': button1, 'list': [button2], 'foo': None })
+```
+
+```python-sync
+# A primitive value.
+page.evaluate('num => num', 42)
+
+# An array.
+page.evaluate('array => array.length', [1, 2, 3])
+
+# An object.
+page.evaluate('object => object.foo', { 'foo': 'bar' })
+
+# A single handle.
+button = page.query_selector('button')
+page.evaluate('button => button.textContent', button)
+
+# Alternative notation using elementHandle.evaluate.
+button.evaluate('(button, from) => button.textContent.substring(from)', 5)
+
+# Object with multiple handles.
+button1 = page.query_selector('.button1')
+button2 = page.query_selector('.button2')
+page.evaluate("""o => o.button1.textContent + o.button2.textContent""",
+    { 'button1': button1, 'button2': button2 })
+
+# Object destructuring works. Note that property names must match
+# between the destructured object and the argument.
+# Also note the required parenthesis.
+page.evaluate("""
+    ({ button1, button2 }) => button1.textContent + button2.textContent""",
+    { 'button1': button1, 'button2': button2 })
+
+# Array works as well. Arbitrary names can be used for destructuring.
+# Note the required parenthesis.
+page.evaluate("""
+    ([b1, b2]) => b1.textContent + b2.textContent""",
+    [button1, button2])
+
+# Any non-cyclic mix of serializables and handles works.
+page.evaluate("""
+    x => x.button1.textContent + x.list[0].textContent + String(x.foo)""",
+    { 'button1': button1, 'list': [button2], 'foo': None })
+```
 
 Right:
 
@@ -306,6 +668,22 @@ const result = await page.evaluate(data => {
 }, data);
 ```
 
+```python-async
+data = { 'text': 'some data', 'value': 1 }
+# Pass |data| as a parameter.
+result = await page.evaluate("""data => {
+  window.myApp.use(data)
+}""", data)
+```
+
+```python-sync
+data = { 'text': 'some data', 'value': 1 }
+# Pass |data| as a parameter.
+result = page.evaluate("""data => {
+  window.myApp.use(data)
+}""", data)
+```
+
 Wrong:
 
 ```js
@@ -314,6 +692,22 @@ const result = await page.evaluate(() => {
   // There is no |data| in the web page.
   window.myApp.use(data);
 });
+```
+
+```python-async
+data = { 'text': 'some data', 'value': 1 }
+result = await page.evaluate("""() => {
+  # There is no |data| in the web page.
+  window.myApp.use(data)
+}""")
+```
+
+```python-sync
+data = { 'text': 'some data', 'value': 1 }
+result = page.evaluate("""() => {
+  # There is no |data| in the web page.
+  window.myApp.use(data)
+}""")
 ```
 
 #### API reference
@@ -350,12 +744,34 @@ const ulElementHandle = await page.$('ul');
 await ulElementHandle.evaluate(ulElement => getComputedStyle(ulElement).getPropertyValue('display'));
 ```
 
+```python-async
+# The first parameter of the elementHandle.evaluate callback is the element handle points to.
+ul_element_handle = await page.query_selector('ul')
+await ul_element_handle.evaluate("ulElement => getComputedStyle(ulElement).getPropertyValue('display')")
+```
+
+```python-sync
+# The first parameter of the elementHandle.evaluate callback is the element handle points to.
+ul_element_handle = page.query_selector('ul')
+ul_element_handle.evaluate("ulElement => getComputedStyle(ulElement).getPropertyValue('display')")
+```
+
 Handles can also be passed as arguments to [`method: Page.evaluate`] function:
 
 ```js
 // In the page API, you can pass handle as a parameter.
 const ulElementHandle = await page.$('ul');
 await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('display'), uiElement);
+```
+
+```python-async
+ul_element_handle = await page.query_selector('ul')
+await page.evaluate("uiElement => getComputedStyle(uiElement).getPropertyValue('display')", uiElement)
+```
+
+```python-sync
+ul_element_handle = page.query_selector('ul')
+page.evaluate("uiElement => getComputedStyle(uiElement).getPropertyValue('display')", uiElement)
 ```
 
 ### Example: JSHandle
@@ -385,6 +801,60 @@ const newLength = await page.evaluate(() => window.myArray.length);
 
 // Release the object when it's no longer needed.
 await myArrayHandle.dispose();
+```
+
+```python-async
+# Create a new array in the page, write a reference to it in
+# window.myArray and get a handle to it.
+my_array_handle = await page.evaluate_handle("""() => {
+  window.myArray = [1]
+  return myArray
+}""")
+
+# Get current length of the array using the handle.
+length = await page.evaluate("""
+  (arg) => arg.myArray.length""",
+  { 'myArray': my_array_handle }
+)
+
+# Add one more element to the array using the handle
+await page.evaluate("(arg) => arg.myArray.push(arg.newElement)", {
+  'myArray': my_array_handle,
+  'newElement': 2
+})
+
+# Get current length of the array using window.myArray reference.
+new_length = await page.evaluate("() => window.myArray.length")
+
+# Release the object when it's no longer needed.
+await my_array_handle.dispose()
+```
+
+```python-sync
+# Create a new array in the page, write a reference to it in
+# window.myArray and get a handle to it.
+my_array_handle = page.evaluate_handle("""() => {
+  window.myArray = [1]
+  return myArray
+}""")
+
+# Get current length of the array using the handle.
+length = page.evaluate("""
+  (arg) => arg.myArray.length""",
+  { 'myArray': my_array_handle }
+)
+
+# Add one more element to the array using the handle
+page.evaluate("(arg) => arg.myArray.push(arg.newElement)", {
+  'myArray': my_array_handle,
+  'newElement': 2
+})
+
+# Get current length of the array using window.myArray reference.
+new_length = page.evaluate("() => window.myArray.length")
+
+# Release the object when it's no longer needed.
+my_array_handle.dispose()
 ```
 
 #### API reference
