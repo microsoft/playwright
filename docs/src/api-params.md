@@ -222,18 +222,14 @@ Logger sink for Playwright logging.
 ## context-option-videospath
 - `videosPath` <[path]>
 
-**NOTE** Use [`option: recordVideo`] instead, it takes precedence over [`option: videosPath`]. Enables video recording for all pages to [`option: videosPath`] directory. If not specified, videos are not recorded. Make sure to await
-[`method: BrowserContext.close`] for videos to be saved.
+**DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-videosize
 - `videoSize` <[Object]>
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
-**NOTE** Use [`option: recordVideo`] instead, it takes precedence over [`option: videoSize`]. Specifies dimensions of the automatically
-recorded video. Can only be used if [`option: videosPath`] is set. If not specified the size will be equal to `viewport`. If
-`viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled
-down if necessary to fit specified size.
+**DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-recordhar
 - `recordHar` <[Object]>
