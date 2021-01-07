@@ -43,6 +43,7 @@ const iPhone = devices['iPhone 6'];
 ```
 
 ## property: Playwright.errors
+* langs: js
 - type: <[Object]>
   - `TimeoutError` <[function]> A class of [TimeoutError].
 

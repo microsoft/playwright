@@ -1,10 +1,7 @@
 # class: Browser
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
-A Browser is created when Playwright connects to a browser instance, either through [`method: BrowserType.launch`] or
-[`method: BrowserType.connect`].
-
-An example of using a [Browser] to create a [Page]:
+A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
 
 ```js
 const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
@@ -17,9 +14,8 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
-See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that [`method:
-BrowserType.connect`] and [`method: BrowserType.launch`] always return a specific browser instance, based on the
-browser being connected to or launched.
+See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
+[`method: BrowserType.launch`] always returns a specific browser instance, based on the browser being launched.
 
 ## event: Browser.disconnected
 
@@ -32,7 +28,7 @@ Emitted when Browser gets disconnected from the browser application. This might 
 In case this browser is obtained using [`method: BrowserType.launch`], closes the browser and all of its pages (if any
 were opened).
 
-In case this browser is obtained using [`method: BrowserType.connect`], clears all created contexts belonging to this
+In case this browser is connected to, clears all created contexts belonging to this
 browser and disconnects from the browser server.
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.

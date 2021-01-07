@@ -31,10 +31,10 @@ class ApiParser {
     let bodyParts = [];
     let paramsPath;
     for (const name of fs.readdirSync(apiDir)) {
-      if (name.startsWith('class-'))
-        bodyParts.push(fs.readFileSync(path.join(apiDir, name)).toString());
       if (name === 'params.md')
         paramsPath = path.join(apiDir, name);
+      else
+        bodyParts.push(fs.readFileSync(path.join(apiDir, name)).toString());
     }
     const body = md.parse(bodyParts.join('\n'));
     const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : null;
@@ -58,21 +58,16 @@ class ApiParser {
    */
   parseClass(node) {
     let extendsName = null;
-    let langs = null;
     const name = node.text.substring('class: '.length);
     for (const member of node.children) {
       if (member.type.startsWith('h'))
         continue;
-      if (member.type === 'li' && member.text.startsWith('extends: [')) {
+      if (member.type === 'li' && member.liType === 'bullet' && member.text.startsWith('extends: [')) {
         extendsName = member.text.substring('extends: ['.length, member.text.indexOf(']'));
         continue;
       }
-      if (member.type === 'li' && member.text.startsWith('langs: ')) {
-        langs = new Set(member.text.substring('langs: '.length).split(',').map(l => l.trim()));
-        continue;
-      }
     }
-    const clazz = new Documentation.Class(langs, name, [], extendsName, extractComments(node));
+    const clazz = new Documentation.Class(extractLangs(node), name, [], extendsName, extractComments(node));
     this.classes.set(clazz.name, clazz);
   }
 
@@ -84,13 +79,9 @@ class ApiParser {
     const match = spec.text.match(/(event|method|property|async method): ([^.]+)\.(.*)/);
     const name = match[3];
     let returnType = null;
-    let langs = null;
-
     for (const item of spec.children || []) {
       if (item.type === 'li' && item.liType === 'default')
         returnType = this.parseType(item);
-      if (item.type === 'li' && item.liType === 'bullet' && item.text.startsWith('langs: '))
-        langs = new Set(item.text.substring('langs: '.length).split(',').map(l => l.trim()));
     }
     if (!returnType)
       returnType = new Documentation.Type('void');
@@ -103,11 +94,11 @@ class ApiParser {
 
     let member;
     if (match[1] === 'event')
-      member = Documentation.Member.createEvent(langs, name, returnType, extractComments(spec));
+      member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, extractComments(spec));
     if (match[1] === 'property')
-      member = Documentation.Member.createProperty(langs, name, returnType, extractComments(spec));
+      member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, extractComments(spec));
     if (match[1] === 'method' || match[1] === 'async method')
-      member = Documentation.Member.createMethod(langs, name, [], returnType, extractComments(spec));
+      member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, extractComments(spec));
     const clazz = this.classes.get(match[2]);
     clazz.membersArray.push(member);
   }
@@ -138,11 +129,11 @@ class ApiParser {
    * @param {MarkdownNode} spec
    */
   parseProperty(spec) {
-    const param = spec.children[0];
+    const param = childrenWithoutProperties(spec)[0];
     const text = param.text;
     const name = text.substring(0, text.indexOf('<')).replace(/\`/g, '').trim();
     const comments = extractComments(spec);
-    return Documentation.Member.createProperty(null, name, this.parseType(param), comments, guessRequired(md.render(comments)));
+    return Documentation.Member.createProperty(extractLangs(spec), name, this.parseType(param), comments, guessRequired(md.render(comments)));
   }
 
   /**
@@ -150,10 +141,10 @@ class ApiParser {
    * @return {Documentation.Type}
    */
   parseType(spec) {
-    const arg = parseArgument(spec.text);
+    const arg = parseVariable(spec.text);
     const properties = [];
     for (const child of spec.children || []) {
-      const { name, text } = parseArgument(child.text);
+      const { name, text } = parseVariable(child.text);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
       properties.push(Documentation.Member.createProperty(null, name, this.parseType(child), comments, guessRequired(text)));
     }
@@ -165,7 +156,7 @@ class ApiParser {
  * @param {string} line 
  * @returns {{ name: string, type: string, text: string }}
  */
-function parseArgument(line) {
+function parseVariable(line) {
   let match = line.match(/^`([^`]+)` (.*)/);
   if (!match)
     match = line.match(/^(returns): (.*)/);
@@ -209,7 +200,8 @@ function applyTemplates(body, params) {
         const template = paramsMap.get(prop.text);
         if (!template)
           throw new Error('Bad template: ' + prop.text);
-        const { name: argName } = parseArgument(template.children[0].text);
+        const children = childrenWithoutProperties(template);
+        const { name: argName } = parseVariable(children[0].text);
         parent.children.push({
           type: node.type,
           text: name + argName,
@@ -279,6 +271,25 @@ function guessRequired(comment) {
  */
 function parseApi(apiDir) {
   return new ApiParser(apiDir).documentation;
+}
+
+/**
+ * @param {MarkdownNode} spec
+ * @returns {?Set<string>}
+ */
+function extractLangs(spec) {
+  for (const child of spec.children)
+  if (child.type === 'li' && child.liType === 'bullet' && child.text.startsWith('langs: '))
+    return new Set(child.text.substring('langs: '.length).split(',').map(l => l.trim()));
+  return null;
+}
+
+/**
+ * @param {MarkdownNode} spec
+ * @returns {MarkdownNode[]}
+ */
+function childrenWithoutProperties(spec) {
+  return spec.children.filter(c => c.liType !== 'bullet' || !c.text.startsWith('langs'));
 }
 
 module.exports = { parseApi };

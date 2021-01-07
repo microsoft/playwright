@@ -95,6 +95,7 @@ await browserContext.addInitScript({
 [`method: Page.addInitScript`] is not defined.
 
 ### param: BrowserContext.addInitScript.script
+* langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
@@ -102,6 +103,7 @@ await browserContext.addInitScript({
 Script to be evaluated in all pages in the browser context.
 
 ### param: BrowserContext.addInitScript.arg
+* langs: js
 - `arg` <[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
