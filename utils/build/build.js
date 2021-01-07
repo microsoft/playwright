@@ -16,7 +16,7 @@
 
 const child_process = require('child_process');
 const path = require('path');
-const fs = require('fs');
+const chokidar = require('chokidar');
 
 const steps = [];
 const onChanges = [];
@@ -30,18 +30,12 @@ function filePath(relative) {
 
 function runWatch() {
   function runOnChanges(paths, nodeFile) {
-    for (const p of [...paths, nodeFile]) {
-      const file = filePath(p);
-      if (!fs.existsSync(file)) {
-        console.error('could not find file', file);
-        process.exit(1);
-      }
-      fs.watchFile(file, callback);
-    }
-    callback();
+    nodeFile = filePath(nodeFile);
     function callback() {
-      child_process.spawnSync('node', [filePath(nodeFile)], { stdio: 'inherit' });
+      child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
     }
+    chokidar.watch([...paths, nodeFile].map(filePath)).on('all', callback);
+    callback();
   }
 
   const spawns = [];
@@ -93,7 +87,7 @@ steps.push({
 onChanges.push({
   committed: false,
   inputs: [
-    'docs/src/api/*',
+    'docs/src/api/',
   ],
   script: 'utils/doclint/generateApiJson.js',
 });
@@ -111,7 +105,7 @@ onChanges.push({
 onChanges.push({
   committed: false,
   inputs: [
-    'docs/src/api/*',
+    'docs/src/api/',
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/exported.json',
     'src/server/chromium/protocol.ts',
