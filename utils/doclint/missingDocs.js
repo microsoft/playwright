@@ -17,17 +17,13 @@
 
 const ts = require('typescript');
 const EventEmitter = require('events');
-const Documentation = require('./Documentation');
+const Documentation = require('./documentation');
 
 /** @typedef {import('../../markdown').MarkdownNode} MarkdownNode */
 
-/**
- * @return {!Array<string>}
- */
-module.exports = function lint(outline, jsSources, apiFileName) {
+module.exports = function lint(documentation, jsSources, apiFileName) {
   const errors = [];
-  const documentation = outline.documentation;
-  outline.copyDocsFromSuperclasses(errors);
+  documentation.copyDocsFromSuperclasses(errors);
   const apiMethods = listMethods(jsSources, apiFileName);
   for (const [className, methods] of apiMethods) {
     const docClass = documentation.classes.get(className);

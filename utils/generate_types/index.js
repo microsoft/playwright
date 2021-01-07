@@ -18,12 +18,12 @@
 const path = require('path');
 const os = require('os');
 const {devices} = require('../..');
-const Documentation = require('../doclint/Documentation');
+const Documentation = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const {parseOverrides} = require('./parseOverrides');
 const exported = require('./exported.json');
-const { MDOutline } = require('../doclint/MDBuilder');
+const { parseApi } = require('../doclint/api_parser');
 
 const objectDefinitions = [];
 const handledMethods = new Set();
@@ -37,13 +37,14 @@ let hadChanges = false;
     fs.mkdirSync(typesDir)
   writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts'), 'utf8'));
   writeFile(path.join(typesDir, 'trace.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'trace', 'traceTypes.ts'), 'utf8'));
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
-  outline.copyDocsFromSuperclasses([]);
+  documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  documentation.filterForLanguage('js');
+  documentation.copyDocsFromSuperclasses([]);
   const createMemberLink = (text) => {
     const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
     return `[${text}](https://github.com/microsoft/playwright/blob/master/docs/api.md#${anchor})`;
   };
-  outline.setLinkRenderer(item => {
+  documentation.setLinkRenderer(item => {
     const { clazz, member, param, option } = item;
     if (param)
       return `\`${param}\``;
@@ -59,8 +60,7 @@ let hadChanges = false;
       return createMemberLink(`${member.clazz.varName}.${member.name}`);
     throw new Error('Unknown member kind ' + member.kind);
   });
-  outline.generateSourceCodeComments();
-  documentation = outline.documentation;
+  documentation.generateSourceCodeComments();
 
   // Root module types are overridden.
   const playwrightClass = documentation.classes.get('Playwright');
