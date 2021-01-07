@@ -38,7 +38,7 @@ run().catch(e => {
 });;
 
 async function run() {
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api-body.md'), path.join(PROJECT_DIR, 'docs', 'src', 'api-params.md'));
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   // This validates member links.
   outline.setLinkRenderer(() => undefined);
 

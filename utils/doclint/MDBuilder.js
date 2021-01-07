@@ -17,6 +17,7 @@
 // @ts-check
 
 const fs = require('fs');
+const path = require('path');
 const md = require('../markdown');
 const Documentation = require('./Documentation');
 
@@ -33,11 +34,18 @@ const Documentation = require('./Documentation');
 
 class MDOutline {
   /**
-   * @param {string} bodyPath
-   * @param {string=} paramsPath
+   * @param {string} apiDir
    */
-  constructor(bodyPath, paramsPath) {
-    const body = md.parse(fs.readFileSync(bodyPath).toString());
+  constructor(apiDir) {
+    let bodyParts = [];
+    let paramsPath;
+    for (const name of fs.readdirSync(apiDir)) {
+      if (name.startsWith('class-'))
+        bodyParts.push(fs.readFileSync(path.join(apiDir, name)).toString());
+      if (name === 'params.md')
+        paramsPath = path.join(apiDir, name);
+    }
+    const body = md.parse(bodyParts.join('\n'));
     const params = paramsPath ? md.parse(fs.readFileSync(paramsPath).toString()) : null;
     const api = params ? applyTemplates(body, params) : body;
     this.classesArray = /** @type {Documentation.Class[]} */ [];
