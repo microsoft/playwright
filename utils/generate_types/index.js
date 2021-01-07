@@ -37,7 +37,7 @@ let hadChanges = false;
     fs.mkdirSync(typesDir)
   writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts'), 'utf8'));
   writeFile(path.join(typesDir, 'trace.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'trace', 'traceTypes.ts'), 'utf8'));
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api-body.md'), path.join(PROJECT_DIR, 'docs', 'src', 'api-params.md'));
+  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   outline.copyDocsFromSuperclasses([]);
   const createMemberLink = (text) => {
     const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');

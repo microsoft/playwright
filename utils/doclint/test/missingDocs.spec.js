@@ -24,7 +24,7 @@ const { MDOutline } = require('../MDBuilder');
 const { test, expect } = folio;
 
 test('missing docs', async ({}) => {
-  const outline = new MDOutline(path.join(__dirname, 'test-api.md'));
+  const outline = new MDOutline(path.join(__dirname));
   const tsSources = [
     path.join(__dirname, 'test-api.ts'),
     path.join(__dirname, 'test-api-class.ts'),

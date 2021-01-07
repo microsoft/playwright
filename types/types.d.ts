@@ -7308,1207 +7308,6 @@ export interface Browser extends EventEmitter {
   version(): string;
 }
 
-/**
- * [ConsoleMessage] objects are dispatched by page via the
- * [page.on('console')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonconsole) event.
- */
-export interface ConsoleMessage {
-  args(): Array<JSHandle>;
-
-  location(): {
-    /**
-     * URL of the resource.
-     */
-    url: string;
-
-    /**
-     * 0-based line number in the resource.
-     */
-    lineNumber: number;
-
-    /**
-     * 0-based column number in the resource.
-     */
-    columnNumber: number;
-  };
-
-  text(): string;
-
-  /**
-   * One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
-   * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,
-   * `'count'`, `'timeEnd'`.
-   */
-  type(): string;
-}
-
-/**
- * [Dialog] objects are dispatched by page via the
- * [page.on('dialog')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
- * 
- * An example of using `Dialog` class:
- * 
- * ```js
- * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
- * 
- * (async () => {
- *   const browser = await chromium.launch();
- *   const page = await browser.newPage();
- *   page.on('dialog', async dialog => {
- *     console.log(dialog.message());
- *     await dialog.dismiss();
- *     await browser.close();
- *   });
- *   page.evaluate(() => alert('1'));
- * })();
- * ```
- * 
- */
-export interface Dialog {
-  /**
-   * Returns when the dialog has been accepted.
-   * @param promptText A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt. Optional.
-   */
-  accept(promptText?: string): Promise<void>;
-
-  /**
-   * If dialog is prompt, returns default prompt value. Otherwise, returns empty string.
-   */
-  defaultValue(): string;
-
-  /**
-   * Returns when the dialog has been dismissed.
-   */
-  dismiss(): Promise<void>;
-
-  /**
-   * A message displayed in the dialog.
-   */
-  message(): string;
-
-  /**
-   * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
-   */
-  type(): string;
-}
-
-/**
- * [Download] objects are dispatched by page via the
- * [page.on('download')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondownload) event.
- * 
- * All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
- * files are deleted when the browser closes.
- * 
- * Download event is emitted once the download starts. Download path becomes available once download completes:
- * 
- * ```js
- * const [ download ] = await Promise.all([
- *   page.waitForEvent('download'), // wait for download to start
- *   page.click('a')
- * ]);
- * // wait for download to complete
- * const path = await download.path();
- * ...
- * ```
- * 
- * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
- * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
- * download is not performed and user has no access to the downloaded files.
- */
-export interface Download {
-  /**
-   * Returns readable stream for current download or `null` if download failed.
-   */
-  createReadStream(): Promise<null|Readable>;
-
-  /**
-   * Deletes the downloaded file.
-   */
-  delete(): Promise<void>;
-
-  /**
-   * Returns download error if any.
-   */
-  failure(): Promise<null|string>;
-
-  /**
-   * Returns path to the downloaded file in case of successful download.
-   */
-  path(): Promise<null|string>;
-
-  /**
-   * Saves the download to a user-specified path.
-   * @param path Path where the download should be saved.
-   */
-  saveAs(path: string): Promise<void>;
-
-  /**
-   * Returns suggested filename for this download. It is typically computed by the browser from the
-   * [`Content-Disposition`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition) response header
-   * or the `download` attribute. See the spec on [whatwg](https://html.spec.whatwg.org/#downloading-resources). Different
-   * browsers can use different logic for computing it.
-   */
-  suggestedFilename(): string;
-
-  /**
-   * Returns downloaded url.
-   */
-  url(): string;
-}
-
-/**
- * When browser context is created with the `videosPath` option, each page has a video object associated with it.
- * 
- * ```js
- * console.log(await page.video().path());
- * ```
- * 
- */
-export interface Video {
-  /**
-   * Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
-   * upon closing the browser context.
-   */
-  path(): Promise<string>;
-}
-
-/**
- * [FileChooser] objects are dispatched by the page in the
- * [page.on('filechooser')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonfilechooser) event.
- * 
- * ```js
- * page.on('filechooser', async (fileChooser) => {
- *   await fileChooser.setFiles('/tmp/myfile.pdf');
- * });
- * ```
- * 
- */
-export interface FileChooser {
-  /**
-   * Returns input element associated with this file chooser.
-   */
-  element(): ElementHandle;
-
-  /**
-   * Returns whether this file chooser accepts multiple files.
-   */
-  isMultiple(): boolean;
-
-  /**
-   * Returns page this file chooser belongs to.
-   */
-  page(): Page;
-
-  /**
-   * Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then
-   * they are resolved relative to the the current working directory. For empty array, clears the selected files.
-   * @param files 
-   * @param options 
-   */
-  setFiles(files: string|Array<string>|{
-    /**
-     * [File] name **required**
-     */
-    name: string;
-
-    /**
-     * [File] type **required**
-     */
-    mimeType: string;
-
-    /**
-     * File content **required**
-     */
-    buffer: Buffer;
-  }|Array<{
-    /**
-     * [File] name **required**
-     */
-    name: string;
-
-    /**
-     * [File] type **required**
-     */
-    mimeType: string;
-
-    /**
-     * File content **required**
-     */
-    buffer: Buffer;
-  }>, options?: {
-    /**
-     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
-     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
-     * inaccessible pages. Defaults to `false`.
-     */
-    noWaitAfter?: boolean;
-
-    /**
-     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
-     * using the
-     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
-     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
-     * methods.
-     */
-    timeout?: number;
-  }): Promise<void>;
-}
-
-/**
- * Keyboard provides an api for managing a virtual keyboard. The high level api is
- * [keyboard.type(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardtype), which takes raw
- * characters and generates proper keydown, keypress/input, and keyup events on your page.
- * 
- * For finer control, you can use
- * [keyboard.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddown),
- * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup), and
- * [keyboard.insertText(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardinserttext) to manually
- * fire events as if they were generated from a real keyboard.
- * 
- * An example of holding down `Shift` in order to select and delete some text:
- * 
- * ```js
- * await page.keyboard.type('Hello World!');
- * await page.keyboard.press('ArrowLeft');
- * 
- * await page.keyboard.down('Shift');
- * for (let i = 0; i < ' World'.length; i++)
- *   await page.keyboard.press('ArrowLeft');
- * await page.keyboard.up('Shift');
- * 
- * await page.keyboard.press('Backspace');
- * // Result text will end up saying 'Hello!'
- * ```
- * 
- * An example of pressing uppercase `A`
- * 
- * ```js
- * await page.keyboard.press('Shift+KeyA');
- * // or
- * await page.keyboard.press('Shift+A');
- * ```
- * 
- * An example to trigger select-all with the keyboard
- * 
- * ```js
- * // on Windows and Linux
- * await page.keyboard.press('Control+A');
- * // on macOS
- * await page.keyboard.press('Meta+A');
- * ```
- * 
- */
-export interface Keyboard {
-  /**
-   * Dispatches a `keydown` event.
-   * 
-   * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
-   * value or a single character to generate the text for. A superset of the `key` values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   * 
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * 
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
-   * 
-   * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
-   * 
-   * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
-   * texts.
-   * 
-   * If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier
-   * active. To release the modifier key, use
-   * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
-   * 
-   * After the key is pressed once, subsequent calls to
-   * [keyboard.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddown) will have
-   * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
-   * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
-   * 
-   * > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   */
-  down(key: string): Promise<void>;
-
-  /**
-   * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
-   * 
-   * ```js
-   * page.keyboard.insertText('嗨');
-   * ```
-   * 
-   * > **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
-   * @param text Sets input to the specified text value.
-   */
-  insertText(text: string): Promise<void>;
-
-  /**
-   * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
-   * value or a single character to generate the text for. A superset of the `key` values can be found
-   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
-   * 
-   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
-   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
-   * 
-   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
-   * 
-   * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
-   * 
-   * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
-   * texts.
-   * 
-   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
-   * modifier, modifier is pressed and being held while the subsequent key is being pressed.
-   * 
-   * ```js
-   * const page = await browser.newPage();
-   * await page.goto('https://keycode.info');
-   * await page.keyboard.press('A');
-   * await page.screenshot({ path: 'A.png' });
-   * await page.keyboard.press('ArrowLeft');
-   * await page.screenshot({ path: 'ArrowLeft.png' });
-   * await page.keyboard.press('Shift+O');
-   * await page.screenshot({ path: 'O.png' });
-   * await browser.close();
-   * ```
-   * 
-   * Shortcut for [keyboard.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddown) and
-   * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   * @param options 
-   */
-  press(key: string, options?: {
-    /**
-     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
-   * 
-   * To press a special key, like `Control` or `ArrowDown`, use
-   * [keyboard.press(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpress).
-   * 
-   * ```js
-   * await page.keyboard.type('Hello'); // Types instantly
-   * await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
-   * ```
-   * 
-   * > **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
-   * @param text A text to type into a focused element.
-   * @param options 
-   */
-  type(text: string, options?: {
-    /**
-     * Time to wait between key presses in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * Dispatches a `keyup` event.
-   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
-   */
-  up(key: string): Promise<void>;
-}
-
-/**
- * The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
- * 
- * Every `page` object has its own Mouse, accessible with
- * [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse).
- * 
- * ```js
- * // Using ‘page.mouse’ to trace a 100x100 square.
- * await page.mouse.move(0, 0);
- * await page.mouse.down();
- * await page.mouse.move(0, 100);
- * await page.mouse.move(100, 100);
- * await page.mouse.move(100, 0);
- * await page.mouse.move(0, 0);
- * await page.mouse.up();
- * ```
- * 
- */
-export interface Mouse {
-  /**
-   * Shortcut for [mouse.move(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemove),
-   * [mouse.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedown),
-   * [mouse.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseup).
-   * @param x 
-   * @param y 
-   * @param options 
-   */
-  click(x: number, y: number, options?: {
-    /**
-     * Defaults to `left`.
-     */
-    button?: "left"|"right"|"middle";
-
-    /**
-     * defaults to 1. See [UIEvent.detail].
-     */
-    clickCount?: number;
-
-    /**
-     * Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * Shortcut for [mouse.move(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemove),
-   * [mouse.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedown),
-   * [mouse.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseup),
-   * [mouse.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedown) and
-   * [mouse.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseup).
-   * @param x 
-   * @param y 
-   * @param options 
-   */
-  dblclick(x: number, y: number, options?: {
-    /**
-     * Defaults to `left`.
-     */
-    button?: "left"|"right"|"middle";
-
-    /**
-     * Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
-     */
-    delay?: number;
-  }): Promise<void>;
-
-  /**
-   * Dispatches a `mousedown` event.
-   * @param options 
-   */
-  down(options?: {
-    /**
-     * Defaults to `left`.
-     */
-    button?: "left"|"right"|"middle";
-
-    /**
-     * defaults to 1. See [UIEvent.detail].
-     */
-    clickCount?: number;
-  }): Promise<void>;
-
-  /**
-   * Dispatches a `mousemove` event.
-   * @param x 
-   * @param y 
-   * @param options 
-   */
-  move(x: number, y: number, options?: {
-    /**
-     * defaults to 1. Sends intermediate `mousemove` events.
-     */
-    steps?: number;
-  }): Promise<void>;
-
-  /**
-   * Dispatches a `mouseup` event.
-   * @param options 
-   */
-  up(options?: {
-    /**
-     * Defaults to `left`.
-     */
-    button?: "left"|"right"|"middle";
-
-    /**
-     * defaults to 1. See [UIEvent.detail].
-     */
-    clickCount?: number;
-  }): Promise<void>;
-}
-
-/**
- * The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the
- * touchscreen can only be used in browser contexts that have been intialized with `hasTouch` set to true.
- */
-export interface Touchscreen {
-  /**
-   * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
-   * @param x 
-   * @param y 
-   */
-  tap(x: number, y: number): Promise<void>;
-}
-
-/**
- * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
- * - [page.on('request')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequest) emitted when the
- *   request is issued by the page.
- * - [page.on('response')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonresponse) emitted
- *   when/if the response status and headers are received for the request.
- * - [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
- *   emitted when the response body is downloaded and the request is complete.
- * 
- * If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
- * the  [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed)
- * event is emitted.
- * 
- * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
- * will complete with `'requestfinished'` event.
- * 
- * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
- * request is  issued to a redirected url.
- */
-export interface Request {
-  /**
-   * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
-   * 
-   * Example of logging of all the failed requests:
-   * 
-   * ```js
-   * page.on('requestfailed', request => {
-   *   console.log(request.url() + ' ' + request.failure().errorText);
-   * });
-   * ```
-   * 
-   */
-  failure(): null|{
-    /**
-     * Human-readable error message, e.g. `'net::ERR_FAILED'`.
-     */
-    errorText: string;
-  };
-
-  /**
-   * Returns the [Frame] that initiated this request.
-   */
-  frame(): Frame;
-
-  /**
-   * An object with HTTP headers associated with the request. All header names are lower-case.
-   */
-  headers(): { [key: string]: string; };
-
-  /**
-   * Whether this request is driving frame's navigation.
-   */
-  isNavigationRequest(): boolean;
-
-  /**
-   * Request's method (GET, POST, etc.)
-   */
-  method(): string;
-
-  /**
-   * Request's post body, if any.
-   */
-  postData(): null|string;
-
-  /**
-   * Request's post body in a binary form, if any.
-   */
-  postDataBuffer(): null|Buffer;
-
-  /**
-   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-   * 
-   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-   * Otherwise it will be parsed as JSON.
-   */
-  postDataJSON(): null|any;
-
-  /**
-   * Request that was redirected by the server to this one, if any.
-   * 
-   * When the server responds with a redirect, Playwright creates a new [Request] object. The two requests are connected by
-   * `redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to
-   * construct the whole redirect chain by repeatedly calling `redirectedFrom()`.
-   * 
-   * For example, if the website `http://example.com` redirects to `https://example.com`:
-   * 
-   * ```js
-   * const response = await page.goto('http://example.com');
-   * console.log(response.request().redirectedFrom().url()); // 'http://example.com'
-   * ```
-   * 
-   * If the website `https://google.com` has no redirects:
-   * 
-   * ```js
-   * const response = await page.goto('https://google.com');
-   * console.log(response.request().redirectedFrom()); // null
-   * ```
-   * 
-   */
-  redirectedFrom(): null|Request;
-
-  /**
-   * New request issued by the browser if the server responded with redirect.
-   * 
-   * This method is the opposite of
-   * [request.redirectedFrom(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#requestredirectedfrom):
-   * 
-   * ```js
-   * console.log(request.redirectedFrom().redirectedTo() === request); // true
-   * ```
-   * 
-   */
-  redirectedTo(): null|Request;
-
-  /**
-   * Contains the request's resource type as it was perceived by the rendering engine. ResourceType will be one of the
-   * following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`,
-   * `websocket`, `manifest`, `other`.
-   */
-  resourceType(): string;
-
-  /**
-   * Returns the matching [Response] object, or `null` if the response was not received due to error.
-   */
-  response(): Promise<null|Response>;
-
-  /**
-   * Returns resource timing information for given request. Most of the timing values become available upon the response,
-   * `responseEnd` becomes available when request finishes. Find more information at
-   * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
-   * 
-   * ```js
-   * const [request] = await Promise.all([
-   *   page.waitForEvent('requestfinished'),
-   *   page.goto(httpsServer.EMPTY_PAGE)
-   * ]);
-   * console.log(request.timing());
-   * ```
-   * 
-   */
-  timing(): {
-    /**
-     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
-     */
-    startTime: number;
-
-    /**
-     * Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds
-     * relative to `startTime`, -1 if not available.
-     */
-    domainLookupStart: number;
-
-    /**
-     * Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds
-     * relative to `startTime`, -1 if not available.
-     */
-    domainLookupEnd: number;
-
-    /**
-     * Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The
-     * value is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    connectStart: number;
-
-    /**
-     * Time immediately before the browser starts the handshake process to secure the current connection. The value is given in
-     * milliseconds relative to `startTime`, -1 if not available.
-     */
-    secureConnectionStart: number;
-
-    /**
-     * Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The
-     * value is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    connectEnd: number;
-
-    /**
-     * Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value
-     * is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    requestStart: number;
-
-    /**
-     * Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value
-     * is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    responseStart: number;
-
-    /**
-     * Time immediately after the browser receives the last byte of the resource or immediately before the transport connection
-     * is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not available.
-     */
-    responseEnd: number;
-  };
-
-  /**
-   * URL of the request.
-   */
-  url(): string;
-}
-
-/**
- * [Response] class represents responses which are received by page.
- */
-export interface Response {
-  /**
-   * Returns the buffer with response body.
-   */
-  body(): Promise<Buffer>;
-
-  /**
-   * Waits for this response to finish, returns failure error if request failed.
-   */
-  finished(): Promise<null|Error>;
-
-  /**
-   * Returns the [Frame] that initiated this response.
-   */
-  frame(): Frame;
-
-  /**
-   * Returns the object with HTTP headers associated with the response. All header names are lower-case.
-   */
-  headers(): { [key: string]: string; };
-
-  /**
-   * Returns the JSON representation of response body.
-   * 
-   * This method will throw if the response body is not parsable via `JSON.parse`.
-   */
-  json(): Promise<Serializable>;
-
-  /**
-   * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
-   */
-  ok(): boolean;
-
-  /**
-   * Returns the matching [Request] object.
-   */
-  request(): Request;
-
-  /**
-   * Contains the status code of the response (e.g., 200 for a success).
-   */
-  status(): number;
-
-  /**
-   * Contains the status text of the response (e.g. usually an "OK" for a success).
-   */
-  statusText(): string;
-
-  /**
-   * Returns the text representation of response body.
-   */
-  text(): Promise<string>;
-
-  /**
-   * Contains the URL of the response.
-   */
-  url(): string;
-}
-
-/**
- * Selectors can be used to install custom selector engines. See
- * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more information.
- */
-export interface Selectors {
-  /**
-   * An example of registering selector engine that queries elements based on a tag name:
-   * 
-   * ```js
-   * const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
-   * 
-   * (async () => {
-   *   // Must be a function that evaluates to a selector engine instance.
-   *   const createTagNameEngine = () => ({
-   *     // Returns the first element matching given selector in the root's subtree.
-   *     query(root, selector) {
-   *       return root.querySelector(selector);
-   *     },
-   * 
-   *     // Returns all elements matching given selector in the root's subtree.
-   *     queryAll(root, selector) {
-   *       return Array.from(root.querySelectorAll(selector));
-   *     }
-   *   });
-   * 
-   *   // Register the engine. Selectors will be prefixed with "tag=".
-   *   await selectors.register('tag', createTagNameEngine);
-   * 
-   *   const browser = await firefox.launch();
-   *   const page = await browser.newPage();
-   *   await page.setContent(`<div><button>Click me</button></div>`);
-   * 
-   *   // Use the selector prefixed with its name.
-   *   const button = await page.$('tag=button');
-   *   // Combine it with other selector engines.
-   *   await page.click('tag=div >> text="Click me"');
-   *   // Can use it in any methods supporting selectors.
-   *   const buttonCount = await page.$$eval('tag=button', buttons => buttons.length);
-   * 
-   *   await browser.close();
-   * })();
-   * ```
-   * 
-   * @param name Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
-   * @param script Script that evaluates to a selector engine instance.
-   * @param options 
-   */
-  register(name: string, script: Function|string|{
-    /**
-     * Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working
-     * directory. Optional.
-     */
-    path?: string;
-
-    /**
-     * Raw script content. Optional.
-     */
-    content?: string;
-  }, options?: {
-    /**
-     * Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but
-     * not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content script is not
-     * guaranteed when this engine is used together with other registered engines.
-     */
-    contentScript?: boolean;
-  }): Promise<void>;
-}
-
-/**
- * Whenever a network route is set up with
- * [page.route(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageroute) or
- * [browserContext.route(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextroute), the
- * `Route` object allows to handle the route.
- */
-export interface Route {
-  /**
-   * Aborts the route's request.
-   * @param errorCode Optional error code. Defaults to `failed`, could be one of the following: - `'aborted'` - An operation was aborted (due to user action)
-   * - `'accessdenied'` - Permission to access a resource, other than the network, was denied
-   * - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified
-   *   host or network.
-   * - `'blockedbyclient'` - The client chose to block the request.
-   * - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not
-   *   met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
-   * - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
-   * - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
-   * - `'connectionfailed'` - A connection attempt failed.
-   * - `'connectionrefused'` - A connection attempt was refused.
-   * - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
-   * - `'internetdisconnected'` - The Internet connection has been lost.
-   * - `'namenotresolved'` - The host name could not be resolved.
-   * - `'timedout'` - An operation timed out.
-   * - `'failed'` - A generic failure occurred.
-   */
-  abort(errorCode?: string): Promise<void>;
-
-  /**
-   * Continues route's request with optional overrides.
-   * 
-   * ```js
-   * await page.route('**\/*', (route, request) => {
-   *   // Override headers
-   *   const headers = {
-   *     ...request.headers(),
-   *     foo: 'bar', // set "foo" header
-   *     origin: undefined, // remove "origin" header
-   *   };
-   *   route.continue({headers});
-   * });
-   * ```
-   * 
-   * @param overrides Optional request overrides, can override following properties:
-   */
-  continue(overrides?: {
-    /**
-     * If set changes the request URL. New URL must have same protocol as original one.
-     */
-    url?: string;
-
-    /**
-     * If set changes the request method (e.g. GET or POST)
-     */
-    method?: string;
-
-    /**
-     * If set changes the post data of request
-     */
-    postData?: string|Buffer;
-
-    /**
-     * If set changes the request HTTP headers. Header values will be converted to a string.
-     */
-    headers?: { [key: string]: string; };
-  }): Promise<void>;
-
-  /**
-   * Fulfills route's request with given response.
-   * 
-   * An example of fulfilling all requests with 404 responses:
-   * 
-   * ```js
-   * await page.route('**\/*', route => {
-   *   route.fulfill({
-   *     status: 404,
-   *     contentType: 'text/plain',
-   *     body: 'Not Found!'
-   *   });
-   * });
-   * ```
-   * 
-   * An example of serving static file:
-   * 
-   * ```js
-   * await page.route('**\/xhr_endpoint', route => route.fulfill({ path: 'mock_data.json' }));
-   * ```
-   * 
-   * @param response Response that will fulfill this route's request.
-   */
-  fulfill(response: {
-    /**
-     * Response status code, defaults to `200`.
-     */
-    status?: number;
-
-    /**
-     * Optional response headers. Header values will be converted to a string.
-     */
-    headers?: { [key: string]: string; };
-
-    /**
-     * If set, equals to setting `Content-Type` response header.
-     */
-    contentType?: string;
-
-    /**
-     * Optional response body.
-     */
-    body?: string|Buffer;
-
-    /**
-     * Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path,
-     * then it is resolved relative to the current working directory.
-     */
-    path?: string;
-  }): Promise<void>;
-
-  /**
-   * A request to be routed.
-   */
-  request(): Request;
-}
-
-/**
- * The [WebSocket] class represents websocket connections in the page.
- */
-export interface WebSocket {
-  /**
-   * Fired when the websocket closes.
-   */
-  on(event: 'close', listener: () => void): this;
-
-  /**
-   * Fired when the websocket recieves a frame.
-   */
-  on(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket sends a frame.
-   */
-  on(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket has an error.
-   */
-  on(event: 'socketerror', listener: (string: String) => void): this;
-
-  /**
-   * Fired when the websocket closes.
-   */
-  once(event: 'close', listener: () => void): this;
-
-  /**
-   * Fired when the websocket recieves a frame.
-   */
-  once(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket sends a frame.
-   */
-  once(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket has an error.
-   */
-  once(event: 'socketerror', listener: (string: String) => void): this;
-
-  /**
-   * Fired when the websocket closes.
-   */
-  addListener(event: 'close', listener: () => void): this;
-
-  /**
-   * Fired when the websocket recieves a frame.
-   */
-  addListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket sends a frame.
-   */
-  addListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket has an error.
-   */
-  addListener(event: 'socketerror', listener: (string: String) => void): this;
-
-  /**
-   * Fired when the websocket closes.
-   */
-  removeListener(event: 'close', listener: () => void): this;
-
-  /**
-   * Fired when the websocket recieves a frame.
-   */
-  removeListener(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket sends a frame.
-   */
-  removeListener(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket has an error.
-   */
-  removeListener(event: 'socketerror', listener: (string: String) => void): this;
-
-  /**
-   * Fired when the websocket closes.
-   */
-  off(event: 'close', listener: () => void): this;
-
-  /**
-   * Fired when the websocket recieves a frame.
-   */
-  off(event: 'framereceived', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket sends a frame.
-   */
-  off(event: 'framesent', listener: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => void): this;
-
-  /**
-   * Fired when the websocket has an error.
-   */
-  off(event: 'socketerror', listener: (string: String) => void): this;
-
-  /**
-   * Indicates that the web socket has been closed.
-   */
-  isClosed(): boolean;
-
-  /**
-   * Contains the URL of the WebSocket.
-   */
-  url(): string;
-
-  /**
-   * Fired when the websocket closes.
-   */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
-
-  /**
-   * Fired when the websocket recieves a frame.
-   */
-  waitForEvent(event: 'framereceived', optionsOrPredicate?: { predicate?: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean, timeout?: number } | ((data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean)): Promise<{
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}>;
-
-  /**
-   * Fired when the websocket sends a frame.
-   */
-  waitForEvent(event: 'framesent', optionsOrPredicate?: { predicate?: (data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean, timeout?: number } | ((data: {
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}) => boolean)): Promise<{
-  /**
-   * frame payload
-   */
-  payload: string|Buffer;
-}>;
-
-  /**
-   * Fired when the websocket has an error.
-   */
-  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: String) => boolean, timeout?: number } | ((string: String) => boolean)): Promise<String>;
-
-}
-
 export interface BrowserServer {
   /**
    * Emitted when the browser server closes.
@@ -8558,47 +7357,6 @@ export interface BrowserServer {
    * establish connection to the browser.
    */
   wsEndpoint(): string;
-}
-
-/**
- * Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
- * 
- * ```js
- * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
- * 
- * (async () => {
- *   const browser = await chromium.launch({
- *     logger: {
- *       isEnabled: (name, severity) => name === 'browser',
- *       log: (name, severity, message, args) => console.log(`${name} ${message}`)
- *     }
- *   });
- *   ...
- * })();
- * ```
- * 
- */
-export interface Logger {
-  /**
-   * Determines whether sink is interested in the logger with the given name and severity.
-   * @param name logger name
-   * @param severity 
-   */
-  isEnabled(name: string, severity: "verbose"|"info"|"warning"|"error"): boolean;
-
-  /**
-   * @param name logger name
-   * @param severity 
-   * @param message log message format
-   * @param args message arguments
-   * @param hints optional formatting hints
-   */
-  log(name: string, severity: "verbose"|"info"|"warning"|"error", message: string|Error, args: Array<Object>, hints: {
-    /**
-     * Optional preferred logger color.
-     */
-    color?: string;
-  }): void;
 }
 
 /**
@@ -9032,6 +7790,236 @@ export interface ChromiumCoverage {
 }
 
 /**
+ * [ConsoleMessage] objects are dispatched by page via the
+ * [page.on('console')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonconsole) event.
+ */
+export interface ConsoleMessage {
+  args(): Array<JSHandle>;
+
+  location(): {
+    /**
+     * URL of the resource.
+     */
+    url: string;
+
+    /**
+     * 0-based line number in the resource.
+     */
+    lineNumber: number;
+
+    /**
+     * 0-based column number in the resource.
+     */
+    columnNumber: number;
+  };
+
+  text(): string;
+
+  /**
+   * One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
+   * `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,
+   * `'count'`, `'timeEnd'`.
+   */
+  type(): string;
+}
+
+/**
+ * [Dialog] objects are dispatched by page via the
+ * [page.on('dialog')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
+ * 
+ * An example of using `Dialog` class:
+ * 
+ * ```js
+ * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+ * 
+ * (async () => {
+ *   const browser = await chromium.launch();
+ *   const page = await browser.newPage();
+ *   page.on('dialog', async dialog => {
+ *     console.log(dialog.message());
+ *     await dialog.dismiss();
+ *     await browser.close();
+ *   });
+ *   page.evaluate(() => alert('1'));
+ * })();
+ * ```
+ * 
+ */
+export interface Dialog {
+  /**
+   * Returns when the dialog has been accepted.
+   * @param promptText A text to enter in prompt. Does not cause any effects if the dialog's `type` is not prompt. Optional.
+   */
+  accept(promptText?: string): Promise<void>;
+
+  /**
+   * If dialog is prompt, returns default prompt value. Otherwise, returns empty string.
+   */
+  defaultValue(): string;
+
+  /**
+   * Returns when the dialog has been dismissed.
+   */
+  dismiss(): Promise<void>;
+
+  /**
+   * A message displayed in the dialog.
+   */
+  message(): string;
+
+  /**
+   * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
+   */
+  type(): string;
+}
+
+/**
+ * [Download] objects are dispatched by page via the
+ * [page.on('download')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondownload) event.
+ * 
+ * All the downloaded files belonging to the browser context are deleted when the browser context is closed. All downloaded
+ * files are deleted when the browser closes.
+ * 
+ * Download event is emitted once the download starts. Download path becomes available once download completes:
+ * 
+ * ```js
+ * const [ download ] = await Promise.all([
+ *   page.waitForEvent('download'), // wait for download to start
+ *   page.click('a')
+ * ]);
+ * // wait for download to complete
+ * const path = await download.path();
+ * ...
+ * ```
+ * 
+ * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+ * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
+ * download is not performed and user has no access to the downloaded files.
+ */
+export interface Download {
+  /**
+   * Returns readable stream for current download or `null` if download failed.
+   */
+  createReadStream(): Promise<null|Readable>;
+
+  /**
+   * Deletes the downloaded file.
+   */
+  delete(): Promise<void>;
+
+  /**
+   * Returns download error if any.
+   */
+  failure(): Promise<null|string>;
+
+  /**
+   * Returns path to the downloaded file in case of successful download.
+   */
+  path(): Promise<null|string>;
+
+  /**
+   * Saves the download to a user-specified path.
+   * @param path Path where the download should be saved.
+   */
+  saveAs(path: string): Promise<void>;
+
+  /**
+   * Returns suggested filename for this download. It is typically computed by the browser from the
+   * [`Content-Disposition`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Disposition) response header
+   * or the `download` attribute. See the spec on [whatwg](https://html.spec.whatwg.org/#downloading-resources). Different
+   * browsers can use different logic for computing it.
+   */
+  suggestedFilename(): string;
+
+  /**
+   * Returns downloaded url.
+   */
+  url(): string;
+}
+
+/**
+ * [FileChooser] objects are dispatched by the page in the
+ * [page.on('filechooser')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonfilechooser) event.
+ * 
+ * ```js
+ * page.on('filechooser', async (fileChooser) => {
+ *   await fileChooser.setFiles('/tmp/myfile.pdf');
+ * });
+ * ```
+ * 
+ */
+export interface FileChooser {
+  /**
+   * Returns input element associated with this file chooser.
+   */
+  element(): ElementHandle;
+
+  /**
+   * Returns whether this file chooser accepts multiple files.
+   */
+  isMultiple(): boolean;
+
+  /**
+   * Returns page this file chooser belongs to.
+   */
+  page(): Page;
+
+  /**
+   * Sets the value of the file input this chooser is associated with. If some of the `filePaths` are relative paths, then
+   * they are resolved relative to the the current working directory. For empty array, clears the selected files.
+   * @param files 
+   * @param options 
+   */
+  setFiles(files: string|Array<string>|{
+    /**
+     * [File] name **required**
+     */
+    name: string;
+
+    /**
+     * [File] type **required**
+     */
+    mimeType: string;
+
+    /**
+     * File content **required**
+     */
+    buffer: Buffer;
+  }|Array<{
+    /**
+     * [File] name **required**
+     */
+    name: string;
+
+    /**
+     * [File] type **required**
+     */
+    mimeType: string;
+
+    /**
+     * File content **required**
+     */
+    buffer: Buffer;
+  }>, options?: {
+    /**
+     * Actions that initiate navigations are waiting for these navigations to happen and for pages to start loading. You can
+     * opt out of waiting via setting this flag. You would only need this option in the exceptional cases such as navigating to
+     * inaccessible pages. Defaults to `false`.
+     */
+    noWaitAfter?: boolean;
+
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<void>;
+}
+
+/**
  * - extends: [Browser]
  * 
  * Firefox browser instance does not expose Firefox-specific features.
@@ -9041,11 +8029,1023 @@ export interface FirefoxBrowser extends Browser {
 }
 
 /**
+ * Keyboard provides an api for managing a virtual keyboard. The high level api is
+ * [keyboard.type(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardtype), which takes raw
+ * characters and generates proper keydown, keypress/input, and keyup events on your page.
+ * 
+ * For finer control, you can use
+ * [keyboard.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddown),
+ * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup), and
+ * [keyboard.insertText(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardinserttext) to manually
+ * fire events as if they were generated from a real keyboard.
+ * 
+ * An example of holding down `Shift` in order to select and delete some text:
+ * 
+ * ```js
+ * await page.keyboard.type('Hello World!');
+ * await page.keyboard.press('ArrowLeft');
+ * 
+ * await page.keyboard.down('Shift');
+ * for (let i = 0; i < ' World'.length; i++)
+ *   await page.keyboard.press('ArrowLeft');
+ * await page.keyboard.up('Shift');
+ * 
+ * await page.keyboard.press('Backspace');
+ * // Result text will end up saying 'Hello!'
+ * ```
+ * 
+ * An example of pressing uppercase `A`
+ * 
+ * ```js
+ * await page.keyboard.press('Shift+KeyA');
+ * // or
+ * await page.keyboard.press('Shift+A');
+ * ```
+ * 
+ * An example to trigger select-all with the keyboard
+ * 
+ * ```js
+ * // on Windows and Linux
+ * await page.keyboard.press('Control+A');
+ * // on macOS
+ * await page.keyboard.press('Meta+A');
+ * ```
+ * 
+ */
+export interface Keyboard {
+  /**
+   * Dispatches a `keydown` event.
+   * 
+   * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
+   * value or a single character to generate the text for. A superset of the `key` values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   * 
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
+   * 
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * 
+   * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+   * 
+   * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
+   * texts.
+   * 
+   * If `key` is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that modifier
+   * active. To release the modifier key, use
+   * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
+   * 
+   * After the key is pressed once, subsequent calls to
+   * [keyboard.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddown) will have
+   * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
+   * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
+   * 
+   * > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   */
+  down(key: string): Promise<void>;
+
+  /**
+   * Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress` events.
+   * 
+   * ```js
+   * page.keyboard.insertText('嗨');
+   * ```
+   * 
+   * > **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
+   * @param text Sets input to the specified text value.
+   */
+  insertText(text: string): Promise<void>;
+
+  /**
+   * `key` can specify the intended [keyboardEvent.key](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key)
+   * value or a single character to generate the text for. A superset of the `key` values can be found
+   * [here](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key/Key_Values). Examples of the keys are:
+   * 
+   * `F1` - `F12`, `Digit0`- `Digit9`, `KeyA`- `KeyZ`, `Backquote`, `Minus`, `Equal`, `Backslash`, `Backspace`, `Tab`,
+   * `Delete`, `Escape`, `ArrowDown`, `End`, `Enter`, `Home`, `Insert`, `PageDown`, `PageUp`, `ArrowRight`, `ArrowUp`, etc.
+   * 
+   * Following modification shortcuts are also supported: `Shift`, `Control`, `Alt`, `Meta`, `ShiftLeft`.
+   * 
+   * Holding down `Shift` will type the text that corresponds to the `key` in the upper case.
+   * 
+   * If `key` is a single character, it is case-sensitive, so the values `a` and `A` will generate different respective
+   * texts.
+   * 
+   * Shortcuts such as `key: "Control+o"` or `key: "Control+Shift+T"` are supported as well. When speficied with the
+   * modifier, modifier is pressed and being held while the subsequent key is being pressed.
+   * 
+   * ```js
+   * const page = await browser.newPage();
+   * await page.goto('https://keycode.info');
+   * await page.keyboard.press('A');
+   * await page.screenshot({ path: 'A.png' });
+   * await page.keyboard.press('ArrowLeft');
+   * await page.screenshot({ path: 'ArrowLeft.png' });
+   * await page.keyboard.press('Shift+O');
+   * await page.screenshot({ path: 'O.png' });
+   * await browser.close();
+   * ```
+   * 
+   * Shortcut for [keyboard.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboarddown) and
+   * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   * @param options 
+   */
+  press(key: string, options?: {
+    /**
+     * Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+  }): Promise<void>;
+
+  /**
+   * Sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the text.
+   * 
+   * To press a special key, like `Control` or `ArrowDown`, use
+   * [keyboard.press(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardpress).
+   * 
+   * ```js
+   * await page.keyboard.type('Hello'); // Types instantly
+   * await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
+   * ```
+   * 
+   * > **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+   * @param text A text to type into a focused element.
+   * @param options 
+   */
+  type(text: string, options?: {
+    /**
+     * Time to wait between key presses in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+  }): Promise<void>;
+
+  /**
+   * Dispatches a `keyup` event.
+   * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
+   */
+  up(key: string): Promise<void>;
+}
+
+/**
+ * Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
+ * 
+ * ```js
+ * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
+ * 
+ * (async () => {
+ *   const browser = await chromium.launch({
+ *     logger: {
+ *       isEnabled: (name, severity) => name === 'browser',
+ *       log: (name, severity, message, args) => console.log(`${name} ${message}`)
+ *     }
+ *   });
+ *   ...
+ * })();
+ * ```
+ * 
+ */
+export interface Logger {
+  /**
+   * Determines whether sink is interested in the logger with the given name and severity.
+   * @param name logger name
+   * @param severity 
+   */
+  isEnabled(name: string, severity: "verbose"|"info"|"warning"|"error"): boolean;
+
+  /**
+   * @param name logger name
+   * @param severity 
+   * @param message log message format
+   * @param args message arguments
+   * @param hints optional formatting hints
+   */
+  log(name: string, severity: "verbose"|"info"|"warning"|"error", message: string|Error, args: Array<Object>, hints: {
+    /**
+     * Optional preferred logger color.
+     */
+    color?: string;
+  }): void;
+}
+
+/**
+ * The Mouse class operates in main-frame CSS pixels relative to the top-left corner of the viewport.
+ * 
+ * Every `page` object has its own Mouse, accessible with
+ * [page.mouse](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagemouse).
+ * 
+ * ```js
+ * // Using ‘page.mouse’ to trace a 100x100 square.
+ * await page.mouse.move(0, 0);
+ * await page.mouse.down();
+ * await page.mouse.move(0, 100);
+ * await page.mouse.move(100, 100);
+ * await page.mouse.move(100, 0);
+ * await page.mouse.move(0, 0);
+ * await page.mouse.up();
+ * ```
+ * 
+ */
+export interface Mouse {
+  /**
+   * Shortcut for [mouse.move(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemove),
+   * [mouse.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedown),
+   * [mouse.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseup).
+   * @param x 
+   * @param y 
+   * @param options 
+   */
+  click(x: number, y: number, options?: {
+    /**
+     * Defaults to `left`.
+     */
+    button?: "left"|"right"|"middle";
+
+    /**
+     * defaults to 1. See [UIEvent.detail].
+     */
+    clickCount?: number;
+
+    /**
+     * Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+  }): Promise<void>;
+
+  /**
+   * Shortcut for [mouse.move(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousemove),
+   * [mouse.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedown),
+   * [mouse.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseup),
+   * [mouse.down(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mousedown) and
+   * [mouse.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#mouseup).
+   * @param x 
+   * @param y 
+   * @param options 
+   */
+  dblclick(x: number, y: number, options?: {
+    /**
+     * Defaults to `left`.
+     */
+    button?: "left"|"right"|"middle";
+
+    /**
+     * Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
+     */
+    delay?: number;
+  }): Promise<void>;
+
+  /**
+   * Dispatches a `mousedown` event.
+   * @param options 
+   */
+  down(options?: {
+    /**
+     * Defaults to `left`.
+     */
+    button?: "left"|"right"|"middle";
+
+    /**
+     * defaults to 1. See [UIEvent.detail].
+     */
+    clickCount?: number;
+  }): Promise<void>;
+
+  /**
+   * Dispatches a `mousemove` event.
+   * @param x 
+   * @param y 
+   * @param options 
+   */
+  move(x: number, y: number, options?: {
+    /**
+     * defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
+  }): Promise<void>;
+
+  /**
+   * Dispatches a `mouseup` event.
+   * @param options 
+   */
+  up(options?: {
+    /**
+     * Defaults to `left`.
+     */
+    button?: "left"|"right"|"middle";
+
+    /**
+     * defaults to 1. See [UIEvent.detail].
+     */
+    clickCount?: number;
+  }): Promise<void>;
+}
+
+/**
+ * Whenever the page sends a request for a network resource the following sequence of events are emitted by [Page]:
+ * - [page.on('request')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequest) emitted when the
+ *   request is issued by the page.
+ * - [page.on('response')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonresponse) emitted
+ *   when/if the response status and headers are received for the request.
+ * - [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
+ *   emitted when the response body is downloaded and the request is complete.
+ * 
+ * If request fails at some point, then instead of `'requestfinished'` event (and possibly instead of 'response' event),
+ * the  [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed)
+ * event is emitted.
+ * 
+ * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
+ * will complete with `'requestfinished'` event.
+ * 
+ * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
+ * request is  issued to a redirected url.
+ */
+export interface Request {
+  /**
+   * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
+   * 
+   * Example of logging of all the failed requests:
+   * 
+   * ```js
+   * page.on('requestfailed', request => {
+   *   console.log(request.url() + ' ' + request.failure().errorText);
+   * });
+   * ```
+   * 
+   */
+  failure(): null|{
+    /**
+     * Human-readable error message, e.g. `'net::ERR_FAILED'`.
+     */
+    errorText: string;
+  };
+
+  /**
+   * Returns the [Frame] that initiated this request.
+   */
+  frame(): Frame;
+
+  /**
+   * An object with HTTP headers associated with the request. All header names are lower-case.
+   */
+  headers(): { [key: string]: string; };
+
+  /**
+   * Whether this request is driving frame's navigation.
+   */
+  isNavigationRequest(): boolean;
+
+  /**
+   * Request's method (GET, POST, etc.)
+   */
+  method(): string;
+
+  /**
+   * Request's post body, if any.
+   */
+  postData(): null|string;
+
+  /**
+   * Request's post body in a binary form, if any.
+   */
+  postDataBuffer(): null|Buffer;
+
+  /**
+   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+   * 
+   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+   * Otherwise it will be parsed as JSON.
+   */
+  postDataJSON(): null|any;
+
+  /**
+   * Request that was redirected by the server to this one, if any.
+   * 
+   * When the server responds with a redirect, Playwright creates a new [Request] object. The two requests are connected by
+   * `redirectedFrom()` and `redirectedTo()` methods. When multiple server redirects has happened, it is possible to
+   * construct the whole redirect chain by repeatedly calling `redirectedFrom()`.
+   * 
+   * For example, if the website `http://example.com` redirects to `https://example.com`:
+   * 
+   * ```js
+   * const response = await page.goto('http://example.com');
+   * console.log(response.request().redirectedFrom().url()); // 'http://example.com'
+   * ```
+   * 
+   * If the website `https://google.com` has no redirects:
+   * 
+   * ```js
+   * const response = await page.goto('https://google.com');
+   * console.log(response.request().redirectedFrom()); // null
+   * ```
+   * 
+   */
+  redirectedFrom(): null|Request;
+
+  /**
+   * New request issued by the browser if the server responded with redirect.
+   * 
+   * This method is the opposite of
+   * [request.redirectedFrom(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#requestredirectedfrom):
+   * 
+   * ```js
+   * console.log(request.redirectedFrom().redirectedTo() === request); // true
+   * ```
+   * 
+   */
+  redirectedTo(): null|Request;
+
+  /**
+   * Contains the request's resource type as it was perceived by the rendering engine. ResourceType will be one of the
+   * following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttrack`, `xhr`, `fetch`, `eventsource`,
+   * `websocket`, `manifest`, `other`.
+   */
+  resourceType(): string;
+
+  /**
+   * Returns the matching [Response] object, or `null` if the response was not received due to error.
+   */
+  response(): Promise<null|Response>;
+
+  /**
+   * Returns resource timing information for given request. Most of the timing values become available upon the response,
+   * `responseEnd` becomes available when request finishes. Find more information at
+   * [Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
+   * 
+   * ```js
+   * const [request] = await Promise.all([
+   *   page.waitForEvent('requestfinished'),
+   *   page.goto(httpsServer.EMPTY_PAGE)
+   * ]);
+   * console.log(request.timing());
+   * ```
+   * 
+   */
+  timing(): {
+    /**
+     * Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
+     */
+    startTime: number;
+
+    /**
+     * Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds
+     * relative to `startTime`, -1 if not available.
+     */
+    domainLookupStart: number;
+
+    /**
+     * Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds
+     * relative to `startTime`, -1 if not available.
+     */
+    domainLookupEnd: number;
+
+    /**
+     * Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The
+     * value is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    connectStart: number;
+
+    /**
+     * Time immediately before the browser starts the handshake process to secure the current connection. The value is given in
+     * milliseconds relative to `startTime`, -1 if not available.
+     */
+    secureConnectionStart: number;
+
+    /**
+     * Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The
+     * value is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    connectEnd: number;
+
+    /**
+     * Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value
+     * is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    requestStart: number;
+
+    /**
+     * Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value
+     * is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    responseStart: number;
+
+    /**
+     * Time immediately after the browser receives the last byte of the resource or immediately before the transport connection
+     * is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not available.
+     */
+    responseEnd: number;
+  };
+
+  /**
+   * URL of the request.
+   */
+  url(): string;
+}
+
+/**
+ * [Response] class represents responses which are received by page.
+ */
+export interface Response {
+  /**
+   * Returns the buffer with response body.
+   */
+  body(): Promise<Buffer>;
+
+  /**
+   * Waits for this response to finish, returns failure error if request failed.
+   */
+  finished(): Promise<null|Error>;
+
+  /**
+   * Returns the [Frame] that initiated this response.
+   */
+  frame(): Frame;
+
+  /**
+   * Returns the object with HTTP headers associated with the response. All header names are lower-case.
+   */
+  headers(): { [key: string]: string; };
+
+  /**
+   * Returns the JSON representation of response body.
+   * 
+   * This method will throw if the response body is not parsable via `JSON.parse`.
+   */
+  json(): Promise<Serializable>;
+
+  /**
+   * Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+   */
+  ok(): boolean;
+
+  /**
+   * Returns the matching [Request] object.
+   */
+  request(): Request;
+
+  /**
+   * Contains the status code of the response (e.g., 200 for a success).
+   */
+  status(): number;
+
+  /**
+   * Contains the status text of the response (e.g. usually an "OK" for a success).
+   */
+  statusText(): string;
+
+  /**
+   * Returns the text representation of response body.
+   */
+  text(): Promise<string>;
+
+  /**
+   * Contains the URL of the response.
+   */
+  url(): string;
+}
+
+/**
+ * Whenever a network route is set up with
+ * [page.route(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageroute) or
+ * [browserContext.route(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextroute), the
+ * `Route` object allows to handle the route.
+ */
+export interface Route {
+  /**
+   * Aborts the route's request.
+   * @param errorCode Optional error code. Defaults to `failed`, could be one of the following: - `'aborted'` - An operation was aborted (due to user action)
+   * - `'accessdenied'` - Permission to access a resource, other than the network, was denied
+   * - `'addressunreachable'` - The IP address is unreachable. This usually means that there is no route to the specified
+   *   host or network.
+   * - `'blockedbyclient'` - The client chose to block the request.
+   * - `'blockedbyresponse'` - The request failed because the response was delivered along with requirements which are not
+   *   met ('X-Frame-Options' and 'Content-Security-Policy' ancestor checks, for instance).
+   * - `'connectionaborted'` - A connection timed out as a result of not receiving an ACK for data sent.
+   * - `'connectionclosed'` - A connection was closed (corresponding to a TCP FIN).
+   * - `'connectionfailed'` - A connection attempt failed.
+   * - `'connectionrefused'` - A connection attempt was refused.
+   * - `'connectionreset'` - A connection was reset (corresponding to a TCP RST).
+   * - `'internetdisconnected'` - The Internet connection has been lost.
+   * - `'namenotresolved'` - The host name could not be resolved.
+   * - `'timedout'` - An operation timed out.
+   * - `'failed'` - A generic failure occurred.
+   */
+  abort(errorCode?: string): Promise<void>;
+
+  /**
+   * Continues route's request with optional overrides.
+   * 
+   * ```js
+   * await page.route('**\/*', (route, request) => {
+   *   // Override headers
+   *   const headers = {
+   *     ...request.headers(),
+   *     foo: 'bar', // set "foo" header
+   *     origin: undefined, // remove "origin" header
+   *   };
+   *   route.continue({headers});
+   * });
+   * ```
+   * 
+   * @param overrides Optional request overrides, can override following properties:
+   */
+  continue(overrides?: {
+    /**
+     * If set changes the request URL. New URL must have same protocol as original one.
+     */
+    url?: string;
+
+    /**
+     * If set changes the request method (e.g. GET or POST)
+     */
+    method?: string;
+
+    /**
+     * If set changes the post data of request
+     */
+    postData?: string|Buffer;
+
+    /**
+     * If set changes the request HTTP headers. Header values will be converted to a string.
+     */
+    headers?: { [key: string]: string; };
+  }): Promise<void>;
+
+  /**
+   * Fulfills route's request with given response.
+   * 
+   * An example of fulfilling all requests with 404 responses:
+   * 
+   * ```js
+   * await page.route('**\/*', route => {
+   *   route.fulfill({
+   *     status: 404,
+   *     contentType: 'text/plain',
+   *     body: 'Not Found!'
+   *   });
+   * });
+   * ```
+   * 
+   * An example of serving static file:
+   * 
+   * ```js
+   * await page.route('**\/xhr_endpoint', route => route.fulfill({ path: 'mock_data.json' }));
+   * ```
+   * 
+   * @param response Response that will fulfill this route's request.
+   */
+  fulfill(response: {
+    /**
+     * Response status code, defaults to `200`.
+     */
+    status?: number;
+
+    /**
+     * Optional response headers. Header values will be converted to a string.
+     */
+    headers?: { [key: string]: string; };
+
+    /**
+     * If set, equals to setting `Content-Type` response header.
+     */
+    contentType?: string;
+
+    /**
+     * Optional response body.
+     */
+    body?: string|Buffer;
+
+    /**
+     * Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path,
+     * then it is resolved relative to the current working directory.
+     */
+    path?: string;
+  }): Promise<void>;
+
+  /**
+   * A request to be routed.
+   */
+  request(): Request;
+}
+
+/**
+ * Selectors can be used to install custom selector engines. See
+ * [Working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more information.
+ */
+export interface Selectors {
+  /**
+   * An example of registering selector engine that queries elements based on a tag name:
+   * 
+   * ```js
+   * const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
+   * 
+   * (async () => {
+   *   // Must be a function that evaluates to a selector engine instance.
+   *   const createTagNameEngine = () => ({
+   *     // Returns the first element matching given selector in the root's subtree.
+   *     query(root, selector) {
+   *       return root.querySelector(selector);
+   *     },
+   * 
+   *     // Returns all elements matching given selector in the root's subtree.
+   *     queryAll(root, selector) {
+   *       return Array.from(root.querySelectorAll(selector));
+   *     }
+   *   });
+   * 
+   *   // Register the engine. Selectors will be prefixed with "tag=".
+   *   await selectors.register('tag', createTagNameEngine);
+   * 
+   *   const browser = await firefox.launch();
+   *   const page = await browser.newPage();
+   *   await page.setContent(`<div><button>Click me</button></div>`);
+   * 
+   *   // Use the selector prefixed with its name.
+   *   const button = await page.$('tag=button');
+   *   // Combine it with other selector engines.
+   *   await page.click('tag=div >> text="Click me"');
+   *   // Can use it in any methods supporting selectors.
+   *   const buttonCount = await page.$$eval('tag=button', buttons => buttons.length);
+   * 
+   *   await browser.close();
+   * })();
+   * ```
+   * 
+   * @param name Name that is used in selectors as a prefix, e.g. `{name: 'foo'}` enables `foo=myselectorbody` selectors. May only contain `[a-zA-Z0-9_]` characters.
+   * @param script Script that evaluates to a selector engine instance.
+   * @param options 
+   */
+  register(name: string, script: Function|string|{
+    /**
+     * Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working
+     * directory. Optional.
+     */
+    path?: string;
+
+    /**
+     * Raw script content. Optional.
+     */
+    content?: string;
+  }, options?: {
+    /**
+     * Whether to run this selector engine in isolated JavaScript environment. This environment has access to the same DOM, but
+     * not any JavaScript objects from the frame's scripts. Defaults to `false`. Note that running as a content script is not
+     * guaranteed when this engine is used together with other registered engines.
+     */
+    contentScript?: boolean;
+  }): Promise<void>;
+}
+
+/**
+ * The Touchscreen class operates in main-frame CSS pixels relative to the top-left corner of the viewport. Methods on the
+ * touchscreen can only be used in browser contexts that have been intialized with `hasTouch` set to true.
+ */
+export interface Touchscreen {
+  /**
+   * Dispatches a `touchstart` and `touchend` event with a single touch at the position (`x`,`y`).
+   * @param x 
+   * @param y 
+   */
+  tap(x: number, y: number): Promise<void>;
+}
+
+/**
+ * When browser context is created with the `videosPath` option, each page has a video object associated with it.
+ * 
+ * ```js
+ * console.log(await page.video().path());
+ * ```
+ * 
+ */
+export interface Video {
+  /**
+   * Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
+   * upon closing the browser context.
+   */
+  path(): Promise<string>;
+}
+
+/**
  * - extends: [Browser]
  * 
  * WebKit browser instance does not expose WebKit-specific features.
  */
 export interface WebKitBrowser extends Browser {
+
+}
+
+/**
+ * The [WebSocket] class represents websocket connections in the page.
+ */
+export interface WebSocket {
+  /**
+   * Fired when the websocket closes.
+   */
+  on(event: 'close', listener: () => void): this;
+
+  /**
+   * Fired when the websocket recieves a frame.
+   */
+  on(event: 'framereceived', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  on(event: 'framesent', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  on(event: 'socketerror', listener: (string: String) => void): this;
+
+  /**
+   * Fired when the websocket closes.
+   */
+  once(event: 'close', listener: () => void): this;
+
+  /**
+   * Fired when the websocket recieves a frame.
+   */
+  once(event: 'framereceived', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  once(event: 'framesent', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  once(event: 'socketerror', listener: (string: String) => void): this;
+
+  /**
+   * Fired when the websocket closes.
+   */
+  addListener(event: 'close', listener: () => void): this;
+
+  /**
+   * Fired when the websocket recieves a frame.
+   */
+  addListener(event: 'framereceived', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  addListener(event: 'framesent', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  addListener(event: 'socketerror', listener: (string: String) => void): this;
+
+  /**
+   * Fired when the websocket closes.
+   */
+  removeListener(event: 'close', listener: () => void): this;
+
+  /**
+   * Fired when the websocket recieves a frame.
+   */
+  removeListener(event: 'framereceived', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  removeListener(event: 'framesent', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  removeListener(event: 'socketerror', listener: (string: String) => void): this;
+
+  /**
+   * Fired when the websocket closes.
+   */
+  off(event: 'close', listener: () => void): this;
+
+  /**
+   * Fired when the websocket recieves a frame.
+   */
+  off(event: 'framereceived', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  off(event: 'framesent', listener: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => void): this;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  off(event: 'socketerror', listener: (string: String) => void): this;
+
+  /**
+   * Indicates that the web socket has been closed.
+   */
+  isClosed(): boolean;
+
+  /**
+   * Contains the URL of the WebSocket.
+   */
+  url(): string;
+
+  /**
+   * Fired when the websocket closes.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+
+  /**
+   * Fired when the websocket recieves a frame.
+   */
+  waitForEvent(event: 'framereceived', optionsOrPredicate?: { predicate?: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => boolean, timeout?: number } | ((data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => boolean)): Promise<{
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}>;
+
+  /**
+   * Fired when the websocket sends a frame.
+   */
+  waitForEvent(event: 'framesent', optionsOrPredicate?: { predicate?: (data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => boolean, timeout?: number } | ((data: {
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}) => boolean)): Promise<{
+  /**
+   * frame payload
+   */
+  payload: string|Buffer;
+}>;
+
+  /**
+   * Fired when the websocket has an error.
+   */
+  waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: String) => boolean, timeout?: number } | ((string: String) => boolean)): Promise<String>;
 
 }
 

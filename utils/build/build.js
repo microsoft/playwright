@@ -93,8 +93,7 @@ steps.push({
 onChanges.push({
   committed: false,
   inputs: [
-    'docs/src/api-body.md',
-    'docs/src/api-params.md',
+    'docs/src/api/*',
   ],
   script: 'utils/doclint/generateApiJson.js',
 });
@@ -112,8 +111,7 @@ onChanges.push({
 onChanges.push({
   committed: false,
   inputs: [
-    'docs/src/api-body.md',
-    'docs/src/api-params.md',
+    'docs/src/api/*',
     'utils/generate_types/overrides.d.ts',
     'utils/generate_types/exported.json',
     'src/server/chromium/protocol.ts',
