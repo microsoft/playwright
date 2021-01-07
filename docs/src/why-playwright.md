@@ -21,12 +21,12 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Timeout-free automation**. Playwright receives browser signals, like network requests, page navigations and page load events to eliminate the need for sleep timeouts that cause flakiness.
 
-* **Lean parallelization with browser contexts**. Reuse a single browser instance for multiple parallelized, isolated execution environments with [browser contexts](core-concepts.md).
+* **Lean parallelization with browser contexts**. Reuse a single browser instance for multiple parallelized, isolated execution environments with [browser contexts](./core-concepts.md).
 
 * **Resilient element selectors**. Playwright can rely on user-facing strings, like text content and accessibility labels to [select elements](./selectors.md). These strings are more resilient than selectors tightly-coupled to the DOM structure.
 
 ## Powerful automation capabilities
-* **Multiple domains, pages and frames**. Playwright is an out-of-process automation driver that is not limited by the scope of in-page JavaScript execution and can automate scenarios with [multiple pages](multi-pages.md).
+* **Multiple domains, pages and frames**. Playwright is an out-of-process automation driver that is not limited by the scope of in-page JavaScript execution and can automate scenarios with [multiple pages](./multi-pages.md).
 
 * **Powerful network control**. Playwright introduces context-wide [network interception](./network.md) to stub and mock network requests.
 

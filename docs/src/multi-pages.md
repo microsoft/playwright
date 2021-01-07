@@ -10,7 +10,7 @@ tabs in a browser window.
 
 ## Multiple contexts
 
-[Browser contexts](core-concepts.md#browser-contexts) are isolated environments
+[Browser contexts](./core-concepts.md#browser-contexts) are isolated environments
 on a single browser instance. Playwright can create multiple browser contexts
 within a single scenario. This is useful when you want to test for
 multi-user functionality, like chat.
