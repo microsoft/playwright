@@ -330,6 +330,8 @@ function stringifySimpleType(type, indent = '', ...namespace) {
   }
   if (out === 'path')
     return 'string';
+  if (out === 'Any')
+    return 'any';
   if (type.templates)
     out += '<' + type.templates.map(t => stringifySimpleType(t, indent, ...namespace)).join(', ') + '>';
   if (type.union)
@@ -353,6 +355,8 @@ function memberJSDOC(member, indent) {
   const lines = [];
   if (member.comment)
     lines.push(...member.comment.split('\n'));
+  if (member.deprecated)
+    lines.push('@deprecated');
   lines.push(...member.argsArray.map(arg => `@param ${arg.name.replace(/\./g, '')} ${arg.comment.replace('\n', ' ')}`));
   if (!lines.length)
     return indent;

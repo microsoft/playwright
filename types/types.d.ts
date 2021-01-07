@@ -4945,11 +4945,8 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
-   * 
-   * > **NOTE** Browsers may cache credentials after successful authentication. Passing different credentials or passing
-   * `null` to disable authentication will be unreliable. To remove or replace credentials, create a new browser context
-   * instead.
+   * **DEPRECATED** Browsers may cache credentials after successful authentication. Create a new browser context instead.
+   * @deprecated
    * @param httpCredentials 
    */
   setHTTPCredentials(httpCredentials: null|{
@@ -6461,10 +6458,8 @@ export interface BrowserType<Browser> {
     userAgent?: string;
 
     /**
-     * **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically
-     * recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If
-     * `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled
-     * down if necessary to fit specified size.
+     * **DEPRECATED** Use `recordVideo` instead.
+     * @deprecated
      */
     videoSize?: {
       /**
@@ -6479,10 +6474,8 @@ export interface BrowserType<Browser> {
     };
 
     /**
-     * **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
-     * `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-     * [browserContext.close(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-     * videos to be saved.
+     * **DEPRECATED** Use `recordVideo` instead.
+     * @deprecated
      */
     videosPath?: string;
 
@@ -7272,10 +7265,8 @@ export interface Browser extends EventEmitter {
     userAgent?: string;
 
     /**
-     * **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically
-     * recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If
-     * `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled
-     * down if necessary to fit specified size.
+     * **DEPRECATED** Use `recordVideo` instead.
+     * @deprecated
      */
     videoSize?: {
       /**
@@ -7290,10 +7281,8 @@ export interface Browser extends EventEmitter {
     };
 
     /**
-     * **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
-     * `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-     * [browserContext.close(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-     * videos to be saved.
+     * **DEPRECATED** Use `recordVideo` instead.
+     * @deprecated
      */
     videosPath?: string;
 
@@ -7924,7 +7913,7 @@ export interface Request {
    * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
    * Otherwise it will be parsed as JSON.
    */
-  postDataJSON(): null|Object;
+  postDataJSON(): null|any;
 
   /**
    * Request that was redirected by the server to this one, if any.
@@ -9299,10 +9288,8 @@ export interface BrowserContextOptions {
   userAgent?: string;
 
   /**
-   * **NOTE** Use `recordVideo` instead, it takes precedence over `videoSize`. Specifies dimensions of the automatically
-   * recorded video. Can only be used if `videosPath` is set. If not specified the size will be equal to `viewport`. If
-   * `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of the page will be scaled
-   * down if necessary to fit specified size.
+   * **DEPRECATED** Use `recordVideo` instead.
+   * @deprecated
    */
   videoSize?: {
     /**
@@ -9317,10 +9304,8 @@ export interface BrowserContextOptions {
   };
 
   /**
-   * **NOTE** Use `recordVideo` instead, it takes precedence over `videosPath`. Enables video recording for all pages to
-   * `videosPath` directory. If not specified, videos are not recorded. Make sure to await
-   * [browserContext.close(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextclose) for
-   * videos to be saved.
+   * **DEPRECATED** Use `recordVideo` instead.
+   * @deprecated
    */
   videosPath?: string;
 

@@ -16,6 +16,8 @@
 
 // @ts-check
 
+const md = require('../markdown');
+
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
 /**
@@ -177,6 +179,13 @@ Documentation.Member = class {
       this.args.set(arg.name, arg);
     /** @type {!Documentation.Class} */
     this.clazz = null;
+    this.deprecated = false;
+    if (spec) {
+      md.visitAll(spec, node => {
+        if (node.text && node.text.includes('**DEPRECATED**'))
+          this.deprecated = true;
+      });
+    }
   }
 
   clone() {

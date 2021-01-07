@@ -583,11 +583,8 @@ pages to read its geolocation.
 
 ## async method: BrowserContext.setHTTPCredentials
 
-Provide credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication).
-
-> **NOTE** Browsers may cache credentials after successful authentication. Passing different credentials or passing
-`null` to disable authentication will be unreliable. To remove or replace credentials, create a new browser context
-instead.
+**DEPRECATED** Browsers may cache credentials after successful authentication.
+Create a new browser context instead.
 
 ### param: BrowserContext.setHTTPCredentials.httpCredentials
 - `httpCredentials` <[null]|[Object]>
@@ -644,7 +641,7 @@ BrowserContext.route`].
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ## async method: BrowserContext.waitForEvent
-- returns: <[Object]>
+- returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the context closes before the event is fired. Returns the event data value.
@@ -2187,7 +2184,7 @@ Video object associated with this page.
   - `height` <[int]> page height in pixels.
 
 ## async method: Page.waitForEvent
-- returns: <[Object]>
+- returns: <[any]>
 
 Returns the event data value.
 
@@ -4505,7 +4502,7 @@ Request's post body, if any.
 Request's post body in a binary form, if any.
 
 ## method: Request.postDataJSON
-- returns: <[null]|[Object]>
+- returns: <[null]|[any]>
 
 Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
 
@@ -4838,7 +4835,7 @@ Indicates that the web socket has been closed.
 Contains the URL of the WebSocket.
 
 ## async method: WebSocket.waitForEvent
-- returns: <[Object]>
+- returns: <[any]>
 
 Returns the event data value.
 
