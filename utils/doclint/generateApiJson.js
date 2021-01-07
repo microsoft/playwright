@@ -18,14 +18,14 @@
 
 const path = require('path');
 const fs = require('fs');
-const Documentation = require('./Documentation');
-const { MDOutline } = require('./MDBuilder');
+const Documentation = require('./documentation');
+const { parseApi } = require('./api_parser');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
 {
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
-  outline.setLinkRenderer(item => {
-    const { clazz, member, param, option } = item;
+  const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  documentation.setLinkRenderer(item => {
+    const { clazz, param, option } = item;
     if (param)
       return `\`${param}\``;
     if (option)
@@ -33,8 +33,8 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
     if (clazz)
       return `\`${clazz.name}\``;
   });
-  outline.generateSourceCodeComments();
-  const result = serialize(outline);
+  documentation.generateSourceCodeComments();
+  const result = serialize(documentation);
   fs.writeFileSync(path.join(PROJECT_DIR, 'api.json'), JSON.stringify(result));
 }
 
@@ -52,6 +52,8 @@ function serializeClass(clazz) {
   const result = { name: clazz.name };
   if (clazz.extends)
     result.extends = clazz.extends;
+  if (clazz.langs)
+    result.langs = [...clazz.langs];
   if (clazz.comment)
     result.comment = clazz.comment;
   result.members = clazz.membersArray.map(serializeMember);
@@ -64,6 +66,8 @@ function serializeClass(clazz) {
 function serializeMember(member) {
   const result = /** @type {any} */ ({ ...member });
   sanitize(result);
+  if (member.langs)
+    result.langs = [...member.langs];
   result.args = member.argsArray.map(serializeProperty);
   if (member.type)
     result.type = serializeType(member.type)
@@ -73,6 +77,8 @@ function serializeMember(member) {
 function serializeProperty(arg) {
   const result = { ...arg };
   sanitize(result);
+  if (arg.langs)
+    result.langs = [...arg.langs];
   if (arg.type)
     result.type = serializeType(arg.type)
   return result;

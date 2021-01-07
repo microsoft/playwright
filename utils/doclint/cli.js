@@ -20,16 +20,14 @@
 const playwright = require('../../');
 const fs = require('fs');
 const path = require('path');
-const { MDOutline } = require('./MDBuilder');
+const { parseApi } = require('./api_parser');
 const missingDocs = require('./missingDocs');
 
-/** @typedef {import('./Documentation').Type} Type */
+/** @typedef {import('./documentation').Type} Type */
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
 
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
-const links = new Map();
-const rLinks = new Map();
 const dirtyFiles = new Set();
 
 run().catch(e => {
@@ -38,9 +36,10 @@ run().catch(e => {
 });;
 
 async function run() {
-  const outline = new MDOutline(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   // This validates member links.
-  outline.setLinkRenderer(() => undefined);
+  documentation.setLinkRenderer(() => undefined);
+  documentation.filterForLanguage('js');
 
   // Patch README.md
   {
@@ -69,7 +68,7 @@ async function run() {
   {
     const srcClient = path.join(PROJECT_DIR, 'src', 'client');
     const sources = fs.readdirSync(srcClient).map(n => path.join(srcClient, n));
-    const errors = missingDocs(outline, sources, path.join(srcClient, 'api.ts'));
+    const errors = missingDocs(documentation, sources, path.join(srcClient, 'api.ts'));
     if (errors.length) {
       console.log('============================');
       console.log('ERROR: missing documentation:');

@@ -19,17 +19,17 @@ const fs = require('fs');
 const path = require('path');
 const missingDocs = require('../missingDocs');
 const { folio } = require('folio');
-const { MDOutline } = require('../MDBuilder');
+const { parseApi } = require('../api_parser');
 
 const { test, expect } = folio;
 
 test('missing docs', async ({}) => {
-  const outline = new MDOutline(path.join(__dirname));
+  const documentation = parseApi(path.join(__dirname));
   const tsSources = [
     path.join(__dirname, 'test-api.ts'),
     path.join(__dirname, 'test-api-class.ts'),
   ];
-  const errors = missingDocs(outline, tsSources, path.join(__dirname, 'test-api.ts'));
+  const errors = missingDocs(documentation, tsSources, path.join(__dirname, 'test-api.ts'));
   expect(errors).toEqual([
     'Missing documentation for "Exists.exists2.extra"',
     'Missing documentation for "Exists.exists2.options"',

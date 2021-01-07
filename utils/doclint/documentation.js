@@ -30,6 +30,15 @@ const md = require('../markdown');
   *   next: ParsedType | null,
   * }} ParsedType
   */
+
+/**
+ * @typedef {function({
+  *   clazz?: Documentation.Class,
+  *   member?: Documentation.Member,
+  *   param?: string,
+  *   option?: string
+  * }): string} Renderer
+  */
  
 class Documentation {
   /**
@@ -39,25 +48,101 @@ class Documentation {
     this.classesArray = classesArray;
     /** @type {!Map<string, !Documentation.Class>} */
     this.classes = new Map();
-    for (const cls of classesArray)
-      this.classes.set(cls.name, cls);
+    this.index();
   }
+
+  /**
+   * @param {string[]} errors
+   */
+  copyDocsFromSuperclasses(errors) {
+    for (const [name, clazz] of this.classes.entries()) {
+      clazz.validateOrder(errors, clazz);
+
+      if (!clazz.extends || clazz.extends === 'EventEmitter' || clazz.extends === 'Error')
+        continue;
+      const superClass = this.classes.get(clazz.extends);
+      if (!superClass) {
+        errors.push(`Undefined superclass: ${superClass} in ${name}`);
+        continue;
+      }
+      for (const memberName of clazz.members.keys()) {
+        if (superClass.members.has(memberName))
+          errors.push(`Member documentation overrides base: ${name}.${memberName} over ${clazz.extends}.${memberName}`);
+      }
+
+      clazz.membersArray = [...clazz.membersArray, ...superClass.membersArray.map(c => c.clone())];
+      clazz.index();
+    }
+  }
+
+  /**
+   * @param {string} lang
+   */
+  filterForLanguage(lang) {
+    const classesArray = [];
+    for (const clazz of this.classesArray) {
+      if (clazz.langs && !clazz.langs.has(lang))
+        continue;
+      clazz.filterForLanguage(lang);
+      classesArray.push(clazz);
+    }
+    this.classesArray = classesArray;
+    this.index();
+  }
+
+  index() {
+    for (const cls of this.classesArray) {
+      this.classes.set(cls.name, cls);
+      cls.index();
+    }
+  }
+
+  /**
+   * @param {Renderer} linkRenderer
+   */
+  setLinkRenderer(linkRenderer) {
+    // @type {Map<string, Documentation.Class>}
+    const classesMap = new Map();
+    const membersMap = new Map();
+    for (const clazz of this.classesArray) {
+      classesMap.set(clazz.name, clazz);
+      for (const member of clazz.membersArray)
+        membersMap.set(`${member.kind}: ${clazz.name}.${member.name}`, member);
+    }
+    this._patchLinks = nodes => patchLinks(nodes, classesMap, membersMap, linkRenderer);
+
+    for (const clazz of this.classesArray)
+      clazz.visit(item => this._patchLinks(item.spec));
+  }
+
+  /**
+   * @param {MarkdownNode[]} nodes
+   */
+  renderLinksInText(nodes) {
+    this._patchLinks(nodes);
+  }
+
+  generateSourceCodeComments() {
+    for (const clazz of this.classesArray)
+      clazz.visit(item => item.comment = generateSourceCodeComment(item.spec));
+  }
+
 }
 
 Documentation.Class = class {
   /**
+   * @param {?Set<string>} langs
    * @param {string} name
    * @param {!Array<!Documentation.Member>} membersArray
    * @param {?string=} extendsName
    * @param {MarkdownNode[]=} spec
-   * @param {string[]=} templates
    */
-  constructor(name, membersArray, extendsName = null, spec = undefined, templates = []) {
+  constructor(langs, name, membersArray, extendsName = null, spec = undefined) {
+    this.langs = langs;
     this.name = name;
     this.membersArray = membersArray;
     this.spec = spec;
     this.extends = extendsName;
-    this.templates = templates;
     this.comment =  '';
     this.index();
     const match = name.match(/(JS|CDP|[A-Z])(.*)/);
@@ -93,7 +178,22 @@ Documentation.Class = class {
         this.eventsArray.push(member);
       }
       member.clazz = this;
+      member.index();
     }
+  }
+
+  /**
+   * @param {string} lang
+   */
+  filterForLanguage(lang) {
+    const membersArray = [];
+    for (const member of this.membersArray) {
+      if (member.langs && !member.langs.has(lang))
+        continue;
+      member.filterForLanguage(lang);
+      membersArray.push(member);
+    }
+    this.membersArray = membersArray;
   }
 
   validateOrder(errors, cls) {
@@ -157,6 +257,7 @@ Documentation.Class = class {
 Documentation.Member = class {
   /**
    * @param {string} kind
+   * @param {?Set<string>} langs
    * @param {string} name
    * @param {?Documentation.Type} type
    * @param {!Array<!Documentation.Member>} argsArray
@@ -164,19 +265,18 @@ Documentation.Member = class {
    * @param {boolean=} required
    * @param {string[]=} templates
    */
-  constructor(kind, name, type, argsArray, spec = undefined, required = true, templates = []) {
+  constructor(kind, langs, name, type, argsArray, spec = undefined, required = true, templates = []) {
     this.kind = kind;
+    this.langs = langs;
     this.name = name;
     this.type = type;
     this.spec = spec;
     this.argsArray = argsArray;
     this.required = required;
-    this.templates = templates;
     this.comment =  '';
     /** @type {!Map<string, !Documentation.Member>} */
     this.args = new Map();
-    for (const arg of argsArray)
-      this.args.set(arg.name, arg);
+    this.index();
     /** @type {!Documentation.Class} */
     this.clazz = null;
     this.deprecated = false;
@@ -188,41 +288,66 @@ Documentation.Member = class {
     }
   }
 
+  index() {
+    this.args = new Map();
+    for (const arg of this.argsArray) {
+      this.args.set(arg.name, arg);
+      if (arg.name === 'options')
+        arg.type.properties.sort((p1, p2) => p1.name.localeCompare(p2.name));
+    }
+  }
+
+    /**
+   * @param {string} lang
+   */
+  filterForLanguage(lang) {
+    const argsArray = [];
+    for (const arg of this.argsArray) {
+      if (arg.langs && !arg.langs.has(lang))
+        continue;
+      arg.filterForLanguage(lang);
+      argsArray.push(arg);
+    }
+    this.argsArray = argsArray;
+  }
+
   clone() {
-    return new Documentation.Member(this.kind, this.name, this.type, this.argsArray, this.spec, this.required, this.templates);
+    return new Documentation.Member(this.kind, this.langs, this.name, this.type, this.argsArray, this.spec, this.required);
   }
 
   /**
+   * @param {?Set<string>} langs
    * @param {string} name
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {?Documentation.Type} returnType
    * @param {MarkdownNode[]=} spec
-   * @param {string[]=} templates
    * @return {!Documentation.Member}
    */
-  static createMethod(name, argsArray, returnType, spec, templates) {
-    return new Documentation.Member('method', name, returnType, argsArray, spec, undefined, templates);
+  static createMethod(langs, name, argsArray, returnType, spec) {
+    return new Documentation.Member('method', langs, name, returnType, argsArray, spec);
   }
 
   /**
+   * @param {?Set<string>} langs
    * @param {string} name
    * @param {!Documentation.Type} type
    * @param {MarkdownNode[]=} spec
    * @param {boolean=} required
    * @return {!Documentation.Member}
    */
-  static createProperty(name, type, spec, required) {
-    return new Documentation.Member('property', name, type, [], spec, required);
+  static createProperty(langs, name, type, spec, required) {
+    return new Documentation.Member('property', langs, name, type, [], spec, required);
   }
 
   /**
+   * @param {?Set<string>} langs
    * @param {string} name
    * @param {?Documentation.Type=} type
    * @param {MarkdownNode[]=} spec
    * @return {!Documentation.Member}
    */
-  static createEvent(name, type = null, spec) {
-    return new Documentation.Member('event', name, type, [], spec);
+  static createEvent(langs, name, type = null, spec) {
+    return new Documentation.Member('event', langs, name, type, [], spec);
   }
 
   /** 
@@ -423,6 +548,51 @@ function matchingBracket(str, open, close) {
       count--;
   }
   return i;
+}
+
+/**
+ * @param {MarkdownNode[]} spec
+ * @param {Map<string, Documentation.Class>} classesMap
+ * @param {Map<string, Documentation.Member>} membersMap
+ * @param {Renderer} linkRenderer
+ */
+function patchLinks(spec, classesMap, membersMap, linkRenderer) {
+  if (!spec)
+    return;
+  md.visitAll(spec, node => {
+    if (!node.text)
+      return;
+    node.text = node.text.replace(/\[`((?:event|method|property): [^\]]+)`\]/g, (match, p1) => {
+      const member = membersMap.get(p1);
+      if (!member)
+        throw new Error('Undefined member references: ' + match);
+      return linkRenderer({ member }) || match;
+    });
+    node.text = node.text.replace(/\[`(param|option): ([^\]]+)`\]/g, (match, p1, p2) => {
+      if (p1 === 'param')
+        return linkRenderer({ param: p2 }) || match;
+      if (p1 === 'option')
+        return linkRenderer({ option: p2 }) || match;
+    });
+    node.text = node.text.replace(/\[([\w]+)\]/, (match, p1) => {
+      const clazz = classesMap.get(p1);
+      if (clazz)
+        return linkRenderer({ clazz }) || match;
+      return match;
+    });
+  });
+}
+
+/**
+ * @param {MarkdownNode[]} spec
+ */
+function generateSourceCodeComment(spec) {
+  const comments = (spec || []).filter(n => !n.type.startsWith('h') && (n.type !== 'li' ||  n.liType !== 'default')).map(c => md.clone(c));
+  md.visitAll(comments, node => {
+    if (node.liType === 'bullet')
+      node.liType = 'default';
+  });
+  return md.render(comments, 120);
 }
 
 module.exports = Documentation;
