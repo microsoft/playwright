@@ -47,7 +47,7 @@ it('should work with :visible', async ({page}) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
-it('should work with proximity selectors', async ({page}) => {
+it('should work with positional selectors', async ({page}) => {
   /*
 
        +--+  +--+

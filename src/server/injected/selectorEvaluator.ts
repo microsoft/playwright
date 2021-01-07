@@ -59,11 +59,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
     this._engines.set('xpath', xpathEngine);
-    this._engines.set('right-of', createProximityEngine('right-of', boxRightOf));
-    this._engines.set('left-of', createProximityEngine('left-of', boxLeftOf));
-    this._engines.set('above', createProximityEngine('above', boxAbove));
-    this._engines.set('below', createProximityEngine('below', boxBelow));
-    this._engines.set('near', createProximityEngine('near', boxNear));
+    this._engines.set('right-of', createPositionalEngine('right-of', boxRightOf));
+    this._engines.set('left-of', createPositionalEngine('left-of', boxLeftOf));
+    this._engines.set('above', createPositionalEngine('above', boxAbove));
+    this._engines.set('below', createPositionalEngine('below', boxBelow));
+    this._engines.set('near', createPositionalEngine('near', boxNear));
     for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
       this._engines.set(attr, createAttributeEngine(attr));
   }
@@ -526,7 +526,7 @@ function boxNear(box1: DOMRect, box2: DOMRect): number | undefined {
   return score > kThreshold ? undefined : score;
 }
 
-function createProximityEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect) => number | undefined): SelectorEngine {
+function createPositionalEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect) => number | undefined): SelectorEngine {
   return {
     matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
       if (!args.length)

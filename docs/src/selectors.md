@@ -17,7 +17,7 @@ Playwright also supports the following CSS extensions:
 * `:text("string")` - Matches elements that contain specific text node. Learn more about [text selector](./selectors.md#css-extension-text).
 * `:visible` - Matches only visible elements. Learn more about [visible selector](./selectors.md#css-extension-visible).
 * `:light(selector)` - Matches in the light DOM only as opposite to piercing open shadow roots. Learn more about [shadow piercing](./selectors.md#shadow-piercing).
-* `:right-of(selector)`, `:left-of(selector)`, `:above(selector)`, `:below(selector)`, `:near(selector)` - Match elements based on their relative position to another element. Learn more about [proximity selectors](./selectors.md#css-extension-proximity).
+* `:right-of(selector)`, `:left-of(selector)`, `:above(selector)`, `:below(selector)`, `:near(selector)` - Match elements based on their relative position to another element. Learn more about [positional selectors](./selectors.md#css-extension-positional).
 
 For convenience, selectors in the wrong format are heuristically converted to the right format:
 - selector starting with `//` or `..` is assumed to be `xpath=selector`;
@@ -283,13 +283,13 @@ await page.click('button:text("Sign in")');
 await page.click(':light(.article > .header)');
 ```
 
-#### CSS extension: proximity
+#### CSS extension: positional
 
-Playwright provides a few proximity selectors based on the page layout. These can be combined with regular CSS for better results, for example `input:right-of(:text("Password"))` matches an input field that is to the right of text "Password".
+Playwright provides positional selectors based on the page layout. These can be combined with regular CSS for better results, for example `input:right-of(:text("Password"))` matches an input field that is to the right of text "Password".
 
-Note that proximity selectors depend on the page layout and may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
+Note that positional selectors depend on the page layout and may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
 
-Proximity selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) to compute distance and relative position of the elements.
+Positional selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) to compute distance and relative position of the elements.
 * `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector.
 * `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector.
 * `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector.
