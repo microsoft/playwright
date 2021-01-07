@@ -50,6 +50,18 @@ Suggested configuration
    });
    ```
 
+   ```python-async
+      browser = await playwright.chromium.launch(
+         args=['--disable-dev-shm-usage']
+      )
+   ```
+
+   ```python-sync
+      browser = playwright.chromium.launch({
+         args=['--disable-dev-shm-usage']
+      })
+   ```
+
    This will write shared memory files into `/tmp` instead of `/dev/shm`. See
    [crbug.com/736452](https://bugs.chromium.org/p/chromium/issues/detail?id=736452) for more details.
 1. Using `--ipc=host` is also recommended when using Chromium—without it Chromium can run out of memory
@@ -191,6 +203,14 @@ const { chromium } = require('playwright');
 const browser = await chromium.launch({ chromiumSandbox: false });
 ```
 
+```python-async
+browser = await playwright.chromium.launch(chromiumSandbox=False)
+```
+
+```python-sync
+browser = playwright.chromium.launch(chromiumSandbox=False)
+```
+
 ### GitLab CI
 
 To run Playwright tests on GitLab, use our public Docker image ([see Dockerfile](./docker.md)).
@@ -265,6 +285,16 @@ By default, Playwright launches browsers in headless mode. This can be changed b
 // Works across chromium, firefox and webkit
 const { chromium } = require('playwright');
 const browser = await chromium.launch({ headless: false });
+```
+
+```python-async
+# Works across chromium, firefox and webkit
+browser = await playwright.chromium.launch(headless=False)
+```
+
+```python-sync
+# Works across chromium, firefox and webkit
+browser = playwright.chromium.launch(headless=False)
 ```
 
 On Linux agents, headful execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headful mode with Xvfb, add `xvfb-run` before the Node.js command.
