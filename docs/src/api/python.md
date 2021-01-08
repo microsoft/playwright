@@ -56,3 +56,26 @@ Script to be evaluated in all pages in the browser context. Optional.
 ### param: Page.selectOption.index = %%-python-select-options-index-%%
 ### param: Page.selectOption.value = %%-python-select-options-value-%%
 ### param: Page.selectOption.label = %%-python-select-options-label-%%
+
+## async method: BrowserContext.resetGeolocation
+* langs: python
+
+Emulates position unavailable state.
+
+### param: BrowserContext.setGeolocation.latitude
+* langs: python
+- `latitude` <[float]>
+
+Latitude between -90 and 90. **required**
+
+### param: BrowserContext.setGeolocation.longitude
+* langs: python
+- `longitude` <[float]>
+
+Longitude between -180 and 180. **required**
+
+### param: BrowserContext.setGeolocation.accuracy
+* langs: python
+- `accuracy` <[float]>
+
+Non-negative accuracy value. Defaults to `0`. Optional.

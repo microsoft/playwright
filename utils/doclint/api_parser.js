@@ -86,19 +86,16 @@ class ApiParser {
     if (!returnType)
       returnType = new Documentation.Type('void');
 
-    if (match[1] === 'async method') {
-      const templates = [ returnType ];
-      returnType = new Documentation.Type('Promise');
-      returnType.templates = templates;
-    }
-
     let member;
     if (match[1] === 'event')
       member = Documentation.Member.createEvent(extractLangs(spec), name, returnType, extractComments(spec));
     if (match[1] === 'property')
       member = Documentation.Member.createProperty(extractLangs(spec), name, returnType, extractComments(spec));
-    if (match[1] === 'method' || match[1] === 'async method')
+    if (match[1] === 'method' || match[1] === 'async method') {
       member = Documentation.Member.createMethod(extractLangs(spec), name, [], returnType, extractComments(spec));
+      if (match[1] === 'async method')
+        member.async = true;
+    }
     const clazz = this.classes.get(match[2]);
     clazz.membersArray.push(member);
   }
