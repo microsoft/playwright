@@ -399,6 +399,7 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 pages to read its geolocation.
 
 ### param: BrowserContext.setGeolocation.geolocation
+* langs: js
 - `geolocation` <[null]|[Object]>
   - `latitude` <[float]> Latitude between -90 and 90. **required**
   - `longitude` <[float]> Longitude between -180 and 180. **required**

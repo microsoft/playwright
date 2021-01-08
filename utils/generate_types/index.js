@@ -229,7 +229,9 @@ function classBody(classDesc) {
     }
     const jsdoc = memberJSDOC(member, '  ');
     const args = argsFromMember(member, '  ', classDesc.name);
-    const type = stringifyComplexType(member.type, '  ', classDesc.name, member.name);
+    let type = stringifyComplexType(member.type, '  ', classDesc.name, member.name);
+    if (member.async)
+      type = `Promise<${type}>`;
     // do this late, because we still want object definitions for overridden types
     if (!hasOwnMethod(classDesc, member.name))
       return '';

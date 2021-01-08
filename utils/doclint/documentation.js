@@ -285,7 +285,8 @@ Documentation.Member = class {
         if (node.text && node.text.includes('**DEPRECATED**'))
           this.deprecated = true;
       });
-    }
+    };
+    this.async = false;
   }
 
   index() {
@@ -312,7 +313,9 @@ Documentation.Member = class {
   }
 
   clone() {
-    return new Documentation.Member(this.kind, this.langs, this.name, this.type, this.argsArray, this.spec, this.required);
+    const result = new Documentation.Member(this.kind, this.langs, this.name, this.type, this.argsArray, this.spec, this.required);
+    result.async = this.async;
+    return result;
   }
 
   /**
