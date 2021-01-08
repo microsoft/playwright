@@ -36,6 +36,7 @@ import * as playwright from '../..';
 
 program
     .version('Version ' + require('../../package.json').version)
+    .name('npx playwright')
     .option('-b, --browser <browserType>', 'browser to use, one of cr, chromium, ff, firefox, wk, webkit', 'chromium')
     .option('--color-scheme <scheme>', 'emulate preferred color scheme, "light" or "dark"')
     .option('--device <deviceName>', 'emulate device, for example  "iPhone 11"')
@@ -128,10 +129,10 @@ program
     });
 
 program
-    .command('install')
+    .command('install [browserType...]')
     .description('Ensure browsers necessary for this version of Playwright are installed')
-    .action(function() {
-      installBrowsers().catch((e: any) => {
+    .action(function(browserType) {
+      installBrowsers(browserType.length ? browserType : undefined).catch((e: any) => {
         console.log(`Failed to install browsers\n${e}`);
         process.exit(1);
       });

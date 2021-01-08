@@ -27,6 +27,7 @@ import { Playwright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
 import { installHarTracer } from '../trace/harTracer';
 import { installTracer } from '../trace/tracer';
+import { BrowserName } from '../utils/browserPaths';
 
 export function printApiJson() {
   console.log(JSON.stringify(require('../../api.json')));
@@ -59,12 +60,12 @@ export function runServer() {
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
-export async function installBrowsers() {
+export async function installBrowsers(browserNames?: BrowserName[]) {
   let browsersJsonDir = path.dirname(process.execPath);
   if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json'))) {
     browsersJsonDir = path.join(__dirname, '..', '..');
     if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json')))
       throw new Error('Failed to find browsers.json in ' + browsersJsonDir);
   }
-  await installBrowsersWithProgressBar(browsersJsonDir);
+  await installBrowsersWithProgressBar(browsersJsonDir, browserNames);
 }

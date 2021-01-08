@@ -32,7 +32,7 @@ const fsUnlinkAsync = util.promisify(fs.unlink.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const removeFolderAsync = util.promisify(removeFolder);
 
-export async function installBrowsersWithProgressBar(packagePath: string) {
+export async function installBrowsersWithProgressBar(packagePath: string, browserNames?: browserPaths.BrowserName[]) {
   // PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD should have a value of 0 or 1
   if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD')) {
     browserFetcher.logPolitely('Skipping browsers download because `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` env variable is set');
@@ -59,11 +59,11 @@ export async function installBrowsersWithProgressBar(packagePath: string) {
 
   await fsMkdirAsync(linksDir,  { recursive: true });
   await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
-  await validateCache(packagePath, browsersPath, linksDir);
+  await validateCache(packagePath, browsersPath, linksDir, browserNames);
   await releaseLock();
 }
 
-async function validateCache(packagePath: string, browsersPath: string, linksDir: string) {
+async function validateCache(packagePath: string, browsersPath: string, linksDir: string, browserNames?: browserPaths.BrowserName[]) {
   // 1. Collect used downloads and package descriptors.
   const usedBrowserPaths: Set<string> = new Set();
   for (const fileName of await fsReaddirAsync(linksDir)) {
@@ -99,7 +99,7 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   }
 
   // 3. Install missing browsers for this package.
-  const myBrowsersToDownload = await readBrowsersToDownload(packagePath);
+  const myBrowsersToDownload = await readBrowsersToDownload(packagePath, browserNames);
   for (const browser of myBrowsersToDownload) {
     await browserFetcher.downloadBrowserWithProgressBar(browsersPath, browser).catch(e => {
       throw new Error(`Failed to download ${browser.name}, caused by\n${e.stack}`);
@@ -108,11 +108,13 @@ async function validateCache(packagePath: string, browsersPath: string, linksDir
   }
 }
 
-async function readBrowsersToDownload(packagePath: string) {
+async function readBrowsersToDownload(packagePath: string, browserNames?: browserPaths.BrowserName[]) {
   const browsers = JSON.parse((await fsReadFileAsync(path.join(packagePath, 'browsers.json'))).toString())['browsers'] as browserPaths.BrowserDescriptor[];
   // Older versions do not have "download" field. We assume they need all browsers
   // from the list. So we want to skip all browsers that are explicitly marked as "download: false".
-  return browsers.filter(browser => browser.download !== false);
+  return browsers.filter(browser => {
+    return browserNames ? browserNames.includes(browser.name) : browser.download !== false;
+  });
 }
 
 function sha1(data: string): string {
