@@ -361,14 +361,38 @@ function test_playwright_cli_install_should_work {
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm install ${PLAYWRIGHT_TGZ}
 
   local BROWSERS="$(pwd -P)/browsers"
-  echo "Running playwright install"
-  PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" npx playwright install
-  if [[ ! -d "${BROWSERS}" ]]; then
-    echo "Directory for shared browsers was not created!"
+
+  echo "Running playwright install chromium"
+  OUTPUT=$(PLAYWRIGHT_BROWSERS_PATH=${BROWSERS} npx playwright install chromium)
+  if [[ "${OUTPUT}" != *"chromium"* ]]; then
+    echo "ERROR: should download chromium"
     exit 1
   fi
-  copy_test_scripts
+  if [[ "${OUTPUT}" == *"webkit"* ]]; then
+    echo "ERROR: should not download webkit"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" == *"firefox"* ]]; then
+    echo "ERROR: should not download firefox"
+    exit 1
+  fi
 
+  echo "Running playwright install"
+  OUTPUT=$(PLAYWRIGHT_BROWSERS_PATH=${BROWSERS} npx playwright install)
+  if [[ "${OUTPUT}" == *"chromium"* ]]; then
+    echo "ERROR: should not download chromium"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"webkit"* ]]; then
+    echo "ERROR: should download webkit"
+    exit 1
+  fi
+  if [[ "${OUTPUT}" != *"firefox"* ]]; then
+    echo "ERROR: should download firefox"
+    exit 1
+  fi
+
+  copy_test_scripts
   echo "Running sanity.js"
   node sanity.js playwright none
   PLAYWRIGHT_BROWSERS_PATH="${BROWSERS}" node sanity.js playwright
