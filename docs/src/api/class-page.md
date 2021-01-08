@@ -1295,8 +1295,8 @@ When true, takes a screenshot of the full scrollable page, instead of the curren
 
 ### option: Page.screenshot.clip
 - `clip` <[Object]>
-  - `x` <[float]> x-coordinate of top-left corner of clip area
-  - `y` <[float]> y-coordinate of top-left corner of clip area
+  - `x` <[int]> x-coordinate of top-left corner of clip area
+  - `y` <[int]> y-coordinate of top-left corner of clip area
   - `width` <[float]> width of clipping area
   - `height` <[float]> height of clipping area
 
@@ -1362,7 +1362,7 @@ This setting will change the default maximum navigation time for the following m
 [`method: BrowserContext.setDefaultTimeout`] and [`method: BrowserContext.setDefaultNavigationTimeout`].
 
 ### param: Page.setDefaultNavigationTimeout.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 Maximum navigation time in milliseconds
 
@@ -1373,7 +1373,7 @@ This setting will change the default maximum time for all the methods accepting 
 > **NOTE** [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`].
 
 ### param: Page.setDefaultTimeout.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 Maximum time in milliseconds
 
@@ -1571,7 +1571,7 @@ Event name, same one would pass into `page.on(event)`.
 ### param: Page.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` <[int]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
 
@@ -1710,7 +1710,7 @@ await page.waitForRequest(request => request.url().searchParams.get('foo') === '
 Request URL string, regex or predicate receiving [Request] object.
 
 ### option: Page.waitForRequest.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: Page.setDefaultTimeout`] method.
@@ -1732,7 +1732,7 @@ return finalResponse.ok();
 Request URL string, regex or predicate receiving [Response] object.
 
 ### option: Page.waitForResponse.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable the timeout. The default value can be
 changed by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
@@ -1788,7 +1788,7 @@ await page.waitForTimeout(1000);
 Shortcut for main frame's [`method: Frame.waitForTimeout`].
 
 ### param: Page.waitForTimeout.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 A timeout to wait for
 

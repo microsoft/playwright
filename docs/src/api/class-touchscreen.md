@@ -8,7 +8,7 @@ touchscreen can only be used in browser contexts that have been intialized with 
 Dispatches a `touchstart` and `touchend` event with a single touch at the position ([`param: x`],[`param: y`]).
 
 ### param: Touchscreen.tap.x
-- `x` <[float]>
+- `x` <[int]>
 
 ### param: Touchscreen.tap.y
-- `y` <[float]>
+- `y` <[int]>

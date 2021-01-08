@@ -358,7 +358,7 @@ This setting will change the default maximum navigation time for the following m
 [`method: BrowserContext.setDefaultNavigationTimeout`].
 
 ### param: BrowserContext.setDefaultNavigationTimeout.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 Maximum navigation time in milliseconds
 
@@ -370,7 +370,7 @@ This setting will change the default maximum time for all the methods accepting 
 BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: BrowserContext.setDefaultTimeout`].
 
 ### param: BrowserContext.setDefaultTimeout.timeout
-- `timeout` <[float]>
+- `timeout` <[int]>
 
 Maximum time in milliseconds
 
@@ -483,6 +483,6 @@ Event name, same one would pass into `browserContext.on(event)`.
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` <[int]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.

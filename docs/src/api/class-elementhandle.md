@@ -109,10 +109,10 @@ Optional argument to pass to [`param: pageFunction`]
 
 ## async method: ElementHandle.boundingBox
 - returns: <[null]|[Object]>
-  - `x` <[float]> the x coordinate of the element in pixels.
-  - `y` <[float]> the y coordinate of the element in pixels.
-  - `width` <[float]> the width of the element in pixels.
-  - `height` <[float]> the height of the element in pixels.
+  - `x` <[int]> the x coordinate of the element in pixels.
+  - `y` <[int]> the y coordinate of the element in pixels.
+  - `width` <[int]> the width of the element in pixels.
+  - `height` <[int]> the height of the element in pixels.
 
 This method returns the bounding box of the element, or `null` if the element is not visible. The bounding box is
 calculated relative to the main frame viewport - which is usually the same as the browser window.

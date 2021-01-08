@@ -20,10 +20,10 @@ await page.mouse.up();
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].
 
 ### param: Mouse.click.x
-- `x` <[float]>
+- `x` <[int]>
 
 ### param: Mouse.click.y
-- `y` <[float]>
+- `y` <[int]>
 
 ### option: Mouse.click.button = %%-input-button-%%
 
@@ -37,10 +37,10 @@ Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`
 [`method: Mouse.up`].
 
 ### param: Mouse.dblclick.x
-- `x` <[float]>
+- `x` <[int]>
 
 ### param: Mouse.dblclick.y
-- `y` <[float]>
+- `y` <[int]>
 
 ### option: Mouse.dblclick.button = %%-input-button-%%
 
@@ -59,10 +59,10 @@ Dispatches a `mousedown` event.
 Dispatches a `mousemove` event.
 
 ### param: Mouse.move.x
-- `x` <[float]>
+- `x` <[int]>
 
 ### param: Mouse.move.y
-- `y` <[float]>
+- `y` <[int]>
 
 ### option: Mouse.move.steps
 - `steps` <[int]>
