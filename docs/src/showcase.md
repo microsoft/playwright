@@ -19,6 +19,10 @@ title: "Community Showcase"
   * [GitHub repo](https://github.com/mxschmitt/playwright-go)
   * [Documentation](https://pkg.go.dev/github.com/mxschmitt/playwright-go?tab=doc)
 
+* Playwright for Crystal
+  * [GitHub repo](https://github.com/naqvis/playwright-cr)
+  * [Documentation](https://naqvis.github.io/playwright-cr/)
+
 ## Tools
 
 * [CodeceptJS](https://github.com/Codeception/CodeceptJS): Write scenario-driven Playwright tests with synchronous code
