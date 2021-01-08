@@ -13,7 +13,7 @@ Selector describes an element in the page. It can be used to obtain `ElementHand
 
 Selector has the following format: `engine=body [>> engine=body]*`. Here `engine` is one of the supported [selector engines](./selectors.md) (e.g. `css` or `xpath`), and `body` is a selector body in the format of the particular engine. When multiple `engine=body` clauses are present (separated by `>>`), next one is queried relative to the previous one's result.
 
-Playwright supports various engines:
+Playwright supports various selector engines:
   * [Text] selectors, for example `text="Log in"`
   * [CSS] selectors, including the following extensions:
     - [Shadow piercing](#shadow-piercing) by default and [`:light`](#css-extension-light) pseudo-class
