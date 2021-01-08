@@ -316,6 +316,19 @@ Receives the event data and resolves to truthy value when the waiting should res
 Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
+## python-evaluate-expression
+* langs: python
+- `expression` <string>
+
+JavaScript expression to be evaluated in the browser context. If it looks like a function declaration,
+it is interpreted as a function. Otherwise, evaluated as an expression.
+
+## python-evaluate-force-expression
+* langs: python
+- `force_expr` <boolean>
+
+Whether to treat given `expression` as JavaScript evaluate expression, even though it looks like an arrow function.
+Optional.
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%

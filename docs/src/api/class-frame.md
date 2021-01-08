@@ -86,6 +86,7 @@ const html = await frame.$eval('.main-container', (e, suffix) => e.outerHTML + s
 ### param: Frame.$eval.selector = %%-query-selector-%%
 
 ### param: Frame.$eval.pageFunction
+* langs: js
 - `pageFunction` <[function]\([Element]\)>
 
 Function to be evaluated in browser context
@@ -118,6 +119,7 @@ const divsCounts = await frame.$$eval('div', (divs, min) => divs.length >= min, 
 ### param: Frame.$$eval.selector = %%-query-selector-%%
 
 ### param: Frame.$$eval.pageFunction
+* langs: js
 - `pageFunction` <[function]\([Array]<[Element]>\)>
 
 Function to be evaluated in browser context
@@ -134,12 +136,25 @@ Returns the added tag when the script's onload fires or when the script content 
 
 Adds a `<script>` tag into the page with the desired url or content.
 
-### param: Frame.addScriptTag.params
-- `params` <[Object]>
-  - `url` <[string]> URL of a script to be added. Optional.
-  - `path` <[path]> Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
-  - `content` <[string]> Raw JavaScript content to be injected into frame. Optional.
-  - `type` <[string]> Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
+### option: Frame.addScriptTag.url
+- `url` <[string]>
+
+URL of a script to be added.
+
+### option: Frame.addScriptTag.path
+- `path` <[path]>
+
+Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
+
+### option: Frame.addScriptTag.content
+- `content` <[string]>
+
+Raw JavaScript content to be injected into frame.
+
+### option: Frame.addScriptTag.type
+- `type` <[string]>
+
+Script type. Use 'module' in order to load a Javascript ES6 module. See [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
 
 ## async method: Frame.addStyleTag
 - returns: <[ElementHandle]>
@@ -149,11 +164,20 @@ Returns the added tag when the stylesheet's onload fires or when the CSS content
 Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
 content.
 
-### param: Frame.addStyleTag.params
-- `params` <[Object]>
-  - `url` <[string]> URL of the `<link>` tag. Optional.
-  - `path` <[path]> Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
-  - `content` <[string]> Raw CSS content to be injected into frame. Optional.
+### option: Frame.addStyleTag.url
+- `url` <[string]>
+
+URL of the `<link>` tag.
+
+### option: Frame.addStyleTag.path
+- `path` <[path]>
+
+Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the current working directory.
+
+### option: Frame.addStyleTag.content
+- `content` <[string]>
+
+Raw CSS content to be injected into frame.
 
 ## async method: Frame.check
 
@@ -324,6 +348,7 @@ await bodyHandle.dispose();
 ```
 
 ### param: Frame.evaluate.pageFunction
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in browser context
@@ -365,6 +390,7 @@ await resultHandle.dispose();
 ```
 
 ### param: Frame.evaluateHandle.pageFunction
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in the page context
@@ -790,6 +816,7 @@ await frame.waitForFunction(selector => !!document.querySelector(selector), sele
 ```
 
 ### param: Frame.waitForFunction.pageFunction
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in browser context

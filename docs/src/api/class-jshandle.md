@@ -42,6 +42,7 @@ expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')
 ```
 
 ### param: JSHandle.evaluate.pageFunction
+* langs: js
 - `pageFunction` <[function]>
 
 Function to be evaluated in browser context
@@ -67,6 +68,7 @@ for the promise to resolve and return its value.
 See [`method: Page.evaluateHandle`] for more details.
 
 ### param: JSHandle.evaluateHandle.pageFunction
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated

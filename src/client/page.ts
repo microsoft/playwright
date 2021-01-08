@@ -296,12 +296,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.$$(selector));
   }
 
-  async addScriptTag(params: { url?: string; path?: string; content?: string; type?: string; }): Promise<ElementHandle> {
-    return this._attributeToPage(() => this._mainFrame.addScriptTag(params));
+  async addScriptTag(options: { url?: string; path?: string; content?: string; type?: string; } = {}): Promise<ElementHandle> {
+    return this._attributeToPage(() => this._mainFrame.addScriptTag(options));
   }
 
-  async addStyleTag(params: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
-    return this._attributeToPage(() => this._mainFrame.addStyleTag(params));
+  async addStyleTag(options: { url?: string; path?: string; content?: string; } = {}): Promise<ElementHandle> {
+    return this._attributeToPage(() => this._mainFrame.addStyleTag(options));
   }
 
   async exposeFunction(name: string, callback: Function) {
@@ -403,7 +403,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async emulateMedia(params: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null }) {
+  async emulateMedia(params: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null } = {}) {
     return this._wrapApiCall('page.emulateMedia', async () => {
       await this._channel.emulateMedia({
         media: params.media === null ? 'null' : params.media,

@@ -44,14 +44,26 @@ await page.route('**/*', (route, request) => {
 });
 ```
 
-### param: Route.continue.overrides
-- `overrides` <[Object]>
-  - `url` <[string]> If set changes the request URL. New URL must have same protocol as original one.
-  - `method` <[string]> If set changes the request method (e.g. GET or POST)
-  - `postData` <[string]|[Buffer]> If set changes the post data of request
-  - `headers` <[Object]<[string], [string]>> If set changes the request HTTP headers. Header values will be converted to a string.
+### option: Route.continue.url
+- `url` <[string]>
 
-Optional request overrides, can override following properties:
+If set changes the request URL. New URL must have same protocol as original one.
+
+### option: Route.continue.method
+- `method` <[string]>
+
+If set changes the request method (e.g. GET or POST)
+
+### option: Route.continue.postData
+- `postData` <[string]|[Buffer]>
+
+If set changes the post data of request
+
+### option: Route.continue.headers
+- `headers` <[Object]<[string], [string]>>
+
+If set changes the request HTTP headers. Header values will be converted to a string.
+
 
 ## async method: Route.fulfill
 
@@ -75,15 +87,30 @@ An example of serving static file:
 await page.route('**/xhr_endpoint', route => route.fulfill({ path: 'mock_data.json' }));
 ```
 
-### param: Route.fulfill.response
-- `response` <[Object]>
-  - `status` <[int]> Response status code, defaults to `200`.
-  - `headers` <[Object]<[string], [string]>> Optional response headers. Header values will be converted to a string.
-  - `contentType` <[string]> If set, equals to setting `Content-Type` response header.
-  - `body` <[string]|[Buffer]> Optional response body.
-  - `path` <[path]> Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory.
+### option: Route.fulfill.status
+- `status` <[int]>
 
-Response that will fulfill this route's request.
+Response status code, defaults to `200`.
+
+### option: Route.fulfill.headers
+- `headers` <[Object]<[string], [string]>>
+
+Response headers. Header values will be converted to a string.
+
+### option: Route.fulfill.contentType
+- `contentType` <[string]>
+
+If set, equals to setting `Content-Type` response header.
+
+### option: Route.fulfill.body
+- `body` <[string]|[Buffer]>
+
+Response body.
+
+### option: Route.fulfill.path
+- `path` <[path]>
+
+File path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it is resolved relative to the current working directory.
 
 ## method: Route.request
 - returns: <[Request]>

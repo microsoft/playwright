@@ -66,6 +66,7 @@ expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
 ### param: ElementHandle.$eval.selector = %%-query-selector-%%
 
 ### param: ElementHandle.$eval.pageFunction
+* langs: js
 - `pageFunction` <[function]\([Element]\)>
 
 Function to be evaluated in browser context
@@ -106,6 +107,7 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 ### param: ElementHandle.$$eval.selector = %%-query-selector-%%
 
 ### param: ElementHandle.$$eval.pageFunction
+* langs: js
 - `pageFunction` <[function]\([Array]<[Element]>\)>
 
 Function to be evaluated in browser context

@@ -1309,30 +1309,30 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.addScriptTag(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameaddscripttag).
-   * @param params 
+   * @param options 
    */
-  addScriptTag(params: {
+  addScriptTag(options?: {
     /**
-     * URL of a script to be added. Optional.
-     */
-    url?: string;
-
-    /**
-     * Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
-     * current working directory. Optional.
-     */
-    path?: string;
-
-    /**
-     * Raw JavaScript content to be injected into frame. Optional.
+     * Raw JavaScript content to be injected into frame.
      */
     content?: string;
 
     /**
+     * Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
+     * current working directory.
+     */
+    path?: string;
+
+    /**
      * Script type. Use 'module' in order to load a Javascript ES6 module. See
-     * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
+     * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
      */
     type?: string;
+
+    /**
+     * URL of a script to be added.
+     */
+    url?: string;
   }): Promise<ElementHandle>;
 
   /**
@@ -1341,24 +1341,24 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.addStyleTag(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameaddstyletag).
-   * @param params 
+   * @param options 
    */
-  addStyleTag(params: {
+  addStyleTag(options?: {
     /**
-     * URL of the `<link>` tag. Optional.
+     * Raw CSS content to be injected into frame.
      */
-    url?: string;
+    content?: string;
 
     /**
      * Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
-     * current working directory. Optional.
+     * current working directory.
      */
     path?: string;
 
     /**
-     * Raw CSS content to be injected into frame. Optional.
+     * URL of the `<link>` tag.
      */
-    content?: string;
+    url?: string;
   }): Promise<ElementHandle>;
 
   /**
@@ -3501,30 +3501,30 @@ export interface Frame {
    * Returns the added tag when the script's onload fires or when the script content was injected into frame.
    * 
    * Adds a `<script>` tag into the page with the desired url or content.
-   * @param params 
+   * @param options 
    */
-  addScriptTag(params: {
+  addScriptTag(options?: {
     /**
-     * URL of a script to be added. Optional.
-     */
-    url?: string;
-
-    /**
-     * Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
-     * current working directory. Optional.
-     */
-    path?: string;
-
-    /**
-     * Raw JavaScript content to be injected into frame. Optional.
+     * Raw JavaScript content to be injected into frame.
      */
     content?: string;
 
     /**
+     * Path to the JavaScript file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
+     * current working directory.
+     */
+    path?: string;
+
+    /**
      * Script type. Use 'module' in order to load a Javascript ES6 module. See
-     * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details. Optional.
+     * [script](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script) for more details.
      */
     type?: string;
+
+    /**
+     * URL of a script to be added.
+     */
+    url?: string;
   }): Promise<ElementHandle>;
 
   /**
@@ -3532,24 +3532,24 @@ export interface Frame {
    * 
    * Adds a `<link rel="stylesheet">` tag into the page with the desired url or a `<style type="text/css">` tag with the
    * content.
-   * @param params 
+   * @param options 
    */
-  addStyleTag(params: {
+  addStyleTag(options?: {
     /**
-     * URL of the `<link>` tag. Optional.
+     * Raw CSS content to be injected into frame.
      */
-    url?: string;
+    content?: string;
 
     /**
      * Path to the CSS file to be injected into frame. If `path` is a relative path, then it is resolved relative to the
-     * current working directory. Optional.
+     * current working directory.
      */
     path?: string;
 
     /**
-     * Raw CSS content to be injected into frame. Optional.
+     * URL of the `<link>` tag.
      */
-    content?: string;
+    url?: string;
   }): Promise<ElementHandle>;
 
   /**
@@ -8855,13 +8855,13 @@ export interface Route {
    * });
    * ```
    * 
-   * @param overrides Optional request overrides, can override following properties:
+   * @param options 
    */
-  continue(overrides?: {
+  continue(options?: {
     /**
-     * If set changes the request URL. New URL must have same protocol as original one.
+     * If set changes the request HTTP headers. Header values will be converted to a string.
      */
-    url?: string;
+    headers?: { [key: string]: string; };
 
     /**
      * If set changes the request method (e.g. GET or POST)
@@ -8874,9 +8874,9 @@ export interface Route {
     postData?: string|Buffer;
 
     /**
-     * If set changes the request HTTP headers. Header values will be converted to a string.
+     * If set changes the request URL. New URL must have same protocol as original one.
      */
-    headers?: { [key: string]: string; };
+    url?: string;
   }): Promise<void>;
 
   /**
@@ -8900,18 +8900,13 @@ export interface Route {
    * await page.route('**\/xhr_endpoint', route => route.fulfill({ path: 'mock_data.json' }));
    * ```
    * 
-   * @param response Response that will fulfill this route's request.
+   * @param options 
    */
-  fulfill(response: {
+  fulfill(options?: {
     /**
-     * Response status code, defaults to `200`.
+     * Response body.
      */
-    status?: number;
-
-    /**
-     * Optional response headers. Header values will be converted to a string.
-     */
-    headers?: { [key: string]: string; };
+    body?: string|Buffer;
 
     /**
      * If set, equals to setting `Content-Type` response header.
@@ -8919,15 +8914,20 @@ export interface Route {
     contentType?: string;
 
     /**
-     * Optional response body.
+     * Response headers. Header values will be converted to a string.
      */
-    body?: string|Buffer;
+    headers?: { [key: string]: string; };
 
     /**
-     * Optional file path to respond with. The content type will be inferred from file extension. If `path` is a relative path,
-     * then it is resolved relative to the current working directory.
+     * File path to respond with. The content type will be inferred from file extension. If `path` is a relative path, then it
+     * is resolved relative to the current working directory.
      */
     path?: string;
+
+    /**
+     * Response status code, defaults to `200`.
+     */
+    status?: number;
   }): Promise<void>;
 
   /**
