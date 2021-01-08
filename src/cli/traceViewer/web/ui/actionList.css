@@ -1,0 +1,92 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.action-list {
+  width: var(--sidebar-width);
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  overflow: auto;
+  position: relative;
+  contain: size;
+  padding: 0 var(--layout-gap);
+}
+
+.action-entry {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: none;
+  overflow: hidden;
+  border: 3px solid var(--background);
+  margin-top: var(--layout-gap);
+  user-select: none;
+  padding: 0 5px 5px 5px;
+  cursor: pointer;
+  outline: none;
+}
+
+.action-entry:hover {
+  border-color: var(--inactive-focus-ring);
+}
+
+.action-entry.selected {
+  border-color: var(--inactive-focus-ring);
+}
+
+.action-entry.selected:focus {
+  border-color: var(--orange);
+}
+
+.action-title {
+  display: inline;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.action-header {
+  display: block;
+  align-items: center;
+  margin: 5px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-selector {
+  display: inline;
+  padding-left: 5px;
+}
+
+.action-url {
+  display: inline;
+  padding-left: 5px;
+}
+
+.action-thumbnail {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 200px;
+  height: 100px;
+  box-shadow: var(--box-shadow);
+}
+
+.action-thumbnail img {
+  max-width: 200px;
+  max-height: 100px;
+}

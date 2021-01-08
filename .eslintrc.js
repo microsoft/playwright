@@ -5,6 +5,9 @@ module.exports = {
       ecmaVersion: 9,
       sourceType: 'module',
     },
+    extends: [
+      'plugin:react-hooks/recommended'
+    ],
 
     /**
      * ESLint rules
