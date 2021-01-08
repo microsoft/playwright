@@ -31,7 +31,7 @@ export class Selectors {
   readonly _engines: Map<string, { source: string, contentScript: boolean }>;
 
   constructor() {
-    // Note: keep in sync with SelectorEvaluator class.
+    // Note: keep in sync with InjectedScript class.
     this._builtinEngines = new Set([
       'css', 'css:light',
       'xpath', 'xpath:light',
