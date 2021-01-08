@@ -507,6 +507,51 @@ Returns `element.innerText`.
 
 Returns `true` if the frame has been detached, or `false` otherwise.
 
+## async method: Frame.isDisabled
+- returns: <[boolean]>
+
+Returns whether the element is disabled, the opposite of [enabled](./actionability.md#enabled).
+
+### param: Frame.isDisabled.selector = %%-input-selector-%%
+
+### option: Frame.isDisabled.timeout = %%-input-timeout-%%
+
+## async method: Frame.isEditable
+- returns: <[boolean]>
+
+Returns whether the element is [editable](./actionability.md#editable).
+
+### param: Frame.isEditable.selector = %%-input-selector-%%
+
+### option: Frame.isEditable.timeout = %%-input-timeout-%%
+
+## async method: Frame.isEnabled
+- returns: <[boolean]>
+
+Returns whether the element is [enabled](./actionability.md#enabled).
+
+### param: Frame.isEnabled.selector = %%-input-selector-%%
+
+### option: Frame.isEnabled.timeout = %%-input-timeout-%%
+
+## async method: Frame.isHidden
+- returns: <[boolean]>
+
+Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
+
+### param: Frame.isHidden.selector = %%-input-selector-%%
+
+### option: Frame.isHidden.timeout = %%-input-timeout-%%
+
+## async method: Frame.isVisible
+- returns: <[boolean]>
+
+Returns whether the element is [visible](./actionability.md#visible).
+
+### param: Frame.isVisible.selector = %%-input-selector-%%
+
+### option: Frame.isVisible.timeout = %%-input-timeout-%%
+
 ## method: Frame.name
 - returns: <[string]>
 

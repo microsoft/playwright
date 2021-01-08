@@ -87,6 +87,36 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     });
   }
 
+  async isDisabled(): Promise<boolean> {
+    return this._wrapApiCall('elementHandle.isDisabled', async () => {
+      return (await this._elementChannel.isDisabled()).value;
+    });
+  }
+
+  async isEditable(): Promise<boolean> {
+    return this._wrapApiCall('elementHandle.isEditable', async () => {
+      return (await this._elementChannel.isEditable()).value;
+    });
+  }
+
+  async isEnabled(): Promise<boolean> {
+    return this._wrapApiCall('elementHandle.isEnabled', async () => {
+      return (await this._elementChannel.isEnabled()).value;
+    });
+  }
+
+  async isHidden(): Promise<boolean> {
+    return this._wrapApiCall('elementHandle.isHidden', async () => {
+      return (await this._elementChannel.isHidden()).value;
+    });
+  }
+
+  async isVisible(): Promise<boolean> {
+    return this._wrapApiCall('elementHandle.isVisible', async () => {
+      return (await this._elementChannel.isVisible()).value;
+    });
+  }
+
   async dispatchEvent(type: string, eventInit: Object = {}) {
     return this._wrapApiCall('elementHandle.dispatchEvent', async () => {
       await this._elementChannel.dispatchEvent({ type, eventInit: serializeArgument(eventInit) });

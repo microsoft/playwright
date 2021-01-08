@@ -632,7 +632,36 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: types.TimeoutOptions = {}): Promise<void> {
+  async isVisible(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Node as Element : node.parentElement;
+      return element ? injected.isVisible(element) : false;
+    }, {});
+  }
+
+  async isHidden(): Promise<boolean> {
+    return !(await this.isVisible());
+  }
+
+  async isEnabled(): Promise<boolean> {
+    return !(await this.isDisabled());
+  }
+
+  async isDisabled(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Node as Element : node.parentElement;
+      return element ? injected.isElementDisabled(element) : false;
+    }, {});
+  }
+
+  async isEditable(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Node as Element : node.parentElement;
+      return element ? !injected.isElementDisabled(element) && !injected.isElementReadOnly(element) : false;
+    }, {});
+  }
+
+  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
     return runAbortableTask(async progress => {
       progress.log(`  waiting for element to be ${state}`);
       if (state === 'visible') {
@@ -667,6 +696,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assertDone(throwRetargetableDOMError(await pollHandler.finish()));
         return;
       }
+      if (state === 'editable') {
+        const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+          return injected.waitForNodeEnabled(node, true /* waitForEnabled */);
+        }, {});
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+        return;
+      }
       if (state === 'stable') {
         const rafCount = this._page._delegate.rafCountForStablePosition();
         const poll = await this._evaluateHandleInUtility(([injected, node, rafOptions]) => {
@@ -676,7 +713,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assertDone(throwRetargetableDOMError(await pollHandler.finish()));
         return;
       }
-      throw new Error(`state: expected one of (visible|hidden|stable|enabled)`);
+      throw new Error(`state: expected one of (visible|hidden|stable|enabled|disabled|editable)`);
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -957,4 +994,40 @@ export function getAttributeTask(selector: SelectorInfo, name: string): Schedula
       return element.getAttribute(name);
     });
   }, { parsed: selector.parsed, name });
+}
+
+export function visibleTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return injected.isVisible(element);
+    });
+  }, selector.parsed);
+}
+
+export function disabledTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return injected.isElementDisabled(element);
+    });
+  }, selector.parsed);
+}
+
+export function editableTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return !injected.isElementDisabled(element) && !injected.isElementReadOnly(element);
+    });
+  }, selector.parsed);
 }

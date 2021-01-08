@@ -156,3 +156,54 @@ it('getAttribute should be atomic', async ({ playwright, page }) => {
   expect(tc).toBe('hello');
   expect(await page.evaluate(() => document.querySelector('div').getAttribute('foo'))).toBe('modified');
 });
+
+it('isVisible and isHidden should work', async ({ page }) => {
+  await page.setContent(`<div>Hi</div><span></span>`);
+  const div = await page.$('div');
+  expect(await div.isVisible()).toBe(true);
+  expect(await div.isHidden()).toBe(false);
+  expect(await page.isVisible('div')).toBe(true);
+  expect(await page.isHidden('div')).toBe(false);
+  const span = await page.$('span');
+  expect(await span.isVisible()).toBe(false);
+  expect(await span.isHidden()).toBe(true);
+  expect(await page.isVisible('span')).toBe(false);
+  expect(await page.isHidden('span')).toBe(true);
+});
+
+it('isEnabled and isDisabled should work', async ({ page }) => {
+  await page.setContent(`
+    <button disabled>button1</button>
+    <button>button2</button>
+    <div>div</div>
+  `);
+  const div = await page.$('div');
+  expect(await div.isEnabled()).toBe(true);
+  expect(await div.isDisabled()).toBe(false);
+  expect(await page.isEnabled('div')).toBe(true);
+  expect(await page.isDisabled('div')).toBe(false);
+  const button1 = await page.$(':text("button1")');
+  expect(await button1.isEnabled()).toBe(false);
+  expect(await button1.isDisabled()).toBe(true);
+  expect(await page.isEnabled(':text("button1")')).toBe(false);
+  expect(await page.isDisabled(':text("button1")')).toBe(true);
+  const button2 = await page.$(':text("button2")');
+  expect(await button2.isEnabled()).toBe(true);
+  expect(await button2.isDisabled()).toBe(false);
+  expect(await page.isEnabled(':text("button2")')).toBe(true);
+  expect(await page.isDisabled(':text("button2")')).toBe(false);
+});
+
+it('isEditable should work', async ({ page }) => {
+  await page.setContent(`<input id=input1 disabled><textarea></textarea><input id=input2>`);
+  await page.$eval('textarea', t => t.readOnly = true);
+  const input1 = await page.$('#input1');
+  expect(await input1.isEditable()).toBe(false);
+  expect(await page.isEditable('#input1')).toBe(false);
+  const input2 = await page.$('#input2');
+  expect(await input2.isEditable()).toBe(true);
+  expect(await page.isEditable('#input2')).toBe(true);
+  const textarea = await page.$('textarea');
+  expect(await textarea.isEditable()).toBe(false);
+  expect(await page.isEditable('textarea')).toBe(false);
+});

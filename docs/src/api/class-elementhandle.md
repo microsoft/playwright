@@ -317,6 +317,31 @@ Returns the `element.innerHTML`.
 
 Returns the `element.innerText`.
 
+## async method: ElementHandle.isDisabled
+- returns: <[boolean]>
+
+Returns whether the element is disabled, the opposite of [enabled](./actionability.md#enabled).
+
+## async method: ElementHandle.isEditable
+- returns: <[boolean]>
+
+Returns whether the element is [editable](./actionability.md#editable).
+
+## async method: ElementHandle.isEnabled
+- returns: <[boolean]>
+
+Returns whether the element is [enabled](./actionability.md#enabled).
+
+## async method: ElementHandle.isHidden
+- returns: <[boolean]>
+
+Returns whether the element is hidden, the opposite of [visible](./actionability.md#visible).
+
+## async method: ElementHandle.isVisible
+- returns: <[boolean]>
+
+Returns whether the element is [visible](./actionability.md#visible).
+
 ## async method: ElementHandle.ownerFrame
 - returns: <[null]|[Frame]>
 
@@ -544,11 +569,12 @@ checks to pass. This method throws when the element is detached while waiting, u
 * `"stable"` Wait until the element is both [visible](./actionability.md#visible) and [stable](./actionability.md#stable).
 * `"enabled"` Wait until the element is [enabled](./actionability.md#enabled).
 * `"disabled"` Wait until the element is [not enabled](./actionability.md#enabled).
+* `"editable"` Wait until the element is [editable](./actionability.md#editable).
 
 If the element does not satisfy the condition for the [`option: timeout`] milliseconds, this method will throw.
 
 ### param: ElementHandle.waitForElementState.state
-- `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled">
+- `state` <"visible"|"hidden"|"stable"|"enabled"|"disabled"|"editable">
 
 A state to wait for, see below for more details.
 
