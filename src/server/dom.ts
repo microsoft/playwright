@@ -661,6 +661,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }, {});
   }
 
+  async isChecked(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      return injected.isCheckboxChecked(node);
+    }, {});
+  }
+
   async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
     return runAbortableTask(async progress => {
       progress.log(`  waiting for element to be ${state}`);
@@ -1028,6 +1034,18 @@ export function editableTask(selector: SelectorInfo): SchedulableTask<boolean> {
         return continuePolling;
       progress.log(`  selector resolved to ${injected.previewNode(element)}`);
       return !injected.isElementDisabled(element) && !injected.isElementReadOnly(element);
+    });
+  }, selector.parsed);
+}
+
+export function checkedTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return injected.isCheckboxChecked(element);
     });
   }, selector.parsed);
 }

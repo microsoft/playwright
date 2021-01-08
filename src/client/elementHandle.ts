@@ -87,6 +87,12 @@ export class ElementHandle<T extends Node = Node> extends JSHandle<T> implements
     });
   }
 
+  async isChecked(): Promise<boolean> {
+    return this._wrapApiCall('elementHandle.isChecked', async () => {
+      return (await this._elementChannel.isChecked()).value;
+    });
+  }
+
   async isDisabled(): Promise<boolean> {
     return this._wrapApiCall('elementHandle.isDisabled', async () => {
       return (await this._elementChannel.isDisabled()).value;

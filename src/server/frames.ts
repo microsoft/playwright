@@ -963,6 +963,15 @@ export class Frame extends EventEmitter {
     }, this._page._timeoutSettings.timeout(options));
   }
 
+  async isChecked(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.checkedTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking checked state of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
   async hover(controller: ProgressController, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions = {}) {
     return controller.run(async progress => {
       return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, handle => handle._hover(progress, options)));

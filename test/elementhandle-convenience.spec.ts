@@ -207,3 +207,15 @@ it('isEditable should work', async ({ page }) => {
   expect(await textarea.isEditable()).toBe(false);
   expect(await page.isEditable('textarea')).toBe(false);
 });
+
+it('isChecked should work', async ({page}) => {
+  await page.setContent(`<input type='checkbox' checked><div>Not a checkbox</div>`);
+  const handle = await page.$('input');
+  expect(await handle.isChecked()).toBe(true);
+  expect(await page.isChecked('input')).toBe(true);
+  await handle.evaluate(input => input.checked = false);
+  expect(await handle.isChecked()).toBe(false);
+  expect(await page.isChecked('input')).toBe(false);
+  const error = await page.isChecked('div').catch(e => e);
+  expect(error.message).toContain('Not a checkbox or radio button');
+});

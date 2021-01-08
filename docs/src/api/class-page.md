@@ -976,6 +976,15 @@ Returns `element.innerText`.
 
 ### option: Page.innerText.timeout = %%-input-timeout-%%
 
+## async method: Page.isChecked
+- returns: <[boolean]>
+
+Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+
+### param: Page.isChecked.selector = %%-input-selector-%%
+
+### option: Page.isChecked.timeout = %%-input-timeout-%%
+
 ## method: Page.isClosed
 - returns: <[boolean]>
 

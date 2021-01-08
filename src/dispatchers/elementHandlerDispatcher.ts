@@ -66,6 +66,10 @@ export class ElementHandleDispatcher extends JSHandleDispatcher implements chann
     return { value: await this._elementHandle.innerHTML() };
   }
 
+  async isChecked(): Promise<channels.ElementHandleIsCheckedResult> {
+    return { value: await this._elementHandle.isChecked() };
+  }
+
   async isDisabled(): Promise<channels.ElementHandleIsDisabledResult> {
     return { value: await this._elementHandle.isDisabled() };
   }

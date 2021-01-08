@@ -2034,6 +2034,22 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isChecked(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
    * Indicates that the page has been closed.
    */
   isClosed(): boolean;
@@ -3992,6 +4008,22 @@ export interface Frame {
   }): Promise<string>;
 
   /**
+   * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
+   * @param options 
+   */
+  isChecked(selector: string, options?: {
+    /**
+     * Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
+     * using the
+     * [browserContext.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaulttimeout)
+     * or [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
+     * methods.
+     */
+    timeout?: number;
+  }): Promise<boolean>;
+
+  /**
    * Returns `true` if the frame has been detached, or `false` otherwise.
    */
   isDetached(): boolean;
@@ -5856,6 +5888,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * Returns the `element.innerText`.
    */
   innerText(): Promise<string>;
+
+  /**
+   * Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+   */
+  isChecked(): Promise<boolean>;
 
   /**
    * Returns whether the element is disabled, the opposite of [enabled](https://github.com/microsoft/playwright/blob/master/docs/actionability.md#enabled).

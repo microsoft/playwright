@@ -510,6 +510,15 @@ Returns `element.innerText`.
 
 ### option: Frame.innerText.timeout = %%-input-timeout-%%
 
+## async method: Frame.isChecked
+- returns: <[boolean]>
+
+Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+
+### param: Frame.isChecked.selector = %%-input-selector-%%
+
+### option: Frame.isChecked.timeout = %%-input-timeout-%%
+
 ## method: Frame.isDetached
 - returns: <[boolean]>
 

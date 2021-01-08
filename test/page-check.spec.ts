@@ -92,3 +92,9 @@ it('should check the box by aria role', async ({page}) => {
   await page.check('div');
   expect(await page.evaluate(() => window['checkbox'].getAttribute('aria-checked'))).toBe('true');
 });
+
+it('should throw when not a checkbox', async ({page}) => {
+  await page.setContent(`<div>Check me</div>`);
+  const error = await page.check('div').catch(e => e);
+  expect(error.message).toContain('Not a checkbox or radio button');
+});

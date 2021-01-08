@@ -362,6 +362,12 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async isChecked(selector: string, options: channels.FrameIsCheckedOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isChecked'), async () => {
+      return (await this._channel.isChecked({ selector, ...options })).value;
+    });
+  }
+
   async isDisabled(selector: string, options: channels.FrameIsDisabledOptions = {}): Promise<boolean> {
     return this._wrapApiCall(this._apiName('isDisabled'), async () => {
       return (await this._channel.isDisabled({ selector, ...options })).value;
