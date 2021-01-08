@@ -29,6 +29,32 @@ const context = await browser.newContext({
 });
 ```
 
+```python-async
+import asyncio
+from playwright import async_playwright
+
+async def main():
+    async with async_playwright() as p:
+        pixel_2 = p.devices['Pixel 2']
+        browser = await p.webkit.launch(headless=False)
+        context = await browser.new_context(
+            **pixel_2,
+        )
+
+asyncio.get_event_loop().run_until_complete(main())
+```
+
+```python-sync
+from playwright import sync_playwright
+
+with sync_playwright() as p:
+    pixel_2 = p.devices['Pixel 2']
+    browser = p.webkit.launch(headless=False)
+    context = browser.new_context(
+        **pixel_2,
+    )
+```
+
 All pages created in the context above will share the same device parameters.
 
 #### API reference
@@ -46,6 +72,18 @@ All pages created in the context above will share the user agent specified:
 const context = await browser.newContext({
   userAgent: 'My user agent'
 });
+```
+
+```python-async
+context = await browser.new_context(
+  user_agent='My user agent'
+)
+```
+
+```python-sync
+context = browser.new_context(
+  user_agent='My user agent'
+)
 ```
 
 #### API reference
@@ -74,6 +112,38 @@ const context = await browser.newContext({
 });
 ```
 
+```python-async
+# Create context with given viewport
+context = await browser.new_context(
+  viewport={ 'width': 1280, 'height': 1024 }
+)
+
+# Resize viewport for individual page
+await page.set_viewport_size(width=1600, height=1200)
+
+# Emulate high-DPI
+context = await browser.new_context(
+  viewport={ 'width': 2560, 'height': 1440 },
+  device_scale_factor=2,
+)
+```
+
+```python-sync
+# Create context with given viewport
+context = browser.new_context(
+  viewport={ 'width': 1280, 'height': 1024 }
+)
+
+# Resize viewport for individual page
+page.set_viewport_size(width=1600, height=1200)
+
+# Emulate high-DPI
+context = browser.new_context(
+  viewport={ 'width': 2560, 'height': 1440 },
+  device_scale_factor=2,
+
+```
+
 #### API reference
 
 - [`method: Browser.newContext`]
@@ -91,6 +161,22 @@ const context = await browser.newContext({
 });
 ```
 
+```python-async
+# Emulate locale and time
+context = await browser.new_context(
+  locale='de-DE',
+  timezone_id='Europe/Berlin',
+)
+```
+
+```python-sync
+# Emulate locale and time
+context = browser.new_context(
+  locale='de-DE',
+  timezone_id='Europe/Berlin',
+)
+```
+
 #### API reference
 
 - [`method: Browser.newContext`]
@@ -100,25 +186,65 @@ const context = await browser.newContext({
 ## Permissions
 
 Allow all pages in the context to show system notifications:
+
 ```js
 const context = await browser.newContext({
   permissions: ['notifications'],
 });
 ```
 
+```python-async
+context = await browser.new_context(
+  permissions=['notifications'],
+)
+```
+
+```python-sync
+context = browser.new_context(
+  permissions=['notifications'],
+)
+```
+
 Grant all pages in the existing context access to current location:
+
 ```js
 await context.grantPermissions(['geolocation']);
 ```
 
+```python-async
+await context.grant_permissions(['geolocation'])
+```
+
+```python-sync
+context.grant_permissions(['geolocation'])
+```
+
 Grant notifications access from a specific domain:
+
 ```js
 await context.grantPermissions(['notifications'], {origin: 'https://skype.com'} );
 ```
 
+```python-async
+await context.grant_permissions(['notifications'], origin='https://skype.com')
+```
+
+```python-sync
+context.grant_permissions(['notifications'], origin='https://skype.com')
+```
+
 Revoke all permissions:
+
 ```js
 await context.clearPermissions();
+```
+
+```python-async
+await context.clear_permissions()
+```
+
+```python-sync
+context.clear_permissions()
 ```
 
 #### API reference
@@ -131,16 +257,40 @@ await context.clearPermissions();
 
 ## Geolocation
 Create a context with `"geolocation"` permissions granted:
+
 ```js
 const context = await browser.newContext({
   geolocation: { longitude: 48.858455, latitude: 2.294474 },
   permissions: ['geolocation']
 });
 ```
+
+```python-async
+context = await browser.new_context(
+  geolocation={ 'longitude': 48.858455, 'latitude': 2.294474 },
+  permissions=['geolocation']
+)
+```
+
+```python-sync
+context = browser.new_context(
+  geolocation={ 'longitude': 48.858455, 'latitude': 2.294474 },
+  permissions=['geolocation']
+)
+```
+
 Change the location later:
 
 ```js
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
+```
+
+```python-async
+await context.set_geolocation(longitude=29.979097, latitude=31.134256)
+```
+
+```python-sync
+context.set_geolocation(longitude=29.979097, latitude=31.134256)
 ```
 
 **Note** you can only change geolocation for all pages in the context.
@@ -173,6 +323,42 @@ await page.emulateMedia({ colorScheme: 'dark' });
 
 // Change media for page
 await page.emulateMedia({ media: 'print' });
+```
+
+```python-async
+# Create context with dark mode
+context = await browser.new_context(
+  color_scheme='dark' # or 'light'
+)
+
+# Create page with dark mode
+page = await browser.new_page(
+  color_scheme='dark' # or 'light'
+)
+
+# Change color scheme for the page
+await page.emulate_media(color_scheme='dark')
+
+# Change media for page
+await page.emulate_media(media='print')
+```
+
+```python-sync
+# Create context with dark mode
+context = browser.new_context(
+  color_scheme='dark' # or 'light'
+)
+
+# Create page with dark mode
+page = browser.new_page(
+  color_scheme='dark' # or 'light'
+)
+
+# Change color scheme for the page
+page.emulate_media(color_scheme='dark')
+
+# Change media for page
+page.emulate_media(media='print')
 ```
 
 #### API reference

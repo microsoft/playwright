@@ -19,6 +19,16 @@ to slow down execution and follow along while debugging.
 await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
 ```
 
+```python-async
+await chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
+
+```
+
+```python-sync
+chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
+
+```
+
 ## Visual Studio Code debugger
 
 The VS Code debugger can be used to pause and resume execution of Playwright
@@ -64,6 +74,15 @@ In Chromium, you can also open developer tools through a launch option.
 
 ```js
 await chromium.launch({ devtools: true });
+```
+
+```python-async
+await chromium.launch(devtools=True)
+
+```
+
+```python-sync
+chromium.launch(devtools=True)
 ```
 
 ## Run in Debug Mode
