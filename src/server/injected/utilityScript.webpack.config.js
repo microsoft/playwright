@@ -21,6 +21,7 @@ const InlineSource = require('./webpack-inline-source-plugin.js');
 module.exports = {
   entry: path.join(__dirname, 'utilityScript.ts'),
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  devtool: false,
   module: {
     rules: [
       {

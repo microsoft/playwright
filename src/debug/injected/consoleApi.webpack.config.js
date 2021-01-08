@@ -21,6 +21,7 @@ const InlineSource = require('../../server/injected/webpack-inline-source-plugin
 module.exports = {
   entry: path.join(__dirname, 'consoleApi.ts'),
   mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  devtool: false,
   module: {
     rules: [
       {
