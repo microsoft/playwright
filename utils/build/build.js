@@ -40,7 +40,10 @@ function runWatch() {
 
   const spawns = [];
   for (const step of steps)
-    spawns.push(child_process.spawn(step.command, step.args, { stdio: 'inherit', shell: step.shell }));
+    spawns.push(child_process.spawn(step.command, step.args, { stdio: 'inherit', shell: step.shell, env: {
+      ...process.env,
+      ...step.env,
+    } }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
   for (const onChange of onChanges)
     runOnChanges(onChange.inputs, onChange.script);
@@ -72,8 +75,11 @@ const webPackFiles = [
 for (const file of webPackFiles) {
   steps.push({
     command: 'npx',
-    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--silent', '--mode', 'development'] : [])],
+    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--silent'] : [])],
     shell: true,
+    env: {
+      NODE_ENV: watchMode ? 'development' : 'production'
+    }
   });
 }
 

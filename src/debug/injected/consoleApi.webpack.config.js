@@ -17,10 +17,10 @@
 const path = require('path');
 const InlineSource = require('../../server/injected/webpack-inline-source-plugin');
 
+/** @type {import('webpack').Configuration} */
 module.exports = {
   entry: path.join(__dirname, 'consoleApi.ts'),
-  devtool: 'source-map',
-  mode: 'development',
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
   module: {
     rules: [
       {
@@ -38,6 +38,8 @@ module.exports = {
   },
   output: {
     libraryTarget: 'var',
+    library: 'pwExport',
+    libraryExport: 'default',
     filename: 'consoleApiSource.js',
     path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },

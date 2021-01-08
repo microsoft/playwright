@@ -62,6 +62,7 @@
     "@types/react-dom": "^17.0.0",
     "@types/resize-observer-browser": "^0.1.4",
     "@types/rimraf": "^3.0.0",
+    "@types/webpack": "^4.41.25",
     "@types/ws": "7.2.6",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
