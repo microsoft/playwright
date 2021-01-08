@@ -40,3 +40,9 @@ dotnet add package PlaywrightSharp
 
 * [Playwright on NuGet](https://www.nuget.org/packages/PlaywrightSharp/)
 * [GitHub repo](https://github.com/microsoft/playwright-sharp)
+
+## Java
+
+Playwright for Java is available in preview.
+
+* [GitHub repo](https://github.com/microsoft/playwright-java)
