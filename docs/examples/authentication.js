@@ -3,13 +3,13 @@ const assert = require('assert');
 
 /**
  * In this script, we will login on GitHub.com through Chromium,
- * and reuse the login cookies state inside WebKit. This recipe can be
+ * and reuse login state inside WebKit. This recipe can be
  * used to speed up tests by logging in once and reusing login state.
  *
  * Steps summary
  * 1. Login on GitHub.com in Chromium
- * 2. Export cookies from Chromium browser context
- * 3. Set cookies in WebKit browser context and verify login
+ * 2. Export storage state from Chromium browser context
+ * 3. Set storage state in WebKit browser context and verify login
  */
 
 const account = { login: '', password: '' };
@@ -31,14 +31,13 @@ const account = { login: '', password: '' };
   await crPage.click('input[type="submit"]');
   await verifyIsLoggedIn(crPage);
 
-  // Get cookies from Chromium browser context
-  const cookies = await crContext.cookies();
+  // Get storage state from Chromium browser context
+  const storageState = await crContext.storageState();
   await crBrowser.close();
 
-  // Create WebKit browser context and load cookies
+  // Create WebKit browser context with saved storage state
   const wkBrowser = await webkit.launch();
-  const wkContext = await wkBrowser.newContext();
-  await wkContext.addCookies(cookies)
+  const wkContext = await wkBrowser.newContext({ storageState });
 
   // Navigate to GitHub.com and verify that we are logged in
   const wkPage = await wkContext.newPage();
