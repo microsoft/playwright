@@ -58,14 +58,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text', textEngine);
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
-    this._engines.set('xpath', xpathEngine);
     this._engines.set('right-of', createProximityEngine('right-of', boxRightOf));
     this._engines.set('left-of', createProximityEngine('left-of', boxLeftOf));
     this._engines.set('above', createProximityEngine('above', boxAbove));
     this._engines.set('below', createProximityEngine('below', boxBelow));
     this._engines.set('near', createProximityEngine('near', boxNear));
-    for (const attr of ['id', 'data-testid', 'data-test-id', 'data-test'])
-      this._engines.set(attr, createAttributeEngine(attr));
   }
 
   // This is the only function we should use for querying, because it does
@@ -452,40 +449,6 @@ function elementMatchesText(element: Element, context: QueryContext, matcher: (s
     }
   }
   return !!lastText && matcher(lastText);
-}
-
-const xpathEngine: SelectorEngine = {
-  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
-    if (args.length !== 1 || typeof args[0] !== 'string')
-      throw new Error(`"xpath" engine expects a single string`);
-    const document = context.scope.nodeType === 9 /* Node.DOCUMENT_NODE */ ? context.scope as Document : context.scope.ownerDocument;
-    if (!document)
-      return [];
-    const result: Element[] = [];
-    const it = document.evaluate(args[0], context.scope, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE);
-    for (let node = it.iterateNext(); node; node = it.iterateNext()) {
-      if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
-        result.push(node as Element);
-    }
-    return result;
-  },
-};
-
-function createAttributeEngine(attr: string): SelectorEngine {
-  return {
-    matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
-      if (args.length === 0 || typeof args[0] !== 'string')
-        throw new Error(`"${attr}" engine expects a single string`);
-      return element.getAttribute(attr) === args[0];
-    },
-
-    query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
-      if (args.length !== 1 || typeof args[0] !== 'string')
-        throw new Error(`"${attr}" engine expects a single string`);
-      const css = `[${attr}=${CSS.escape(args[0])}]`;
-      return (evaluator as SelectorEvaluatorImpl)._queryCSS(context, css);
-    },
-  };
 }
 
 function boxRightOf(box1: DOMRect, box2: DOMRect): number | undefined {
