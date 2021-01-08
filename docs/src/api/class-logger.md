@@ -1,4 +1,5 @@
 # class: Logger
+* langs: js
 
 Playwright generates a lot of logs and they are accessible via the pluggable logger sink.
 

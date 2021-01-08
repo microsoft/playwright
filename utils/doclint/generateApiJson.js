@@ -88,6 +88,7 @@ function sanitize(result) {
   delete result.args;
   delete result.argsArray;
   delete result.clazz;
+  delete result.langs;
   delete result.spec;
 }
 

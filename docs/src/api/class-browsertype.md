@@ -16,6 +16,7 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 ```
 
 ## async method: BrowserType.connect
+* langs: js
 - returns: <[Browser]>
 
 This methods attaches Playwright to an existing browser instance.
@@ -129,6 +130,7 @@ Close the browser process on SIGTERM. Defaults to `true`.
 Close the browser process on SIGHUP. Defaults to `true`.
 
 ### option: BrowserType.launch.logger
+* langs: js
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging.
@@ -258,6 +260,7 @@ Defaults to 0.
 ### option: BrowserType.launchPersistentContext.-inline- = %%-shared-context-params-list-%%
 
 ## async method: BrowserType.launchServer
+* langs: js
 - returns: <[BrowserServer]>
 
 Returns the browser app instance.
@@ -352,6 +355,7 @@ Close the browser process on SIGTERM. Defaults to `true`.
 Close the browser process on SIGHUP. Defaults to `true`.
 
 ### option: BrowserType.launchServer.logger
+* langs: js
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging.

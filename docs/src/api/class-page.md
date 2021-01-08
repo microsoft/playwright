@@ -315,6 +315,7 @@ await page.addInitScript(preloadFile);
 [`method: Page.addInitScript`] is not defined.
 
 ### param: Page.addInitScript.script
+* langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
@@ -322,6 +323,7 @@ await page.addInitScript(preloadFile);
 Script to be evaluated in the page.
 
 ### param: Page.addInitScript.arg
+* langs: js
 - `arg` <[Serializable]>
 
 Optional argument to pass to [`param: script`] (only supported when passing a function).
@@ -443,6 +445,7 @@ Gets the full HTML contents of the page, including the doctype.
 Get the browser context that the page belongs to.
 
 ## property: Page.coverage
+* langs: js
 - type: <[null]|[ChromiumCoverage]>
 
 Browser-specific Coverage implementation, only available for Chromium atm. See
@@ -1285,19 +1288,8 @@ page.selectOption('select#colors', ['red', 'green', 'blue']);
 Shortcut for main frame's [`method: Frame.selectOption`]
 
 ### param: Page.selectOption.selector = %%-input-selector-%%
-
-### param: Page.selectOption.values
-- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`. Optional.
-  - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[int]> Matches by the index. Optional.
-
-Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
-first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
-is considered matching if all specified properties match.
-
+### param: Page.selectOption.values = %%-select-options-values-%%
 ### option: Page.selectOption.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Page.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Page.setContent

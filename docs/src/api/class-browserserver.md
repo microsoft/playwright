@@ -1,4 +1,5 @@
 # class: BrowserServer
+* langs: js
 
 ## event: BrowserServer.close
 

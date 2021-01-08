@@ -424,18 +424,8 @@ handle.selectOption('red', 'green', 'blue');
 handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
 ```
 
-### param: ElementHandle.selectOption.values
-- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`. Optional.
-  - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[int]> Matches by the index. Optional.
-
-Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
-first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
-is considered matching if all specified properties match.
-
+### param: ElementHandle.selectOption.values = %%-select-options-values-%%
 ### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.selectText

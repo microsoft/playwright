@@ -6884,11 +6884,9 @@ export {};
 /**
  * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
  * 
- * A Browser is created when Playwright connects to a browser instance, either through
- * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch) or
- * [browserType.connect(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnect).
- * 
- * An example of using a [Browser] to create a [Page]:
+ * A Browser is created via
+ * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch). An example
+ * of using a [Browser] to create a [Page]:
  * 
  * ```js
  * const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
@@ -6902,9 +6900,8 @@ export {};
  * ```
  * 
  * See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
- * [browserType.connect(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnect) and
- * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch) always return
- * a specific browser instance, based on the browser being connected to or launched.
+ * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch) always
+ * returns a specific browser instance, based on the browser being launched.
  */
 export interface Browser extends EventEmitter {
   /**
@@ -6952,9 +6949,8 @@ export interface Browser extends EventEmitter {
    * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch), closes the
    * browser and all of its pages (if any were opened).
    * 
-   * In case this browser is obtained using
-   * [browserType.connect(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypeconnect), clears all
-   * created contexts belonging to this browser and disconnects from the browser server.
+   * In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from the
+   * browser server.
    * 
    * The [Browser] object itself is considered to be disposed and cannot be used anymore.
    */

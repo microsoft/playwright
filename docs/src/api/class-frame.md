@@ -583,19 +583,8 @@ frame.selectOption('select#colors', 'red', 'green', 'blue');
 ```
 
 ### param: Frame.selectOption.selector = %%-query-selector-%%
-
-### param: Frame.selectOption.values
-- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
-  - `value` <[string]> Matches by `option.value`. Optional.
-  - `label` <[string]> Matches by `option.label`. Optional.
-  - `index` <[int]> Matches by the index. Optional.
-
-Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
-first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
-is considered matching if all specified properties match.
-
+### param: Frame.selectOption.values = %%-select-options-values-%%
 ### option: Frame.selectOption.noWaitAfter = %%-input-no-wait-after-%%
-
 ### option: Frame.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: Frame.setContent

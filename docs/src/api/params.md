@@ -215,6 +215,7 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 [`method: Page.emulateMedia`] for more details. Defaults to '`light`'.
 
 ## context-option-logger
+* langs: js
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging.
@@ -264,6 +265,44 @@ sure to await [`method: BrowserContext.close`] for videos to be saved.
 Network proxy settings to use with this context. Note that browser needs to be launched with the global proxy for this
 option to work. If all contexts override the proxy, global proxy will be never used and can be any string, for example
 `launch({ proxy: { server: 'per-context' } })`.
+
+## select-options-values
+* langs: js
+- `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
+  - `value` <[string]> Matches by `option.value`. Optional.
+  - `label` <[string]> Matches by `option.label`. Optional.
+  - `index` <[int]> Matches by the index. Optional.
+
+Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the
+first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
+is considered matching if all specified properties match.
+
+## python-select-options-element
+* langs: python
+- `element` <[ElementHandle]|[Array]<[ElementHandle]>>
+
+Option elements to select. Optional.
+
+## python-select-options-index
+* langs: python
+- `index` <[int]|[Array]<[int]>>
+
+Options to select by index. Optional.
+
+## python-select-options-value
+* langs: python
+- `value` <[string]|[Array]<[string]>>
+
+Options to select by value. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
+only the first option matching one of the passed options is selected. Optional.
+
+## python-select-options-label
+* langs: python
+- `label` <[string]|[Array]<[string]>>
+
+Options to select by label. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
+only the first option matching one of the passed options is selected. Optional.
+
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%

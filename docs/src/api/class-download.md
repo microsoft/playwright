@@ -22,6 +22,7 @@ downloaded content. If `acceptDownloads` is not set or set to `false`, download 
 download is not performed and user has no access to the downloaded files.
 
 ## async method: Download.createReadStream
+* langs: js
 - returns: <[null]|[Readable]>
 
 Returns readable stream for current download or `null` if download failed.
