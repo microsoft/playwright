@@ -152,7 +152,7 @@ We run our tests on CircleCI, with our [pre-built Docker image](./docker.md). Ru
 
 1. Use the pre-built [Docker image](./docker.md) in your config like so:
 
-   ```yaml
+   ```yml
    docker:
      - image: mcr.microsoft.com/playwright:bionic
        environment:
