@@ -38,6 +38,8 @@ console.log(text);
 ```
 
 ## async method: Frame.$
+* langs:
+  - alias-python: query_selector
 - returns: <[null]|[ElementHandle]>
 
 Returns the ElementHandle pointing to the frame element.
@@ -48,6 +50,8 @@ selectors](./selectors.md#working-with-selectors) for more details. If no elemen
 ### param: Frame.$.selector = %%-query-selector-%%
 
 ## async method: Frame.$$
+* langs:
+  - alias-python: query_selector_all
 - returns: <[Array]<[ElementHandle]>>
 
 Returns the ElementHandles pointing to the frame elements.
@@ -58,6 +62,8 @@ selectors](./selectors.md#working-with-selectors) for more details. If no elemen
 ### param: Frame.$$.selector = %%-query-selector-%%
 
 ## async method: Frame.$eval
+* langs:
+  - alias-python: eval_on_selector
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -90,6 +96,8 @@ Function to be evaluated in browser context
 Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Frame.$$eval
+* langs:
+  - alias-python: eval_on_selector_all
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]

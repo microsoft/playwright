@@ -60,7 +60,7 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
       }
       const memberParams = paramsForMember(member);
       for (const paramName of memberParams) {
-        if (!params.has(paramName))
+        if (!params.has(paramName) && paramName !== 'options')
           errors.push(`Documented "${cls.name}.${member.name}.${paramName}" not found is sources`);
       }
     }

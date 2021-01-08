@@ -79,3 +79,26 @@ Longitude between -180 and 180. **required**
 - `accuracy` <[float]>
 
 Non-negative accuracy value. Defaults to `0`. Optional.
+
+### param: Page.emulateMedia.params
+* langs: python
+- `media` <[null]|"screen"|"print">
+
+Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
+Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
+Optional.
+
+### param: Page.emulateMedia.params
+* langs: python
+- `colorScheme` <[null]|"light"|"dark"|"no-preference">
+
+Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
+`null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated
+value. Optional.
+
+### option: BrowserContext.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
+### option: BrowserContext.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: Page.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
+### option: Page.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
+### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%

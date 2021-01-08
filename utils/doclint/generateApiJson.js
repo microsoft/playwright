@@ -52,8 +52,7 @@ function serializeClass(clazz) {
   const result = { name: clazz.name };
   if (clazz.extends)
     result.extends = clazz.extends;
-  if (clazz.langs)
-    result.langs = [...clazz.langs];
+  result.langs = clazz.langs;
   if (clazz.comment)
     result.comment = clazz.comment;
   result.members = clazz.membersArray.map(serializeMember);
@@ -66,8 +65,6 @@ function serializeClass(clazz) {
 function serializeMember(member) {
   const result = /** @type {any} */ ({ ...member });
   sanitize(result);
-  if (member.langs)
-    result.langs = [...member.langs];
   result.args = member.argsArray.map(serializeProperty);
   if (member.type)
     result.type = serializeType(member.type)
@@ -77,8 +74,6 @@ function serializeMember(member) {
 function serializeProperty(arg) {
   const result = { ...arg };
   sanitize(result);
-  if (arg.langs)
-    result.langs = [...arg.langs];
   if (arg.type)
     result.type = serializeType(arg.type)
   return result;
@@ -88,7 +83,6 @@ function sanitize(result) {
   delete result.args;
   delete result.argsArray;
   delete result.clazz;
-  delete result.langs;
   delete result.spec;
 }
 

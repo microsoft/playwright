@@ -113,7 +113,7 @@ class ApiParser {
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
         const type = new Documentation.Type('Object', []);
-        options = Documentation.Member.createProperty(null, 'options', type, undefined, false);
+        options = Documentation.Member.createProperty({}, 'options', type, undefined, false);
         method.argsArray.push(options);
       }
       const p = this.parseProperty(spec);
@@ -143,7 +143,7 @@ class ApiParser {
     for (const child of spec.children || []) {
       const { name, text } = parseVariable(child.text);
       const comments = /** @type {MarkdownNode[]} */ ([{ type: 'text', text }]);
-      properties.push(Documentation.Member.createProperty(null, name, this.parseType(child), comments, guessRequired(text)));
+      properties.push(Documentation.Member.createProperty({}, name, this.parseType(child), comments, guessRequired(text)));
     }
     return Documentation.Type.parse(arg.type, properties);
   }
@@ -272,13 +272,27 @@ function parseApi(apiDir) {
 
 /**
  * @param {MarkdownNode} spec
- * @returns {?Set<string>}
+ * @returns {import('./documentation').Langs}
  */
 function extractLangs(spec) {
-  for (const child of spec.children)
-  if (child.type === 'li' && child.liType === 'bullet' && child.text.startsWith('langs: '))
-    return new Set(child.text.substring('langs: '.length).split(',').map(l => l.trim()));
-  return null;
+  for (const child of spec.children) {
+    if (child.type !== 'li' || child.liType !== 'bullet' || !child.text.startsWith('langs:'))
+      continue;
+
+    const only = child.text.substring('langs:'.length).trim();
+    /** @type {Object<string, string>} */
+    const aliases = {};
+    for (const p of child.children || []) {
+      const match = p.text.match(/alias-(\w+)[\s]*:(.*)/);
+      if (match)
+        aliases[match[1].trim()] = match[2].trim();
+    }
+    return {
+      only: only ? only.split(',') : undefined,
+      aliases
+    };
+  }
+  return {};
 }
 
 /**

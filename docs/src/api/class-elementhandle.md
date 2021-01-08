@@ -22,6 +22,8 @@ JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame get
 ElementHandle instances can be used as an argument in [`method: Page.$eval`] and [`method: Page.evaluate`] methods.
 
 ## async method: ElementHandle.$
+* langs:
+  - alias-python: query_selector
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See [Working with
@@ -30,6 +32,8 @@ selectors](./selectors.md#working-with-selectors) for more details. If no elemen
 ### param: ElementHandle.$.selector = %%-query-selector-%%
 
 ## async method: ElementHandle.$$
+* langs:
+  - alias-python: query_selector_all
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See [Working with
@@ -38,6 +42,8 @@ selectors](./selectors.md#working-with-selectors) for more details. If no elemen
 ### param: ElementHandle.$$.selector = %%-query-selector-%%
 
 ## async method: ElementHandle.$eval
+* langs:
+  - alias-python: eval_on_selector
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -70,6 +76,8 @@ Function to be evaluated in browser context
 Optional argument to pass to [`param: pageFunction`]
 
 ## async method: ElementHandle.$$eval
+* langs:
+  - alias-python: eval_on_selector_all
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]

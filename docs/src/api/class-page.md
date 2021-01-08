@@ -210,6 +210,8 @@ Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/We
 page.
 
 ## async method: Page.$
+* langs:
+  - alias-python: query_selector
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
@@ -220,6 +222,8 @@ Shortcut for main frame's [`method: Frame.$`].
 ### param: Page.$.selector = %%-query-selector-%%
 
 ## async method: Page.$$
+* langs:
+  - alias-python: query_selector_all
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector within the page. If no elements match the selector, the
@@ -230,6 +234,8 @@ Shortcut for main frame's [`method: Frame.$$`].
 ### param: Page.$$.selector = %%-query-selector-%%
 
 ## async method: Page.$eval
+* langs:
+  - alias-python: eval_on_selector
 - returns: <[Serializable]>
 
 The method finds an element matching the specified selector within the page and passes it as a first argument to
@@ -262,6 +268,8 @@ Function to be evaluated in browser context
 Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Page.$$eval
+* langs:
+  - alias-python: eval_on_selector_all
 - returns: <[Serializable]>
 
 The method finds all elements matching the specified selector within the page and passes an array of matched elements as
@@ -560,6 +568,7 @@ await page.evaluate(() => matchMedia('(prefers-color-scheme: no-preference)').ma
 ```
 
 ### param: Page.emulateMedia.params
+* langs: js
 - `params` <[Object]>
   - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value. Optional.
   - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated value. Optional.
@@ -1524,6 +1533,7 @@ value. Will throw an error if the page is closed before the event is fired.
 Event name, same one would pass into `page.on(event)`.
 
 ### param: Page.waitForEvent.optionsOrPredicate
+* langs: js
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].

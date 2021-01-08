@@ -207,15 +207,17 @@ Consider a page with two buttons, first invisible and second visible.
 <button>Visible</button>
 ```
 
-* ```js
+* This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting:
+
+  ```js
   await page.click('button');
   ```
-  This will find the first button, because it is the first one in DOM order. Then it will wait for the button to become visible before clicking, or timeout while waiting.
 
-* ```js
+* This will find a second button, because it is visible, and then click it.
+
+  ```js
   await page.click('button:visible');
-  ```
-  This will find a second button, because it is visible, and then click it.
+  ``` 
 
 Use `:visible` with caution, because it has two major drawbacks:
 * When elements change their visibility dynamically, `:visible` will give upredictable results based on the timing.

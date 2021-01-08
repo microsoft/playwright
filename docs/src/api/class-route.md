@@ -27,6 +27,8 @@ Optional error code. Defaults to `failed`, could be one of the following:
   * `'failed'` - A generic failure occurred.
 
 ## async method: Route.continue
+* langs:
+  - alias-python: continue_
 
 Continues route's request with optional overrides.
 

@@ -32,6 +32,13 @@ const md = require('../markdown');
   */
 
 /**
+ * @typedef {{
+ *   only?: string[],
+ *   aliases?: Object<string, string>
+ * }} Langs
+ */
+
+/**
  * @typedef {function({
   *   clazz?: Documentation.Class,
   *   member?: Documentation.Member,
@@ -81,7 +88,7 @@ class Documentation {
   filterForLanguage(lang) {
     const classesArray = [];
     for (const clazz of this.classesArray) {
-      if (clazz.langs && !clazz.langs.has(lang))
+      if (clazz.langs.only && !clazz.langs.only.includes(lang))
         continue;
       clazz.filterForLanguage(lang);
       classesArray.push(clazz);
@@ -131,7 +138,7 @@ class Documentation {
 
 Documentation.Class = class {
   /**
-   * @param {?Set<string>} langs
+   * @param {Langs} langs
    * @param {string} name
    * @param {!Array<!Documentation.Member>} membersArray
    * @param {?string=} extendsName
@@ -188,8 +195,10 @@ Documentation.Class = class {
   filterForLanguage(lang) {
     const membersArray = [];
     for (const member of this.membersArray) {
-      if (member.langs && !member.langs.has(lang))
+      if (member.langs.only && !member.langs.only.includes(lang))
         continue;
+      if (member.langs.aliases && member.langs.aliases[lang])
+        member.alias = member.langs.aliases[lang];
       member.filterForLanguage(lang);
       membersArray.push(member);
     }
@@ -257,7 +266,7 @@ Documentation.Class = class {
 Documentation.Member = class {
   /**
    * @param {string} kind
-   * @param {?Set<string>} langs
+   * @param {Langs} langs
    * @param {string} name
    * @param {?Documentation.Type} type
    * @param {!Array<!Documentation.Member>} argsArray
@@ -287,6 +296,7 @@ Documentation.Member = class {
       });
     };
     this.async = false;
+    this.alias = name;
   }
 
   index() {
@@ -304,8 +314,10 @@ Documentation.Member = class {
   filterForLanguage(lang) {
     const argsArray = [];
     for (const arg of this.argsArray) {
-      if (arg.langs && !arg.langs.has(lang))
+      if (arg.langs.only && !arg.langs.only.includes(lang))
         continue;
+      if (arg.langs.aliases && arg.langs.aliases[lang])
+        arg.alias = arg.langs.aliases[lang];
       arg.filterForLanguage(lang);
       argsArray.push(arg);
     }
@@ -319,7 +331,7 @@ Documentation.Member = class {
   }
 
   /**
-   * @param {?Set<string>} langs
+   * @param {Langs} langs
    * @param {string} name
    * @param {!Array<!Documentation.Member>} argsArray
    * @param {?Documentation.Type} returnType
@@ -331,10 +343,10 @@ Documentation.Member = class {
   }
 
   /**
-   * @param {?Set<string>} langs
-   * @param {string} name
+   * @param {!Langs} langs
+   * @param {!string} name
    * @param {!Documentation.Type} type
-   * @param {MarkdownNode[]=} spec
+   * @param {!MarkdownNode[]=} spec
    * @param {boolean=} required
    * @return {!Documentation.Member}
    */
@@ -343,7 +355,7 @@ Documentation.Member = class {
   }
 
   /**
-   * @param {?Set<string>} langs
+   * @param {Langs} langs
    * @param {string} name
    * @param {?Documentation.Type=} type
    * @param {MarkdownNode[]=} spec
