@@ -38,6 +38,5 @@ test('missing docs', async ({}) => {
     'Documented "DoesNotExist" not found in sources',
     'Documented "Exists.doesNotExist" not found is sources',
     'Documented "Exists.exists.doesNotExist" not found is sources',
-    'Documented "Exists.exists.options" not found is sources',
   ]);
 });

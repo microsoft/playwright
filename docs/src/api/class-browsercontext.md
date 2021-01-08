@@ -481,6 +481,7 @@ await context.grantPermissions(['geolocation']);
 Event name, same one would pass into `browserContext.on(event)`.
 
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
+* langs: js
 - `optionsOrPredicate` <[Function]|[Object]>
   - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].

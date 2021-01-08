@@ -26,7 +26,7 @@
  *  }} MarkdownNode */
 
 function flattenWrappedLines(content) {
-  const inLines = content.split('\n');
+  const inLines = content.replace(/\r\n/g, '\n').split('\n');
   let inCodeBlock = false;
   const outLines = [];
   let outLineTokens = [];
@@ -124,8 +124,12 @@ function buildTree(lines) {
       };
       line = lines[++i];
       while (!line.trim().startsWith('```')) {
-        if (!line.startsWith(indent))
-          throw new Error('Bad code block ' + line);
+        if (!line.startsWith(indent)) {
+          const from = Math.max(0, i - 5)
+          const to = Math.min(lines.length, from + 10);
+          const snippet = lines.slice(from, to);
+          throw new Error(`Bad code block: ${snippet.join('\n')}`);
+        }
         node.lines.push(line.substring(indent.length));
         line = lines[++i];
       }

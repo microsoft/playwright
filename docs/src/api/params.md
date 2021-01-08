@@ -303,6 +303,19 @@ only the first option matching one of the passed options is selected. Optional.
 Options to select by label. If the `<select>` has the `multiple` attribute, all given options are selected, otherwise
 only the first option matching one of the passed options is selected. Optional.
 
+## python-wait-for-event-predicate
+* langs: python
+- `predicate` <[Function]>
+
+Receives the event data and resolves to truthy value when the waiting should resolve.
+
+## python-wait-for-event-timeout
+* langs: python
+- `timeout` <[float]>
+
+Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+
 
 ## shared-context-params-list
 - %%-context-option-acceptdownloads-%%
