@@ -69,7 +69,7 @@ existing authentication state in new browser contexts.
 Web apps use cookie-based or token-based authentication, where authenticated
 state is stored as [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies)
 or in [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Storage).
-Playwright provides [`method: Browser.storageState`] method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
+Playwright provides [`method: BrowserContext.storageState`] method that can be used to retrieve storage state from authenticated contexts and then create new contexts with prepopulated state.
 
 Cookies and local storage state can be used across different browsers. They depend
 on your application's authentication model: some apps might require both cookies
