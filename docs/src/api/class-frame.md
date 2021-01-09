@@ -896,6 +896,6 @@ Note that `frame.waitForTimeout()` should only be used for debugging. Tests usin
 be flaky. Use signals such as network events, selectors becoming visible and others instead.
 
 ### param: Frame.waitForTimeout.timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 A timeout to wait for

@@ -26,7 +26,7 @@ This methods attaches Playwright to an existing browser instance.
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to. **required**
   - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
-  - `timeout` <[int]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## method: BrowserType.executablePath
 - returns: <[string]>
@@ -136,7 +136,7 @@ Close the browser process on SIGHUP. Defaults to `true`.
 Logger sink for Playwright logging.
 
 ### option: BrowserType.launch.timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
@@ -235,7 +235,7 @@ Close the browser process on SIGTERM. Defaults to `true`.
 Close the browser process on SIGHUP. Defaults to `true`.
 
 ### option: BrowserType.launchPersistentContext.timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
@@ -361,7 +361,7 @@ Close the browser process on SIGHUP. Defaults to `true`.
 Logger sink for Playwright logging.
 
 ### option: BrowserType.launchServer.timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.

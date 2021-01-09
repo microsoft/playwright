@@ -7,7 +7,7 @@ When to consider operation succeeded, defaults to `load`. Events can be either:
 * `'networkidle'` - consider operation to be finished when there are no network connections for at least `500` ms.
 
 ## navigation-timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 Maximum operation time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout.
 The default value can be changed by using the
@@ -17,13 +17,13 @@ The default value can be changed by using the
 [`method: Page.setDefaultTimeout`] methods.
 
 ## wait-for-timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default
 value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 ## input-timeout
-- `timeout` <[int]>
+- `timeout` <[float]>
 
 Maximum time in milliseconds, defaults to 30 seconds, pass `0` to disable timeout. The default value can be changed by
 using the [`method: BrowserContext.setDefaultTimeout`] or
