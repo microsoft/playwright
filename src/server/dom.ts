@@ -82,9 +82,12 @@ export class FrameExecutionContext extends js.ExecutionContext {
       for (const [name, { source }] of this.frame._page.selectors._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
-        new (${injectedScriptSource.source})([
+        (() => {
+        ${injectedScriptSource.source}
+        return new pwExport([
           ${custom.join(',\n')}
-        ])
+        ]);
+        })();
       `;
       this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }

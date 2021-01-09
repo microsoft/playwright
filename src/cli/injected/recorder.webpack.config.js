@@ -17,10 +17,11 @@
 const path = require('path');
 const InlineSource = require('../../server/injected/webpack-inline-source-plugin');
 
+/** @type {import('webpack').Configuration} */
 module.exports = {
   entry: path.join(__dirname, 'recorder.ts'),
-  devtool: 'source-map',
-  mode: 'development',
+  mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
+  devtool: false,
   module: {
     rules: [
       {
@@ -38,6 +39,8 @@ module.exports = {
   },
   output: {
     libraryTarget: 'var',
+    libraryExport: 'default',
+    library: 'pwExport',
     filename: 'recorderSource.js',
     path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },

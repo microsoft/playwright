@@ -22,15 +22,12 @@ module.exports = class InlineSource {
     this.outFile = outFile;
   }
 
+  /**
+   * @param {import('webpack').Compiler} compiler
+   */
   apply(compiler) {
     compiler.hooks.emit.tapAsync('InlineSource', (compilation, callback) => {
-      let source = compilation.assets[path.basename(this.outFile).replace('.ts', '.js')].source();
-      const lastLine = source.split('\n').pop();
-      if (lastLine.startsWith('//# sourceMappingURL'))
-        source = source.substring(0, source.length - lastLine.length - 1);
-      if (source.endsWith(';'))
-        source = source.substring(0, source.length - 1);
-      source = '(' + source + ').default';
+      const source = compilation.assets[path.basename(this.outFile).replace('.ts', '.js')].source();
       fs.mkdirSync(path.dirname(this.outFile), { recursive: true });
       const newSource = 'export const source = ' + JSON.stringify(source) + ';';
       fs.writeFileSync(this.outFile, newSource);
