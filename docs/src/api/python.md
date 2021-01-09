@@ -102,3 +102,37 @@ value. Optional.
 ### option: Page.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
 ### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
 ### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+
+### param: ElementHandle.$eval.expression = %%-python-evaluate-expression-%%
+### param: ElementHandle.$$eval.expression = %%-python-evaluate-expression-%%
+### param: Frame.$eval.expression = %%-python-evaluate-expression-%%
+### param: Frame.$$eval.expression = %%-python-evaluate-expression-%%
+### param: Frame.evaluate.expression = %%-python-evaluate-expression-%%
+### param: Frame.evaluateHandle.expression = %%-python-evaluate-expression-%%
+### param: Frame.waitForFunction.expression = %%-python-evaluate-expression-%%
+### param: JSHandle.evaluate.expression = %%-python-evaluate-expression-%%
+### param: JSHandle.evaluateHandle.expression = %%-python-evaluate-expression-%%
+### param: Page.$eval.expression = %%-python-evaluate-expression-%%
+### param: Page.$$eval.expression = %%-python-evaluate-expression-%%
+### param: Page.evaluate.expression = %%-python-evaluate-expression-%%
+### param: Page.evaluateHandle.expression = %%-python-evaluate-expression-%%
+### param: Page.waitForFunction.expression = %%-python-evaluate-expression-%%
+### param: Worker.evaluate.expression = %%-python-evaluate-expression-%%
+### param: Worker.evaluateHandle.expression = %%-python-evaluate-expression-%%
+
+### param: ElementHandle.$eval.expression = %%-python-evaluate-force-expression-%%
+### param: ElementHandle.$$eval.expression = %%-python-evaluate-force-expression-%%
+### param: Frame.$eval.expression = %%-python-evaluate-force-expression-%%
+### param: Frame.$$eval.expression = %%-python-evaluate-force-expression-%%
+### param: Frame.evaluate.expression = %%-python-evaluate-force-expression-%%
+### param: Frame.evaluateHandle.expression = %%-python-evaluate-force-expression-%%
+### param: Frame.waitForFunction.expression = %%-python-evaluate-force-expression-%%
+### param: JSHandle.evaluate.expression = %%-python-evaluate-force-expression-%%
+### param: JSHandle.evaluateHandle.expression = %%-python-evaluate-force-expression-%%
+### param: Page.$eval.expression = %%-python-evaluate-force-expression-%%
+### param: Page.$$eval.expression = %%-python-evaluate-force-expression-%%
+### param: Page.evaluate.expression = %%-python-evaluate-force-expression-%%
+### param: Page.evaluateHandle.expression = %%-python-evaluate-force-expression-%%
+### param: Page.waitForFunction.expression = %%-python-evaluate-force-expression-%%
+### param: Worker.evaluate.expression = %%-python-evaluate-force-expression-%%
+### param: Worker.evaluateHandle.expression = %%-python-evaluate-force-expression-%%
