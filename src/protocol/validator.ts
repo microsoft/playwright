@@ -578,6 +578,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     timeout: tOptional(tNumber),
   });
+  scheme.FrameIsCheckedParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
   scheme.FrameIsDisabledParams = tObject({
     selector: tString,
     timeout: tOptional(tNumber),
@@ -770,6 +774,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
   scheme.ElementHandleInnerTextParams = tOptional(tObject({}));
+  scheme.ElementHandleIsCheckedParams = tOptional(tObject({}));
   scheme.ElementHandleIsDisabledParams = tOptional(tObject({}));
   scheme.ElementHandleIsEditableParams = tOptional(tObject({}));
   scheme.ElementHandleIsEnabledParams = tOptional(tObject({}));

@@ -1218,6 +1218,13 @@ Frame:
       returns:
         value: string
 
+    isChecked:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
     isDisabled:
       parameters:
         selector: string
@@ -1636,6 +1643,10 @@ ElementHandle:
     innerText:
       returns:
         value: string
+
+    isChecked:
+      returns:
+        value: boolean
 
     isDisabled:
       returns:

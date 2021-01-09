@@ -530,6 +530,10 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this._attributeToPage(() => this._mainFrame.getAttribute(selector, name, options));
   }
 
+  async isChecked(selector: string, options?: channels.FrameIsCheckedOptions): Promise<boolean> {
+    return this._attributeToPage(() => this._mainFrame.isChecked(selector, options));
+  }
+
   async isDisabled(selector: string, options?: channels.FrameIsDisabledOptions): Promise<boolean> {
     return this._attributeToPage(() => this._mainFrame.isDisabled(selector, options));
   }

@@ -327,6 +327,11 @@ Returns the `element.innerHTML`.
 
 Returns the `element.innerText`.
 
+## async method: ElementHandle.isChecked
+- returns: <[boolean]>
+
+Returns whether the element is checked. Throws if the element is not a checkbox or radio input.
+
 ## async method: ElementHandle.isDisabled
 - returns: <[boolean]>
 

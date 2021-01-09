@@ -1190,6 +1190,7 @@ export interface FrameChannel extends Channel {
   hover(params: FrameHoverParams, metadata?: Metadata): Promise<FrameHoverResult>;
   innerHTML(params: FrameInnerHTMLParams, metadata?: Metadata): Promise<FrameInnerHTMLResult>;
   innerText(params: FrameInnerTextParams, metadata?: Metadata): Promise<FrameInnerTextResult>;
+  isChecked(params: FrameIsCheckedParams, metadata?: Metadata): Promise<FrameIsCheckedResult>;
   isDisabled(params: FrameIsDisabledParams, metadata?: Metadata): Promise<FrameIsDisabledResult>;
   isEnabled(params: FrameIsEnabledParams, metadata?: Metadata): Promise<FrameIsEnabledResult>;
   isHidden(params: FrameIsHiddenParams, metadata?: Metadata): Promise<FrameIsHiddenResult>;
@@ -1445,6 +1446,16 @@ export type FrameInnerTextOptions = {
 };
 export type FrameInnerTextResult = {
   value: string,
+};
+export type FrameIsCheckedParams = {
+  selector: string,
+  timeout?: number,
+};
+export type FrameIsCheckedOptions = {
+  timeout?: number,
+};
+export type FrameIsCheckedResult = {
+  value: boolean,
 };
 export type FrameIsDisabledParams = {
   selector: string,
@@ -1783,6 +1794,7 @@ export interface ElementHandleChannel extends JSHandleChannel {
   hover(params: ElementHandleHoverParams, metadata?: Metadata): Promise<ElementHandleHoverResult>;
   innerHTML(params?: ElementHandleInnerHTMLParams, metadata?: Metadata): Promise<ElementHandleInnerHTMLResult>;
   innerText(params?: ElementHandleInnerTextParams, metadata?: Metadata): Promise<ElementHandleInnerTextResult>;
+  isChecked(params?: ElementHandleIsCheckedParams, metadata?: Metadata): Promise<ElementHandleIsCheckedResult>;
   isDisabled(params?: ElementHandleIsDisabledParams, metadata?: Metadata): Promise<ElementHandleIsDisabledResult>;
   isEditable(params?: ElementHandleIsEditableParams, metadata?: Metadata): Promise<ElementHandleIsEditableResult>;
   isEnabled(params?: ElementHandleIsEnabledParams, metadata?: Metadata): Promise<ElementHandleIsEnabledResult>;
@@ -1941,6 +1953,11 @@ export type ElementHandleInnerTextParams = {};
 export type ElementHandleInnerTextOptions = {};
 export type ElementHandleInnerTextResult = {
   value: string,
+};
+export type ElementHandleIsCheckedParams = {};
+export type ElementHandleIsCheckedOptions = {};
+export type ElementHandleIsCheckedResult = {
+  value: boolean,
 };
 export type ElementHandleIsDisabledParams = {};
 export type ElementHandleIsDisabledOptions = {};

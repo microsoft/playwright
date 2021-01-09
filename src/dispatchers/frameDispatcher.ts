@@ -159,6 +159,10 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameInitializer
     return { value: value === null ? undefined : value };
   }
 
+  async isChecked(params: channels.FrameIsCheckedParams): Promise<channels.FrameIsCheckedResult> {
+    return { value: await this._frame.isChecked(params.selector, params) };
+  }
+
   async isDisabled(params: channels.FrameIsDisabledParams): Promise<channels.FrameIsDisabledResult> {
     return { value: await this._frame.isDisabled(params.selector, params) };
   }
