@@ -22,6 +22,7 @@ const fs = require('fs');
 const path = require('path');
 const { parseApi } = require('./api_parser');
 const missingDocs = require('./missingDocs');
+const md = require('../markdown');
 
 /** @typedef {import('./documentation').Type} Type */
 /** @typedef {import('../markdown').MarkdownNode} MarkdownNode */
@@ -62,6 +63,16 @@ async function run() {
       return `<!-- GEN:${p1} -->${params.get(p1)}<!-- GEN:stop -->`;
     });
     writeAssumeNoop(path.join(PROJECT_DIR, 'README.md'), content, dirtyFiles);
+  }
+
+  // Validate links
+  {
+    for (const file of fs.readdirSync(path.join(PROJECT_DIR, 'docs', 'src'))) {
+      if (!file.endsWith('.md'))
+        continue;
+      const data = fs.readFileSync(path.join(PROJECT_DIR, 'docs', 'src', file)).toString();
+      documentation.renderLinksInText(md.parse(data));
+    }
   }
 
   // Check for missing docs
