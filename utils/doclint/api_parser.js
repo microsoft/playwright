@@ -258,8 +258,6 @@ function guessRequired(comment) {
     required = false;
   if (comment.toLowerCase().includes('if available'))
     required = false;
-  if (comment.includes('**required**'))
-    required = true;
   return required;
 }
 

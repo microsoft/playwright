@@ -68,9 +68,9 @@ Defaults to `left`.
 
 ## input-files
 - `files` <[path]|[Array]<[path]>|[Object]|[Array]<[Object]>>
-  - `name` <[string]> [File] name **required**
-  - `mimeType` <[string]> [File] type **required**
-  - `buffer` <[Buffer]> File content **required**
+  - `name` <[string]> [File] name
+  - `mimeType` <[string]> [File] type
+  - `buffer` <[Buffer]> File content
 
 ## input-down-up-delay
 - `delay` <[float]>
@@ -101,8 +101,8 @@ Defaults to `'visible'`. Can be either:
 ## context-option-storage-state
 - `storageState` <[path]|[Object]>
   - `cookies` <[Array]<[Object]>> Optional cookies to set for context
-    - `name` <[string]> **required**
-    - `value` <[string]> **required**
+    - `name` <[string]>
+    - `value` <[string]>
     - `url` <[string]> Optional either url or domain / path are required
     - `domain` <[string]> Optional either url or domain / path are required
     - `path` <[string]> Optional either url or domain / path are required
@@ -135,11 +135,26 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 Toggles bypassing page's Content-Security-Policy.
 
 ## context-option-viewport
+* langs: js
 - `viewport` <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
 Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
+
+## python-context-option-viewport
+* langs: python
+- `viewport` <[null]|[Object]>
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
+
+Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_viewport` disables the fixed viewport.
+
+## python-context-option-no-viewport
+* langs: python
+- `noViewport` <[boolean]>
+
+Disables the default viewport.
 
 ## context-option-useragent
 - `userAgent` <[string]>
@@ -233,6 +248,7 @@ Logger sink for Playwright logging.
 **DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-recordhar
+* langs: js
 - `recordHar` <[Object]>
   - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
@@ -242,7 +258,20 @@ Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all 
 specified, the HAR is not recorded. Make sure to await [`method: BrowserContext.close`] for the HAR to be
 saved.
 
+## python-context-option-recordhar-omit-content
+* langs: python
+- `record_har_omit_content` <[boolean]>
+
+Optional setting to control whether to omit request content from the HAR. Defaults to `false`.
+
+## python-context-option-recordhar-path
+* langs: python
+- `record_har_path` <[path]>
+
+Path on the filesystem to write the HAR file to.
+
 ## context-option-recordvideo
+* langs: js
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
   - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
@@ -253,6 +282,22 @@ saved.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.
+
+## python-context-option-recordvideo-dir
+* langs: python
+- `record_video_dir` <[path]>
+
+Path to the directory to put videos into.
+
+## python-context-option-recordvideo-size
+* langs: python
+- `record_video_size` <[Object]>
+  If `viewport` is not configured explicitly the video size defaults to 1280x720. Actual picture of each page will be
+  scaled down if necessary to fit the specified size.
+  - `width` <[int]> Video frame width.
+  - `height` <[int]> Video frame height.
+
+Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
 
 ## context-option-proxy
 - `proxy` <[Object]>
@@ -335,6 +380,8 @@ Optional.
 - %%-context-option-ignorehttpserrors-%%
 - %%-context-option-bypasscsp-%%
 - %%-context-option-viewport-%%
+- %%-python-context-option-viewport-%%
+- %%-python-context-option-no-viewport-%%
 - %%-context-option-useragent-%%
 - %%-context-option-devicescalefactor-%%
 - %%-context-option-ismobile-%%
@@ -352,4 +399,8 @@ Optional.
 - %%-context-option-videospath-%%
 - %%-context-option-videosize-%%
 - %%-context-option-recordhar-%%
+- %%-python-context-option-recordhar-path-%%
+- %%-python-context-option-recordhar-omit-content-%%
 - %%-context-option-recordvideo-%%
+- %%-python-context-option-recordvideo-dir-%%
+- %%-python-context-option-recordvideo-size-%%
