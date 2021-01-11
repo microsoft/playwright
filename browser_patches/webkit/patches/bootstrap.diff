@@ -10485,7 +10485,7 @@ index 30dc2b97782825f23184b42301c50acf60617216..b79d979521e8510b42c28e8e8c7d8590
          bool webViewRunBeforeUnloadConfirmPanelWithMessageInitiatedByFrameCompletionHandler : 1;
          bool webViewRequestGeolocationPermissionForFrameDecisionHandler : 1;
 diff --git a/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm b/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm
-index 1b9edbf4d98b8e50900b5a36a93647487be358db..b2185cf53222b4cca18425490a161d6caa3645dc 100644
+index 1b9edbf4d98b8e50900b5a36a93647487be358db..db7fed31883ec19cd73e151286c4888c0868fd7a 100644
 --- a/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm
 +++ b/Source/WebKit/UIProcess/Cocoa/UIDelegate.mm
 @@ -104,6 +104,7 @@ void UIDelegate::setDelegate(id <WKUIDelegate> delegate)
@@ -10501,12 +10501,12 @@ index 1b9edbf4d98b8e50900b5a36a93647487be358db..b2185cf53222b4cca18425490a161d6c
  }
  
 +void UIDelegate::UIClient::handleJavaScriptDialog(WebKit::WebPageProxy&, bool accept, const WTF::String& value) {
-+    if (!m_uiDelegate.m_delegateMethods.webViewHandleJavaScriptDialogValue)
++    if (!m_uiDelegate->m_delegateMethods.webViewHandleJavaScriptDialogValue)
 +        return;
-+    auto delegate = m_uiDelegate.m_delegate.get();
++    auto delegate = m_uiDelegate->m_delegate.get();
 +    if (!delegate)
 +        return;
-+    [delegate webView:m_uiDelegate.m_webView handleJavaScriptDialog:accept value:value];
++    [delegate webView:m_uiDelegate->m_webView handleJavaScriptDialog:accept value:value];
 +}
 +
  void UIDelegate::UIClient::requestStorageAccessConfirm(WebPageProxy& webPageProxy, WebFrameProxy*, const WebCore::RegistrableDomain& requestingDomain, const WebCore::RegistrableDomain& currentDomain, CompletionHandler<void(bool)>&& completionHandler)
