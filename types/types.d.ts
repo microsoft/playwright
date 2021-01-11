@@ -2636,32 +2636,32 @@ export interface Page {
    */
   setInputFiles(selector: string, files: string|Array<string>|{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }>, options?: {
@@ -2703,12 +2703,12 @@ export interface Page {
    */
   setViewportSize(viewportSize: {
     /**
-     * page width in pixels. **required**
+     * page width in pixels.
      */
     width: number;
 
     /**
-     * page height in pixels. **required**
+     * page height in pixels.
      */
     height: number;
   }): Promise<void>;
@@ -4279,32 +4279,32 @@ export interface Frame {
    */
   setInputFiles(selector: string, files: string|Array<string>|{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }>, options?: {
@@ -4827,14 +4827,8 @@ export interface BrowserContext {
    * @param cookies 
    */
   addCookies(cookies: Array<{
-    /**
-     * **required**
-     */
     name: string;
 
-    /**
-     * **required**
-     */
     value: string;
 
     /**
@@ -5121,12 +5115,12 @@ export interface BrowserContext {
    */
   setGeolocation(geolocation: null|{
     /**
-     * Latitude between -90 and 90. **required**
+     * Latitude between -90 and 90.
      */
     latitude: number;
 
     /**
-     * Longitude between -180 and 180. **required**
+     * Longitude between -180 and 180.
      */
     longitude: number;
 
@@ -5142,14 +5136,8 @@ export interface BrowserContext {
    * @param httpCredentials 
    */
   setHTTPCredentials(httpCredentials: null|{
-    /**
-     * **required**
-     */
     username: string;
 
-    /**
-     * **required**
-     */
     password: string;
   }): Promise<void>;
 
@@ -6131,32 +6119,32 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    */
   setInputFiles(files: string|Array<string>|{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }>, options?: {
@@ -7438,14 +7426,8 @@ export interface Browser extends EventEmitter {
        * Optional cookies to set for context
        */
       cookies?: Array<{
-        /**
-         * **required**
-         */
         name: string;
 
-        /**
-         * **required**
-         */
         value: string;
 
         /**
@@ -8218,32 +8200,32 @@ export interface FileChooser {
    */
   setFiles(files: string|Array<string>|{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }|Array<{
     /**
-     * [File] name **required**
+     * [File] name
      */
     name: string;
 
     /**
-     * [File] type **required**
+     * [File] type
      */
     mimeType: string;
 
     /**
-     * File content **required**
+     * File content
      */
     buffer: Buffer;
   }>, options?: {
@@ -9461,14 +9443,8 @@ export interface BrowserContextOptions {
      * Optional cookies to set for context
      */
     cookies?: Array<{
-      /**
-       * **required**
-       */
       name: string;
 
-      /**
-       * **required**
-       */
       value: string;
 
       /**
@@ -9712,7 +9688,7 @@ export interface LaunchOptions {
 
 export interface ConnectOptions {
   /**
-   * A browser websocket endpoint to connect to. **required**
+   * A browser websocket endpoint to connect to.
    */
   wsEndpoint: string;
 

@@ -1,6 +1,6 @@
 # class: ChromiumBrowser
-* extends: [Browser]
 * langs: js
+* extends: [Browser]
 
 Chromium-specific features including Tracing, service worker support, etc. You can use [`method:
 ChromiumBrowser.startTracing`] and [`method: ChromiumBrowser.stopTracing`] to create a trace file which can be

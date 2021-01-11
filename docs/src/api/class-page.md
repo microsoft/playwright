@@ -872,6 +872,7 @@ const frame = page.frame({ url: /.*domain.*/ });
 ```
 
 ### param: Page.frame.frameSelector
+* langs: js
 - `frameSelector` <[string]|[Object]>
   - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
   - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
@@ -1467,8 +1468,8 @@ await page.goto('https://example.com');
 
 ### param: Page.setViewportSize.viewportSize
 - `viewportSize` <[Object]>
-  - `width` <[int]> page width in pixels. **required**
-  - `height` <[int]> page height in pixels. **required**
+  - `width` <[int]> page width in pixels.
+  - `height` <[int]> page height in pixels.
 
 ## async method: Page.tap
 

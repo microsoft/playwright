@@ -267,15 +267,15 @@ const context = await browser.newContext({
 
 ```python-async
 context = await browser.new_context(
-  geolocation={ 'longitude': 48.858455, 'latitude': 2.294474 },
-  permissions=['geolocation']
+  geolocation={"longitude": 48.858455, "latitude": 2.294474},
+  permissions=["geolocation"]
 )
 ```
 
 ```python-sync
 context = browser.new_context(
-  geolocation={ 'longitude': 48.858455, 'latitude': 2.294474 },
-  permissions=['geolocation']
+  geolocation={"longitude": 48.858455, "latitude": 2.294474},
+  permissions=["geolocation"]
 )
 ```
 
@@ -286,11 +286,11 @@ await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 ```
 
 ```python-async
-await context.set_geolocation(longitude=29.979097, latitude=31.134256)
+await context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 ```
 
 ```python-sync
-context.set_geolocation(longitude=29.979097, latitude=31.134256)
+context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 ```
 
 **Note** you can only change geolocation for all pages in the context.

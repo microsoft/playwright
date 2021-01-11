@@ -57,29 +57,6 @@ Script to be evaluated in all pages in the browser context. Optional.
 ### param: Page.selectOption.value = %%-python-select-options-value-%%
 ### param: Page.selectOption.label = %%-python-select-options-label-%%
 
-## async method: BrowserContext.resetGeolocation
-* langs: python
-
-Emulates position unavailable state.
-
-### param: BrowserContext.setGeolocation.latitude
-* langs: python
-- `latitude` <[float]>
-
-Latitude between -90 and 90. **required**
-
-### param: BrowserContext.setGeolocation.longitude
-* langs: python
-- `longitude` <[float]>
-
-Longitude between -180 and 180. **required**
-
-### param: BrowserContext.setGeolocation.accuracy
-* langs: python
-- `accuracy` <[float]>
-
-Non-negative accuracy value. Defaults to `0`. Optional.
-
 ### param: Page.emulateMedia.params
 * langs: python
 - `media` <[null]|"screen"|"print">
@@ -95,6 +72,50 @@ Optional.
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
 `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated
 value. Optional.
+
+### option: Page.frame.name
+* langs: python
+- `name` <[string]>
+
+Frame name specified in the `iframe`'s `name` attribute. Optional.
+
+### option: Page.frame.url
+* langs: python
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+
+### option: Selectors.register.script
+* langs: python
+- `path` <[path]>
+
+Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory.
+
+### option: Selectors.register.script
+* langs: python
+- `script` <[string]>
+
+Raw script content.
+
+## method: Request.failure
+* langs: python
+- returns: <[null]|[string]>
+
+Returns human-readable error message, e.g. `'net::ERR_FAILED'`. The method returns `None` unless this request has
+failed, as reported by `requestfailed` event.
+
+Example of logging of all the failed requests:
+
+```python
+page.on('requestfailed', lambda request: print(request.url + ' ' + request.failure);
+```
+
+## async method: Response.finished
+* langs: python
+- returns: <[null]|[string]>
+
+Waits for this response to finish, returns failure error if request failed.
+
 
 ### option: BrowserContext.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
 ### option: BrowserContext.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%

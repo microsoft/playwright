@@ -58,8 +58,8 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 
 ### param: BrowserContext.addCookies.cookies
 - `cookies` <[Array]<[Object]>>
-  - `name` <[string]> **required**
-  - `value` <[string]> **required**
+  - `name` <[string]>
+  - `value` <[string]>
   - `url` <[string]> either url or domain / path are required. Optional.
   - `domain` <[string]> either url or domain / path are required Optional.
   - `path` <[string]> either url or domain / path are required Optional.
@@ -399,10 +399,9 @@ await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 pages to read its geolocation.
 
 ### param: BrowserContext.setGeolocation.geolocation
-* langs: js
 - `geolocation` <[null]|[Object]>
-  - `latitude` <[float]> Latitude between -90 and 90. **required**
-  - `longitude` <[float]> Longitude between -180 and 180. **required**
+  - `latitude` <[float]> Latitude between -90 and 90.
+  - `longitude` <[float]> Longitude between -180 and 180.
   - `accuracy` <[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## async method: BrowserContext.setHTTPCredentials
@@ -412,8 +411,8 @@ Create a new browser context instead.
 
 ### param: BrowserContext.setHTTPCredentials.httpCredentials
 - `httpCredentials` <[null]|[Object]>
-  - `username` <[string]> **required**
-  - `password` <[string]> **required**
+  - `username` <[string]>
+  - `password` <[string]>
 
 ## async method: BrowserContext.setOffline
 

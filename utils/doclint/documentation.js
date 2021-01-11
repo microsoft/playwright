@@ -319,6 +319,9 @@ Documentation.Member = class {
       if (arg.langs.aliases && arg.langs.aliases[lang])
         arg.alias = arg.langs.aliases[lang];
       arg.filterForLanguage(lang);
+      arg.type.filterForLanguage(lang);
+      if (arg.name === 'options' && !arg.type.properties.length)
+        continue;
       argsArray.push(arg);
     }
     this.argsArray = argsArray;
@@ -476,6 +479,22 @@ Documentation.Type = class {
         return type.properties;
     }
     return [];
+  }
+
+  /**
+   * @param {string} lang
+   */
+  filterForLanguage(lang) {
+    if (!this.properties)
+      return;
+    const properties = [];
+    for (const prop of this.properties) {
+      if (prop.langs.only && !prop.langs.only.includes(lang))
+        continue;
+      prop.filterForLanguage(lang);
+      properties.push(prop);
+    }
+    this.properties = properties;
   }
 
   /**
