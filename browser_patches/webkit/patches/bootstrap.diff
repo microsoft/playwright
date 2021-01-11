@@ -15183,7 +15183,7 @@ index 5716d67d700e2d1a97b304a2949aabca24358d5c..9b63c511180c50907a3719ae854571ad
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 0df616b76fb75033ef20179fe5b296f28355e3e1..e641744506cb9103f0a79351fb6fab51bcf46ea0 100644
+index 0df616b76fb75033ef20179fe5b296f28355e3e1..b99708424ab3aca96818466d05ea61329493b3be 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -39,6 +39,7 @@
@@ -15301,7 +15301,7 @@ index 0df616b76fb75033ef20179fe5b296f28355e3e1..e641744506cb9103f0a79351fb6fab51
      unsigned m_currentDragNumberOfFilesToBeAccepted { 0 };
      WebCore::IntRect m_currentDragCaretRect;
      WebCore::IntRect m_currentDragCaretEditableElementRect;
-+#if !PLATOFORM(COCOA)
++#if !PLATFORM(COCOA)
 +    bool m_interceptDrags { false };
 +    OptionSet<WebCore::DragOperation> m_dragSourceOperationMask;
 +    int m_dragEventsQueued = 0;
