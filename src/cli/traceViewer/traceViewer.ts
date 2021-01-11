@@ -142,6 +142,10 @@ export async function showTraceViewer(traceStorageDir: string | undefined, trace
     files = [tracePath];
     if (!traceStorageDir)
       traceStorageDir = path.dirname(tracePath);
+
+      if(fs.existsSync(traceStorageDir + '/trace-resources')) {
+        traceStorageDir = traceStorageDir + '/trace-resources';
+      }
   } else {
     files = collectFiles(tracePath);
     if (!traceStorageDir)
