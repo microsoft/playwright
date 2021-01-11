@@ -72,7 +72,7 @@ async function validateDependenciesWindows(browserPath: string, browser: Browser
   let isCrtMissing = false;
   let isMediaFoundationMissing = false;
   for (const dep of missingDeps) {
-    if (dep.startsWith('api-ms-win-crt') || dep === 'vcruntime140.dll' || dep === 'msvcp140.dll')
+    if (dep.startsWith('api-ms-win-crt') || dep === 'vcruntime140.dll' || dep === 'vcruntime140_1.dll' || dep === 'msvcp140.dll')
       isCrtMissing = true;
     else if (dep === 'mf.dll' || dep === 'mfplat.dll' ||  dep === 'msmpeg2vdec.dll' || dep === 'evr.dll' || dep === 'avrt.dll')
       isMediaFoundationMissing = true;
