@@ -47,7 +47,27 @@ function build {
   cp ./output/${NODE_DIR}/LICENSE ./output/playwright-${SUFFIX}/
   cd ./output/playwright-${SUFFIX}/package
   PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --production
+
+  # ----------- Minifying magic ----------
+  # We mess up with lib files location, and therefore use _PW_PACKAGE_ROOT
+  # environment variable to guide our code (see packageRoot() in src).
+
+  # The goal here is to have "lib2/cli/cli.js" and "lib2/cli/traceViewer/web/*".
+  npm install -D @vercel/ncc@0.26.2
+  npx ncc build -C -o dist -e "*.json" -e "*.yml" lib/cli/cli.js
+  mkdir -p ./lib2/cli/traceViewer
+  mv ./lib/cli/traceViewer/web ./lib2/cli/traceViewer/web
+  mv ./dist/index.js ./lib2/cli/cli.js
+
+  # Remove files that ended up in a bundle.
+  rm -rf ./lib
+  rm -rf ./dist
+  rm -rf ./node_modules
   rm package-lock.json
+
+  # Now move lib2 to lib, and we are done.
+  mv ./lib2 ./lib
+  # ------- End of minifying magic -------
 
   cd ..
   if [[ "${RUN_DRIVER}" == *".cmd" ]]; then

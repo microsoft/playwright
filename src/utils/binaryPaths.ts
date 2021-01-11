@@ -17,6 +17,7 @@
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { packageRoot } from './utils';
 
 export function printDepsWindowsExecutable(): string | undefined {
   return pathToExecutable(['bin', 'PrintDeps.exe']);
@@ -34,17 +35,10 @@ export function ffmpegExecutable(): string | undefined {
 }
 
 function pathToExecutable(relative: string[]): string | undefined {
-  const defaultPath = path.join(__dirname, '..', '..', ...relative);
-  const localPath = path.join(path.dirname(process.argv[0]), relative[relative.length - 1]);
   try {
-    if (fs.existsSync(defaultPath))
-      return defaultPath;
-  } catch (e) {
-  }
-
-  try {
-    if (fs.existsSync(localPath))
-      return localPath;
+    const executbalePath = path.join(packageRoot(), ...relative);
+    if (fs.existsSync(executbalePath))
+      return executbalePath;
   } catch (e) {
   }
 }

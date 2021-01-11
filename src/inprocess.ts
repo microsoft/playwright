@@ -23,10 +23,9 @@ import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { installDebugController } from './debug/debugController';
 import { installTracer } from './trace/tracer';
 import { installHarTracer } from './trace/harTracer';
-import * as path from 'path';
 
 function setupInProcess(): PlaywrightAPI {
-  const playwright = new PlaywrightImpl(path.join(__dirname, '..'), require('../browsers.json')['browsers']);
+  const playwright = new PlaywrightImpl();
 
   installDebugController();
   installTracer();

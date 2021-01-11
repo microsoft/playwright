@@ -15,6 +15,9 @@
  */
 
 import * as browserPaths from '../utils/browserPaths';
+import * as fs from 'fs';
+import * as path from 'path';
+import { packageRoot } from '../utils/utils';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
 import { Chromium } from './chromium/chromium';
@@ -31,7 +34,10 @@ export class Playwright {
   readonly firefox: Firefox;
   readonly webkit: WebKit;
 
-  constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
+  constructor() {
+    const packagePath = packageRoot();
+    const browsers = JSON.parse(fs.readFileSync(path.join(packageRoot(), 'browsers.json'), 'utf8')).browsers as browserPaths.BrowserDescriptor[];
+
     const chromium = browsers.find(browser => browser.name === 'chromium');
     this.chromium = new Chromium(packagePath, chromium!);
 

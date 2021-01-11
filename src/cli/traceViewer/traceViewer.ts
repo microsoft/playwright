@@ -23,6 +23,7 @@ import { SnapshotRouter } from './snapshotRouter';
 import { readTraceFile, TraceModel } from './traceModel';
 import type { ActionTraceEvent, PageSnapshot, TraceEvent } from '../../trace/traceTypes';
 import { VideoTileGenerator } from './videoTileGenerator';
+import { packageRoot } from '../../utils/utils';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -110,14 +111,13 @@ class TraceViewer {
           });
           return;
         }
-        let filePath: string;
+        let body: Buffer;
         if (request.url().includes('video-tile')) {
           const fullPath = url.pathname.substring('/video-tile/'.length);
-          filePath = this._videoTileGenerator.tilePath(fullPath);
+          body = fs.readFileSync(this._videoTileGenerator.tilePath(fullPath));
         } else {
-          filePath = path.join(__dirname, 'web', url.pathname.substring(1));
+          body = fs.readFileSync(path.join(packageRoot(), 'lib', 'cli', 'traceViewer', 'web', url.pathname.substring(1)));
         }
-        const body = fs.readFileSync(filePath);
         route.fulfill({
           contentType: extensionToMime[path.extname(url.pathname).substring(1)] || 'text/plain',
           body,
