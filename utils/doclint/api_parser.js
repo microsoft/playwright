@@ -77,6 +77,8 @@ class ApiParser {
    */
   parseMember(spec) {
     const match = spec.text.match(/(event|method|property|async method): ([^.]+)\.(.*)/);
+    if (!match)
+      throw new Error('Invalid member: ' + spec.text);
     const name = match[3];
     let returnType = null;
     for (const item of spec.children || []) {
@@ -106,7 +108,11 @@ class ApiParser {
   parseArgument(spec) {
     const match = spec.text.match(/(param|option): ([^.]+)\.([^.]+)\.(.*)/);
     const clazz = this.classes.get(match[2]);
+    if (!clazz)
+      throw new Error('Invalid class ' + match[2]);
     const method = clazz.membersArray.find(m => m.kind === 'method' && m.name === match[3]);
+    if (!method)
+      throw new Error('Invalid method ' + match[2] + '.' + match[3]);
     if (match[1] === 'param') {
       method.argsArray.push(this.parseProperty(spec));
     } else {

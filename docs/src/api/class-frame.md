@@ -856,15 +856,7 @@ await frame.click('button'); // Click triggers navigation.
 await frame.waitForLoadState(); // Waits for 'load' state by default.
 ```
 
-### param: Frame.waitForLoadState.state
-- `state` <"load"|"domcontentloaded"|"networkidle">
-
-Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
-method returns immediately. Can be one of:
-  * `'load'` - wait for the `load` event to be fired.
-  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
-
+### param: Frame.waitForLoadState.state = %%-wait-for-load-state-state-%%
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
 
 ## async method: Frame.waitForNavigation

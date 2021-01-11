@@ -322,6 +322,25 @@ Options to select. If the `<select>` has the `multiple` attribute, all matching 
 first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
 is considered matching if all specified properties match.
 
+## wait-for-navigation-url
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+
+## wait-for-event-event
+- `event` <[string]>
+
+Event name, same one typically passed into `page.on(event)`.
+
+## wait-for-load-state-state
+- `state` <"load"|"domcontentloaded"|"networkidle">
+
+Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
+method resolves immediately. Can be one of:
+  * `'load'` - wait for the `load` event to be fired.
+  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
+  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
+
 ## python-select-options-element
 * langs: python
 - `element` <[ElementHandle]|[Array]<[ElementHandle]>>

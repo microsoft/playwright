@@ -1608,10 +1608,7 @@ Returns the event data value.
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the page is closed before the event is fired.
 
-### param: Page.waitForEvent.event
-- `event` <[string]>
-
-Event name, same one would pass into `page.on(event)`.
+### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 
 ### param: Page.waitForEvent.optionsOrPredicate
 * langs: js
@@ -1693,15 +1690,7 @@ console.log(await popup.title()); // Popup is ready to use.
 
 Shortcut for main frame's [`method: Frame.waitForLoadState`].
 
-### param: Page.waitForLoadState.state
-- `state` <"load"|"domcontentloaded"|"networkidle">
-
-Optional load state to wait for, defaults to `load`. If the state has been already reached while loading current document, the
-method resolves immediately. Can be one of:
-  * `'load'` - wait for the `load` event to be fired.
-  * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
-  * `'networkidle'` - wait until there are no network connections for at least `500` ms.
-
+### param: Page.waitForLoadState.state = %%-wait-for-load-state-state-%%
 ### option: Page.waitForLoadState.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.waitForNavigation
@@ -1729,10 +1718,7 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
 ### option: Page.waitForNavigation.timeout = %%-navigation-timeout-%%
 
-### option: Page.waitForNavigation.url
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
-
-A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation.
+### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
 
