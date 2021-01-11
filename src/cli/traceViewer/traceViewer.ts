@@ -137,15 +137,13 @@ export async function showTraceViewer(traceStorageDir: string | undefined, trace
   if (!fs.existsSync(tracePath))
     throw new Error(`${tracePath} does not exist`);
 
-  let files: string[];
-  if (fs.statSync(tracePath).isFile()) {
-    files = [tracePath];
-    if (!traceStorageDir)
-      traceStorageDir = path.dirname(tracePath);
-  } else {
-    files = collectFiles(tracePath);
-    if (!traceStorageDir)
-      traceStorageDir = tracePath;
+  const files: string[] = fs.statSync(tracePath).isFile() ? [tracePath] : collectFiles(tracePath);
+
+  if (!traceStorageDir) {
+    traceStorageDir = fs.statSync(tracePath).isFile() ? path.dirname(tracePath) : tracePath;
+
+    if (fs.existsSync(traceStorageDir + '/trace-resources'))
+      traceStorageDir = traceStorageDir + '/trace-resources';
   }
 
   const traceViewer = new TraceViewer(traceStorageDir);
