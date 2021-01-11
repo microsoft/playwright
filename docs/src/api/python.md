@@ -4,7 +4,7 @@
 Terminates this instance of Playwright in case it was created bypassing the Python context manager. This is useful in REPL applications.
 
 ```py
->>> from playwright import sync_playwright
+>>> from playwright.sync_api import sync_playwright
 
 >>> playwright = sync_playwright().start()
 

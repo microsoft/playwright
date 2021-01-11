@@ -25,7 +25,7 @@ const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empt
 it('should print the correct imports and context options', async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright import async_playwright
+from playwright.async_api import async_playwright
 
 async def run(playwright):
     browser = await playwright.chromium.launch(headless=False)
@@ -37,7 +37,7 @@ async def run(playwright):
 it('should print the correct context options for custom settings', async ({ runCLI }) => {
   const cli = runCLI(['--color-scheme=light', 'codegen', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright import async_playwright
+from playwright.async_api import async_playwright
 
 async def run(playwright):
     browser = await playwright.chromium.launch(headless=False)
@@ -49,7 +49,7 @@ async def run(playwright):
 it('should print the correct context options when using a device', async ({ runCLI }) => {
   const cli = runCLI(['--device=Pixel 2', 'codegen', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright import async_playwright
+from playwright.async_api import async_playwright
 
 async def run(playwright):
     browser = await playwright.chromium.launch(headless=False)
@@ -61,7 +61,7 @@ async def run(playwright):
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
   const cli = runCLI(['--color-scheme=light', '--device=Pixel 2', 'codegen', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-from playwright import async_playwright
+from playwright.async_api import async_playwright
 
 async def run(playwright):
     browser = await playwright.chromium.launch(headless=False)
@@ -76,7 +76,7 @@ it('should save the codegen output to a file if specified', async ({ runCLI, tes
   await cli.exited;
   const content = await fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`import asyncio
-from playwright import async_playwright
+from playwright.async_api import async_playwright
 
 async def run(playwright):
     browser = await playwright.chromium.launch(headless=False)
@@ -107,7 +107,7 @@ it('should print load/save storageState', async ({ runCLI, testInfo }) => {
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=python-async', emptyHTML]);
   const expectedResult = `import asyncio
-  from playwright import async_playwright
+  from playwright.async_api import async_playwright
 
   async def run(playwright):
       browser = await playwright.chromium.launch(headless=False)
