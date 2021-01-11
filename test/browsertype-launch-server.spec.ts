@@ -33,6 +33,13 @@ describe('lauch server', (suite, { mode }) => {
     await browserServer.close();
   });
 
+  it('should provide an error when ws endpoint is incorrect', async ({browserType, browserOptions}) => {
+    const browserServer = await browserType.launchServer(browserOptions);
+    const error = await browserType.connect({ wsEndpoint: browserServer.wsEndpoint() + '-foo' }).catch(e => e);
+    await browserServer.close();
+    expect(error.message).toContain('Most likely ws endpoint is incorrect');
+  });
+
   it('should fire "close" event during kill', async ({browserType, browserOptions}) => {
     const order = [];
     const browserServer = await browserType.launchServer(browserOptions);

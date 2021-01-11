@@ -147,6 +147,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           }
         }
         ws.addEventListener('open', async () => {
+          const prematureCloseListener = (event: { reason: string }) => {
+            reject(new Error('Server disconnected: ' + event.reason));
+          };
+          ws.addEventListener('close', prematureCloseListener);
           const remoteBrowser = await connection.waitForObjectWithKnownName('remoteBrowser') as RemoteBrowser;
 
           // Inherit shared selectors for connected browser.
@@ -165,6 +169,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             }
             browser._didClose();
           };
+          ws.removeEventListener('close', prematureCloseListener);
           ws.addEventListener('close', closeListener);
           browser.on(Events.Browser.Disconnected, () => {
             sharedSelectors._removeChannel(selectorsOwner);
@@ -175,7 +180,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         });
         ws.addEventListener('error', event => {
           ws.close();
-          reject(new Error('WebSocket error: ' + event.message));
+          reject(new Error(event.message + '. Most likely ws endpoint is incorrect'));
         });
       });
     }, logger);
