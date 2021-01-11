@@ -58,11 +58,11 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text', textEngine);
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
-    this._engines.set('right-of', createProximityEngine('right-of', boxRightOf));
-    this._engines.set('left-of', createProximityEngine('left-of', boxLeftOf));
-    this._engines.set('above', createProximityEngine('above', boxAbove));
-    this._engines.set('below', createProximityEngine('below', boxBelow));
-    this._engines.set('near', createProximityEngine('near', boxNear));
+    this._engines.set('right-of', createPositionEngine('right-of', boxRightOf));
+    this._engines.set('left-of', createPositionEngine('left-of', boxLeftOf));
+    this._engines.set('above', createPositionEngine('above', boxAbove));
+    this._engines.set('below', createPositionEngine('below', boxBelow));
+    this._engines.set('near', createPositionEngine('near', boxNear));
   }
 
   // This is the only function we should use for querying, because it does
@@ -489,7 +489,7 @@ function boxNear(box1: DOMRect, box2: DOMRect): number | undefined {
   return score > kThreshold ? undefined : score;
 }
 
-function createProximityEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect) => number | undefined): SelectorEngine {
+function createPositionEngine(name: string, scorer: (box1: DOMRect, box2: DOMRect) => number | undefined): SelectorEngine {
   return {
     matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
       if (!args.length)

@@ -20,7 +20,7 @@ Playwright supports various selector engines:
     - [`:visible`](#css-extension-visible) pseudo-class
     - [`:text`](#css-extension-text) pseudo-class
     - [`:has`](#css-extension-has) and [`:is`](#css-extension-is) pseudo-classes
-    - [Proximity selectors](#css-extension-proximity), for example `button:right-of(article)`
+    - [Position selectors](#css-extension-position), for example `button:right-of(article)`
   * [XPath] selectors, for example `xpath=//html/body/div`
   * [id selectors][id], for example `id=sign-in`
   * [Custom selector engines](./extensibility.md)
@@ -217,7 +217,7 @@ Consider a page with two buttons, first invisible and second visible.
 
   ```js
   await page.click('button:visible');
-  ``` 
+  ```
 
 Use `:visible` with caution, because it has two major drawbacks:
 * When elements change their visibility dynamically, `:visible` will give upredictable results based on the timing.
@@ -264,13 +264,13 @@ await page.click('button:is(:text("Log in"), :text("Sign in"))');
 await page.click(':light(.article > .header)');
 ```
 
-### CSS extension: proximity
+### CSS extension: position
 
-Playwright provides a few proximity selectors based on the page layout. These can be combined with regular CSS for better results, for example `input:right-of(:text("Password"))` matches an input field that is to the right of text "Password".
+Playwright provides position selectors based on the page layout. These can be combined with regular CSS for better results, for example `input:right-of(:text("Password"))` matches an input field that is to the right of text "Password".
 
-Note that proximity selectors depend on the page layout and may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
+Note that position selectors depend on the page layout and may produce unexpected results. For example, a different element could be matched when layout changes by one pixel.
 
-Proximity selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) to compute distance and relative position of the elements.
+Position selectors use [bounding client rect](https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect) to compute distance and relative position of the elements.
 * `:right-of(inner > selector)` - Matches elements that are to the right of any element matching the inner selector.
 * `:left-of(inner > selector)` - Matches elements that are to the left of any element matching the inner selector.
 * `:above(inner > selector)` - Matches elements that are above any of the elements matching the inner selector.
