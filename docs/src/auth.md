@@ -36,7 +36,7 @@ await page.click('text=Submit');
 // Verify app is logged in
 ```
 
-```python-async
+```python async
 page = await context.new_page()
 await page.goto('https://github.com/login')
 
@@ -48,7 +48,7 @@ await page.click('text=Submit')
 # Verify app is logged in
 ```
 
-```python-sync
+```python sync
 page = context.new_page()
 page.goto('https://github.com/login')
 
@@ -88,7 +88,7 @@ const storageState = JSON.parse(process.env.STORAGE);
 const context = await browser.newContext({ storageState });
 ```
 
-```python-async
+```python async
 import json
 import os
 # Save storage state and store as an env variable
@@ -100,7 +100,7 @@ storage_state = json.loads(os.environ["STORAGE"])
 context = await browser.new_context(storage_state=storage_state)
 ```
 
-```python-sync
+```python sync
 import json
 import os
 # Save storage state and store as an env variable
@@ -134,7 +134,7 @@ await context.addInitScript(storage => {
 }, sessionStorage);
 ```
 
-```python-async
+```python async
 import os
 # Get session storage and store as env variable
 session_storage = await page.evaluate("() => JSON.stringify(sessionStorage)")
@@ -152,7 +152,7 @@ await context.add_init_script(storage => {
 }, session_storage)
 ```
 
-```python-sync
+```python sync
 import os
 # Get session storage and store as env variable
 session_storage = page.evaluate("() => JSON.stringify(sessionStorage)")
@@ -217,7 +217,7 @@ const context = await chromium.launchPersistentContext(userDataDir, { headless: 
 // Execute login steps manually in the browser window
 ```
 
-```python-async
+```python async
 import asyncio
 from playwright import async_playwright
 
@@ -230,7 +230,7 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-```python-sync
+```python sync
 from playwright import sync_playwright
 
 with sync_playwright() as p:

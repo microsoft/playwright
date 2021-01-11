@@ -29,7 +29,7 @@ const browser = await chromium.launch({ headless: false });
 await browser.close();
 ```
 
-```python-async
+```python async
 import asyncio
 from playwright import async_playwright
 
@@ -41,7 +41,7 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-```python-sync
+```python sync
 from playwright import sync_playwright
 
 with sync_playwright() as p:
@@ -69,12 +69,12 @@ const browser = await chromium.launch();
 const context = await browser.newContext();
 ```
 
-```python-async
+```python async
 browser = await playwright.chromium.launch()
 context = await browser.new_context()
 ```
 
-```python-sync
+```python sync
 browser = playwright.chromium.launch()
 context = browser.new_context()
 ```
@@ -95,7 +95,7 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 import asyncio
 from playwright import async_playwright
 
@@ -116,7 +116,7 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-```python-sync
+```python sync
 from playwright import sync_playwright
 
 with sync_playwright() as p:
@@ -161,7 +161,7 @@ console.log(page.url());
 window.location.href = 'https://example.com';
 ```
 
-```python-async
+```python async
 page = await context.new_page()
 
 # Navigate explicitly, similar to entering a URL in the browser.
@@ -178,7 +178,7 @@ print(page.url)
 # window.location.href = 'https://example.com'
 ```
 
-```python-sync
+```python sync
 page = context.new_page()
 
 # Navigate explicitly, similar to entering a URL in the browser.
@@ -219,7 +219,7 @@ const frame = await frameElementHandle.contentFrame();
 await frame.fill('#username-input', 'John');
 ```
 
-```python-async
+```python async
 # Get frame using the frame's name attribute
 frame = page.frame('frame-login')
 
@@ -234,7 +234,7 @@ frame = await frame_element_handle.content_frame()
 await frame.fill('#username-input', 'John')
 ```
 
-```python-sync
+```python sync
 # Get frame using the frame's name attribute
 frame = page.frame('frame-login')
 
@@ -274,12 +274,12 @@ Some examples below:
 await page.click('data-test-id=foo');
 ```
 
-```python-async
+```python async
 # Using data-test-id= selector engine
 await page.click('data-test-id=foo')
 ```
 
-```python-sync
+```python sync
 # Using data-test-id= selector engine
 page.click('data-test-id=foo')
 ```
@@ -290,13 +290,13 @@ await page.click('div');
 await page.click('//html/body/div');
 ```
 
-```python-async
+```python async
 # CSS and XPath selector engines are automatically detected
 await page.click('div')
 await page.click('//html/body/div')
 ```
 
-```python-sync
+```python sync
 # CSS and XPath selector engines are automatically detected
 page.click('div')
 page.click('//html/body/div')
@@ -307,12 +307,12 @@ page.click('//html/body/div')
 await page.click('text=Hello w');
 ```
 
-```python-async
+```python async
 # Find node by text substring
 await page.click('text=Hello w')
 ```
 
-```python-sync
+```python sync
 # Find node by text substring
 page.click('text=Hello w')
 ```
@@ -323,13 +323,13 @@ await page.click('css=div');
 await page.click('xpath=//html/body/div');
 ```
 
-```python-async
+```python async
 # Explicit CSS and XPath notation
 await page.click('css=div')
 await page.click('xpath=//html/body/div')
 ```
 
-```python-sync
+```python sync
 # Explicit CSS and XPath notation
 page.click('css=div')
 page.click('xpath=//html/body/div')
@@ -340,12 +340,12 @@ page.click('xpath=//html/body/div')
 await page.click('css:light=div');
 ```
 
-```python-async
+```python async
 # Only search light DOM, outside WebComponent shadow DOM:
 await page.click('css:light=div')
 ```
 
-```python-sync
+```python sync
 # Only search light DOM, outside WebComponent shadow DOM:
 page.click('css:light=div')
 ```
@@ -357,12 +357,12 @@ Selectors using the same or different engines can be combined using the `>>` sep
 await page.click('#free-month-promo >> text=Sign Up');
 ```
 
-```python-async
+```python async
 # Click an element with text 'Sign Up' inside of a #free-month-promo.
 await page.click('#free-month-promo >> text=Sign Up')
 ```
 
-```python-sync
+```python sync
 # Click an element with text 'Sign Up' inside of a #free-month-promo.
 page.click('#free-month-promo >> text=Sign Up')
 ```
@@ -372,12 +372,12 @@ page.click('#free-month-promo >> text=Sign Up')
 const sectionText = await page.$eval('*css=section >> text=Selectors', e => e.textContent);
 ```
 
-```python-async
+```python async
 # Capture textContent of a section that contains an element with text 'Selectors'.
 section_text = await page.eval_on_selector('*css=section >> text=Selectors', 'e => e.textContent')
 ```
 
-```python-sync
+```python sync
 # Capture textContent of a section that contains an element with text 'Selectors'.
 section_text = page.eval_on_selector('*css=section >> text=Selectors', 'e => e.textContent')
 ```
@@ -401,12 +401,12 @@ and [actionable](./actionability.md). For example, click will:
 await page.fill('#search', 'query');
 ```
 
-```python-async
+```python async
 # Playwright waits for #search element to be in the DOM
 await page.fill('#search', 'query')
 ```
 
-```python-sync
+```python sync
 # Playwright waits for #search element to be in the DOM
 page.fill('#search', 'query')
 ```
@@ -417,13 +417,13 @@ page.fill('#search', 'query')
 await page.click('#search');
 ```
 
-```python-async
+```python async
 # Playwright waits for element to stop animating
 # and accept clicks.
 await page.click('#search')
 ```
 
-```python-sync
+```python sync
 # Playwright waits for element to stop animating
 # and accept clicks.
 page.click('#search')
@@ -438,14 +438,14 @@ await page.waitForSelector('#search', { state: 'attached' });
 await page.waitForSelector('#promo');
 ```
 
-```python-async
+```python async
 # Wait for #search to appear in the DOM.
 await page.wait_for_selector('#search', state='attached')
 # Wait for #promo to become visible, for example with `visibility:visible`.
 await page.wait_for_selector('#promo')
 ```
 
-```python-sync
+```python sync
 # Wait for #search to appear in the DOM.
 page.wait_for_selector('#search', state='attached')
 # Wait for #promo to become visible, for example with `visibility:visible`.
@@ -461,14 +461,14 @@ await page.waitForSelector('#details', { state: 'hidden' });
 await page.waitForSelector('#promo', { state: 'detached' });
 ```
 
-```python-async
+```python async
 # Wait for #details to become hidden, for example with `display:none`.
 await page.wait_for_selector('#details', state='hidden')
 # Wait for #promo to be removed from the DOM.
 await page.wait_for_selector('#promo', state='detached')
 ```
 
-```python-sync
+```python sync
 # Wait for #details to become hidden, for example with `display:none`.
 page.wait_for_selector('#details', state='hidden')
 # Wait for #promo to be removed from the DOM.
@@ -495,11 +495,11 @@ of the web page and bring results back to the Node.js environment. Browser globa
 const href = await page.evaluate(() => document.location.href);
 ```
 
-```python-async
+```python async
 href = await page.evaluate('() => document.location.href')
 ```
 
-```python-sync
+```python sync
 href = page.evaluate('() => document.location.href')
 ```
 
@@ -512,14 +512,14 @@ const status = await page.evaluate(async () => {
 });
 ```
 
-```python-async
+```python async
 status = await page.evaluate("""async () => {
   response = await fetch(location.href)
   return response.status
 }""")
 ```
 
-```python-sync
+```python sync
 status = page.evaluate("""async () => {
   response = fetch(location.href)
   return response.status
@@ -573,7 +573,7 @@ await page.evaluate(
     { button1, list: [button2], foo: null });
 ```
 
-```python-async
+```python async
 # A primitive value.
 await page.evaluate('num => num', 42)
 
@@ -616,7 +616,7 @@ await page.evaluate("""
     { 'button1': button1, 'list': [button2], 'foo': None })
 ```
 
-```python-sync
+```python sync
 # A primitive value.
 page.evaluate('num => num', 42)
 
@@ -668,7 +668,7 @@ const result = await page.evaluate(data => {
 }, data);
 ```
 
-```python-async
+```python async
 data = { 'text': 'some data', 'value': 1 }
 # Pass |data| as a parameter.
 result = await page.evaluate("""data => {
@@ -676,7 +676,7 @@ result = await page.evaluate("""data => {
 }""", data)
 ```
 
-```python-sync
+```python sync
 data = { 'text': 'some data', 'value': 1 }
 # Pass |data| as a parameter.
 result = page.evaluate("""data => {
@@ -694,7 +694,7 @@ const result = await page.evaluate(() => {
 });
 ```
 
-```python-async
+```python async
 data = { 'text': 'some data', 'value': 1 }
 result = await page.evaluate("""() => {
   # There is no |data| in the web page.
@@ -702,7 +702,7 @@ result = await page.evaluate("""() => {
 }""")
 ```
 
-```python-sync
+```python sync
 data = { 'text': 'some data', 'value': 1 }
 result = page.evaluate("""() => {
   # There is no |data| in the web page.
@@ -744,13 +744,13 @@ const ulElementHandle = await page.$('ul');
 await ulElementHandle.evaluate(ulElement => getComputedStyle(ulElement).getPropertyValue('display'));
 ```
 
-```python-async
+```python async
 # The first parameter of the elementHandle.evaluate callback is the element handle points to.
 ul_element_handle = await page.query_selector('ul')
 await ul_element_handle.evaluate("ulElement => getComputedStyle(ulElement).getPropertyValue('display')")
 ```
 
-```python-sync
+```python sync
 # The first parameter of the elementHandle.evaluate callback is the element handle points to.
 ul_element_handle = page.query_selector('ul')
 ul_element_handle.evaluate("ulElement => getComputedStyle(ulElement).getPropertyValue('display')")
@@ -764,12 +764,12 @@ const ulElementHandle = await page.$('ul');
 await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('display'), uiElement);
 ```
 
-```python-async
+```python async
 ul_element_handle = await page.query_selector('ul')
 await page.evaluate("uiElement => getComputedStyle(uiElement).getPropertyValue('display')", uiElement)
 ```
 
-```python-sync
+```python sync
 ul_element_handle = page.query_selector('ul')
 page.evaluate("uiElement => getComputedStyle(uiElement).getPropertyValue('display')", uiElement)
 ```
@@ -803,7 +803,7 @@ const newLength = await page.evaluate(() => window.myArray.length);
 await myArrayHandle.dispose();
 ```
 
-```python-async
+```python async
 # Create a new array in the page, write a reference to it in
 # window.myArray and get a handle to it.
 my_array_handle = await page.evaluate_handle("""() => {
@@ -830,7 +830,7 @@ new_length = await page.evaluate("() => window.myArray.length")
 await my_array_handle.dispose()
 ```
 
-```python-sync
+```python sync
 # Create a new array in the page, write a reference to it in
 # window.myArray and get a handle to it.
 my_array_handle = page.evaluate_handle("""() => {

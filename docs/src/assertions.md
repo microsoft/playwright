@@ -35,7 +35,7 @@ const checked = await page.getAttribute('input', 'checked');
 assert(checked);
 ```
 
-```python-async
+```python async
 # Assert text content
 content = await page.text_content('nav:first-child')
 assert content == 'home'
@@ -53,7 +53,7 @@ checked = await page.get_attribute('input', 'checked')
 assert checked
 ```
 
-```python-sync
+```python sync
 # Assert text content
 content = page.text_content('nav:first-child')
 assert content == 'home'
@@ -106,7 +106,7 @@ const classNames = await elementHandle.getAttribute('class');
 assert(classNames.includes('highlighted'));
 ```
 
-```python-async
+```python async
 # Get the element handle
 element_handle = page.wait_for_selector('#box')
 
@@ -119,7 +119,7 @@ class_names = await element_handle.get_attribute('class')
 assert 'highlighted' in class_names
 ```
 
-```python-sync
+```python sync
 # Get the element handle
 element_handle = page.wait_for_selector('#box')
 
@@ -171,7 +171,7 @@ const length = await page.$$eval('li.selected', (items) => items.length);
 assert(length === 3);
 ```
 
-```python-async
+```python async
 # Assert local storage value
 user_id = page.evaluate("() => window.localStorage.getItem('user_id')")
 assert user_id
@@ -190,7 +190,7 @@ length = await page.eval_on_selector_all('li.selected', '(items) => items.length
 assert length == 3
 ```
 
-```python-sync
+```python sync
 # Assert local storage value
 user_id = page.evaluate("() => window.localStorage.getItem('user_id')")
 assert user_id

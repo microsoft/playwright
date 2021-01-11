@@ -124,13 +124,13 @@ Performs action and waits for given `event` to fire. If predicate is provided, i
 event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
 Will throw an error if the page is closed before the `event` is fired.
 
-```python-async
+```python async
 async with page.expect_event(event_name) as event_info:
     await page.click("button")
 value = await event_info.value
 ```
 
-```python-sync
+```python sync
 with page.expect_event(event_name) as event_info:
     page.click("button")
 value = event_info.value
@@ -148,13 +148,13 @@ Performs action and waits for given `event` to fire. If predicate is provided, i
 event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
 Will throw an error if browser context is closed before the `event` is fired.
 
-```python-async
+```python async
 async with context.expect_event(event_name) as event_info:
     await context.click("button")
 value = await event_info.value
 ```
 
-```python-sync
+```python sync
 with context.expect_event(event_name) as event_info:
     context.click("button")
 value = event_info.value
@@ -172,13 +172,13 @@ Performs action and waits for given `event` to fire. If predicate is provided, i
 event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
 Will throw an error if the socket is closed before the `event` is fired.
 
-```python-async
+```python async
 async with ws.expect_event(event_name) as event_info:
     await ws.click("button")
 value = await event_info.value
 ```
 
-```python-sync
+```python sync
 with ws.expect_event(event_name) as event_info:
     ws.click("button")
 value = event_info.value
@@ -195,13 +195,13 @@ value = event_info.value
 Performs action and waits for the required load state. It resolves when the page reaches a required load state, `load` by default. The navigation must have been committed when this method is called. If current document has
 already reached the required state, resolves immediately.
 
-```python-async
+```python async
 async with page.expect_load_state():
     await page.click('button') # Click triggers navigation.
 # Context manager waits for 'load' event.
 ```
 
-```python-sync
+```python sync
 with page.expect_load_state():
     page.click('button') # Click triggers navigation.
 # Context manager waits for 'load' event.
@@ -219,13 +219,13 @@ Shortcut for main frame's [`method: Frame.expectLoadState`].
 Performs action and waits for the required load state. It resolves when the page reaches a required load state, `load` by default. The navigation must have been committed when this method is called. If current document has
 already reached the required state, resolves immediately.
 
-```python-async
+```python async
 async with frame.expect_load_state():
     await frame.click('button') # Click triggers navigation.
 # Context manager waits for 'load' event.
 ```
 
-```python-sync
+```python sync
 with frame.expect_load_state():
     frame.click('button') # Click triggers navigation.
 # Context manager waits for 'load' event.
@@ -238,7 +238,7 @@ with frame.expect_load_state():
 * langs: python
 - returns: <[EventContextManager]>
 
-Performs action and wait for the next navigation. In case of multiple redirects, the navigation will resolve with
+Performs action and waits for the next navigation. In case of multiple redirects, the navigation will resolve with
 the response of the last redirect. In case of navigation to a different anchor or navigation due to History API
 usage, the navigation will resolve with `null`.
 
@@ -246,13 +246,13 @@ This resolves when the page navigates to a new URL or reloads. It is useful for 
 indirectly cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation
 from a `setTimeout`. Consider this example:
 
-```python-async
+```python async
 async with page.expect_navigation():
     await page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
 # Context manager waited for the navigation to happen.
 ```
 
-```python-sync
+```python sync
 with page.expect_navigation():
     page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
 # Context manager waited for the navigation to happen.
@@ -271,7 +271,7 @@ Shortcut for main frame's [`method: Frame.expectNavigation`].
 * langs: python
 - returns: <[EventContextManager]>
 
-Performs action and wait for the next navigation. In case of multiple redirects, the navigation will resolve with
+Performs action and waits for the next navigation. In case of multiple redirects, the navigation will resolve with
 the response of the last redirect. In case of navigation to a different anchor or navigation due to History API
 usage, the navigation will resolve with `null`.
 
@@ -279,13 +279,13 @@ This resolves when the page navigates to a new URL or reloads. It is useful for 
 indirectly cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation
 from a `setTimeout`. Consider this example:
 
-```python-async
+```python async
 async with frame.expect_navigation():
     await frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
 # Context manager waited for the navigation to happen.
 ```
 
-```python-sync
+```python sync
 with frame.expect_navigation():
     frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
 # Context manager waited for the navigation to happen.

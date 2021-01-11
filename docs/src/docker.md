@@ -3,7 +3,7 @@ id: docker
 title: "Docker"
 ---
 
-[Dockerfile.bionic](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.bionic) and [Dockerfile.focal](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal) can be used to run Playwright scripts in Docker environments. These images includes all the dependencies needed to run browsers in a Docker container, including browsers.
+[Dockerfile.bionic](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.bionic) and [Dockerfile.focal](https://github.com/microsoft/playwright/blob/master/utils/docker/Dockerfile.focal) can be used to run Playwright scripts in Docker environments. These images includes all the dependencies needed to run browsers in a Docker container, and also include the browsers themselves.
 
 <!-- TOC -->
 
