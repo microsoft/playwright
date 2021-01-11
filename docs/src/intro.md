@@ -54,7 +54,7 @@ const { webkit } = require('playwright');
 })();
 ```
 
-By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use `slowMo` to slow down execution.
+By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless: false` flag while launching the browser. You can also use `slowMo` to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
 ```js
 firefox.launch({ headless: false, slowMo: 50 });
@@ -62,7 +62,7 @@ firefox.launch({ headless: false, slowMo: 50 });
 
 ## Record scripts
 
-[Playwright CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
+Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate JavaScript code.
 
 ```sh
 npx playwright codegen wikipedia.org

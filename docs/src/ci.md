@@ -50,13 +50,13 @@ Suggested configuration
    });
    ```
 
-   ```python-async
+   ```python async
       browser = await playwright.chromium.launch(
          args=['--disable-dev-shm-usage']
       )
    ```
 
-   ```python-sync
+   ```python sync
       browser = playwright.chromium.launch({
          args=['--disable-dev-shm-usage']
       })
@@ -203,11 +203,11 @@ const { chromium } = require('playwright');
 const browser = await chromium.launch({ chromiumSandbox: false });
 ```
 
-```python-async
+```python async
 browser = await playwright.chromium.launch(chromiumSandbox=False)
 ```
 
-```python-sync
+```python sync
 browser = playwright.chromium.launch(chromiumSandbox=False)
 ```
 
@@ -287,7 +287,7 @@ const { chromium } = require('playwright');
 const browser = await chromium.launch({ headless: false });
 ```
 
-```python-async
+```python async
 import asyncio
 from playwright import async_playwright
 
@@ -299,7 +299,7 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-```python-sync
+```python sync
 from playwright import sync_playwright
 
 with sync_playwright() as p:

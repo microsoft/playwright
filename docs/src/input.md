@@ -26,7 +26,7 @@ await page.fill('#local', '2020-03-02T05:15');
 await page.fill('text=First Name', 'Peter');
 ```
 
-```python-async
+```python async
 # Text input
 await page.fill('#name', 'Peter')
 
@@ -43,7 +43,7 @@ await page.fill('#local', '2020-03-02T05:15')
 await page.fill('text=First Name', 'Peter')
 ```
 
-```python-sync
+```python sync
 # Text input
 page.fill('#name', 'Peter')
 
@@ -83,7 +83,7 @@ await page.uncheck('#subscribe-label');
 await page.check('text=XL');
 ```
 
-```python-async
+```python async
 # Check the checkbox
 await page.check('#agree')
 
@@ -94,7 +94,7 @@ await page.uncheck('#subscribe-label')
 await page.check('text=XL')
 ```
 
-```python-sync
+```python sync
 # Check the checkbox
 page.check('#agree')
 
@@ -136,7 +136,7 @@ const option = await page.$('#best-option');
 await page.selectOption('select#colors', option);
 ```
 
-```python-async
+```python async
 # Single selection matching the value
 await page.select_option('select#colors', 'blue')
 
@@ -151,7 +151,7 @@ option = await page.query_selector('#best-option')
 await page.select_option('select#colors', option)
 ```
 
-```python-sync
+```python sync
 # Single selection matching the value
 page.select_option('select#colors', 'blue')
 
@@ -198,7 +198,7 @@ await page.hover('#item');
 await page.click('#item', { position: { x: 0, y: 0} });
 ```
 
-```python-async
+```python async
 # Generic click
 await page.click('button#submit')
 
@@ -218,7 +218,7 @@ await page.hover('#item')
 await page.click('#item', position={ 'x': 0, 'y': 0})
 ```
 
-```python-sync
+```python sync
 # Generic click
 page.click('button#submit')
 
@@ -255,11 +255,11 @@ Sometimes, apps use non-trivial logic where hovering the element overlays it wit
 await page.click('button#submit', { force: true });
 ```
 
-```python-async
+```python async
 await page.click('button#submit', force=True)
 ```
 
-```python-sync
+```python sync
 page.click('button#submit', force=True)
 ```
 
@@ -271,11 +271,11 @@ If you are not interested in testing your app under the real conditions and want
 await page.dispatchEvent('button#submit', 'click');
 ```
 
-```python-async
+```python async
 await page.dispatch_event('button#submit', 'click')
 ```
 
-```python-sync
+```python sync
 page.dispatch_event('button#submit', 'click')
 ```
 
@@ -305,12 +305,12 @@ Type into the field character by character, as if it was a user with a real keyb
 await page.type('#area', 'Hello World!');
 ```
 
-```python-async
+```python async
 # Type character by character
 await page.type('#area', 'Hello World!')
 ```
 
-```python-sync
+```python sync
 # Type character by character
 page.type('#area', 'Hello World!')
 ```
@@ -341,7 +341,7 @@ await page.press('#name', 'Control+ArrowRight');
 await page.press('#value', '$');
 ```
 
-```python-async
+```python async
 # Hit Enter
 await page.press('#submit', 'Enter')
 
@@ -352,7 +352,7 @@ await page.press('#name', 'Control+ArrowRight')
 await page.press('#value', '$')
 ```
 
-```python-sync
+```python sync
 # Hit Enter
 page.press('#submit', 'Enter')
 
@@ -386,7 +386,7 @@ await page.press('#name', 'Shift+A');
 await page.press('#name', 'Shift+ArrowLeft');
 ```
 
-```python-async
+```python async
 # <input id=name>
 await page.press('#name', 'Shift+A')
 
@@ -394,7 +394,7 @@ await page.press('#name', 'Shift+A')
 await page.press('#name', 'Shift+ArrowLeft')
 ```
 
-```python-sync
+```python sync
 # <input id=name>
 page.press('#name', 'Shift+A')
 
@@ -436,7 +436,7 @@ await page.setInputFiles('input#upload', {
 });
 ```
 
-```python-async
+```python async
 from playwright.async_api import FilePayload
 # Select one file
 await page.set_input_files('input#upload', 'myfile.pdf')
@@ -454,7 +454,7 @@ await page.set_input_files(
 )
 ```
 
-```python-sync
+```python sync
 from playwright.sync_api import FilePayload
 # Select one file
 page.set_input_files('input#upload', 'myfile.pdf')
@@ -494,11 +494,11 @@ For the dynamic pages that handle focus events, you can focus the given element.
 await page.focus('input#name');
 ```
 
-```python-async
+```python async
 await page.focus('input#name')
 ```
 
-```python-sync
+```python sync
 page.focus('input#name')
 ```
 

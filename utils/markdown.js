@@ -342,7 +342,7 @@ function generateToc(nodes) {
     if (node.type === 'h1' || node.type === 'h2') {
       let link = node.text.toLowerCase();
       link = link.replace(/[ ]+/g, '-');
-      link = link.replace(/[^\w-]/g, '');
+      link = link.replace(/[^\w-_]/g, '');
       result.push(`${' '.repeat(depth * 2)}- [${node.text}](#${link})`);
     }
   });

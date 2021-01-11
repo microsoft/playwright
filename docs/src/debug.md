@@ -19,17 +19,17 @@ to slow down execution and follow along while debugging.
 await chromium.launch({ headless: false, slowMo: 100 }); // or firefox, webkit
 ```
 
-```python-async
+```python async
 await chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
 ```
 
-```python-sync
+```python sync
 chromium.launch(headless=False, slow_mo=100) # or firefox, webkit
 
 ```
 
-## Visual Studio Code debugger
+## Visual Studio Code debugger (Node.JS)
 
 The VS Code debugger can be used to pause and resume execution of Playwright
 scripts with breakpoints. The debugger can be configured in two ways.
@@ -40,18 +40,13 @@ Setup [`launch.json` configuration](https://code.visualstudio.com/docs/nodejs/no
 for your Node.js project. Once configured launch the scripts with F5 and use
 breakpoints.
 
-### Use the new JavaScript debugger
+### Use the new JavaScript debugging terminal
 
-VS Code 1.46+ introduces the new JavaScript debugger behind a feature flag. The
-new debugger does not require a `launch.json` configuration. To use this:
-
-1. Enable the preview debugger
-    * Open JSON settings and add `"debug.javascript.usePreview": true`
-    * Open settings UI and enable the `Debug › JavaScript: Use Preview` setting
+VS Code 1.46+ introduced the new JavaScript debugger that does not require a `launch.json`
+configuration. To use it:
 
 1. Set a breakpoint in VS Code
     * Use the `debugger` keyword or set a breakpoint in the VS Code UI
-
 1. Run your Node.js script from the terminal
 
 ## Browser Developer Tools
@@ -76,12 +71,12 @@ In Chromium, you can also open developer tools through a launch option.
 await chromium.launch({ devtools: true });
 ```
 
-```python-async
+```python async
 await chromium.launch(devtools=True)
 
 ```
 
-```python-sync
+```python sync
 chromium.launch(devtools=True)
 ```
 

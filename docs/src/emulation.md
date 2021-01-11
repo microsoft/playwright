@@ -29,7 +29,7 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 import asyncio
 from playwright import async_playwright
 
@@ -44,7 +44,7 @@ async def main():
 asyncio.get_event_loop().run_until_complete(main())
 ```
 
-```python-sync
+```python sync
 from playwright import sync_playwright
 
 with sync_playwright() as p:
@@ -74,13 +74,13 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 context = await browser.new_context(
   user_agent='My user agent'
 )
 ```
 
-```python-sync
+```python sync
 context = browser.new_context(
   user_agent='My user agent'
 )
@@ -112,7 +112,7 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 # Create context with given viewport
 context = await browser.new_context(
   viewport={ 'width': 1280, 'height': 1024 }
@@ -128,7 +128,7 @@ context = await browser.new_context(
 )
 ```
 
-```python-sync
+```python sync
 # Create context with given viewport
 context = browser.new_context(
   viewport={ 'width': 1280, 'height': 1024 }
@@ -161,7 +161,7 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 # Emulate locale and time
 context = await browser.new_context(
   locale='de-DE',
@@ -169,7 +169,7 @@ context = await browser.new_context(
 )
 ```
 
-```python-sync
+```python sync
 # Emulate locale and time
 context = browser.new_context(
   locale='de-DE',
@@ -193,13 +193,13 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 context = await browser.new_context(
   permissions=['notifications'],
 )
 ```
 
-```python-sync
+```python sync
 context = browser.new_context(
   permissions=['notifications'],
 )
@@ -211,11 +211,11 @@ Grant all pages in the existing context access to current location:
 await context.grantPermissions(['geolocation']);
 ```
 
-```python-async
+```python async
 await context.grant_permissions(['geolocation'])
 ```
 
-```python-sync
+```python sync
 context.grant_permissions(['geolocation'])
 ```
 
@@ -225,11 +225,11 @@ Grant notifications access from a specific domain:
 await context.grantPermissions(['notifications'], {origin: 'https://skype.com'} );
 ```
 
-```python-async
+```python async
 await context.grant_permissions(['notifications'], origin='https://skype.com')
 ```
 
-```python-sync
+```python sync
 context.grant_permissions(['notifications'], origin='https://skype.com')
 ```
 
@@ -239,11 +239,11 @@ Revoke all permissions:
 await context.clearPermissions();
 ```
 
-```python-async
+```python async
 await context.clear_permissions()
 ```
 
-```python-sync
+```python sync
 context.clear_permissions()
 ```
 
@@ -265,14 +265,14 @@ const context = await browser.newContext({
 });
 ```
 
-```python-async
+```python async
 context = await browser.new_context(
   geolocation={"longitude": 48.858455, "latitude": 2.294474},
   permissions=["geolocation"]
 )
 ```
 
-```python-sync
+```python sync
 context = browser.new_context(
   geolocation={"longitude": 48.858455, "latitude": 2.294474},
   permissions=["geolocation"]
@@ -285,11 +285,11 @@ Change the location later:
 await context.setGeolocation({ longitude: 29.979097, latitude: 31.134256 });
 ```
 
-```python-async
+```python async
 await context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 ```
 
-```python-sync
+```python sync
 context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 ```
 
@@ -325,7 +325,7 @@ await page.emulateMedia({ colorScheme: 'dark' });
 await page.emulateMedia({ media: 'print' });
 ```
 
-```python-async
+```python async
 # Create context with dark mode
 context = await browser.new_context(
   color_scheme='dark' # or 'light'
@@ -343,7 +343,7 @@ await page.emulate_media(color_scheme='dark')
 await page.emulate_media(media='print')
 ```
 
-```python-sync
+```python sync
 # Create context with dark mode
 context = browser.new_context(
   color_scheme='dark' # or 'light'
