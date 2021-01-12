@@ -15,4 +15,4 @@
  */
 
 import { config } from './generated-source-template.rollup.config';
-export default config('recorderSource', ['cli', 'injected', 'recorder.ts']);
+export default config('recorderSource', ['src', 'cli', 'injected', 'recorder.ts']);

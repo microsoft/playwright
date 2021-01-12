@@ -14,47 +14,26 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import typescript from '@rollup/plugin-typescript';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import { terser } from 'rollup-plugin-terser';
+import { config as baseConfig, projectRoot } from './common-template.rollup.config';
 import { inlineSource } from './rollup-plugin-inline-source';
-
-const projectRoot = path.join(__dirname, '..', '..');
-const src = path.join(projectRoot, 'src');
-const pkg = require(path.join(projectRoot, 'package.json'));
-
-const template = {
-  external: [
-    ...Object.keys(pkg.dependencies || {}),
-  ],
-  plugins: [
-    typescript({
-      typescript: require('typescript'),
-    }),
-    nodeResolve(),
-    commonjs({ extensions: ['.js', '.ts'] }),
-    json(),
-    ...(process.env.NODE_ENV === 'production' ? [terser()] : []),
-    inlineSource(),
-  ],
-};
+import path from 'path';
 
 export function config(generatedFileName, pathToSource) {
-  return [
-    {
-      ...template,
-      input: {
-        [generatedFileName]: path.join(src, ...pathToSource),
-      },
-      output: {
-        entryFileNames: '[name].ts',
-        dir: path.join(src, 'generated'),
-        format: 'iife',
-        exports: 'default',
-      },
+  const base = baseConfig();
+  return {
+    ...base,
+    plugins: [
+      ...base.plugins,
+      inlineSource(),
+    ],
+    input: {
+      [generatedFileName]: path.join(projectRoot, ...pathToSource),
     },
-  ];
+    output: {
+      entryFileNames: '[name].ts',
+      dir: path.join(projectRoot, 'src', 'generated'),
+      format: 'iife',
+      exports: 'default',
+    },
+  };
 }

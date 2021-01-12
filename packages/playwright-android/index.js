@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-module.exports = require('./build/index');
+module.exports = require('./index');
 module.exports.android = module.exports._android;

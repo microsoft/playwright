@@ -14,9 +14,16 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright';
-import playwright from 'playwright';
-import testExports from 'playwright/testExports.js';
+export function shebang(shebangs) {
+	return {
+		name: 'shebang',
 
-import testESM from './esm.mjs';
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, testExports }, [chromium, firefox, webkit]);
+		generateBundle(options, bundle) {
+      for (const [file, shebang] of Object.entries(shebangs)) {
+        if (bundle[file]) {
+          bundle[file].code = shebang + '\n' + bundle[file].code;
+        }
+      }
+		}
+	};
+}

@@ -15,4 +15,4 @@
  */
 
 import { config } from './generated-source-template.rollup.config';
-export default config('injectedScriptSource', ['server', 'injected', 'injectedScript.ts']);
+export default config('injectedScriptSource', ['src', 'server', 'injected', 'injectedScript.ts']);

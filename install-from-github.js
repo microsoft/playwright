@@ -21,12 +21,12 @@ const {execSync} = require('child_process');
 
 console.log(`Rebuilding installer...`);
 try {
-  execSync('npm run tsc-installer');
+  execSync('npm run build-installer');
 } catch (e) {
 }
 
 console.log(`Downloading browsers...`);
-const { installBrowsersWithProgressBar } = require('./build/installer');
+const { installBrowsersWithProgressBar } = require('./build/mini-installer');
 installBrowsersWithProgressBar(__dirname).catch(e =>  {
   console.error(`Failed to install browsers, caused by\n${e.stack}`);
   process.exit(1);

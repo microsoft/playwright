@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright';
-import playwright from 'playwright';
-import testExports from 'playwright/testExports.js';
+import { config, projectRoot } from './common-template.rollup.config';
+import path from 'path';
 
-import testESM from './esm.mjs';
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, testExports }, [chromium, firefox, webkit]);
+export default {
+  ...config({ typescriptInclude: ['src/install/**/*.ts', 'src/utils/**/*.ts'] }),
+  input: {
+    'mini-installer': path.join(projectRoot, 'src', 'install', 'installer.ts'),
+  },
+};

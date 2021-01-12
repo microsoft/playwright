@@ -34,7 +34,7 @@ export function bundleCss(fileName) {
       return '';
     },
 
-    generateBundle(opts, bundle) {
+    generateBundle(options, bundle) {
       if (!changes)
         return;
       changes = 0;

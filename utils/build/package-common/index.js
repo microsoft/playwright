@@ -14,9 +14,4 @@
  * limitations under the License.
  */
 
-import { chromium, firefox, webkit, selectors, devices, errors } from 'playwright';
-import playwright from 'playwright';
-import testExports from 'playwright/testExports.js';
-
-import testESM from './esm.mjs';
-testESM({ chromium, firefox, webkit, selectors, devices, errors, playwright, testExports }, [chromium, firefox, webkit]);
+module.exports = require('./inprocess');

@@ -144,7 +144,7 @@ if (!args.some(arg => arg === '--no-cleanup')) {
     },
     author: pwInternalJSON.author,
     license: pwInternalJSON.license,
-    dependencies: pwInternalJSON.dependencies
+    dependencies: {},
   }, null, 2));
 
   // 5. Generate browsers.json

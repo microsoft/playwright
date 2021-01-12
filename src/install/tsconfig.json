@@ -1,6 +1,0 @@
-{
-  // This config exists so that we can quickly compile just an installer.
-  "extends": "../../tsconfig.json",
-  "include": ["./*.ts"],
-  "exclude": ["node_modules"]
-}

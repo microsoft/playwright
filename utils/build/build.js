@@ -112,6 +112,8 @@ function runBuild() {
   }
 }
 
+// NOTE: when chaning this list, consider changing .npmignore files
+// for various packages.
 const copyFiles = [
   'src/cli/traceViewer/web/third_party/vscode/codicon.ttf',
   'src/cli/traceViewer/web/trace-viewer.html',
@@ -136,6 +138,7 @@ const copyFiles = [
   'LICENSE',
   'README.md',
   'utils/build/package-common/.npmignore',
+  'utils/build/package-common/index.js',
   'utils/build/package-common/index.mjs',
   'utils/build/package-common/install.js',
 ];
@@ -155,6 +158,10 @@ for (const file of rollupFiles) {
     command: 'npx',
     args: ['rollup', '-c', filePath(file), ...(watchMode ? ['-w', '--silent'] : [])],
     shell: true,
+    env: {
+      ...process.env,
+      NODE_ENV: watchMode ? 'development' : 'production'
+    },
   });
 }
 
@@ -189,5 +196,7 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
+if (!watchMode)
+  require('rimraf').sync(filePath('build'));
 fs.mkdirSync(filePath('build'), { recursive: true });
 watchMode ? runWatch() : runBuild();

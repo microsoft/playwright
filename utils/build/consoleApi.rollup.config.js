@@ -15,4 +15,4 @@
  */
 
 import { config } from './generated-source-template.rollup.config';
-export default config('consoleApiSource', ['debug', 'injected', 'consoleApi.ts']);
+export default config('consoleApiSource', ['src', 'debug', 'injected', 'consoleApi.ts']);

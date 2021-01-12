@@ -14,45 +14,17 @@
  * limitations under the License.
  */
 
+import { config, projectRoot } from './common-template.rollup.config';
 import path from 'path';
-import typescript from '@rollup/plugin-typescript';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import { terser } from 'rollup-plugin-terser';
-import { bundleCss } from './rollup-plugin-bundle-css';
 
-const projectRoot = path.join(__dirname, '..', '..');
-const src = path.join(projectRoot, 'src');
-const build = path.join(projectRoot, 'build');
-const pkg = require(path.join(projectRoot, 'package.json'));
-
-const template = {
-  external: [
-    ...Object.keys(pkg.dependencies || {}),
-  ],
-  plugins: [
-    typescript({
-      typescript: require('typescript'),
-    }),
-    nodeResolve(),
-    commonjs({ extensions: ['.js', '.ts', '.tsx'] }),
-    bundleCss('trace-viewer.css'),
-    json(),
-    ...(process.env.NODE_ENV === 'production' ? [terser()] : []),
-  ],
-};
-
-export default [
-  {
-    ...template,
-    input: {
-      'trace-viewer': path.join(src, 'cli', 'traceViewer', 'web', 'index.tsx'),
-    },
-    output: {
-      entryFileNames: '[name].js',
-      dir: build,
-      format: 'iife',
-    },
+export default {
+  ...config({ bundleCss: 'trace-viewer.css' }),
+  input: {
+    'trace-viewer': path.join(projectRoot, 'src', 'cli', 'traceViewer', 'web', 'index.tsx'),
   },
-];
+  output: {
+    entryFileNames: '[name].js',
+    dir: path.join(projectRoot, 'build'),
+    format: 'iife',
+  },
+};

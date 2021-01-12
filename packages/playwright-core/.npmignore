@@ -1,6 +1,6 @@
 # This empty file bundles everything we have in the build/ directory.
 
-# We do not need binaries though.
+# playwright-core does not bundle binaries.
 android-driver.apk
 android-driver-target.apk
 PrintDeps.exe

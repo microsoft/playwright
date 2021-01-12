@@ -132,7 +132,7 @@ class TraceViewer {
         });
       }
     });
-    await uiPage.goto('http://trace-viewer/index.html');
+    await uiPage.goto('http://trace-viewer/trace-viewer.html');
   }
 }
 

@@ -14,51 +14,23 @@
  * limitations under the License.
  */
 
+import { config, projectRoot } from './common-template.rollup.config';
 import path from 'path';
-import typescript from '@rollup/plugin-typescript';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import json from '@rollup/plugin-json';
-import { terser } from 'rollup-plugin-terser';
 
-const projectRoot = path.join(__dirname, '..', '..');
-const src = path.join(projectRoot, 'src');
-const build = path.join(projectRoot, 'build');
-const pkg = require(path.join(projectRoot, 'package.json'));
-
-const template = {
-  external: [
-    ...Object.keys(pkg.dependencies || {}),
-  ],
-  plugins: [
-    typescript({
-      typescript: require('typescript'),
-    }),
-    nodeResolve(),
-    commonjs({ extensions: ['.js', '.ts'] }),
-    json(),
-    ...(process.env.NODE_ENV === 'production' ? [terser()] : []),
-  ],
-};
-
-export default [
-  {
-    ...template,
-    input: {
-      events: path.join(src, 'client', 'events.ts'),
-      api: path.join(src, 'client', 'api.ts'),
-      index: path.join(src, 'inprocess.ts'),
-      testExports: path.join(src, 'testExports.ts'),
-      service: path.join(src, 'service.ts'),
-      cliTestExports: path.join(src, 'cli', 'cliTestExports.ts'),
-      cli: path.join(src, 'cli', 'cli.ts'),
-      installer: path.join(src, 'install', 'installer.ts'),
-    },
-    output: {
-      entryFileNames: '[name].js',
-      dir: build,
-      format: 'cjs',
-      exports: 'default',
-    },
+export default {
+  ...config({
+    shebangs: {
+      'cli.js': '#!/usr/bin/env node',
+    }
+  }),
+  input: {
+    events: path.join(projectRoot, 'src', 'client', 'events.ts'),
+    api: path.join(projectRoot, 'src', 'client', 'api.ts'),
+    inprocess: path.join(projectRoot, 'src', 'inprocess.ts'),
+    testExports: path.join(projectRoot, 'src', 'testExports.ts'),
+    service: path.join(projectRoot, 'src', 'service.ts'),
+    cliTestExports: path.join(projectRoot, 'src', 'cli', 'cliTestExports.ts'),
+    cli: path.join(projectRoot, 'src', 'cli', 'cli.ts'),
+    installer: path.join(projectRoot, 'src', 'install', 'installer.ts'),
   },
-];
+};
