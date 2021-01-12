@@ -125,7 +125,7 @@ describe('electron app', (suite, { browserName }) => {
     await expect(clipboardContentRead).toEqual(clipboardContentToWrite);
   });
 
-  it.only('should be able to send CDP messages', async ({application, window}) => {
+  it('should be able to send CDP messages', async ({application, window}) => {
     const context = await application.context();
     const client = await context.newCDPSession(window);
     await client.send('Runtime.enable');

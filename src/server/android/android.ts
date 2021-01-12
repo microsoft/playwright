@@ -256,6 +256,7 @@ export class AndroidDevice extends EventEmitter {
 
     const browserOptions: BrowserOptions = {
       name: 'clank',
+      isChromium: true,
       slowMo: 0,
       persistent: { ...options, noDefaultViewport: true },
       downloadsPath: undefined,

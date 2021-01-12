@@ -45,21 +45,21 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserIniti
   }
 
   async crNewBrowserCDPSession(): Promise<channels.BrowserCrNewBrowserCDPSessionResult> {
-    if (this._object._options.name !== 'chromium' && this._object._options.name !== 'electron')
+    if (!this._object._options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowser.newBrowserCDPSession()) };
   }
 
   async crStartTracing(params: channels.BrowserCrStartTracingParams): Promise<void> {
-    if (this._object._options.name !== 'chromium' && this._object._options.name !== 'electron')
+    if (!this._object._options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     await crBrowser.startTracing(params.page ? (params.page as PageDispatcher)._object : undefined, params);
   }
 
   async crStopTracing(): Promise<channels.BrowserCrStopTracingResult> {
-    if (this._object._options.name !== 'chromium' && this._object._options.name !== 'electron')
+    if (!this._object._options.isChromium)
       throw new Error(`Tracing is only available in Chromium`);
     const crBrowser = this._object as CRBrowser;
     const buffer = await crBrowser.stopTracing();
