@@ -50,7 +50,8 @@ if (process.env.PW_ANDROID_TESTS) {
   });
   it('should be able to send CDP messages', async ({ device }) => {
     const context = await device.launchBrowser();
-    const client = await context.newCDPSession(window);
+    const [page] = context.pages();
+    const client = await context.newCDPSession(page);
     await client.send('Runtime.enable');
     const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
     expect(evalResponse.result.value).toBe(3);
