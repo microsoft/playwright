@@ -100,6 +100,12 @@ elif [[ "$BUILD_FLAVOR" == "firefox-mac-10.14" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.14"
   BUILD_BLOB_NAME="firefox-mac-10.14.zip"
+elif [[ "$BUILD_FLAVOR" == "firefox-mac-11.0-arm64" ]]; then
+  BROWSER_NAME="firefox"
+  EXPECTED_HOST_OS="Darwin"
+  EXPECTED_HOST_OS_VERSION="11.0"
+  EXPECTED_ARCH="arm64"
+  BUILD_BLOB_NAME="firefox-mac-11.0-arm64.zip"
 elif [[ "$BUILD_FLAVOR" == "firefox-win32" ]]; then
   BROWSER_NAME="firefox"
   EXPECTED_HOST_OS="MINGW"
