@@ -151,14 +151,14 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     if (this._isAsync) {
       formatter.add(`
 import asyncio
-from playwright import async_playwright
+from playwright.async_api import async_playwright
 
 async def run(playwright) {
     browser = await playwright.${browserName}.launch(${formatOptions(launchOptions, false)})
     context = await browser.newContext(${formatContextOptions(contextOptions, deviceName)})`);
     } else {
       formatter.add(`
-from playwright import sync_playwright
+from playwright.sync_api import sync_playwright
 
 def run(playwright) {
     browser = playwright.${browserName}.launch(${formatOptions(launchOptions, false)})

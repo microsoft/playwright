@@ -24,7 +24,7 @@ const emptyHTML = new URL('file://' + path.join(__dirname, '..', 'assets', 'empt
 
 it('should print the correct imports and context options', async ({ runCLI }) => {
   const cli = runCLI(['codegen', '--target=python', emptyHTML]);
-  const expectedResult = `from playwright import sync_playwright
+  const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
@@ -35,7 +35,7 @@ def run(playwright):
 
 it('should print the correct context options for custom settings', async ({ runCLI }) => {
   const cli = runCLI(['--color-scheme=light', 'codegen', '--target=python', emptyHTML]);
-  const expectedResult = `from playwright import sync_playwright
+  const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
@@ -46,7 +46,7 @@ def run(playwright):
 
 it('should print the correct context options when using a device', async ({ runCLI }) => {
   const cli = runCLI(['--device=Pixel 2', 'codegen', '--target=python', emptyHTML]);
-  const expectedResult = `from playwright import sync_playwright
+  const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
@@ -57,7 +57,7 @@ def run(playwright):
 
 it('should print the correct context options when using a device and additional options', async ({ runCLI }) => {
   const cli = runCLI(['--color-scheme=light', '--device=Pixel 2', 'codegen', '--target=python', emptyHTML]);
-  const expectedResult = `from playwright import sync_playwright
+  const expectedResult = `from playwright.sync_api import sync_playwright
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
@@ -71,7 +71,7 @@ it('should save the codegen output to a file if specified', async ({ runCLI, tes
   const cli = runCLI(['codegen', '--target=python', '--output', tmpFile, emptyHTML]);
   await cli.exited;
   const content = fs.readFileSync(tmpFile);
-  expect(content.toString()).toBe(`from playwright import sync_playwright
+  expect(content.toString()).toBe(`from playwright.sync_api import sync_playwright
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
@@ -99,7 +99,7 @@ it('should print load/save storageState', async ({ runCLI, testInfo }) => {
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=python', emptyHTML]);
-  const expectedResult = `from playwright import sync_playwright
+  const expectedResult = `from playwright.sync_api import sync_playwright
 
   def run(playwright):
       browser = playwright.chromium.launch(headless=False)
