@@ -111,9 +111,12 @@ event is dispatched.
 Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
 [Download] instance.
 
-> **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-download is not performed and user has no access to the downloaded files.
+:::note
+Browser context **must** be created with the [`option: acceptDownloads`] set to `true` when user needs access to the
+downloaded content. If [`option: acceptDownloads`] is not set, download events
+are emitted, but the actual download is not performed and user has no access to
+the downloaded files.
+:::
 
 ## event: Page.filechooser
 - type: <[FileChooser]>
@@ -169,8 +172,10 @@ const [popup] = await Promise.all([
 console.log(await popup.evaluate('location.href'));
 ```
 
-> **NOTE** Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
+:::note
+Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
 need it in most cases).
+:::
 
 ## event: Page.request
 - type: <[Request]>
@@ -183,8 +188,10 @@ Emitted when a page issues a request. The [request] object is read-only. In orde
 
 Emitted when a request fails, for example by timing out.
 
-> **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
+:::note
+HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
 will complete with [`event: Page.requestfinished`] event and not with [`event: Page.requestfailed`].
+:::
 
 ## event: Page.requestfinished
 - type: <[Request]>
@@ -321,8 +328,10 @@ const preloadFile = fs.readFileSync('./preload.js', 'utf8');
 await page.addInitScript(preloadFile);
 ```
 
-> **NOTE** The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
+:::note
+The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
 [`method: Page.addInitScript`] is not defined.
+:::
 
 ### param: Page.addInitScript.script
 * langs: js
@@ -457,8 +466,9 @@ close.
 
 By default, `page.close()` **does not** run `beforeunload` handlers.
 
-> **NOTE** if [`option: runBeforeUnload`] is passed as true, a `beforeunload` dialog might be summoned
-> and should be handled manually via [`event: Page.dialog`] event.
+:::note
+if [`option: runBeforeUnload`] is passed as true, a `beforeunload` dialog might be summoned and should be handled manually via [`event: Page.dialog`] event.
+:::
 
 ### option: Page.close.runBeforeUnload
 - `runBeforeUnload` <[boolean]>
@@ -495,7 +505,9 @@ This method double clicks an element matching [`param: selector`] by performing 
 When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-> **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
+:::note
+`page.dblclick()` dispatches two `click` events and a single `dblclick` event.
+:::
 
 Shortcut for main frame's [`method: Frame.dblclick`].
 
@@ -695,7 +707,9 @@ browserContext: BrowserContext, page: Page, frame: Frame }`.
 
 See [`method: BrowserContext.exposeBinding`] for the context-wide version.
 
-> **NOTE** Functions installed via `page.exposeBinding` survive navigations.
+:::note
+Functions installed via [`method: Page.exposeBinding`] survive navigations.
+:::
 
 An example of exposing page URL to all frames in a page:
 
@@ -761,7 +775,9 @@ If the [`param: callback`] returns a [Promise], it will be awaited.
 
 See [`method: BrowserContext.exposeFunction`] for context-wide exposed function.
 
-> **NOTE** Functions installed via `page.exposeFunction` survive navigations.
+:::note
+Functions installed via [`method: Page.exposeFunction`] survive navigations.
+:::
 
 An example of adding an `md5` function to the page:
 
@@ -939,10 +955,14 @@ last redirect.
 Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [`method:
 Response.status`].
 
-> **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
+:::note
+`page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
 `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
-> **NOTE** Headless mode doesn't support navigation to a PDF document. See the [upstream
+:::
+:::note
+Headless mode doesn't support navigation to a PDF document. See the [upstream
 issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
+:::
 
 Shortcut for main frame's [`method: Frame.goto`]
 
@@ -1083,15 +1103,18 @@ Returns the opener for popup pages and `null` for others. If the opener has been
 
 Returns the PDF buffer.
 
-> **NOTE** Generating a pdf is currently only supported in Chromium headless.
+:::note
+Generating a pdf is currently only supported in Chromium headless.
+:::
 
 `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call [`method:
 Page.emulateMedia`] before calling `page.pdf()`:
 
-> **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
+:::note
+By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
 [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to
 force rendering of exact colors.
-
+:::
 ```js
 // Generates a PDF with 'screen' media type.
 await page.emulateMedia({media: 'screen'});
@@ -1125,9 +1148,11 @@ The [`option: format`] options are:
 * `A5`: 5.83in x 8.27in
 * `A6`: 4.13in x 5.83in
 
-> **NOTE** [`option: headerTemplate`] and [`option: footerTemplate`] markup have the following limitations:
+:::note
+[`option: headerTemplate`] and [`option: footerTemplate`] markup have the following limitations:
 > 1. Script tags inside templates are not evaluated.
 > 2. Page styles are not visible inside templates.
+:::
 
 ### option: Page.pdf.path
 - `path` <[path]>
@@ -1272,7 +1297,9 @@ Routing provides the capability to modify network requests that are made by a pa
 
 Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
 
-> **NOTE** The handler will only be called for the first url if the response is a redirect.
+:::note
+The handler will only be called for the first url if the response is a redirect.
+:::
 
 An example of a naïve handler that aborts all image requests:
 
@@ -1295,7 +1322,9 @@ await browser.close();
 Page routes take precedence over browser context routes (set up with [`method: BrowserContext.route`]) when request
 matches both handlers.
 
-> **NOTE** Enabling routing disables http cache.
+:::note
+Enabling routing disables http cache.
+:::
 
 ### param: Page.route.url
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
@@ -1312,8 +1341,10 @@ handler function to route the request.
 
 Returns the buffer with the captured screenshot.
 
-> **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for
+:::note
+Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for
 discussion.
+:::
 
 ### option: Page.screenshot.path
 - `path` <[path]>
@@ -1403,8 +1434,10 @@ This setting will change the default maximum navigation time for the following m
 * [`method: Page.setContent`]
 * [`method: Page.waitForNavigation`]
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`],
+:::note
+[`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`],
 [`method: BrowserContext.setDefaultTimeout`] and [`method: BrowserContext.setDefaultNavigationTimeout`].
+:::
 
 ### param: Page.setDefaultNavigationTimeout.timeout
 - `timeout` <[float]>
@@ -1415,7 +1448,9 @@ Maximum navigation time in milliseconds
 
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`].
+:::note
+[`method: Page.setDefaultNavigationTimeout`] takes priority over [`method: Page.setDefaultTimeout`].
+:::
 
 ### param: Page.setDefaultTimeout.timeout
 - `timeout` <[float]>
@@ -1426,7 +1461,9 @@ Maximum time in milliseconds
 
 The extra HTTP headers will be sent with every request the page initiates.
 
-> **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
+:::note
+[`method: Page.setExtraHTTPHeaders`] does not guarantee the order of headers in the outgoing requests.
+:::
 
 ### param: Page.setExtraHTTPHeaders.headers
 - `headers` <[Object]<[string], [string]>>
@@ -1483,7 +1520,9 @@ This method taps an element matching [`param: selector`] by performing the follo
 When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-> **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
+:::note
+[`method: Page.tap`] requires that the [`option: hasTouch`] option of the browser context be set to true.
+:::
 
 Shortcut for main frame's [`method: Frame.tap`].
 
@@ -1612,8 +1651,8 @@ value. Will throw an error if the page is closed before the event is fired.
 
 ### param: Page.waitForEvent.optionsOrPredicate
 * langs: js
-- `optionsOrPredicate` <[Function]|[Object]>
-  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+- `optionsOrPredicate` <[function]|[Object]>
+  - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.
@@ -1711,8 +1750,10 @@ const [response] = await Promise.all([
 ]);
 ```
 
-**NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
+:::note
+Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
 considered a navigation.
+:::
 
 Shortcut for main frame's [`method: Frame.waitForNavigation`].
 
@@ -1831,4 +1872,6 @@ A timeout to wait for
 This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
 associated with the page.
 
-> **NOTE** This does not contain ServiceWorkers
+:::note
+This does not contain ServiceWorkers
+:::

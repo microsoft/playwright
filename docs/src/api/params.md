@@ -154,7 +154,7 @@ Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `no_
 * langs: python
 - `noViewport` <[boolean]>
 
-Disables the default viewport.
+Does not enforce fixed viewport, allows resizing window in the headed mode.
 
 ## context-option-useragent
 - `userAgent` <[string]>
@@ -236,11 +236,13 @@ Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`
 Logger sink for Playwright logging.
 
 ## context-option-videospath
+* langs: js
 - `videosPath` <[path]>
 
 **DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-videosize
+* langs: js
 - `videoSize` <[Object]>
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
@@ -330,7 +332,7 @@ A glob pattern, regex pattern or predicate receiving [URL] to match while waitin
 ## wait-for-event-event
 - `event` <[string]>
 
-Event name, same one typically passed into `page.on(event)`.
+Event name, same one typically passed into `*.on(event)`.
 
 ## wait-for-load-state-state
 - `state` <"load"|"domcontentloaded"|"networkidle">
@@ -369,7 +371,7 @@ only the first option matching one of the passed options is selected. Optional.
 
 ## python-wait-for-event-predicate
 * langs: python
-- `predicate` <[Function]>
+- `predicate` <[function]>
 
 Receives the event data and resolves to truthy value when the waiting should resolve.
 

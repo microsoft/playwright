@@ -61,7 +61,9 @@ $ npm i -D playwright
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
 
-> **NOTE** Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
+:::note
+Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
+:::
 
 ## Download from artifact repository
 
@@ -111,7 +113,9 @@ Playwright ships three packages that bundle only a single browser:
 - [`playwright-webkit`](https://www.npmjs.com/package/playwright-webkit)
 - [`playwright-firefox`](https://www.npmjs.com/package/playwright-firefox)
 
-> **NOTE** All configuration environment variables also apply to these packages.
+:::note
+All configuration environment variables also apply to these packages.
+:::
 
 Using these packages is as easy as using a regular Playwright:
 
