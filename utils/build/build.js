@@ -123,6 +123,8 @@ const copyFiles = [
   'third_party/ffmpeg/ffmpeg-win32.exe',
   'third_party/ffmpeg/ffmpeg-win64.exe',
   'bin/PrintDeps.exe',
+  'bin/android-driver.apk',
+  'bin/android-driver-target.apk',
   'types/android.d.ts',
   'types/electron.d.ts',
   'types/protocol.d.ts',
@@ -130,6 +132,12 @@ const copyFiles = [
   'types/trace.d.ts',
   'types/types.d.ts',
   'types/index.d.ts',
+  'NOTICE',
+  'LICENSE',
+  'README.md',
+  'utils/build/package-common/.npmignore',
+  'utils/build/package-common/index.mjs',
+  'utils/build/package-common/install.js',
 ];
 for (const file of copyFiles)
   copies.push({ from: file, to: 'build/', });

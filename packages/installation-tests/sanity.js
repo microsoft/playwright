@@ -29,8 +29,7 @@ if (process.argv[3] === 'all')
 const playwright = require(requireName);
 
 // Requiring internals should work.
-const errors = require(requireName + '/lib/utils/errors');
-const installer = require(requireName + '/build/installer');
+const installer = require(requireName + '/installer');
 
 (async () => {
   for (const browserType of success) {

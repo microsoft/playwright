@@ -1,0 +1,10 @@
+# This empty file bundles everything we have in the build/ directory.
+
+# We do not need binaries though.
+android-driver.apk
+android-driver-target.apk
+PrintDeps.exe
+ffmpeg-linux
+ffmpeg-mac
+ffmpeg-win32.exe
+ffmpeg-win64.exe

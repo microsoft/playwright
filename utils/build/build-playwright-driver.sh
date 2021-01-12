@@ -28,28 +28,22 @@ function build {
   tar -xzf ./output/playwright.tgz -C ./output/playwright-${SUFFIX}/
 
   curl ${NODE_URL} -o ./output/${NODE_DIR}.${ARCHIVE}
-  NPM_PATH=""
   if [[ "${ARCHIVE}" == "zip" ]]; then
     cd ./output
     unzip -q ./${NODE_DIR}.zip
     cd ..
     cp ./output/${NODE_DIR}/node.exe ./output/playwright-${SUFFIX}/
-    NPM_PATH="node_modules/npm/bin/npm-cli.js"
   elif [[ "${ARCHIVE}" == "tar.gz" ]]; then
     tar -xzf ./output/${NODE_DIR}.tar.gz -C ./output/
     cp ./output/${NODE_DIR}/bin/node ./output/playwright-${SUFFIX}/
-    NPM_PATH="lib/node_modules/npm/bin/npm-cli.js"
   else
     echo "Unsupported ARCHIVE ${ARCHIVE}"
     exit 1
   fi
 
   cp ./output/${NODE_DIR}/LICENSE ./output/playwright-${SUFFIX}/
-  cd ./output/playwright-${SUFFIX}/package
-  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 node "../../${NODE_DIR}/${NPM_PATH}" install --production
-  rm package-lock.json
+  cd ./output/playwright-${SUFFIX}
 
-  cd ..
   if [[ "${RUN_DRIVER}" == *".cmd" ]]; then
     cp ../../${RUN_DRIVER} ./playwright.cmd
     chmod +x ./playwright.cmd

@@ -15,6 +15,6 @@
  */
 
 import { Android } from './types/android';
-export * from './types/types';
-export * from './types/android';
+export * from './types';
+export * from './android';
 export const android: Android;

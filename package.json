@@ -32,9 +32,6 @@
     "name": "Microsoft Corporation"
   },
   "license": "Apache-2.0",
-  "bin": {
-    "playwright": "./build/cli.js"
-  },
   "dependencies": {
     "commander": "^6.1.0",
     "debug": "^4.1.1",
