@@ -106,5 +106,7 @@ property to get
 
 Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
 
-> **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an
+:::note
+The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an
 error if the object has circular references.
+:::

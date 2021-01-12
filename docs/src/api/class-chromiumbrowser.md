@@ -14,7 +14,9 @@ await browser.stopTracing();
 
 [ChromiumBrowser] can also be used for testing Chrome Extensions.
 
-> **NOTE** Extensions in Chrome / Chromium currently only work in non-headless mode.
+:::note
+Extensions in Chrome / Chromium currently only work in non-headless mode.
+:::
 
 The following is code for getting a handle to the [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in `./my-extension`:
 ```js

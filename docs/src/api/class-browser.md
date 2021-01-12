@@ -14,9 +14,6 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
-See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
-[`method: BrowserType.launch`] always returns a specific browser instance, based on the browser being launched.
-
 ## event: Browser.disconnected
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:

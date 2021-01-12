@@ -625,6 +625,10 @@ function generateSourceCodeComment(spec) {
   md.visitAll(comments, node => {
     if (node.liType === 'bullet')
       node.liType = 'default';
+    if (node.type === 'note') {
+      node.type = 'text';
+      node.text = '> NOTE: ' + node.text;
+    }
   });
   return md.render(comments, 120);
 }
