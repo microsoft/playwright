@@ -26,7 +26,10 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
     if (!parsedURLs.length)
       return true;
     for (const parsedURL of parsedURLs) {
-      if (parsedURL.hostname !== c.domain)
+      let domain = c.domain;
+      if (!domain.startsWith('.'))
+        domain = '.' + domain;
+      if (!('.' + parsedURL.hostname).endsWith(domain))
         continue;
       if (!parsedURL.pathname.startsWith(c.path))
         continue;
