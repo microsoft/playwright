@@ -17,9 +17,12 @@ const path = await download.path();
 ...
 ```
 
-> **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-download is not performed and user has no access to the downloaded files.
+:::note
+Browser context **must** be created with the [`option: acceptDownloads`] set to `true` when user needs access to the
+downloaded content. If [`option: acceptDownloads`] is not set, download events are
+emitted, but the actual download is not performed and user has no access to the
+downloaded files.
+:::
 
 ## async method: Download.createReadStream
 * langs: js
@@ -37,7 +40,7 @@ Deletes the downloaded file.
 Returns download error if any.
 
 ## async method: Download.path
-- returns: <[null]|[string]>
+- returns: <[null]|[path]>
 
 Returns path to the downloaded file in case of successful download.
 

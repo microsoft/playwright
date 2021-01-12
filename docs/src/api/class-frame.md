@@ -251,7 +251,9 @@ This method double clicks an element matching [`param: selector`] by performing 
 When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-> **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
+:::note
+`frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
+:::
 
 ### param: Frame.dblclick.selector = %%-input-selector-%%
 
@@ -476,10 +478,14 @@ last redirect.
 "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling [`method:
 Response.status`].
 
-> **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation
+:::note
+`frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation
 to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
-> **NOTE** Headless mode doesn't support navigation to a PDF document. See the [upstream
+:::
+:::note
+Headless mode doesn't support navigation to a PDF document. See the [upstream
 issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
+:::
 
 ### param: Frame.goto.url
 - `url` <[string]>
@@ -602,8 +608,10 @@ Returns frame's name attribute as specified in the tag.
 
 If the name is empty, returns the id attribute instead.
 
-> **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed
+:::note
+This value is calculated once when the frame is created, and will not update if the attribute is changed
 later.
+:::note
 
 ## method: Frame.page
 - returns: <[Page]>
@@ -714,7 +722,9 @@ This method taps an element matching [`param: selector`] by performing the follo
 When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-> **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
+:::note
+`frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
+:::
 
 ### param: Frame.tap.selector = %%-input-selector-%%
 
@@ -876,8 +886,10 @@ const [response] = await Promise.all([
 ]);
 ```
 
-**NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
+:::note
+Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
 considered a navigation.
+:::
 
 ### option: Frame.waitForNavigation.timeout = %%-navigation-timeout-%%
 

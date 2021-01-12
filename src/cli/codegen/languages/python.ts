@@ -43,7 +43,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     formatter.add('# ' + actionTitle(action));
 
     if (action.name === 'openPage') {
-      formatter.add(`${pageAlias} = ${this._awaitPrefix}context.newPage()`);
+      formatter.add(`${pageAlias} = ${this._awaitPrefix}context.new_page()`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
         formatter.add(`${pageAlias}.goto('${action.url}')`);
       return formatter.format();
@@ -133,7 +133,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'fill':
         return `fill(${quote(action.selector)}, ${quote(action.text)})`;
       case 'setInputFiles':
-        return `setInputFiles(${quote(action.selector)}, ${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
+        return `set_input_files(${quote(action.selector)}, ${formatValue(action.files.length === 1 ? action.files[0] : action.files)})`;
       case 'press': {
         const modifiers = toModifiers(action.modifiers);
         const shortcut = [...modifiers, action.key].join('+');
@@ -142,7 +142,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       case 'navigate':
         return `goto(${quote(action.url)})`;
       case 'select':
-        return `selectOption(${quote(action.selector)}, ${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
+        return `select_option(${quote(action.selector)}, ${formatValue(action.options.length === 1 ? action.options[0] : action.options)})`;
     }
   }
 
@@ -155,21 +155,21 @@ from playwright.async_api import async_playwright
 
 async def run(playwright) {
     browser = await playwright.${browserName}.launch(${formatOptions(launchOptions, false)})
-    context = await browser.newContext(${formatContextOptions(contextOptions, deviceName)})`);
+    context = await browser.new_context(${formatContextOptions(contextOptions, deviceName)})`);
     } else {
       formatter.add(`
 from playwright.sync_api import sync_playwright
 
 def run(playwright) {
     browser = playwright.${browserName}.launch(${formatOptions(launchOptions, false)})
-    context = browser.newContext(${formatContextOptions(contextOptions, deviceName)})`);
+    context = browser.new_context(${formatContextOptions(contextOptions, deviceName)})`);
     }
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
     if (this._isAsync) {
-      const storageStateLine = saveStorage ? `\n    await context.storageState(path="${saveStorage}")` : '';
+      const storageStateLine = saveStorage ? `\n    await context.storage_state(path="${saveStorage}")` : '';
       return `    # ---------------------${storageStateLine}
     await context.close()
     await browser.close()
@@ -179,7 +179,7 @@ async def main():
         await run(playwright)
 asyncio.run(main())`;
     } else {
-      const storageStateLine = saveStorage ? `\n    context.storageState(path="${saveStorage}")` : '';
+      const storageStateLine = saveStorage ? `\n    context.storage_state(path="${saveStorage}")` : '';
       return `    # ---------------------${storageStateLine}
     context.close()
     browser.close()

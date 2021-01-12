@@ -149,15 +149,15 @@ event's value into the `predicate` function and waits for `predicate(event)` to 
 Will throw an error if browser context is closed before the `event` is fired.
 
 ```python async
-async with context.expect_event(event_name) as event_info:
+async with context.expect_event("page") as event_info:
     await context.click("button")
-value = await event_info.value
+page = await event_info.value
 ```
 
 ```python sync
-with context.expect_event(event_name) as event_info:
+with context.expect_event("page") as event_info:
     context.click("button")
-value = event_info.value
+page = event_info.value
 ```
 
 ### param: BrowserContext.expectEvent.event = %%-wait-for-event-event-%%
@@ -188,52 +188,6 @@ value = event_info.value
 ### option: WebSocket.expectEvent.predicate = %%-python-wait-for-event-predicate-%%
 ### option: WebSocket.expectEvent.timeout = %%-python-wait-for-event-timeout-%%
 
-## async method: Page.expectLoadState
-* langs: python
-- returns: <[EventContextManager]>
-
-Performs action and waits for the required load state. It resolves when the page reaches a required load state, `load` by default. The navigation must have been committed when this method is called. If current document has
-already reached the required state, resolves immediately.
-
-```python async
-async with page.expect_load_state():
-    await page.click('button') # Click triggers navigation.
-# Context manager waits for 'load' event.
-```
-
-```python sync
-with page.expect_load_state():
-    page.click('button') # Click triggers navigation.
-# Context manager waits for 'load' event.
-```
-
-Shortcut for main frame's [`method: Frame.expectLoadState`].
-
-### param: Page.expectLoadState.state = %%-wait-for-load-state-state-%%
-### option: Page.expectLoadState.timeout = %%-navigation-timeout-%%
-
-## async method: Frame.expectLoadState
-* langs: python
-- returns: <[EventContextManager]>
-
-Performs action and waits for the required load state. It resolves when the page reaches a required load state, `load` by default. The navigation must have been committed when this method is called. If current document has
-already reached the required state, resolves immediately.
-
-```python async
-async with frame.expect_load_state():
-    await frame.click('button') # Click triggers navigation.
-# Context manager waits for 'load' event.
-```
-
-```python sync
-with frame.expect_load_state():
-    frame.click('button') # Click triggers navigation.
-# Context manager waits for 'load' event.
-```
-
-### param: Frame.expectLoadState.state = %%-wait-for-load-state-state-%%
-### option: Frame.expectLoadState.timeout = %%-navigation-timeout-%%
-
 ## async method: Page.expectNavigation
 * langs: python
 - returns: <[EventContextManager]>
@@ -258,8 +212,9 @@ with page.expect_navigation():
 # Context manager waited for the navigation to happen.
 ```
 
-**NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the
-URL is considered a navigation.
+:::note
+Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is considered a navigation.
+:::
 
 Shortcut for main frame's [`method: Frame.expectNavigation`].
 
@@ -291,8 +246,10 @@ with frame.expect_navigation():
 # Context manager waited for the navigation to happen.
 ```
 
-**NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the
+:::note
+Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the
 URL is considered a navigation.
+:::
 
 ### option: Frame.expectNavigation.timeout = %%-navigation-timeout-%%
 ### option: Frame.expectNavigation.url = %%-wait-for-navigation-url-%%

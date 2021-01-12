@@ -58,7 +58,9 @@ $ docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_pr
 ]
 ```
 
-> **NOTE**: Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
+:::note
+Using `--ipc=host` is recommended when using Chrome ([Docker docs](https://docs.docker.com/engine/reference/run/#ipc-settings---ipc)). Chrome can run out of memory without this flag.
+:::
 
 
 ### Using on CI

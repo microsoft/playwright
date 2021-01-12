@@ -64,7 +64,9 @@ After the key is pressed once, subsequent calls to [`method: Keyboard.down`] wil
 [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
 [`method: Keyboard.up`].
 
-> **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+:::note
+Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+:::
 
 ### param: Keyboard.down.key
 - `key` <[string]>
@@ -79,7 +81,9 @@ Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress
 page.keyboard.insertText('嗨');
 ```
 
-> **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
+:::note
+Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
+:::
 
 ### param: Keyboard.insertText.text
 - `text` <[string]>
@@ -141,7 +145,9 @@ await page.keyboard.type('Hello'); // Types instantly
 await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
 ```
 
-> **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+:::note
+Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+:::
 
 ### param: Keyboard.type.text
 - `text` <[string]>

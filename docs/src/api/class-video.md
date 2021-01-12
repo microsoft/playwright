@@ -7,7 +7,7 @@ console.log(await page.video().path());
 ```
 
 ## async method: Video.path
-- returns: <[string]>
+- returns: <[path]>
 
 Returns the file system path this video will be recorded to. The video is guaranteed to be written to the filesystem
 upon closing the browser context.

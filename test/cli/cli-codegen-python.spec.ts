@@ -28,7 +28,7 @@ it('should print the correct imports and context options', async ({ runCLI }) =>
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
-    context = browser.newContext()`;
+    context = browser.new_context()`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -39,7 +39,7 @@ it('should print the correct context options for custom settings', async ({ runC
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
-    context = browser.newContext(colorScheme="light")`;
+    context = browser.new_context(color_scheme="light")`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -50,7 +50,7 @@ it('should print the correct context options when using a device', async ({ runC
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
-    context = browser.newContext(**playwright.devices["Pixel 2"])`;
+    context = browser.new_context(**playwright.devices["Pixel 2"])`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -61,7 +61,7 @@ it('should print the correct context options when using a device and additional 
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
-    context = browser.newContext(**playwright.devices["Pixel 2"], colorScheme="light")`;
+    context = browser.new_context(**playwright.devices["Pixel 2"], color_scheme="light")`;
   await cli.waitFor(expectedResult);
   expect(cli.text()).toContain(expectedResult);
 });
@@ -75,10 +75,10 @@ it('should save the codegen output to a file if specified', async ({ runCLI, tes
 
 def run(playwright):
     browser = playwright.chromium.launch(headless=False)
-    context = browser.newContext()
+    context = browser.new_context()
 
     # Open new page
-    page = context.newPage()
+    page = context.new_page()
 
     # Go to ${emptyHTML}
     page.goto("${emptyHTML}")
@@ -94,7 +94,7 @@ with sync_playwright() as playwright:
     run(playwright)`);
 });
 
-it('should print load/save storageState', async ({ runCLI, testInfo }) => {
+it('should print load/save storage_state', async ({ runCLI, testInfo }) => {
   const loadFileName = testInfo.outputPath('load.json');
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
@@ -103,13 +103,13 @@ it('should print load/save storageState', async ({ runCLI, testInfo }) => {
 
   def run(playwright):
       browser = playwright.chromium.launch(headless=False)
-      context = browser.newContext(storageState="${loadFileName}")
+      context = browser.new_context(storage_state="${loadFileName}")
 
       # Open new page
-      page = context.newPage()
+      page = context.new_page()
 
       # ---------------------
-      context.storageState(path="${saveFileName}")
+      context.storage_state(path="${saveFileName}")
       context.close()
       browser.close()
 
