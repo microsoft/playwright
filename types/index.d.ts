@@ -14,5 +14,9 @@
  * limitations under the License.
  */
 
-module.exports = require('./build/index');
-module.exports.android = module.exports._android;
+import * as types from './types';
+
+export * from './types';
+export const webkit: types.BrowserType<types.WebKitBrowser>;
+export const chromium: types.BrowserType<types.ChromiumBrowser>;
+export const firefox: types.BrowserType<types.FirefoxBrowser>;

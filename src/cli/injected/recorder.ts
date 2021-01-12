@@ -42,9 +42,11 @@ export class Recorder {
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
+  private _platform: string;
 
-  constructor(injectedScript: InjectedScript) {
+  constructor(injectedScript: InjectedScript, platform: string) {
     this._injectedScript = injectedScript;
+    this._platform = platform;
 
     this._outerGlassPaneElement = html`
       <x-pw-glass style="
@@ -372,7 +374,7 @@ export class Recorder {
     if (event.key === '@' && event.code === 'KeyL')
       return false;
     // Allow and ignore common used shortcut for pasting.
-    if (process.platform === 'darwin') {
+    if (this._platform === 'darwin') {
       if (event.key === 'v' && event.metaKey)
         return false;
     } else {

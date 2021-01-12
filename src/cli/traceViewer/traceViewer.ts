@@ -16,13 +16,16 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as playwright from '../../..';
 import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
 import { SnapshotRouter } from './snapshotRouter';
 import { readTraceFile, TraceModel } from './traceModel';
 import type { ActionTraceEvent, PageSnapshot, TraceEvent } from '../../trace/traceTypes';
 import { VideoTileGenerator } from './videoTileGenerator';
+
+import * as inprocess from '../../inprocess';
+import { packageRoot } from '../../utils/utils';
+const playwright = inprocess as typeof import('../../..');
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -115,7 +118,7 @@ class TraceViewer {
           const fullPath = url.pathname.substring('/video-tile/'.length);
           filePath = this._videoTileGenerator.tilePath(fullPath);
         } else {
-          filePath = path.join(__dirname, 'web', url.pathname.substring(1));
+          filePath = path.join(packageRoot(), url.pathname.substring(1));
         }
         const body = fs.readFileSync(filePath);
         route.fulfill({

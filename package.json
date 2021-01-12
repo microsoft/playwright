@@ -33,7 +33,7 @@
   },
   "license": "Apache-2.0",
   "bin": {
-    "playwright": "./lib/cli/cli.js"
+    "playwright": "./build/cli.js"
   },
   "dependencies": {
     "commander": "^6.1.0",
@@ -50,6 +50,10 @@
     "ws": "^7.3.1"
   },
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^17.0.0",
+    "@rollup/plugin-json": "^4.1.0",
+    "@rollup/plugin-node-resolve": "^11.0.1",
+    "@rollup/plugin-typescript": "^8.1.0",
     "@types/debug": "^4.1.5",
     "@types/extract-zip": "^1.6.2",
     "@types/mime": "^2.0.3",
@@ -62,33 +66,26 @@
     "@types/react-dom": "^17.0.0",
     "@types/resize-observer-browser": "^0.1.4",
     "@types/rimraf": "^3.0.0",
-    "@types/webpack": "^4.41.25",
     "@types/ws": "7.2.6",
     "@typescript-eslint/eslint-plugin": "^3.10.1",
     "@typescript-eslint/parser": "^3.10.1",
     "chokidar": "^3.5.0",
-    "css-loader": "^4.3.0",
     "colors": "^1.4.0",
-    "commonmark": "^0.29.1",
     "cross-env": "^7.0.2",
     "electron": "^9.2.1",
     "eslint": "^7.7.0",
     "eslint-plugin-notice": "^0.9.10",
     "eslint-plugin-react-hooks": "^4.2.0",
-    "file-loader": "^6.1.0",
     "folio": "=0.3.16",
     "formidable": "^1.2.2",
-    "html-webpack-plugin": "^4.4.1",
     "ncp": "^2.0.0",
     "node-stream-zip": "^1.11.3",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
+    "rollup": "^2.36.1",
+    "rollup-plugin-terser": "^7.0.2",
     "socksv5": "0.0.6",
-    "style-loader": "^1.2.1",
-    "ts-loader": "^8.0.3",
     "typescript": "^4.0.2",
-    "webpack": "^4.44.2",
-    "webpack-cli": "^3.3.12",
     "yaml": "^1.10.0"
   }
 }

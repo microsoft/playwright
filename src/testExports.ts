@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,5 +14,11 @@
  * limitations under the License.
  */
 
-module.exports = require('./build/index');
-module.exports.android = module.exports._android;
+export * as cssParser from './server/common/cssParser';
+export * as stackTrace from './utils/stackTrace';
+export { Connection } from './client/connection';
+export { Transport } from './protocol/transport';
+export { PlaywrightClient } from './remote/playwrightClient';
+export { setUnderTest } from './utils/utils';
+export { globToRegex } from './client/clientHelper';
+export * as browserPaths from './utils/browserPaths';

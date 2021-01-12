@@ -30,7 +30,7 @@ export class RecorderController {
   private _timers = new Set<NodeJS.Timeout>();
 
   constructor(context: BrowserContext, generator: CodeGenerator) {
-    (context as any)._extendInjectedScript(recorderSource.source);
+    (context as any)._extendInjectedScript(recorderSource.source, process.platform);
 
     this._generator = generator;
 

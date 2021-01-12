@@ -15,7 +15,8 @@
  */
 
 import { it, expect } from './fixtures';
-import { parseCSS, serializeSelector as serialize } from '../src/server/common/cssParser';
+import { cssParser } from '../build/testExports';
+const { parseCSS, serializeSelector: serialize } = cssParser;
 
 const parse = (selector: string) => {
   return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'scope', 'right-of', 'scope', 'is'])).selector;

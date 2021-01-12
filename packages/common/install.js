@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-const { installBrowsersWithProgressBar } = require('./lib/install/installer');
+const { installBrowsersWithProgressBar } = require('./build/installer');
 
 installBrowsersWithProgressBar(__dirname);

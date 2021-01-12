@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -14,5 +14,7 @@
  * limitations under the License.
  */
 
-module.exports = require('./build/index');
-module.exports.android = module.exports._android;
+export { RecorderController } from './codegen/recorderController';
+export { TerminalOutput } from './codegen/outputs';
+export { JavaScriptLanguageGenerator } from './codegen/languages';
+export { CodeGenerator } from './codegen/codeGenerator';

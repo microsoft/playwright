@@ -22,7 +22,7 @@
  */
 
 import { config, folio as baseFolio } from 'folio';
-import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '../index';
+import type { Browser, BrowserContext, BrowserContextOptions, BrowserType, LaunchOptions, Page } from '..';
 export { expect, config } from 'folio';
 
 // Test timeout for e2e tests is 30 seconds.
@@ -52,7 +52,7 @@ type PlaywrightParameters = {
 
 type PlaywrightWorkerFixtures = {
   // Playwright library.
-  playwright: typeof import('../index');
+  playwright: typeof import('..');
   // Browser type (Chromium / WebKit / Firefox)
   browserType: BrowserType<Browser>;
   // Default browserType.launch() options.

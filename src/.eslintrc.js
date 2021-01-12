@@ -11,6 +11,16 @@ module.exports = {
      */
     "rules": {
         "no-console": [2, { "allow": ["warn", "error", "assert", "timeStamp", "time", "timeEnd"] }],
-        "no-debugger": 0
-    }
+        "no-debugger": 0,
+        "no-undef": 2,
+    },
+    "env": {
+      "browser": true,
+      "node": true,
+      "es2021": true,
+    },
+    "globals": {
+      "__filename": "off",
+      "__dirname": "off",
+    },
 };

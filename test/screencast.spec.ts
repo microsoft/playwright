@@ -27,7 +27,7 @@ else if (process.platform === 'darwin')
   ffmpegName = 'ffmpeg-mac';
 else if (process.platform === 'linux')
   ffmpegName = 'ffmpeg-linux';
-const ffmpeg = path.join(__dirname, '..', 'third_party', 'ffmpeg', ffmpegName);
+const ffmpeg = path.join(__dirname, '..', 'build', ffmpegName);
 
 export class VideoPlayer {
   fileName: string;

@@ -21,10 +21,7 @@ import { ChildProcess, spawn } from 'child_process';
 import { folio as baseFolio } from '../fixtures';
 import type { Page, BrowserType, Browser, BrowserContext } from '../..';
 export { config } from 'folio';
-import { RecorderController } from '../../src/cli/codegen/recorderController';
-import { TerminalOutput } from '../../src/cli/codegen/outputs';
-import { JavaScriptLanguageGenerator } from '../../src/cli/codegen/languages';
-import { CodeGenerator } from '../../src/cli/codegen/codeGenerator';
+import { RecorderController, TerminalOutput, JavaScriptLanguageGenerator, CodeGenerator } from '../../build/cliTestExports';
 
 type WorkerFixtures = {
   browserType: BrowserType<Browser>;
@@ -210,7 +207,7 @@ class CLIMock {
   constructor(args: string[]) {
     this.data = '';
     this.process = spawn('node', [
-      path.join(__dirname, '..', '..', 'lib', 'cli', 'cli.js'),
+      path.join(__dirname, '..', '..', 'build', 'cli.js'),
       ...args
     ], {
       env: {

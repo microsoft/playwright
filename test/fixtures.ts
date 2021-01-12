@@ -21,12 +21,10 @@ import path from 'path';
 import util from 'util';
 import os from 'os';
 import type { Browser, BrowserContext, BrowserType, Page } from '../index';
-import { Connection } from '../lib/client/connection';
-import { Transport } from '../lib/protocol/transport';
+import { Connection, Transport, PlaywrightClient, setUnderTest } from '../build/testExports';
 import { installCoverageHooks } from './coverage';
 import { folio as httpFolio } from './http.fixtures';
 import { folio as playwrightFolio } from './playwright.fixtures';
-import { PlaywrightClient } from '../lib/remote/playwrightClient';
 import type { Android } from '../types/android';
 import type { ElectronLauncher } from '../types/electron';
 export { expect, config } from 'folio';
@@ -104,11 +102,11 @@ fixtures.browserOptions.override(async ({ browserName, headful, slowMo }, run) =
 
 fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mode }, run) => {
   assert(platform); // Depend on platform to generate all tests.
+  setUnderTest();
   const { coverage, uninstall } = installCoverageHooks(browserName);
   if (mode === 'driver') {
-    require('../lib/utils/utils').setUnderTest();
     const connection = new Connection();
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'cli', 'cli.js'), ['run-driver'], {
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'build', 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
       detached: true,
     });
@@ -128,9 +126,8 @@ fixtures.playwright.override(async ({ browserName, testWorkerIndex, platform, mo
     spawnedProcess.stderr.destroy();
     await teardownCoverage();
   } else if (mode === 'service') {
-    require('../lib/utils/utils').setUnderTest();
     const port = 9407 + testWorkerIndex * 2;
-    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'lib', 'service.js'), [String(port)], {
+    const spawnedProcess = childProcess.fork(path.join(__dirname, '..', 'build', 'service.js'), [String(port)], {
       stdio: 'pipe'
     });
     spawnedProcess.stderr.pipe(process.stderr);

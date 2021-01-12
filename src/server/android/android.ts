@@ -21,7 +21,8 @@ import * as fs from 'fs';
 import * as stream from 'stream';
 import * as util from 'util';
 import * as ws from 'ws';
-import { createGuid, makeWaitForNextTask } from '../../utils/utils';
+import * as path from 'path';
+import { createGuid, makeWaitForNextTask, packageRoot } from '../../utils/utils';
 import { BrowserOptions, BrowserProcess } from '../browser';
 import { BrowserContext, validateBrowserContextOptions } from '../browserContext';
 import { ProgressController } from '../progress';
@@ -169,7 +170,7 @@ export class AndroidDevice extends EventEmitter {
 
     debug('pw:android')('Installing the new driver');
     for (const file of ['android-driver.apk', 'android-driver-target.apk'])
-      await this.installApk(await readFileAsync(require.resolve(`../../../bin/${file}`)));
+      await this.installApk(await readFileAsync(path.join(packageRoot(), file)));
 
     debug('pw:android')('Starting the new driver');
     this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner');

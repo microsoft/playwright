@@ -68,13 +68,13 @@ Example:
 
   // 3. Download new browser.
   console.log('\nDownloading new browser...');
-  const { installBrowsersWithProgressBar } = require('../lib/install/installer');
+  const { installBrowsersWithProgressBar } = require('../build/installer');
   await installBrowsersWithProgressBar(ROOT_PATH);
 
   // 4. Generate types.
   console.log('\nGenerating protocol types...');
   const browser = { name: browserName, revision };
-  const browserPaths = require('../lib/utils/browserPaths');
+  const { browserPaths } = require('../build/testExports');
   const browserDir = browserPaths.browserDirectory(browserPaths.browsersPath(ROOT_PATH), browser);
   const executablePath = browserPaths.executablePath(browserDir, browser);
   await protocolGenerator.generateProtocol(browserName, executablePath).catch(console.warn);

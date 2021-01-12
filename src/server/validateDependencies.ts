@@ -19,7 +19,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { spawn } from 'child_process';
 import { getUbuntuVersion } from '../utils/ubuntuVersion';
-import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../utils/browserPaths.js';
+import { linuxLddDirectories, windowsExeAndDllDirectories, BrowserDescriptor } from '../utils/browserPaths';
 import { printDepsWindowsExecutable } from '../utils/binaryPaths';
 
 const accessAsync = util.promisify(fs.access.bind(fs));

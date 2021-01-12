@@ -16,7 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
-import type { Frame } from '../index';
+import type { Frame } from '..';
 import { expectedSSLError } from './utils';
 
 it('should work', async ({page, server}) => {

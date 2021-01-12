@@ -83,7 +83,7 @@ export class FrameExecutionContext extends js.ExecutionContext {
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
         (() => {
-        ${injectedScriptSource.source}
+        const pwExport = ${injectedScriptSource.source};
         return new pwExport([
           ${custom.join(',\n')}
         ]);

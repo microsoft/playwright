@@ -146,11 +146,7 @@ export class InjectedScript {
   }
 
   extend(source: string, params: any): any {
-    const constrFunction = global.eval(`
-    (() => {
-      ${source}
-      return pwExport;
-    })()`);
+    const constrFunction = global.eval(source);
     return new constrFunction(this, params);
   }
 

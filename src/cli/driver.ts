@@ -28,13 +28,14 @@ import { gracefullyCloseAll } from '../server/processLauncher';
 import { installHarTracer } from '../trace/harTracer';
 import { installTracer } from '../trace/tracer';
 import { BrowserName } from '../utils/browserPaths';
+import { packageRoot } from '../utils/utils';
 
 export function printApiJson() {
-  console.log(JSON.stringify(require('../../api.json')));
+  console.log(fs.readFileSync(path.join(packageRoot(), 'api.json'), 'utf8'));
 }
 
 export function printProtocol() {
-  console.log(fs.readFileSync(path.join(__dirname, '..', '..', 'protocol.yml'), 'utf8'));
+  console.log(fs.readFileSync(path.join(packageRoot(), 'protocol.yml'), 'utf8'));
 }
 
 export function runServer() {
@@ -56,14 +57,14 @@ export function runServer() {
     process.exit(0);
   };
 
-  const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
+  const playwright = new Playwright();
   new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
 }
 
 export async function installBrowsers(browserNames?: BrowserName[]) {
   let browsersJsonDir = path.dirname(process.execPath);
   if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json'))) {
-    browsersJsonDir = path.join(__dirname, '..', '..');
+    browsersJsonDir = packageRoot();
     if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json')))
       throw new Error('Failed to find browsers.json in ' + browsersJsonDir);
   }

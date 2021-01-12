@@ -62,7 +62,7 @@ export class PlaywrightServer {
         this._onDisconnect();
       });
       dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
-      const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
+      const playwright = new Playwright();
       new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
     });
   }

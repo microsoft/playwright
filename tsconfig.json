@@ -5,13 +5,13 @@
     "lib": ["esnext", "dom", "DOM.Iterable"],
     "sourceMap": true,
     "rootDir": "./src",
-    "outDir": "./lib",
     "strict": true,
     "allowJs": true,
     "declaration": false,
-    "jsx": "react"
+    "jsx": "react",
+    "noEmit": true,
   },
   "compileOnSave": true,
-  "include": ["src/**/*.ts", "src/**/*.js"],
-  "exclude": ["node_modules", "src/.eslintrc.js", "src/cli/traceViewer/web/**"]
+  "include": ["src/**/*.ts", "src/**/*.js", "src/**/*.tsx"],
+  "exclude": ["node_modules", "src/.eslintrc.js"]
 }

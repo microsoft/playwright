@@ -17,7 +17,7 @@
 
 import { it, expect } from './fixtures';
 import { attachFrame, detachFrame } from './utils';
-import type { Frame } from '../index';
+import type { Frame } from '..';
 
 function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   let description = frame.url().replace(/:\d{4}\//, ':<PORT>/');

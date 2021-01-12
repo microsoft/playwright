@@ -145,3 +145,8 @@ export function calculateSha1(buffer: Buffer): string {
 export function createGuid(): string {
   return crypto.randomBytes(16).toString('hex');
 }
+
+export function packageRoot(): string {
+  // Note: this should be the only place referencing __dirname. Do not add similar exceptions.
+  return __dirname;  // eslint-disable-line no-undef
+}

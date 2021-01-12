@@ -15,11 +15,13 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import * as playwright from '../../../..';
 import { HighlighterType, LanguageGenerator } from '.';
 import { ActionInContext } from '../codeGenerator';
 import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from '../recorderActions';
 import { MouseClickOptions, toModifiers } from '../utils';
+
+import * as inprocess from '../../../inprocess';
+const playwright = inprocess as typeof import('../../../..');
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
 

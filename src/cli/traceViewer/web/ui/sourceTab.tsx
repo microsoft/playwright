@@ -29,7 +29,7 @@ export const SourceTab: React.FunctionComponent<{
       return { value: '' };
     const { action } = actionEntry;
     const frames = action.stack!.split('\n').slice(1);
-    const frame = frames.filter(frame => !frame.includes('playwright/lib/') && !frame.includes('playwright/src/'))[0];
+    const frame = frames.filter(frame => !frame.includes('playwright/build/') && !frame.includes('playwright/src/'))[0];
     if (!frame)
       return { value: action.stack! };
     const match = frame.match(/at [^(]+\(([^:]+):(\d+):\d+\)/) || frame.match(/at ([^:^(]+):(\d+):\d+/);

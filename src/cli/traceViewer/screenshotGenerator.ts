@@ -16,18 +16,21 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as playwright from '../../..';
 import * as util from 'util';
 import { SnapshotRouter } from './snapshotRouter';
 import { actionById, ActionEntry, ContextEntry, TraceModel } from './traceModel';
 import type { PageSnapshot } from '../../trace/traceTypes';
+import type { Browser } from '../../..';
+
+import * as inprocess from '../../inprocess';
+const playwright = inprocess as typeof import('../../..');
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class ScreenshotGenerator {
   private _traceStorageDir: string;
-  private _browserPromise: Promise<playwright.Browser> | undefined;
+  private _browserPromise: Promise<Browser> | undefined;
   private _traceModel: TraceModel;
   private _rendering = new Map<ActionEntry, Promise<Buffer | undefined>>();
 

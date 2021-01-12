@@ -18,7 +18,7 @@
 import { folio as baseFolio } from './fixtures';
 import * as fs from 'fs';
 import type * as har from '../src/trace/har';
-import type { BrowserContext, Page } from '../index';
+import type { BrowserContext, Page } from '..';
 
 const builder = baseFolio.extend<{
   pageWithHar: {

@@ -14,6 +14,4 @@
  * limitations under the License.
  */
 
-const { setUnderTest } = require('./lib/utils/utils');
-setUnderTest(); // Note: we must call setUnderTest before initializing.
-module.exports = require('./lib/inprocess');
+module.exports = require('./build/index');

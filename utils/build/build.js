@@ -17,9 +17,11 @@
 const child_process = require('child_process');
 const path = require('path');
 const chokidar = require('chokidar');
+const fs = require('fs');
 
 const steps = [];
 const onChanges = [];
+const copies = [];
 
 const watchMode = process.argv.slice(2).includes('--watch');
 const ROOT = path.join(__dirname, '..', '..');
@@ -28,14 +30,56 @@ function filePath(relative) {
   return path.join(ROOT, ...relative.split('/'));
 }
 
+function copyFile(from, to) {
+  console.log(`Copying ${from} to ${to}`);
+  from = filePath(from);
+  const fileName = path.basename(from);
+  fs.copyFileSync(from, path.join(filePath(to), fileName));
+}
+
+function throttle(fn, timeout) {
+  let running = false;
+  let shouldRun = false;
+
+  const run = () => {
+    running = true;
+    shouldRun = false;
+    try {
+      fn();
+    } catch (e) {
+      console.error(e);
+    }
+    setTimeout(() => {
+      running = false;
+      if (shouldRun)
+        run();
+    }, timeout);
+  }
+
+  return () => {
+    if (running) {
+      shouldRun = true;
+      return;
+    }
+    run();
+  };
+}
+
 function runWatch() {
   function runOnChanges(paths, nodeFile) {
-    nodeFile = filePath(nodeFile);
-    function callback() {
-      child_process.spawnSync('node', [nodeFile], { stdio: 'inherit' });
-    }
+    const callback = throttle(() => {
+      console.log(`Running ${nodeFile}`);
+      child_process.spawnSync('node', [filePath(nodeFile)], { stdio: 'inherit' });
+      console.log(`Done running ${nodeFile}`);
+    }, 2000);
     chokidar.watch([...paths, nodeFile].map(filePath)).on('all', callback);
-    callback();
+  }
+
+  function runCopy(from, to) {
+    const callback = throttle(() => {
+      copyFile(from, to);
+    }, 2000);
+    chokidar.watch([filePath(from)]).on('all', callback);
   }
 
   const spawns = [];
@@ -45,6 +89,8 @@ function runWatch() {
       ...step.env,
     } }));
   process.on('exit', () => spawns.forEach(s => s.kill()));
+  for (const copy of copies)
+    runCopy(copy.from, copy.to);
   for (const onChange of onChanges)
     runOnChanges(onChange.inputs, onChange.script);
 }
@@ -56,6 +102,8 @@ function runBuild() {
       process.exit(out.status);
   }
 
+  for (const copy of copies)
+    copyFile(copy.from, copy.to);
   for (const step of steps)
     runStep(step.command, step.args, step.shell);
   for (const onChange of onChanges) {
@@ -64,31 +112,43 @@ function runBuild() {
   }
 }
 
-// Build injected scripts.
-const webPackFiles = [
-  'src/server/injected/injectedScript.webpack.config.js',
-  'src/server/injected/utilityScript.webpack.config.js',
-  'src/debug/injected/consoleApi.webpack.config.js',
-  'src/cli/injected/recorder.webpack.config.js',
-  'src/cli/traceViewer/web/web.webpack.config.js',
+const copyFiles = [
+  'src/cli/traceViewer/web/third_party/vscode/codicon.ttf',
+  'src/cli/traceViewer/web/trace-viewer.html',
+  'browsers.json',
+  'src/protocol/protocol.yml',
+  'third_party/ffmpeg/COPYING.GPLv3',
+  'third_party/ffmpeg/ffmpeg-linux',
+  'third_party/ffmpeg/ffmpeg-mac',
+  'third_party/ffmpeg/ffmpeg-win32.exe',
+  'third_party/ffmpeg/ffmpeg-win64.exe',
+  'bin/PrintDeps.exe',
+  'types/android.d.ts',
+  'types/electron.d.ts',
+  'types/protocol.d.ts',
+  'types/structs.d.ts',
+  'types/trace.d.ts',
+  'types/types.d.ts',
+  'types/index.d.ts',
 ];
-for (const file of webPackFiles) {
+for (const file of copyFiles)
+  copies.push({ from: file, to: 'build/', });
+
+const rollupFiles = [
+  'utils/build/injectedScript.rollup.config.js',
+  'utils/build/utilityScript.rollup.config.js',
+  'utils/build/consoleApi.rollup.config.js',
+  'utils/build/recorder.rollup.config.js',
+  'utils/build/traceViewer.rollup.config.js',
+  'utils/build/index.rollup.config.js',
+];
+for (const file of rollupFiles) {
   steps.push({
     command: 'npx',
-    args: ['webpack', '--config', filePath(file), ...(watchMode ? ['--watch', '--silent'] : [])],
+    args: ['rollup', '-c', filePath(file), ...(watchMode ? ['-w', '--silent'] : [])],
     shell: true,
-    env: {
-      NODE_ENV: watchMode ? 'development' : 'production'
-    }
   });
 }
-
-// Run typescript.
-steps.push({
-  command: 'npx',
-  args: ['tsc', ...(watchMode ? ['-w', '--preserveWatchOutput'] : []), '-p', filePath('.')],
-  shell: true,
-});
 
 // Generate api.json.
 onChanges.push({
@@ -121,4 +181,5 @@ onChanges.push({
   script: 'utils/generate_types/index.js',
 });
 
+fs.mkdirSync(filePath('build'), { recursive: true });
 watchMode ? runWatch() : runBuild();

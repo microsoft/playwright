@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
-
-// NOTE: update this to point to playwright/lib when moving this file.
-const PLAYWRIGHT_LIB_PATH = path.normalize(path.join(__dirname, '..'));
+import { packageRoot } from './utils';
 
 type ParsedStackFrame = { filePath: string, functionName: string };
 
@@ -45,7 +42,7 @@ function parseStackFrame(frame: string): ParsedStackFrame | null {
   return { filePath, functionName };
 }
 
-export function getCallerFilePath(ignorePrefix = PLAYWRIGHT_LIB_PATH): string | null {
+export function getCallerFilePath(ignorePrefix = packageRoot()): string | null {
   const error = new Error();
   const stackFrames = (error.stack || '').split('\n').slice(2);
   // Find first stackframe that doesn't point to ignorePrefix.

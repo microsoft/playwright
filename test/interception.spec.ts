@@ -17,7 +17,7 @@
 
 import { it, expect } from './fixtures';
 
-import { globToRegex } from '../lib/client/clientHelper';
+import { globToRegex } from '../build/testExports';
 import vm from 'vm';
 
 it('should work with navigation', async ({page, server}) => {

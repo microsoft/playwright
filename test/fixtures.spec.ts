@@ -18,7 +18,7 @@
 import { folio, RemoteServer } from './remoteServer.fixture';
 import { execSync } from 'child_process';
 import path from 'path';
-import * as stackTrace from '../src/utils/stackTrace';
+import { stackTrace } from '../build/testExports';
 
 type FixturesFixtures = {
   connectedRemoteServer: RemoteServer;

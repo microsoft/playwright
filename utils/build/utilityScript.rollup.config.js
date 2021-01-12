@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-module.exports = require('./build/index');
-module.exports.android = module.exports._android;
+import { config } from './generated-source-template.rollup.config';
+export default config('utilityScriptSource', ['server', 'injected', 'utilityScript.ts']);

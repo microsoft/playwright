@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -32,7 +30,9 @@ import { RecorderController } from './codegen/recorderController';
 import { runServer, printApiJson, installBrowsers } from './driver';
 import { showTraceViewer } from './traceViewer/traceViewer';
 import type { Browser, BrowserContext, Page, BrowserType, BrowserContextOptions, LaunchOptions } from '../..';
-import * as playwright from '../..';
+
+import * as inprocess from '../inprocess';
+const playwright = inprocess as typeof import('../..');
 
 program
     .version('Version ' + require('../../package.json').version)

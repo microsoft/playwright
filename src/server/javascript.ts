@@ -66,7 +66,7 @@ export class ExecutionContext {
     if (!this._utilityScriptPromise) {
       const source = `
       (() => {
-        ${utilityScriptSource.source}
+        const pwExport = ${utilityScriptSource.source};
         return new pwExport();
       })();`;
       this._utilityScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new JSHandle(this, 'object', objectId));

@@ -14,5 +14,5 @@
  * limitations under the License.
  */
 
-module.exports = require('./lib/inprocess');
+module.exports = require('./build/index');
 module.exports.electron = module.exports._electron;

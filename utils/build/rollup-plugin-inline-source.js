@@ -14,5 +14,14 @@
  * limitations under the License.
  */
 
-module.exports = require('./build/index');
-module.exports.android = module.exports._android;
+export function inlineSource() {
+  return {
+    name: 'inline-source',
+    renderChunk(code) {
+      code = code.trim();
+      if (code.endsWith(';'))
+        code = code.substring(0, code.length - 1);
+      return 'export const source = ' + JSON.stringify(code) + ';';
+    },
+  };
+}
