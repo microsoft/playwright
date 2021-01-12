@@ -177,3 +177,29 @@ it('should include the origin header', async ({page, server}) => {
   expect(text).toBe('done');
   expect(interceptedRequest.headers()['origin']).toEqual(server.PREFIX);
 });
+
+it('should support Set-Cookie header', (test, { browserName }) => {
+  test.fixme(browserName === 'webkit');
+  test.fixme(browserName === 'firefox');
+}, async ({context, page, server}) => {
+  await page.route('https://example.com/', (route, request) => {
+    route.fulfill({
+      headers: {
+        'Set-Cookie': 'name=value; domain=.example.com; Path=/'
+      },
+      contentType: 'text/html',
+      body: 'done'
+    });
+  });
+  await page.goto('https://example.com');
+  expect(await context.cookies()).toEqual([{
+    sameSite: 'None',
+    name: 'name',
+    value: 'value',
+    domain: '.example.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: false
+  }]);
+});
