@@ -169,3 +169,33 @@ it('should get cookies from multiple urls', async ({context}) => {
     sameSite: 'None',
   }]);
 });
+
+it('should work with subdomain cookie', async ({context, page, server}) => {
+  await context.addCookies([{
+    domain: '.foo.com',
+    path: '/',
+    name: 'doggo',
+    value: 'woofs',
+    secure: true
+  }]);
+  expect(await context.cookies('https://foo.com')).toEqual([{
+    name: 'doggo',
+    value: 'woofs',
+    domain: '.foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+  }]);
+  expect(await context.cookies('https://sub.foo.com')).toEqual([{
+    name: 'doggo',
+    value: 'woofs',
+    domain: '.foo.com',
+    path: '/',
+    expires: -1,
+    httpOnly: false,
+    secure: true,
+    sameSite: 'None',
+  }]);
+});
