@@ -17,6 +17,7 @@
 const {blobServiceClient, gunzipAsync, deleteBlob} = require('./utils.js');
 const {processDashboardV1} = require('./dashboard_v1.js');
 const {processDashboardV2} = require('./dashboard_v2.js');
+const {processDashboardRaw} = require('./dashboard_raw.js');
 
 module.exports = async function(context) {
   // First thing we do - delete the blob.
@@ -30,5 +31,6 @@ module.exports = async function(context) {
   await Promise.all([
     processDashboardV1(context, report),
     processDashboardV2(context, report),
+    processDashboardRaw(context, report),
   ]);
 }
