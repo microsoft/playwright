@@ -1396,14 +1396,6 @@ Frame:
       returns:
         element: ElementHandle?
 
-    extendInjectedScript:
-      experimental: True
-      parameters:
-        source: string
-        arg: SerializedArgument
-      returns:
-        handle: JSHandle
-
   events:
 
     loadstate:

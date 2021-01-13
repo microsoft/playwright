@@ -15,7 +15,7 @@
  */
 
 import { it, expect } from './fixtures';
-import type * as trace from '../types/trace';
+import type * as trace from '../src/trace/traceTypes';
 import * as path from 'path';
 import * as fs from 'fs';
 

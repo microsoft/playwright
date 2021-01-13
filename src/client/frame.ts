@@ -464,12 +464,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
       return (await this._channel.title()).value;
     });
   }
-
-  // TODO: remove once playwright-cli does not use this one anymore.
-  async _extendInjectedScript<Arg>(source: string, arg?: Arg): Promise<JSHandle> {
-    const result = await this._channel.extendInjectedScript({ source, arg: serializeArgument(arg) });
-    return JSHandle.from(result.handle);
-  }
 }
 
 export function verifyLoadState(name: string, waitUntil: LifecycleEvent): LifecycleEvent {
