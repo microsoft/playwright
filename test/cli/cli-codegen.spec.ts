@@ -40,6 +40,34 @@ describe('cli codegen', (test, { browserName, headful }) => {
     expect(message.text()).toBe('click');
   });
 
+  it('should click after same-document navigation', async ({ page, recorder, httpServer }) => {
+    httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.end('');
+    });
+    await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`, httpServer.PREFIX + '/foo.html');
+    await Promise.all([
+      page.waitForNavigation(),
+      page.evaluate(() => history.pushState({}, '', '/url.html')),
+    ]);
+    // This is the only way to give recorder a chance to install
+    // the second unnecessary copy of the recorder script.
+    await page.waitForTimeout(1000);
+
+    const selector = await recorder.hoverOverElement('button');
+    expect(selector).toBe('text="Submit"');
+
+    const [message] = await Promise.all([
+      page.waitForEvent('console'),
+      recorder.waitForOutput('click'),
+      page.dispatchEvent('button', 'click', { detail: 1 })
+    ]);
+    expect(recorder.output()).toContain(`
+  // Click text="Submit"
+  await page.click('text="Submit"');`);
+    expect(message.text()).toBe('click');
+  });
+
   it('should not target selector preview by text regexp', async ({ page, recorder }) => {
     await recorder.setContentAndWait(`<span>dummy</span>`);
 

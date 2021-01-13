@@ -110,7 +110,7 @@ export class Page extends EventEmitter {
     RequestFinished: 'requestfinished',
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
-    FrameNavigated: 'framenavigated',
+    InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
     Load: 'load',
     Popup: 'popup',
     WebSocket: 'websocket',
@@ -457,8 +457,8 @@ export class Page extends EventEmitter {
     this.emit(Page.Events.VideoStarted, video);
   }
 
-  frameNavigated(frame: frames.Frame) {
-    this.emit(Page.Events.FrameNavigated, frame);
+  frameNavigatedToNewDocument(frame: frames.Frame) {
+    this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
     const url = frame.url();
     if (!url.startsWith('http'))
       return;
