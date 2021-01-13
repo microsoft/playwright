@@ -32,6 +32,7 @@ export interface BrowserProcess {
 
 export type BrowserOptions = types.UIOptions & {
   name: string,
+  isChromium: boolean,
   downloadsPath?: string,
   headful?: boolean,
   persistent?: types.BrowserContextOptions,  // Undefined means no persistent context.

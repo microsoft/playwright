@@ -507,7 +507,7 @@ BrowserContext:
   type: interface
 
   initializer:
-    browserName: string
+    isChromium: boolean
 
   commands:
 

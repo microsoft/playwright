@@ -530,7 +530,7 @@ export type BrowserCrStopTracingResult = {
 
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
-  browserName: string,
+  isChromium: boolean,
 };
 export interface BrowserContextChannel extends Channel {
   on(event: 'bindingCall', callback: (params: BrowserContextBindingCallEvent) => void): this;
