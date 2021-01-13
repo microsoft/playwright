@@ -22,6 +22,26 @@ jobs:
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-driver-release:
+    name: "publish playwright driver to CDN"
+    runs-on: ubuntu-20.04
+    if: github.repository == 'microsoft/playwright'
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+        registry-url: 'https://registry.npmjs.org'
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - run: utils/build/build-playwright-driver.sh
+    - run: utils/build/upload-playwright-driver.sh
+      env:
+        AZ_UPLOAD_FOLDER: driver
+        AZ_ACCOUNT_KEY: ${{ secrets.AZ_ACCOUNT_KEY }}
+        AZ_ACCOUNT_NAME: ${{ secrets.AZ_ACCOUNT_NAME }}
+
   publish-docker-release:
     name: "publish to DockerHub"
     # We use `docker push --all-tags` to push all tags which is a newly addition to docker
