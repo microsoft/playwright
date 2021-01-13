@@ -28,7 +28,6 @@ async function processDashboardRaw(context, report) {
     SHA: ${report.metadata.commitSHA}
     URL: ${report.metadata.runURL}
     timestamp: ${report.metadata.commitTimestamp}
-    added specs: ${addedSpecs}
   ===== complete in ${Date.now() - timestamp}ms =====
   `);
 }

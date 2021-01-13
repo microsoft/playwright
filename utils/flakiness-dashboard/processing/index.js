@@ -27,10 +27,9 @@ module.exports = async function(context) {
   const data = await gunzipAsync(context.bindings.newBlob);
   const report = JSON.parse(data.toString('utf8'));
 
-  // Upload report to both dashboards.
-  await Promise.all([
-    processDashboardV1(context, report),
-    processDashboardV2(context, report),
-    processDashboardRaw(context, report),
-  ]);
+  // Process dashboards one-by-one to limit max heap utilization.
+  await processDashboardRaw(context, report);
+  await processDashboardV1(context, report);
+  // Disable V2 dashboard in favor of raw data.
+  // await processDashboardV2(context, report);
 }
