@@ -341,7 +341,7 @@ async function codegen(options: Options, url: string | undefined, target: string
   if (process.env.PWTRACE)
     contextOptions.recordVideo = { dir: path.join(process.cwd(), '.trace') };
 
-  const outputs: CodeGeneratorOutput[] = [new TerminalOutput(process.stdout, languageGenerator.highligherType())];
+  const outputs: CodeGeneratorOutput[] = [TerminalOutput.create(process.stdout, languageGenerator.highlighterType())];
   if (outputFile)
     outputs.push(new FileOutput(outputFile));
   const output = new OutputMultiplexer(outputs);

@@ -42,30 +42,44 @@ export class OutputMultiplexer implements CodeGeneratorOutput {
   }
 }
 
-export class FileOutput implements CodeGeneratorOutput {
-  private _fileName: string;
-  private _lines: string[];
-  constructor(fileName: string) {
-    this._fileName = fileName;
-    this._lines = [];
-  }
+export class BufferOutput {
+  lines: string[] = [];
 
   printLn(text: string) {
-    this._lines.push(...text.trimEnd().split('\n'));
+    this.lines.push(...text.trimEnd().split('\n'));
   }
 
   popLn(text: string) {
-    this._lines.length -= text.trimEnd().split('\n').length;
+    this.lines.length -= text.trimEnd().split('\n').length;
+  }
+
+  buffer(): string {
+    return this.lines.join('\n');
+  }
+}
+
+export class FileOutput extends BufferOutput implements CodeGeneratorOutput {
+  private _fileName: string;
+
+  constructor(fileName: string) {
+    super();
+    this._fileName = fileName;
   }
 
   flush() {
-    fs.writeFileSync(this._fileName, this._lines.join('\n'));
+    fs.writeFileSync(this._fileName, this.buffer());
   }
 }
 
 export class TerminalOutput implements CodeGeneratorOutput {
   private _output: Writable
   private _language: string;
+
+  static create(output: Writable, language: string) {
+    if (process.stdout.columns)
+      return new TerminalOutput(output, language);
+    return new FlushingTerminalOutput(output);
+  }
 
   constructor(output: Writable, language: string) {
     this._output = output;
@@ -111,4 +125,24 @@ export class TerminalOutput implements CodeGeneratorOutput {
   }
 
   flush() {}
+}
+
+export class FlushingTerminalOutput extends BufferOutput implements CodeGeneratorOutput {
+  private _output: Writable
+
+  constructor(output: Writable) {
+    super();
+    this._output = output;
+  }
+
+  printLn(text: string) {
+    super.printLn(text);
+    this._output.write('-------------8<-------------\n');
+    this._output.write(this.buffer() + '\n');
+    this._output.write('-------------8<-------------\n');
+  }
+
+  flush() {
+    this._output.write(this.buffer() + '\n');
+  }
 }

@@ -23,7 +23,7 @@ import { MouseClickOptions, toModifiers } from '../utils';
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
-  highligherType(): HighlighterType {
+  highlighterType(): HighlighterType {
     return 'javascript';
   }
 
@@ -157,7 +157,7 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: '${saveStorage}' })` : '';
+    const storageStateLine = saveStorage ? `\n  await context.storageState({ path: '${saveStorage}' });` : '';
     return `  // ---------------------${storageStateLine}
   await context.close();
   await browser.close();

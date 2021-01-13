@@ -197,7 +197,7 @@ fixtures.runCLI.init(async ({  }, runTest) => {
     return cli;
   };
   await runTest(cliFactory);
-  cli.kill();
+  await cli.exited;
 });
 
 class CLIMock {
@@ -216,18 +216,20 @@ class CLIMock {
       env: {
         ...process.env,
         PWCLI_EXIT_FOR_TEST: '1'
-      }
+      },
+      stdio: 'pipe'
     });
-    this.process.stdout.on('data', line => {
-      this.data += removeAnsiColors(line.toString());
+    this.process.stdout.on('data', data => {
+      this.data = data.toString();
       if (this.waitForCallback && this.data.includes(this.waitForText))
         this.waitForCallback();
     });
-    this.exited = new Promise<void>(r => this.process.on('exit', () => {
-      if (this.waitForCallback)
-        this.waitForCallback();
-      return r();
-    }));
+    this.exited = new Promise((f, r) => {
+      this.process.stderr.on('data', data => {
+        r(new Error(data));
+      });
+      this.process.on('exit', f);
+    });
   }
 
   async waitFor(text: string): Promise<void> {
@@ -239,10 +241,6 @@ class CLIMock {
 
   text() {
     return removeAnsiColors(this.data);
-  }
-
-  kill() {
-    this.process.kill();
   }
 }
 

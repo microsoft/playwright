@@ -136,7 +136,7 @@ it('should print load/save storageState', async ({ runCLI, testInfo }) => {
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', '--target=csharp', emptyHTML]);
   const expectedResult = `await Playwright.InstallAsync();
 using var playwright = await Playwright.CreateAsync();
-await using var browser = await playwright.Chromium.LaunchAsync();
+await using var browser = await playwright.Chromium.LaunchAsync(headless: false);
 var context = await browser.NewContextAsync(storageState: "${loadFileName}");
 
 // Open new page

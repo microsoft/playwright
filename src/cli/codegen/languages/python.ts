@@ -32,7 +32,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     this._asyncPrefix = isAsync ? 'async ' : '';
   }
 
-  highligherType(): HighlighterType {
+  highlighterType(): HighlighterType {
     return 'python';
   }
 
@@ -43,7 +43,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     formatter.add('# ' + actionTitle(action));
 
     if (action.name === 'openPage') {
-      formatter.add(`${pageAlias} = ${this._awaitPrefix}context.newPage()`);
+      formatter.add(`${pageAlias} = ${this._awaitPrefix}context.new_page()`);
       if (action.url && action.url !== 'about:blank' && action.url !== 'chrome://newtab/')
         formatter.add(`${pageAlias}.goto('${action.url}')`);
       return formatter.format();
@@ -155,21 +155,21 @@ from playwright.async_api import async_playwright
 
 async def run(playwright) {
     browser = await playwright.${browserName}.launch(${formatOptions(launchOptions, false)})
-    context = await browser.newContext(${formatContextOptions(contextOptions, deviceName)})`);
+    context = await browser.new_context(${formatContextOptions(contextOptions, deviceName)})`);
     } else {
       formatter.add(`
 from playwright.sync_api import sync_playwright
 
 def run(playwright) {
     browser = playwright.${browserName}.launch(${formatOptions(launchOptions, false)})
-    context = browser.newContext(${formatContextOptions(contextOptions, deviceName)})`);
+    context = browser.new_context(${formatContextOptions(contextOptions, deviceName)})`);
     }
     return formatter.format();
   }
 
   generateFooter(saveStorage: string | undefined): string {
     if (this._isAsync) {
-      const storageStateLine = saveStorage ? `\n    await context.storageState(path="${saveStorage}")` : '';
+      const storageStateLine = saveStorage ? `\n    await context.storage_state(path="${saveStorage}")` : '';
       return `    # ---------------------${storageStateLine}
     await context.close()
     await browser.close()
@@ -179,7 +179,7 @@ async def main():
         await run(playwright)
 asyncio.run(main())`;
     } else {
-      const storageStateLine = saveStorage ? `\n    context.storageState(path="${saveStorage}")` : '';
+      const storageStateLine = saveStorage ? `\n    context.storage_state(path="${saveStorage}")` : '';
       return `    # ---------------------${storageStateLine}
     context.close()
     browser.close()
@@ -204,11 +204,16 @@ function formatValue(value: any): string {
   return String(value);
 }
 
+function toSnakeCase(name: string): string {
+  const toSnakeCaseRegex = /((?<=[a-z0-9])[A-Z]|(?!^)[A-Z](?=[a-z]))/g;
+  return name.replace(toSnakeCaseRegex, `_$1`).toLowerCase();
+}
+
 function formatOptions(value: any, hasArguments: boolean): string {
   const keys = Object.keys(value);
   if (!keys.length)
     return '';
-  return (hasArguments ? ', ' : '') + keys.map(key => `${key}=${formatValue(value[key])}`).join(', ');
+  return (hasArguments ? ', ' : '') + keys.map(key => `${toSnakeCase(key)}=${formatValue(value[key])}`).join(', ');
 }
 
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
