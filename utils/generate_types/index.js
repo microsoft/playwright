@@ -264,7 +264,25 @@ function parentClass(classDesc) {
 
 function writeComment(comment, indent = '') {
   const parts = [];
-
+  const out = [];
+  const pushLine = (line) => {
+    if (line || out[out.length - 1])
+      out.push(line)
+  };
+  let skipExample = false;
+  for (let line of comment.split('\n')) {
+    const match = line.match(/```(\w+)/);
+    if (match) {
+      const lang = match[1];
+      skipExample = !["html", "yml", "sh", "js"].includes(lang);
+    } else if (skipExample && line.trim().startsWith('```')) {
+      skipExample = false;
+      continue;
+    }
+    if (!skipExample)
+      pushLine(line);
+  }
+  comment = out.join('\n');
   comment = comment.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
   comment = comment.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
   comment = comment.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');

@@ -202,7 +202,7 @@ export interface Page {
    * Examples:
    * 
    * ```js
-   * const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
+   * const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
@@ -225,14 +225,15 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch();
    *   const page = await browser.newPage();
-   *   const watchDog = page.waitForFunction('window.innerWidth < 100');
+   *   const watchDog = page.waitForFunction(() => window.innerWidth < 100);
    *   await page.setViewportSize({width: 50, height: 50});
    *   await watchDog;
    *   await browser.close();
    * })();
    * ```
    * 
-   * To pass an argument to the predicate of `page.waitForFunction` function:
+   * To pass an argument to the predicate of
+   * [page.waitForFunction(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforfunction) function:
    * 
    * ```js
    * const selector = '.foo';
@@ -264,12 +265,10 @@ export interface Page {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   let currentURL;
-   *   page
-   *     .waitForSelector('img')
-   *     .then(() => console.log('First URL with image: ' + currentURL));
-   *   for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
+   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
+   *     const element = await page.waitForSelector('img');
+   *     console.log('Loaded image: ' + await element.getAttribute('src'));
    *   }
    *   await browser.close();
    * })();
@@ -359,7 +358,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -382,19 +381,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -543,7 +529,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -566,19 +552,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -727,7 +700,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -750,19 +723,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -911,7 +871,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -934,19 +894,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -1095,7 +1042,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -1118,19 +1065,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -1279,10 +1213,11 @@ export interface Page {
    * ```js
    * // preload.js
    * Math.random = () => 42;
+   * ```
    * 
+   * ```js
    * // In your playwright script, assuming the preload.js file is in same directory
-   * const preloadFile = fs.readFileSync('./preload.js', 'utf8');
-   * await page.addInitScript(preloadFile);
+   * await page.addInitScript({ path: './preload.js' });
    * ```
    * 
    * > NOTE: The order of evaluation of multiple scripts installed via
@@ -1632,7 +1567,6 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * 
    * ```js
    * await page.evaluate(() => matchMedia('screen').matches);
    * // → true
@@ -1693,7 +1627,7 @@ export interface Page {
    * [page.exposeFunction(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunction) survive
    * navigations.
    * 
-   * An example of adding an `md5` function to the page:
+   * An example of adding an `sha1` function to the page:
    * 
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -1702,46 +1636,17 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const page = await browser.newPage();
-   *   await page.exposeFunction('md5', text => crypto.createHash('md5').update(text).digest('hex'));
+   *   await page.exposeFunction('sha1', text => crypto.createHash('sha1').update(text).digest('hex'));
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.md5('PLAYWRIGHT');
+   *         document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
    *       }
    *     </script>
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
    *   await page.click('button');
-   * })();
-   * ```
-   * 
-   * An example of adding a `window.readfile` function to the page:
-   * 
-   * ```js
-   * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
-   * const fs = require('fs');
-   * 
-   * (async () => {
-   *   const browser = await chromium.launch();
-   *   const page = await browser.newPage();
-   *   page.on('console', msg => console.log(msg.text()));
-   *   await page.exposeFunction('readfile', async filePath => {
-   *     return new Promise((resolve, reject) => {
-   *       fs.readFile(filePath, 'utf8', (err, text) => {
-   *         if (err)
-   *           reject(err);
-   *         else
-   *           resolve(text);
-   *       });
-   *     });
-   *   });
-   *   await page.evaluate(async () => {
-   *     // use window.readfile to read contents of a file
-   *     const content = await window.readfile('/etc/hosts');
-   *     console.log(content);
-   *   });
-   *   await browser.close();
    * })();
    * ```
    * 
@@ -2499,7 +2404,7 @@ export interface Page {
    * // single selection matching the value
    * page.selectOption('select#colors', 'blue');
    * 
-   * // single selection matching both the value and the label
+   * // single selection matching the label
    * page.selectOption('select#colors', { label: 'Blue' });
    * 
    * // multiple selection
@@ -2931,7 +2836,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -2954,19 +2859,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */

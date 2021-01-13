@@ -33,7 +33,7 @@ with sync_playwright() as p:
 
 Playwright supports two variations of the API: synchronous and asynchronous. If your modern project uses [asyncio](https://docs.python.org/3/library/asyncio.html), you should use async API:
 
-```python
+```py
 import asyncio
 from playwright.async_api import async_playwright
 
@@ -52,7 +52,7 @@ asyncio.run(main())
 
 In our first script, we will navigate to `whatsmyuseragent.org` and take a screenshot in WebKit.
 
-```python
+```py
 from playwright.sync_api import sync_playwright
 
 with sync_playwright() as p:
@@ -65,7 +65,7 @@ with sync_playwright() as p:
 
 By default, Playwright runs the browsers in headless mode. To see the browser UI, pass the `headless=False` flag while launching the browser. You can also use `slowMo` to slow down execution. Learn more in the debugging tools [section](./debug.md).
 
-```python
+```py
 firefox.launch(headless=False, slowMo=50)
 ```
 
