@@ -86,7 +86,7 @@ it('should save the codegen output to a file if specified', async ({ runCLI, tes
   const tmpFile = testInfo.outputPath('script.js');
   const cli = runCLI(['codegen', '--output', tmpFile, emptyHTML]);
   await cli.exited;
-  const content = await fs.readFileSync(tmpFile);
+  const content = fs.readFileSync(tmpFile);
   expect(content.toString()).toBe(`const { chromium } = require('playwright');
 
 (async () => {
@@ -115,7 +115,7 @@ it('should print load/save storageState', async ({ runCLI, testInfo }) => {
   const saveFileName = testInfo.outputPath('save.json');
   await fs.promises.writeFile(loadFileName, JSON.stringify({ cookies: [], origins: [] }), 'utf8');
   const cli = runCLI([`--load-storage=${loadFileName}`, `--save-storage=${saveFileName}`, 'codegen', emptyHTML]);
-  const expectedResult = `const { chromium, devices } = require('playwright');
+  const expectedResult = `const { chromium } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch({

@@ -23,7 +23,7 @@ import { MouseClickOptions, toModifiers } from '../utils';
 
 export class CSharpLanguageGenerator implements LanguageGenerator {
 
-  highligherType(): HighlighterType {
+  highlighterType(): HighlighterType {
     return 'csharp';
   }
 
@@ -155,7 +155,7 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
   }
 
   generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\nawait context.StorageStateAsync(path: "${saveStorage}")` : '';
+    const storageStateLine = saveStorage ? `\nawait context.StorageStateAsync(path: "${saveStorage}");` : '';
     return `// ---------------------${storageStateLine}`;
   }
 }
