@@ -199,7 +199,7 @@ export class FrameManager {
     frame.emit(Frame.Events.Navigation, navigationEvent);
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
-      this._page.frameNavigated(frame);
+      this._page.frameNavigatedToNewDocument(frame);
     }
     // Restore pending if any - see comments above about keepPending.
     frame._pendingDocument = keepPending;
@@ -213,7 +213,6 @@ export class FrameManager {
     const navigationEvent: NavigationEvent = { url, name: frame._name };
     frame.emit(Frame.Events.Navigation, navigationEvent);
     debugLogger.log('api', `  navigated to "${url}"`);
-    this._page.frameNavigated(frame);
   }
 
   frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
