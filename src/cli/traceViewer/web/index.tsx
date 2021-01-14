@@ -27,6 +27,7 @@ declare global {
     getTraceModel(): Promise<TraceModel>;
     getVideoMetaInfo(videoId: string): Promise<VideoMetaInfo | undefined>;
     readFile(filePath: string): Promise<string>;
+    readResource(sha1: string): Promise<string>;
     renderSnapshot(action: ActionTraceEvent): void;
   }
 }

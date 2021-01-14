@@ -36,6 +36,9 @@ export type NetworkResourceTraceEvent = {
   url: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
+  requestHeaders: { name: string, value: string }[],
+  method: string,
+  requestSha1: string,
   sha1: string,
 };
 

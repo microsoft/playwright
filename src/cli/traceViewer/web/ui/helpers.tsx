@@ -57,9 +57,10 @@ export function useMeasure<T extends Element>() {
 export const Expandable: React.FunctionComponent<{
   title: JSX.Element,
   body: JSX.Element,
+  setExpanded: Function,
+  expanded: Boolean,
   style?: React.CSSProperties,
-}> = ({ title, body, style }) => {
-  const [expanded, setExpanded] = React.useState(true);
+}> = ({ title, body, setExpanded, expanded, style }) => {
   return <div style={{ ...style, display: 'flex', flexDirection: 'column' }}>
     <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', whiteSpace: 'nowrap' }}>
       <div
