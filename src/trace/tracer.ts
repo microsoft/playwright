@@ -117,6 +117,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       responseHeaders: resource.responseHeaders,
       requestHeaders: resource.requestHeaders,
       method: resource.method,
+      status: resource.status,
       requestSha1: resource.requestSha1,
       sha1: resource.sha1,
     };

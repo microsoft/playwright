@@ -36,6 +36,7 @@ export type SnapshotterResource = {
   responseHeaders: { name: string, value: string }[],
   requestHeaders: { name: string, value: string }[],
   method: string,
+  status: number,
   requestSha1: string,
   sha1: string,
 };
@@ -92,6 +93,7 @@ export class Snapshotter {
     }
 
     const method = original.method();
+    const status = response.status();
     const requestBody = original.postDataBuffer();
     const requestSha1 = requestBody ? calculateSha1(requestBody) : 'none';
     const requestHeaders = original.headers();
@@ -105,6 +107,7 @@ export class Snapshotter {
       responseHeaders: response.headers(),
       requestHeaders,
       method,
+      status,
       requestSha1,
 
       sha1,

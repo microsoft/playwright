@@ -38,6 +38,7 @@ export type NetworkResourceTraceEvent = {
   responseHeaders: { name: string, value: string }[],
   requestHeaders: { name: string, value: string }[],
   method: string,
+  status: number,
   requestSha1: string,
   sha1: string,
 };

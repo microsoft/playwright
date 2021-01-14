@@ -72,6 +72,16 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     return atob(body);
   }
 
+  function formatStatus(status: number): string {
+    if (status >= 200 && status < 400)
+      return 'status-success';
+
+    if (status >= 400)
+      return 'status-failure';
+
+    return 'status-neutral';
+  }
+
   const requestContentTypeHeader = resource.requestHeaders.find(q => q.name === 'Content-Type');
   const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
 
@@ -79,6 +89,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     className='network-request'>
     <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={
       <div className='network-request-title'>
+        <div className={'network-request-title-status ' + formatStatus(resource.status)}>{resource.status}</div>
         <div className='network-request-title-method'>{resource.method}: &nbsp;</div>
         <div className='network-request-title-url'>{resource.url}</div>
         <div className='network-request-title-content-type'>{resource.contentType}</div>

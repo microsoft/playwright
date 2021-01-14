@@ -51,6 +51,7 @@ it('should record trace', async ({browser, testInfo, server}) => {
   expect(resourceEvent.contextId).toBe(contextId);
   expect(resourceEvent.pageId).toBe(pageId);
   expect(resourceEvent.method).toBe('GET');
+  expect(resourceEvent.status).toBe(200);
   expect(resourceEvent.requestHeaders).toBeTruthy();
   expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
   expect(resourceEvent.requestSha1).toBe('none');
@@ -92,6 +93,7 @@ it('should record trace with POST', async ({browser, testInfo, server}) => {
   expect(resourceEvent.contextId).toBe(contextId);
   expect(resourceEvent.pageId).toBe(pageId);
   expect(resourceEvent.method).toBe('POST');
+  expect(resourceEvent.status).toBe(404);
   expect(resourceEvent.requestHeaders).toBeTruthy();
   expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
   expect(resourceEvent.requestSha1).toBeTruthy();

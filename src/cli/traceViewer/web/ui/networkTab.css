@@ -46,6 +46,28 @@
   flex: 1;
 }
 
+.network-request-title-status {
+  font-weight: bold;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0px 5px;
+  margin-right: 5px;
+}
+
+.status-success {
+  background-color: rgb(124, 187, 62);
+}
+
+.status-failure {
+  background-color: rgb(211, 35, 35);
+  color: white;
+}
+
+.status-neutral {
+  background-color: white;
+}
+
 .network-request-title-method {
   font-weight: bold;
 }
