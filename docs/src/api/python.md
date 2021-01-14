@@ -106,7 +106,7 @@ failed, as reported by `requestfailed` event.
 
 Example of logging of all the failed requests:
 
-```python
+```py
 page.on('requestfailed', lambda request: print(request.url + ' ' + request.failure);
 ```
 
