@@ -104,7 +104,7 @@ function getDownloadUrl(browserName: BrowserName, revision: number, platform: Br
         ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
         ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
         ['mac11', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-        ['mac11-arm64', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+        ['mac11-arm64', '%s/builds/firefox/%s/firefox-mac-11.0-arm64.zip'],
         ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
         ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
       ]).get(platform);
