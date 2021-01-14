@@ -6,6 +6,14 @@ When browser context is created with the `videosPath` option, each page has a vi
 console.log(await page.video().path());
 ```
 
+```python async
+print(await page.video.path())
+```
+
+```python sync
+print(page.video.path())
+```
+
 ## async method: Video.path
 - returns: <[path]>
 

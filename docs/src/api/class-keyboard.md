@@ -3,8 +3,8 @@
 Keyboard provides an api for managing a virtual keyboard. The high level api is [`method: Keyboard.type`], which takes
 raw characters and generates proper keydown, keypress/input, and keyup events on your page.
 
-For finer control, you can use [`method: Keyboard.down`], [`method: Keyboard.up`], and [`method:
-Keyboard.insertText`] to manually fire events as if they were generated from a real keyboard.
+For finer control, you can use [`method: Keyboard.down`], [`method: Keyboard.up`], and [`method: Keyboard.insertText`]
+to manually fire events as if they were generated from a real keyboard.
 
 An example of holding down `Shift` in order to select and delete some text:
 
@@ -21,12 +21,46 @@ await page.keyboard.press('Backspace');
 // Result text will end up saying 'Hello!'
 ```
 
+```python async
+await page.keyboard.type("Hello World!")
+await page.keyboard.press("ArrowLeft")
+await page.keyboard.down("Shift")
+for i in range(6):
+    await page.keyboard.press("ArrowLeft")
+await page.keyboard.up("Shift")
+await page.keyboard.press("Backspace")
+# result text will end up saying "Hello!"
+```
+
+```python sync
+page.keyboard.type("Hello World!")
+page.keyboard.press("ArrowLeft")
+page.keyboard.down("Shift")
+for i in range(6):
+    page.keyboard.press("ArrowLeft")
+page.keyboard.up("Shift")
+page.keyboard.press("Backspace")
+# result text will end up saying "Hello!"
+```
+
 An example of pressing uppercase `A`
 
 ```js
 await page.keyboard.press('Shift+KeyA');
 // or
 await page.keyboard.press('Shift+A');
+```
+
+```python async
+await page.keyboard.press("Shift+KeyA")
+# or
+await page.keyboard.press("Shift+A")
+```
+
+```python sync
+page.keyboard.press("Shift+KeyA")
+# or
+page.keyboard.press("Shift+A")
 ```
 
 An example to trigger select-all with the keyboard
@@ -36,6 +70,20 @@ An example to trigger select-all with the keyboard
 await page.keyboard.press('Control+A');
 // on macOS
 await page.keyboard.press('Meta+A');
+```
+
+```python async
+# on windows and linux
+await page.keyboard.press("Control+A")
+# on mac_os
+await page.keyboard.press("Meta+A")
+```
+
+```python sync
+# on windows and linux
+page.keyboard.press("Control+A")
+# on mac_os
+page.keyboard.press("Meta+A")
 ```
 
 ## async method: Keyboard.down
@@ -57,8 +105,8 @@ Holding down `Shift` will type the text that corresponds to the [`param: key`] i
 If [`param: key`] is a single character, it is case-sensitive, so the values `a` and `A` will generate different
 respective texts.
 
-If [`param: key`] is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with
-that modifier active. To release the modifier key, use [`method: Keyboard.up`].
+If [`param: key`] is a modifier key, `Shift`, `Meta`, `Control`, or `Alt`, subsequent key presses will be sent with that
+modifier active. To release the modifier key, use [`method: Keyboard.up`].
 
 After the key is pressed once, subsequent calls to [`method: Keyboard.down`] will have
 [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
@@ -79,6 +127,14 @@ Dispatches only `input` event, does not emit the `keydown`, `keyup` or `keypress
 
 ```js
 page.keyboard.insertText('嗨');
+```
+
+```python async
+await page.keyboard.insert_text("嗨")
+```
+
+```python sync
+page.keyboard.insert_text("嗨")
 ```
 
 :::note
@@ -122,6 +178,30 @@ await page.screenshot({ path: 'O.png' });
 await browser.close();
 ```
 
+```python async
+page = await browser.new_page()
+await page.goto("https://keycode.info")
+await page.keyboard.press("a")
+await page.screenshot(path="a.png")
+await page.keyboard.press("ArrowLeft")
+await page.screenshot(path="arrow_left.png")
+await page.keyboard.press("Shift+O")
+await page.screenshot(path="o.png")
+await browser.close()
+```
+
+```python sync
+page = browser.new_page()
+page.goto("https://keycode.info")
+page.keyboard.press("a")
+page.screenshot(path="a.png")
+page.keyboard.press("ArrowLeft")
+page.screenshot(path="arrow_left.png")
+page.keyboard.press("Shift+O")
+page.screenshot(path="o.png")
+browser.close()
+```
+
 Shortcut for [`method: Keyboard.down`] and [`method: Keyboard.up`].
 
 ### param: Keyboard.press.key
@@ -143,6 +223,16 @@ To press a special key, like `Control` or `ArrowDown`, use [`method: Keyboard.pr
 ```js
 await page.keyboard.type('Hello'); // Types instantly
 await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
+```
+
+```python async
+await page.keyboard.type("Hello") # types instantly
+await page.keyboard.type("World", delay=100) # types slower, like a user
+```
+
+```python sync
+page.keyboard.type("Hello") # types instantly
+page.keyboard.type("World", delay=100) # types slower, like a user
 ```
 
 :::note
