@@ -1,13 +1,8 @@
 // @ts-check
 
-const { outputHelp } = require("commander");
 const fs = require("fs");
-const { createImportSpecifier } = require("typescript");
 const md = require("../markdown");
 
-const inputFile = "docs/src/api/class-page.md";
-const fileContent = fs.readFileSync(inputFile).toString();
-const nodes = md.parse(fileContent);
 
 /**
  * @param {string[]} input
@@ -99,11 +94,6 @@ function multiplyComment(spec) {
   return children;
 }
 
-md.visitAll(nodes, node => {
-  if (node.children)
-    node.children = multiplyComment(node.children);
-});
-
 /**
  * @param {string} name
  */
@@ -112,5 +102,19 @@ function toSnakeCase(name) {
   return name.replace(toSnakeCaseRegex, `_$1`).toLowerCase();
 }
 
-const out = md.render(nodes, 120);
-fs.writeFileSync(inputFile, out);
+for (const name of fs.readdirSync("docs/src")) {
+  if (!name.endsWith(".md"))
+    continue;
+  const inputFile = `docs/src/${name}`;
+  const fileContent = fs.readFileSync(inputFile).toString();
+  const nodes = md.parse(fileContent);
+  
+  md.visitAll(nodes, node => {
+    if (node.children)
+      node.children = multiplyComment(node.children);
+  });
+  
+ 
+  const out = md.render(nodes, 120);
+  fs.writeFileSync(inputFile, out);
+}

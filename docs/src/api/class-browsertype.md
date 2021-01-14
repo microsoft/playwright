@@ -15,6 +15,39 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 })();
 ```
 
+```python async
+import asyncio
+from playwright.async_api import async_playwright
+
+async def run(playwright):
+    chromium = playwright.chromium
+    browser = await chromium.launch()
+    page = await browser.new_page()
+    await page.goto("https://example.com")
+    # other actions...
+    await browser.close()
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+def run(playwright):
+    chromium = playwright.chromium
+    browser = chromium.launch()
+    page = browser.new_page()
+    page.goto("https://example.com")
+    # other actions...
+    browser.close()
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
 ## async method: BrowserType.connect
 * langs: js
 - returns: <[Browser]>
@@ -24,9 +57,11 @@ This methods attaches Playwright to an existing browser instance.
 ### param: BrowserType.connect.params
 - `params` <[Object]>
   - `wsEndpoint` <[string]> A browser websocket endpoint to connect to.
-  - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going on. Defaults to 0.
+  - `slowMo` <[float]> Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+    can see what is going on. Defaults to 0.
   - `logger` <[Logger]> Logger sink for Playwright logging. Optional.
-  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
+  - `timeout` <[float]> Maximum time in milliseconds to wait for the connection to be established. Defaults to
+    `30000` (30 seconds). Pass `0` to disable timeout.
 
 ## method: BrowserType.executablePath
 - returns: <[string]>
@@ -46,20 +81,32 @@ const browser = await chromium.launch({  // Or 'firefox' or 'webkit'.
 });
 ```
 
+```python async
+browser = await playwright.chromium.launch( # or "firefox" or "webkit".
+    ignore_default_args=["--mute-audio"]
+)
+```
+
+```python sync
+browser = playwright.chromium.launch( # or "firefox" or "webkit".
+    ignore_default_args=["--mute-audio"]
+)
+```
+
 > **Chromium-only** Playwright can also be used to control the Chrome browser, but it works best with the version of
 Chromium it is bundled with. There is no guarantee it will work with any other version. Use [`option: executablePath`]
 option with extreme caution.
 >
-> If Google Chrome (rather than Chromium) is preferred, a [Chrome
-Canary](https://www.google.com/chrome/browser/canary.html) or [Dev
-Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
+> If Google Chrome (rather than Chromium) is preferred, a
+[Chrome Canary](https://www.google.com/chrome/browser/canary.html) or
+[Dev Channel](https://www.chromium.org/getting-involved/dev-channel) build is suggested.
 >
 > In [`method: BrowserType.launch`] above, any mention of Chromium also applies to Chrome.
 >
 > See [`this article`](https://www.howtogeek.com/202825/what%E2%80%99s-the-difference-between-chromium-and-chrome/) for
-a description of the differences between Chromium and Chrome. [`This
-article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md) describes
-some differences for Linux users.
+a description of the differences between Chromium and Chrome.
+[`This article`](https://chromium.googlesource.com/chromium/src/+/lkgr/docs/chromium_browser_vs_google_chrome.md)
+describes some differences for Linux users.
 
 ### option: BrowserType.launch.headless
 - `headless` <[boolean]>
@@ -90,8 +137,11 @@ array is given, then filters out the given default arguments. Dangerous option; 
 
 ### option: BrowserType.launch.proxy
 - `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
+    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
+    proxy.
+  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org,
+    .domain.com"`.
   - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
   - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
 
@@ -149,8 +199,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
 ### option: BrowserType.launch.devtools
 - `devtools` <[boolean]>
 
-**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the [`option:
-headless`] option will be set `false`.
+**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+[`option: headless`] option will be set `false`.
 
 ### option: BrowserType.launch.slowMo
 - `slowMo` <[float]>
@@ -201,8 +251,11 @@ arguments. Dangerous option; use with care. Defaults to `false`.
 
 ### option: BrowserType.launchPersistentContext.proxy
 - `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
+    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
+    proxy.
+  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org,
+    .domain.com"`.
   - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
   - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
 
@@ -248,8 +301,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
 ### option: BrowserType.launchPersistentContext.devtools
 - `devtools` <[boolean]>
 
-**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the [`option:
-headless`] option will be set `false`.
+**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+[`option: headless`] option will be set `false`.
 
 ### option: BrowserType.launchPersistentContext.slowMo
 - `slowMo` <[float]>
@@ -315,8 +368,11 @@ arguments. Dangerous option; use with care. Defaults to `false`.
 
 ### option: BrowserType.launchServer.proxy
 - `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org, .domain.com"`.
+  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
+    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
+    proxy.
+  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org,
+    .domain.com"`.
   - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
   - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
 
@@ -374,8 +430,8 @@ Specify environment variables that will be visible to the browser. Defaults to `
 ### option: BrowserType.launchServer.devtools
 - `devtools` <[boolean]>
 
-**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the [`option:
-headless`] option will be set `false`.
+**Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
+[`option: headless`] option will be set `false`.
 
 ## method: BrowserType.name
 - returns: <[string]>

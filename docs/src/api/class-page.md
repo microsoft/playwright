@@ -1,4 +1,3 @@
-
 # class: Page
 * extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
 
@@ -830,10 +829,10 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 
 Returns the value of the [`param: pageFunction`] invocation.
 
-If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to
+If the function passed to the [`method: Page.evaluate`] returns a [Promise], then [`method: Page.evaluate`] would wait for the promise to
 resolve and return its value.
 
-If the function passed to the `page.evaluate` returns a non-[Serializable] value, then `page.evaluate` resolves to
+If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then[ method: `Page.evaluate`] resolves to
 `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
 `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
@@ -876,7 +875,7 @@ x = 10
 print(page.evaluate(f"1 + {x}")) # prints "11"
 ```
 
-[ElementHandle] instances can be passed as an argument to the `page.evaluate`:
+[ElementHandle] instances can be passed as an argument to the [`method: Page.evaluate`]:
 
 ```js
 const bodyHandle = await page.$('body');
@@ -914,11 +913,27 @@ Optional argument to pass to [`param: pageFunction`]
 
 Returns the value of the [`param: pageFunction`] invocation as in-page object (JSHandle).
 
-The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page
+The only difference between [`method: Page.evaluate`] and [`method: Page.evaluateHandle`] is that [`method: Page.evaluateHandle`] returns in-page
 object (JSHandle).
 
-If the function passed to the `page.evaluateHandle` returns a [Promise], then `page.evaluateHandle` would wait for the
+If the function passed to the [`method: Page.evaluateHandle`] returns a [Promise], then [`method:Ppage.EvaluateHandle`] would wait for the
 promise to resolve and return its value.
+
+```js
+const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
+aWindowHandle; // Handle for the window object.
+```
+
+```python async
+# FIXME
+a_window_handle = await page.evaluate_handle("Promise.resolve(window)")
+a_window_handle # handle for the window object.
+```
+
+```python sync
+a_window_handle = page.evaluate_handle("Promise.resolve(window)")
+a_window_handle # handle for the window object.
+```
 
 A string can also be passed in instead of a function:
 
@@ -934,7 +949,7 @@ a_handle = await page.evaluate_handle("document") # handle for the "document"
 a_handle = page.evaluate_handle("document") # handle for the "document"
 ```
 
-[JSHandle] instances can be passed as an argument to the `page.evaluateHandle`:
+[JSHandle] instances can be passed as an argument to the [`method: Page.evaluateHandle`]:
 
 ```js
 const aHandle = await page.evaluateHandle(() => document.body);
@@ -2234,6 +2249,7 @@ await page.wait_for_function("selector => !!document.querySelector(selector)", s
 ```
 
 ```python sync
+selector = ".foo"
 page.wait_for_function("selector => !!document.querySelector(selector)", selector)
 ```
 

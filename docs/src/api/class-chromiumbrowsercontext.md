@@ -7,6 +7,16 @@ Chromium-specific features including background pages, service worker support, e
 const backgroundPage = await context.waitForEvent('backgroundpage');
 ```
 
+```python async
+# FIXME
+background_page = await context.wait_for_event("backgroundpage")
+```
+
+```python sync
+# FIXME
+background_page = context.wait_for_event("backgroundpage")
+```
+
 ## event: ChromiumBrowserContext.backgroundpage
 - type: <[Page]>
 

@@ -1,7 +1,7 @@
 # class: Selectors
 
-Selectors can be used to install custom selector engines. See [Working with selectors](./selectors.md#working-with-selectors) for more
-information.
+Selectors can be used to install custom selector engines. See
+[Working with selectors](./selectors.md#working-with-selectors) for more information.
 
 ## async method: Selectors.register
 
@@ -42,6 +42,14 @@ const { selectors, firefox } = require('playwright');  // Or 'chromium' or 'webk
 })();
 ```
 
+```python async
+# FIXME: add snippet
+```
+
+```python sync
+# FIXME: add snippet
+```
+
 ### param: Selectors.register.name
 - `name` <[string]>
 
@@ -51,7 +59,8 @@ contain `[a-zA-Z0-9_]` characters.
 ### param: Selectors.register.script
 * langs: js
 - `script` <[function]|[string]|[Object]>
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
+    current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 
 Script that evaluates to a selector engine instance.

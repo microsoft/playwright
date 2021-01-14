@@ -47,9 +47,8 @@ Captures the current state of the accessibility tree. The returned object repres
 page.
 
 :::note
-The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers.
-Playwright will discard them as well for an easier to process tree, unless [`option: interestingOnly`] is set to
-`false`.
+The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers. Playwright
+will discard them as well for an easier to process tree, unless [`option: interestingOnly`] is set to `false`.
 :::
 
 An example of dumping the entire accessibility tree:
@@ -57,6 +56,16 @@ An example of dumping the entire accessibility tree:
 ```js
 const snapshot = await page.accessibility.snapshot();
 console.log(snapshot);
+```
+
+```python async
+snapshot = await page.accessibility.snapshot()
+print(snapshot)
+```
+
+```python sync
+snapshot = page.accessibility.snapshot()
+print(snapshot)
 ```
 
 An example of logging the focused node's name:
@@ -75,6 +84,36 @@ function findFocusedNode(node) {
   }
   return null;
 }
+```
+
+```python async
+def find_focused_node(node):
+    if (node.get("focused"))
+        return node
+    for child in (node.get("children") or []):
+        found_node = find_focused_node(child)
+        return found_node
+    return null
+
+snapshot = await page.accessibility.snapshot()
+node = find_focused_node(snapshot)
+if node:
+    print(node["name"]) 
+```
+
+```python sync
+def find_focused_node(node):
+    if (node.get("focused"))
+        return node
+    for child in (node.get("children") or []):
+        found_node = find_focused_node(child)
+        return found_node
+    return null
+
+snapshot = page.accessibility.snapshot()
+node = find_focused_node(snapshot)
+if node:
+    print(node["name"]) 
 ```
 
 ### option: Accessibility.snapshot.interestingOnly

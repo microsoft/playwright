@@ -75,12 +75,16 @@ export interface Page {
   /**
    * Returns the value of the `pageFunction` invocation.
    * 
-   * If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to
-   * resolve and return its value.
+   * If the function passed to the
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) returns a [Promise],
+   * then [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) would wait for the
+   * promise to resolve and return its value.
    * 
-   * If the function passed to the `page.evaluate` returns a non-[Serializable] value, then `page.evaluate` resolves to
-   * `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+   * If the function passed to the
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) returns a
+   * non-[Serializable] value, then[ method: `Page.evaluate`] resolves to `undefined`. DevTools Protocol also supports
+   * transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and
+   * bigint literals.
    * 
    * Passing argument to `pageFunction`:
    * 
@@ -99,7 +103,8 @@ export interface Page {
    * console.log(await page.evaluate(`1 + ${x}`)); // prints "11"
    * ```
    * 
-   * [ElementHandle] instances can be passed as an argument to the `page.evaluate`:
+   * [ElementHandle] instances can be passed as an argument to the
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate):
    * 
    * ```js
    * const bodyHandle = await page.$('body');
@@ -118,11 +123,20 @@ export interface Page {
   /**
    * Returns the value of the `pageFunction` invocation as in-page object (JSHandle).
    * 
-   * The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page
-   * object (JSHandle).
+   * The only difference between
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) and
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) is that
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) returns
+   * in-page object (JSHandle).
    * 
-   * If the function passed to the `page.evaluateHandle` returns a [Promise], then `page.evaluateHandle` would wait for the
-   * promise to resolve and return its value.
+   * If the function passed to the
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) returns a
+   * [Promise], then [`method:Ppage.EvaluateHandle`] would wait for the promise to resolve and return its value.
+   * 
+   * ```js
+   * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
+   * aWindowHandle; // Handle for the window object.
+   * ```
    * 
    * A string can also be passed in instead of a function:
    * 
@@ -130,7 +144,8 @@ export interface Page {
    * const aHandle = await page.evaluateHandle('document'); // Handle for the 'document'
    * ```
    * 
-   * [JSHandle] instances can be passed as an argument to the `page.evaluateHandle`:
+   * [JSHandle] instances can be passed as an argument to the
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle):
    * 
    * ```js
    * const aHandle = await page.evaluateHandle(() => document.body);
@@ -3190,25 +3205,21 @@ export interface Page {
  * })();
  * ```
  * 
- * An example of getting text from an iframe element:
- * 
- * ```js
- * const frame = page.frames().find(frame => frame.name() === 'myframe');
- * const text = await frame.$eval('.selector', element => element.textContent);
- * console.log(text);
- * ```
- * 
  */
 export interface Frame {
   /**
    * Returns the return value of `pageFunction`
    * 
-   * If the function passed to the `frame.evaluate` returns a [Promise], then `frame.evaluate` would wait for the promise to
-   * resolve and return its value.
+   * If the function passed to the
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) returns a [Promise],
+   * then [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) would wait for
+   * the promise to resolve and return its value.
    * 
-   * If the function passed to the `frame.evaluate` returns a non-[Serializable] value, then `frame.evaluate` returns
-   * `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+   * If the function passed to the
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) returns a
+   * non-[Serializable] value, then[ method: `Frame.evaluate`] returns `undefined`. DevTools Protocol also supports
+   * transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and
+   * bigint literals.
    * 
    * ```js
    * const result = await frame.evaluate(([x, y]) => {
@@ -3223,7 +3234,8 @@ export interface Frame {
    * console.log(await frame.evaluate('1 + 2')); // prints "3"
    * ```
    * 
-   * [ElementHandle] instances can be passed as an argument to the `frame.evaluate`:
+   * [ElementHandle] instances can be passed as an argument to the
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate):
    * 
    * ```js
    * const bodyHandle = await frame.$('body');
@@ -3240,11 +3252,14 @@ export interface Frame {
   /**
    * Returns the return value of `pageFunction` as in-page object (JSHandle).
    * 
-   * The only difference between `frame.evaluate` and `frame.evaluateHandle` is that `frame.evaluateHandle` returns in-page
-   * object (JSHandle).
+   * The only difference between
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) and
+   * [frame.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatehandle) is
+   * that[ method: Fframe.evaluateHandle`] returns in-page object (JSHandle).
    * 
-   * If the function, passed to the `frame.evaluateHandle`, returns a [Promise], then `frame.evaluateHandle` would wait for
-   * the promise to resolve and return its value.
+   * If the function, passed to the
+   * [frame.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatehandle), returns
+   * a [Promise], then[ method: Fframe.evaluateHandle`] would wait for the promise to resolve and return its value.
    * 
    * ```js
    * const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
@@ -3257,7 +3272,8 @@ export interface Frame {
    * const aHandle = await frame.evaluateHandle('document'); // Handle for the 'document'.
    * ```
    * 
-   * [JSHandle] instances can be passed as an argument to the `frame.evaluateHandle`:
+   * [JSHandle] instances can be passed as an argument to the
+   * [frame.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatehandle):
    * 
    * ```js
    * const aHandle = await frame.evaluateHandle(() => document.body);
@@ -3387,17 +3403,15 @@ export interface Frame {
    * This method works across navigations:
    * 
    * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+   * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
    * 
    * (async () => {
-   *   const browser = await webkit.launch();
+   *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   let currentURL;
-   *   page.mainFrame()
-   *     .waitForSelector('img')
-   *     .then(() => console.log('First URL with image: ' + currentURL));
-   *   for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
+   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
+   *     const element = await page.mainFrame().waitForSelector('img');
+   *     console.log('Loaded image: ' + await element.getAttribute('src'));
    *   }
    *   await browser.close();
    * })();
@@ -4424,8 +4438,8 @@ export interface Frame {
    * 
    * ```js
    * const [response] = await Promise.all([
-   *   frame.waitForNavigation(), // Wait for the navigation to finish
-   *   frame.click('a.my-link'), // Clicking the link will indirectly cause a navigation
+   *   frame.waitForNavigation(), // The promise resolves after navigation has finished
+   *   frame.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
    * ]);
    * ```
    * 
@@ -5235,7 +5249,7 @@ export interface JSHandle<T = any> {
    * 
    * ```js
    * const tweetHandle = await page.$('.tweet .retweets');
-   * expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')).toBe('10 retweets');
+   * expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10 retweets');
    * ```
    * 
    * @param pageFunction Function to be evaluated in browser context
@@ -5926,16 +5940,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * 
    * ```js
    * // single selection matching the value
-   * handle.selectOption('blue');
+   * handle.selectOption('select#colors', 'blue');
    * 
-   * // single selection matching both the value and the label
-   * handle.selectOption({ label: 'Blue' });
+   * // single selection matching the label
+   * handle.selectOption('select#colors', { label: 'Blue' });
    * 
    * // multiple selection
-   * handle.selectOption('red', 'green', 'blue');
-   * 
-   * // multiple selection for blue, red and second option
-   * handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
+   * handle.selectOption('select#colors', ['red', 'green', 'blue']);
    * ```
    * 
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -8011,7 +8022,6 @@ export interface Dialog {
  * ]);
  * // wait for download to complete
  * const path = await download.path();
- * ...
  * ```
  * 
  * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
@@ -8596,7 +8606,7 @@ export interface Request {
    * ```js
    * const [request] = await Promise.all([
    *   page.waitForEvent('requestfinished'),
-   *   page.goto(httpsServer.EMPTY_PAGE)
+   *   page.goto('http://example.com')
    * ]);
    * console.log(request.timing());
    * ```
