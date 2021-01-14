@@ -1,5 +1,5 @@
 # class: Browser
-* extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+* extends: [EventEmitter]
 
 A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
 

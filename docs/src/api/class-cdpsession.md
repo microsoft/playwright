@@ -1,5 +1,5 @@
 # class: CDPSession
-* extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+* extends: [EventEmitter]
 
 The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
 * protocol methods can be called with `session.send` method.

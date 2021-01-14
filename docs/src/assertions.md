@@ -4,7 +4,7 @@ title: "Assertions"
 ---
 
 The Playwright API can be used to read element contents and properties for test assertions. These values are fetched from the browser page and asserted in
-Node.js.
+your script.
 
 <!-- TOC -->
 

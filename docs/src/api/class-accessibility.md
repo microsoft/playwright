@@ -7,10 +7,10 @@ assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Scre
 Accessibility is a very platform-specific thing. On different platforms, there are different screen readers that might
 have wildly different output.
 
-Blink - Chromium's rendering engine - has a concept of "accessibility tree", which is then translated into different
-platform-specific APIs. Accessibility namespace gives users access to the Blink Accessibility Tree.
+Rendering engines of Chromium, Firefox and Webkit have a concept of "accessibility tree", which is then translated into different
+platform-specific APIs. Accessibility namespace gives access to this Accessibility Tree.
 
-Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by
+Most of the accessibility tree gets filtered out when converting from internal browser AX Tree to Platform-specific AX-Tree or by
 assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the
 "interesting" nodes of the tree.
 
@@ -98,7 +98,7 @@ def find_focused_node(node):
 snapshot = await page.accessibility.snapshot()
 node = find_focused_node(snapshot)
 if node:
-    print(node["name"]) 
+    print(node["name"])
 ```
 
 ```python sync
@@ -113,7 +113,7 @@ def find_focused_node(node):
 snapshot = page.accessibility.snapshot()
 node = find_focused_node(snapshot)
 if node:
-    print(node["name"]) 
+    print(node["name"])
 ```
 
 ### option: Accessibility.snapshot.interestingOnly
