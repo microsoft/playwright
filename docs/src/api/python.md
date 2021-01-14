@@ -224,7 +224,7 @@ Shortcut for main frame's [`method: Frame.expectNavigation`].
 
 ## async method: Frame.expectNavigation
 * langs: python
-- returns: <[EventContextManager]>
+- returns: <[EventContextManager[Response]]>
 
 Performs action and waits for the next navigation. In case of multiple redirects, the navigation will resolve with
 the response of the last redirect. In case of navigation to a different anchor or navigation due to History API
