@@ -21,12 +21,13 @@ import { SourceTab } from './sourceTab';
 import './propertiesTabbedPane.css';
 import * as React from 'react';
 import { useMeasure } from './helpers';
+import { LogsTab } from './logsTab';
 
 export const PropertiesTabbedPane: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
   snapshotSize: Size,
 }> = ({ actionEntry, snapshotSize }) => {
-  const [selected, setSelected] = React.useState<'snapshot' | 'source' | 'network'>('snapshot');
+  const [selected, setSelected] = React.useState<'snapshot' | 'source' | 'network' | 'logs'>('snapshot');
   return <div className='properties-tabbed-pane'>
     <div className='vbox'>
       <div className='hbox' style={{ flex: 'none' }}>
@@ -43,6 +44,10 @@ export const PropertiesTabbedPane: React.FunctionComponent<{
             onClick={() => setSelected('network')}>
             <div className='properties-tab-label'>Network</div>
           </div>
+          <div className={'properties-tab-element ' + (selected === 'logs' ? 'selected' : '')}
+            onClick={() => setSelected('logs')}>
+            <div className='properties-tab-label'>Logs</div>
+          </div>
         </div>
       </div>
       <div className='properties-tab-content' style={{ display: selected === 'snapshot' ? 'flex' : 'none' }}>
@@ -53,6 +58,9 @@ export const PropertiesTabbedPane: React.FunctionComponent<{
       </div>
       <div className='properties-tab-content' style={{ display: selected === 'network' ? 'flex' : 'none' }}>
         <NetworkTab actionEntry={actionEntry} />
+      </div>
+      <div className='properties-tab-content' style={{ display: selected === 'logs' ? 'flex' : 'none' }}>
+        <LogsTab actionEntry={actionEntry} />
       </div>
     </div>
   </div>;
