@@ -48,9 +48,6 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
-By default, the `playwright` NPM package automatically downloads browser executables during installation. The
-`playwright-core` NPM package can be used to skip automatic downloads.
-
 ## property: Playwright.chromium
 - type: <[BrowserType]>
 

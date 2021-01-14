@@ -131,7 +131,9 @@ export interface Page {
    * 
    * If the function passed to the
    * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) returns a
-   * [Promise], then [`method:Ppage.EvaluateHandle`] would wait for the promise to resolve and return its value.
+   * [Promise], then
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) would wait
+   * for the promise to resolve and return its value.
    * 
    * ```js
    * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
@@ -5940,13 +5942,13 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * 
    * ```js
    * // single selection matching the value
-   * handle.selectOption('select#colors', 'blue');
+   * handle.selectOption('blue');
    * 
    * // single selection matching the label
-   * handle.selectOption('select#colors', { label: 'Blue' });
+   * handle.selectOption({ label: 'Blue' });
    * 
    * // multiple selection
-   * handle.selectOption('select#colors', ['red', 'green', 'blue']);
+   * handle.selectOption(['red', 'green', 'blue']);
    * ```
    * 
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option

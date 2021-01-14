@@ -32,7 +32,7 @@ page.on('requestfailed', request => {
 ```
 
 ```py
-page.on("requestfailed", lambda: request => print(request.url + " " + request.failure)
+page.on("requestfailed", lambda request: print(request.url + " " + request.failure))
 ```
 
 ## method: Request.frame

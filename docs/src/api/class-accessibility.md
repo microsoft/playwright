@@ -93,7 +93,7 @@ def find_focused_node(node):
     for child in (node.get("children") or []):
         found_node = find_focused_node(child)
         return found_node
-    return null
+    return None
 
 snapshot = await page.accessibility.snapshot()
 node = find_focused_node(snapshot)
@@ -108,7 +108,7 @@ def find_focused_node(node):
     for child in (node.get("children") or []):
         found_node = find_focused_node(child)
         return found_node
-    return null
+    return None
 
 snapshot = page.accessibility.snapshot()
 node = find_focused_node(snapshot)

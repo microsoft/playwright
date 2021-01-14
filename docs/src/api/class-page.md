@@ -916,7 +916,7 @@ Returns the value of the [`param: pageFunction`] invocation as in-page object (J
 The only difference between [`method: Page.evaluate`] and [`method: Page.evaluateHandle`] is that [`method: Page.evaluateHandle`] returns in-page
 object (JSHandle).
 
-If the function passed to the [`method: Page.evaluateHandle`] returns a [Promise], then [`method:Ppage.EvaluateHandle`] would wait for the
+If the function passed to the [`method: Page.evaluateHandle`] returns a [Promise], then [`method: Page.evaluateHandle`] would wait for the
 promise to resolve and return its value.
 
 ```js

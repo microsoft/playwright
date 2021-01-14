@@ -547,31 +547,31 @@ element, the method throws an error.
 
 ```js
 // single selection matching the value
-handle.selectOption('select#colors', 'blue');
+handle.selectOption('blue');
 
 // single selection matching the label
-handle.selectOption('select#colors', { label: 'Blue' });
+handle.selectOption({ label: 'Blue' });
 
 // multiple selection
-handle.selectOption('select#colors', ['red', 'green', 'blue']);
+handle.selectOption(['red', 'green', 'blue']);
 ```
 
 ```python async
 # single selection matching the value
-await handle.select_option("select#colors", "blue")
+await handle.select_option("blue")
 # single selection matching the label
-await handle.select_option("select#colors", label="blue")
+await handle.select_option(label="blue")
 # multiple selection
-await handle.select_option("select#colors", value=["red", "green", "blue"])
+await handle.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
 # single selection matching the value
-handle.select_option("select#colors", "blue")
+handle.select_option("blue")
 # single selection matching both the label
-handle.select_option("select#colors", label="blue")
+handle.select_option(label="blue")
 # multiple selection
-handle.select_option("select#colors", value=["red", "green", "blue"])
+handle.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
