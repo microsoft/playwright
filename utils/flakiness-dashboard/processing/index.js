@@ -29,7 +29,8 @@ module.exports = async function(context) {
 
   // Process dashboards one-by-one to limit max heap utilization.
   await processDashboardRaw(context, report);
-  await processDashboardV1(context, report);
+  // Disable V1 dashboard since it's crazy expensive to compute.
+  // await processDashboardV1(context, report);
   // Disable V2 dashboard in favor of raw data.
   // await processDashboardV2(context, report);
 }
