@@ -567,7 +567,8 @@ await browser.close();
 ```python async
 context = await browser.new_context()
 page = await context.new_page()
-await context.route(r"(\.png$)|(\.jpg$)", lambda page = await context.new_page()
+await context.route(r"(\.png$)|(\.jpg$)", lambda route => route.abort())
+page = await context.new_page()
 await page.goto("https://example.com")
 await browser.close()
 ```
@@ -575,7 +576,8 @@ await browser.close()
 ```python sync
 context = browser.new_context()
 page = context.new_page()
-context.route(r"(\.png$)|(\.jpg$)", lambda page = await context.new_page()
+context.route(r"(\.png$)|(\.jpg$)", lambda route => route.abort())
+page = await context.new_page()
 page = context.new_page()
 page.goto("https://example.com")
 browser.close()

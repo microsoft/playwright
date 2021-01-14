@@ -1046,7 +1046,7 @@ async def run(playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     page = await browser.new_page()
-    watch_dog = page.main_frame.wait_for_function("() => window.innerWidth < 100")
+    watch_dog = asyncio.create_task(page.main_frame.wait_for_function("() => window.innerWidth < 100")
     await page.set_viewport_size({"width": 50, "height": 50})
     await watch_dog
     await browser.close()
@@ -1055,22 +1055,6 @@ async def main():
     async with async_playwright() as playwright:
         await run(playwright)
 asyncio.run(main())
-```
-
-```python sync
-from playwright.sync_api import sync_playwright
-
-def run(playwright):
-    webkit = playwright.webkit
-    browser = await webkit.launch()
-    page = await browser.new_page()
-    watch_dog = page.main_frame.wait_for_function("() => window.innerWidth < 100")
-    await page.set_viewport_size({"width": 50, "height": 50})
-    await watch_dog
-    await browser.close()
-
-with sync_playwright() as playwright:
-    run(playwright)
 ```
 
 To pass an argument to the predicate of `frame.waitForFunction` function:

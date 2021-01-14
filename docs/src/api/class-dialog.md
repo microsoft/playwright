@@ -48,7 +48,7 @@ from playwright.sync_api import sync_playwright
 
 def handle_dialog(dialog):
     print(dialog.message)
-    await dialog.dismiss()
+    dialog.dismiss()
 
 def run(playwright):
     chromium = playwright.chromium
