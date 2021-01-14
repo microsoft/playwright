@@ -35,8 +35,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   resource: NetworkResourceTraceEvent,
 }> = ({ resource }) => {
   const [expanded, setExpanded] = React.useState(false);
-  const [requestBody, setRequestBody] = React.useState<String | null>(null);
-  const [responseBody, setResponseBody] = React.useState<String | null>(null);
+  const [requestBody, setRequestBody] = React.useState<string | null>(null);
+  const [responseBody, setResponseBody] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     const readResources = async  () => {
@@ -54,7 +54,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     readResources();
   }, [expanded, resource.sha1, resource.requestSha1]);
 
-  function formatBody(body, contentType) {
+  function formatBody(body: string | null, contentType: string): string {
     if (body === null)
       return 'Loading...';
 
@@ -73,7 +73,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   }
 
   const requestContentTypeHeader = resource.requestHeaders.find(q => q.name === 'Content-Type');
-  const requestContentType = requestContentTypeHeader && requestContentTypeHeader.value;
+  const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
 
   return <div
     className='network-request'>
