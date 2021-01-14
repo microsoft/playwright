@@ -61,11 +61,6 @@ export function runServer() {
 }
 
 export async function installBrowsers(browserNames?: BrowserName[]) {
-  let browsersJsonDir = path.dirname(process.execPath);
-  if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json'))) {
-    browsersJsonDir = path.join(__dirname, '..', '..');
-    if (!fs.existsSync(path.join(browsersJsonDir, 'browsers.json')))
-      throw new Error('Failed to find browsers.json in ' + browsersJsonDir);
-  }
+  const browsersJsonDir = path.join(__dirname, '..', '..');
   await installBrowsersWithProgressBar(browsersJsonDir, browserNames);
 }
