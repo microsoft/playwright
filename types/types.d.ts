@@ -28,7 +28,7 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
 };
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * Page provides methods to interact with a single tab in a [Browser], or an
  * [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser]
@@ -4485,7 +4485,7 @@ export interface Frame {
   waitForTimeout(timeout: number): Promise<void>;}
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * BrowserContexts provide a way to operate multiple independent browser sessions.
  * 
@@ -6865,7 +6865,7 @@ export interface ChromiumBrowser extends Browser {
   stopTracing(): Promise<Buffer>;}
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
  * - protocol methods can be called with `session.send` method.
@@ -6939,12 +6939,12 @@ class TimeoutError extends Error {}
  * Accessibility is a very platform-specific thing. On different platforms, there are different screen readers that might
  * have wildly different output.
  * 
- * Blink - Chromium's rendering engine - has a concept of "accessibility tree", which is then translated into different
- * platform-specific APIs. Accessibility namespace gives users access to the Blink Accessibility Tree.
+ * Rendering engines of Chromium, Firefox and Webkit have a concept of "accessibility tree", which is then translated into
+ * different platform-specific APIs. Accessibility namespace gives access to this Accessibility Tree.
  * 
- * Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by
- * assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the
- * "interesting" nodes of the tree.
+ * Most of the accessibility tree gets filtered out when converting from internal browser AX Tree to Platform-specific
+ * AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing
+ * only the "interesting" nodes of the tree.
  */
 export interface Accessibility {
   /**
@@ -7031,7 +7031,7 @@ export {};
 
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * A Browser is created via
  * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch). An example

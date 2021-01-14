@@ -4,12 +4,13 @@ title: "Device and environment emulation"
 ---
 
 Playwright allows overriding various parameters of the device where the browser is running:
-  - viewport size, device scale factor, touch support
-  - locale, timezone
-  - color scheme
-  - geolocation
+- viewport size, device scale factor, touch support
+- locale, timezone
+- color scheme
+- geolocation
 
-Most of these parameters are configured during the browser context construction, but some of them such as viewport size can be changed for individual pages.
+Most of these parameters are configured during the browser context construction, but some of them such as viewport size
+can be changed for individual pages.
 
 <!-- TOC -->
 
@@ -17,7 +18,8 @@ Most of these parameters are configured during the browser context construction,
 
 ## Devices
 
-Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser behavior on a mobile device:
+Playwright comes with a registry of device parameters for selected mobile devices. It can be used to simulate browser
+behavior on a mobile device:
 
 ```js
 const { chromium, devices } = require('playwright');
@@ -33,32 +35,36 @@ const context = await browser.newContext({
 import asyncio
 from playwright.async_api import async_playwright
 
-async def main():
-    async with async_playwright() as p:
-        pixel_2 = p.devices['Pixel 2']
-        browser = await p.webkit.launch(headless=False)
-        context = await browser.new_context(
-            **pixel_2,
-        )
+async def run(playwright):
+    pixel_2 = playwright.devices['Pixel 2']
+    browser = await playwright.webkit.launch(headless=False)
+    context = await browser.new_context(
+        **pixel_2,
+    )
 
-asyncio.get_event_loop().run_until_complete(main())
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
 ```
 
 ```python sync
 from playwright.sync_api import sync_playwright
 
-with sync_playwright() as p:
-    pixel_2 = p.devices['Pixel 2']
-    browser = p.webkit.launch(headless=False)
+def run(playwright):
+    pixel_2 = playwright.devices['Pixel 2']
+    browser = playwright.webkit.launch(headless=False)
     context = browser.new_context(
         **pixel_2,
     )
+
+with sync_playwright() as playwright:
+    run(playwright)
 ```
 
 All pages created in the context above will share the same device parameters.
 
 #### API reference
-
 - [`property: Playwright.devices`]
 - [`method: Browser.newContext`]
 
@@ -87,7 +93,6 @@ context = browser.new_context(
 ```
 
 #### API reference
-
 - [`method: Browser.newContext`]
 
 <br/>
@@ -141,11 +146,9 @@ page.set_viewport_size(width=1600, height=1200)
 context = browser.new_context(
   viewport={ 'width': 2560, 'height': 1440 },
   device_scale_factor=2,
-
 ```
 
 #### API reference
-
 - [`method: Browser.newContext`]
 - [`method: Page.setViewportSize`]
 
@@ -178,7 +181,6 @@ context = browser.new_context(
 ```
 
 #### API reference
-
 - [`method: Browser.newContext`]
 
 <br/>
@@ -248,7 +250,6 @@ context.clear_permissions()
 ```
 
 #### API reference
-
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.grantPermissions`]
 - [`method: BrowserContext.clearPermissions`]
@@ -256,6 +257,7 @@ context.clear_permissions()
 <br/>
 
 ## Geolocation
+
 Create a context with `"geolocation"` permissions granted:
 
 ```js
@@ -296,7 +298,6 @@ context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 **Note** you can only change geolocation for all pages in the context.
 
 #### API reference
-
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.setGeolocation`]
 
@@ -304,8 +305,7 @@ context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 
 ## Color scheme and media
 
-Create a context with dark or light mode. Pages created in this context will
-follow this color scheme preference.
+Create a context with dark or light mode. Pages created in this context will follow this color scheme preference.
 
 ```js
 // Create context with dark mode
@@ -362,6 +362,5 @@ page.emulate_media(media='print')
 ```
 
 #### API reference
-
 - [`method: Browser.newContext`]
 - [`method: Page.emulateMedia`]

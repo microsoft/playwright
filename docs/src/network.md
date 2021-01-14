@@ -3,8 +3,8 @@ id: network
 title: "Network"
 ---
 
-Playwright provides APIs to **monitor** and **modify** network traffic, both HTTP and HTTPS.
-Any requests that page does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
+Playwright provides APIs to **monitor** and **modify** network traffic, both HTTP and HTTPS. Any requests that page
+does, including [XHRs](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest) and
 [fetch](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) requests, can be tracked, modified and handled.
 
 <!-- TOC -->
@@ -24,8 +24,23 @@ const page = await context.newPage();
 await page.goto('https://example.com');
 ```
 
-#### API reference
+```python async
+context = await browser.new_context(
+    http_credentials={"username": "bill", "password": "pa55w0rd"}
+)
+page = await context.new_page()
+await page.goto("https://example.com")
+```
 
+```python sync
+context = browser.new_context(
+    http_credentials={"username": "bill", "password": "pa55w0rd"}
+)
+page = context.new_page()
+page.goto("https://example.com")
+```
+
+#### API reference
 - [`method: Browser.newContext`]
 
 <br/>
@@ -35,12 +50,32 @@ await page.goto('https://example.com');
 ```js
 const [ download ] = await Promise.all([
   page.waitForEvent('download'), // <-- start waiting for the download
-  page.click('button#delayed-download') // <-- perform the action that directly or indirectly initiates it.
+  page.click('button#delayed-download') // <-- perform the action that directly or indirectly initiates it
 ]);
 const path = await download.path();
 ```
 
-For every attachment downloaded by the page, [`event: Page.download`] event is emitted. If you create a browser context with the [`option: acceptDownloads`] set, all these attachments are going to be downloaded into a temporary folder. You can obtain the download url, file system path and payload stream using the [Download] object from the event.
+```python async
+# Start waiting for the download
+async with page.expect_download() as download_info:
+    # Perform the action that directly or indirectly initiates it
+    await page.click("button#delayed-download")
+download = await download_info.value
+path = await download.path()
+```
+
+```python sync
+# Start waiting for the download
+with page.expect_download() as download_info:
+    # Perform the action that directly or indirectly initiates it
+    page.click("button#delayed-download")
+download = download_info.value
+path = download.path()
+```
+
+For every attachment downloaded by the page, [`event: Page.download`] event is emitted. If you create a browser context
+with the [`option: acceptDownloads`] set, all these attachments are going to be downloaded into a temporary folder. You
+can obtain the download url, file system path and payload stream using the [Download] object from the event.
 
 #### Variations
 
@@ -50,10 +85,20 @@ If you have no idea what initiates the download, you can still handle the event:
 page.on('download', download => download.path().then(console.log));
 ```
 
-Note that handling the event forks the control flow and makes script harder to follow. Your scenario might end while you are downloading a file since your main control flow is not awaiting for this operation to resolve.
+```python async
+async def handle_download(download):
+    print(await download.path())
+page.on("download", handle_download)
+```
+
+```python sync
+page.on("download", lambda download: print(download.path()))
+```
+
+Note that handling the event forks the control flow and makes script harder to follow. Your scenario might end while you
+are downloading a file since your main control flow is not awaiting for this operation to resolve.
 
 #### API reference
-
 - [Download]
 - [`event: Page.download`]
 - [`method: Page.waitForEvent`]
@@ -82,6 +127,43 @@ const { chromium, webkit, firefox } = require('playwright');
 })();
 ```
 
+```python async
+import asyncio
+from playwright.async_api import async_playwright
+
+async def run(playwright):
+    chromium = playwright.chromium
+    browser = await chromium.launch()
+    page = await browser.new_page()
+    # Subscribe to "request" and "response" events.
+    page.on("request", lambda request: print(">>", request.method, request.url))
+    page.on("response", lambda response: print("<<", response.status, response.url))
+    await page.goto("https://example.com")
+    await browser.close()
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+def run(playwright):
+    chromium = playwright.chromium
+    browser = chromium.launch()
+    page = browser.new_page()
+    # Subscribe to "request" and "response" events.
+    page.on("request", lambda request: print(">>", request.method, request.url))
+    page.on("response", lambda response: print("<<", response.status, response.url))
+    page.goto("https://example.com")
+    browser.close()
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
 Or wait for a network response after the button click:
 
 ```js
@@ -90,6 +172,20 @@ const [response] = await Promise.all([
   page.waitForResponse('**/api/fetch_data'),
   page.click('button#update'),
 ]);
+```
+
+```python async
+# Use a glob url pattern
+async with page.expect_response("**/api/fetch_data") as response_info:
+    await page.click("button#update")
+response = await response_info.value
+```
+
+```python sync
+# Use a glob url pattern
+with page.expect_response("**/api/fetch_data") as response_info:
+    page.click("button#update")
+response = response_info.value
 ```
 
 #### Variations
@@ -108,8 +204,31 @@ const [response] = await Promise.all([
 ]);
 ```
 
-#### API reference
+```python async
+# Use a regular expresison
+async with page.expect_response(re.compile(r"\.jpeg$")) as response_info:
+    await page.click("button#update")
+response = await response_info.value
 
+# Use a predicate taking a response object
+async with page.expect_response(lambda response: token in response.url) as response_info:
+    await page.click("button#update")
+response = await response_info.value
+```
+
+```python sync
+# Use a regular expresison
+with page.expect_response(re.compile(r"\.jpeg$")) as response_info:
+    page.click("button#update")
+response = response_info.value
+
+# Use a predicate taking a response object
+with page.expect_response(lambda response: token in response.url) as response_info:
+    page.click("button#update")
+response = response_info.value
+```
+
+#### API reference
 - [Request]
 - [Response]
 - [`event: Page.request`]
@@ -129,6 +248,20 @@ await page.route('**/api/fetch_data', route => route.fulfill({
 await page.goto('https://example.com');
 ```
 
+```python async
+await page.route(
+    "**/api/fetch_data",
+    lambda route: route.fulfill(status=200, body=test_data))
+await page.goto("https://example.com")
+```
+
+```python sync
+page.route(
+    "**/api/fetch_data",
+    lambda route: route.fulfill(status=200, body=test_data))
+page.goto("https://example.com")
+```
+
 You can mock API endpoints via handling the network quests in your Playwright script.
 
 #### Variations
@@ -144,8 +277,25 @@ await browserContext.route('**/api/login', route => route.fulfill({
 await page.goto('https://example.com');
 ```
 
-#### API reference
+```python async
+# Set up route on the entire browser context.
+# It will apply to popup windows and opened links.
+await context.route(
+    "**/api/login",
+    lambda route: route.fulfill(status=200, body="accept"))
+await page.goto("https://example.com")
+```
 
+```python sync
+# Set up route on the entire browser context.
+# It will apply to popup windows and opened links.
+context.route(
+    "**/api/login",
+    lambda route: route.fulfill(status=200, body="accept"))
+page.goto("https://example.com")
+```
+
+#### API reference
 - [`method: BrowserContext.route`]
 - [`method: BrowserContext.unroute`]
 - [`method: Page.route`]
@@ -168,6 +318,30 @@ await page.route('**/*', route => {
 await page.route('**/*', route => route.continue({method: 'POST'}));
 ```
 
+```python async
+# Delete header
+async def handle_route(route):
+    headers = route.request.headers
+    del headers["x-secret"]
+    route.continue_(headers=headers)
+await page.route("**/*", handle_route)
+
+# Continue requests as POST.
+await page.route("**/*", lambda route: route.continue_(method="POST"))
+```
+
+```python sync
+# Delete header
+def handle_route(route):
+    headers = route.request.headers
+    del headers["x-secret"]
+    route.continue_(headers=headers)
+page.route("**/*", handle_route)
+
+# Continue requests as POST.
+page.route("**/*", lambda route: route.continue_(method="POST"))
+```
+
 You can continue requests with modifications. Example above removes an HTTP header from the outgoing requests.
 
 ## Abort requests
@@ -182,8 +356,21 @@ await page.route('**/*', route => {
 });
 ```
 
-#### API reference
+```python async
+await page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
 
+# Abort based on the request type
+await page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image"  else route.continue_())
+```
+
+```python sync
+page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+
+# Abort based on the request type
+page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image"  else route.continue_())
+```
+
+#### API reference
 - [`method: Page.route`]
 - [`method: BrowserContext.route`]
 - [`method: Route.abort`]

@@ -59,6 +59,64 @@ const handle = await page.$('div >> ../span');
 const handle = await divHandle.$('css=span');
 ```
 
+```python async
+# queries 'div' css selector
+handle = await page.query_selector('css=div')
+
+# queries '//html/body/div' xpath selector
+handle = await page.query_selector('xpath=//html/body/div')
+
+# queries '"foo"' text selector
+handle = await page.query_selector('text="foo"')
+
+# queries 'span' css selector inside the result of '//html/body/div' xpath selector
+handle = await page.query_selector('xpath=//html/body/div >> css=span')
+
+# converted to 'css=div'
+handle = await page.query_selector('div')
+
+# converted to 'xpath=//html/body/div'
+handle = await page.query_selector('//html/body/div')
+
+# converted to 'text="foo"'
+handle = await page.query_selector('"foo"')
+
+# queries '../span' xpath selector starting with the result of 'div' css selector
+handle = await page.query_selector('div >> ../span')
+
+# queries 'span' css selector inside the div handle
+handle = await div_handle.query_selector('css=span')
+```
+
+```python sync
+# queries 'div' css selector
+handle = page.query_selector('css=div')
+
+# queries '//html/body/div' xpath selector
+handle = page.query_selector('xpath=//html/body/div')
+
+# queries '"foo"' text selector
+handle = page.query_selector('text="foo"')
+
+# queries 'span' css selector inside the result of '//html/body/div' xpath selector
+handle = page.query_selector('xpath=//html/body/div >> css=span')
+
+# converted to 'css=div'
+handle = page.query_selector('div')
+
+# converted to 'xpath=//html/body/div'
+handle = page.query_selector('//html/body/div')
+
+# converted to 'text="foo"'
+handle = page.query_selector('"foo"')
+
+# queries '../span' xpath selector starting with the result of 'div' css selector
+handle = page.query_selector('div >> ../span')
+
+# queries 'span' css selector inside the div handle
+handle = div_handle.query_selector('css=span')
+```
+
 ## Syntax
 Selectors are defined by selector engine name and selector body, `engine=body`.
 
@@ -127,6 +185,40 @@ await page.click('[aria-label="Close"]'); // short-form
 await page.click('css=nav >> text=Login');
 ```
 
+```python async
+# queries "Login" text selector
+await page.click('text="Login"')
+await page.click('"Login"') # short-form
+
+# queries "Search GitHub" placeholder attribute
+await page.fill('css=[placeholder="Search GitHub"]')
+await page.fill('[placeholder="Search GitHub"]') # short-form
+
+# queries "Close" accessibility label
+await page.click('css=[aria-label="Close"]')
+await page.click('[aria-label="Close"]') # short-form
+
+# combine role and text queries
+await page.click('css=nav >> text=Login')
+```
+
+```python sync
+# queries "Login" text selector
+page.click('text="Login"')
+page.click('"Login"') # short-form
+
+# queries "Search GitHub" placeholder attribute
+page.fill('css=[placeholder="Search GitHub"]')
+page.fill('[placeholder="Search GitHub"]') # short-form
+
+# queries "Close" accessibility label
+page.click('css=[aria-label="Close"]')
+page.click('[aria-label="Close"]') # short-form
+
+# combine role and text queries
+page.click('css=nav >> text=Login')
+```
+
 ### Define explicit contract
 
 When user-facing attributes change frequently, it is recommended to use explicit test ids, like `data-test-id`. These `data-*` attributes are supported by the [css] and [id selectors][id].
@@ -144,6 +236,24 @@ await page.click('[data-test-id=directions]'); // short-form
 await page.click('data-test-id=directions');
 ```
 
+```python async
+# queries data-test-id attribute with css
+await page.click('css=[data-test-id=directions]')
+await page.click('[data-test-id=directions]') # short-form
+
+# queries data-test-id with id
+await page.click('data-test-id=directions')
+```
+
+```python sync
+# queries data-test-id attribute with css
+page.click('css=[data-test-id=directions]')
+page.click('[data-test-id=directions]') # short-form
+
+# queries data-test-id with id
+page.click('data-test-id=directions')
+```
+
 ### Avoid selectors tied to implementation
 [xpath] and [css] can be tied to the DOM structure or implementation. These selectors can break when the DOM structure changes.
 
@@ -151,6 +261,18 @@ await page.click('data-test-id=directions');
 // avoid long css or xpath chains
 await page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input');
 await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input');
+```
+
+```python async
+# avoid long css or xpath chains
+await page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input')
+await page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
+```
+
+```python sync
+# avoid long css or xpath chains
+page.click('#tsf > div:nth-child(2) > div.A8SBwf > div.RNNXgb > div > div.a4bIc > input')
+page.click('//*[@id="tsf"]/div[2]/div[1]/div[1]/div/div[2]/input')
 ```
 
 ## CSS selector engine
@@ -212,11 +334,23 @@ Consider a page with two buttons, first invisible and second visible.
   ```js
   await page.click('button');
   ```
+  ```python async
+  await page.click("button")
+  ```
+  ```python sync
+  page.click("button")
+  ```
 
 * This will find a second button, because it is visible, and then click it.
 
   ```js
   await page.click('button:visible');
+  ```
+  ```python async
+  await page.click("button:visible")
+  ```
+  ```python sync
+  page.click("button:visible")
   ```
 
 Use `:visible` with caution, because it has two major drawbacks:
@@ -238,6 +372,16 @@ The `:text` pseudo-class matches elements that have a text node child with speci
 await page.click('button:text("Sign in")');
 ```
 
+```python async
+# Click a button with text "Sign in".
+await page.click('button:text("Sign in")')
+```
+
+```python sync
+# Click a button with text "Sign in".
+page.click('button:text("Sign in")')
+```
+
 ### CSS extension: has
 
 The `:has()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has) that is supported by Playwright.
@@ -245,6 +389,16 @@ The `:has()` pseudo-class is an [experimental CSS pseudo-class](https://develope
 ```js
 // Returns text content of an <article> element that has a <div class=promo> inside.
 await page.textContent('article:has(div.promo)');
+```
+
+```python async
+# Returns text content of an <article> element that has a <div class=promo> inside.
+await page.textContent("article:has(div.promo)")
+```
+
+```python sync
+# Returns text content of an <article> element that has a <div class=promo> inside.
+page.textContent("article:has(div.promo)")
 ```
 
 ### CSS extension: is
@@ -256,12 +410,30 @@ The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer
 await page.click('button:is(:text("Log in"), :text("Sign in"))');
 ```
 
+```python async
+# Clicks a <button> that has either a "Log in" or "Sign in" text.
+await page.click('button:is(:text("Log in"), :text("Sign in"))')
+```
+
+```python sync
+# Clicks a <button> that has either a "Log in" or "Sign in" text.
+page.click('button:is(:text("Log in"), :text("Sign in"))')
+```
+
 ### CSS extension: light
 
 `css` engine [pierces shadow](#shadow-piercing) by default. It is possible to disable this behavior by wrapping a selector in `:light` pseudo-class: `:light(section > button.class)` matches in light DOM only.
 
 ```js
 await page.click(':light(.article > .header)');
+```
+
+```python async
+await page.click(":light(.article > .header)")
+```
+
+```python sync
+page.click(":light(.article > .header)")
 ```
 
 ### CSS extension: position
@@ -283,6 +455,22 @@ await page.fill('input:right-of(:text("Username"))');
 
 // Click a button near the promo card.
 await page.click('button:near(.promo-card)');
+```
+
+```python async
+# Fill an input to the right of "Username".
+await page.fill('input:right-of(:text("Username"))')
+
+# Click a button near the promo card.
+await page.click('button:near(.promo-card)')
+```
+
+```python sync
+# Fill an input to the right of "Username".
+page.fill('input:right-of(:text("Username"))')
+
+# Click a button near the promo card.
+page.click('button:near(.promo-card)')
 ```
 
 ## Xpath selector engine

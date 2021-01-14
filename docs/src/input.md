@@ -439,7 +439,6 @@ await page.setInputFiles('input#upload', {
 ```
 
 ```python async
-from playwright.async_api import FilePayload
 # Select one file
 await page.set_input_files('input#upload', 'myfile.pdf')
 
@@ -452,12 +451,13 @@ await page.set_input_files('input#upload', [])
 # Upload buffer from memory
 await page.set_input_files(
     "input#upload",
-    files=[FilePayload("test.txt", "text/plain", b"this is a test")],
+    files=[
+        {"name": "test.txt", "mimeType": "text/plain", "buffer": b"this is a test"}
+    ],
 )
 ```
 
 ```python sync
-from playwright.sync_api import FilePayload
 # Select one file
 page.set_input_files('input#upload', 'myfile.pdf')
 
@@ -470,7 +470,9 @@ page.set_input_files('input#upload', [])
 # Upload buffer from memory
 page.set_input_files(
     "input#upload",
-    files=[FilePayload("test.txt", "text/plain", b"this is a test")],
+    files=[
+        {"name": "test.txt", "mimeType": "text/plain", "buffer": b"this is a test"}
+    ],
 )
 ```
 
