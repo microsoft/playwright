@@ -32,7 +32,7 @@ export type BrowserDescriptor = {
 export const hostPlatform = ((): BrowserPlatform => {
   const platform = os.platform();
   if (platform === 'darwin') {
-    let [major, minor] = execSync('sw_vers -productVersion', {
+    const [major, minor] = execSync('sw_vers -productVersion', {
       stdio: ['ignore', 'pipe', 'ignore']
     }).toString('utf8').trim().split('.').map(x => parseInt(x, 10));
     let arm64 = false;
