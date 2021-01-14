@@ -382,7 +382,7 @@ export abstract class BrowserContext extends EventEmitter {
   async extendInjectedScript(source: string, arg?: any) {
     const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(e => {});
     const installInPage = (page: Page) => {
-      page.on(Page.Events.FrameNavigated, installInFrame);
+      page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
     };
     this.on(BrowserContext.Events.Page, installInPage);

@@ -44,8 +44,10 @@ const [page] = await Promise.all([
 console.log(await page.evaluate('location.href'));
 ```
 
-> **NOTE** Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
+:::note
+Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
 need it in most cases).
+:::
 
 ## async method: BrowserContext.addCookies
 
@@ -91,8 +93,10 @@ await browserContext.addInitScript({
 });
 ```
 
-> **NOTE** The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
+:::note
+The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
 [`method: Page.addInitScript`] is not defined.
+:::
 
 ### param: BrowserContext.addInitScript.script
 * langs: js
@@ -132,7 +136,9 @@ context.clearPermissions();
 
 Closes the browser context. All the pages that belong to the browser context will be closed.
 
-> **NOTE** the default browser context cannot be closed.
+:::note
+The default browser context cannot be closed.
+:::
 
 ## async method: BrowserContext.cookies
 - returns: <[Array]<[Object]>>
@@ -332,7 +338,9 @@ await browser.close();
 Page routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both
 handlers.
 
-> **NOTE** Enabling routing disables http cache.
+:::note
+Enabling routing disables http cache.
+:::
 
 ### param: BrowserContext.route.url
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
@@ -354,8 +362,10 @@ This setting will change the default maximum navigation time for the following m
 * [`method: Page.setContent`]
 * [`method: Page.waitForNavigation`]
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`] and [`method: Page.setDefaultTimeout`] take priority over
+:::note
+[`method: Page.setDefaultNavigationTimeout`] and [`method: Page.setDefaultTimeout`] take priority over
 [`method: BrowserContext.setDefaultNavigationTimeout`].
+:::
 
 ### param: BrowserContext.setDefaultNavigationTimeout.timeout
 - `timeout` <[float]>
@@ -366,8 +376,10 @@ Maximum navigation time in milliseconds
 
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
 
-> **NOTE** [`method: Page.setDefaultNavigationTimeout`], [`method: Page.setDefaultTimeout`] and [`method:
+:::note
+[`method: Page.setDefaultNavigationTimeout`], [`method: Page.setDefaultTimeout`] and [`method:
 BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: BrowserContext.setDefaultTimeout`].
+:::
 
 ### param: BrowserContext.setDefaultTimeout.timeout
 - `timeout` <[float]>
@@ -380,7 +392,9 @@ The extra HTTP headers will be sent with every request initiated by any page in 
 with page-specific extra HTTP headers set with [`method: Page.setExtraHTTPHeaders`]. If page overrides a particular
 header, page-specific header value will be used instead of the browser context header value.
 
-> **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
+:::note
+[`method: BrowserContext.setExtraHTTPHeaders`] does not guarantee the order of headers in the outgoing requests.
+:::
 
 ### param: BrowserContext.setExtraHTTPHeaders.headers
 - `headers` <[Object]<[string], [string]>>
@@ -395,8 +409,10 @@ Sets the context's geolocation. Passing `null` or `undefined` emulates position 
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
-> **NOTE** Consider using [`method: BrowserContext.grantPermissions`] to grant permissions for the browser context
+:::note
+Consider using [`method: BrowserContext.grantPermissions`] to grant permissions for the browser context
 pages to read its geolocation.
+:::
 
 ### param: BrowserContext.setGeolocation.geolocation
 - `geolocation` <[null]|[Object]>
@@ -405,6 +421,7 @@ pages to read its geolocation.
   - `accuracy` <[float]> Non-negative accuracy value. Defaults to `0`.
 
 ## async method: BrowserContext.setHTTPCredentials
+* langs: js
 
 **DEPRECATED** Browsers may cache credentials after successful authentication.
 Create a new browser context instead.
@@ -481,8 +498,8 @@ Event name, same one would pass into `browserContext.on(event)`.
 
 ### param: BrowserContext.waitForEvent.optionsOrPredicate
 * langs: js
-- `optionsOrPredicate` <[Function]|[Object]>
-  - `predicate` <[Function]> receives the event data and resolves to truthy value when the waiting should resolve.
+- `optionsOrPredicate` <[function]|[Object]>
+  - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
   - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.

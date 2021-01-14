@@ -210,7 +210,9 @@ If the element is detached from the DOM at any moment during the action, this me
 When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-> **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
+:::note
+`elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
+:::
 
 ### option: ElementHandle.dblclick.button = %%-input-button-%%
 
@@ -435,7 +437,7 @@ Defaults to `false`.
 
 This method waits for [actionability](./actionability.md) checks, then tries to scroll element into view, unless it is
 completely visible as defined by
-[IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
+[IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
 
 Throws when `elementHandle` does not point to an element
 [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
@@ -502,7 +504,9 @@ If the element is detached from the DOM at any moment during the action, this me
 When all steps combined have not finished during the specified [`option: timeout`], this method rejects with a
 [TimeoutError]. Passing zero timeout disables this.
 
-> **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
+:::note
+`elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
+:::
 
 ### option: ElementHandle.tap.position = %%-input-position-%%
 
@@ -613,7 +617,9 @@ const div = await page.$('div');
 const span = await div.waitForSelector('span', { state: 'attached' });
 ```
 
-> **NOTE** This method does not work across navigations, use [`method: Page.waitForSelector`] instead.
+:::note
+This method does not work across navigations, use [`method: Page.waitForSelector`] instead.
+:::
 
 ### param: ElementHandle.waitForSelector.selector = %%-query-selector-%%
 

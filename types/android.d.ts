@@ -15,7 +15,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { BrowserContextOptions, BrowserContext, Page } from './types';
+import { BrowserContextOptions, Page, ChromiumBrowserContext } from './types';
 
 export interface Android extends EventEmitter {
   setDefaultTimeout(timeout: number): void;
@@ -37,7 +37,7 @@ export interface AndroidDevice extends EventEmitter {
   open(command: string): Promise<AndroidSocket>;
   installApk(file: string | Buffer, options?: { args?: string[] }): Promise<void>;
   push(file: string | Buffer, path: string, options?: { mode?: number }): Promise<void>;
-  launchBrowser(options?: BrowserContextOptions & { pkg?: string  }): Promise<BrowserContext>;
+  launchBrowser(options?: BrowserContextOptions & { pkg?: string  }): Promise<ChromiumBrowserContext>;
   close(): Promise<void>;
 
   wait(selector: AndroidSelector, options?: { state?: 'gone' } & { timeout?: number }): Promise<void>;

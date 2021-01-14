@@ -17,9 +17,10 @@
 // @ts-check
 
 /** @typedef {{
- *    type: 'text' | 'li' | 'code' | 'properties' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4',
+ *    type: 'text' | 'li' | 'code' | 'properties' | 'h0' | 'h1' | 'h2' | 'h3' | 'h4' | 'note',
  *    text?: string,
  *    codeLang?: string,
+ *    noteType?: string,
  *    lines?: string[],
  *    liType?: 'default' | 'bullet' | 'ordinal',
  *    children?: MarkdownNode[]
@@ -42,7 +43,7 @@ function flattenWrappedLines(content) {
       || trimmedLine.startsWith('*')
       || line.match(/\[[^\]]+\]:.*/)
       || singleLineExpression;
-    if (trimmedLine.startsWith('```') || trimmedLine.startsWith('---')) {
+    if (trimmedLine.startsWith('```') || trimmedLine.startsWith('---') || trimmedLine.startsWith(':::')) {
       inCodeBlock = !inCodeBlock;
       flushLastParagraph = true;
     }
@@ -133,6 +134,29 @@ function buildTree(lines) {
         node.lines.push(line.substring(indent.length));
         line = lines[++i];
       }
+      appendNode(indent, node);
+      continue;
+    }
+
+    if (content.startsWith(':::')) {
+      /** @type {MarkdownNode} */
+      const node = {
+        type: 'note',
+        noteType: content.substring(3)
+      };
+      line = lines[++i];
+      const tokens = [];
+      while (!line.trim().startsWith(':::')) {
+        if (!line.startsWith(indent)) {
+          const from = Math.max(0, i - 5)
+          const to = Math.min(lines.length, from + 10);
+          const snippet = lines.slice(from, to);
+          throw new Error(`Bad comment block: ${snippet.join('\n')}`);
+        }
+        tokens.push(line.substring(indent.length));
+        line = lines[++i];
+      }
+      node.text = tokens.join(' ');
       appendNode(indent, node);
       continue;
     }
@@ -233,6 +257,15 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
     for (const line of node.lines)
       result.push(indent + line);
     result.push(`${indent}\`\`\``);
+    newLine();
+    return;
+  }
+
+  if (node.type === 'note') {
+    newLine();
+    result.push(`${indent}:::${node.noteType}`);
+    result.push(`${wrapText(node.text, maxColumns, indent)}`);
+    result.push(`${indent}:::`);
     newLine();
     return;
   }

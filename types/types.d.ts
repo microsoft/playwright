@@ -295,7 +295,9 @@ export interface Page {
    * [browserContext.exposeBinding(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposebinding)
    * for the context-wide version.
    * 
-   * > **NOTE** Functions installed via `page.exposeBinding` survive navigations.
+   * > NOTE: Functions installed via
+   * [page.exposeBinding(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposebinding) survive
+   * navigations.
    * 
    * An example of exposing page URL to all frames in a page:
    * 
@@ -415,9 +417,9 @@ export interface Page {
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
    * 
-   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-   * download is not performed and user has no access to the downloaded files.
+   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+   * performed and user has no access to the downloaded files.
    */
   on(event: 'download', listener: (download: Download) => void): this;
 
@@ -478,7 +480,7 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -494,8 +496,8 @@ export interface Page {
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-   * will complete with
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
    * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
    * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
@@ -599,9 +601,9 @@ export interface Page {
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
    * 
-   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-   * download is not performed and user has no access to the downloaded files.
+   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+   * performed and user has no access to the downloaded files.
    */
   once(event: 'download', listener: (download: Download) => void): this;
 
@@ -662,7 +664,7 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -678,8 +680,8 @@ export interface Page {
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-   * will complete with
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
    * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
    * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
@@ -783,9 +785,9 @@ export interface Page {
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
    * 
-   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-   * download is not performed and user has no access to the downloaded files.
+   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+   * performed and user has no access to the downloaded files.
    */
   addListener(event: 'download', listener: (download: Download) => void): this;
 
@@ -846,7 +848,7 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -862,8 +864,8 @@ export interface Page {
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-   * will complete with
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
    * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
    * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
@@ -967,9 +969,9 @@ export interface Page {
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
    * 
-   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-   * download is not performed and user has no access to the downloaded files.
+   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+   * performed and user has no access to the downloaded files.
    */
   removeListener(event: 'download', listener: (download: Download) => void): this;
 
@@ -1030,7 +1032,7 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -1046,8 +1048,8 @@ export interface Page {
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-   * will complete with
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
    * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
    * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
@@ -1151,9 +1153,9 @@ export interface Page {
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
    * 
-   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-   * download is not performed and user has no access to the downloaded files.
+   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+   * performed and user has no access to the downloaded files.
    */
   off(event: 'download', listener: (download: Download) => void): this;
 
@@ -1214,7 +1216,7 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -1230,8 +1232,8 @@ export interface Page {
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-   * will complete with
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
    * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
    * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
@@ -1283,7 +1285,7 @@ export interface Page {
    * await page.addInitScript(preloadFile);
    * ```
    * 
-   * > **NOTE** The order of evaluation of multiple scripts installed via
+   * > NOTE: The order of evaluation of multiple scripts installed via
    * [browserContext.addInitScript(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextaddinitscript)
    * and [page.addInitScript(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageaddinitscript) is not
    * defined.
@@ -1486,9 +1488,8 @@ export interface Page {
    * 
    * By default, `page.close()` **does not** run `beforeunload` handlers.
    * 
-   * > **NOTE** if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned
-   * > and should be handled manually via
-   * [page.on('dialog')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
+   * > NOTE: if `runBeforeUnload` is passed as true, a `beforeunload` dialog might be summoned and should be handled manually
+   * via [page.on('dialog')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageondialog) event.
    * @param options 
    */
   close(options?: {
@@ -1529,7 +1530,7 @@ export interface Page {
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
    * 
-   * > **NOTE** `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
+   * > NOTE: `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * 
    * Shortcut for main frame's
    * [frame.dblclick(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#framedblclick).
@@ -1688,7 +1689,9 @@ export interface Page {
    * [browserContext.exposeFunction(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextexposefunction)
    * for context-wide exposed function.
    * 
-   * > **NOTE** Functions installed via `page.exposeFunction` survive navigations.
+   * > NOTE: Functions installed via
+   * [page.exposeFunction(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunction) survive
+   * navigations.
    * 
    * An example of adding an `md5` function to the page:
    * 
@@ -1916,9 +1919,9 @@ export interface Page {
    * Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
    * [response.status(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#responsestatus).
    * 
-   * > **NOTE** `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
+   * > NOTE: `page.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
    * `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
-   * > **NOTE** Headless mode doesn't support navigation to a PDF document. See the
+   * > NOTE: Headless mode doesn't support navigation to a PDF document. See the
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
    * 
    * Shortcut for main frame's [frame.goto(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#framegoto)
@@ -2151,13 +2154,13 @@ export interface Page {
   /**
    * Returns the PDF buffer.
    * 
-   * > **NOTE** Generating a pdf is currently only supported in Chromium headless.
+   * > NOTE: Generating a pdf is currently only supported in Chromium headless.
    * 
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
    * [page.emulateMedia(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageemulatemedia) before calling
    * `page.pdf()`:
    * 
-   * > **NOTE** By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
+   * > NOTE: By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
    * [`-webkit-print-color-adjust`](https://developer.mozilla.org/en-US/docs/Web/CSS/-webkit-print-color-adjust) property to
    * force rendering of exact colors.
    * 
@@ -2193,9 +2196,8 @@ export interface Page {
    * - `A5`: 5.83in x 8.27in
    * - `A6`: 4.13in x 5.83in
    * 
-   * > **NOTE** `headerTemplate` and `footerTemplate` markup have the following limitations:
-   * > 1. Script tags inside templates are not evaluated.
-   * > 2. Page styles are not visible inside templates.
+   * > NOTE: `headerTemplate` and `footerTemplate` markup have the following limitations: > 1. Script tags inside templates
+   * are not evaluated. > 2. Page styles are not visible inside templates.
    * @param options 
    */
   pdf(options?: {
@@ -2385,7 +2387,7 @@ export interface Page {
    * 
    * Once routing is enabled, every request matching the url pattern will stall unless it's continued, fulfilled or aborted.
    * 
-   * > **NOTE** The handler will only be called for the first url if the response is a redirect.
+   * > NOTE: The handler will only be called for the first url if the response is a redirect.
    * 
    * An example of a naïve handler that aborts all image requests:
    * 
@@ -2409,7 +2411,7 @@ export interface Page {
    * [browserContext.route(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextroute)) when
    * request matches both handlers.
    * 
-   * > **NOTE** Enabling routing disables http cache.
+   * > NOTE: Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler handler function to route the request.
    */
@@ -2418,7 +2420,7 @@ export interface Page {
   /**
    * Returns the buffer with the captured screenshot.
    * 
-   * > **NOTE** Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for
+   * > NOTE: Screenshots take at least 1/6 second on Chromium OS X and Chromium Windows. See https://crbug.com/741689 for
    * discussion.
    * @param options 
    */
@@ -2594,7 +2596,7 @@ export interface Page {
    * - [page.setContent(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetcontent)
    * - [page.waitForNavigation(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitfornavigation)
    * 
-   * > **NOTE**
+   * > NOTE:
    * [page.setDefaultNavigationTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeout)
    * takes priority over
    * [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout),
@@ -2608,7 +2610,7 @@ export interface Page {
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * 
-   * > **NOTE**
+   * > NOTE:
    * [page.setDefaultNavigationTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeout)
    * takes priority over
    * [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout).
@@ -2619,7 +2621,9 @@ export interface Page {
   /**
    * The extra HTTP headers will be sent with every request the page initiates.
    * 
-   * > **NOTE** page.setExtraHTTPHeaders does not guarantee the order of headers in the outgoing requests.
+   * > NOTE:
+   * [page.setExtraHTTPHeaders(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetextrahttpheaders)
+   * does not guarantee the order of headers in the outgoing requests.
    * @param headers An object containing additional HTTP headers to be sent with every request. All header values must be strings.
    */
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
@@ -2726,7 +2730,8 @@ export interface Page {
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
    * 
-   * > **NOTE** `page.tap()` requires that the `hasTouch` option of the browser context be set to true.
+   * > NOTE: [page.tap(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagetap) requires that the
+   * `hasTouch` option of the browser context be set to true.
    * 
    * Shortcut for main frame's [frame.tap(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frametap).
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
@@ -2984,9 +2989,9 @@ export interface Page {
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
    * [Download] instance.
    * 
-   * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
-   * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
-   * download is not performed and user has no access to the downloaded files.
+   * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+   * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+   * performed and user has no access to the downloaded files.
    */
   waitForEvent(event: 'download', optionsOrPredicate?: { predicate?: (download: Download) => boolean, timeout?: number } | ((download: Download) => boolean)): Promise<Download>;
 
@@ -3047,7 +3052,7 @@ export interface Page {
    * console.log(await popup.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -3063,8 +3068,8 @@ export interface Page {
   /**
    * Emitted when a request fails, for example by timing out.
    * 
-   * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-   * will complete with
+   * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+   * complete with
    * [page.on('requestfinished')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfinished)
    * event and not with
    * [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed).
@@ -3152,7 +3157,7 @@ export interface Page {
    * ]);
    * ```
    * 
-   * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
+   * > NOTE: Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
    * considered a navigation.
    * 
    * Shortcut for main frame's
@@ -3255,7 +3260,7 @@ export interface Page {
    * This method returns all of the dedicated [WebWorkers](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API)
    * associated with the page.
    * 
-   * > **NOTE** This does not contain ServiceWorkers
+   * > NOTE: This does not contain ServiceWorkers
    */
   workers(): Array<Worker>;}
 
@@ -3699,7 +3704,7 @@ export interface Frame {
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
    * 
-   * > **NOTE** `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
+   * > NOTE: `frame.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -3894,9 +3899,9 @@ export interface Frame {
    * "Not Found" and 500 "Internal Server Error".  The status code for such responses can be retrieved by calling
    * [response.status(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#responsestatus).
    * 
-   * > **NOTE** `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation
-   * to `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
-   * > **NOTE** Headless mode doesn't support navigation to a PDF document. See the
+   * > NOTE: `frame.goto` either throws an error or returns a main resource response. The only exceptions are navigation to
+   * `about:blank` or navigation to the same URL with a different hash, which would succeed and return `null`.
+   * > NOTE: Headless mode doesn't support navigation to a PDF document. See the
    * [upstream issue](https://bugs.chromium.org/p/chromium/issues/detail?id=761295).
    * @param url URL to navigate frame to. The url should include scheme, e.g. `https://`.
    * @param options 
@@ -4113,8 +4118,7 @@ export interface Frame {
    * 
    * If the name is empty, returns the id attribute instead.
    * 
-   * > **NOTE** This value is calculated once when the frame is created, and will not update if the attribute is changed
-   * later.
+   * > NOTE: This value is calculated once when the frame is created, and will not update if the attribute is changed later.
    */
   name(): string;
 
@@ -4338,7 +4342,7 @@ export interface Frame {
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
    * 
-   * > **NOTE** `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
+   * > NOTE: `frame.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * @param selector A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
    */
@@ -4533,7 +4537,7 @@ export interface Frame {
    * ]);
    * ```
    * 
-   * **NOTE** Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
+   * > NOTE: Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is
    * considered a navigation.
    * @param options 
    */
@@ -4677,7 +4681,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -4710,7 +4714,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -4743,7 +4747,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -4776,7 +4780,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -4809,7 +4813,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -4890,7 +4894,7 @@ export interface BrowserContext {
    * });
    * ```
    * 
-   * > **NOTE** The order of evaluation of multiple scripts installed via
+   * > NOTE: The order of evaluation of multiple scripts installed via
    * [browserContext.addInitScript(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextaddinitscript)
    * and [page.addInitScript(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageaddinitscript) is not
    * defined.
@@ -4936,7 +4940,7 @@ export interface BrowserContext {
   /**
    * Closes the browser context. All the pages that belong to the browser context will be closed.
    * 
-   * > **NOTE** the default browser context cannot be closed.
+   * > NOTE: The default browser context cannot be closed.
    */
   close(): Promise<void>;
 
@@ -5052,7 +5056,7 @@ export interface BrowserContext {
    * Page routes (set up with [page.route(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageroute))
    * take precedence over browser context routes when request matches both handlers.
    * 
-   * > **NOTE** Enabling routing disables http cache.
+   * > NOTE: Enabling routing disables http cache.
    * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
    * @param handler handler function to route the request.
    */
@@ -5067,7 +5071,7 @@ export interface BrowserContext {
    * - [page.setContent(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetcontent)
    * - [page.waitForNavigation(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitfornavigation)
    * 
-   * > **NOTE**
+   * > NOTE:
    * [page.setDefaultNavigationTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeout)
    * and [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout)
    * take priority over
@@ -5079,7 +5083,7 @@ export interface BrowserContext {
   /**
    * This setting will change the default maximum time for all the methods accepting `timeout` option.
    * 
-   * > **NOTE**
+   * > NOTE:
    * [page.setDefaultNavigationTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaultnavigationtimeout),
    * [page.setDefaultTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagesetdefaulttimeout) and
    * [browserContext.setDefaultNavigationTimeout(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetdefaultnavigationtimeout)
@@ -5096,7 +5100,9 @@ export interface BrowserContext {
    * If page overrides a particular header, page-specific header value will be used instead of the browser context header
    * value.
    * 
-   * > **NOTE** `browserContext.setExtraHTTPHeaders` does not guarantee the order of headers in the outgoing requests.
+   * > NOTE:
+   * [browserContext.setExtraHTTPHeaders(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextsetextrahttpheaders)
+   * does not guarantee the order of headers in the outgoing requests.
    * @param headers An object containing additional HTTP headers to be sent with every request. All header values must be strings.
    */
   setExtraHTTPHeaders(headers: { [key: string]: string; }): Promise<void>;
@@ -5108,7 +5114,7 @@ export interface BrowserContext {
    * await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
    * ```
    * 
-   * > **NOTE** Consider using
+   * > NOTE: Consider using
    * [browserContext.grantPermissions(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsercontextgrantpermissions)
    * to grant permissions for the browser context pages to read its geolocation.
    * @param geolocation 
@@ -5226,7 +5232,7 @@ export interface BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -5368,7 +5374,7 @@ export interface JSHandle<T = any> {
   /**
    * Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
    * 
-   * > **NOTE** The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an
+   * > NOTE: The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an
    * error if the object has circular references.
    */
   jsonValue(): Promise<T>;
@@ -5521,7 +5527,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * const span = await div.waitForSelector('span', { state: 'attached' });
    * ```
    * 
-   * > **NOTE** This method does not work across navigations, use
+   * > NOTE: This method does not work across navigations, use
    * [page.waitForSelector(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforselector) instead.
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
    * @param options 
@@ -5699,7 +5705,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
    * 
-   * > **NOTE** `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
+   * > NOTE: `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
    * @param options 
    */
   dblclick(options?: {
@@ -6003,7 +6009,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
   /**
    * This method waits for [actionability](https://github.com/microsoft/playwright/blob/master/docs/actionability.md) checks, then tries to scroll element into view, unless it is
    * completely visible as defined by
-   * [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s ```ratio```.
+   * [IntersectionObserver](https://developer.mozilla.org/en-US/docs/Web/API/Intersection_Observer_API)'s `ratio`.
    * 
    * Throws when `elementHandle` does not point to an element
    * [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
@@ -6178,7 +6184,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * When all steps combined have not finished during the specified `timeout`, this method rejects with a [TimeoutError].
    * Passing zero timeout disables this.
    * 
-   * > **NOTE** `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
+   * > NOTE: `elementHandle.tap()` requires that the `hasTouch` option of the browser context be set to true.
    * @param options 
    */
   tap(options?: {
@@ -6864,7 +6870,7 @@ export interface BrowserType<Browser> {
  * 
  * [ChromiumBrowser] can also be used for testing Chrome Extensions.
  * 
- * > **NOTE** Extensions in Chrome / Chromium currently only work in non-headless mode.
+ * > NOTE: Extensions in Chrome / Chromium currently only work in non-headless mode.
  * 
  * The following is code for getting a handle to the
  * [background page](https://developer.chrome.com/extensions/background_pages) of an extension whose source is located in
@@ -7040,7 +7046,7 @@ export interface Accessibility {
    * Captures the current state of the accessibility tree. The returned object represents the root accessible node of the
    * page.
    * 
-   * > **NOTE** The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers.
+   * > NOTE: The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen readers.
    * Playwright will discard them as well for an easier to process tree, unless `interestingOnly` is set to `false`.
    * 
    * An example of dumping the entire accessibility tree:
@@ -7137,9 +7143,6 @@ export {};
  * })();
  * ```
  * 
- * See [ChromiumBrowser], [FirefoxBrowser] and [WebKitBrowser] for browser-specific features. Note that
- * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch) always
- * returns a specific browser instance, based on the browser being launched.
  */
 export interface Browser extends EventEmitter {
   /**
@@ -7601,7 +7604,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * > **NOTE** Only works with persistent context.
+   * > NOTE: Only works with persistent context.
    */
   on(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7637,7 +7640,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -7646,7 +7649,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * > **NOTE** Only works with persistent context.
+   * > NOTE: Only works with persistent context.
    */
   once(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7682,7 +7685,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -7691,7 +7694,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * > **NOTE** Only works with persistent context.
+   * > NOTE: Only works with persistent context.
    */
   addListener(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7727,7 +7730,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -7736,7 +7739,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * > **NOTE** Only works with persistent context.
+   * > NOTE: Only works with persistent context.
    */
   removeListener(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7772,7 +7775,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -7781,7 +7784,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * > **NOTE** Only works with persistent context.
+   * > NOTE: Only works with persistent context.
    */
   off(event: 'backgroundpage', listener: (page: Page) => void): this;
 
@@ -7817,7 +7820,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -7842,7 +7845,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
   /**
    * Emitted when new background page is created in the context.
    * 
-   * > **NOTE** Only works with persistent context.
+   * > NOTE: Only works with persistent context.
    */
   waitForEvent(event: 'backgroundpage', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
@@ -7878,7 +7881,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * console.log(await page.evaluate('location.href'));
    * ```
    * 
-   * > **NOTE** Use
+   * > NOTE: Use
    * [page.waitForLoadState(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforloadstate) to wait
    * until the page gets to a particular state (you should not need it in most cases).
    */
@@ -7927,8 +7930,8 @@ export interface ChromiumCoverage {
   /**
    * Returns coverage is started
    * 
-   * > **NOTE** Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created
-   * on the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have
+   * > NOTE: Anonymous scripts are ones that don't have an associated url. These are scripts that are dynamically created on
+   * the page using `eval` or `new Function`. If `reportAnonymousScripts` is set to `true`, anonymous scripts will have
    * `__playwright_evaluation_script__` as their URL.
    * @param options 
    */
@@ -7947,7 +7950,7 @@ export interface ChromiumCoverage {
   /**
    * Returns the array of coverage reports for all stylesheets
    * 
-   * > **NOTE** CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
+   * > NOTE: CSS Coverage doesn't include dynamically injected style tags without sourceURLs.
    */
   stopCSSCoverage(): Promise<Array<{
     /**
@@ -7979,8 +7982,7 @@ export interface ChromiumCoverage {
   /**
    * Returns the array of coverage reports for all scripts
    * 
-   * > **NOTE** JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are
-   * reported.
+   * > NOTE: JavaScript Coverage doesn't include anonymous scripts by default. However, scripts with sourceURLs are reported.
    */
   stopJSCoverage(): Promise<Array<{
     /**
@@ -8120,9 +8122,9 @@ export interface Dialog {
  * ...
  * ```
  * 
- * > **NOTE** Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
- * downloaded content. If `acceptDownloads` is not set or set to `false`, download events are emitted, but the actual
- * download is not performed and user has no access to the downloaded files.
+ * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
+ * downloaded content. If `acceptDownloads` is not set, download events are emitted, but the actual download is not
+ * performed and user has no access to the downloaded files.
  */
 export interface Download {
   /**
@@ -8327,7 +8329,7 @@ export interface Keyboard {
    * [repeat](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) set to true. To release the key, use
    * [keyboard.up(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#keyboardup).
    * 
-   * > **NOTE** Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
+   * > NOTE: Modifier keys DO influence `keyboard.down`. Holding down `Shift` will type the text in upper case.
    * @param key Name of the key to press or a character to generate, such as `ArrowLeft` or `a`.
    */
   down(key: string): Promise<void>;
@@ -8339,7 +8341,7 @@ export interface Keyboard {
    * page.keyboard.insertText('嗨');
    * ```
    * 
-   * > **NOTE** Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
+   * > NOTE: Modifier keys DO NOT effect `keyboard.insertText`. Holding down `Shift` will not type the text in upper case.
    * @param text Sets input to the specified text value.
    */
   insertText(text: string): Promise<void>;
@@ -8397,7 +8399,7 @@ export interface Keyboard {
    * await page.keyboard.type('World', {delay: 100}); // Types slower, like a user
    * ```
    * 
-   * > **NOTE** Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
+   * > NOTE: Modifier keys DO NOT effect `keyboard.type`. Holding down `Shift` will not type the text in upper case.
    * @param text A text to type into a focused element.
    * @param options 
    */
@@ -8581,8 +8583,8 @@ export interface Mouse {
  * the  [page.on('requestfailed')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonrequestfailed)
  * event is emitted.
  * 
- * > **NOTE** HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
- * will complete with `'requestfinished'` event.
+ * > NOTE: HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will
+ * complete with `'requestfinished'` event.
  * 
  * If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
  * request is  issued to a redirected url.

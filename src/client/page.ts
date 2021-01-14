@@ -46,6 +46,7 @@ import { evaluationScript, urlMatches } from './clientHelper';
 import { isString, isRegExp, isObject, mkdirIfNeeded, headersObjectToArray } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import { Video } from './video';
+import type { ChromiumBrowserContext } from './chromiumBrowserContext';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const mkdirAsync = util.promisify(fs.mkdir);
@@ -133,7 +134,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
 
-    if (this._browserContext._browserName === 'chromium') {
+    if ((this._browserContext as ChromiumBrowserContext)._isChromium) {
       this.coverage = new ChromiumCoverage(this._channel);
       this.pdf = options => this._pdf(options);
     } else {

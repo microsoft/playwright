@@ -23,7 +23,7 @@ export interface LanguageGenerator {
   generateHeader(browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName?: string): string;
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string;
   generateFooter(saveStorage: string | undefined): string;
-  highligherType(): HighlighterType;
+  highlighterType(): HighlighterType;
 }
 
 export { JavaScriptLanguageGenerator } from './javascript';

@@ -173,11 +173,11 @@ export class Connection {
         break;
       }
       case 'BrowserContext': {
-        const browserName = (initializer as channels.BrowserContextInitializer).browserName;
-        if (browserName === 'chromium')
+        const {isChromium} = (initializer as channels.BrowserContextInitializer);
+        if (isChromium)
           result = new ChromiumBrowserContext(parent, type, guid, initializer);
         else
-          result = new BrowserContext(parent, type, guid, initializer, browserName);
+          result = new BrowserContext(parent, type, guid, initializer);
         break;
       }
       case 'BrowserType':

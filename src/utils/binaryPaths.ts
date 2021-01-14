@@ -34,17 +34,10 @@ export function ffmpegExecutable(): string | undefined {
 }
 
 function pathToExecutable(relative: string[]): string | undefined {
-  const defaultPath = path.join(__dirname, '..', '..', ...relative);
-  const localPath = path.join(path.dirname(process.argv[0]), relative[relative.length - 1]);
   try {
+    const defaultPath = path.join(__dirname, '..', '..', ...relative);
     if (fs.existsSync(defaultPath))
       return defaultPath;
-  } catch (e) {
-  }
-
-  try {
-    if (fs.existsSync(localPath))
-      return localPath;
   } catch (e) {
   }
 }

@@ -372,7 +372,7 @@ export class Recorder {
     if (event.key === '@' && event.code === 'KeyL')
       return false;
     // Allow and ignore common used shortcut for pasting.
-    if (process.platform === 'darwin') {
+    if (navigator.platform.includes('Mac')) {
       if (event.key === 'v' && event.metaKey)
         return false;
     } else {

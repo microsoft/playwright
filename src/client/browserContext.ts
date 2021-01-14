@@ -40,7 +40,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _pages = new Set<Page>();
   private _routes: { url: URLMatch, handler: network.RouteHandler }[] = [];
   readonly _browser: Browser | null = null;
-  readonly _browserName: string;
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   _timeoutSettings = new TimeoutSettings();
   _ownerPage: Page | undefined;
@@ -55,11 +54,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     return context ? BrowserContext.from(context) : null;
   }
 
-  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer, browserName: string) {
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserContextInitializer) {
     super(parent, type, guid, initializer);
     if (parent instanceof Browser)
       this._browser = parent;
-    this._browserName = browserName;
 
     this._channel.on('bindingCall', ({binding}) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());

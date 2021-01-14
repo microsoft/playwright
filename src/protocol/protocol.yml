@@ -507,7 +507,7 @@ BrowserContext:
   type: interface
 
   initializer:
-    browserName: string
+    isChromium: boolean
 
   commands:
 
@@ -1395,14 +1395,6 @@ Frame:
           - hidden
       returns:
         element: ElementHandle?
-
-    extendInjectedScript:
-      experimental: True
-      parameters:
-        source: string
-        arg: SerializedArgument
-      returns:
-        handle: JSHandle
 
   events:
 

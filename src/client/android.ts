@@ -27,6 +27,7 @@ import { Page } from './page';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
 import { EventEmitter } from 'events';
+import { ChromiumBrowserContext } from './chromiumBrowserContext';
 
 type Direction =  'down' | 'up' | 'left' | 'right';
 type SpeedOptions = { speed?: number };
@@ -233,11 +234,11 @@ export class AndroidDevice extends ChannelOwner<channels.AndroidDeviceChannel, c
     });
   }
 
-  async launchBrowser(options: types.BrowserContextOptions & { pkg?: string  } = {}): Promise<BrowserContext> {
+  async launchBrowser(options: types.BrowserContextOptions & { pkg?: string  } = {}): Promise<ChromiumBrowserContext> {
     return this._wrapApiCall('androidDevice.launchBrowser', async () => {
       const contextOptions = await prepareBrowserContextOptions(options);
       const { context } = await this._channel.launchBrowser(contextOptions);
-      return BrowserContext.from(context);
+      return BrowserContext.from(context) as ChromiumBrowserContext;
     });
   }
 
