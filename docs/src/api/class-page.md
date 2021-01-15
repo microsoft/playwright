@@ -1783,14 +1783,14 @@ await browser.close();
 
 ```python async
 page = await browser.new_page()
-await page.route(r"(\.png$)|(\.jpg$)", lambda route: route.abort())
+await page.route(re.compile(r"(\.png$)|(\.jpg$)"), lambda route: route.abort())
 await page.goto("https://example.com")
 await browser.close()
 ```
 
 ```python sync
 page = browser.new_page()
-page.route(r"(\.png$)|(\.jpg$)", lambda route: route.abort())
+page.route(re.compile(r"(\.png$)|(\.jpg$)"), lambda route: route.abort())
 page.goto("https://example.com")
 browser.close()
 ```
@@ -2163,12 +2163,31 @@ Video object associated with this page.
   - `height` <[int]> page height in pixels.
 
 ## async method: Page.waitForEvent
+* langs:
+  - alias-python: expect_event
 - returns: <[any]>
 
-Returns the event data value.
-
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
-value. Will throw an error if the page is closed before the event is fired.
+value. Will throw an error if the page is closed before the event is fired. Returns the event data value.
+
+```js
+const [frame, _] = await Promise.all([
+  page.waitForEvent('framenavigated'),
+  page.click('button')
+]);
+```
+
+```python async
+async with page.expect_event("framenavigated") as event_info:
+    await page.click("button")
+frame = await event_info.value
+```
+
+```python sync
+with page.expect_event("framenavigated") as event_info:
+    page.click("button")
+frame = event_info.value
+```
 
 ### param: Page.waitForEvent.event = %%-wait-for-event-event-%%
 
@@ -2329,11 +2348,13 @@ Shortcut for main frame's [`method: Frame.waitForLoadState`].
 ### option: Page.waitForLoadState.timeout = %%-navigation-timeout-%%
 
 ## async method: Page.waitForNavigation
+* langs:
+  * alias-python: expect_navigation
 - returns: <[null]|[Response]>
 
-Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
-resolve with `null`.
+Waits for the main frame navigation and returns the main resource response. In case of multiple redirects, the navigation
+will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to
+History API usage, the navigation will resolve with `null`.
 
 This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will indirectly
 cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation from a `setTimeout`.
@@ -2372,6 +2393,8 @@ Shortcut for main frame's [`method: Frame.waitForNavigation`].
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.waitForRequest
+* langs:
+  * alias-python: expect_request
 - returns: <[Request]>
 
 Waits for the matching request and returns it.
@@ -2383,15 +2406,23 @@ return firstRequest.url();
 ```
 
 ```python async
-first_request = await page.wait_for_request("http://example.com/resource")
-final_request = await page.wait_for_request(lambda request: request.url == "http://example.com" and request.method == "get")
-return first_request.url
+async with page.expect_request("http://example.com/resource") as first:
+    await page.click('button')
+first_request = await first.value
+
+async with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
+    await page.click('img')
+second_request = await second.value
 ```
 
 ```python sync
-first_request = page.wait_for_request("http://example.com/resource")
-final_request = page.wait_for_request(lambda request: request.url == "http://example.com" and request.method == "get")
-return first_request.url
+with page.expect_request("http://example.com/resource") as first:
+    page.click('button')
+first_request = first.value
+
+with page.expect_request(lambda request: request.url == "http://example.com" and request.method == "get") as second:
+    page.click('img')
+second_request = second.value
 ```
 
 ```js
@@ -2410,6 +2441,8 @@ Maximum wait time in milliseconds, defaults to 30 seconds, pass `0` to disable t
 changed by using the [`method: Page.setDefaultTimeout`] method.
 
 ## async method: Page.waitForResponse
+* langs:
+  * alias-python: expect_response
 - returns: <[Response]>
 
 Returns the matched response.

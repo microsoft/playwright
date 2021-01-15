@@ -1135,11 +1135,13 @@ frame.wait_for_load_state() # the promise resolves after "load" event.
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
 
 ## async method: Frame.waitForNavigation
+* langs:
+  * alias-python: expect_navigation
 - returns: <[null]|[Response]>
 
-Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
-resolve with `null`.
+Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the navigation
+will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to
+History API usage, the navigation will resolve with `null`.
 
 This method waits for the frame to navigate to a new URL. It is useful for when you run code which will indirectly cause
 the frame to navigate. Consider this example:

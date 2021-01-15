@@ -208,7 +208,7 @@ page.fill("#username", "John Doe")
 
 ### Asynchronous navigation
 
-Clicking an element could trigger asychronous processing before initiating the navigation. In these cases, it is
+Clicking an element could trigger asynchronous processing before initiating the navigation. In these cases, it is
 recommended to explicitly call [`method: Page.waitForNavigation`]. For example:
 * Navigation is triggered from a `setTimeout`
 * Page waits for network requests before navigation

@@ -205,7 +205,7 @@ const [response] = await Promise.all([
 ```
 
 ```python async
-# Use a regular expresison
+# Use a regular expression
 async with page.expect_response(re.compile(r"\.jpeg$")) as response_info:
     await page.click("button#update")
 response = await response_info.value
@@ -217,7 +217,7 @@ response = await response_info.value
 ```
 
 ```python sync
-# Use a regular expresison
+# Use a regular expression
 with page.expect_response(re.compile(r"\.jpeg$")) as response_info:
     page.click("button#update")
 response = response_info.value
