@@ -10,8 +10,8 @@ title: "Getting Started"
 Use pip to install Playwright in your Python project. See [system requirements](#system-requirements).
 
 ```sh
-pip install playwright
-python -m playwright install
+$ pip install playwright
+$ python -m playwright install
 ```
 
 These commands download the Playwright package and install browser binaries for Chromium, Firefox and WebKit. To modify this behavior see [installation parameters](./installation.md).
@@ -74,7 +74,7 @@ firefox.launch(headless=False, slowMo=50)
 Command Line Interface [CLI](./cli.md) can be used to record user interactions and generate Python code.
 
 ```sh
-python -m playwright codegen wikipedia.org
+$ python -m playwright codegen wikipedia.org
 ```
 
 ## System requirements

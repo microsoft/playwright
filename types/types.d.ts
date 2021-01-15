@@ -1227,7 +1227,7 @@ export interface Page {
    * 
    * An example of overriding `Math.random` before the page loads:
    * 
-   * ```js
+   * ```js browser
    * // preload.js
    * Math.random = () => 42;
    * ```
@@ -4790,7 +4790,7 @@ export interface BrowserContext {
    * 
    * An example of overriding `Math.random` before the page loads:
    * 
-   * ```js
+   * ```js browser
    * // preload.js
    * Math.random = () => 42;
    * ```
