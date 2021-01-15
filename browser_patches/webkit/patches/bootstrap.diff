@@ -10446,6 +10446,18 @@ index 0000000000000000000000000000000000000000..cd66887de171cda7d15a8e4dc6dbff63
 +} // namespace WebKit
 +
 +#endif // ENABLE(REMOTE_INSPECTOR)
+diff --git a/Source/WebKit/UIProcess/Cocoa/AutomationClient.mm b/Source/WebKit/UIProcess/Cocoa/AutomationClient.mm
+index 8cdc2e45fae3fc7af0459b9541b7def06a73779a..80ae6d9b6c548c2143f77c6175f7c81a98b0edef 100644
+--- a/Source/WebKit/UIProcess/Cocoa/AutomationClient.mm
++++ b/Source/WebKit/UIProcess/Cocoa/AutomationClient.mm
+@@ -34,6 +34,7 @@
+ #import <JavaScriptCore/RemoteInspector.h>
+ #import <wtf/spi/cf/CFBundleSPI.h>
+ #import <wtf/text/WTFString.h>
++#import <wtf/RunLoop.h>
+ 
+ using namespace Inspector;
+ 
 diff --git a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h b/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
 index 454c61ffdefecc476d1560c7c43f5b5d345f281d..6de7509037b7683ddd403ee247bdf2845ce4e87a 100644
 --- a/Source/WebKit/UIProcess/Cocoa/SOAuthorization/PopUpSOAuthorizationSession.h
