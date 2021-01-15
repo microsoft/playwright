@@ -38,7 +38,7 @@ async def main():
         browser = await p.chromium.launch(headless=False)
         await browser.close()
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
 ```
 
 ```python sync
@@ -113,7 +113,7 @@ async def main():
         page = await browser.newPage()
         await browser.close()
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
 ```
 
 ```python sync
