@@ -9,8 +9,8 @@ If request fails at some point, then instead of `'requestfinished'` event (and p
 the  [`event: Page.requestfailed`] event is emitted.
 
 :::note
-HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request
-will complete with `'requestfinished'` event.
+HTTP Error responses, such as 404 or 503, are still successful responses from HTTP standpoint, so request will complete
+with `'requestfinished'` event.
 :::
 
 If request gets a 'redirect' response, the request is successfully finished with the 'requestfinished' event, and a new
@@ -29,6 +29,10 @@ Example of logging of all the failed requests:
 page.on('requestfailed', request => {
   console.log(request.url() + ' ' + request.failure().errorText);
 });
+```
+
+```py
+page.on("requestfailed", lambda request: print(request.url + " " + request.failure))
 ```
 
 ## method: Request.frame
@@ -85,11 +89,31 @@ const response = await page.goto('http://example.com');
 console.log(response.request().redirectedFrom().url()); // 'http://example.com'
 ```
 
+```python async
+response = await page.goto("http://example.com")
+print(response.request.redirected_from.url) # "http://example.com"
+```
+
+```python sync
+response = page.goto("http://example.com")
+print(response.request.redirected_from.url) # "http://example.com"
+```
+
 If the website `https://google.com` has no redirects:
 
 ```js
 const response = await page.goto('https://google.com');
 console.log(response.request().redirectedFrom()); // null
+```
+
+```python async
+response = await page.goto("https://google.com")
+print(response.request.redirected_from) # None
+```
+
+```python sync
+response = page.goto("https://google.com")
+print(response.request.redirected_from) # None
 ```
 
 ## method: Request.redirectedTo
@@ -101,6 +125,10 @@ This method is the opposite of [`method: Request.redirectedFrom`]:
 
 ```js
 console.log(request.redirectedFrom().redirectedTo() === request); // true
+```
+
+```py
+assert request.redirected_from.redirected_to == request
 ```
 
 ## method: Request.resourceType
@@ -118,25 +146,48 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 ## method: Request.timing
 - returns: <[Object]>
   - `startTime` <[float]> Request start time in milliseconds elapsed since January 1, 1970 00:00:00 UTC
-  - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `domainLookupEnd` <[float]> Time immediately after the browser starts the domain name lookup for the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `connectStart` <[float]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `secureConnectionStart` <[float]> Time immediately before the browser starts the handshake process to secure the current connection. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `connectEnd` <[float]> Time immediately before the user agent starts establishing the connection to the server to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `requestStart` <[float]> Time immediately before the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `responseStart` <[float]> Time immediately after the browser starts requesting the resource from the server, cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
-  - `responseEnd` <[float]> Time immediately after the browser receives the last byte of the resource or immediately before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `domainLookupStart` <[float]> Time immediately before the browser starts the domain name lookup for the
+    resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `domainLookupEnd` <[float]> Time immediately after the browser starts the domain name lookup for the resource.
+    The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectStart` <[float]> Time immediately before the user agent starts establishing the connection to the server
+    to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `secureConnectionStart` <[float]> Time immediately before the browser starts the handshake process to secure the
+    current connection. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `connectEnd` <[float]> Time immediately before the user agent starts establishing the connection to the server
+    to retrieve the resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `requestStart` <[float]> Time immediately before the browser starts requesting the resource from the server,
+    cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseStart` <[float]> Time immediately after the browser starts requesting the resource from the server,
+    cache, or local resource. The value is given in milliseconds relative to `startTime`, -1 if not available.
+  - `responseEnd` <[float]> Time immediately after the browser receives the last byte of the resource or immediately
+    before the transport connection is closed, whichever comes first. The value is given in milliseconds relative to
+    `startTime`, -1 if not available.
 
 Returns resource timing information for given request. Most of the timing values become available upon the response,
-`responseEnd` becomes available when request finishes. Find more information at [Resource Timing
-API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
+`responseEnd` becomes available when request finishes. Find more information at
+[Resource Timing API](https://developer.mozilla.org/en-US/docs/Web/API/PerformanceResourceTiming).
 
 ```js
 const [request] = await Promise.all([
   page.waitForEvent('requestfinished'),
-  page.goto(httpsServer.EMPTY_PAGE)
+  page.goto('http://example.com')
 ]);
 console.log(request.timing());
+```
+
+```python async
+async with page.expect_event("requestfinished") as request_info:
+    await page.goto("http://example.com")
+request = await request_info.value
+print(request.timing)
+```
+
+```python sync
+with page.expect_event("requestfinished") as request_info:
+    page.goto("http://example.com")
+request = request_info.value
+print(request.timing)
 ```
 
 ## method: Request.url

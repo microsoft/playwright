@@ -1,5 +1,5 @@
 # class: BrowserContext
-* extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+* extends: [EventEmitter]
 
 BrowserContexts provide a way to operate multiple independent browser sessions.
 
@@ -17,6 +17,26 @@ const page = await context.newPage();
 await page.goto('https://example.com');
 // Dispose context once it's no longer needed.
 await context.close();
+```
+
+```python async
+# create a new incognito browser context
+context = await browser.new_context()
+# create a new page inside context.
+page = await context.new_page()
+await page.goto("https://example.com")
+# dispose context once it"s no longer needed.
+await context.close()
+```
+
+```python sync
+# create a new incognito browser context
+context = browser.new_context()
+# create a new page inside context.
+page = context.new_page()
+page.goto("https://example.com")
+# dispose context once it"s no longer needed.
+context.close()
 ```
 
 ## event: BrowserContext.close
@@ -44,9 +64,23 @@ const [page] = await Promise.all([
 console.log(await page.evaluate('location.href'));
 ```
 
+```python async
+async with context.expect_page() as page_info:
+    await page.click("a[target=_blank]"),
+page = await page_info.value
+print(await page.evaluate("location.href"))
+```
+
+```python sync
+with context.expect_page() as page_info:
+    page.click("a[target=_blank]"),
+page = page_info.value
+print(page.evaluate("location.href"))
+```
+
 :::note
-Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not
-need it in most cases).
+Use [`method: Page.waitForLoadState`] to wait until the page gets to a particular state (you should not need it in most
+cases).
 :::
 
 ## async method: BrowserContext.addCookies
@@ -56,6 +90,14 @@ obtained via [`method: BrowserContext.cookies`].
 
 ```js
 await browserContext.addCookies([cookieObject1, cookieObject2]);
+```
+
+```python async
+await browser_context.add_cookies([cookie_object1, cookie_object2])
+```
+
+```python sync
+browser_context.add_cookies([cookie_object1, cookie_object2])
 ```
 
 ### param: BrowserContext.addCookies.cookies
@@ -74,14 +116,15 @@ await browserContext.addCookies([cookieObject1, cookieObject2]);
 
 Adds a script which would be evaluated in one of the following scenarios:
 * Whenever a page is created in the browser context or is navigated.
-* Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is evaluated in the context of the newly attached frame.
+* Whenever a child frame is attached or navigated in any page in the browser context. In this case, the script is
+  evaluated in the context of the newly attached frame.
 
 The script is evaluated after the document was created but before any of its scripts were run. This is useful to amend
 the JavaScript environment, e.g. to seed `Math.random`.
 
 An example of overriding `Math.random` before the page loads:
 
-```js
+```js browser
 // preload.js
 Math.random = () => 42;
 ```
@@ -93,6 +136,16 @@ await browserContext.addInitScript({
 });
 ```
 
+```python async
+# in your playwright script, assuming the preload.js file is in same directory.
+await browser_context.add_init_script(path="preload.js")
+```
+
+```python sync
+# in your playwright script, assuming the preload.js file is in same directory.
+browser_context.add_init_script(path="preload.js")
+```
+
 :::note
 The order of evaluation of multiple scripts installed via [`method: BrowserContext.addInitScript`] and
 [`method: Page.addInitScript`] is not defined.
@@ -101,7 +154,8 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 ### param: BrowserContext.addInitScript.script
 * langs: js
 - `script` <[function]|[string]|[Object]>
-  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the current working directory. Optional.
+  - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
+    current working directory. Optional.
   - `content` <[string]> Raw script content. Optional.
 
 Script to be evaluated in all pages in the browser context.
@@ -130,6 +184,20 @@ const context = await browser.newContext();
 await context.grantPermissions(['clipboard-read']);
 // do stuff ..
 context.clearPermissions();
+```
+
+```python async
+context = await browser.new_context()
+await context.grant_permissions(["clipboard-read"])
+# do stuff ..
+context.clear_permissions()
+```
+
+```python sync
+context = browser.new_context()
+context.grant_permissions(["clipboard-read"])
+# do stuff ..
+context.clear_permissions()
 ```
 
 ## async method: BrowserContext.close
@@ -162,11 +230,11 @@ Optional list of URLs.
 ## async method: BrowserContext.exposeBinding
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
-When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return
-value of [`param: callback`]. If the [`param: callback`] returns a [Promise], it will be awaited.
+When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return value of
+[`param: callback`]. If the [`param: callback`] returns a [Promise], it will be awaited.
 
-The first argument of the [`param: callback`] function contains information about the caller: `{
-browserContext: BrowserContext, page: Page, frame: Frame }`.
+The first argument of the [`param: callback`] function contains information about the caller: `{ browserContext:
+BrowserContext, page: Page, frame: Frame }`.
 
 See [`method: Page.exposeBinding`] for page-only version.
 
@@ -193,6 +261,57 @@ const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
 })();
 ```
 
+```python async
+import asyncio
+from playwright.async_api import async_playwright
+
+async def run(playwright):
+    webkit = playwright.webkit
+    browser = await webkit.launch(headless=false)
+    context = await browser.new_context()
+    await context.expose_binding("pageURL", lambda source: source["page"].url)
+    page = await context.new_page()
+    await page.set_content("""
+    <script>
+      async function onClick() {
+        document.querySelector('div').textContent = await window.pageURL();
+      }
+    </script>
+    <button onclick="onClick()">Click me</button>
+    <div></div>
+    """)
+    await page.click("button")
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+def run(playwright):
+    webkit = playwright.webkit
+    browser = webkit.launch(headless=false)
+    context = browser.new_context()
+    context.expose_binding("pageURL", lambda source: source["page"].url)
+    page = context.new_page()
+    page.set_content("""
+    <script>
+      async function onClick() {
+        document.querySelector('div').textContent = await window.pageURL();
+      }
+    </script>
+    <button onclick="onClick()">Click me</button>
+    <div></div>
+    """)
+    page.click("button")
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
 An example of passing an element handle:
 
 ```js
@@ -206,6 +325,34 @@ await page.setContent(`
   <div>Click me</div>
   <div>Or click me</div>
 `);
+```
+
+```python async
+async def print(source, element):
+    print(await element.text_content())
+
+await context.expose_binding("clicked", print, handle=true)
+await page.set_content("""
+  <script>
+    document.addEventListener('click', event => window.clicked(event.target));
+  </script>
+  <div>Click me</div>
+  <div>Or click me</div>
+""")
+```
+
+```python sync
+def print(source, element):
+    print(element.text_content())
+
+context.expose_binding("clicked", print, handle=true)
+page.set_content("""
+  <script>
+    document.addEventListener('click', event => window.clicked(event.target));
+  </script>
+  <div>Click me</div>
+  <div>Or click me</div>
+""")
 ```
 
 ### param: BrowserContext.exposeBinding.name
@@ -227,8 +374,8 @@ supported. When passing by value, multiple arguments are supported.
 ## async method: BrowserContext.exposeFunction
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
-When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return
-value of [`param: callback`].
+When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return value of
+[`param: callback`].
 
 If the [`param: callback`] returns a [Promise], it will be awaited.
 
@@ -258,6 +405,72 @@ const crypto = require('crypto');
 })();
 ```
 
+```python async
+import asyncio
+import hashlib
+from playwright.async_api import async_playwright
+
+async def sha1(text):
+    m = hashlib.sha1()
+    m.update(bytes(text, "utf8"))
+    return m.hexdigest()
+
+
+async def run(playwright):
+    webkit = playwright.webkit
+    browser = await webkit.launch(headless=False)
+    context = await browser.new_context()
+    await context.expose_function("sha1", sha1)
+    page = await context.new_page()
+    await page.set_content("""
+        <script>
+          async function onClick() {
+            document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+          }
+        </script>
+        <button onclick="onClick()">Click me</button>
+        <div></div>
+    """)
+    await page.click("button")
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+import hashlib
+from playwright.sync_api import sync_playwright
+
+def sha1(text):
+    m = hashlib.sha1()
+    m.update(bytes(text, "utf8"))
+    return m.hexdigest()
+
+
+def run(playwright):
+    webkit = playwright.webkit
+    browser = webkit.launch(headless=False)
+    context = browser.new_context()
+    context.expose_function("sha1", sha1)
+    page = context.new_page()
+    page.expose_function("sha1", sha1)
+    page.set_content("""
+        <script>
+          async function onClick() {
+            document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
+          }
+        </script>
+        <button onclick="onClick()">Click me</button>
+        <div></div>
+    """)
+    page.click("button")
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
 ### param: BrowserContext.exposeFunction.name
 - `name` <[string]>
 
@@ -277,22 +490,22 @@ specified.
 - `permissions` <[Array]<[string]>>
 
 A permission or an array of permissions to grant. Permissions can be one of the following values:
-  * `'geolocation'`
-  * `'midi'`
-  * `'midi-sysex'` (system-exclusive midi)
-  * `'notifications'`
-  * `'push'`
-  * `'camera'`
-  * `'microphone'`
-  * `'background-sync'`
-  * `'ambient-light-sensor'`
-  * `'accelerometer'`
-  * `'gyroscope'`
-  * `'magnetometer'`
-  * `'accessibility-events'`
-  * `'clipboard-read'`
-  * `'clipboard-write'`
-  * `'payment-handler'`
+* `'geolocation'`
+* `'midi'`
+* `'midi-sysex'` (system-exclusive midi)
+* `'notifications'`
+* `'push'`
+* `'camera'`
+* `'microphone'`
+* `'background-sync'`
+* `'ambient-light-sensor'`
+* `'accelerometer'`
+* `'gyroscope'`
+* `'magnetometer'`
+* `'accessibility-events'`
+* `'clipboard-read'`
+* `'clipboard-write'`
+* `'payment-handler'`
 
 ### option: BrowserContext.grantPermissions.origin
 - `origin` <[string]>
@@ -325,6 +538,22 @@ await page.goto('https://example.com');
 await browser.close();
 ```
 
+```python async
+context = await browser.new_context()
+page = await context.new_page()
+await context.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+await page.goto("https://example.com")
+await browser.close()
+```
+
+```python sync
+context = browser.new_context()
+page = context.new_page()
+context.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
+page.goto("https://example.com")
+browser.close()
+```
+
 or the same snippet using a regex pattern instead:
 
 ```js
@@ -333,6 +562,25 @@ await context.route(/(\.png$)|(\.jpg$)/, route => route.abort());
 const page = await context.newPage();
 await page.goto('https://example.com');
 await browser.close();
+```
+
+```python async
+context = await browser.new_context()
+page = await context.new_page()
+await context.route(r"(\.png$)|(\.jpg$)", lambda route: route.abort())
+page = await context.new_page()
+await page.goto("https://example.com")
+await browser.close()
+```
+
+```python sync
+context = browser.new_context()
+page = context.new_page()
+context.route(r"(\.png$)|(\.jpg$)", lambda route: route.abort())
+page = await context.new_page()
+page = context.new_page()
+page.goto("https://example.com")
+browser.close()
 ```
 
 Page routes (set up with [`method: Page.route`]) take precedence over browser context routes when request matches both
@@ -377,8 +625,8 @@ Maximum navigation time in milliseconds
 This setting will change the default maximum time for all the methods accepting [`param: timeout`] option.
 
 :::note
-[`method: Page.setDefaultNavigationTimeout`], [`method: Page.setDefaultTimeout`] and [`method:
-BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: BrowserContext.setDefaultTimeout`].
+[`method: Page.setDefaultNavigationTimeout`], [`method: Page.setDefaultTimeout`] and
+[`method: BrowserContext.setDefaultNavigationTimeout`] take priority over [`method: BrowserContext.setDefaultTimeout`].
 :::
 
 ### param: BrowserContext.setDefaultTimeout.timeout
@@ -409,9 +657,17 @@ Sets the context's geolocation. Passing `null` or `undefined` emulates position 
 await browserContext.setGeolocation({latitude: 59.95, longitude: 30.31667});
 ```
 
+```python async
+await browser_context.set_geolocation({"latitude": 59.95, "longitude": 30.31667})
+```
+
+```python sync
+browser_context.set_geolocation({"latitude": 59.95, "longitude": 30.31667})
+```
+
 :::note
-Consider using [`method: BrowserContext.grantPermissions`] to grant permissions for the browser context
-pages to read its geolocation.
+Consider using [`method: BrowserContext.grantPermissions`] to grant permissions for the browser context pages to read
+its geolocation.
 :::
 
 ### param: BrowserContext.setGeolocation.geolocation
@@ -423,8 +679,7 @@ pages to read its geolocation.
 ## async method: BrowserContext.setHTTPCredentials
 * langs: js
 
-**DEPRECATED** Browsers may cache credentials after successful authentication.
-Create a new browser context instead.
+**DEPRECATED** Browsers may cache credentials after successful authentication. Create a new browser context instead.
 
 ### param: BrowserContext.setHTTPCredentials.httpCredentials
 - `httpCredentials` <[null]|[Object]>
@@ -472,8 +727,8 @@ routes for the [`param: url`].
 ### param: BrowserContext.unroute.url
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with [`method:
-BrowserContext.route`].
+A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with
+[`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
 - `handler` <[function]\([Route], [Request]\)>
@@ -491,6 +746,16 @@ const context = await browser.newContext();
 await context.grantPermissions(['geolocation']);
 ```
 
+```python async
+context = await browser.new_context()
+await context.grant_permissions(["geolocation"])
+```
+
+```python sync
+context = browser.new_context()
+context.grant_permissions(["geolocation"])
+```
+
 ### param: BrowserContext.waitForEvent.event
 - `event` <[string]>
 
@@ -500,6 +765,7 @@ Event name, same one would pass into `browserContext.on(event)`.
 * langs: js
 - `optionsOrPredicate` <[function]|[Object]>
   - `predicate` <[function]> receives the event data and resolves to truthy value when the waiting should resolve.
-  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
+  - `timeout` <[float]> maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to
+    disable timeout. The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
 
 Either a predicate that receives an event or an options object. Optional.

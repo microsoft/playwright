@@ -15,6 +15,28 @@ await page.mouse.move(0, 0);
 await page.mouse.up();
 ```
 
+```python async
+# using ‘page.mouse’ to trace a 100x100 square.
+await page.mouse.move(0, 0)
+await page.mouse.down()
+await page.mouse.move(0, 100)
+await page.mouse.move(100, 100)
+await page.mouse.move(100, 0)
+await page.mouse.move(0, 0)
+await page.mouse.up()
+```
+
+```python sync
+# using ‘page.mouse’ to trace a 100x100 square.
+page.mouse.move(0, 0)
+page.mouse.down()
+page.mouse.move(0, 100)
+page.mouse.move(100, 100)
+page.mouse.move(100, 0)
+page.mouse.move(0, 0)
+page.mouse.up()
+```
+
 ## async method: Mouse.click
 
 Shortcut for [`method: Mouse.move`], [`method: Mouse.down`], [`method: Mouse.up`].

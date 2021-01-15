@@ -64,6 +64,7 @@
 
 .timeline-lane.timeline-actions {
   margin-bottom: 10px;
+  overflow: visible;
 }
 
 .timeline-action {
@@ -72,19 +73,26 @@
   bottom: 0;
   background-color: red;
   border-radius: 3px;
+  --action-color: 'transparent';
+  background-color: var(--action-color);
+}
+
+.timeline-action.selected {
+  filter: brightness(70%);
+  box-shadow: 0 0 0 1px var(--action-color);
 }
 
 .timeline-action.click {
-  background-color: var(--green);
+  --action-color: var(--green);
 }
 
 .timeline-action.fill,
 .timeline-action.press {
-  background-color: var(--orange);
+  --action-color: var(--orange);
 }
 
 .timeline-action.goto {
-  background-color: var(--blue);
+  --action-color: var(--blue);
 }
 
 .timeline-action-label {
@@ -93,6 +101,12 @@
   bottom: 0;
   margin-left: 2px;
   background-color: #fffffff0;
+  justify-content: center;
+  display: none;
+}
+
+.timeline-action-label.selected {
+  display: flex;
 }
 
 .timeline-time-bar {

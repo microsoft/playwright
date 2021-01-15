@@ -16,8 +16,43 @@ const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
 })();
 ```
 
-ElementHandle prevents DOM element from garbage collection unless the handle is disposed with [`method:
-JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
+```python async
+import asyncio
+from playwright.async_api import async_playwright
+
+async def run(playwright):
+    chromium = playwright.chromium
+    browser = await chromium.launch()
+    page = await browser.new_page()
+    await page.goto("https://example.com")
+    href_element = await page.query_selector("a")
+    await href_element.click()
+    # ...
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+def run(playwright):
+    chromium = playwright.chromium
+    browser = chromium.launch()
+    page = browser.new_page()
+    page.goto("https://example.com")
+    href_element = page.query_selector("a")
+    href_element.click()
+    # ...
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
+ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
+[`method: JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
 
 ElementHandle instances can be used as an argument in [`method: Page.$eval`] and [`method: Page.evaluate`] methods.
 
@@ -26,8 +61,9 @@ ElementHandle instances can be used as an argument in [`method: Page.$eval`] and
   - alias-python: query_selector
 - returns: <[null]|[ElementHandle]>
 
-The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See [Working with
-selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector, returns `null`.
+The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
+[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+returns `null`.
 
 ### param: ElementHandle.$.selector = %%-query-selector-%%
 
@@ -36,8 +72,9 @@ selectors](./selectors.md#working-with-selectors) for more details. If no elemen
   - alias-python: query_selector_all
 - returns: <[Array]<[ElementHandle]>>
 
-The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See [Working with
-selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector, returns empty array.
+The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
+[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+returns empty array.
 
 ### param: ElementHandle.$$.selector = %%-query-selector-%%
 
@@ -49,11 +86,11 @@ selectors](./selectors.md#working-with-selectors) for more details. If no elemen
 Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more details. If no
-elements match the selector, the method throws an error.
+argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more
+details. If no elements match the selector, the method throws an error.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return
-its value.
+If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its
+value.
 
 Examples:
 
@@ -61,6 +98,18 @@ Examples:
 const tweetHandle = await page.$('.tweet');
 expect(await tweetHandle.$eval('.like', node => node.innerText)).toBe('100');
 expect(await tweetHandle.$eval('.retweets', node => node.innerText)).toBe('10');
+```
+
+```python async
+tweet_handle = await page.query_selector(".tweet")
+assert await tweet_handle.eval_on_selector(".like", "node => node.innerText") == "100"
+assert await tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "10"
+```
+
+```python sync
+tweet_handle = page.query_selector(".tweet")
+assert tweet_handle.eval_on_selector(".like", "node => node.innerText") == "100"
+assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "10"
 ```
 
 ### param: ElementHandle.$eval.selector = %%-query-selector-%%
@@ -84,11 +133,11 @@ Optional argument to pass to [`param: pageFunction`]
 Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
-matched elements as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors)
-for more details.
+matched elements as a first argument to [`param: pageFunction`]. See
+[Working with selectors](./selectors.md#working-with-selectors) for more details.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return
-its value.
+If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its
+value.
 
 Examples:
 
@@ -102,6 +151,17 @@ Examples:
 ```js
 const feedHandle = await page.$('.feed');
 expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).toEqual(['Hello!', 'Hi!']);
+```
+
+```python async
+# FIXME
+feed_handle = await page.query_selector(".feed")
+assert await feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.innerText)") == ["hello!", "hi!"]
+```
+
+```python sync
+feed_handle = page.query_selector(".feed")
+assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.innerText)") == ["hello!", "hi!"]
 ```
 
 ### param: ElementHandle.$$eval.selector = %%-query-selector-%%
@@ -142,10 +202,21 @@ const box = await elementHandle.boundingBox();
 await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
 ```
 
+```python async
+box = await element_handle.bounding_box()
+await page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+```
+
+```python sync
+box = element_handle.bounding_box()
+page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+```
+
 ## async method: ElementHandle.check
 
 This method checks the element by performing the following steps:
-1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already checked, this method returns immediately.
+1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   checked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -203,7 +274,8 @@ This method double clicks the element by performing the following steps:
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to double click in the center of the element, or the specified [`option: position`].
-1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that if the first click of the `dblclick()` triggers a navigation event, this method will reject.
+1. Wait for initiated navigations to either succeed or fail, unless [`option: noWaitAfter`] option is set. Note that
+   if the first click of the `dblclick()` triggers a navigation event, this method will reject.
 
 If the element is detached from the DOM at any moment during the action, this method rejects.
 
@@ -238,8 +310,17 @@ is dispatched. This is equivalend to calling
 await elementHandle.dispatchEvent('click');
 ```
 
-Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with [`param:
-eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by default.
+```python async
+await element_handle.dispatch_event("click")
+```
+
+```python sync
+element_handle.dispatch_event("click")
+```
+
+Under the hood, it creates an instance of an event based on the given [`param: type`], initializes it with
+[`param: eventInit`] properties and dispatches it on the element. Events are `composed`, `cancelable` and bubble by
+default.
 
 Since [`param: eventInit`] is event-specific, please refer to the events documentation for the lists of initial
 properties:
@@ -257,6 +338,18 @@ You can also specify `JSHandle` as the property value if you want live objects t
 // Note you can only create DataTransfer in Chromium and Firefox
 const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
 await elementHandle.dispatchEvent('dragstart', { dataTransfer });
+```
+
+```python async
+# note you can only create data_transfer in chromium and firefox
+data_transfer = await page.evaluate_handle("new DataTransfer()")
+await element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
+```
+
+```python sync
+# note you can only create data_transfer in chromium and firefox
+data_transfer = page.evaluate_handle("new DataTransfer()")
+element_handle.dispatch_event("#source", "dragstart", {"dataTransfer": data_transfer})
 ```
 
 ### param: ElementHandle.dispatchEvent.type
@@ -456,18 +549,47 @@ element, the method throws an error.
 // single selection matching the value
 handle.selectOption('blue');
 
-// single selection matching both the value and the label
+// single selection matching the label
 handle.selectOption({ label: 'Blue' });
 
 // multiple selection
-handle.selectOption('red', 'green', 'blue');
+handle.selectOption(['red', 'green', 'blue']);
+```
 
-// multiple selection for blue, red and second option
-handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
+```python async
+# single selection matching the value
+await handle.select_option("blue")
+# single selection matching the label
+await handle.select_option(label="blue")
+# multiple selection
+await handle.select_option(value=["red", "green", "blue"])
+```
+
+```python sync
+# single selection matching the value
+handle.select_option("blue")
+# single selection matching both the label
+handle.select_option(label="blue")
+# multiple selection
+handle.select_option(value=["red", "green", "blue"])
+```
+
+```python sync
+# FIXME
+# single selection matching the value
+handle.select_option("blue")
+# single selection matching both the value and the label
+handle.select_option(label="blue")
+# multiple selection
+handle.select_option("red", "green", "blue")
+# multiple selection for blue, red and second option
+handle.select_option(value="blue", { index: 2 }, "red")
 ```
 
 ### param: ElementHandle.selectOption.values = %%-select-options-values-%%
+
 ### option: ElementHandle.selectOption.noWaitAfter = %%-input-no-wait-after-%%
+
 ### option: ElementHandle.selectOption.timeout = %%-input-timeout-%%
 
 ## async method: ElementHandle.selectText
@@ -479,8 +601,8 @@ content.
 
 ## async method: ElementHandle.setInputFiles
 
-This method expects `elementHandle` to point to an [input
-element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
+This method expects `elementHandle` to point to an
+[input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input).
 
 Sets the value of the file input to these file paths or files. If some of the `filePaths` are relative paths, then they
 are resolved relative to the the current working directory. For empty array, clears the selected files.
@@ -534,12 +656,34 @@ await elementHandle.type('Hello'); // Types instantly
 await elementHandle.type('World', {delay: 100}); // Types slower, like a user
 ```
 
+```python async
+await element_handle.type("hello") # types instantly
+await element_handle.type("world", delay=100) # types slower, like a user
+```
+
+```python sync
+element_handle.type("hello") # types instantly
+element_handle.type("world", delay=100) # types slower, like a user
+```
+
 An example of typing into a text field and then submitting the form:
 
 ```js
 const elementHandle = await page.$('input');
 await elementHandle.type('some text');
 await elementHandle.press('Enter');
+```
+
+```python async
+element_handle = await page.query_selector("input")
+await element_handle.type("some text")
+await element_handle.press("Enter")
+```
+
+```python sync
+element_handle = page.query_selector("input")
+element_handle.type("some text")
+element_handle.press("Enter")
 ```
 
 ### param: ElementHandle.type.text
@@ -559,7 +703,8 @@ Time to wait between key presses in milliseconds. Defaults to 0.
 ## async method: ElementHandle.uncheck
 
 This method checks the element by performing the following steps:
-1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already unchecked, this method returns immediately.
+1. Ensure that element is a checkbox or a radio input. If not, this method rejects. If the element is already
+   unchecked, this method returns immediately.
 1. Wait for [actionability](./actionability.md) checks on the element, unless [`option: force`] option is set.
 1. Scroll the element into view if needed.
 1. Use [`property: Page.mouse`] to click in the center of the element.
@@ -581,11 +726,13 @@ When all steps combined have not finished during the specified [`option: timeout
 
 Returns when the element satisfies the [`param: state`].
 
-Depending on the [`param: state`] parameter, this method waits for one of the [actionability](./actionability.md)
-checks to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
+Depending on the [`param: state`] parameter, this method waits for one of the [actionability](./actionability.md) checks
+to pass. This method throws when the element is detached while waiting, unless waiting for the `"hidden"` state.
 * `"visible"` Wait until the element is [visible](./actionability.md#visible).
-* `"hidden"` Wait until the element is [not visible](./actionability.md#visible) or [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
-* `"stable"` Wait until the element is both [visible](./actionability.md#visible) and [stable](./actionability.md#stable).
+* `"hidden"` Wait until the element is [not visible](./actionability.md#visible) or
+  [not attached](./actionability.md#attached). Note that waiting for hidden does not throw when the element detaches.
+* `"stable"` Wait until the element is both [visible](./actionability.md#visible) and
+  [stable](./actionability.md#stable).
 * `"enabled"` Wait until the element is [enabled](./actionability.md#enabled).
 * `"disabled"` Wait until the element is [not enabled](./actionability.md#enabled).
 * `"editable"` Wait until the element is [editable](./actionability.md#editable).
@@ -602,19 +749,33 @@ A state to wait for, see below for more details.
 ## async method: ElementHandle.waitForSelector
 - returns: <[null]|[ElementHandle]>
 
-Returns element specified by selector when it satisfies [`option: state`] option. Returns `null` if waiting for `hidden` or
-`detached`.
+Returns element specified by selector when it satisfies [`option: state`] option. Returns `null` if waiting for `hidden`
+or `detached`.
 
 Wait for the [`param: selector`] relative to the element handle to satisfy [`option: state`] option (either
-appear/disappear from dom, or become visible/hidden). If at the moment of calling the method [`param: selector`]
-already satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for
-the [`option: timeout`] milliseconds, the function will throw.
+appear/disappear from dom, or become visible/hidden). If at the moment of calling the method [`param: selector`] already
+satisfies the condition, the method will return immediately. If the selector doesn't satisfy the condition for the
+[`option: timeout`] milliseconds, the function will throw.
 
 ```js
 await page.setContent(`<div><span></span></div>`);
 const div = await page.$('div');
 // Waiting for the 'span' selector relative to the div.
 const span = await div.waitForSelector('span', { state: 'attached' });
+```
+
+```python async
+await page.set_content("<div><span></span></div>")
+div = await page.query_selector("div")
+# waiting for the "span" selector relative to the div.
+span = await div.wait_for_selector("span", state="attached")
+```
+
+```python sync
+page.set_content("<div><span></span></div>")
+div = page.query_selector("div")
+# waiting for the "span" selector relative to the div.
+span = div.wait_for_selector("span", state="attached")
 ```
 
 :::note

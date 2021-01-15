@@ -26,7 +26,8 @@ export const Workbench: React.FunctionComponent<{
   traceModel: TraceModel,
 }> = ({ traceModel }) => {
   const [context, setContext] = React.useState(traceModel.contexts[0]);
-  const [action, setAction] = React.useState<ActionEntry | undefined>();
+  const [selectedAction, setSelectedAction] = React.useState<ActionEntry | undefined>();
+  const [highlightedAction, setHighlightedAction] = React.useState<ActionEntry | undefined>();
 
   const actions = React.useMemo(() => {
     const actions: ActionEntry[] = [];
@@ -47,7 +48,7 @@ export const Workbench: React.FunctionComponent<{
         context={context}
         onChange={context => {
           setContext(context);
-          setAction(undefined);
+          setSelectedAction(undefined);
         }}
       />
     </div>
@@ -55,13 +56,23 @@ export const Workbench: React.FunctionComponent<{
       <Timeline
         context={context}
         boundaries={{ minimum: context.startTime, maximum: context.endTime }}
-      />
+        selectedAction={selectedAction}
+        highlightedAction={highlightedAction}
+        onSelected={action => setSelectedAction(action)}
+        onHighlighted={action => setHighlightedAction(action)}
+        />
     </div>
     <div className='hbox'>
       <div style={{ display: 'flex', flex: 'none' }}>
-        <ActionList actions={actions} selectedAction={action} onSelected={action => setAction(action)} />
+        <ActionList
+          actions={actions}
+          selectedAction={selectedAction}
+          highlightedAction={highlightedAction}
+          onSelected={action => setSelectedAction(action)}
+          onHighlighted={action => setHighlightedAction(action)}
+        />
       </div>
-      <PropertiesTabbedPane actionEntry={action} snapshotSize={snapshotSize} />
+      <PropertiesTabbedPane actionEntry={selectedAction} snapshotSize={snapshotSize} />
     </div>
   </div>;
 };

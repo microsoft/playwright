@@ -28,7 +28,7 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
 };
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * Page provides methods to interact with a single tab in a [Browser], or an
  * [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One [Browser]
@@ -75,12 +75,16 @@ export interface Page {
   /**
    * Returns the value of the `pageFunction` invocation.
    * 
-   * If the function passed to the `page.evaluate` returns a [Promise], then `page.evaluate` would wait for the promise to
-   * resolve and return its value.
+   * If the function passed to the
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) returns a [Promise],
+   * then [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) would wait for the
+   * promise to resolve and return its value.
    * 
-   * If the function passed to the `page.evaluate` returns a non-[Serializable] value, then `page.evaluate` resolves to
-   * `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+   * If the function passed to the
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) returns a
+   * non-[Serializable] value, then[ method: `Page.evaluate`] resolves to `undefined`. DevTools Protocol also supports
+   * transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and
+   * bigint literals.
    * 
    * Passing argument to `pageFunction`:
    * 
@@ -99,7 +103,8 @@ export interface Page {
    * console.log(await page.evaluate(`1 + ${x}`)); // prints "11"
    * ```
    * 
-   * [ElementHandle] instances can be passed as an argument to the `page.evaluate`:
+   * [ElementHandle] instances can be passed as an argument to the
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate):
    * 
    * ```js
    * const bodyHandle = await page.$('body');
@@ -118,11 +123,22 @@ export interface Page {
   /**
    * Returns the value of the `pageFunction` invocation as in-page object (JSHandle).
    * 
-   * The only difference between `page.evaluate` and `page.evaluateHandle` is that `page.evaluateHandle` returns in-page
-   * object (JSHandle).
+   * The only difference between
+   * [page.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluate) and
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) is that
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) returns
+   * in-page object (JSHandle).
    * 
-   * If the function passed to the `page.evaluateHandle` returns a [Promise], then `page.evaluateHandle` would wait for the
-   * promise to resolve and return its value.
+   * If the function passed to the
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) returns a
+   * [Promise], then
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle) would wait
+   * for the promise to resolve and return its value.
+   * 
+   * ```js
+   * const aWindowHandle = await page.evaluateHandle(() => Promise.resolve(window));
+   * aWindowHandle; // Handle for the window object.
+   * ```
    * 
    * A string can also be passed in instead of a function:
    * 
@@ -130,7 +146,8 @@ export interface Page {
    * const aHandle = await page.evaluateHandle('document'); // Handle for the 'document'
    * ```
    * 
-   * [JSHandle] instances can be passed as an argument to the `page.evaluateHandle`:
+   * [JSHandle] instances can be passed as an argument to the
+   * [page.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageevaluatehandle):
    * 
    * ```js
    * const aHandle = await page.evaluateHandle(() => document.body);
@@ -202,7 +219,7 @@ export interface Page {
    * Examples:
    * 
    * ```js
-   * const divsCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
+   * const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://github.com/microsoft/playwright/blob/master/docs/selectors.md#working-with-selectors) for more details.
@@ -225,14 +242,15 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch();
    *   const page = await browser.newPage();
-   *   const watchDog = page.waitForFunction('window.innerWidth < 100');
+   *   const watchDog = page.waitForFunction(() => window.innerWidth < 100);
    *   await page.setViewportSize({width: 50, height: 50});
    *   await watchDog;
    *   await browser.close();
    * })();
    * ```
    * 
-   * To pass an argument to the predicate of `page.waitForFunction` function:
+   * To pass an argument to the predicate of
+   * [page.waitForFunction(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pagewaitforfunction) function:
    * 
    * ```js
    * const selector = '.foo';
@@ -264,12 +282,10 @@ export interface Page {
    * (async () => {
    *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   let currentURL;
-   *   page
-   *     .waitForSelector('img')
-   *     .then(() => console.log('First URL with image: ' + currentURL));
-   *   for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
+   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
+   *     const element = await page.waitForSelector('img');
+   *     console.log('Loaded image: ' + await element.getAttribute('src'));
    *   }
    *   await browser.close();
    * })();
@@ -359,7 +375,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -382,19 +398,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -543,7 +546,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -566,19 +569,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -727,7 +717,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -750,19 +740,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -911,7 +888,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -934,19 +911,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -1095,7 +1059,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -1118,19 +1082,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -1276,13 +1227,14 @@ export interface Page {
    * 
    * An example of overriding `Math.random` before the page loads:
    * 
-   * ```js
+   * ```js browser
    * // preload.js
    * Math.random = () => 42;
+   * ```
    * 
+   * ```js
    * // In your playwright script, assuming the preload.js file is in same directory
-   * const preloadFile = fs.readFileSync('./preload.js', 'utf8');
-   * await page.addInitScript(preloadFile);
+   * await page.addInitScript({ path: './preload.js' });
    * ```
    * 
    * > NOTE: The order of evaluation of multiple scripts installed via
@@ -1632,7 +1584,6 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * 
    * ```js
    * await page.evaluate(() => matchMedia('screen').matches);
    * // → true
@@ -1693,7 +1644,7 @@ export interface Page {
    * [page.exposeFunction(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageexposefunction) survive
    * navigations.
    * 
-   * An example of adding an `md5` function to the page:
+   * An example of adding an `sha1` function to the page:
    * 
    * ```js
    * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
@@ -1702,46 +1653,17 @@ export interface Page {
    * (async () => {
    *   const browser = await webkit.launch({ headless: false });
    *   const page = await browser.newPage();
-   *   await page.exposeFunction('md5', text => crypto.createHash('md5').update(text).digest('hex'));
+   *   await page.exposeFunction('sha1', text => crypto.createHash('sha1').update(text).digest('hex'));
    *   await page.setContent(`
    *     <script>
    *       async function onClick() {
-   *         document.querySelector('div').textContent = await window.md5('PLAYWRIGHT');
+   *         document.querySelector('div').textContent = await window.sha1('PLAYWRIGHT');
    *       }
    *     </script>
    *     <button onclick="onClick()">Click me</button>
    *     <div></div>
    *   `);
    *   await page.click('button');
-   * })();
-   * ```
-   * 
-   * An example of adding a `window.readfile` function to the page:
-   * 
-   * ```js
-   * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
-   * const fs = require('fs');
-   * 
-   * (async () => {
-   *   const browser = await chromium.launch();
-   *   const page = await browser.newPage();
-   *   page.on('console', msg => console.log(msg.text()));
-   *   await page.exposeFunction('readfile', async filePath => {
-   *     return new Promise((resolve, reject) => {
-   *       fs.readFile(filePath, 'utf8', (err, text) => {
-   *         if (err)
-   *           reject(err);
-   *         else
-   *           resolve(text);
-   *       });
-   *     });
-   *   });
-   *   await page.evaluate(async () => {
-   *     // use window.readfile to read contents of a file
-   *     const content = await window.readfile('/etc/hosts');
-   *     console.log(content);
-   *   });
-   *   await browser.close();
    * })();
    * ```
    * 
@@ -2499,7 +2421,7 @@ export interface Page {
    * // single selection matching the value
    * page.selectOption('select#colors', 'blue');
    * 
-   * // single selection matching both the value and the label
+   * // single selection matching the label
    * page.selectOption('select#colors', { label: 'Blue' });
    * 
    * // multiple selection
@@ -2931,7 +2853,7 @@ export interface Page {
    * ```js
    * page.on('console', msg => {
    *   for (let i = 0; i < msg.args().length; ++i)
-   *     console.log(`${i}: ${msg.args()[i]}`);
+   *     console.log(`${i}: ${await msg.args()[i].jsonValue()}`);
    * });
    * page.evaluate(() => console.log('hello', 5, {foo: 'bar'}));
    * ```
@@ -2954,19 +2876,6 @@ export interface Page {
    * } catch (e) {
    *   // When the page crashes, exception message contains 'crash'.
    * }
-   * ```
-   * 
-   * However, when manually listening to events, it might be useful to avoid stalling when the page crashes. In this case,
-   * handling `crash` event helps:
-   * 
-   * ```js
-   * await new Promise((resolve, reject) => {
-   *   page.on('requestfinished', async request => {
-   *     if (await someProcessing(request))
-   *       resolve(request);
-   *   });
-   *   page.on('crash', error => reject(error));
-   * });
    * ```
    * 
    */
@@ -3298,25 +3207,21 @@ export interface Page {
  * })();
  * ```
  * 
- * An example of getting text from an iframe element:
- * 
- * ```js
- * const frame = page.frames().find(frame => frame.name() === 'myframe');
- * const text = await frame.$eval('.selector', element => element.textContent);
- * console.log(text);
- * ```
- * 
  */
 export interface Frame {
   /**
    * Returns the return value of `pageFunction`
    * 
-   * If the function passed to the `frame.evaluate` returns a [Promise], then `frame.evaluate` would wait for the promise to
-   * resolve and return its value.
+   * If the function passed to the
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) returns a [Promise],
+   * then [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) would wait for
+   * the promise to resolve and return its value.
    * 
-   * If the function passed to the `frame.evaluate` returns a non-[Serializable] value, then `frame.evaluate` returns
-   * `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-   * `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+   * If the function passed to the
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) returns a
+   * non-[Serializable] value, then[ method: `Frame.evaluate`] returns `undefined`. DevTools Protocol also supports
+   * transferring some additional values that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and
+   * bigint literals.
    * 
    * ```js
    * const result = await frame.evaluate(([x, y]) => {
@@ -3331,7 +3236,8 @@ export interface Frame {
    * console.log(await frame.evaluate('1 + 2')); // prints "3"
    * ```
    * 
-   * [ElementHandle] instances can be passed as an argument to the `frame.evaluate`:
+   * [ElementHandle] instances can be passed as an argument to the
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate):
    * 
    * ```js
    * const bodyHandle = await frame.$('body');
@@ -3348,11 +3254,14 @@ export interface Frame {
   /**
    * Returns the return value of `pageFunction` as in-page object (JSHandle).
    * 
-   * The only difference between `frame.evaluate` and `frame.evaluateHandle` is that `frame.evaluateHandle` returns in-page
-   * object (JSHandle).
+   * The only difference between
+   * [frame.evaluate(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluate) and
+   * [frame.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatehandle) is
+   * that[ method: Fframe.evaluateHandle`] returns in-page object (JSHandle).
    * 
-   * If the function, passed to the `frame.evaluateHandle`, returns a [Promise], then `frame.evaluateHandle` would wait for
-   * the promise to resolve and return its value.
+   * If the function, passed to the
+   * [frame.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatehandle), returns
+   * a [Promise], then[ method: Fframe.evaluateHandle`] would wait for the promise to resolve and return its value.
    * 
    * ```js
    * const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
@@ -3365,7 +3274,8 @@ export interface Frame {
    * const aHandle = await frame.evaluateHandle('document'); // Handle for the 'document'.
    * ```
    * 
-   * [JSHandle] instances can be passed as an argument to the `frame.evaluateHandle`:
+   * [JSHandle] instances can be passed as an argument to the
+   * [frame.evaluateHandle(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#frameevaluatehandle):
    * 
    * ```js
    * const aHandle = await frame.evaluateHandle(() => document.body);
@@ -3495,17 +3405,15 @@ export interface Frame {
    * This method works across navigations:
    * 
    * ```js
-   * const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.
+   * const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
    * 
    * (async () => {
-   *   const browser = await webkit.launch();
+   *   const browser = await chromium.launch();
    *   const page = await browser.newPage();
-   *   let currentURL;
-   *   page.mainFrame()
-   *     .waitForSelector('img')
-   *     .then(() => console.log('First URL with image: ' + currentURL));
-   *   for (currentURL of ['https://example.com', 'https://google.com', 'https://bbc.com']) {
+   *   for (let currentURL of ['https://google.com', 'https://bbc.com']) {
    *     await page.goto(currentURL);
+   *     const element = await page.mainFrame().waitForSelector('img');
+   *     console.log('Loaded image: ' + await element.getAttribute('src'));
    *   }
    *   await browser.close();
    * })();
@@ -4532,8 +4440,8 @@ export interface Frame {
    * 
    * ```js
    * const [response] = await Promise.all([
-   *   frame.waitForNavigation(), // Wait for the navigation to finish
-   *   frame.click('a.my-link'), // Clicking the link will indirectly cause a navigation
+   *   frame.waitForNavigation(), // The promise resolves after navigation has finished
+   *   frame.click('a.delayed-navigation'), // Clicking the link will indirectly cause a navigation
    * ]);
    * ```
    * 
@@ -4577,7 +4485,7 @@ export interface Frame {
   waitForTimeout(timeout: number): Promise<void>;}
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * BrowserContexts provide a way to operate multiple independent browser sessions.
  * 
@@ -4882,7 +4790,7 @@ export interface BrowserContext {
    * 
    * An example of overriding `Math.random` before the page loads:
    * 
-   * ```js
+   * ```js browser
    * // preload.js
    * Math.random = () => 42;
    * ```
@@ -5343,7 +5251,7 @@ export interface JSHandle<T = any> {
    * 
    * ```js
    * const tweetHandle = await page.$('.tweet .retweets');
-   * expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')).toBe('10 retweets');
+   * expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10 retweets');
    * ```
    * 
    * @param pageFunction Function to be evaluated in browser context
@@ -6036,14 +5944,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * // single selection matching the value
    * handle.selectOption('blue');
    * 
-   * // single selection matching both the value and the label
+   * // single selection matching the label
    * handle.selectOption({ label: 'Blue' });
    * 
    * // multiple selection
-   * handle.selectOption('red', 'green', 'blue');
-   * 
-   * // multiple selection for blue, red and second option
-   * handle.selectOption({ value: 'blue' }, { index: 2 }, 'red');
+   * handle.selectOption(['red', 'green', 'blue']);
    * ```
    * 
    * @param values Options to select. If the `<select>` has the `multiple` attribute, all matching options are selected, otherwise only the first option matching one of the passed options is selected. String values are equivalent to `{value:'string'}`. Option
@@ -6960,7 +6865,7 @@ export interface ChromiumBrowser extends Browser {
   stopTracing(): Promise<Buffer>;}
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:
  * - protocol methods can be called with `session.send` method.
@@ -7034,12 +6939,12 @@ class TimeoutError extends Error {}
  * Accessibility is a very platform-specific thing. On different platforms, there are different screen readers that might
  * have wildly different output.
  * 
- * Blink - Chromium's rendering engine - has a concept of "accessibility tree", which is then translated into different
- * platform-specific APIs. Accessibility namespace gives users access to the Blink Accessibility Tree.
+ * Rendering engines of Chromium, Firefox and Webkit have a concept of "accessibility tree", which is then translated into
+ * different platform-specific APIs. Accessibility namespace gives access to this Accessibility Tree.
  * 
- * Most of the accessibility tree gets filtered out when converting from Blink AX Tree to Platform-specific AX-Tree or by
- * assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing only the
- * "interesting" nodes of the tree.
+ * Most of the accessibility tree gets filtered out when converting from internal browser AX Tree to Platform-specific
+ * AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering, exposing
+ * only the "interesting" nodes of the tree.
  */
 export interface Accessibility {
   /**
@@ -7126,7 +7031,7 @@ export {};
 
 
 /**
- * - extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+ * - extends: [EventEmitter]
  * 
  * A Browser is created via
  * [browserType.launch(…)](https://github.com/microsoft/playwright/blob/master/docs/api.md#browsertypelaunch). An example
@@ -8119,7 +8024,6 @@ export interface Dialog {
  * ]);
  * // wait for download to complete
  * const path = await download.path();
- * ...
  * ```
  * 
  * > NOTE: Browser context **must** be created with the `acceptDownloads` set to `true` when user needs access to the
@@ -8704,7 +8608,7 @@ export interface Request {
    * ```js
    * const [request] = await Promise.all([
    *   page.waitForEvent('requestfinished'),
-   *   page.goto(httpsServer.EMPTY_PAGE)
+   *   page.goto('http://example.com')
    * ]);
    * console.log(request.timing());
    * ```

@@ -1,5 +1,5 @@
 # class: Browser
-* extends: [EventEmitter](https://nodejs.org/api/events.html#events_class_eventemitter)
+* extends: [EventEmitter]
 
 A Browser is created via [`method: BrowserType.launch`]. An example of using a [Browser] to create a [Page]:
 
@@ -14,6 +14,37 @@ const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.
 })();
 ```
 
+```python async
+import asyncio
+from playwright.async_api import async_playwright
+
+async def run(playwright):
+    firefox = playwright.firefox
+    browser = await firefox.launch()
+    page = await browser.new_page()
+    await page.goto("https://example.com")
+    await browser.close()
+
+async def main():
+    async with async_playwright() as playwright:
+        await run(playwright)
+asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+def run(playwright):
+    firefox = playwright.firefox
+    browser = firefox.launch()
+    page = browser.new_page()
+    page.goto("https://example.com")
+    browser.close()
+
+with sync_playwright() as playwright:
+    run(playwright)
+```
+
 ## event: Browser.disconnected
 
 Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
@@ -25,8 +56,8 @@ Emitted when Browser gets disconnected from the browser application. This might 
 In case this browser is obtained using [`method: BrowserType.launch`], closes the browser and all of its pages (if any
 were opened).
 
-In case this browser is connected to, clears all created contexts belonging to this
-browser and disconnects from the browser server.
+In case this browser is connected to, clears all created contexts belonging to this browser and disconnects from the
+browser server.
 
 The [Browser] object itself is considered to be disposed and cannot be used anymore.
 
@@ -41,6 +72,20 @@ console.log(browser.contexts().length); // prints `0`
 
 const context = await browser.newContext();
 console.log(browser.contexts().length); // prints `1`
+```
+
+```python async
+browser = await pw.webkit.launch()
+print(len(browser.contexts())) # prints `0`
+context = await browser.new_context()
+print(len(browser.contexts())) # prints `1`
+```
+
+```python sync
+browser = pw.webkit.launch()
+print(len(browser.contexts())) # prints `0`
+context = browser.new_context()
+print(len(browser.contexts())) # prints `1`
 ```
 
 ## method: Browser.isConnected
@@ -64,6 +109,24 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 })();
 ```
 
+```python async
+browser = await playwright.firefox.launch() # or "chromium" or "webkit".
+# create a new incognito browser context.
+context = await browser.new_context()
+# create a new page in a pristine context.
+page = await context.new_page()
+await page.goto("https://example.com")
+```
+
+```python sync
+browser = playwright.firefox.launch() # or "chromium" or "webkit".
+# create a new incognito browser context.
+context = browser.new_context()
+# create a new page in a pristine context.
+page = context.new_page()
+page.goto("https://example.com")
+```
+
 ### option: Browser.newContext.-inline- = %%-shared-context-params-list-%%
 
 ### option: Browser.newContext.proxy = %%-context-option-proxy-%%
@@ -76,8 +139,8 @@ Creates a new browser context. It won't share cookies/cache with other browser c
 Creates a new page in a new browser context. Closing this page will close the context as well.
 
 This is a convenience API that should only be used for the single-page scenarios and short snippets. Production code and
-testing frameworks should explicitly create [`method: Browser.newContext`] followed by the [`method:
-BrowserContext.newPage`] to control their exact life times.
+testing frameworks should explicitly create [`method: Browser.newContext`] followed by the
+[`method: BrowserContext.newPage`] to control their exact life times.
 
 ### option: Browser.newPage.-inline- = %%-shared-context-params-list-%%
 

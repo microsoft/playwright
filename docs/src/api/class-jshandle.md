@@ -8,12 +8,22 @@ const windowHandle = await page.evaluateHandle(() => window);
 // ...
 ```
 
-JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with [`method:
-JSHandle.dispose`]. JSHandles are auto-disposed when their origin frame gets navigated or the parent context gets
-destroyed.
+```python async
+window_handle = await page.evaluate_handle("window")
+# ...
+```
 
-JSHandle instances can be used as an argument in [`method: Page.$eval`], [`method: Page.evaluate`] and [`method:
-Page.evaluateHandle`] methods.
+```python sync
+window_handle = page.evaluate_handle("window")
+# ...
+```
+
+JSHandle prevents the referenced JavaScript object being garbage collected unless the handle is exposed with
+[`method: JSHandle.dispose`]. JSHandles are auto-disposed when their origin frame gets navigated or the parent context
+gets destroyed.
+
+JSHandle instances can be used as an argument in [`method: Page.$eval`], [`method: Page.evaluate`] and
+[`method: Page.evaluateHandle`] methods.
 
 ## method: JSHandle.asElement
 - returns: <[null]|[ElementHandle]>
@@ -31,14 +41,24 @@ Returns the return value of [`param: pageFunction`]
 
 This method passes this handle as the first argument to [`param: pageFunction`].
 
-If [`param: pageFunction`] returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and
-return its value.
+If [`param: pageFunction`] returns a [Promise], then `handle.evaluate` would wait for the promise to resolve and return
+its value.
 
 Examples:
 
 ```js
 const tweetHandle = await page.$('.tweet .retweets');
-expect(await tweetHandle.evaluate((node, suffix) => node.innerText, ' retweets')).toBe('10 retweets');
+expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10 retweets');
+```
+
+```python async
+tweet_handle = await page.query_selector(".tweet .retweets")
+assert await tweet_handle.evaluate("node => node.innerText") == "10 retweets"
+```
+
+```python sync
+tweet_handle = page.query_selector(".tweet .retweets")
+assert tweet_handle.evaluate("node => node.innerText") == "10 retweets"
 ```
 
 ### param: JSHandle.evaluate.pageFunction
@@ -91,6 +111,22 @@ const documentHandle = properties.get('document');
 await handle.dispose();
 ```
 
+```python async
+handle = await page.evaluate_handle("{window, document}")
+properties = await handle.get_properties()
+window_handle = properties.get("window")
+document_handle = properties.get("document")
+await handle.dispose()
+```
+
+```python sync
+handle = page.evaluate_handle("{window, document}")
+properties = handle.get_properties()
+window_handle = properties.get("window")
+document_handle = properties.get("document")
+handle.dispose()
+```
+
 ## async method: JSHandle.getProperty
 - returns: <[JSHandle]>
 
@@ -107,6 +143,6 @@ property to get
 Returns a JSON representation of the object. If the object has a `toJSON` function, it **will not be called**.
 
 :::note
-The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an
-error if the object has circular references.
+The method will return an empty JSON object if the referenced object is not stringifiable. It will throw an error if the
+object has circular references.
 :::

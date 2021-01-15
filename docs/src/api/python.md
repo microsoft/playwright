@@ -1,3 +1,22 @@
+## async method: Playwright.start
+* langs: python
+
+Starts a new instance of Playwright without using the Python context manager. This is useful in REPL applications. Requires [`method: Playwright.stop`] to be called to cleanup resources.
+
+```py
+>>> from playwright.sync_api import sync_playwright
+
+>>> playwright = sync_playwright().start()
+
+>>> browser = playwright.chromium.launch()
+>>> page = browser.newPage()
+>>> page.goto("http://whatsmyuseragent.org/")
+>>> page.screenshot(path="example.png")
+>>> browser.close()
+
+>>> playwright.stop()
+```
+
 ## async method: Playwright.stop
 * langs: python
 
@@ -106,7 +125,7 @@ failed, as reported by `requestfailed` event.
 
 Example of logging of all the failed requests:
 
-```python
+```py
 page.on('requestfailed', lambda request: print(request.url + ' ' + request.failure);
 ```
 
@@ -202,13 +221,13 @@ from a `setTimeout`. Consider this example:
 
 ```python async
 async with page.expect_navigation():
-    await page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
+    await page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
 # Context manager waited for the navigation to happen.
 ```
 
 ```python sync
 with page.expect_navigation():
-    page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
+    page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
 # Context manager waited for the navigation to happen.
 ```
 
@@ -224,7 +243,7 @@ Shortcut for main frame's [`method: Frame.expectNavigation`].
 
 ## async method: Frame.expectNavigation
 * langs: python
-- returns: <[EventContextManager]>
+- returns: <[EventContextManager[Response]]>
 
 Performs action and waits for the next navigation. In case of multiple redirects, the navigation will resolve with
 the response of the last redirect. In case of navigation to a different anchor or navigation due to History API
@@ -236,13 +255,13 @@ from a `setTimeout`. Consider this example:
 
 ```python async
 async with frame.expect_navigation():
-    await frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
+    await frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
 # Context manager waited for the navigation to happen.
 ```
 
 ```python sync
 with frame.expect_navigation():
-    frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation  
+    frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
 # Context manager waited for the navigation to happen.
 ```
 

@@ -21,19 +21,25 @@ import { FilmStrip } from './filmStrip';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
+import { ActionEntry } from '../../traceModel';
 
 export const Timeline: React.FunctionComponent<{
   context: ContextEntry,
   boundaries: Boundaries,
-}> = ({ context, boundaries }) => {
+  selectedAction: ActionEntry | undefined,
+  highlightedAction: ActionEntry | undefined,
+  onSelected: (action: ActionEntry) => void,
+  onHighlighted: (action: ActionEntry | undefined) => void,
+}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
+  const targetAction = highlightedAction || selectedAction;
 
   const offsets = React.useMemo(() => {
     return calculateDividerOffsets(measure.width, boundaries);
   }, [measure.width, boundaries]);
   const actionEntries = React.useMemo(() => {
-    const actions = [];
+    const actions: ActionEntry[] = [];
     for (const page of context.pages)
       actions.push(...page.actions);
     return actions;
@@ -41,23 +47,52 @@ export const Timeline: React.FunctionComponent<{
   const actionTimes = React.useMemo(() => {
     return actionEntries.map(entry => {
       return {
-        action: entry.action,
-        actionId: entry.actionId,
+        entry,
         left: timeToPercent(measure.width, boundaries, entry.action.startTime!),
         right: timeToPercent(measure.width, boundaries, entry.action.endTime!),
       };
     });
   }, [actionEntries, boundaries, measure.width]);
 
+  const findHoveredAction = (x: number) => {
+    const time = positionToTime(measure.width, boundaries, x);
+    const time1 = positionToTime(measure.width, boundaries, x - 5);
+    const time2 = positionToTime(measure.width, boundaries, x + 5);
+    let entry: ActionEntry | undefined;
+    let distance: number | undefined;
+    for (const e of actionEntries) {
+      const left = Math.max(e.action.startTime!, time1);
+      const right = Math.min(e.action.endTime!, time2);
+      const middle = (e.action.startTime! + e.action.endTime!) / 2;
+      const d = Math.abs(time - middle);
+      if (left <= right && (!entry || d < distance!)) {
+        entry = e;
+        distance = d;
+      }
+    }
+    return entry;
+  };
+
   const onMouseMove = (event: React.MouseEvent) => {
-    if (ref.current)
-      setPreviewX(event.clientX - ref.current.getBoundingClientRect().left);
+    if (ref.current) {
+      const x = event.clientX - ref.current.getBoundingClientRect().left;
+      setPreviewX(x);
+      onHighlighted(findHoveredAction(x));
+    }
   };
   const onMouseLeave = () => {
     setPreviewX(undefined);
   };
+  const onClick = (event: React.MouseEvent) => {
+    if (ref.current) {
+      const x = event.clientX - ref.current.getBoundingClientRect().left;
+      const entry = findHoveredAction(x);
+      if (entry)
+        onSelected(entry);
+    }
+  };
 
-  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave}>
+  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}>
     <div className='timeline-grid'>{
       offsets.map((offset, index) => {
         return <div key={index} className='timeline-divider' style={{ left: offset.percent + '%' }}>
@@ -66,19 +101,22 @@ export const Timeline: React.FunctionComponent<{
       })
     }</div>
     <div className='timeline-lane timeline-action-labels'>{
-      actionTimes.map(({ action, actionId, left }) => {
-        return <div key={actionId}
-          className={'timeline-action-label ' + action.action}
-          style={{ left: left + '%' }}
+      actionTimes.map(({ entry, left, right }) => {
+        return <div key={entry.actionId}
+          className={'timeline-action-label ' + entry.action.action + (targetAction === entry ? ' selected' : '')}
+          style={{
+            left: left + '%',
+            width: (right - left) + '%',
+          }}
         >
-          {action.action}
+          {entry.action.action}
         </div>;
       })
     }</div>
     <div className='timeline-lane timeline-actions'>{
-      actionTimes.map(({ action, actionId, left, right }) => {
-        return <div key={actionId}
-          className={'timeline-action ' + action.action}
+      actionTimes.map(({ entry, left, right }) => {
+        return <div key={entry.actionId}
+          className={'timeline-action ' + entry.action.action + (targetAction === entry ? ' selected' : '')}
           style={{
             left: left + '%',
             width: (right - left) + '%',
@@ -127,6 +165,11 @@ function calculateDividerOffsets(clientWidth: number, boundaries: Boundaries): {
 function timeToPercent(clientWidth: number, boundaries: Boundaries, time: number): number {
   const position = (time - boundaries.minimum) / (boundaries.maximum - boundaries.minimum) * clientWidth;
   return 100 * position / clientWidth;
+}
+
+function positionToTime(clientWidth: number, boundaries: Boundaries, x: number): number {
+  const percent = x / clientWidth;
+  return percent * (boundaries.maximum - boundaries.minimum) + boundaries.minimum;
 }
 
 function msToString(ms: number): string {

@@ -8,6 +8,14 @@ page.on('filechooser', async (fileChooser) => {
 });
 ```
 
+```python async
+page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
+```
+
+```python sync
+page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
+```
+
 ## method: FileChooser.element
 - returns: <[ElementHandle]>
 
