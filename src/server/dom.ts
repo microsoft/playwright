@@ -446,7 +446,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const selectOptions = [...elements, ...values];
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const value = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions);
+      progress.log('  selecting specified option(s)');
+      const value = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.waitForOptionsAndSelect(node, selectOptions), selectOptions);
       await this._page._doSlowMo();
       return throwFatalDOMError(value);
     });
