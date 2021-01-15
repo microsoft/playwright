@@ -2209,9 +2209,8 @@ async def run(playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     page = await browser.new_page()
-    watch_dog = page.wait_for_function("() => window.innerWidth < 100")
-    await page.set_viewport_size({"width": 50, "height": 50})
-    await watch_dog
+    await page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);", force_expr=True)
+    await page.wait_for_function("() => window.x > 0")
     await browser.close()
 
 async def main():
@@ -2225,12 +2224,11 @@ from playwright.sync_api import sync_playwright
 
 def run(playwright):
     webkit = playwright.webkit
-    browser = await webkit.launch()
-    page = await browser.new_page()
-    watch_dog = page.wait_for_function("() => window.innerWidth < 100")
-    await page.set_viewport_size({"width": 50, "height": 50})
-    await watch_dog
-    await browser.close()
+    browser = webkit.launch()
+    page = browser.new_page()
+    page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);", force_expr=True)
+    page.wait_for_function("() => window.x > 0")
+    browser.close()
 
 with sync_playwright() as playwright:
     run(playwright)

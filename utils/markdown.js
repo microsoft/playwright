@@ -247,7 +247,8 @@ function innerRenderMdNode(indent, node, lastNode, result, maxColumns) {
     const bothLinks = node.text.match(/\[[^\]]+\]:/) && lastNode && lastNode.type === 'text' && lastNode.text.match(/\[[^\]]+\]:/);
     if (!bothTables && !bothGen && !bothComments && !bothLinks && lastNode && lastNode.text)
       newLine();
-      result.push(wrapText(node.text, maxColumns, indent));
+      for (const line of node.text.split('\n'))
+        result.push(wrapText(line, maxColumns, indent));
     return;
   }
 
