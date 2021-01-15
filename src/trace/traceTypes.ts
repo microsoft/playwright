@@ -15,6 +15,7 @@
  */
 
 export type ContextCreatedTraceEvent = {
+  timestamp: number,
   type: 'context-created',
   browserName: string,
   contextId: string,
@@ -24,11 +25,13 @@ export type ContextCreatedTraceEvent = {
 };
 
 export type ContextDestroyedTraceEvent = {
+  timestamp: number,
   type: 'context-destroyed',
   contextId: string,
 };
 
 export type NetworkResourceTraceEvent = {
+  timestamp: number,
   type: 'resource',
   contextId: string,
   pageId: string,
@@ -40,18 +43,21 @@ export type NetworkResourceTraceEvent = {
 };
 
 export type PageCreatedTraceEvent = {
+  timestamp: number,
   type: 'page-created',
   contextId: string,
   pageId: string,
 };
 
 export type PageDestroyedTraceEvent = {
+  timestamp: number,
   type: 'page-destroyed',
   contextId: string,
   pageId: string,
 };
 
 export type PageVideoTraceEvent = {
+  timestamp: number,
   type: 'page-video',
   contextId: string,
   pageId: string,
@@ -59,6 +65,7 @@ export type PageVideoTraceEvent = {
 };
 
 export type ActionTraceEvent = {
+  timestamp: number,
   type: 'action',
   contextId: string,
   action: string,
@@ -66,8 +73,8 @@ export type ActionTraceEvent = {
   selector?: string,
   label?: string,
   value?: string,
-  startTime?: number,
-  endTime?: number,
+  startTime: number,
+  endTime: number,
   logs?: string[],
   snapshot?: {
     sha1: string,
@@ -77,6 +84,39 @@ export type ActionTraceEvent = {
   error?: string,
 };
 
+export type DialogOpenedEvent = {
+  timestamp: number,
+  type: 'dialog-opened',
+  contextId: string,
+  pageId: string,
+  dialogType: string,
+  message?: string,
+};
+
+export type DialogClosedEvent = {
+  timestamp: number,
+  type: 'dialog-closed',
+  contextId: string,
+  pageId: string,
+  dialogType: string,
+};
+
+export type NavigationEvent = {
+  timestamp: number,
+  type: 'navigation',
+  contextId: string,
+  pageId: string,
+  url: string,
+  sameDocument: boolean,
+};
+
+export type LoadEvent = {
+  timestamp: number,
+  type: 'load',
+  contextId: string,
+  pageId: string,
+};
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ContextDestroyedTraceEvent |
@@ -84,7 +124,11 @@ export type TraceEvent =
     PageDestroyedTraceEvent |
     PageVideoTraceEvent |
     NetworkResourceTraceEvent |
-    ActionTraceEvent;
+    ActionTraceEvent |
+    DialogOpenedEvent |
+    DialogClosedEvent |
+    NavigationEvent |
+    LoadEvent;
 
 
 export type FrameSnapshot = {
