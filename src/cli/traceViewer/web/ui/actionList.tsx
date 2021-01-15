@@ -20,16 +20,23 @@ import * as React from 'react';
 
 export const ActionList: React.FunctionComponent<{
   actions: ActionEntry[],
-  selectedAction?: ActionEntry,
+  selectedAction: ActionEntry | undefined,
+  highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
-}> = ({ actions, selectedAction, onSelected }) => {
+  onHighlighted: (action: ActionEntry | undefined) => void,
+}> = ({ actions, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
+  const targetAction = highlightedAction || selectedAction;
   return <div className='action-list'>{actions.map(actionEntry => {
     const { action, actionId } = actionEntry;
     return <div
-      className={'action-entry' + (actionEntry === selectedAction ? ' selected' : '')}
+      className={'action-entry' + (actionEntry === targetAction ? ' selected' : '')}
       key={actionId}
-      onClick={() => onSelected(actionEntry)}>
+      onClick={() => onSelected(actionEntry)}
+      onMouseEnter={() => onHighlighted(actionEntry)}
+      onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
+      >
       <div className='action-header'>
+        <div className={'action-error codicon codicon-issues'} hidden={!actionEntry.action.error} />
         <div className='action-title'>{action.action}</div>
         {action.selector && <div className='action-selector' title={action.selector}>{action.selector}</div>}
         {action.action === 'goto' && action.value && <div className='action-url' title={action.value}>{action.value}</div>}

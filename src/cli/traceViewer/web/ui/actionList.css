@@ -66,6 +66,13 @@
   white-space: nowrap;
 }
 
+.action-header .action-error {
+  color: red;
+  top: 2px;
+  position: relative;
+  margin-right: 2px;
+}
+
 .action-selector {
   display: inline;
   padding-left: 5px;
