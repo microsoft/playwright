@@ -9,8 +9,12 @@ Playwright comes with the command line tools that run via `npx` or as a part of 
 
 ## Usage
 
-```sh
+```sh js
 $ npx playwright --help
+```
+
+```sh python
+$ python -m playwright
 ```
 
 Running from `package.json` script
@@ -24,8 +28,12 @@ Running from `package.json` script
 
 ## Generate code
 
-```sh
+```sh js
 $ npx playwright codegen wikipedia.org
+```
+
+```sh python
+$ python -m playwright codegen wikipedia.org
 ```
 
 Run `codegen` and perform actions in the browser. Playwright CLI will generate JavaScript code for the user interactions. `codegen` will attempt to generate resilient text-based selectors.
@@ -36,17 +44,29 @@ Run `codegen` and perform actions in the browser. Playwright CLI will generate J
 
 Run `codegen` with `--save-storage` to save [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) at the end. This is useful to separately record authentication step and reuse it later.
 
-```sh
+```sh js
 $ npx playwright --save-storage=auth.json codegen
+# Perform authentication and exit.
+# auth.json will contain the storage state.
+```
+
+```sh python
+$ python -m playwright --save-storage=auth.json codegen
 # Perform authentication and exit.
 # auth.json will contain the storage state.
 ```
 
 Run with `--load-storage` to consume previously loaded storage. This way, all [cookies](https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies) and [localStorage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) will be restored, bringing most web apps to the authenticated state.
 
-```sh
+```sh js
 $ npx playwright --load-storage=auth.json open my.web.app
 $ npx playwright --load-storage=auth.json codegen my.web.app
+# Perform actions in authenticated state.
+```
+
+```sh python
+$ python -m playwright --load-storage=auth.json open my.web.app
+$ python -m playwright --load-storage=auth.json codegen my.web.app
 # Perform actions in authenticated state.
 ```
 
@@ -54,35 +74,59 @@ $ npx playwright --load-storage=auth.json codegen my.web.app
 
 With `open`, you can use Playwright bundled browsers to browse web pages. Playwright provides cross-platform WebKit builds that can be used to reproduce Safari rendering across Windows, Linux and macOS.
 
-```sh
+```sh js
 # Open page in Chromium
-npx playwright open example.com
+$ npx playwright open example.com
 ```
 
-```sh
+```sh python
+# Open page in Chromium
+$ python -m playwright open example.com
+```
+
+```sh js
 # Open page in WebKit
-npx playwright wk example.com
+$ npx playwright wk example.com
+```
+
+```sh python
+# Open page in WebKit
+$ python -m playwright wk example.com
 ```
 
 ### Emulate devices
 `open` can emulate mobile and tablet devices ([see all devices](https://github.com/microsoft/playwright/blob/master/src/server/deviceDescriptors.ts)).
 
-```sh
+```sh js
 # Emulate iPhone 11.
-npx playwright --device="iPhone 11" open wikipedia.org
+$ npx playwright --device="iPhone 11" open wikipedia.org
+```
+
+```sh python
+# Emulate iPhone 11.
+$ python -m playwright --device="iPhone 11" open wikipedia.org
 ```
 
 ### Emulate color scheme and viewport size
-```sh
+```sh js
 # Emulate screen size and color scheme.
-npx playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
+$ npx playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
+```
+```sh python
+# Emulate screen size and color scheme.
+$ python -m playwright --viewport-size=800,600 --color-scheme=dark open twitter.com
 ```
 
 ### Emulate geolocation, language and timezone
-```sh
+```sh js
 # Emulate timezone, language & location
 # Once page opens, click the "my location" button to see geolocation in action
-npx playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" open maps.google.com
+$ npx playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" open maps.google.com
+```
+```sh python
+# Emulate timezone, language & location
+# Once page opens, click the "my location" button to see geolocation in action
+$ python -m playwright --timezone="Europe/Rome" --geolocation="41.890221,12.492348" --lang="it-IT" open maps.google.com
 ```
 
 ## Inspect selectors
@@ -130,14 +174,19 @@ Generates selector for the given element.
 
 ## Take screenshot
 
-```sh
+```sh js
 # See command help
 $ npx playwright screenshot --help
 ```
 
-```sh
+```sh python
+# See command help
+$ python -m playwright screenshot --help
+```
+
+```sh js
 # Wait 3 seconds before capturing a screenshot after page loads ('load' event fires)
-npx playwright \
+$ npx playwright \
   --device="iPhone 11" \
   --color-scheme=dark \
   screenshot \
@@ -145,18 +194,38 @@ npx playwright \
     twitter.com twitter-iphone.png
 ```
 
-```sh
+```sh python
+# Wait 3 seconds before capturing a screenshot after page loads ('load' event fires)
+$ python -m playwright \
+  --device="iPhone 11" \
+  --color-scheme=dark \
+  screenshot \
+    --wait-for-timeout=3000 \
+    twitter.com twitter-iphone.png
+```
+
+```sh js
 # Capture a full page screenshot
-npx playwright screenshot --full-page en.wikipedia.org wiki-full.png
+$ npx playwright screenshot --full-page en.wikipedia.org wiki-full.png
+```
+
+```sh python
+# Capture a full page screenshot
+$ python -m playwright screenshot --full-page en.wikipedia.org wiki-full.png
 ```
 
 ## Generate PDF
 
 PDF generation only works in Headless Chromium.
 
-```sh
+```sh js
 # See command help
 $ npx playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
+```
+
+```sh python
+# See command help
+$ python -m playwright pdf https://en.wikipedia.org/wiki/PDF wiki.pdf
 ```
 
 ## Known limitations

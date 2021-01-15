@@ -85,13 +85,22 @@ chromium.launch(devtools=True)
 Set the `PWDEBUG` environment variable to run your scripts in debug mode. This
 configures the browser for debugging.
 
-```sh
+```sh js
 # Linux/macOS
 $ PWDEBUG=1 npm run test
 
 # Windows
 $ set PWDEBUG=1
 $ npm run test
+```
+
+```sh python
+# Linux/macOS
+$ PWDEBUG=1 pytest -s
+
+# Windows
+$ set PWDEBUG=1
+$ pytest -s
 ```
 
 ### Defaults
@@ -132,11 +141,20 @@ This improves the debugging experience for JavaScript executions in the page con
 
 Playwright supports verbose logging with the `DEBUG` environment variable.
 
-```sh
+```sh js
 # Linux/macOS
 $ DEBUG=pw:api npm run test
 
 # Windows
 $ set DEBUG=pw:api
 $ npm run test
+```
+
+```sh python
+# Linux/macOS
+$ DEBUG=pw:api pytest -s
+
+# Windows
+$ set DEBUG=pw:api
+$ pytest -s
 ```

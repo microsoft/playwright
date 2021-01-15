@@ -124,7 +124,7 @@ the JavaScript environment, e.g. to seed `Math.random`.
 
 An example of overriding `Math.random` before the page loads:
 
-```js
+```js browser
 // preload.js
 Math.random = () => 42;
 ```
