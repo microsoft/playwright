@@ -227,7 +227,7 @@ async def main():
         browser = await p.chromium.launch_persistent_context(userDataDir, headless=False)
         # Execute login steps manually in the browser window
 
-asyncio.get_event_loop().run_until_complete(main())
+asyncio.run(main())
 ```
 
 ```python sync

@@ -17,8 +17,8 @@ $ npx playwright --help
 $ python -m playwright
 ```
 
-Running from `package.json` script
-```json
+```json js
+# Running from `package.json` script
 {
   "scripts": {
     "help": "playwright --help"
