@@ -15,13 +15,24 @@
   limitations under the License.
 */
 
-import { ContextEntry } from '../../traceModel';
+import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../traceModel';
 import './timeline.css';
 import { FilmStrip } from './filmStrip';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
-import { ActionEntry } from '../../traceModel';
+
+type TimelineBar = {
+  entry?: ActionEntry;
+  event?: InterestingPageEvent;
+  leftPosition: number;
+  rightPosition: number;
+  leftTime: number;
+  rightTime: number;
+  type: string;
+  label: string;
+  priority: number;
+};
 
 export const Timeline: React.FunctionComponent<{
   context: ContextEntry,
@@ -33,51 +44,102 @@ export const Timeline: React.FunctionComponent<{
 }> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
-  const targetAction = highlightedAction || selectedAction;
+  const [hoveredBar, setHoveredBar] = React.useState<TimelineBar | undefined>();
 
   const offsets = React.useMemo(() => {
     return calculateDividerOffsets(measure.width, boundaries);
   }, [measure.width, boundaries]);
-  const actionEntries = React.useMemo(() => {
-    const actions: ActionEntry[] = [];
-    for (const page of context.pages)
-      actions.push(...page.actions);
-    return actions;
-  }, [context]);
-  const actionTimes = React.useMemo(() => {
-    return actionEntries.map(entry => {
-      return {
-        entry,
-        left: timeToPercent(measure.width, boundaries, entry.action.startTime!),
-        right: timeToPercent(measure.width, boundaries, entry.action.endTime!),
-      };
-    });
-  }, [actionEntries, boundaries, measure.width]);
 
-  const findHoveredAction = (x: number) => {
+  let targetBar: TimelineBar | undefined = hoveredBar;
+  const bars = React.useMemo(() => {
+    const bars: TimelineBar[] = [];
+    for (const page of context.pages) {
+      for (const entry of page.actions) {
+        bars.push({
+          entry,
+          leftTime: entry.action.startTime,
+          rightTime: entry.action.endTime,
+          leftPosition: timeToPosition(measure.width, boundaries, entry.action.startTime),
+          rightPosition: timeToPosition(measure.width, boundaries, entry.action.endTime),
+          label: entry.action.action + ' ' + (entry.action.selector || entry.action.value || ''),
+          type: entry.action.action,
+          priority: 0,
+        });
+        if (entry === (highlightedAction || selectedAction))
+          targetBar = bars[bars.length - 1];
+      }
+      let lastDialogOpened: trace.DialogOpenedEvent | undefined;
+      for (const event of page.interestingEvents) {
+        if (event.type === 'dialog-opened') {
+          lastDialogOpened = event;
+          continue;
+        }
+        if (event.type === 'dialog-closed' && lastDialogOpened) {
+          bars.push({
+            event,
+            leftTime: lastDialogOpened.timestamp,
+            rightTime: event.timestamp,
+            leftPosition: timeToPosition(measure.width, boundaries, lastDialogOpened.timestamp),
+            rightPosition: timeToPosition(measure.width, boundaries, event.timestamp),
+            label: lastDialogOpened.message ? `${event.dialogType} "${lastDialogOpened.message}"` : event.dialogType,
+            type: 'dialog',
+            priority: -1,
+          });
+        } else if (event.type === 'navigation') {
+          bars.push({
+            event,
+            leftTime: event.timestamp,
+            rightTime: event.timestamp,
+            leftPosition: timeToPosition(measure.width, boundaries, event.timestamp),
+            rightPosition: timeToPosition(measure.width, boundaries, event.timestamp),
+            label: `navigated to ${event.url}`,
+            type: event.type,
+            priority: 1,
+          });
+        } else if (event.type === 'load') {
+          bars.push({
+            event,
+            leftTime: event.timestamp,
+            rightTime: event.timestamp,
+            leftPosition: timeToPosition(measure.width, boundaries, event.timestamp),
+            rightPosition: timeToPosition(measure.width, boundaries, event.timestamp),
+            label: `load`,
+            type: event.type,
+            priority: 1,
+          });
+        }
+      }
+    }
+    bars.sort((a, b) => a.priority - b.priority);
+    return bars;
+  }, [context, boundaries, measure.width]);
+
+  const findHoveredBar = (x: number) => {
     const time = positionToTime(measure.width, boundaries, x);
     const time1 = positionToTime(measure.width, boundaries, x - 5);
     const time2 = positionToTime(measure.width, boundaries, x + 5);
-    let entry: ActionEntry | undefined;
+    let bar: TimelineBar | undefined;
     let distance: number | undefined;
-    for (const e of actionEntries) {
-      const left = Math.max(e.action.startTime!, time1);
-      const right = Math.min(e.action.endTime!, time2);
-      const middle = (e.action.startTime! + e.action.endTime!) / 2;
+    for (const b of bars) {
+      const left = Math.max(b.leftTime, time1);
+      const right = Math.min(b.rightTime, time2);
+      const middle = (b.leftTime + b.rightTime) / 2;
       const d = Math.abs(time - middle);
-      if (left <= right && (!entry || d < distance!)) {
-        entry = e;
+      if (left <= right && (!bar || d < distance!)) {
+        bar = b;
         distance = d;
       }
     }
-    return entry;
+    return bar;
   };
 
   const onMouseMove = (event: React.MouseEvent) => {
     if (ref.current) {
       const x = event.clientX - ref.current.getBoundingClientRect().left;
       setPreviewX(x);
-      onHighlighted(findHoveredAction(x));
+      const bar = findHoveredBar(x);
+      setHoveredBar(bar);
+      onHighlighted(bar && bar.entry ? bar.entry : undefined);
     }
   };
   const onMouseLeave = () => {
@@ -86,53 +148,53 @@ export const Timeline: React.FunctionComponent<{
   const onClick = (event: React.MouseEvent) => {
     if (ref.current) {
       const x = event.clientX - ref.current.getBoundingClientRect().left;
-      const entry = findHoveredAction(x);
-      if (entry)
-        onSelected(entry);
+      const bar = findHoveredBar(x);
+      if (bar && bar.entry)
+        onSelected(bar.entry);
     }
   };
 
   return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}>
     <div className='timeline-grid'>{
       offsets.map((offset, index) => {
-        return <div key={index} className='timeline-divider' style={{ left: offset.percent + '%' }}>
-          <div className='timeline-label'>{msToString(offset.time - boundaries.minimum)}</div>
+        return <div key={index} className='timeline-divider' style={{ left: offset.position + 'px' }}>
+          <div className='timeline-time'>{msToString(offset.time - boundaries.minimum)}</div>
         </div>;
       })
     }</div>
-    <div className='timeline-lane timeline-action-labels'>{
-      actionTimes.map(({ entry, left, right }) => {
-        return <div key={entry.actionId}
-          className={'timeline-action-label ' + entry.action.action + (targetAction === entry ? ' selected' : '')}
+    <div className='timeline-lane timeline-labels'>{
+      bars.map((bar, index) => {
+        return <div key={index}
+          className={'timeline-label ' + bar.type + (targetBar === bar ? ' selected' : '')}
           style={{
-            left: left + '%',
-            width: (right - left) + '%',
+            left: bar.leftPosition + 'px',
+            width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
           }}
         >
-          {entry.action.action}
+          {bar.label}
         </div>;
       })
     }</div>
-    <div className='timeline-lane timeline-actions'>{
-      actionTimes.map(({ entry, left, right }) => {
-        return <div key={entry.actionId}
-          className={'timeline-action ' + entry.action.action + (targetAction === entry ? ' selected' : '')}
+    <div className='timeline-lane timeline-bars'>{
+      bars.map((bar, index) => {
+        return <div key={index}
+          className={'timeline-bar ' + bar.type + (targetBar === bar ? ' selected' : '')}
           style={{
-            left: left + '%',
-            width: (right - left) + '%',
+            left: bar.leftPosition + 'px',
+            width: Math.max(1, bar.rightPosition - bar.leftPosition) + 'px',
           }}
         ></div>;
       })
     }</div>
     <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
-    <div className='timeline-time-bar timeline-time-bar-hover' style={{
+    <div className='timeline-marker timeline-marker-hover' style={{
       display: (previewX !== undefined) ? 'block' : 'none',
       left: (previewX || 0) + 'px',
     }}></div>
   </div>;
 };
 
-function calculateDividerOffsets(clientWidth: number, boundaries: Boundaries): { percent: number, time: number }[] {
+function calculateDividerOffsets(clientWidth: number, boundaries: Boundaries): { position: number, time: number }[] {
   const minimumGap = 64;
   let dividerCount = clientWidth / minimumGap;
   const boundarySpan = boundaries.maximum - boundaries.minimum;
@@ -157,19 +219,17 @@ function calculateDividerOffsets(clientWidth: number, boundaries: Boundaries): {
   const offsets = [];
   for (let i = 0; i < dividerCount; ++i) {
     const time = firstDividerTime + sectionTime * i;
-    offsets.push({ percent: timeToPercent(clientWidth, boundaries, time), time });
+    offsets.push({ position: timeToPosition(clientWidth, boundaries, time), time });
   }
   return offsets;
 }
 
-function timeToPercent(clientWidth: number, boundaries: Boundaries, time: number): number {
-  const position = (time - boundaries.minimum) / (boundaries.maximum - boundaries.minimum) * clientWidth;
-  return 100 * position / clientWidth;
+function timeToPosition(clientWidth: number, boundaries: Boundaries, time: number): number {
+  return (time - boundaries.minimum) / (boundaries.maximum - boundaries.minimum) * clientWidth;
 }
 
 function positionToTime(clientWidth: number, boundaries: Boundaries, x: number): number {
-  const percent = x / clientWidth;
-  return percent * (boundaries.maximum - boundaries.minimum) + boundaries.minimum;
+  return x / clientWidth * (boundaries.maximum - boundaries.minimum) + boundaries.minimum;
 }
 
 function msToString(ms: number): string {

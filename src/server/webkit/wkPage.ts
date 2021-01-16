@@ -549,6 +549,7 @@ export class WKPage implements PageDelegate {
 
   _onDialog(event: Protocol.Dialog.javascriptDialogOpeningPayload) {
     this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+        this._page,
         event.type as dialog.DialogType,
         event.message,
         async (accept: boolean, promptText?: string) => {

@@ -81,7 +81,7 @@ function parseMetaInfo(text: string, video: PageVideoTraceEvent): VideoMetaInfo 
     width: parseInt(resolutionMatch![1], 10),
     height: parseInt(resolutionMatch![2], 10),
     fps: parseInt(fpsMatch![1], 10),
-    startTime: (video as any).timestamp,
-    endTime: (video as any).timestamp + duration
+    startTime: video.timestamp,
+    endTime: video.timestamp + duration
   };
 }

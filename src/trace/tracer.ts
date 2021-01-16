@@ -16,7 +16,7 @@
 
 import { ActionListener, ActionMetadata, BrowserContext, ContextListener, contextListeners, Video } from '../server/browserContext';
 import type { SnapshotterResource as SnapshotterResource, SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
-import { ContextCreatedTraceEvent, ContextDestroyedTraceEvent, NetworkResourceTraceEvent, ActionTraceEvent, PageCreatedTraceEvent, PageDestroyedTraceEvent, PageVideoTraceEvent } from './traceTypes';
+import * as trace from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
@@ -27,6 +27,8 @@ import { ElementHandle } from '../server/dom';
 import { helper, RegisteredListener } from '../server/helper';
 import { DEFAULT_TIMEOUT } from '../utils/timeoutSettings';
 import { ProgressResult } from '../server/progress';
+import { Dialog } from '../server/dialog';
+import { Frame, NavigationEvent } from '../server/frames';
 
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 const fsAppendFileAsync = util.promisify(fs.appendFile.bind(fs));
@@ -86,7 +88,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     this._traceStoragePromise = mkdirIfNeeded(path.join(traceStorageDir, 'sha1')).then(() => traceStorageDir);
     this._appendEventChain = mkdirIfNeeded(traceFile).then(() => traceFile);
     this._writeArtifactChain = Promise.resolve();
-    const event: ContextCreatedTraceEvent = {
+    const event: trace.ContextCreatedTraceEvent = {
+      timestamp: monotonicTime(),
       type: 'context-created',
       browserName: context._browser._options.name,
       contextId: this._contextId,
@@ -107,7 +110,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   }
 
   onResource(resource: SnapshotterResource): void {
-    const event: NetworkResourceTraceEvent = {
+    const event: trace.NetworkResourceTraceEvent = {
+      timestamp: monotonicTime(),
       type: 'resource',
       contextId: this._contextId,
       pageId: resource.pageId,
@@ -127,7 +131,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   async onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void> {
     try {
       const snapshot = await this._takeSnapshot(metadata.page, typeof metadata.target === 'string' ? undefined : metadata.target);
-      const event: ActionTraceEvent = {
+      const event: trace.ActionTraceEvent = {
+        timestamp: monotonicTime(),
         type: 'action',
         contextId: this._contextId,
         pageId: this._pageToId.get(metadata.page),
@@ -150,7 +155,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     const pageId = 'page@' + createGuid();
     this._pageToId.set(page, pageId);
 
-    const event: PageCreatedTraceEvent = {
+    const event: trace.PageCreatedTraceEvent = {
+      timestamp: monotonicTime(),
       type: 'page-created',
       contextId: this._contextId,
       pageId,
@@ -160,7 +166,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     page.on(Page.Events.VideoStarted, (video: Video) => {
       if (this._disposed)
         return;
-      const event: PageVideoTraceEvent = {
+      const event: trace.PageVideoTraceEvent = {
+        timestamp: monotonicTime(),
         type: 'page-video',
         contextId: this._contextId,
         pageId,
@@ -169,11 +176,65 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       this._appendTraceEvent(event);
     });
 
+    page.on(Page.Events.Dialog, (dialog: Dialog) => {
+      if (this._disposed)
+        return;
+      const event: trace.DialogOpenedEvent = {
+        timestamp: monotonicTime(),
+        type: 'dialog-opened',
+        contextId: this._contextId,
+        pageId,
+        dialogType: dialog.type(),
+        message: dialog.message(),
+      };
+      this._appendTraceEvent(event);
+    });
+
+    page.on(Page.Events.InternalDialogClosed, (dialog: Dialog) => {
+      if (this._disposed)
+        return;
+      const event: trace.DialogClosedEvent = {
+        timestamp: monotonicTime(),
+        type: 'dialog-closed',
+        contextId: this._contextId,
+        pageId,
+        dialogType: dialog.type(),
+      };
+      this._appendTraceEvent(event);
+    });
+
+    page.mainFrame().on(Frame.Events.Navigation, (navigationEvent: NavigationEvent) => {
+      if (this._disposed || page.mainFrame().url() === 'about:blank')
+        return;
+      const event: trace.NavigationEvent = {
+        timestamp: monotonicTime(),
+        type: 'navigation',
+        contextId: this._contextId,
+        pageId,
+        url: navigationEvent.url,
+        sameDocument: !navigationEvent.newDocument,
+      };
+      this._appendTraceEvent(event);
+    });
+
+    page.on(Page.Events.Load, () => {
+      if (this._disposed || page.mainFrame().url() === 'about:blank')
+        return;
+      const event: trace.LoadEvent = {
+        timestamp: monotonicTime(),
+        type: 'load',
+        contextId: this._contextId,
+        pageId,
+      };
+      this._appendTraceEvent(event);
+    });
+
     page.once(Page.Events.Close, () => {
       this._pageToId.delete(page);
       if (this._disposed)
         return;
-      const event: PageDestroyedTraceEvent = {
+      const event: trace.PageDestroyedTraceEvent = {
+        timestamp: monotonicTime(),
         type: 'page-destroyed',
         contextId: this._contextId,
         pageId,
@@ -204,7 +265,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     helper.removeEventListeners(this._eventListeners);
     this._pageToId.clear();
     this._snapshotter.dispose();
-    const event: ContextDestroyedTraceEvent = {
+    const event: trace.ContextDestroyedTraceEvent = {
+      timestamp: monotonicTime(),
       type: 'context-destroyed',
       contextId: this._contextId,
     };
@@ -234,9 +296,8 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
 
   private _appendTraceEvent(event: any) {
     // Serialize all writes to the trace file.
-    const timestamp = monotonicTime();
     this._appendEventChain = this._appendEventChain.then(async traceFile => {
-      await fsAppendFileAsync(traceFile, JSON.stringify({...event, timestamp}) + '\n');
+      await fsAppendFileAsync(traceFile, JSON.stringify(event) + '\n');
       return traceFile;
     });
   }

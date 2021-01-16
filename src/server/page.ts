@@ -98,6 +98,7 @@ export class Page extends EventEmitter {
     Crash: 'crash',
     Console: 'console',
     Dialog: 'dialog',
+    InternalDialogClosed: 'internaldialogclosed',
     Download: 'download',
     FileChooser: 'filechooser',
     DOMContentLoaded: 'domcontentloaded',
