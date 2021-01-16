@@ -30,12 +30,19 @@ Playwright enables fast, reliable and capable automation across all modern brows
 
 * **Powerful network control**. Playwright introduces context-wide [network interception](./network.md) to stub and mock network requests.
 
-* **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./selectors.md), [geolocation, permissions](./emulation.md), web workers and other modern web APIs. 
+* **Modern web features**. Playwright supports web components through [shadow-piercing selectors](./selectors.md), [geolocation, permissions](./emulation.md), web workers and other modern web APIs.
 
 * **Capabilities to cover all scenarios**. Support for [file downloads](./network.md) and [uploads](./input.md), out-of-process iframes, native [input events](./input.md), and even [dark mode](./emulation.md).
 
 ## Integrates with your workflow
-* **One-line installation**. Running `npm i playwright` auto-downloads browser dependencies for your team to be onboarded quickly.
+* **One-line installation**. Installing Playwright auto-downloads browser dependencies for your team to be onboarded quickly.
+  ```sh js
+  $ npm i playwright
+  ```
+  ```sh python
+  $ pip install playwright
+  $ python -m playwright install
+  ```
 
 * **TypeScript support**. Playwright ships with built-in types for auto-completion and other benefits.
 
