@@ -34,7 +34,8 @@ const md = require('../markdown');
 /**
  * @typedef {{
  *   only?: string[],
- *   aliases?: Object<string, string>
+ *   aliases?: Object<string, string>,
+  *  types?: Object<string, Documentation.Type>,
  * }} Langs
  */
 
@@ -197,8 +198,6 @@ Documentation.Class = class {
     for (const member of this.membersArray) {
       if (member.langs.only && !member.langs.only.includes(lang))
         continue;
-      if (member.langs.aliases && member.langs.aliases[lang])
-        member.alias = member.langs.aliases[lang];
       member.filterForLanguage(lang);
       membersArray.push(member);
     }
@@ -312,6 +311,11 @@ Documentation.Member = class {
    * @param {string} lang
    */
   filterForLanguage(lang) {
+    if (this.langs.aliases && this.langs.aliases[lang])
+      this.alias = this.langs.aliases[lang];
+    if (this.langs.types && this.langs.types[lang])
+      this.type = this.langs.types[lang];
+    this.type.filterForLanguage(lang);
     const argsArray = [];
     for (const arg of this.argsArray) {
       if (arg.langs.only && !arg.langs.only.includes(lang))

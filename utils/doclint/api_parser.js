@@ -99,7 +99,15 @@ class ApiParser {
         member.async = true;
     }
     const clazz = this.classes.get(match[2]);
-    clazz.membersArray.push(member);
+    const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === "method");
+    if (existingMember) {
+      for (const lang of member.langs.only) {
+        existingMember.langs.types = existingMember.langs.types || {};
+        existingMember.langs.types[lang] = returnType;
+      }
+    } else {
+      clazz.membersArray.push(member);
+    }
   }
 
   /**
@@ -293,7 +301,8 @@ function extractLangs(spec) {
     }
     return {
       only: only ? only.split(',') : undefined,
-      aliases
+      aliases,
+      types: {}
     };
   }
   return {};

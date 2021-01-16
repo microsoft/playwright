@@ -53,6 +53,10 @@ function serializeClass(clazz) {
   if (clazz.extends)
     result.extends = clazz.extends;
   result.langs = clazz.langs;
+  if (result.langs && result.langs.types) {
+    for (const key in result.langs.types)
+      result.langs.types[key] = serializeType(result.langs.types[key]);
+  }
   if (clazz.comment)
     result.comment = clazz.comment;
   result.members = clazz.membersArray.map(serializeMember);

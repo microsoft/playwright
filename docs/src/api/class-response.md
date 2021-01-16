@@ -8,7 +8,6 @@
 Returns the buffer with response body.
 
 ## async method: Response.finished
-* langs: js
 - returns: <[null]|[Error]>
 
 Waits for this response to finish, returns failure error if request failed.

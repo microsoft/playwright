@@ -3051,9 +3051,9 @@ export interface Page {
   }): Promise<void>;
 
   /**
-   * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-   * last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
-   * resolve with `null`.
+   * Waits for the main frame navigation and returns the main resource response. In case of multiple redirects, the
+   * navigation will resolve with the response of the last redirect. In case of navigation to a different anchor or
+   * navigation due to History API usage, the navigation will resolve with `null`.
    * 
    * This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will indirectly
    * cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation from a `setTimeout`.
@@ -4431,9 +4431,9 @@ export interface Frame {
   }): Promise<void>;
 
   /**
-   * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-   * last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
-   * resolve with `null`.
+   * Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the navigation
+   * will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to
+   * History API usage, the navigation will resolve with `null`.
    * 
    * This method waits for the frame to navigate to a new URL. It is useful for when you run code which will indirectly cause
    * the frame to navigate. Consider this example:
