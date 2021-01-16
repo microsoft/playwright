@@ -15,17 +15,18 @@
  */
 
 import * as channels from '../protocol/channels';
-import { DeviceDescriptors } from '../server/deviceDescriptors';
 import { Playwright } from '../server/playwright';
 import { AndroidDispatcher } from './androidDispatcher';
 import { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import { Dispatcher, DispatcherScope } from './dispatcher';
 import { ElectronDispatcher } from './electronDispatcher';
 import { SelectorsDispatcher } from './selectorsDispatcher';
+import * as types from '../server/types';
 
 export class PlaywrightDispatcher extends Dispatcher<Playwright, channels.PlaywrightInitializer> implements channels.PlaywrightChannel {
   constructor(scope: DispatcherScope, playwright: Playwright) {
-    const deviceDescriptors = Object.entries(DeviceDescriptors)
+    const descriptors = require('../server/deviceDescriptors') as types.Devices;
+    const deviceDescriptors = Object.entries(descriptors)
         .map(([name, descriptor]) => ({ name, descriptor }));
     super(scope, playwright, 'Playwright', {
       chromium: new BrowserTypeDispatcher(scope, playwright.chromium),

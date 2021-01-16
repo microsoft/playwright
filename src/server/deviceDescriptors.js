@@ -15,9 +15,10 @@
  * limitations under the License.
  */
 
-import * as types from './types';
-
-export const DeviceDescriptors: types.Devices = {
+/**
+ * @type {import('./types').Devices}
+ */
+module.exports = {
   'Blackberry PlayBook': {
     'userAgent': 'Mozilla/5.0 (PlayBook; U; RIM Tablet OS 2.1.0; en-US) AppleWebKit/536.2+ (KHTML like Gecko) Version/7.2.1.0 Safari/536.2+',
     'viewport': {
