@@ -31,7 +31,7 @@ export type InjectedScriptProgress = {
 };
 
 export type InjectedScriptPoll<T> = {
-  result: Promise<T>,
+  run: () => Promise<T>,
   // Takes more logs, waiting until at least one message is available.
   takeNextLogs: () => Promise<string[]>,
   // Takes all current logs without waiting.
@@ -242,19 +242,23 @@ export class InjectedScript {
       },
     };
 
-    const result = task(progress);
+    const run = () => {
+      const result = task(progress);
 
-    // After the task has finished, there should be no more logs.
-    // Release any pending `takeNextLogs` call, and do not block any future ones.
-    // This prevents non-finished protocol evaluation calls and memory leaks.
-    result.finally(() => {
-      taskFinished = true;
-      logReady();
-    });
+      // After the task has finished, there should be no more logs.
+      // Release any pending `takeNextLogs` call, and do not block any future ones.
+      // This prevents non-finished protocol evaluation calls and memory leaks.
+      result.finally(() => {
+        taskFinished = true;
+        logReady();
+      });
+
+      return result;
+    };
 
     return {
       takeNextLogs,
-      result,
+      run,
       cancel: () => { progress.aborted = true; },
       takeLastLogs: () => unsentLogs,
     };
@@ -267,7 +271,7 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  waitForOptionsAndSelect(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): Promise<string[] | 'error:notconnected' | FatalDOMError> {
+  waitForOptionsAndSelect(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): InjectedScriptPoll<string[] | 'error:notconnected' | FatalDOMError> {
     return this.pollRaf((progress, continuePolling) => {
       const element = this.findLabelTarget(node as Element);
       if (!element || !element.isConnected)
@@ -312,7 +316,7 @@ export class InjectedScript {
       select.dispatchEvent(new Event('input', { 'bubbles': true }));
       select.dispatchEvent(new Event('change', { 'bubbles': true }));
       return selectedOptions.map(option => option.value);
-    }).result;
+    });
   }
 
   waitForEnabledAndFill(node: Node, value: string): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {

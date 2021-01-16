@@ -447,9 +447,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
-      const value = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.waitForOptionsAndSelect(node, selectOptions), selectOptions);
+      const poll = await this._evaluateHandleInUtility(([injected, node, selectOptions]) => injected.waitForOptionsAndSelect(node, selectOptions), selectOptions);
+      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const result = throwFatalDOMError(await pollHandler.finish());
       await this._page._doSlowMo();
-      return throwFatalDOMError(value);
+      return result;
     });
   }
 
@@ -818,7 +820,7 @@ export class InjectedScriptPollHandler<T> {
 
   async finishHandle(): Promise<js.SmartHandle<T>> {
     try {
-      const result = await this._poll!.evaluateHandle(poll => poll.result);
+      const result = await this._poll!.evaluateHandle(poll => poll.run());
       await this._finishInternal();
       return result;
     } finally {
@@ -828,7 +830,7 @@ export class InjectedScriptPollHandler<T> {
 
   async finish(): Promise<T> {
     try {
-      const result = await this._poll!.evaluate(poll => poll.result);
+      const result = await this._poll!.evaluate(poll => poll.run());
       await this._finishInternal();
       return result;
     } finally {
