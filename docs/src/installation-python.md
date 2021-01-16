@@ -14,13 +14,14 @@ Each version of Playwright needs specific versions of browser binaries to operat
 - `~/.cache/ms-playwright` on Linux
 
 ```sh
-npm i -D playwright
+$ pip install playwright
+$ python -m playwright install
 ```
 
 These browsers will take few hundreds of megabytes of the disk space when installed:
 
 ```sh
-du -hs ./Library/Caches/ms-playwright/*
+$ du -hs ./Library/Caches/ms-playwright/*
 281M  chromium-XXXXXX
 187M  firefox-XXXX
 180M  webkit-XXXX
@@ -30,33 +31,37 @@ You can override default behavior using environment variables. When installing P
 
 ```sh
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npm i -D playwright
+$ pip install playwright
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python -m playwright install
 
 # Windows
 $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ npm i -D playwright
+$ pip install playwright
+$ python -m playwright install
 ```
 
 When running Playwright scripts, ask it to search for browsers in a shared location:
 
 ```sh
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers node playwright-script.js
+$ PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers python playwright_script.js
 
 # Windows
 $ set PLAYWRIGHT_BROWSERS_PATH=%USERPROFILE%\pw-browsers
-$ node playwright-script.js
+$ python playwright_script.py
 ```
 
-Or you can opt into the hermetic install and place binaries under the `node_modules/` folder:
+Or you can opt into the hermetic install and place binaries under the `site-packages/playwright` folder:
 
 ```sh
 # Linux/macOS
-$ PLAYWRIGHT_BROWSERS_PATH=0 npm i -D playwright
+$ pip install playwright
+$ PLAYWRIGHT_BROWSERS_PATH=0 python -m playwright install
 
 # Windows
 $ set PLAYWRIGHT_BROWSERS_PATH=0
-$ npm i -D playwright
+$ pip install playwright
+$ python -m playwright install
 ```
 
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
@@ -75,11 +80,13 @@ location using the `PLAYWRIGHT_DOWNLOAD_HOST` env variable.
 
 ```sh
 # Linux/macOS
-$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+$ pip install playwright
+$ PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
 
 # Windows
 $ set PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78
-$ npm i -D playwright
+$ pip install playwright
+$ python -m playwright install
 ```
 
 It is also possible to use a per-browser download hosts using `PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST`, `PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST` and `PLAYWRIGHT_WEBKIT_DOWNLOAD_HOST` env variables that
@@ -87,7 +94,8 @@ take precedence over `PLAYWRIGHT_DOWNLOAD_HOST`.
 
 ```sh
 # Linux/macOS
-$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 npm i -D playwright
+$ pip install playwright
+$ PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST=192.168.1.1 PLAYWRIGHT_DOWNLOAD_HOST=192.168.1.78 python -m playwright install
 ```
 
 ## Skip browser downloads
@@ -99,40 +107,20 @@ This can be done by setting `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` variable before i
 
 ```sh
 # Linux/macOS
-$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm i -D playwright
+$ pip install playwright
+$ PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 python -m playwright install
 
 # Windows
 $ set PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-$ npm i -D playwright
+$ pip install playwright
+$ python -m playwright install
 ```
 
 ## Download single browser binary
 
-Playwright ships three packages that bundle only a single browser:
-- [`playwright-chromium`](https://www.npmjs.com/package/playwright-chromium)
-- [`playwright-webkit`](https://www.npmjs.com/package/playwright-webkit)
-- [`playwright-firefox`](https://www.npmjs.com/package/playwright-firefox)
-
-:::note
-All configuration environment variables also apply to these packages.
-:::
-
-Using these packages is as easy as using a regular Playwright:
-
-Install a specific package
+Playwright downloads Chromium, Firefox and WebKit browsers by default. To install a specific browser, pass it as an argument during installation.
 
 ```sh
-$ npm i -D playwright-webkit
-```
-
-Require package
-
-```js
-// Notice a proper package name in require
-const { webkit } = require('playwright-webkit');
-
-(async () => {
-  const browser = await webkit.launch();
-  // ...
-})();
+$ pip install playwright
+$ python -m playwright install firefox
 ```
