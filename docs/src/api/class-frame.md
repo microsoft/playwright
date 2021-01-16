@@ -842,6 +842,8 @@ Returns the array of option values that have been successfully selected.
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
 matching [`param: selector`], the method throws an error.
 
+Will wait until all specified options are present in the `<select>` element.
+
 ```js
 // single selection matching the value
 frame.selectOption('select#colors', 'blue');
