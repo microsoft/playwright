@@ -1,5 +1,5 @@
 ---
-id: intro-python
+id: intro
 title: "Getting Started"
 ---
 

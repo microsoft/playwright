@@ -1,5 +1,5 @@
 ---
-id: test-runners-python
+id: test-runners
 title: "Test Runners"
 ---
 
