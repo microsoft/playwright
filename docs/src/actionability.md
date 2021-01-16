@@ -32,7 +32,20 @@ Some actions like [`method: Page.click`] support `force` option that disables no
 | textContent | Yes | - | - | - | - | - |
 | type | Yes | - | - | - | - | - |
 
-<br/>
+You can check the actionability state of the element using one of the following methods:
+
+- [`method: ElementHandle.isChecked`]
+- [`method: ElementHandle.isDisabled`]
+- [`method: ElementHandle.isEditable`]
+- [`method: ElementHandle.isEnabled`]
+- [`method: ElementHandle.isHidden`]
+- [`method: ElementHandle.isVisible`]
+- [`method: Page.isChecked`]
+- [`method: Page.isDisabled`]
+- [`method: Page.isEditable`]
+- [`method: Page.isEnabled`]
+- [`method: Page.isHidden`]
+- [`method: Page.isVisible`]
 
 ### Visible
 

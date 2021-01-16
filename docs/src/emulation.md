@@ -1,6 +1,6 @@
 ---
 id: emulation
-title: "Device and environment emulation"
+title: "Emulation"
 ---
 
 Playwright allows overriding various parameters of the device where the browser is running:
