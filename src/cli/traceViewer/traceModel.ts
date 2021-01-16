@@ -66,7 +66,6 @@ export type VideoMetaInfo = {
 export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel, filePath: string) {
   const contextEntries = new Map<string, ContextEntry>();
   const pageEntries = new Map<string, PageEntry>();
-
   for (const event of events) {
     switch (event.type) {
       case 'context-created': {

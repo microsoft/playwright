@@ -248,12 +248,12 @@ function msToString(ms: number): string {
 
   const minutes = seconds / 60;
   if (minutes < 60)
-    return minutes.toFixed(1) + 's';
+    return minutes.toFixed(1) + 'm';
 
   const hours = minutes / 60;
   if (hours < 24)
     return hours.toFixed(1) + 'h';
 
   const days = hours / 24;
-  return days.toFixed(1) + 'h';
+  return days.toFixed(1) + 'd';
 }
