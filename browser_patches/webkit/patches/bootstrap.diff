@@ -16508,6 +16508,18 @@ index 50469a524949a69e9419280ed2a4f8c2bc1e5f23..2bc6e32b486f4ae244a6ccb870a88de9
      return m_impl->windowIsFrontWindowUnderMouse(event.nativeEvent());
  }
  
+diff --git a/Source/WebKit/UIProcess/mac/WKPrintingView.h b/Source/WebKit/UIProcess/mac/WKPrintingView.h
+index 59c90e79342fb28b405069f03d8ec3dc162b4eed..b64249bd88aba343143d6bec5a98a52e8c5d505d 100644
+--- a/Source/WebKit/UIProcess/mac/WKPrintingView.h
++++ b/Source/WebKit/UIProcess/mac/WKPrintingView.h
+@@ -32,6 +32,7 @@
+ #import <wtf/Lock.h>
+ #import <wtf/RetainPtr.h>
+ #import <wtf/Vector.h>
++#import <wtf/WeakObjCPtr.h>
+ 
+ @class WKPrintingViewData;
+ @class PDFDestination;
 diff --git a/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h b/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h
 index 0bb07e679f30e7b3682b3736b5372cbbb2d31ec8..cc0740c7d88d11d419cf2ca51cbc00b193531100 100644
 --- a/Source/WebKit/UIProcess/mac/WebContextMenuProxyMac.h
