@@ -567,7 +567,7 @@ await browser.close();
 ```python async
 context = await browser.new_context()
 page = await context.new_page()
-await context.route(r"(\.png$)|(\.jpg$)", lambda route: route.abort())
+await context.route(re.compile(r"(\.png$)|(\.jpg$)"), lambda route: route.abort())
 page = await context.new_page()
 await page.goto("https://example.com")
 await browser.close()
@@ -576,7 +576,7 @@ await browser.close()
 ```python sync
 context = browser.new_context()
 page = context.new_page()
-context.route(r"(\.png$)|(\.jpg$)", lambda route: route.abort())
+context.route(re.compile(r"(\.png$)|(\.jpg$)"), lambda route: route.abort())
 page = await context.new_page()
 page = context.new_page()
 page.goto("https://example.com")
@@ -736,24 +736,30 @@ A glob pattern, regex pattern or predicate receiving [URL] used to register a ro
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ## async method: BrowserContext.waitForEvent
+* langs:
+  - alias-python: expect_event
 - returns: <[any]>
 
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
 value. Will throw an error if the context closes before the event is fired. Returns the event data value.
 
 ```js
-const context = await browser.newContext();
-await context.grantPermissions(['geolocation']);
+const [page, _] = await Promise.all([
+  context.waitForEvent('page'),
+  page.click('button')
+]);
 ```
 
 ```python async
-context = await browser.new_context()
-await context.grant_permissions(["geolocation"])
+async with context.expect_event("page") as event_info:
+    await page.click("button")
+page = await event_info.value
 ```
 
 ```python sync
-context = browser.new_context()
-context.grant_permissions(["geolocation"])
+with context.expect_event("page") as event_info:
+    page.click("button")
+page = event_info.value
 ```
 
 ### param: BrowserContext.waitForEvent.event

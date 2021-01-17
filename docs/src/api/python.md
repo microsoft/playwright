@@ -1,22 +1,3 @@
-## async method: Playwright.start
-* langs: python
-
-Starts a new instance of Playwright without using the Python context manager. This is useful in REPL applications. Requires [`method: Playwright.stop`] to be called to cleanup resources.
-
-```py
->>> from playwright.sync_api import sync_playwright
-
->>> playwright = sync_playwright().start()
-
->>> browser = playwright.chromium.launch()
->>> page = browser.newPage()
->>> page.goto("http://whatsmyuseragent.org/")
->>> page.screenshot(path="example.png")
->>> browser.close()
-
->>> playwright.stop()
-```
-
 ## async method: Playwright.stop
 * langs: python
 
@@ -120,160 +101,27 @@ Raw script content.
 * langs: python
 - returns: <[null]|[string]>
 
-Returns human-readable error message, e.g. `'net::ERR_FAILED'`. The method returns `None` unless this request has
-failed, as reported by `requestfailed` event.
-
-Example of logging of all the failed requests:
-
-```py
-page.on('requestfailed', lambda request: print(request.url + ' ' + request.failure);
-```
-
 ## async method: Response.finished
 * langs: python
 - returns: <[null]|[string]>
 
-Waits for this response to finish, returns failure error if request failed.
-
-## async method: Page.expectEvent
+## async method: Page.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
+### option: Page.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
+### option: Page.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
 
-Performs action and waits for given `event` to fire. If predicate is provided, it passes
-event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the `event` is fired.
-
-```python async
-async with page.expect_event(event_name) as event_info:
-    await page.click("button")
-value = await event_info.value
-```
-
-```python sync
-with page.expect_event(event_name) as event_info:
-    page.click("button")
-value = event_info.value
-```
-
-### param: Page.expectEvent.event = %%-wait-for-event-event-%%
-### option: Page.expectEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: Page.expectEvent.timeout = %%-python-wait-for-event-timeout-%%
-
-## async method: BrowserContext.expectEvent
+## async method: BrowserContext.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
+### option: BrowserContext.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
+### option: BrowserContext.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
 
-Performs action and waits for given `event` to fire. If predicate is provided, it passes
-event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if browser context is closed before the `event` is fired.
-
-```python async
-async with context.expect_event("page") as event_info:
-    await context.click("button")
-page = await event_info.value
-```
-
-```python sync
-with context.expect_event("page") as event_info:
-    context.click("button")
-page = event_info.value
-```
-
-### param: BrowserContext.expectEvent.event = %%-wait-for-event-event-%%
-### option: BrowserContext.expectEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: BrowserContext.expectEvent.timeout = %%-python-wait-for-event-timeout-%%
-
-## async method: WebSocket.expectEvent
+## async method: WebSocket.waitForEvent
 * langs: python
 - returns: <[EventContextManager]>
-
-Performs action and waits for given `event` to fire. If predicate is provided, it passes
-event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the socket is closed before the `event` is fired.
-
-```python async
-async with ws.expect_event(event_name) as event_info:
-    await ws.click("button")
-value = await event_info.value
-```
-
-```python sync
-with ws.expect_event(event_name) as event_info:
-    ws.click("button")
-value = event_info.value
-```
-
-### param: WebSocket.expectEvent.event = %%-wait-for-event-event-%%
-### option: WebSocket.expectEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: WebSocket.expectEvent.timeout = %%-python-wait-for-event-timeout-%%
-
-## async method: Page.expectNavigation
-* langs: python
-- returns: <[EventContextManager]>
-
-Performs action and waits for the next navigation. In case of multiple redirects, the navigation will resolve with
-the response of the last redirect. In case of navigation to a different anchor or navigation due to History API
-usage, the navigation will resolve with `null`.
-
-This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will
-indirectly cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation
-from a `setTimeout`. Consider this example:
-
-```python async
-async with page.expect_navigation():
-    await page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
-# Context manager waited for the navigation to happen.
-```
-
-```python sync
-with page.expect_navigation():
-    page.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
-# Context manager waited for the navigation to happen.
-```
-
-:::note
-Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the URL is considered a navigation.
-:::
-
-Shortcut for main frame's [`method: Frame.expectNavigation`].
-
-### option: Page.expectNavigation.timeout = %%-navigation-timeout-%%
-### option: Page.expectNavigation.url = %%-wait-for-navigation-url-%%
-### option: Page.expectNavigation.waitUntil = %%-navigation-wait-until-%%
-
-## async method: Frame.expectNavigation
-* langs: python
-- returns: <[EventContextManager[Response]]>
-
-Performs action and waits for the next navigation. In case of multiple redirects, the navigation will resolve with
-the response of the last redirect. In case of navigation to a different anchor or navigation due to History API
-usage, the navigation will resolve with `null`.
-
-This resolves when the page navigates to a new URL or reloads. It is useful for when you run code which will
-indirectly cause the page to navigate. e.g. The click target has an `onclick` handler that triggers navigation
-from a `setTimeout`. Consider this example:
-
-```python async
-async with frame.expect_navigation():
-    await frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
-# Context manager waited for the navigation to happen.
-```
-
-```python sync
-with frame.expect_navigation():
-    frame.click("a.delayed-navigation") # Clicking the link will indirectly cause a navigation
-# Context manager waited for the navigation to happen.
-```
-
-:::note
-Usage of the [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) to change the
-URL is considered a navigation.
-:::
-
-### option: Frame.expectNavigation.timeout = %%-navigation-timeout-%%
-### option: Frame.expectNavigation.url = %%-wait-for-navigation-url-%%
-### option: Frame.expectNavigation.waitUntil = %%-navigation-wait-until-%%
-
+### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
+### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
 
 ## async method: Page.expectDownload
 * langs: python
@@ -376,46 +224,72 @@ Receives the [Page] object and resolves to truthy value when the waiting should 
 
 ### option: BrowserContext.expectPage.timeout = %%-python-wait-for-event-timeout-%%
 
-
-## async method: Page.expectRequest
-* langs: python
-- returns: <[EventContextManager]<[Request]>>
-
-Performs action and waits for `response` event to fire. If predicate is provided, it passes
-[Request] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the download event is fired.
-
-### param: Page.expectRequest.url_or_predicate =
-* langs: python
-- `url_or_predicate` <[str]|[RegExp]|[function]\([Request]\):[bool]>
-
-Receives the [Request] object and resolves to truthy value when the waiting should resolve.
-
-### option: Page.expectRequest.timeout = %%-python-wait-for-event-timeout-%%
-
-## async method: Page.expectResponse
+## async method: Frame.waitForNavigation
 * langs: python
 - returns: <[EventContextManager]<[Response]>>
 
-Performs action and waits for `response` event to fire. If predicate is provided, it passes
-[Response] value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
-Will throw an error if the page is closed before the download event is fired.
-
-### param: Page.expectResponse.url_or_predicate =
+## async method: Page.waitForNavigation
 * langs: python
-- `url_or_predicate` <[str]|[RegExp]|[function]\([Response]\):[bool]>
+- returns: <[EventContextManager]<[Response]>>
 
-Receives the [Response] object and resolves to truthy value when the waiting should resolve.
+## async method: Page.waitForRequest
+* langs: python
+- returns: <[EventContextManager]<[Request]>>
 
-### option: Page.expectResponse.timeout = %%-python-wait-for-event-timeout-%%
+## async method: Page.waitForResponse
+* langs: python
+- returns: <[EventContextManager]<[Response]>>
 
+## async method: BrowserContext.waitForEvent2
+* langs: python
+  - alias-python: wait_for_event
+- returns: <[Any]>
 
-### option: BrowserContext.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: BrowserContext.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
-### option: Page.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: Page.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
-### option: WebSocket.waitForEvent.predicate = %%-python-wait-for-event-predicate-%%
-### option: WebSocket.waitForEvent.timeout = %%-python-wait-for-event-timeout-%%
+:::note
+In most cases, you should use [`method: BrowserContext.waitForEvent`].
+:::
+
+Waits for given `event` to fire. If predicate is provided, it passes
+event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+Will throw an error if the socket is closed before the `event` is fired.
+
+### param: BrowserContext.waitForEvent2.event = %%-wait-for-event-event-%%
+### option: BrowserContext.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
+### option: BrowserContext.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+
+## async method: Page.waitForEvent2
+* langs: python
+  - alias-python: wait_for_event
+- returns: <[Any]>
+
+:::note
+In most cases, you should use [`method: Page.waitForEvent`].
+:::
+
+Waits for given `event` to fire. If predicate is provided, it passes
+event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+Will throw an error if the socket is closed before the `event` is fired.
+
+### param: Page.waitForEvent2.event = %%-wait-for-event-event-%%
+### option: Page.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
+### option: Page.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
+
+## async method: WebSocket.waitForEvent2
+* langs: python
+  - alias-python: wait_for_event
+- returns: <[Any]>
+
+:::note
+In most cases, you should use [`method: WebSocket.waitForEvent`].
+:::
+
+Waits for given `event` to fire. If predicate is provided, it passes
+event's value into the `predicate` function and waits for `predicate(event)` to return a truthy value.
+Will throw an error if the socket is closed before the `event` is fired.
+
+### param: WebSocket.waitForEvent2.event = %%-wait-for-event-event-%%
+### option: WebSocket.waitForEvent2.predicate = %%-python-wait-for-event-predicate-%%
+### option: WebSocket.waitForEvent2.timeout = %%-python-wait-for-event-timeout-%%
 
 ### param: ElementHandle.$eval.expression = %%-python-evaluate-expression-%%
 ### param: ElementHandle.$$eval.expression = %%-python-evaluate-expression-%%

@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-import { TraceModel, VideoMetaInfo } from '../traceModel';
+import { TraceModel, VideoMetaInfo, trace } from '../traceModel';
 import './common.css';
 import './third_party/vscode/codicon.css';
 import { Workbench } from './ui/workbench';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { ActionTraceEvent } from '../../../trace/traceTypes';
 
 declare global {
   interface Window {
@@ -28,7 +27,7 @@ declare global {
     getVideoMetaInfo(videoId: string): Promise<VideoMetaInfo | undefined>;
     readFile(filePath: string): Promise<string>;
     readResource(sha1: string): Promise<string>;
-    renderSnapshot(action: ActionTraceEvent): void;
+    renderSnapshot(action: trace.ActionTraceEvent): void;
   }
 }
 

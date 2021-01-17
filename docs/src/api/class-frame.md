@@ -1046,15 +1046,29 @@ async def run(playwright):
     webkit = playwright.webkit
     browser = await webkit.launch()
     page = await browser.new_page()
-    watch_dog = asyncio.create_task(page.main_frame.wait_for_function("() => window.innerWidth < 100")
-    await page.set_viewport_size({"width": 50, "height": 50})
-    await watch_dog
+    await page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);", force_expr=True)
+    await page.main_frame.wait_for_function("() => window.x > 0")
     await browser.close()
 
 async def main():
     async with async_playwright() as playwright:
         await run(playwright)
 asyncio.run(main())
+```
+
+```python sync
+from playwright.sync_api import sync_playwright
+
+def run(playwright):
+    webkit = playwright.webkit
+    browser = webkit.launch()
+    page = browser.new_page()
+    page.evaluate("window.x = 0; setTimeout(() => { window.x = 100 }, 1000);", force_expr=True)
+    page.main_frame.wait_for_function("() => window.x > 0")
+    browser.close()
+
+with sync_playwright() as playwright:
+    run(playwright)
 ```
 
 To pass an argument to the predicate of `frame.waitForFunction` function:
@@ -1121,11 +1135,13 @@ frame.wait_for_load_state() # the promise resolves after "load" event.
 ### option: Frame.waitForLoadState.timeout = %%-navigation-timeout-%%
 
 ## async method: Frame.waitForNavigation
+* langs:
+  * alias-python: expect_navigation
 - returns: <[null]|[Response]>
 
-Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
-last redirect. In case of navigation to a different anchor or navigation due to History API usage, the navigation will
-resolve with `null`.
+Waits for the frame navigation and returns the main resource response. In case of multiple redirects, the navigation
+will resolve with the response of the last redirect. In case of navigation to a different anchor or navigation due to
+History API usage, the navigation will resolve with `null`.
 
 This method waits for the frame to navigate to a new URL. It is useful for when you run code which will indirectly cause
 the frame to navigate. Consider this example:

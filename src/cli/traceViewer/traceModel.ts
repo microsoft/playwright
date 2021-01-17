@@ -15,6 +15,7 @@
  */
 
 import * as trace from '../../trace/traceTypes';
+export * as trace from '../../trace/traceTypes';
 
 export type TraceModel = {
   contexts: ContextEntry[];
@@ -36,11 +37,14 @@ export type VideoEntry = {
   videoId: string;
 };
 
+export type InterestingPageEvent = trace.DialogOpenedEvent | trace.DialogClosedEvent | trace.NavigationEvent | trace.LoadEvent;
+
 export type PageEntry = {
   created: trace.PageCreatedTraceEvent;
   destroyed: trace.PageDestroyedTraceEvent;
   video?: VideoEntry;
   actions: ActionEntry[];
+  interestingEvents: InterestingPageEvent[];
   resources: trace.NetworkResourceTraceEvent[];
 }
 
@@ -88,6 +92,7 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
           destroyed: undefined as any,
           actions: [],
           resources: [],
+          interestingEvents: [],
         };
         pageEntries.set(event.pageId, pageEntry);
         contextEntries.get(event.contextId)!.pages.push(pageEntry);
@@ -129,11 +134,19 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
         responseEvents.push(event);
         break;
       }
+      case 'dialog-opened':
+      case 'dialog-closed':
+      case 'navigation':
+      case 'load': {
+        const pageEntry = pageEntries.get(event.pageId)!;
+        pageEntry.interestingEvents.push(event);
+        break;
+      }
     }
 
     const contextEntry = contextEntries.get(event.contextId)!;
-    contextEntry.startTime = Math.min(contextEntry.startTime, (event as any).timestamp);
-    contextEntry.endTime = Math.max(contextEntry.endTime, (event as any).timestamp);
+    contextEntry.startTime = Math.min(contextEntry.startTime, event.timestamp);
+    contextEntry.endTime = Math.max(contextEntry.endTime, event.timestamp);
   }
   traceModel.contexts.push(...contextEntries.values());
 }

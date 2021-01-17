@@ -34,12 +34,12 @@ Indicates that the web socket has been closed.
 Contains the URL of the WebSocket.
 
 ## async method: WebSocket.waitForEvent
+* langs:
+  - alias-python: expect_event
 - returns: <[any]>
 
-Returns the event data value.
-
 Waits for event to fire and passes its value into the predicate function. Returns when the predicate returns truthy
-value. Will throw an error if the webSocket is closed before the event is fired.
+value. Will throw an error if the webSocket is closed before the event is fired. Returns the event data value.
 
 ### param: WebSocket.waitForEvent.event
 - `event` <[string]>
