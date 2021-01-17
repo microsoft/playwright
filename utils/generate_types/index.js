@@ -17,7 +17,7 @@
 //@ts-check
 const path = require('path');
 const os = require('os');
-const {devices} = require('../..');
+const devices = require('../../src/server/deviceDescriptors');
 const Documentation = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');

@@ -23,7 +23,7 @@ it('should require top-level Errors', async ({}) => {
 });
 
 it('should require top-level DeviceDescriptors', async ({playwright}) => {
-  const Devices = require('../lib/server/deviceDescriptors.js').DeviceDescriptors;
+  const Devices = require('../lib/server/deviceDescriptors.js');
   expect(Devices['iPhone 6']).toBeTruthy();
   expect(Devices['iPhone 6']).toEqual(playwright.devices['iPhone 6']);
 });
