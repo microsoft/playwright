@@ -24,7 +24,7 @@ it('should have default url when launching browser', async ({browserType, browse
 });
 
 it('headless should be able to read cookies written by headful', (test, { browserName, platform }) => {
-  test.fail(platform === 'win32' && browserName === 'chromium');
+  test.flaky(platform === 'win32' && browserName === 'chromium');
   test.flaky(browserName === 'firefox');
   test.slow();
 }, async ({browserType, browserOptions, server, createUserDataDir}) => {
