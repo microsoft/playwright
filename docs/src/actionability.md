@@ -1,15 +1,21 @@
 ---
 id: actionability
-title: "Actionability"
+title: "Auto-waiting"
 ---
 
-Playwright does a range of actionability checks on the elements before performing certain actions. These checks ensure that action behaves as expected, for example Playwright does not click on a disabled button.
+Playwright performs a range of actionability checks on the elements before making actions to ensure these actions
+behave as expected. It auto-waits for all the relevant checks to pass and only then performs the requested action. If the required checks do not pass within the given `timeout`, action fails with the `TimeoutError`.
 
-Playwright waits until all the relevant actionability checks pass before performing an action. This means that action will fail with the `TimeoutError` if checks do not pass within the specified `timeout`.
+For example, for [`method: Page.click`], Playwright will ensure that:
+- element is [Attached] to the DOM
+- element is [Visible]
+- element is [Stable], as in not animating or completed animation
+- element [Receives Events], as in not obscured by other elements
+- element is [Enabled]
 
-Some actions like [`method: Page.click`] support `force` option that disables non-essential actionability checks, for example passing truthy `force` to [`method: Page.click`] method will not check that the target element actually receives click events.
+Here is the complete list of actionability checks performed for each action:
 
-| Action | [Attached] | [Visible] | [Stable] | [Receiving Events] | [Enabled] | [Editable] |
+| Action | [Attached] | [Visible] | [Stable] | [Receives Events] | [Enabled] | [Editable] |
 | :- | :-: | :-: | :-: | :-: | :-: | :-: |
 | check | Yes | Yes | Yes | Yes | Yes | - |
 | click | Yes | Yes | Yes | Yes | Yes | - |
@@ -32,7 +38,19 @@ Some actions like [`method: Page.click`] support `force` option that disables no
 | textContent | Yes | - | - | - | - | - |
 | type | Yes | - | - | - | - | - |
 
-You can check the actionability state of the element using one of the following methods:
+<br/>
+
+## Forcing actions
+
+Some actions like [`method: Page.click`] support `force` option that disables non-essential actionability checks,
+for example passing truthy `force` to [`method: Page.click`] method will not check that the target element actually
+receives click events.
+
+## Assertions
+
+You can check the actionability state of the element using one of the following methods as well. This is typically
+not necessary, but it helps writing assertive tests that ensure that after certain actions, elements reach
+actionable state:
 
 - [`method: ElementHandle.isChecked`]
 - [`method: ElementHandle.isDisabled`]
@@ -47,33 +65,32 @@ You can check the actionability state of the element using one of the following 
 - [`method: Page.isHidden`]
 - [`method: Page.isVisible`]
 
-### Visible
+<br/>
 
-Element is considered visible when it has non-empty bounding box and does not have `visibility:hidden` computed style. Note that elements of zero size or with `display:none` are not considered visible.
-
-### Stable
-
-Element is considered stable when it has maintained the same bounding box for at least two consecutive animation frames.
-
-### Enabled
-
-Element is considered enabled when it is not a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property set.
-
-### Editable
-
-Element is considered editable when it is [enabled] and does not have `readonly` property set.
-
-### Receiving events
-
-Element is considered receiving pointer events when it is the hit target of the pointer event at the action point. For example, when clicking at the point `(10;10)`, Playwright checks whether some other element (usually an overlay) will instead capture the click at `(10;10)`.
-
-### Attached
+## Attached
 
 Element is considered attached when it is [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
 
-Attached check differs between selector-based and handle-based actions, like [`method: Page.click`] as opposite to [`method: ElementHandle.click`]:
-- For selector-based actions, Playwright first waits for an element matching `selector` to be attached to the DOM, and then checks that element is still attached before performing the action. If element was detached, the action is retried from the start.
-- For handle-based actions, Playwright throws if the element is not attached.
+## Visible
+
+Element is considered visible when it has non-empty bounding box and does not have `visibility:hidden` computed style. Note that elements of zero size or with `display:none` are not considered visible.
+
+## Stable
+
+Element is considered stable when it has maintained the same bounding box for at least two consecutive animation frames.
+
+## Enabled
+
+Element is considered enabled when it is not a `<button>`, `<select>`, `<input>` or `<textarea>` with a `disabled` property set.
+
+## Editable
+
+Element is considered editable when it is [enabled] and does not have `readonly` property set.
+
+## Receives Events
+
+Element is considered receiving pointer events when it is the hit target of the pointer event at the action point. For example, when clicking at the point `(10;10)`, Playwright checks whether some other element (usually an overlay) will instead capture the click at `(10;10)`.
+
 
 For example, consider a scenario where Playwright will click `Sign Up` button regardless of when the [`method: Page.click`] call was made:
 - page is checking that user name is unique and `Sign Up` button is disabled;
@@ -83,5 +100,5 @@ For example, consider a scenario where Playwright will click `Sign Up` button re
 [Stable]: #stable "Stable"
 [Enabled]: #enabled "Enabled"
 [Editable]: #editable "Editable"
-[Receiving Events]: #receiving-events "Receiving Events"
+[Receives Events]: #receives-events "Receives Events"
 [Attached]: #attached "Attached"

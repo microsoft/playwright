@@ -71,7 +71,7 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
-#### API reference
+### API reference
 - [BrowserContext]
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.addCookies`]
@@ -110,7 +110,7 @@ page_two = context.new_page()
 all_pages = context.pages()
 ```
 
-#### API reference
+### API reference
 - [Page]
 - [`method: BrowserContext.newPage`]
 - [`method: BrowserContext.pages`]
@@ -178,7 +178,7 @@ def handle_page(page):
 context.on("page", handle_page)
 ```
 
-#### API reference
+### API reference
 - [`event: BrowserContext.page`]
 
 ## Handling popups
@@ -245,5 +245,5 @@ def handle_popup(popup):
 page.on("popup", handle_popup)
 ```
 
-#### API reference
+### API reference
 - [`event: Page.popup`]

@@ -71,7 +71,7 @@ page.on("download", lambda download: print(download.path()))
 Note that handling the event forks the control flow and makes script harder to follow. Your scenario might end while you
 are downloading a file since your main control flow is not awaiting for this operation to resolve.
 
-#### API reference
+### API reference
 - [Download]
 - [`event: Page.download`]
 - [`method: Page.waitForEvent`]

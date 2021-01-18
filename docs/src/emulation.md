@@ -64,7 +64,7 @@ with sync_playwright() as playwright:
 
 All pages created in the context above will share the same device parameters.
 
-#### API reference
+### API reference
 - [`property: Playwright.devices`]
 - [`method: Browser.newContext`]
 
@@ -92,7 +92,7 @@ context = browser.new_context(
 )
 ```
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 
 <br/>
@@ -148,7 +148,7 @@ context = browser.new_context(
   device_scale_factor=2,
 ```
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 - [`method: Page.setViewportSize`]
 
@@ -180,7 +180,7 @@ context = browser.new_context(
 )
 ```
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 
 <br/>
@@ -249,7 +249,7 @@ await context.clear_permissions()
 context.clear_permissions()
 ```
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.grantPermissions`]
 - [`method: BrowserContext.clearPermissions`]
@@ -297,7 +297,7 @@ context.set_geolocation({"longitude": 29.979097, "latitude": 31.134256})
 
 **Note** you can only change geolocation for all pages in the context.
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 - [`method: BrowserContext.setGeolocation`]
 
@@ -361,6 +361,6 @@ page.emulate_media(color_scheme='dark')
 page.emulate_media(media='print')
 ```
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 - [`method: Page.emulateMedia`]

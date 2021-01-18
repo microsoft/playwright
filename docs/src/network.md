@@ -40,7 +40,7 @@ page = context.new_page()
 page.goto("https://example.com")
 ```
 
-#### API reference
+### API reference
 - [`method: Browser.newContext`]
 
 ## Network events
@@ -166,7 +166,7 @@ with page.expect_response(lambda response: token in response.url) as response_in
 response = response_info.value
 ```
 
-#### API reference
+### API reference
 - [Request]
 - [Response]
 - [`event: Page.request`]
@@ -233,7 +233,7 @@ context.route(
 page.goto("https://example.com")
 ```
 
-#### API reference
+### API reference
 - [`method: BrowserContext.route`]
 - [`method: BrowserContext.unroute`]
 - [`method: Page.route`]
@@ -308,7 +308,7 @@ page.route("**/*.{png,jpg,jpeg}", lambda route: route.abort())
 page.route("**/*", lambda route: route.abort() if route.request.resource_type == "image"  else route.continue_())
 ```
 
-#### API reference
+### API reference
 - [`method: Page.route`]
 - [`method: BrowserContext.route`]
 - [`method: Route.abort`]
