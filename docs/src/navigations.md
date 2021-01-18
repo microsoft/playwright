@@ -108,7 +108,7 @@ page.goto("https://example.com")
 page.click("text=example domain")
 ```
 
-#### API reference
+### API reference
 - [`method: Page.goto`]
 - [`method: Page.reload`]
 - [`method: Page.goBack`]
@@ -297,7 +297,7 @@ popup = popup_info.value
 popup.wait_for_load_state("load")
 ```
 
-#### API reference
+### API reference
 - [`method: Page.click`]
 - [`method: Page.waitForLoadState`]
 - [`method: Page.waitForSelector`]
@@ -331,5 +331,5 @@ page.wait_for_function("() => window.amILoadedYet()")
 page.screenshot()
 ```
 
-#### API reference
+### API reference
 - [`method: Page.waitForFunction`]

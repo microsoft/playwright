@@ -5,132 +5,9 @@ title: "Verification"
 
 <!-- TOC -->
 
-## Videos
-
-Playwright can record videos for all pages in a [browser context](./core-concepts.md#browser-contexts). Videos are saved
-upon context closure, so make sure to await [`method: BrowserContext.close`].
-
-```js
-// With browser.newContext()
-const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
-// Make sure to await close, so that videos are saved.
-await context.close();
-
-// With browser.newPage()
-const page = await browser.newPage({ recordVideo: { dir: 'videos/' } });
-// Make sure to await close, so that videos are saved.
-await page.close();
-
-// [Optional] Specify video size; defaults to viewport size
-const context = await browser.newContext({
-  recordVideo: {
-    dir: 'videos/',
-    size: { width: 800, height: 600 },
-  }
-});
-```
-
-```python async
-# With browser.new_context()
-context = await browser.new_context(record_video_dir="videos/")
-# Make sure to await close, so that videos are saved.
-await context.close()
-
-# With browser.new_page()
-page = await browser.new_page(record_video_dir="videos/")
-# Make sure to await close, so that videos are saved.
-await page.close()
-
-# [Optional] specify video size; defaults to viewport size
-context = await browser.new_context(
-    record_video_dir="videos/",
-    record_video_size={"width": 800, "height": 600}
-)
-```
-
-```python sync
-# With browser.new_context()
-context = browser.new_context(record_video_dir="videos/")
-# Make sure to close, so that videos are saved.
-context.close()
-
-# With browser.new_page()
-page = browser.new_page(record_video_dir="videos/")
-# Make sure to close, so that videos are saved.
-page.close()
-
-# [Optional] specify video size; defaults to viewport size
-context = browser.new_context(
-    record_video_dir="videos/",
-    record_video_size={"width": 800, "height": 600}
-)
-```
-
-#### API reference
-- [BrowserContext]
-- [`method: Browser.newContext`]
-- [`method: Browser.newPage`]
-- [`method: BrowserContext.close`]
-
-## Screenshots
-
-```js
-// Save to file
-await page.screenshot({ path: 'screenshot.png' });
-
-// Capture full page
-await page.screenshot({ path: 'screenshot.png', fullPage: true });
-
-// Capture into buffer
-const buffer = await page.screenshot();
-console.log(buffer.toString('base64'));
-
-// Capture given element
-const elementHandle = await page.$('.header');
-await elementHandle.screenshot({ path: 'screenshot.png' });
-```
-
-```python async
-# Save to file
-await page.screenshot(path="screenshot.png")
-
-# Capture full page
-await page.screenshot(path="screenshot.png", full_page=True)
-
-# Capture into Image
-screenshot_bytes = await page.screenshot()
-image = Image.open(io.BytesIO(screenshot_bytes))
-
-# Capture given element
-element_handle = await page.query_selector(".header")
-await element_handle.screenshot(path="screenshot.png")
-```
-
-```python sync
-# Save to file
-page.screenshot(path="screenshot.png")
-
-# Capture full page
-page.screenshot(path="screenshot.png", full_page=True)
-
-# Capture into Image
-screenshot_bytes = page.screenshot()
-image = Image.open(io.BytesIO(screenshot_bytes))
-
-# Capture given element
-element_handle = page.query_selector(".header")
-element_handle.screenshot(path="screenshot.png")
-```
-
-#### API reference
-- [`method: Page.screenshot`]
-- [`method: ElementHandle.screenshot`]
-
-<br/>
-
 ## Console logs
 
-Console messages logged in the page can be brought into the Node.js context.
+Console messages logged in the page can be brought into the Playwright context.
 
 ```js
 // Listen for all console logs
@@ -192,7 +69,7 @@ msg.args[0].json_value() # hello
 msg.args[1].json_value() # 42
 ```
 
-#### API reference
+### API reference
 - [ConsoleMessage]
 - [Page]
 - [`event: Page.console`]
@@ -229,7 +106,7 @@ page.on("pageerror", lambda exc: print(f"uncaught exception: {exc}"))
 page.goto("data:text/html,<script>throw new Error('test')</script>")
 ```
 
-#### API reference
+### API reference
 - [Page]
 - [`event: Page.pageerror`]
 
@@ -282,7 +159,7 @@ with page.expect_popup() as popup_info:
 popup = popup_info.value
 ```
 
-#### API reference
+### API reference
 - [Page]
 - [`event: Page.requestfailed`]
 - [`event: Page.dialog`]

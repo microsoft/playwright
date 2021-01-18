@@ -55,7 +55,7 @@ page.click("button") # Will hang here
 page.on("dialog", lambda dialog: dialog.accept())
 ```
 
-#### API reference
+### API reference
 
 - [`Dialog`]
 - [`method: Dialog.accept`]
