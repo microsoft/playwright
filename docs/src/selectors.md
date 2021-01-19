@@ -216,14 +216,14 @@ More advanced Shadow DOM use cases:
 </article>
 ```
 
-- Both `"css=article div"` and `"css:light=article div"` match the first `<div>In the light dom</div>`.
-- Both `"css=article > div"` and `"css:light=article > div"` match two `div` elements that are direct children of the `article`.
-- `"css=article .in-the-shadow"` matches the `<div class='in-the-shadow'>`, piercing the shadow root, while `"css:light=article .in-the-shadow"` does not match anything.
-- `"css:light=article div > span"` does not match anything, because both light-dom `div` elements do not contain a `span`.
-- `"css=article div > span"` matches the `<span class='content'>`, piercing the shadow root.
-- `"css=article > .in-the-shadow"` does not match anything, because `<div class='in-the-shadow'>` is not a direct child of `article`
-- `"css:light=article > .in-the-shadow"` does not match anything.
-- `"css=article li#target"` matches the `<li id='target'>Deep in the shadow</li>`, piercing two shadow roots.
+- Both `"article div"` and `":light(article div)"` match the first `<div>In the light dom</div>`.
+- Both `"article > div"` and `":light(article > div)"` match two `div` elements that are direct children of the `article`.
+- `"article .in-the-shadow"` matches the `<div class='in-the-shadow'>`, piercing the shadow root, while `":light(article .in-the-shadow)"` does not match anything.
+- `":light(article div > span)"` does not match anything, because both light-dom `div` elements do not contain a `span`.
+- `"article div > span"` matches the `<span class='content'>`, piercing the shadow root.
+- `"article > .in-the-shadow"` does not match anything, because `<div class='in-the-shadow'>` is not a direct child of `article`
+- `":light(article > .in-the-shadow)"` does not match anything.
+- `"article li#target"` matches the `<li id='target'>Deep in the shadow</li>`, piercing two shadow roots.
 
 ## Selecting elements based on layout
 
@@ -268,12 +268,12 @@ page.fill('input:right-of(:text("Username"))')
 page.click('button:near(.promo-card)')
 ```
 
-## XPpath selectors
+## XPath selectors
 
-XPath engine is equivalent to [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate).
+XPath selectors are equivalent to calling [`Document.evaluate`](https://developer.mozilla.org/en/docs/Web/API/Document/evaluate).
 Example: `xpath=//html/body`.
 
-Malformed selector starting with `//` or `..` is assumed to be an xpath selector. For example, Playwright
+Selector starting with `//` or `..` is assumed to be an xpath selector. For example, Playwright
 converts `'//html/body'` to `'xpath=//html/body'`.
 
 :::note
