@@ -3325,6 +3325,10 @@ might return multiple quads for inline nodes.
        * A frontend-assigned identifier for this breakpoint action.
        */
       id?: BreakpointActionIdentifier;
+      /**
+       * Indicates whether this action should be executed with a user gesture or not. Defaults to <code>false<code>.
+       */
+      emulateUserGesture?: boolean;
     }
     /**
      * Extra options that modify breakpoint behavior.
