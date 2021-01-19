@@ -25,13 +25,10 @@ await page.click("text=Log in")
 page.click("text=Log in")
 ```
 
-By default, the match is case-insensitive, it ignores leading/trailing whitespace and searches for
-a substring. This means `text= Login` matches `<button>Button loGIN (click me)</button>`.
+Matching is case-insensitive and searches for a substring. This means `text=Login` matches `<button>Button loGIN (click me)</button>`. Matching also normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 
-Text body can be escaped with single or double quotes for precise matching, insisting on exact match,
-including specified whitespace and case. This means `text="Login "` will only match
-`<button>Login </button>` with exactly one space after "Login". Quoted text follows the usual escaping
-rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.
+Text body can be escaped with single or double quotes for full-string case-sensitive match instead. This means `text="Login"` will match `<button>Login</button>`, but not `<button>Login (click me)</button>` or `<button>login</button>`. Quoted text follows the usual escaping
+rules, e.g. use `\"` to escape double quote in a double-quoted string: `text="foo\"bar"`.  Note that quoted match still normalizes whitespace.
 
 Text body can also be a JavaScript-like regex wrapped in `/` symbols. This means `text=/^\\s*Login$/i`
 will match `<button> loGIN</button>` with any number of spaces before "Login" and no spaces after.
@@ -156,7 +153,7 @@ The `:text` pseudo-class matches elements that have a text node child with speci
 It is similar to the [text] engine, but can be used in combination with other `css` selector extensions.
 There are a few variations that support different arguments:
 
-* `:text("substring")` - Matches when element's text contains "substring" somewhere. Matching is case-insensitive. Matching also normalizes whitespace, for example it turns multiple spaces into one, trusn line breaks into spaces and ignores leading and trailing whitespace.
+* `:text("substring")` - Matches when element's text contains "substring" somewhere. Matching is case-insensitive. Matching also normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
 * `:text-is("string")` - Matches when element's text equals the "string". Matching is case-insensitive and normalizes whitespace.
 * `button:text("Sign in")` - Text selector may be combined with regular CSS.
 * `:text-matches("[+-]?\\d+")` - Matches text against a regular expression. Note that special characters like back-slash `\`, quotes `"`, square brackets `[]` and more should be escaped. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
