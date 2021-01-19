@@ -2417,6 +2417,8 @@ export interface Page {
    * Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
    * matching `selector`, the method throws an error.
    * 
+   * Will wait until all specified options are present in the `<select>` element.
+   * 
    * ```js
    * // single selection matching the value
    * page.selectOption('select#colors', 'blue');
@@ -4089,6 +4091,8 @@ export interface Frame {
    * 
    * Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
    * matching `selector`, the method throws an error.
+   * 
+   * Will wait until all specified options are present in the `<select>` element.
    * 
    * ```js
    * // single selection matching the value
@@ -5939,6 +5943,8 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * 
    * Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`
    * element, the method throws an error.
+   * 
+   * Will wait until all specified options are present in the `<select>` element.
    * 
    * ```js
    * // single selection matching the value

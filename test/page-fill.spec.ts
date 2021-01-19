@@ -288,3 +288,14 @@ it('should be able to clear', async ({page, server}) => {
   await page.fill('input', '');
   expect(await page.evaluate(() => window['result'])).toBe('');
 });
+
+it('should not throw when fill causes navigation', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/input/textarea.html');
+  await page.setContent('<input type=date>');
+  await page.$eval('input', select => select.addEventListener('input', () => window.location.href = '/empty.html'));
+  await Promise.all([
+    page.fill('input', '2020-03-02'),
+    page.waitForNavigation(),
+  ]);
+  expect(page.url()).toContain('empty.html');
+});

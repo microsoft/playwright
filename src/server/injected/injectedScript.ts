@@ -31,7 +31,7 @@ export type InjectedScriptProgress = {
 };
 
 export type InjectedScriptPoll<T> = {
-  result: Promise<T>,
+  run: () => Promise<T>,
   // Takes more logs, waiting until at least one message is available.
   takeNextLogs: () => Promise<string[]>,
   // Takes all current logs without waiting.
@@ -242,19 +242,23 @@ export class InjectedScript {
       },
     };
 
-    const result = task(progress);
+    const run = () => {
+      const result = task(progress);
 
-    // After the task has finished, there should be no more logs.
-    // Release any pending `takeNextLogs` call, and do not block any future ones.
-    // This prevents non-finished protocol evaluation calls and memory leaks.
-    result.finally(() => {
-      taskFinished = true;
-      logReady();
-    });
+      // After the task has finished, there should be no more logs.
+      // Release any pending `takeNextLogs` call, and do not block any future ones.
+      // This prevents non-finished protocol evaluation calls and memory leaks.
+      result.finally(() => {
+        taskFinished = true;
+        logReady();
+      });
+
+      return result;
+    };
 
     return {
       takeNextLogs,
-      result,
+      run,
       cancel: () => { progress.aborted = true; },
       takeLastLogs: () => unsentLogs,
     };
@@ -267,35 +271,52 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | FatalDOMError {
-    const element = this.findLabelTarget(node as Element);
-    if (!element || !element.isConnected)
-      return 'error:notconnected';
-    if (element.nodeName.toLowerCase() !== 'select')
-      return 'error:notselect';
-    const select = element as HTMLSelectElement;
-    const options = Array.from(select.options);
-    select.value = undefined as any;
-    for (let index = 0; index < options.length; index++) {
-      const option = options[index];
-      option.selected = optionsToSelect.some(optionToSelect => {
-        if (optionToSelect instanceof Node)
-          return option === optionToSelect;
-        let matches = true;
-        if (optionToSelect.value !== undefined)
-          matches = matches && optionToSelect.value === option.value;
-        if (optionToSelect.label !== undefined)
-          matches = matches && optionToSelect.label === option.label;
-        if (optionToSelect.index !== undefined)
-          matches = matches && optionToSelect.index === index;
-        return matches;
-      });
-      if (option.selected && !select.multiple)
-        break;
-    }
-    select.dispatchEvent(new Event('input', { 'bubbles': true }));
-    select.dispatchEvent(new Event('change', { 'bubbles': true }));
-    return options.filter(option => option.selected).map(option => option.value);
+  waitForOptionsAndSelect(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): InjectedScriptPoll<string[] | 'error:notconnected' | FatalDOMError> {
+    return this.pollRaf((progress, continuePolling) => {
+      const element = this.findLabelTarget(node as Element);
+      if (!element || !element.isConnected)
+        return 'error:notconnected';
+      if (element.nodeName.toLowerCase() !== 'select')
+        return 'error:notselect';
+      const select = element as HTMLSelectElement;
+      const options = Array.from(select.options);
+      const selectedOptions = [];
+      let remainingOptionsToSelect = optionsToSelect.slice();
+      for (let index = 0; index < options.length; index++) {
+        const option = options[index];
+        const filter = (optionToSelect: Node | { value?: string, label?: string, index?: number }) => {
+          if (optionToSelect instanceof Node)
+            return option === optionToSelect;
+          let matches = true;
+          if (optionToSelect.value !== undefined)
+            matches = matches && optionToSelect.value === option.value;
+          if (optionToSelect.label !== undefined)
+            matches = matches && optionToSelect.label === option.label;
+          if (optionToSelect.index !== undefined)
+            matches = matches && optionToSelect.index === index;
+          return matches;
+        };
+        if (!remainingOptionsToSelect.some(filter))
+          continue;
+        selectedOptions.push(option);
+        if (select.multiple) {
+          remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));
+        } else {
+          remainingOptionsToSelect = [];
+          break;
+        }
+      }
+      if (remainingOptionsToSelect.length) {
+        progress.logRepeating('    did not find some options - waiting... ');
+        return continuePolling;
+      }
+      select.value = undefined as any;
+      selectedOptions.forEach(option => option.selected = true);
+      progress.log('    selected specified option(s)');
+      select.dispatchEvent(new Event('input', { 'bubbles': true }));
+      select.dispatchEvent(new Event('change', { 'bubbles': true }));
+      return selectedOptions.map(option => option.value);
+    });
   }
 
   waitForEnabledAndFill(node: Node, value: string): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {

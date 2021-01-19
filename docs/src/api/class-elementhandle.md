@@ -545,6 +545,8 @@ Returns the array of option values that have been successfully selected.
 Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`
 element, the method throws an error.
 
+Will wait until all specified options are present in the `<select>` element.
+
 ```js
 // single selection matching the value
 handle.selectOption('blue');
