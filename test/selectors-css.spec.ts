@@ -348,6 +348,13 @@ it('should work with :has', async ({page, server}) => {
   expect(await page.$$eval(`css=div:has(#target)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=div:has([data-testid=foo])`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=div:has([attr*=value])`, els => els.length)).toBe(2);
+
+  await page.setContent(`<section><span></span><div></div></section><section><br></section>`);
+  expect(await page.$$eval(`section:has(span, div)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section:has(span, div)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section:has(br)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section:has(span, br)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`section:has(span, br, div)`, els => els.length)).toBe(2);
 });
 
 it('should work with :scope', async ({page, server}) => {
