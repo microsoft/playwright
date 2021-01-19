@@ -473,6 +473,31 @@ export class Page extends EventEmitter {
     const identifier = PageBinding.identifier(name, world);
     return this._pageBindings.get(identifier) || this._browserContext._pageBindings.get(identifier);
   }
+
+  async pause() {
+    if (!this._browserContext._browser._options.headful)
+      throw new Error('Cannot pause in headless mode.');
+    await this.mainFrame().evaluateSurvivingNavigations(async context => {
+      await context.evaluateInternal(async () => {
+        const element = document.createElement('playwright-resume');
+        element.style.position = 'absolute';
+        element.style.top = '10px';
+        element.style.left = '10px';
+        element.style.zIndex = '2147483646';
+        element.style.opacity = '0.9';
+        element.setAttribute('role', 'button');
+        element.tabIndex = 0;
+        element.style.fontSize = '50px';
+        element.textContent = '▶️';
+        element.title = 'Resume script';
+        document.body.appendChild(element);
+        await new Promise(x => {
+          element.onclick = x;
+        });
+        element.remove();
+      });
+    }, 'utility');
+  }
 }
 
 export class Worker extends EventEmitter {

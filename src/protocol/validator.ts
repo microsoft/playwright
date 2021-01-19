@@ -445,6 +445,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     interestingOnly: tOptional(tBoolean),
     root: tOptional(tChannel('ElementHandle')),
   });
+  scheme.PagePauseParams = tOptional(tObject({}));
   scheme.PagePdfParams = tObject({
     scale: tOptional(tNumber),
     displayHeaderFooter: tOptional(tBoolean),

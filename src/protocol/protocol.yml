@@ -844,6 +844,8 @@ Page:
       returns:
         rootAXNode: AXNode?
 
+    pause:
+
     pdf:
       parameters:
         scale: number?

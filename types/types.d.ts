@@ -2074,6 +2074,14 @@ export interface Page {
   opener(): Promise<null|Page>;
 
   /**
+   * Displays a resume button on the page, and waits for the user to press it. Useful for when you want to manually inspect
+   * or modify the page before continuing.
+   * 
+   * > NOTE: Pausing is not supported in headless mode.
+   */
+  pause(): Promise<void>;
+
+  /**
    * Returns the PDF buffer.
    * 
    * > NOTE: Generating a pdf is currently only supported in Chromium headless.

@@ -1509,6 +1509,15 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 
 Returns the opener for popup pages and `null` for others. If the opener has been closed already the returns `null`.
 
+## async method: Page.pause
+
+Displays a resume button on the page, and waits for the user to press it. Useful for when you want to
+manually inspect or modify the page before continuing.
+
+:::note
+Pausing is not supported in headless mode.
+:::
+
 ## async method: Page.pdf
 - returns: <[Buffer]>
 
