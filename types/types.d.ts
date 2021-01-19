@@ -5066,9 +5066,8 @@ export interface BrowserContext {
    */
   storageState(options?: {
     /**
-     * The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to
-     * [current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage
-     * state is still returned, but won't be saved to the disk.
+     * The file path to save the storage state to. If `path` is a relative path, then it is resolved relative to current
+     * working directory. If no path is provided, storage state is still returned, but won't be saved to the disk.
      */
     path?: string;
   }): Promise<{
@@ -8076,9 +8075,11 @@ export interface Download {
  * [page.on('filechooser')](https://github.com/microsoft/playwright/blob/master/docs/api.md#pageonfilechooser) event.
  * 
  * ```js
- * page.on('filechooser', async (fileChooser) => {
- *   await fileChooser.setFiles('/tmp/myfile.pdf');
- * });
+ * const [fileChooser] = await Promise.all([
+ *   page.waitForEvent('filechooser'),
+ *   page.click('upload')
+ * ]);
+ * await fileChooser.setFiles('myfile.pdf');
  * ```
  * 
  */

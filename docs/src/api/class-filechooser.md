@@ -3,17 +3,25 @@
 [FileChooser] objects are dispatched by the page in the [`event: Page.filechooser`] event.
 
 ```js
-page.on('filechooser', async (fileChooser) => {
-  await fileChooser.setFiles('/tmp/myfile.pdf');
-});
+const [fileChooser] = await Promise.all([
+  page.waitForEvent('filechooser'),
+  page.click('upload')
+]);
+await fileChooser.setFiles('myfile.pdf');
 ```
 
 ```python async
-page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
+async with page.expect_file_chooser() as fc_info:
+    await page.click("upload")
+file_chooser = await fc_info.value
+await file_chooser.set_files("myfile.pdf")
 ```
 
 ```python sync
-page.on("filechooser", lambda file_chooser: file_chooser.set_files("/tmp/myfile.pdf"))
+with page.expect_file_chooser() as fc_info:
+    page.click("upload")
+file_chooser = fc_info.value
+file_chooser.set_files("myfile.pdf")
 ```
 
 ## method: FileChooser.element

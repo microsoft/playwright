@@ -716,7 +716,7 @@ Returns storage state for this browser context, contains current cookies and loc
 - `path` <[path]>
 
 The file path to save the storage state to. If [`option: path`] is a relative path, then it is resolved relative to
-[current working directory](https://nodejs.org/api/process.html#process_process_cwd). If no path is provided, storage
+current working directory. If no path is provided, storage
 state is still returned, but won't be saved to the disk.
 
 ## async method: BrowserContext.unroute

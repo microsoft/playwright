@@ -429,6 +429,8 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 
 ## Upload files
 
+You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
+
 ```js
 // Select one file
 await page.setInputFiles('input#upload', 'myfile.pdf');
@@ -485,14 +487,33 @@ page.set_input_files(
 )
 ```
 
-You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Empty array clears the selected files.
+If you don't have input element in hand (it is created dynamically), you can handle the [`event: Page.filechooser`] event
+or use a corresponding waiting method upon your action:
 
-#### Example
+```js
+const [fileChooser] = await Promise.all([
+  page.waitForEvent('filechooser'),
+  page.click('upload')
+]);
+await fileChooser.setFiles('myfile.pdf');
+```
 
-[This script](https://github.com/microsoft/playwright/blob/master/utils/docs/examples/upload.js) uploads a file to an `input` element that accepts file uploads.
+```python async
+async with page.expect_file_chooser() as fc_info:
+    await page.click("upload")
+file_chooser = await fc_info.value
+await file_chooser.set_files("myfile.pdf")
+```
+
+```python sync
+with page.expect_file_chooser() as fc_info:
+    page.click("upload")
+file_chooser = fc_info.value
+file_chooser.set_files("myfile.pdf")
+```
 
 ### API reference
-
+- [FileChooser]
 - [`method: Page.setInputFiles`]
 - [`method: Frame.setInputFiles`]
 - [`method: ElementHandle.setInputFiles`]
