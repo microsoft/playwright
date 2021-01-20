@@ -44,11 +44,12 @@ cd ..
 NPM_PUBLISH_TAG="next"
 VERSION=$(node -e 'console.log(require("./package.json").version)')
 
+if [[ -n $(git status -s) ]]; then
+  echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
+  exit 1
+fi
+
 if [[ $1 == "--release" ]]; then
-  if [[ -n $(git status -s) ]]; then
-    echo "ERROR: git status is dirty; some uncommitted changes or untracked files"
-    exit 1
-  fi
   # Ensure package version does not contain dash.
   if [[ "${VERSION}" == *-* ]]; then
     echo "ERROR: cannot publish pre-release version with --release flag"
