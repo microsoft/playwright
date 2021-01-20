@@ -154,7 +154,6 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 ```
 
 ```python async
-# FIXME
 feed_handle = await page.query_selector(".feed")
 assert await feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.innerText)") == ["hello!", "hi!"]
 ```
@@ -577,7 +576,6 @@ handle.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
-# FIXME
 # single selection matching the value
 handle.select_option("blue")
 # single selection matching both the value and the label

@@ -505,7 +505,6 @@ aWindowHandle; // Handle for the window object.
 ```
 
 ```python async
-# FIXME
 a_window_handle = await frame.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
 ```
