@@ -95,6 +95,28 @@ it('should authenticate', async ({browserType, browserOptions, server}) => {
   await browser.close();
 });
 
+it('should authenticate with empty password', async ({browserType, browserOptions, server}) => {
+  server.setRoute('/target.html', async (req, res) => {
+    const auth = req.headers['proxy-authorization'];
+    if (!auth) {
+      res.writeHead(407, 'Proxy Authentication Required', {
+        'Proxy-Authenticate': 'Basic realm="Access to internal site"'
+      });
+      res.end();
+    } else {
+      res.end(`<html><title>${auth}</title></html>`);
+    }
+  });
+  const browser = await browserType.launch({
+    ...browserOptions,
+    proxy: { server: `localhost:${server.PORT}`, username: 'user', password: '' }
+  });
+  const page = await browser.newPage();
+  await page.goto('http://non-existent.com/target.html');
+  expect(await page.title()).toBe('Basic ' + Buffer.from('user:').toString('base64'));
+  await browser.close();
+});
+
 it('should exclude patterns', (test, { browserName, headful }) => {
   test.fixme(browserName === 'chromium' && headful, 'Chromium headful crashes with CHECK(!in_frame_tree_) in RenderFrameImpl::OnDeleteFrame.');
 }, async ({browserType, browserOptions, server}) => {
