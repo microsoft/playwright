@@ -4,7 +4,7 @@ title: "Core concepts"
 ---
 
 Playwright provides a set of APIs to automate Chromium, Firefox and WebKit
-browsers. By using the Playwright API, you can write JavaScript code to create
+browsers. By using the Playwright API, you can write scripts to create
 new browser pages, navigate to URLs and then interact with elements on a page.
 
 Along with a test runner Playwright can be used to automate user interactions to
