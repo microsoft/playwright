@@ -324,7 +324,6 @@ await page.screenshot()
 ```
 
 ```python sync
-# FIXME
 page.goto("http://example.com")
 page.wait_for_function("() => window.amILoadedYet()")
 # Ready to take a screenshot, according to the page itself.
