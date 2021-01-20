@@ -1,5 +1,5 @@
 diff --git a/Source/JavaScriptCore/CMakeLists.txt b/Source/JavaScriptCore/CMakeLists.txt
-index 58a570697eb90dd4c391b0b230634f35c3c2feeb..733134a56cc6b81cf82b89d298e17354531d2505 100644
+index 893990f496d6acfe62eadd186421210249437852..652eca035f93b2d9d0c5c065c57cfa309168634c 100644
 --- a/Source/JavaScriptCore/CMakeLists.txt
 +++ b/Source/JavaScriptCore/CMakeLists.txt
 @@ -1201,22 +1201,27 @@ set(JavaScriptCore_INSPECTOR_DOMAINS
@@ -1760,10 +1760,10 @@ index 74c3881f712faef6f5ebe74a569f6c21bd0baf88..ca9c018d6643bd88ee7254483f5fbc9f
  
  #if !defined(ENABLE_TOUCH_ACTION_REGIONS)
 diff --git a/Source/WTF/wtf/PlatformHave.h b/Source/WTF/wtf/PlatformHave.h
-index cfdafd6f2c88eab693032a55f0c77e6769ae2e92..4e521e43d6727958de373e7c3df107f669935af9 100644
+index 42ff5b4ecc8f6aafc9600dfb49b844b22cb75abb..ed16dc96c043f752b0e654d3e21dc00410fcac0c 100644
 --- a/Source/WTF/wtf/PlatformHave.h
 +++ b/Source/WTF/wtf/PlatformHave.h
-@@ -335,7 +335,7 @@
+@@ -342,7 +342,7 @@
  #define HAVE_NSHTTPCOOKIESTORAGE__INITWITHIDENTIFIER_WITH_INACCURATE_NULLABILITY 1
  #endif
  
@@ -1935,10 +1935,10 @@ index ef168b76819216d984b7a2d0f760005fb9d24de8..2d6cf51f3b45191ad84106429d4f108f
  __ZN7WebCore14DocumentLoaderD2Ev
  __ZN7WebCore14DocumentLoader17clearMainResourceEv
 diff --git a/Source/WebCore/WebCore.xcodeproj/project.pbxproj b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
-index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0e1dfd9d7 100644
+index 193504dc43b6e47d359643f0a1cf0b2c0c55fd82..d536b3e7d7fec008753c1ba789d728fd9fadf4ac 100644
 --- a/Source/WebCore/WebCore.xcodeproj/project.pbxproj
 +++ b/Source/WebCore/WebCore.xcodeproj/project.pbxproj
-@@ -5234,6 +5234,14 @@
+@@ -5235,6 +5235,14 @@
  		EDE3A5000C7A430600956A37 /* ColorMac.h in Headers */ = {isa = PBXBuildFile; fileRef = EDE3A4FF0C7A430600956A37 /* ColorMac.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		EDEC98030AED7E170059137F /* WebCorePrefix.h in Headers */ = {isa = PBXBuildFile; fileRef = EDEC98020AED7E170059137F /* WebCorePrefix.h */; };
  		EFCC6C8F20FE914400A2321B /* CanvasActivityRecord.h in Headers */ = {isa = PBXBuildFile; fileRef = EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -1953,7 +1953,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  		F12171F616A8CF0B000053CA /* WebVTTElement.h in Headers */ = {isa = PBXBuildFile; fileRef = F12171F416A8BC63000053CA /* WebVTTElement.h */; };
  		F32BDCD92363AACA0073B6AE /* UserGestureEmulationScope.h in Headers */ = {isa = PBXBuildFile; fileRef = F32BDCD72363AACA0073B6AE /* UserGestureEmulationScope.h */; };
  		F344C7141125B82C00F26EEE /* InspectorFrontendClient.h in Headers */ = {isa = PBXBuildFile; fileRef = F344C7121125B82C00F26EEE /* InspectorFrontendClient.h */; settings = {ATTRIBUTES = (Private, ); }; };
-@@ -16519,6 +16527,14 @@
+@@ -16520,6 +16528,14 @@
  		EDEC98020AED7E170059137F /* WebCorePrefix.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = WebCorePrefix.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 0; };
  		EFB7287B2124C73D005C2558 /* CanvasActivityRecord.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = CanvasActivityRecord.cpp; sourceTree = "<group>"; };
  		EFCC6C8D20FE914000A2321B /* CanvasActivityRecord.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CanvasActivityRecord.h; sourceTree = "<group>"; };
@@ -1968,7 +1968,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  		F12171F316A8BC63000053CA /* WebVTTElement.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebVTTElement.cpp; sourceTree = "<group>"; };
  		F12171F416A8BC63000053CA /* WebVTTElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebVTTElement.h; sourceTree = "<group>"; };
  		F32BDCD52363AAC90073B6AE /* UserGestureEmulationScope.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UserGestureEmulationScope.cpp; sourceTree = "<group>"; };
-@@ -22044,7 +22060,12 @@
+@@ -22045,7 +22061,12 @@
  				93D6B7A62551D3ED0058DD3A /* DummySpeechRecognitionProvider.h */,
  				1AF326770D78B9440068F0C4 /* EditorClient.h */,
  				93C09A800B064F00005ABD4D /* EventHandler.cpp */,
@@ -1981,7 +1981,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				E0FEF371B27C53EAC1C1FBEE /* EventSource.cpp */,
  				E0FEF371B17C53EAC1C1FBEE /* EventSource.h */,
  				E0FEF371B07C53EAC1C1FBEE /* EventSource.idl */,
-@@ -27492,7 +27513,9 @@
+@@ -27493,7 +27514,9 @@
  				B2C3D9EC0D006C1D00EF6F26 /* text */,
  				E1EE8B6B2412B2A700E794D6 /* xr */,
  				DFDB912CF8E88A6DA1AD264F /* AbortableTaskQueue.h */,
@@ -1991,7 +1991,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				49AE2D95134EE5F90072920A /* CalculationValue.h */,
  				C330A22113EC196B0000B45B /* ColorChooser.h */,
  				C37CDEBC149EF2030042090D /* ColorChooserClient.h */,
-@@ -30012,6 +30035,7 @@
+@@ -30013,6 +30036,7 @@
  				BCCFBAE70B5152ED0001F1D7 /* DocumentParser.h */,
  				AD6E71AA1668899D00320C13 /* DocumentSharedObjectPool.cpp */,
  				AD6E71AB1668899D00320C13 /* DocumentSharedObjectPool.h */,
@@ -1999,7 +1999,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				6BDB5DC1227BD3B800919770 /* DocumentStorageAccess.cpp */,
  				6BDB5DC0227BD3B800919770 /* DocumentStorageAccess.h */,
  				86D982F6125C154000AD9E3D /* DocumentTiming.h */,
-@@ -31035,6 +31059,7 @@
+@@ -31036,6 +31060,7 @@
  				93C4F6EB1108F9A50099D0DB /* AccessibilityScrollbar.h in Headers */,
  				29489FC712C00F0300D83F0F /* AccessibilityScrollView.h in Headers */,
  				0709FC4E1025DEE30059CDBA /* AccessibilitySlider.h in Headers */,
@@ -2007,7 +2007,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				29D7BCFA1444AF7D0070619C /* AccessibilitySpinButton.h in Headers */,
  				69A6CBAD1C6BE42C00B836E9 /* AccessibilitySVGElement.h in Headers */,
  				AAC08CF315F941FD00F1E188 /* AccessibilitySVGRoot.h in Headers */,
-@@ -33006,6 +33031,7 @@
+@@ -33007,6 +33032,7 @@
  				6E4ABCD5138EA0B70071D291 /* JSHTMLUnknownElement.h in Headers */,
  				E44614170CD6826900FADA75 /* JSHTMLVideoElement.h in Headers */,
  				81BE20D311F4BC3200915DFA /* JSIDBCursor.h in Headers */,
@@ -2015,7 +2015,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				7C3D8EF01E0B21430023B084 /* JSIDBCursorDirection.h in Headers */,
  				C585A68311D4FB08004C3E4B /* JSIDBDatabase.h in Headers */,
  				C585A69711D4FB13004C3E4B /* JSIDBFactory.h in Headers */,
-@@ -35002,9 +35028,11 @@
+@@ -35004,9 +35030,11 @@
  				B2C3DA3A0D006C1D00EF6F26 /* TextCodec.h in Headers */,
  				26E98A10130A9FCA008EB7B2 /* TextCodecASCIIFastPath.h in Headers */,
  				DF95B14A24FDAFD300B1F4D7 /* TextCodecCJK.h in Headers */,
@@ -2027,7 +2027,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				B2C3DA400D006C1D00EF6F26 /* TextCodecUserDefined.h in Headers */,
  				B2C3DA420D006C1D00EF6F26 /* TextCodecUTF16.h in Headers */,
  				9343CB8212F25E510033C5EE /* TextCodecUTF8.h in Headers */,
-@@ -36032,6 +36060,7 @@
+@@ -36034,6 +36062,7 @@
  				51058ADF1D67C229009A538C /* MockGamepad.cpp in Sources */,
  				51058AE11D67C229009A538C /* MockGamepadProvider.cpp in Sources */,
  				CDF2B0121820540600F2B424 /* MockMediaPlayerMediaSource.cpp in Sources */,
@@ -2035,7 +2035,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				CDF2B0141820540600F2B424 /* MockMediaSourcePrivate.cpp in Sources */,
  				CDF2B0161820540700F2B424 /* MockSourceBufferPrivate.cpp in Sources */,
  				2D9BF7421DBFDC27007A7D99 /* NavigatorEME.cpp in Sources */,
-@@ -36063,6 +36092,7 @@
+@@ -36065,6 +36094,7 @@
  				6E72F54F229DCD1300B3E151 /* TemporaryANGLESetting.cpp in Sources */,
  				CE88EE262414467B007F29C2 /* TextAlternativeWithRange.mm in Sources */,
  				51DF6D800B92A18E00C2DC85 /* ThreadCheck.mm in Sources */,
@@ -2043,7 +2043,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				538EC8031F96AF81004D22A8 /* UnifiedSource1-mm.mm in Sources */,
  				538EC8021F96AF81004D22A8 /* UnifiedSource1.cpp in Sources */,
  				538EC8051F96AF81004D22A8 /* UnifiedSource2-mm.mm in Sources */,
-@@ -36111,6 +36141,7 @@
+@@ -36113,6 +36143,7 @@
  				538EC8881F993F9C004D22A8 /* UnifiedSource23.cpp in Sources */,
  				DE5F85801FA1ABF4006DB63A /* UnifiedSource24-mm.mm in Sources */,
  				538EC8891F993F9D004D22A8 /* UnifiedSource24.cpp in Sources */,
@@ -2051,7 +2051,7 @@ index 419a09118431b3bfbef5f0066c0130422f047ecf..6538b4f2c7962b8743c41a5fbb5b93e0
  				DE5F85811FA1ABF4006DB63A /* UnifiedSource25-mm.mm in Sources */,
  				538EC88A1F993F9D004D22A8 /* UnifiedSource25.cpp in Sources */,
  				DE5F85821FA1ABF4006DB63A /* UnifiedSource26-mm.mm in Sources */,
-@@ -36643,6 +36674,7 @@
+@@ -36645,6 +36676,7 @@
  				2D8B92F1203D13E1009C868F /* UnifiedSource516.cpp in Sources */,
  				2D8B92F2203D13E1009C868F /* UnifiedSource517.cpp in Sources */,
  				2D8B92F3203D13E1009C868F /* UnifiedSource518.cpp in Sources */,
@@ -4499,10 +4499,10 @@ index 5fd4b651adb9c8471e10265bd97cfb80b7277962..39811b3b04cd7b84e6573acd503824e7
  
  #if ENABLE(INPUT_TYPE_COLOR)
 diff --git a/Source/WebCore/page/EventHandler.cpp b/Source/WebCore/page/EventHandler.cpp
-index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14af5dbfde7 100644
+index d69f29704531e7872588d4a5ff8d3a54be36eae1..3519cddbbb06b1bf75bac3d2d319fa556f8816cc 100644
 --- a/Source/WebCore/page/EventHandler.cpp
 +++ b/Source/WebCore/page/EventHandler.cpp
-@@ -121,6 +121,7 @@
+@@ -122,6 +122,7 @@
  
  #if ENABLE(TOUCH_EVENTS) && !ENABLE(IOS_TOUCH_EVENTS)
  #include "PlatformTouchEvent.h"
@@ -4510,7 +4510,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  #endif
  
  #if ENABLE(MAC_GESTURE_EVENTS)
-@@ -767,9 +768,7 @@ bool EventHandler::handleMousePressEvent(const MouseEventWithHitTestResults& eve
+@@ -768,9 +769,7 @@ bool EventHandler::handleMousePressEvent(const MouseEventWithHitTestResults& eve
      m_mousePressNode = event.targetNode();
      m_frame.document()->setFocusNavigationStartingNode(event.targetNode());
  
@@ -4520,7 +4520,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  
      m_mousePressed = true;
      m_selectionInitiationState = HaveNotStartedSelection;
-@@ -808,8 +807,6 @@ VisiblePosition EventHandler::selectionExtentRespectingEditingBoundary(const Vis
+@@ -809,8 +808,6 @@ VisiblePosition EventHandler::selectionExtentRespectingEditingBoundary(const Vis
      return targetNode->renderer()->positionForPoint(LayoutPoint(selectionEndPoint), nullptr);
  }
  
@@ -4529,7 +4529,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  #if !PLATFORM(IOS_FAMILY)
  
  bool EventHandler::supportsSelectionUpdatesOnMouseDrag() const
-@@ -831,8 +828,10 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+@@ -832,8 +829,10 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
  
      Ref<Frame> protectedFrame(m_frame);
  
@@ -4540,7 +4540,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  
      Node* targetNode = event.targetNode();
      if (event.event().button() != LeftButton || !targetNode)
-@@ -853,7 +852,9 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+@@ -854,7 +853,9 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
      ASSERT(mouseDownMayStartSelect() || m_mouseDownMayStartAutoscroll);
  #endif
  
@@ -4550,7 +4550,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  
      if (m_mouseDownMayStartAutoscroll && !panScrollInProgress()) {
          m_autoscrollController->startAutoscrollForSelection(renderer);
-@@ -870,6 +871,8 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
+@@ -871,6 +872,8 @@ bool EventHandler::handleMouseDraggedEvent(const MouseEventWithHitTestResults& e
      return true;
  }
      
@@ -4559,7 +4559,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
  {
      // This is a pre-flight check of whether the event might lead to a drag being started.  Be careful
-@@ -901,6 +904,8 @@ bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
+@@ -902,6 +905,8 @@ bool EventHandler::eventMayStartDrag(const PlatformMouseEvent& event) const
      return targetElement && page->dragController().draggableElement(&m_frame, targetElement, result.roundedPointInInnerNodeFrame(), state);
  }
  
@@ -4568,7 +4568,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  void EventHandler::updateSelectionForMouseDrag()
  {
      if (!supportsSelectionUpdatesOnMouseDrag())
-@@ -992,7 +997,6 @@ void EventHandler::updateSelectionForMouseDrag(const HitTestResult& hitTestResul
+@@ -993,7 +998,6 @@ void EventHandler::updateSelectionForMouseDrag(const HitTestResult& hitTestResul
      m_frame.selection().setSelectionByMouseIfDifferent(newSelection, m_frame.selection().granularity(),
          FrameSelection::EndPointsAdjustmentMode::AdjustAtBidiBoundary);
  }
@@ -4576,7 +4576,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  
  void EventHandler::lostMouseCapture()
  {
-@@ -1040,9 +1044,7 @@ bool EventHandler::handleMouseReleaseEvent(const MouseEventWithHitTestResults& e
+@@ -1041,9 +1045,7 @@ bool EventHandler::handleMouseReleaseEvent(const MouseEventWithHitTestResults& e
      // on the selection, the selection goes away.  However, if we are
      // editing, place the caret.
      if (m_mouseDownWasSingleClickInSelection && m_selectionInitiationState != ExtendedSelection
@@ -4586,7 +4586,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
              && m_frame.selection().isRange()
              && event.event().button() != RightButton) {
          VisibleSelection newSelection;
-@@ -2002,10 +2004,8 @@ bool EventHandler::handleMouseMoveEvent(const PlatformMouseEvent& platformMouseE
+@@ -2003,10 +2005,8 @@ bool EventHandler::handleMouseMoveEvent(const PlatformMouseEvent& platformMouseE
      
      swallowEvent = !dispatchMouseEvent(eventNames().mousemoveEvent, mouseEvent.targetNode(), 0, platformMouseEvent, FireMouseOverOut::Yes);
  
@@ -4597,7 +4597,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
  
      return swallowEvent;
  }
-@@ -4305,7 +4305,8 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+@@ -4306,7 +4306,8 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
              allTouchReleased = false;
      }
  
@@ -4607,7 +4607,7 @@ index a93ec555089360d96210f042dd2ecc83e789df92..e55ea054d877ff880e975193d4f1e14a
          PlatformTouchPoint::State pointState = point.state();
          LayoutPoint pagePoint = documentPointForWindowPoint(m_frame, point.pos());
  
-@@ -4431,6 +4432,9 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+@@ -4432,6 +4433,9 @@ bool EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
              changedTouches[pointState].m_touches->append(WTFMove(touch));
              changedTouches[pointState].m_targets.add(touchTarget);
          }
@@ -5181,10 +5181,10 @@ index e2f8a37fb89b421eebfa846e54c47ee795c6a9ab..f31da2c7cb84a027601c68d26232670c
  }
  
 diff --git a/Source/WebCore/page/FrameView.cpp b/Source/WebCore/page/FrameView.cpp
-index 470ddc8fa22c99bcda4c87b975959b1b8194ae98..f9c1e2672648dc775e99580065c413bee093f2a8 100644
+index fc2b3578633916f3432e9352c1eccb17704465ca..f7f6977a1d0993a730e8fe63df314263c3edf59f 100644
 --- a/Source/WebCore/page/FrameView.cpp
 +++ b/Source/WebCore/page/FrameView.cpp
-@@ -3035,7 +3035,7 @@ void FrameView::setBaseBackgroundColor(const Color& backgroundColor)
+@@ -3036,7 +3036,7 @@ void FrameView::setBaseBackgroundColor(const Color& backgroundColor)
  
  void FrameView::updateBackgroundRecursively(const Optional<Color>& backgroundColor)
  {
@@ -5451,10 +5451,10 @@ index 37d5c443785f3df52bddb775cb9c1e66e0dd97b6..f2329ad61fd4f4ad006ca89ba2bdc729
      for (auto& policy : m_policies) {
          if (const ContentSecurityPolicyDirective* violatedDirective = (policy.get()->*predicate)(std::forward<Args>(args)...)) {
 diff --git a/Source/WebCore/page/ios/FrameIOS.mm b/Source/WebCore/page/ios/FrameIOS.mm
-index 32d32e59b24265286710a5f3f7053e1816ad9e3b..34f7e01b612710a817debb7f8d25d6bd5f0e9e6d 100644
+index c97087ffe45a71a3b75c3ed19ede392da8fcf389..42b9e3c50a606f95d85f02e19f86c14ab33910fa 100644
 --- a/Source/WebCore/page/ios/FrameIOS.mm
 +++ b/Source/WebCore/page/ios/FrameIOS.mm
-@@ -225,354 +225,6 @@ CGRect Frame::renderRectForPoint(CGPoint point, bool* isReplaced, float* fontSiz
+@@ -226,354 +226,6 @@ CGRect Frame::renderRectForPoint(CGPoint point, bool* isReplaced, float* fontSiz
      return CGRectZero;
  }
  
@@ -8187,7 +8187,7 @@ index 66ff36eec2db1699a9bc2bce8fe0d5124ce19ed2..cc2bda254ce55d574c36b07dbaf95093
  }
  
 diff --git a/Source/WebKit/PlatformGTK.cmake b/Source/WebKit/PlatformGTK.cmake
-index 15ef6a9cd91c87f85f6fea030ea48d6dfb4a2b40..ffb277c195281c8caa738170adb4a73db5b05820 100644
+index 8b9dd2a423aae454f901f46478919831b02226cb..4335e3d45dd2ff304321e9ec77920d0f438cdb7b 100644
 --- a/Source/WebKit/PlatformGTK.cmake
 +++ b/Source/WebKit/PlatformGTK.cmake
 @@ -447,6 +447,9 @@ list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES
@@ -8985,10 +8985,10 @@ index 88d53d236cd6d62735f03678a04ca9c198dddacb..b8f8efc57ab00dc5725660c5a8ad56a3
      return WebTouchEvent();
  }
 diff --git a/Source/WebKit/Sources.txt b/Source/WebKit/Sources.txt
-index 88b91b9004d5ec2366b0888d6ee0384d57c84700..b2717088886e6f2d871e231a7ae87346063858ad 100644
+index 77ac16df891fd94c9b763d424aac7712e220f083..3b51c1db6bea9de30efcdcbeb76182361c723c16 100644
 --- a/Source/WebKit/Sources.txt
 +++ b/Source/WebKit/Sources.txt
-@@ -279,16 +279,20 @@ Shared/WebsiteData/WebsiteData.cpp
+@@ -278,16 +278,20 @@ Shared/WebsiteData/WebsiteData.cpp
  
  UIProcess/AuxiliaryProcessProxy.cpp
  UIProcess/BackgroundProcessResponsivenessTimer.cpp
@@ -9009,7 +9009,7 @@ index 88b91b9004d5ec2366b0888d6ee0384d57c84700..b2717088886e6f2d871e231a7ae87346
  UIProcess/ResponsivenessTimer.cpp
  UIProcess/SpeechRecognitionRemoteRealtimeMediaSource.cpp
  UIProcess/SpeechRecognitionRemoteRealtimeMediaSourceManager.cpp
-@@ -330,6 +334,8 @@ UIProcess/WebOpenPanelResultListenerProxy.cpp
+@@ -329,6 +333,8 @@ UIProcess/WebOpenPanelResultListenerProxy.cpp
  UIProcess/WebPageDiagnosticLoggingClient.cpp
  UIProcess/WebPageGroup.cpp
  UIProcess/WebPageInjectedBundleClient.cpp
@@ -9018,7 +9018,7 @@ index 88b91b9004d5ec2366b0888d6ee0384d57c84700..b2717088886e6f2d871e231a7ae87346
  UIProcess/WebPageProxy.cpp
  UIProcess/WebPasteboardProxy.cpp
  UIProcess/WebPreferences.cpp
-@@ -452,6 +458,9 @@ UIProcess/Inspector/WebPageDebuggable.cpp
+@@ -451,6 +457,9 @@ UIProcess/Inspector/WebPageDebuggable.cpp
  UIProcess/Inspector/WebPageInspectorController.cpp
  
  UIProcess/Inspector/Agents/InspectorBrowserAgent.cpp
@@ -14047,7 +14047,7 @@ index 8b51250f5cad7f3f5ce78f58d67637190cf8bf91..15012ef7bf5927d536bceeb1677a69b0
  public:
      static Ref<WebCore::RealtimeMediaSource> create(SpeechRecognitionRemoteRealtimeMediaSourceManager&, const WebCore::CaptureDevice&);
 diff --git a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h
-index f1393512fe0b859ece3829bf239f6ae6c1874155..385c5fe843613f84c783ab86ac4d85a90192e061 100644
+index dcb1eacd69eb3bdb7efbe291a4c083f49477cc67..a4a2d0e9815280df6c17eeb6805ba634243ebca8 100644
 --- a/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h
 +++ b/Source/WebKit/UIProcess/WebAuthentication/Cocoa/AuthenticatorPresenterCoordinator.h
 @@ -31,6 +31,7 @@
@@ -15220,7 +15220,7 @@ index ae87a0bafef57aa6d392f9eebef48c58811d5ee3..ffe8d7d4df1f248d5d8675d6ab126442
      // and make it one UIClient call that calls the completionHandler with false
      // if there is no delegate instead of returning the completionHandler
 diff --git a/Source/WebKit/UIProcess/WebPageProxy.h b/Source/WebKit/UIProcess/WebPageProxy.h
-index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d4276702bab 100644
+index 67a4eb9f621d43738e01b9eaf011293ceb57c990..55cf51eee4cf9a948c64ff461b99178617af0ce1 100644
 --- a/Source/WebKit/UIProcess/WebPageProxy.h
 +++ b/Source/WebKit/UIProcess/WebPageProxy.h
 @@ -39,6 +39,7 @@
@@ -15291,7 +15291,7 @@ index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d42
      RefPtr<API::Navigation> loadRequest(WebCore::ResourceRequest&&, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldAllowExternalSchemesButNotAppLinks, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadFile(const String& fileURL, const String& resourceDirectoryURL, API::Object* userData = nullptr);
      RefPtr<API::Navigation> loadData(const IPC::DataReference&, const String& MIMEType, const String& encoding, const String& baseURL, API::Object* userData = nullptr, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
-@@ -1095,6 +1112,7 @@ public:
+@@ -1096,6 +1113,7 @@ public:
  #endif
  
      void pageScaleFactorDidChange(double);
@@ -15299,7 +15299,7 @@ index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d42
      void pluginScaleFactorDidChange(double);
      void pluginZoomFactorDidChange(double);
  
-@@ -1173,10 +1191,16 @@ public:
+@@ -1174,10 +1192,16 @@ public:
      void startDrag(const WebCore::DragItem&, const ShareableBitmap::Handle& dragImageHandle);
      void setPromisedDataForImage(const String& pasteboardName, const SharedMemory::IPCHandle& imageHandle, const String& filename, const String& extension,
          const String& title, const String& url, const String& visibleURL, const SharedMemory::IPCHandle& archiveHandle);
@@ -15317,7 +15317,7 @@ index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d42
  #endif
  
      void processDidBecomeUnresponsive();
-@@ -1415,6 +1439,8 @@ public:
+@@ -1416,6 +1440,8 @@ public:
  
  #if PLATFORM(COCOA) || PLATFORM(GTK)
      RefPtr<ViewSnapshot> takeViewSnapshot(Optional<WebCore::IntRect>&&);
@@ -15326,7 +15326,7 @@ index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d42
  #endif
  
  #if ENABLE(WEB_CRYPTO)
-@@ -2425,6 +2451,7 @@ private:
+@@ -2426,6 +2452,7 @@ private:
      String m_overrideContentSecurityPolicy;
  
      RefPtr<WebInspectorProxy> m_inspector;
@@ -15334,7 +15334,7 @@ index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d42
  
  #if ENABLE(FULLSCREEN_API)
      std::unique_ptr<WebFullScreenManagerProxy> m_fullScreenManager;
-@@ -2658,6 +2685,18 @@ private:
+@@ -2659,6 +2686,18 @@ private:
      unsigned m_currentDragNumberOfFilesToBeAccepted { 0 };
      WebCore::IntRect m_currentDragCaretRect;
      WebCore::IntRect m_currentDragCaretEditableElementRect;
@@ -15353,7 +15353,7 @@ index 7acb638c326c727c50c90ba376028ea3530e85cf..03731148cb84c901627220babb0d2d42
  #endif
  
      PageLoadState m_pageLoadState;
-@@ -2863,6 +2902,9 @@ private:
+@@ -2864,6 +2903,9 @@ private:
          RefPtr<API::Object> messageBody;
      };
      Vector<InjectedBundleMessage> m_pendingInjectedBundleMessages;
@@ -17241,7 +17241,7 @@ index 0000000000000000000000000000000000000000..c3d7cacea987ba2b094d5022c670705e
 + 
 +} // namespace WebKit
 diff --git a/Source/WebKit/WebKit.xcodeproj/project.pbxproj b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
-index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290c04023c4 100644
+index fa03dc8514003858261753deccf95777a1abcea1..b593b15f575cab5eff9d93b8a45571e3c0aee6e5 100644
 --- a/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 +++ b/Source/WebKit/WebKit.xcodeproj/project.pbxproj
 @@ -1904,6 +1904,18 @@
@@ -17263,7 +17263,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  		DF462E0F23F22F5500EFF35F /* WKHTTPCookieStorePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		DF462E1223F338BE00EFF35F /* WKContentWorldPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
  		DF84CEE4249AA24D009096F6 /* WKPDFHUDView.mm in Sources */ = {isa = PBXBuildFile; fileRef = DF84CEE2249AA21F009096F6 /* WKPDFHUDView.mm */; };
-@@ -1963,6 +1975,9 @@
+@@ -1961,6 +1973,9 @@
  		E5BEF6822130C48000F31111 /* WebDataListSuggestionsDropdownIOS.h in Headers */ = {isa = PBXBuildFile; fileRef = E5BEF6802130C47F00F31111 /* WebDataListSuggestionsDropdownIOS.h */; };
  		E5CB07DC20E1678F0022C183 /* WKFormColorControl.h in Headers */ = {isa = PBXBuildFile; fileRef = E5CB07DA20E1678F0022C183 /* WKFormColorControl.h */; };
  		ED82A7F2128C6FAF004477B3 /* WKBundlePageOverlay.h in Headers */ = {isa = PBXBuildFile; fileRef = 1A22F0FF1289FCD90085E74F /* WKBundlePageOverlay.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -17273,7 +17273,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  		F4094CBD2553053D003D73E3 /* DisplayListReaderHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = F4094CBB255304AF003D73E3 /* DisplayListReaderHandle.h */; };
  		F4094CBE25530540003D73E3 /* DisplayListWriterHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = F4094CB92553047E003D73E3 /* DisplayListWriterHandle.h */; };
  		F409BA181E6E64BC009DA28E /* WKDragDestinationAction.h in Headers */ = {isa = PBXBuildFile; fileRef = F409BA171E6E64B3009DA28E /* WKDragDestinationAction.h */; settings = {ATTRIBUTES = (Private, ); }; };
-@@ -5660,6 +5675,19 @@
+@@ -5658,6 +5673,19 @@
  		DF0C5F24252ECB8D00D921DB /* WKDownload.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDownload.h; sourceTree = "<group>"; };
  		DF0C5F25252ECB8E00D921DB /* WKDownloadInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDownloadInternal.h; sourceTree = "<group>"; };
  		DF0C5F26252ECB8E00D921DB /* WKDownloadDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDownloadDelegate.h; sourceTree = "<group>"; };
@@ -17293,7 +17293,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  		DF462E0E23F22F5300EFF35F /* WKHTTPCookieStorePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKHTTPCookieStorePrivate.h; sourceTree = "<group>"; };
  		DF462E1123F338AD00EFF35F /* WKContentWorldPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKContentWorldPrivate.h; sourceTree = "<group>"; };
  		DF58C6311371AC5800F9A37C /* NativeWebWheelEvent.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NativeWebWheelEvent.h; sourceTree = "<group>"; };
-@@ -5778,6 +5806,14 @@
+@@ -5774,6 +5802,14 @@
  		ECA680D31E6904B500731D20 /* ExtraPrivateSymbolsForTAPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtraPrivateSymbolsForTAPI.h; sourceTree = "<group>"; };
  		ECBFC1DB1E6A4D66000300C7 /* ExtraPublicSymbolsForTAPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ExtraPublicSymbolsForTAPI.h; sourceTree = "<group>"; };
  		F036978715F4BF0500C3A80E /* WebColorPicker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebColorPicker.cpp; sourceTree = "<group>"; };
@@ -17308,7 +17308,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  		F4094CB92553047E003D73E3 /* DisplayListWriterHandle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DisplayListWriterHandle.h; sourceTree = "<group>"; };
  		F4094CBA2553047E003D73E3 /* DisplayListWriterHandle.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DisplayListWriterHandle.cpp; sourceTree = "<group>"; };
  		F4094CBB255304AF003D73E3 /* DisplayListReaderHandle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DisplayListReaderHandle.h; sourceTree = "<group>"; };
-@@ -5879,6 +5915,7 @@
+@@ -5875,6 +5911,7 @@
  				3766F9EF189A1244003CF19B /* QuartzCore.framework in Frameworks */,
  				37694525184FC6B600CDE21F /* Security.framework in Frameworks */,
  				37BEC4DD1948FC6A008B4286 /* WebCore.framework in Frameworks */,
@@ -17316,7 +17316,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  			);
  			runOnlyForDeploymentPostprocessing = 0;
  		};
-@@ -7671,6 +7708,7 @@
+@@ -7665,6 +7702,7 @@
  		37C4C08318149C2A003688B9 /* Cocoa */ = {
  			isa = PBXGroup;
  			children = (
@@ -17324,7 +17324,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				1A43E826188F38E2009E4D30 /* Deprecated */,
  				37A5E01218BBF937000A081E /* _WKActivatedElementInfo.h */,
  				37A5E01118BBF937000A081E /* _WKActivatedElementInfo.mm */,
-@@ -8707,6 +8745,7 @@
+@@ -8701,6 +8739,7 @@
  			isa = PBXGroup;
  			children = (
  				57A9FF15252C6AEF006A2040 /* libWTF.a */,
@@ -17332,7 +17332,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				5750F32A2032D4E500389347 /* LocalAuthentication.framework */,
  				570DAAB0230273D200E8FC04 /* NearField.framework */,
  			);
-@@ -9124,6 +9163,12 @@
+@@ -9118,6 +9157,12 @@
  			children = (
  				9197940423DBC4BB00257892 /* InspectorBrowserAgent.cpp */,
  				9197940323DBC4BB00257892 /* InspectorBrowserAgent.h */,
@@ -17345,7 +17345,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  			);
  			path = Agents;
  			sourceTree = "<group>";
-@@ -9132,6 +9177,7 @@
+@@ -9126,6 +9171,7 @@
  			isa = PBXGroup;
  			children = (
  				A5D3504D1D78F0D2005124A9 /* RemoteWebInspectorProxyMac.mm */,
@@ -17353,7 +17353,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				1CA8B935127C774E00576C2B /* WebInspectorProxyMac.mm */,
  				994BADF11F7D77EA00B571E7 /* WKInspectorViewController.h */,
  				994BADF21F7D77EB00B571E7 /* WKInspectorViewController.mm */,
-@@ -9606,6 +9652,12 @@
+@@ -9600,6 +9646,12 @@
  		BC032DC310F438260058C15A /* UIProcess */ = {
  			isa = PBXGroup;
  			children = (
@@ -17366,7 +17366,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				BC032DC410F4387C0058C15A /* API */,
  				512F588D12A8836F00629530 /* Authentication */,
  				9955A6E81C79809000EB6A93 /* Automation */,
-@@ -9901,6 +9953,7 @@
+@@ -9895,6 +9947,7 @@
  		BC0C376610F807660076D7CB /* C */ = {
  			isa = PBXGroup;
  			children = (
@@ -17374,7 +17374,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				5123CF18133D25E60056F800 /* cg */,
  				6EE849C41368D9040038D481 /* mac */,
  				BCB63477116BF10600603215 /* WebKit2_C.h */,
-@@ -10500,6 +10553,11 @@
+@@ -10494,6 +10547,11 @@
  		BCCF085C113F3B7500C650C5 /* mac */ = {
  			isa = PBXGroup;
  			children = (
@@ -17386,7 +17386,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				B878B613133428DC006888E9 /* CorrectionPanel.h */,
  				B878B614133428DC006888E9 /* CorrectionPanel.mm */,
  				C1817362205844A900DFDA65 /* DisplayLink.cpp */,
-@@ -11302,6 +11360,7 @@
+@@ -11296,6 +11354,7 @@
  				99788ACB1F421DDA00C08000 /* _WKAutomationSessionConfiguration.h in Headers */,
  				990D28AC1C6420CF00986977 /* _WKAutomationSessionDelegate.h in Headers */,
  				990D28B11C65208D00986977 /* _WKAutomationSessionInternal.h in Headers */,
@@ -17394,7 +17394,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				5C4609E7224317B4009943C2 /* _WKContentRuleListAction.h in Headers */,
  				5C4609E8224317BB009943C2 /* _WKContentRuleListActionInternal.h in Headers */,
  				1A5704F81BE01FF400874AF1 /* _WKContextMenuElementInfo.h in Headers */,
-@@ -11600,6 +11659,7 @@
+@@ -11594,6 +11653,7 @@
  				1A14F8E21D74C834006CBEC6 /* FrameInfoData.h in Headers */,
  				1AE00D611831792100087DD7 /* FrameLoadState.h in Headers */,
  				5C121E842410208D00486F9B /* FrameTreeNodeData.h in Headers */,
@@ -17402,7 +17402,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				2D4AF0892044C3C4006C8817 /* FrontBoardServicesSPI.h in Headers */,
  				CD78E1151DB7D7ED0014A2DE /* FullscreenClient.h in Headers */,
  				CD19D2EA2046406F0017074A /* FullscreenTouchSecheuristic.h in Headers */,
-@@ -11613,6 +11673,7 @@
+@@ -11607,6 +11667,7 @@
  				2DA944A41884E4F000ED86DB /* GestureTypes.h in Headers */,
  				F40BBB41257FF46E0067463A /* GPUProcessWakeupMessageArguments.h in Headers */,
  				2DA049B8180CCD0A00AAFA9E /* GraphicsLayerCARemote.h in Headers */,
@@ -17410,7 +17410,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				C0CE72AD1247E78D00BC0EC4 /* HandleMessage.h in Headers */,
  				1AC75A1B1B3368270056745B /* HangDetectionDisabler.h in Headers */,
  				57AC8F50217FEED90055438C /* HidConnection.h in Headers */,
-@@ -11749,8 +11810,10 @@
+@@ -11743,8 +11804,10 @@
  				413075AC1DE85F370039EC69 /* NetworkRTCMonitor.h in Headers */,
  				41DC45961E3D6E2200B11F51 /* NetworkRTCProvider.h in Headers */,
  				5C20CBA01BB1ECD800895BB1 /* NetworkSession.h in Headers */,
@@ -17421,7 +17421,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				570DAAC22303730300E8FC04 /* NfcConnection.h in Headers */,
  				570DAAAE23026F5C00E8FC04 /* NfcService.h in Headers */,
  				31A2EC5614899C0900810D71 /* NotificationPermissionRequest.h in Headers */,
-@@ -11832,6 +11895,7 @@
+@@ -11826,6 +11889,7 @@
  				BC1A7C581136E19C00FB7167 /* ProcessLauncher.h in Headers */,
  				463FD4821EB94EC000A2982C /* ProcessTerminationReason.h in Headers */,
  				86E67A251910B9D100004AB7 /* ProcessThrottler.h in Headers */,
@@ -17429,7 +17429,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				83048AE61ACA45DC0082C832 /* ProcessThrottlerClient.h in Headers */,
  				A1E688701F6E2BAB007006A6 /* QuarantineSPI.h in Headers */,
  				1A0C227E2451130A00ED614D /* QuickLookThumbnailingSoftLink.h in Headers */,
-@@ -12150,6 +12214,7 @@
+@@ -12143,6 +12207,7 @@
  				A543E30D215C8A9000279CD9 /* WebPageInspectorTargetController.h in Headers */,
  				A543E307215AD13700279CD9 /* WebPageInspectorTargetFrontendChannel.h in Headers */,
  				C0CE72A11247E71D00BC0EC4 /* WebPageMessages.h in Headers */,
@@ -17437,7 +17437,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				2D5C9D0619C81D8F00B3C5C1 /* WebPageOverlay.h in Headers */,
  				46C392292316EC4D008EED9B /* WebPageProxyIdentifier.h in Headers */,
  				BCBD3915125BB1A800D2C29F /* WebPageProxyMessages.h in Headers */,
-@@ -12280,6 +12345,7 @@
+@@ -12273,6 +12338,7 @@
  				BCD25F1711D6BDE100169B0E /* WKBundleFrame.h in Headers */,
  				BCF049E611FE20F600F86A58 /* WKBundleFramePrivate.h in Headers */,
  				BC49862F124D18C100D834E1 /* WKBundleHitTestResult.h in Headers */,
@@ -17445,7 +17445,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				BC204EF211C83EC8008F3375 /* WKBundleInitialize.h in Headers */,
  				65B86F1E12F11DE300B7DD8A /* WKBundleInspector.h in Headers */,
  				1A8B66B41BC45B010082DF77 /* WKBundleMac.h in Headers */,
-@@ -12334,6 +12400,7 @@
+@@ -12327,6 +12393,7 @@
  				5C795D71229F3757003FF1C4 /* WKContextMenuElementInfoPrivate.h in Headers */,
  				51A555F6128C6C47009ABCEC /* WKContextMenuItem.h in Headers */,
  				51A55601128C6D92009ABCEC /* WKContextMenuItemTypes.h in Headers */,
@@ -17453,7 +17453,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				A1EA02381DABFF7E0096021F /* WKContextMenuListener.h in Headers */,
  				BCC938E11180DE440085E5FE /* WKContextPrivate.h in Headers */,
  				9FB5F395169E6A80002C25BF /* WKContextPrivateMac.h in Headers */,
-@@ -12489,6 +12556,7 @@
+@@ -12482,6 +12549,7 @@
  				1AB8A1F818400BB800E9AE69 /* WKPageContextMenuClient.h in Headers */,
  				8372DB251A674C8F00C697C5 /* WKPageDiagnosticLoggingClient.h in Headers */,
  				1AB8A1F418400B8F00E9AE69 /* WKPageFindClient.h in Headers */,
@@ -17461,7 +17461,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				1AB8A1F618400B9D00E9AE69 /* WKPageFindMatchesClient.h in Headers */,
  				1AB8A1F018400B0000E9AE69 /* WKPageFormClient.h in Headers */,
  				BC7B633712A45ABA00D174A4 /* WKPageGroup.h in Headers */,
-@@ -13662,6 +13730,7 @@
+@@ -13655,6 +13723,7 @@
  				C1A152D724E5A29A00978C8B /* HandleXPCEndpointMessages.mm in Sources */,
  				2749F6442146561B008380BF /* InjectedBundleNodeHandle.cpp in Sources */,
  				2749F6452146561E008380BF /* InjectedBundleRangeHandle.cpp in Sources */,
@@ -17469,7 +17469,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				9BF5EC642541145600984E77 /* JSIPCBinding.cpp in Sources */,
  				2D913441212CF9F000128AFD /* JSNPMethod.cpp in Sources */,
  				2D913442212CF9F000128AFD /* JSNPObject.cpp in Sources */,
-@@ -13678,6 +13747,7 @@
+@@ -13671,6 +13740,7 @@
  				2D92A781212B6A7100F493FD /* MessageReceiverMap.cpp in Sources */,
  				2D92A782212B6A7100F493FD /* MessageSender.cpp in Sources */,
  				2D92A77A212B6A6100F493FD /* Module.cpp in Sources */,
@@ -17477,7 +17477,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
  				2D913443212CF9F000128AFD /* NetscapeBrowserFuncs.cpp in Sources */,
  				2D913444212CF9F000128AFD /* NetscapePlugin.cpp in Sources */,
-@@ -13702,6 +13772,7 @@
+@@ -13695,6 +13765,7 @@
  				1A2D8439127F65D5001EB962 /* NPObjectMessageReceiverMessageReceiver.cpp in Sources */,
  				2D92A792212B6AD400F493FD /* NPObjectProxy.cpp in Sources */,
  				2D92A793212B6AD400F493FD /* NPRemoteObjectMap.cpp in Sources */,
@@ -17485,7 +17485,7 @@ index adf900cd4a254cde3e32634df66c76716f09ca9d..172d748ca0a599b5d3fb1eac544bc290
  				2D913447212CF9F000128AFD /* NPRuntimeObjectMap.cpp in Sources */,
  				2D913448212CF9F000128AFD /* NPRuntimeUtilities.cpp in Sources */,
  				2D92A794212B6AD400F493FD /* NPVariantData.cpp in Sources */,
-@@ -14002,6 +14073,7 @@
+@@ -13994,6 +14065,7 @@
  				2D92A78C212B6AB100F493FD /* WebMouseEvent.cpp in Sources */,
  				31BA924D148831260062EDB5 /* WebNotificationManagerMessageReceiver.cpp in Sources */,
  				2DF6FE52212E110900469030 /* WebPage.cpp in Sources */,
@@ -18421,7 +18421,7 @@ index 4bb18a66c75a48c36e86761d30dc33eeb709cabd..382cf72578bfb4161402897ecfe7cb3e
  
  void WebProcess::initializeConnection(IPC::Connection* connection)
 diff --git a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
-index 89bc159df35910abe133c68d71057cdfe1995cbb..aba8e9110a3ec4c59e9888b148e1e908d477cbe4 100644
+index 8987c3964a9308f2454759de7f8972215a3ae416..bcac0afeb94ed8123d1f9fb0b932c8497d157b49 100644
 --- a/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
 +++ b/Source/WebKit/WebProcess/win/WebProcessMainWin.cpp
 @@ -42,7 +42,9 @@ public:
