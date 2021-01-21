@@ -829,12 +829,12 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 
 Returns the value of the [`param: pageFunction`] invocation.
 
-If the function passed to the [`method: Page.evaluate`] returns a [Promise], then [`method: Page.evaluate`] would wait for the promise to
-resolve and return its value.
+If the function passed to the [`method: Page.evaluate`] returns a [Promise], then [`method: Page.evaluate`] would wait
+for the promise to resolve and return its value.
 
-If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then[ method: `Page.evaluate`] resolves to
-`undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-`-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then
+[`method: Page.evaluate`] resolves to `undefined`. DevTools Protocol also supports transferring some additional values
+that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
 Passing argument to [`param: pageFunction`]:
 
@@ -2206,7 +2206,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 Returns when the [`param: pageFunction`] returns a truthy value. It resolves to a JSHandle of the truthy value.
 
-The `waitForFunction` can be used to observe viewport size change:
+The [`method: Page.waitForFunction`] can be used to observe viewport size change:
 
 ```js
 const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.

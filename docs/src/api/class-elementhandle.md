@@ -62,7 +62,7 @@ ElementHandle instances can be used as an argument in [`method: Page.$eval`] and
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+[Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
 ### param: ElementHandle.$.selector = %%-query-selector-%%
@@ -73,7 +73,7 @@ returns `null`.
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+[Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
 ### param: ElementHandle.$$.selector = %%-query-selector-%%
@@ -86,7 +86,7 @@ returns empty array.
 Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more
+argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for more
 details. If no elements match the selector, the method throws an error.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its
@@ -134,7 +134,7 @@ Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
 matched elements as a first argument to [`param: pageFunction`]. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details.
+[Working with selectors](./selectors.md) for more details.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its
 value.

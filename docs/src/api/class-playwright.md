@@ -157,7 +157,7 @@ This object can be used to launch or connect to Firefox, returning instances of 
 - type: <[Selectors]>
 
 Selectors can be used to install custom selector engines. See
-[Working with selectors](./selectors.md#working-with-selectors) for more information.
+[Working with selectors](./selectors.md) for more information.
 
 ## property: Playwright.webkit
 - type: <[BrowserType]>
