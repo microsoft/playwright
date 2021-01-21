@@ -140,11 +140,10 @@ program
 
 if (process.env.PWTRACE) {
   program
-      .command('show-trace <trace>')
+      .command('show-trace [trace]')
       .description('Show trace viewer')
-      .option('--resources <dir>', 'Directory with the shared trace artifacts')
       .action(function(trace, command) {
-        showTraceViewer(command.resources, trace);
+        showTraceViewer(trace);
       }).on('--help', function() {
         console.log('');
         console.log('Examples:');

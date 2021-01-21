@@ -26,27 +26,66 @@ import { VideoTileGenerator } from './videoTileGenerator';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
-class TraceViewer {
-  private _traceStorageDir: string;
-  private _traceModel: TraceModel;
-  private _snapshotRouter: SnapshotRouter;
-  private _screenshotGenerator: ScreenshotGenerator;
-  private _videoTileGenerator: VideoTileGenerator;
+type TraceViewerDocument = {
+  resourcesDir: string;
+  model: TraceModel;
+  snapshotRouter: SnapshotRouter;
+  screenshotGenerator: ScreenshotGenerator;
+  videoTileGenerator: VideoTileGenerator;
+};
 
-  constructor(traceStorageDir: string) {
-    this._traceStorageDir = traceStorageDir;
-    this._snapshotRouter = new SnapshotRouter(traceStorageDir);
-    this._traceModel = {
-      contexts: [],
-    };
-    this._screenshotGenerator = new ScreenshotGenerator(traceStorageDir, this._traceModel);
-    this._videoTileGenerator = new VideoTileGenerator(this._traceModel);
+const emptyModel: TraceModel = {
+  contexts: [
+    {
+      startTime: 0,
+      endTime: 1,
+      created: {
+        timestamp: Date.now(),
+        type: 'context-created',
+        browserName: 'none',
+        contextId: '<empty>',
+        deviceScaleFactor: 1,
+        isMobile: false,
+        viewportSize: { width: 800, height: 600 },
+      },
+      destroyed: {
+        timestamp: Date.now(),
+        type: 'context-destroyed',
+        contextId: '<empty>',
+      },
+      name: '<empty>',
+      filePath: '',
+      pages: [],
+      resourcesByUrl: new Map()
+    }
+  ]
+};
+
+class TraceViewer {
+  private _document: TraceViewerDocument | undefined;
+
+  constructor() {
   }
 
-  async load(filePath: string) {
-    const traceContent = await fsReadFileAsync(filePath, 'utf8');
-    const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
-    readTraceFile(events, this._traceModel, filePath);
+  async load(traceDir: string) {
+    const resourcesDir = path.join(traceDir, 'resources');
+    const model = { contexts: [] };
+    this._document = {
+      model,
+      resourcesDir,
+      snapshotRouter: new SnapshotRouter(resourcesDir),
+      screenshotGenerator: new ScreenshotGenerator(resourcesDir, model),
+      videoTileGenerator: new VideoTileGenerator(model)
+    };
+
+    for (const name of fs.readdirSync(traceDir)) {
+      if (!name.endsWith('.trace'))
+        continue;
+      const filePath = path.join(traceDir, name);
+      const traceContent = await fsReadFileAsync(filePath, 'utf8');
+      const events = traceContent.split('\n').map(line => line.trim()).filter(line => !!line).map(line => JSON.parse(line)) as TraceEvent[];
+      readTraceFile(events, model, filePath);
+    }
   }
 
   async show() {
@@ -57,6 +96,8 @@ class TraceViewer {
       return fs.readFileSync(path).toString();
     });
     await uiPage.exposeBinding('renderSnapshot', async (_, action: ActionTraceEvent) => {
+      if (!this._document)
+        return;
       try {
         if (!action.snapshot) {
           const snapshotFrame = uiPage.frames()[1];
@@ -64,10 +105,10 @@ class TraceViewer {
           return;
         }
 
-        const snapshot = await fsReadFileAsync(path.join(this._traceStorageDir, action.snapshot!.sha1), 'utf8');
+        const snapshot = await fsReadFileAsync(path.join(this._document.resourcesDir, action.snapshot!.sha1), 'utf8');
         const snapshotObject = JSON.parse(snapshot) as PageSnapshot;
-        const contextEntry = this._traceModel.contexts.find(entry => entry.created.contextId === action.contextId)!;
-        this._snapshotRouter.selectSnapshot(snapshotObject, contextEntry);
+        const contextEntry = this._document.model.contexts.find(entry => entry.created.contextId === action.contextId)!;
+        this._document.snapshotRouter.selectSnapshot(snapshotObject, contextEntry);
 
         // TODO: fix Playwright bug where frame.name is lost (empty).
         const snapshotFrame = uiPage.frames()[1];
@@ -88,21 +129,21 @@ class TraceViewer {
         console.log(e); // eslint-disable-line no-console
       }
     });
-    await uiPage.exposeBinding('getTraceModel', () => this._traceModel);
+    await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
     await uiPage.exposeBinding('getVideoMetaInfo', async (_, videoId: string) => {
-      return this._videoTileGenerator.render(videoId);
+      return this._document ? this._document.videoTileGenerator.render(videoId) : null;
     });
     await uiPage.route('**/*', (route, request) => {
-      if (request.frame().parentFrame()) {
-        this._snapshotRouter.route(route);
+      if (request.frame().parentFrame() && this._document) {
+        this._document.snapshotRouter.route(route);
         return;
       }
       const url = new URL(request.url());
       try {
-        if (request.url().includes('action-preview')) {
+        if (this._document && request.url().includes('action-preview')) {
           const fullPath = url.pathname.substring('/action-preview/'.length);
           const actionId = fullPath.substring(0, fullPath.indexOf('.png'));
-          this._screenshotGenerator.generateScreenshot(actionId).then(body => {
+          this._document.screenshotGenerator.generateScreenshot(actionId).then(body => {
             if (body)
               route.fulfill({ contentType: 'image/png', body });
             else
@@ -111,9 +152,9 @@ class TraceViewer {
           return;
         }
         let filePath: string;
-        if (request.url().includes('video-tile')) {
+        if (this._document && request.url().includes('video-tile')) {
           const fullPath = url.pathname.substring('/video-tile/'.length);
-          filePath = this._videoTileGenerator.tilePath(fullPath);
+          filePath = this._document.videoTileGenerator.tilePath(fullPath);
         } else {
           filePath = path.join(__dirname, 'web', url.pathname.substring(1));
         }
@@ -133,35 +174,11 @@ class TraceViewer {
   }
 }
 
-export async function showTraceViewer(traceStorageDir: string | undefined, tracePath: string) {
-  if (!fs.existsSync(tracePath))
-    throw new Error(`${tracePath} does not exist`);
-
-  const files: string[] = fs.statSync(tracePath).isFile() ? [tracePath] : collectFiles(tracePath);
-
-  if (!traceStorageDir) {
-    traceStorageDir = fs.statSync(tracePath).isFile() ? path.dirname(tracePath) : tracePath;
-
-    if (fs.existsSync(traceStorageDir + '/trace-resources'))
-      traceStorageDir = traceStorageDir + '/trace-resources';
-  }
-
-  const traceViewer = new TraceViewer(traceStorageDir);
-  for (const filePath of files)
-    await traceViewer.load(filePath);
+export async function showTraceViewer(traceDir: string) {
+  const traceViewer = new TraceViewer();
+  if (traceDir)
+    await traceViewer.load(traceDir);
   await traceViewer.show();
-}
-
-function collectFiles(dir: string): string[] {
-  const files = [];
-  for (const name of fs.readdirSync(dir)) {
-    const fullName = path.join(dir, name);
-    if (fs.lstatSync(fullName).isDirectory())
-      files.push(...collectFiles(fullName));
-    else if (fullName.endsWith('.trace'))
-      files.push(fullName);
-  }
-  return files;
 }
 
 const extensionToMime: { [key: string]: string } = {

@@ -43,17 +43,11 @@ class Tracer implements ContextListener {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
-    let traceStorageDir: string;
-    let tracePath: string;
-    if (context._options._tracePath) {
-      traceStorageDir = context._options._traceResourcesPath || path.join(path.dirname(context._options._tracePath), 'trace-resources');
-      tracePath = context._options._tracePath;
-    } else if (envTrace) {
-      traceStorageDir = envTrace;
-      tracePath = path.join(envTrace, createGuid() + '.trace');
-    } else {
+    const traceDir = envTrace || context._options._traceDir;
+    if (!traceDir)
       return;
-    }
+    const traceStorageDir = path.join(traceDir, 'resources');
+    const tracePath = path.join(traceDir, createGuid() + '.trace');
     const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
     this._contextTracers.set(context, contextTracer);
   }
