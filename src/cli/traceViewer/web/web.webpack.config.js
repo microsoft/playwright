@@ -9,6 +9,7 @@ module.exports = {
   resolve: {
     extensions: ['.ts', '.js', '.tsx', '.jsx']
   },
+  devtool: 'source-map',
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',

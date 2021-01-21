@@ -45,8 +45,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall('browser.newContext', async () => {
-      if (this._isRemote && options._tracePath)
-        throw new Error(`"_tracePath" is not supported in connected browser`);
+      if (this._isRemote && options._traceDir)
+        throw new Error(`"_traceDir" is not supported in connected browser`);
       const contextOptions = await prepareBrowserContextOptions(options);
       const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
       context._options = contextOptions;
