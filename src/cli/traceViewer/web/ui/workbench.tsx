@@ -36,7 +36,7 @@ export const Workbench: React.FunctionComponent<{
     return actions;
   }, [context]);
 
-  const snapshotSize = context.created.viewportSize!;
+  const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
 
   return <div className='vbox workbench'>
     <div className='hbox header'>
