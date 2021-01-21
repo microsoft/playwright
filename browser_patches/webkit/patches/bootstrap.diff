@@ -2615,7 +2615,7 @@ index 3b00f3125085a72ca2884d2c0389380a4b882bcd..c05decbf1086c0407c9bc6490d9061a9
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index 57f4ec4440c8b54a48ca456327c33e4c521685d9..21d25cbb18489691e3c3c57ab84b40410c9c428a 100644
+index 57f4ec4440c8b54a48ca456327c33e4c521685d9..0609d3eeea15bd0ebde1abbcf2ad010a83ee3f54 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -2708,7 +2708,7 @@ index 57f4ec4440c8b54a48ca456327c33e4c521685d9..21d25cbb18489691e3c3c57ab84b4041
      if (!node)
          return makeUnexpected(errorString);
  
-@@ -1560,15 +1573,137 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setInspectedNode(Protocol::DOM:
+@@ -1560,15 +1573,136 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setInspectedNode(Protocol::DOM:
      return { };
  }
  
@@ -2806,9 +2806,8 @@ index 57f4ec4440c8b54a48ca456327c33e4c521685d9..21d25cbb18489691e3c3c57ab84b4041
 +        absoluteBounds.setWidth(LayoutUnit(std::max(*width, 1.0)));
 +        absoluteBounds.setHeight(LayoutUnit(std::max(*height, 1.0)));
 +    }
-+    // Note: we should use ScrollAlignment::alignCenterIfNotVisible, but
-+    // RenderLayer insists on no horizontal scroll if enough of the rect is visible.
-+    ScrollAlignment alignment = ScrollAlignment::alignCenterAlways;
++    ScrollAlignment alignment = ScrollAlignment::alignCenterIfNotVisible;
++    alignment.m_disableMinThreshold = true; // Disable RenderLayer minium horizontal scroll threshold.
 +    renderer->scrollRectToVisible(absoluteBounds, insideFixed, { SelectionRevealMode::Reveal, alignment, alignment, ShouldAllowCrossOriginScrolling::Yes });
 +    return { };
 +}
@@ -2850,7 +2849,7 @@ index 57f4ec4440c8b54a48ca456327c33e4c521685d9..21d25cbb18489691e3c3c57ab84b4041
      if (!object)
          return makeUnexpected("Missing injected script for given nodeId"_s);
  
-@@ -2759,7 +2894,7 @@ Protocol::ErrorStringOr<Protocol::DOM::NodeId> InspectorDOMAgent::pushNodeByPath
+@@ -2759,7 +2893,7 @@ Protocol::ErrorStringOr<Protocol::DOM::NodeId> InspectorDOMAgent::pushNodeByPath
      return makeUnexpected("Missing node for given path"_s);
  }
  
@@ -2859,7 +2858,7 @@ index 57f4ec4440c8b54a48ca456327c33e4c521685d9..21d25cbb18489691e3c3c57ab84b4041
  {
      Document* document = &node->document();
      if (auto* templateHost = document->templateDocumentHost())
-@@ -2768,12 +2903,16 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
+@@ -2768,12 +2902,16 @@ RefPtr<Protocol::Runtime::RemoteObject> InspectorDOMAgent::resolveNode(Node* nod
      if (!frame)
          return nullptr;
  
@@ -2879,7 +2878,7 @@ index 57f4ec4440c8b54a48ca456327c33e4c521685d9..21d25cbb18489691e3c3c57ab84b4041
  }
  
  Node* InspectorDOMAgent::scriptValueAsNode(JSC::JSValue value)
-@@ -2796,4 +2935,42 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
+@@ -2796,4 +2934,42 @@ Protocol::ErrorStringOr<void> InspectorDOMAgent::setAllowEditingUserAgentShadowT
      return { };
  }
  
@@ -7786,6 +7785,19 @@ index 0000000000000000000000000000000000000000..cf2b51f6f02837a1106f4d999f2f130e
 +};
 +
 +} // namespace WebCore
+diff --git a/Source/WebCore/rendering/RenderLayer.cpp b/Source/WebCore/rendering/RenderLayer.cpp
+index 230fa2a1a8d212ada67359da73c09b105051e21d..4831f7900eae72c0d7b1ea2ebe2771013f907f2b 100644
+--- a/Source/WebCore/rendering/RenderLayer.cpp
++++ b/Source/WebCore/rendering/RenderLayer.cpp
+@@ -2696,7 +2696,7 @@ LayoutRect RenderLayer::getRectToExpose(const LayoutRect& visibleRect, const Lay
+     ScrollAlignment::Behavior scrollX;
+     LayoutRect exposeRectX(exposeRect.x(), visibleRect.y(), exposeRect.width(), visibleRect.height());
+     LayoutUnit intersectWidth = intersection(visibleRect, exposeRectX).width();
+-    if (intersectWidth == exposeRect.width() || intersectWidth >= MIN_INTERSECT_FOR_REVEAL)
++    if (intersectWidth == exposeRect.width() || (intersectWidth >= MIN_INTERSECT_FOR_REVEAL && !alignX.m_disableMinThreshold))
+         // If the rectangle is fully visible, use the specified visible behavior.
+         // If the rectangle is partially visible, but over a certain threshold,
+         // then treat it as fully visible to avoid unnecessary horizontal scrolling
 diff --git a/Source/WebCore/rendering/RenderTextControl.cpp b/Source/WebCore/rendering/RenderTextControl.cpp
 index 40ea1ccb667629d6357a40cd147b30f30470d95e..78bc9d55f7e84625100b4cf45546e1c3561b0cfc 100644
 --- a/Source/WebCore/rendering/RenderTextControl.cpp
@@ -7820,6 +7832,18 @@ index 69b193b1ff28bf2d0e58be6ae3152da8d9229a90..9b8327958cbc21e46a5720f558156b00
      // Returns the line height of the inner renderer.
      int innerLineHeight() const override;
  #endif
+diff --git a/Source/WebCore/rendering/ScrollAlignment.h b/Source/WebCore/rendering/ScrollAlignment.h
+index 694008e0451edc5770142a0a6d9eed52b04ded80..ec93869f9486bdf7bd3bb56478c62469d2fa58b6 100644
+--- a/Source/WebCore/rendering/ScrollAlignment.h
++++ b/Source/WebCore/rendering/ScrollAlignment.h
+@@ -78,6 +78,7 @@ struct ScrollAlignment {
+     Behavior m_rectVisible;
+     Behavior m_rectHidden;
+     Behavior m_rectPartial;
++    bool m_disableMinThreshold = false;
+ };
+     
+ WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, ScrollAlignment::Behavior);
 diff --git a/Source/WebKit/NetworkProcess/NetworkProcess.cpp b/Source/WebKit/NetworkProcess/NetworkProcess.cpp
 index 7a931948a056eb92ecbd3f2d274df144df01a95e..5beafaad7d350868f0091cd92842b51fba20ef3b 100644
 --- a/Source/WebKit/NetworkProcess/NetworkProcess.cpp
