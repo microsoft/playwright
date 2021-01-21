@@ -284,6 +284,59 @@ converts `'//html/body'` to `'xpath=//html/body'`.
 
 Attribute engines are selecting based on the corresponding attribute value. For example: `data-test-id=foo` is equivalent to `css=[data-test-id="foo"]`, and `id:light=foo` is equivalent to `css:light=[id="foo"]`.
 
+## Pick n-th match from the query result
+
+Sometimes page contains a number of similar elements, and it is hard to select a particular one. For example:
+
+```html
+<section> <button>Buy</button> </section>
+<article><div> <button>Buy</button> </div></article>
+<div><div> <button>Buy</button> </div></div>
+```
+
+In this case, `:nth-match(:text("Buy"), 3)` will select the third button from the snippet above. Note that index is one-based.
+
+```js
+// Click the third "Buy" button
+await page.click(':nth-match(:text("Buy"), 3)');
+```
+
+```python async
+# Click the third "Buy" button
+await page.click(":nth-match(:text('Buy'), 3)"
+```
+
+```python sync
+# Click the third "Buy" button
+page.click(":nth-match(:text('Buy'), 3)"
+```
+
+`:nth-match()` is also useful to wait until a specified number of elements appear, using [`method: Page.waitForSelector`].
+
+```js
+// Wait until all three buttons are visible
+await page.waitForSelector(':nth-match(:text("Buy"), 3)');
+```
+
+```python async
+# Wait until all three buttons are visible
+await page.wait_for_selector(":nth-match(:text('Buy'), 3)")
+```
+
+```python sync
+# Wait until all three buttons are visible
+page.wait_for_selector(":nth-match(:text('Buy'), 3)")
+```
+
+:::note
+Unlike [`:nth-child()`](https://developer.mozilla.org/en-US/docs/Web/CSS/:nth-child), elements do not have to be siblings, they could be anywhere on the page. In the snippet above, all three buttons match `:text("Buy")` selector, and `:nth-match()` selects the third button.
+:::
+
+:::note
+It is usually possible to distinguish elements by some attribute or text content. In this case,
+prefer using [text] or [css] selectors over the `:nth-match()`.
+:::
+
 ## Chaining selectors
 
 Selectors defined as `engine=body` or in short-form can be combined with the `>>` token, e.g. `selector1 >> selector2 >> selectors3`. When selectors are chained, next one is queried relative to the previous one's result.

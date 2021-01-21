@@ -15,6 +15,7 @@
  */
 
 import { CSSComplexSelector, CSSSimpleSelector, CSSComplexSelectorList, CSSFunctionArgument } from '../common/cssParser';
+import { customCSSNames } from '../common/selectorParser';
 
 export type QueryContext = {
   scope: Element | Document;
@@ -45,7 +46,6 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
   private _scoreMap: Map<Element, number> | undefined;
 
   constructor(extraEngines: Map<string, SelectorEngine>) {
-    // Note: keep predefined names in sync with Selectors class.
     for (const [name, engine] of extraEngines)
       this._engines.set(name, engine);
     this._engines.set('not', notEngine);
@@ -63,6 +63,14 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('above', createPositionEngine('above', boxAbove));
     this._engines.set('below', createPositionEngine('below', boxBelow));
     this._engines.set('near', createPositionEngine('near', boxNear));
+    this._engines.set('nth-match', nthMatchEngine);
+
+    const allNames = Array.from(this._engines.keys());
+    allNames.sort();
+    const parserNames = Array.from(customCSSNames).slice();
+    parserNames.sort();
+    if (allNames.join('|') !== parserNames.join('|'))
+      throw new Error(`Please keep customCSSNames in sync with evaluator engines`);
   }
 
   // This is the only function we should use for querying, because it does
@@ -512,6 +520,19 @@ function createPositionEngine(name: string, scorer: (box1: DOMRect, box2: DOMRec
     }
   };
 }
+
+const nthMatchEngine: SelectorEngine = {
+  query(context: QueryContext, args: (string | number | Selector)[], evaluator: SelectorEvaluator): Element[] {
+    let index = args[args.length - 1];
+    if (args.length < 2)
+      throw new Error(`"nth-match" engine expects non-empty selector list and an index argument`);
+    if (typeof index !== 'number' || index < 1)
+      throw new Error(`"nth-match" engine expects a one-based index as the last argument`);
+    const elements = isEngine.query!(context, args.slice(0, args.length - 1), evaluator);
+    index--;  // one-based
+    return index < elements.length ? [elements[index]] : [];
+  },
+};
 
 export function parentElementOrShadowHost(element: Element): Element | undefined {
   if (element.parentElement)
