@@ -21,12 +21,13 @@ import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { parseArgument } from './jsHandleDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
 
   constructor(scope: DispatcherScope, context: BrowserContext) {
-    super(scope, context, 'BrowserContext', { browserName: context._browser._options.name }, true);
+    super(scope, context, 'BrowserContext', { isChromium: context._browser._options.isChromium }, true);
     this._context = context;
 
     for (const page of context.pages())
@@ -125,8 +126,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close();
   }
 
+  async extendInjectedScript(params: channels.BrowserContextExtendInjectedScriptParams): Promise<void> {
+    await this._context.extendInjectedScript(params.source, parseArgument(params.arg));
+  }
+
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {
-    if (this._object._browser._options.name !== 'chromium')
+    if (!this._object._browser._options.isChromium)
       throw new Error(`CDP session is only available in Chromium`);
     const crBrowserContext = this._object as CRBrowserContext;
     return { session: new CDPSessionDispatcher(this._scope, await crBrowserContext.newCDPSession((params.page as PageDispatcher)._object)) };

@@ -130,3 +130,14 @@ it('should wait for stable position', (test, { browserName, platform }) => {
   await button.evaluate(button => button.style.transition = '');
   await promise;
 });
+
+it('should wait for editable input', async ({page, server}) => {
+  await page.setContent('<input readonly>');
+  const input = await page.$('input');
+  let done = false;
+  const promise = input.waitForElementState('editable').then(() => done = true);
+  await giveItAChanceToResolve(page);
+  expect(done).toBe(false);
+  await input.evaluate(input => input.readOnly = false);
+  await promise;
+});

@@ -16,7 +16,7 @@
 
 import * as channels from '../protocol/channels';
 import { Browser } from './browser';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
 import { ChannelOwner } from './channelOwner';
 import { LaunchOptions, LaunchServerOptions, ConnectOptions, LaunchPersistentContextOptions } from './types';
 import * as WebSocket from 'ws';
@@ -32,19 +32,21 @@ import { assert, makeWaitForNextTask, mkdirIfNeeded } from '../utils/utils';
 import { SelectorsOwner, sharedSelectors } from './selectors';
 import { kBrowserClosedError } from '../utils/errors';
 import { Stream } from './stream';
+import * as api from '../../types/types';
 
 export interface BrowserServerLauncher {
-  launchServer(options?: LaunchServerOptions): Promise<BrowserServer>;
+  launchServer(options?: LaunchServerOptions): Promise<api.BrowserServer>;
 }
 
-export interface BrowserServer {
+// This is here just for api generation and checking.
+export interface BrowserServer extends api.BrowserServer {
   process(): ChildProcess;
   wsEndpoint(): string;
   close(): Promise<void>;
   kill(): Promise<void>;
 }
 
-export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> {
+export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, channels.BrowserTypeInitializer> implements api.BrowserType<api.Browser> {
   private _timeoutSettings = new TimeoutSettings();
   _serverLauncher?: BrowserServerLauncher;
 
@@ -83,7 +85,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
     }, logger);
   }
 
-  async launchServer(options: LaunchServerOptions = {}): Promise<BrowserServer> {
+  async launchServer(options: LaunchServerOptions = {}): Promise<api.BrowserServer> {
     if (!this._serverLauncher)
       throw new Error('Launching server is not supported');
     return this._serverLauncher.launchServer(options);
@@ -92,7 +94,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall('browserType.launchPersistentContext', async () => {
       assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
-      const contextOptions = validateBrowserContextOptions(options);
+      const contextOptions = await prepareBrowserContextOptions(options);
       const persistentOptions: channels.BrowserTypeLaunchPersistentContextParams = {
         ...contextOptions,
         ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
@@ -145,6 +147,10 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
           }
         }
         ws.addEventListener('open', async () => {
+          const prematureCloseListener = (event: { reason: string }) => {
+            reject(new Error('Server disconnected: ' + event.reason));
+          };
+          ws.addEventListener('close', prematureCloseListener);
           const remoteBrowser = await connection.waitForObjectWithKnownName('remoteBrowser') as RemoteBrowser;
 
           // Inherit shared selectors for connected browser.
@@ -163,6 +169,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
             }
             browser._didClose();
           };
+          ws.removeEventListener('close', prematureCloseListener);
           ws.addEventListener('close', closeListener);
           browser.on(Events.Browser.Disconnected, () => {
             sharedSelectors._removeChannel(selectorsOwner);
@@ -173,7 +180,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel, chann
         });
         ws.addEventListener('error', event => {
           ws.close();
-          reject(new Error('WebSocket error: ' + event.message));
+          reject(new Error(event.message + '. Most likely ws endpoint is incorrect'));
         });
       });
     }, logger);

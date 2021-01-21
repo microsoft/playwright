@@ -2,8 +2,12 @@
 set -e
 set +x
 
-RUST_VERSION="1.45.0"
+RUST_VERSION="1.49.0"
 CBINDGEN_VERSION="0.15.0"
+# Certain minimal SDK Version is required by firefox
+MACOS_SDK_VERSION="10.12"
+# XCode version can be determined from https://en.wikipedia.org/wiki/Xcode
+XCODE_VERSION_WITH_REQUIRED_SDK_VERSION="8.3.3"
 
 trap "cd $(pwd -P)" EXIT
 
@@ -19,16 +23,30 @@ fi
 
 
 if [[ "$(uname)" == "Darwin" ]]; then
-  # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.11.
-  # Make sure the SDK is out there.
-  if ! [[ -d $HOME/SDK-archive/MacOSX10.11.sdk ]]; then
-    echo "As of Jun 2020, Firefox does not build on Mac without 10.11 SDK."
-    echo "Check out instructions on getting 10.11 sdk at https://firefox-source-docs.mozilla.org/setup/macos_build.html"
-    echo "and make sure to put SDK to $HOME/SDK-archive/MacOSX10.11.sdk/"
-    exit 1
+  if [[ $(uname -m) == "arm64" ]]; then
+    # Building on Apple Silicon requires XCode12.2 and does not require any extra SDKs.
+    if ! [[ -d "/Applications/Xcode12.2.app" ]]; then
+      echo "As of Jan 2021, building Firefox on Apple Silicon requires XCode 12.2"
+      echo "Make sure there's an /Applications/Xcode12.2.app"
+      echo "Download XCode from https://developer.apple.com/download/more/"
+      echo ""
+      exit 1
+    fi
+    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
   else
-    echo "-- configuting .mozconfig with 10.11 SDK path"
-    echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX10.11.sdk/" > .mozconfig
+    # Firefox currently does not build on 10.15 out of the box - it requires SDK for 10.12.
+    # Make sure the SDK is out there.
+    if ! [[ -d $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk ]]; then
+      echo "As of Dec 2020, Firefox does not build on Mac without ${MACOS_SDK_VERSION} SDK."
+      echo "Download XCode ${XCODE_VERSION_WITH_REQUIRED_SDK_VERSION} from https://developer.apple.com/download/more/ and"
+      echo "extract SDK to $HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk"
+      echo ""
+      echo "More info: https://firefox-source-docs.mozilla.org/setup/macos_build.html"
+      exit 1
+    else
+      echo "-- configuting .mozconfig with ${MACOS_SDK_VERSION} SDK path"
+      echo "ac_add_options --with-macos-sdk=$HOME/SDK-archive/MacOSX${MACOS_SDK_VERSION}.sdk/" > .mozconfig
+    fi
   fi
   echo "-- building on Mac"
 elif [[ "$(uname)" == "Linux" ]]; then

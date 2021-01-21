@@ -14,27 +14,10 @@
  * limitations under the License.
  */
 
-import { SelectorEngine, SelectorType, SelectorRoot } from './selectorEngine';
+import { SelectorEngine, SelectorRoot } from './selectorEngine';
 
 export function createTextSelector(shadow: boolean): SelectorEngine {
   const engine: SelectorEngine = {
-    create(root: SelectorRoot, targetElement: Element, type: SelectorType): string | undefined {
-      const document = root instanceof Document ? root : root.ownerDocument;
-      if (!document)
-        return;
-      for (let child = targetElement.firstChild; child; child = child.nextSibling) {
-        if (child.nodeType === 3 /* Node.TEXT_NODE */) {
-          const text = child.nodeValue;
-          if (!text)
-            continue;
-          if (text.match(/^\s*[a-zA-Z0-9]+\s*$/) && engine.query(root, text.trim()) === targetElement)
-            return text.trim();
-          if (queryInternal(root, createMatcher(JSON.stringify(text)), shadow) === targetElement)
-            return JSON.stringify(text);
-        }
-      }
-    },
-
     query(root: SelectorRoot, selector: string): Element | undefined {
       return queryInternal(root, createMatcher(selector), shadow);
     },
@@ -63,21 +46,29 @@ function unescape(s: string): string {
 
 type Matcher = (text: string) => boolean;
 function createMatcher(selector: string): Matcher {
-  if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
-    const parsed = unescape(selector.substring(1, selector.length - 1));
-    return text => text === parsed;
-  }
-  if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
-    const parsed = unescape(selector.substring(1, selector.length - 1));
-    return text => text === parsed;
-  }
   if (selector[0] === '/' && selector.lastIndexOf('/') > 0) {
     const lastSlash = selector.lastIndexOf('/');
     const re = new RegExp(selector.substring(1, lastSlash), selector.substring(lastSlash + 1));
     return text => re.test(text);
   }
-  selector = selector.trim().toLowerCase().replace(/\s+/g, ' ');
-  return text => text.toLowerCase().replace(/\s+/g, ' ').includes(selector);
+  let strict = false;
+  if (selector.length > 1 && selector[0] === '"' && selector[selector.length - 1] === '"') {
+    selector = unescape(selector.substring(1, selector.length - 1));
+    strict = true;
+  }
+  if (selector.length > 1 && selector[0] === "'" && selector[selector.length - 1] === "'") {
+    selector = unescape(selector.substring(1, selector.length - 1));
+    strict = true;
+  }
+  selector = selector.trim().replace(/\s+/g, ' ');
+  if (!strict)
+    selector = selector.toLowerCase();
+  return text => {
+    text = text.trim().replace(/\s+/g, ' ');
+    if (!strict)
+      return text.toLowerCase().includes(selector);
+    return text === selector;
+  };
 }
 
 // Skips <head>, <script> and <style> elements and all their children.

@@ -1,6 +1,4 @@
 ({
-  create(root, target) {
-  },
   query(root, selector) {
     return root.querySelector('section');
   },

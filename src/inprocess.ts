@@ -15,7 +15,7 @@
  */
 
 import { DispatcherConnection } from './dispatchers/dispatcher';
-import type { Playwright as PlaywrightImpl } from './server/playwright';
+import { Playwright as PlaywrightImpl } from './server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
@@ -23,8 +23,11 @@ import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { installDebugController } from './debug/debugController';
 import { installTracer } from './trace/tracer';
 import { installHarTracer } from './trace/harTracer';
+import * as path from 'path';
 
-export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
+function setupInProcess(): PlaywrightAPI {
+  const playwright = new PlaywrightImpl(path.join(__dirname, '..'), require('../browsers.json')['browsers']);
+
   installDebugController();
   installTracer();
   installHarTracer();
@@ -50,3 +53,5 @@ export function setupInProcess(playwright: PlaywrightImpl): PlaywrightAPI {
   (playwrightAPI as any)._toImpl = (x: any) => dispatcherConnection._dispatchers.get(x._guid)!._object;
   return playwrightAPI;
 }
+
+module.exports = setupInProcess();

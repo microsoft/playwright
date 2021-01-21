@@ -199,7 +199,7 @@ export class FrameManager {
     frame.emit(Frame.Events.Navigation, navigationEvent);
     if (!initial) {
       debugLogger.log('api', `  navigated to "${url}"`);
-      this._page.frameNavigated(frame);
+      this._page.frameNavigatedToNewDocument(frame);
     }
     // Restore pending if any - see comments above about keepPending.
     frame._pendingDocument = keepPending;
@@ -213,7 +213,6 @@ export class FrameManager {
     const navigationEvent: NavigationEvent = { url, name: frame._name };
     frame.emit(Frame.Events.Navigation, navigationEvent);
     debugLogger.log('api', `  navigated to "${url}"`);
-    this._page.frameNavigated(frame);
   }
 
   frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
@@ -704,7 +703,7 @@ export class Frame extends EventEmitter {
     return Array.from(this._childFrames);
   }
 
-  async addScriptTag(options: {
+  async addScriptTag(params: {
       url?: string,
       content?: string,
       type?: string,
@@ -713,7 +712,7 @@ export class Frame extends EventEmitter {
       url = null,
       content = null,
       type = ''
-    } = options;
+    } = params;
     if (!url && !content)
       throw new Error('Provide an object with a `url`, `path` or `content` property');
 
@@ -729,11 +728,11 @@ export class Frame extends EventEmitter {
       return result;
     });
 
-    async function addScriptUrl(options: { url: string, type: string }): Promise<HTMLElement> {
+    async function addScriptUrl(params: { url: string, type: string }): Promise<HTMLElement> {
       const script = document.createElement('script');
-      script.src = options.url;
-      if (options.type)
-        script.type = options.type;
+      script.src = params.url;
+      if (params.type)
+        script.type = params.type;
       const promise = new Promise((res, rej) => {
         script.onload = res;
         script.onerror = e => rej(typeof e === 'string' ? new Error(e) : new Error(`Failed to load script at ${script.src}`));
@@ -743,10 +742,10 @@ export class Frame extends EventEmitter {
       return script;
     }
 
-    function addScriptContent(options: { content: string, type: string }): HTMLElement {
+    function addScriptContent(params: { content: string, type: string }): HTMLElement {
       const script = document.createElement('script');
-      script.type = options.type || 'text/javascript';
-      script.text = options.content;
+      script.type = params.type || 'text/javascript';
+      script.text = params.content;
       let error = null;
       script.onerror = e => error = e;
       document.head.appendChild(script);
@@ -756,11 +755,11 @@ export class Frame extends EventEmitter {
     }
   }
 
-  async addStyleTag(options: { url?: string, content?: string }): Promise<dom.ElementHandle> {
+  async addStyleTag(params: { url?: string, content?: string }): Promise<dom.ElementHandle> {
     const {
       url = null,
       content = null
-    } = options;
+    } = params;
     if (!url && !content)
       throw new Error('Provide an object with a `url`, `path` or `content` property');
 
@@ -924,6 +923,50 @@ export class Frame extends EventEmitter {
     const task = dom.getAttributeTask(info, name);
     return runAbortableTask(async progress => {
       progress.log(`  retrieving attribute "${name}" from "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async isVisible(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.visibleTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking visibility of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async isHidden(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    return !(await this.isVisible(selector, options));
+  }
+
+  async isDisabled(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.disabledTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking disabled state of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async isEnabled(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    return !(await this.isDisabled(selector, options));
+  }
+
+  async isEditable(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.editableTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking editable state of "${selector}"`);
+      return this._scheduleRerunnableTask(progress, info.world, task);
+    }, this._page._timeoutSettings.timeout(options));
+  }
+
+  async isChecked(selector: string, options: types.TimeoutOptions = {}): Promise<boolean> {
+    const info = this._page.selectors._parseSelector(selector);
+    const task = dom.checkedTask(info);
+    return runAbortableTask(async progress => {
+      progress.log(`  checking checked state of "${selector}"`);
       return this._scheduleRerunnableTask(progress, info.world, task);
     }, this._page._timeoutSettings.timeout(options));
   }

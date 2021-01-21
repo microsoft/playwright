@@ -26,7 +26,7 @@ import { DialogDispatcher } from './dialogDispatcher';
 import { DownloadDispatcher } from './downloadDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
 import { RequestDispatcher, ResponseDispatcher, RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
-import { serializeResult, parseArgument, JSHandleDispatcher } from './jsHandleDispatcher';
+import { serializeResult, parseArgument } from './jsHandleDispatcher';
 import { ElementHandleDispatcher, createHandle } from './elementHandlerDispatcher';
 import { FileChooser } from '../server/fileChooser';
 import { CRCoverage } from '../server/chromium/crCoverage';
@@ -274,7 +274,7 @@ export class BindingCallDispatcher extends Dispatcher<{}, channels.BindingCallIn
       frame: lookupDispatcher<FrameDispatcher>(source.frame),
       name,
       args: needsHandle ? undefined : args.map(serializeResult),
-      handle: needsHandle ? new JSHandleDispatcher(scope, args[0] as JSHandle) : undefined,
+      handle: needsHandle ? createHandle(scope, args[0] as JSHandle) : undefined,
     });
     this._promise = new Promise((resolve, reject) => {
       this._resolve = resolve;

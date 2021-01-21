@@ -191,6 +191,7 @@ export class Electron  {
       };
       const browserOptions: BrowserOptions = {
         name: 'electron',
+        isChromium: true,
         headful: true,
         persistent: { noDefaultViewport: true },
         browserProcess,

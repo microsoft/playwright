@@ -49,12 +49,13 @@ export type SetStorageState = {
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle';
 export const kLifecycleEvents: Set<LifecycleEvent> = new Set(['load', 'domcontentloaded', 'networkidle']);
 
-export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders'> & {
+export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'viewport' | 'noDefaultViewport' | 'extraHTTPHeaders' | 'storageState'> & {
   viewport?: Size | null,
   extraHTTPHeaders?: Headers,
   logger?: Logger,
   videosPath?: string,
   videoSize?: Size,
+  storageState?: string | channels.BrowserNewContextOptions['storageState'],
 };
 
 type LaunchOverrides = {
@@ -99,11 +100,6 @@ export type LaunchServerOptions = {
 } & FirefoxUserPrefs;
 
 export type SelectorEngine = {
-  /**
-   * Creates a selector that matches given target when queried at the root.
-   * Can return undefined if unable to create one.
-   */
-  create(root: HTMLElement, target: HTMLElement): string | undefined;
   /**
    * Returns the first element matching given selector in the root's subtree.
    */

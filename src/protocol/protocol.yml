@@ -372,8 +372,7 @@ BrowserType:
           - dark
           - no-preference
         acceptDownloads: boolean?
-        _traceResourcesPath: string?
-        _tracePath: string?
+        _traceDir: string?
         recordVideo:
           type: object?
           properties:
@@ -445,8 +444,7 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceResourcesPath: string?
-        _tracePath: string?
+        _traceDir: string?
         recordVideo:
           type: object?
           properties:
@@ -507,7 +505,7 @@ BrowserContext:
   type: interface
 
   initializer:
-    browserName: string
+    isChromium: boolean
 
   commands:
 
@@ -600,6 +598,12 @@ BrowserContext:
         origins:
           type: array
           items: OriginStorage
+
+    extendInjectedScript:
+      experimental: True
+      parameters:
+        source: string
+        arg: SerializedArgument
 
     crNewCDPSession:
       parameters:
@@ -1212,6 +1216,48 @@ Frame:
       returns:
         value: string
 
+    isChecked:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isDisabled:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isEnabled:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isHidden:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isVisible:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
+    isEditable:
+      parameters:
+        selector: string
+        timeout: number?
+      returns:
+        value: boolean
+
     press:
       parameters:
         selector: string
@@ -1347,14 +1393,6 @@ Frame:
           - hidden
       returns:
         element: ElementHandle?
-
-    extendInjectedScript:
-      experimental: True
-      parameters:
-        source: string
-        arg: SerializedArgument
-      returns:
-        handle: JSHandle
 
   events:
 
@@ -1596,6 +1634,30 @@ ElementHandle:
       returns:
         value: string
 
+    isChecked:
+      returns:
+        value: boolean
+
+    isDisabled:
+      returns:
+        value: boolean
+
+    isEditable:
+      returns:
+        value: boolean
+
+    isEnabled:
+      returns:
+        value: boolean
+
+    isHidden:
+      returns:
+        value: boolean
+
+    isVisible:
+      returns:
+        value: boolean
+
     ownerFrame:
       returns:
         frame: Frame?
@@ -1718,6 +1780,7 @@ ElementHandle:
           - stable
           - enabled
           - disabled
+          - editable
         timeout: number?
 
     waitForSelector:
@@ -2083,6 +2146,21 @@ Android:
       parameters:
         timeout: number
 
+AndroidSocket:
+  type: interface
+
+  commands:
+    write:
+      parameters:
+        data: binary
+
+    close:
+
+  events:
+    data:
+      parameters:
+        data: binary
+    close:
 
 AndroidDevice:
   type: interface
@@ -2119,7 +2197,7 @@ AndroidDevice:
         dest: Point
         speed: number?
         timeout: number?
-    
+
     fling:
       parameters:
         selector: AndroidSelector
@@ -2132,12 +2210,12 @@ AndroidDevice:
           - right
         speed: number?
         timeout: number?
-    
+
     longTap:
       parameters:
         selector: AndroidSelector
         timeout: number?
-    
+
     pinchClose:
       parameters:
         selector: AndroidSelector
@@ -2186,6 +2264,14 @@ AndroidDevice:
       returns:
         info: AndroidElementInfo
 
+    tree:
+      returns:
+        tree: AndroidElementInfo
+
+    screenshot:
+      returns:
+        binary: binary
+
     inputType:
       parameters:
         text: string
@@ -2213,7 +2299,7 @@ AndroidDevice:
 
     launchBrowser:
       parameters:
-        packageName: string?
+        pkg: string?
         ignoreHTTPSErrors: boolean?
         javaScriptEnabled: boolean?
         bypassCSP: boolean?
@@ -2248,8 +2334,7 @@ AndroidDevice:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceResourcesPath: string?
-        _tracePath: string?
+        _traceDir: string?
         recordVideo:
           type: object?
           properties:
@@ -2275,11 +2360,30 @@ AndroidDevice:
       returns:
         context: BrowserContext
 
+    open:
+      parameters:
+        command: string
+      returns:
+        socket: AndroidSocket
+
     shell:
       parameters:
         command: string
       returns:
-        result: string
+        result: binary
+
+    installApk:
+      parameters:
+        file: binary
+        args:
+          type: array?
+          items: string
+
+    push:
+      parameters:
+        file: binary
+        path: string
+        mode: number?
 
     setDefaultTimeoutNoReply:
       parameters:
@@ -2342,6 +2446,9 @@ AndroidSelector:
 AndroidElementInfo:
   type: object
   properties:
+    children:
+      type: array?
+      items: AndroidElementInfo
     clazz: string
     desc: string
     res: string

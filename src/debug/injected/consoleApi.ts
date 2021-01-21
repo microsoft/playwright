@@ -15,38 +15,50 @@
  */
 
 import type InjectedScript from '../../server/injected/injectedScript';
+import { generateSelector } from './selectorGenerator';
 
 export class ConsoleAPI {
   private _injectedScript: InjectedScript;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
+    if ((window as any).playwright)
+      return;
     (window as any).playwright = {
       $: (selector: string) => this._querySelector(selector),
       $$: (selector: string) => this._querySelectorAll(selector),
       inspect: (selector: string) => this._inspect(selector),
+      selector: (element: Element) => this._selector(element),
     };
   }
 
-  _querySelector(selector: string): (Element | undefined) {
+  private _querySelector(selector: string): (Element | undefined) {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.query('Playwright >> selector').`);
     const parsed = this._injectedScript.parseSelector(selector);
     return this._injectedScript.querySelector(parsed, document);
   }
 
-  _querySelectorAll(selector: string): Element[] {
+  private _querySelectorAll(selector: string): Element[] {
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.$$('Playwright >> selector').`);
     const parsed = this._injectedScript.parseSelector(selector);
     return this._injectedScript.querySelectorAll(parsed, document);
   }
 
-  _inspect(selector: string) {
+  private _inspect(selector: string) {
     if (typeof (window as any).inspect !== 'function')
       return;
     if (typeof selector !== 'string')
       throw new Error(`Usage: playwright.inspect('Playwright >> selector').`);
     (window as any).inspect(this._querySelector(selector));
   }
+
+  private _selector(element: Element) {
+    if (!(element instanceof Element))
+      throw new Error(`Usage: playwright.selector(element).`);
+    return generateSelector(this._injectedScript, element).selector;
+  }
 }
+
+export default ConsoleAPI;

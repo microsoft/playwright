@@ -16,6 +16,7 @@
  */
 
 import { it, expect } from './fixtures';
+import type { ElementHandle } from '..';
 
 it('should work', async ({page}) => {
   const aHandle = await page.evaluateHandle(() => ({
@@ -93,4 +94,13 @@ it('getProperties should return even non-own properties', async ({page}) => {
   const properties = await aHandle.getProperties();
   expect(await properties.get('a').jsonValue()).toBe('1');
   expect(await properties.get('b').jsonValue()).toBe('2');
+});
+
+it('getProperties should work with elements', async ({page}) => {
+  await page.setContent(`<div>Hello</div>`);
+  const handle = await page.evaluateHandle(() => ({ body: document.body }));
+  const properties = await handle.getProperties();
+  const body = properties.get('body') as ElementHandle;
+  expect(body).toBeTruthy();
+  expect(await body.textContent()).toBe('Hello');
 });

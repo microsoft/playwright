@@ -14,60 +14,62 @@
  * limitations under the License.
  */
 
-const playwright = require('../..');
+// @ts-check
+
 const path = require('path');
-const Source = require('./Source');
-const mdBuilder = require('./check_public_api/MDBuilder');
+const fs = require('fs');
+const Documentation = require('./documentation');
+const { parseApi } = require('./api_parser');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 
-(async () => {
-  const api = await Source.readFile(path.join(PROJECT_DIR, 'docs', 'api.md'));
-  const browser = await playwright.chromium.launch();
-  const page = await browser.newPage();
-  const { documentation } = await mdBuilder(page, [api], false);
+{
+  const documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
+  documentation.setLinkRenderer(item => {
+    const { clazz, param, option } = item;
+    if (param)
+      return `\`${param}\``;
+    if (option)
+      return `\`${option}\``;
+    if (clazz)
+      return `\`${clazz.name}\``;
+  });
+  documentation.generateSourceCodeComments();
   const result = serialize(documentation);
-  console.log(JSON.stringify(result));
-  await browser.close();
-})()
-
-function serialize(documentation) {
-  const result = {};
-  for (const clazz of documentation.classesArray)
-    result[clazz.name] = serializeClass(clazz);
-  return result;
+  fs.writeFileSync(path.join(PROJECT_DIR, 'api.json'), JSON.stringify(result));
 }
 
+/**
+ * @param {Documentation} documentation
+ */
+function serialize(documentation) {
+  return documentation.classesArray.map(serializeClass);
+}
+
+/**
+ * @param {Documentation.Class} clazz
+ */
 function serializeClass(clazz) {
   const result = { name: clazz.name };
   if (clazz.extends)
     result.extends = clazz.extends;
+  result.langs = clazz.langs;
+  if (result.langs && result.langs.types) {
+    for (const key in result.langs.types)
+      result.langs.types[key] = serializeType(result.langs.types[key]);
+  }
   if (clazz.comment)
     result.comment = clazz.comment;
-  result.methods = {};
-  result.events = {};
-  result.properties = {};
-  for (const member of clazz.membersArray) {
-    let map;
-    if (member.kind === 'event') {
-      map = result.events;
-    } else if (member.kind === 'method') {
-      map = result.methods;
-    } else if (member.kind === 'property') {
-      map = result.properties;
-    } else {
-      throw new Error('Unexpected member kind: ' + member.kind + ' ' + member.name + ' ' + member.type);
-    }
-    map[member.name] = serializeMember(member);
-  }
+  result.members = clazz.membersArray.map(serializeMember);
   return result;
 }
 
+/**
+ * @param {Documentation.Member} member
+ */
 function serializeMember(member) {
-  const result = { ...member };
+  const result = /** @type {any} */ ({ ...member });
   sanitize(result);
-  result.args = {};
-  for (const arg of member.argsArray)
-    result.args[arg.name] = serializeProperty(arg);
+  result.args = member.argsArray.map(serializeProperty);
   if (member.type)
     result.type = serializeType(member.type)
   return result;
@@ -82,26 +84,27 @@ function serializeProperty(arg) {
 }
 
 function sanitize(result) {
-  delete result.kind;
   delete result.args;
   delete result.argsArray;
-  delete result.templates;
-  if (result.properties && !Object.keys(result.properties).length)
-    delete result.properties;
-  if (result.comment === '')
-    delete result.comment;
-  if (result.returnComment === '')
-    delete result.returnComment;
+  delete result.clazz;
+  delete result.spec;
 }
 
+/**
+ * @param {Documentation.Type} type
+ */
 function serializeType(type) {
+  /** @type {any} */
   const result = { ...type };
-  if (type.properties && type.properties.length) {
-    result.properties = {};
-    for (const prop of type.properties)
-      result.properties[prop.name] = serializeProperty(prop);
-  } else {
-    delete result.properties;
-  }
+  if (type.properties)
+    result.properties = type.properties.map(serializeProperty);
+  if (type.union)
+    result.union = type.union.map(serializeType);
+  if (type.templates)
+    result.templates = type.templates.map(serializeType);
+  if (type.args)
+    result.args = type.args.map(serializeType);
+  if (type.returnType)
+    result.returnType = serializeType(type.returnType);
   return result;
 }

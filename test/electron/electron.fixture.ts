@@ -15,7 +15,7 @@
  */
 
 import { folio as base } from '../fixtures';
-import type { ElectronApplication, ElectronLauncher, ElectronPage } from '../../electron-types';
+import type { ElectronApplication, ElectronPage } from '../../types/electron';
 import path from 'path';
 
 const electronName = process.platform === 'win32' ? 'electron.cmd' : 'electron';
@@ -42,7 +42,3 @@ fixtures.window.init(async ({ application }, run) => {
 });
 
 export const folio = fixtures.build();
-
-declare module '../../index' {
-  const _electron: ElectronLauncher;
-}

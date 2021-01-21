@@ -211,8 +211,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceResourcesPath: tOptional(tString),
-    _tracePath: tOptional(tString),
+    _traceDir: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -255,8 +254,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceResourcesPath: tOptional(tString),
-    _tracePath: tOptional(tString),
+    _traceDir: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -337,6 +335,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     offline: tBoolean,
   });
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
+  scheme.BrowserContextExtendInjectedScriptParams = tObject({
+    source: tString,
+    arg: tType('SerializedArgument'),
+  });
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });
@@ -574,6 +576,30 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     timeout: tOptional(tNumber),
   });
+  scheme.FrameIsCheckedParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsDisabledParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsEnabledParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsHiddenParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsVisibleParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
+  scheme.FrameIsEditableParams = tObject({
+    selector: tString,
+    timeout: tOptional(tNumber),
+  });
   scheme.FramePressParams = tObject({
     selector: tString,
     key: tString,
@@ -650,10 +676,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     selector: tString,
     timeout: tOptional(tNumber),
     state: tOptional(tEnum(['attached', 'detached', 'visible', 'hidden'])),
-  });
-  scheme.FrameExtendInjectedScriptParams = tObject({
-    source: tString,
-    arg: tType('SerializedArgument'),
   });
   scheme.WorkerEvaluateExpressionParams = tObject({
     expression: tString,
@@ -746,6 +768,12 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   });
   scheme.ElementHandleInnerHTMLParams = tOptional(tObject({}));
   scheme.ElementHandleInnerTextParams = tOptional(tObject({}));
+  scheme.ElementHandleIsCheckedParams = tOptional(tObject({}));
+  scheme.ElementHandleIsDisabledParams = tOptional(tObject({}));
+  scheme.ElementHandleIsEditableParams = tOptional(tObject({}));
+  scheme.ElementHandleIsEnabledParams = tOptional(tObject({}));
+  scheme.ElementHandleIsHiddenParams = tOptional(tObject({}));
+  scheme.ElementHandleIsVisibleParams = tOptional(tObject({}));
   scheme.ElementHandleOwnerFrameParams = tOptional(tObject({}));
   scheme.ElementHandlePressParams = tObject({
     key: tString,
@@ -810,7 +838,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleWaitForElementStateParams = tObject({
-    state: tEnum(['visible', 'hidden', 'stable', 'enabled', 'disabled']),
+    state: tEnum(['visible', 'hidden', 'stable', 'enabled', 'disabled', 'editable']),
     timeout: tOptional(tNumber),
   });
   scheme.ElementHandleWaitForSelectorParams = tObject({
@@ -901,6 +929,10 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
   });
+  scheme.AndroidSocketWriteParams = tObject({
+    data: tBinary,
+  });
+  scheme.AndroidSocketCloseParams = tOptional(tObject({}));
   scheme.AndroidDeviceWaitParams = tObject({
     selector: tType('AndroidSelector'),
     state: tOptional(tEnum(['gone'])),
@@ -961,6 +993,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
   scheme.AndroidDeviceInfoParams = tObject({
     selector: tType('AndroidSelector'),
   });
+  scheme.AndroidDeviceTreeParams = tOptional(tObject({}));
+  scheme.AndroidDeviceScreenshotParams = tOptional(tObject({}));
   scheme.AndroidDeviceInputTypeParams = tObject({
     text: tString,
   });
@@ -980,7 +1014,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     steps: tNumber,
   });
   scheme.AndroidDeviceLaunchBrowserParams = tObject({
-    packageName: tOptional(tString),
+    pkg: tOptional(tString),
     ignoreHTTPSErrors: tOptional(tBoolean),
     javaScriptEnabled: tOptional(tBoolean),
     bypassCSP: tOptional(tBoolean),
@@ -1004,8 +1038,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceResourcesPath: tOptional(tString),
-    _tracePath: tOptional(tString),
+    _traceDir: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -1024,8 +1057,20 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
       password: tOptional(tString),
     })),
   });
+  scheme.AndroidDeviceOpenParams = tObject({
+    command: tString,
+  });
   scheme.AndroidDeviceShellParams = tObject({
     command: tString,
+  });
+  scheme.AndroidDeviceInstallApkParams = tObject({
+    file: tBinary,
+    args: tOptional(tArray(tString)),
+  });
+  scheme.AndroidDevicePushParams = tObject({
+    file: tBinary,
+    path: tString,
+    mode: tOptional(tNumber),
   });
   scheme.AndroidDeviceSetDefaultTimeoutNoReplyParams = tObject({
     timeout: tNumber,
@@ -1063,6 +1108,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     text: tOptional(tString),
   });
   scheme.AndroidElementInfo = tObject({
+    children: tOptional(tArray(tType('AndroidElementInfo'))),
     clazz: tString,
     desc: tString,
     res: tString,

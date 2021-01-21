@@ -82,9 +82,12 @@ export class FrameExecutionContext extends js.ExecutionContext {
       for (const [name, { source }] of this.frame._page.selectors._engines)
         custom.push(`{ name: '${name}', engine: (${source}) }`);
       const source = `
-        new (${injectedScriptSource.source})([
+        (() => {
+        ${injectedScriptSource.source}
+        return new pwExport([
           ${custom.join(',\n')}
-        ])
+        ]);
+        })();
       `;
       this._injectedScriptPromise = this._delegate.rawEvaluate(source).then(objectId => new js.JSHandle(this, 'object', objectId));
     }
@@ -276,7 +279,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
-    const waitTime = [0, 20, 100, 500];
+    const waitTime = [0, 20, 100, 100, 500];
+
+    // By default, we scroll with protocol method to reveal the action point.
+    // However, that might not work to scroll from under position:sticky elements
+    // that overlay the target element. To fight this, we cycle through different
+    // scroll alignments. This works in most scenarios.
+    const scrollOptions: (ScrollIntoViewOptions | undefined)[] = [
+      undefined,
+      { block: 'end', inline: 'end' },
+      { block: 'center', inline: 'center' },
+      { block: 'start', inline: 'start' },
+    ];
+
     while (progress.isRunning()) {
       if (retry) {
         progress.log(`retrying ${actionName} action, attempt #${retry}`);
@@ -288,7 +303,8 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       } else {
         progress.log(`attempting ${actionName} action`);
       }
-      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, options);
+      const forceScrollOptions = scrollOptions[retry % scrollOptions.length];
+      const result = await this._performPointerAction(progress, actionName, waitForEnabled, action, forceScrollOptions, options);
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force)
@@ -313,7 +329,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return 'done';
   }
 
-  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
+  async _performPointerAction(progress: Progress, actionName: string, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>, forceScrollOptions: ScrollIntoViewOptions | undefined, options: types.PointerActionOptions & types.PointerActionWaitOptions & types.NavigatingActionWaitOptions): Promise<'error:notvisible' | 'error:notconnected' | 'error:notinviewport' | { hitTargetDescription: string } | 'done'> {
     const { force = false, position } = options;
     if ((options as any).__testHookBeforeStable)
       await (options as any).__testHookBeforeStable();
@@ -327,9 +343,16 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     progress.log('  scrolling into view if needed');
     progress.throwIfAborted();  // Avoid action that has side-effects.
-    const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
-    if (scrolled !== 'done')
-      return scrolled;
+    if (forceScrollOptions) {
+      await this._evaluateInUtility(([injected, node, options]) => {
+        if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
+          (node as Node as Element).scrollIntoView(options);
+      }, forceScrollOptions);
+    } else {
+      const scrolled = await this._scrollRectIntoViewIfNeeded(position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
+      if (scrolled !== 'done')
+        return scrolled;
+    }
     progress.log('  done scrolling');
 
     const maybePoint = position ? await this._offsetPoint(position) : await this._clickablePoint();
@@ -423,9 +446,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     const selectOptions = [...elements, ...values];
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
-      const value = await this._evaluateInUtility(([injected, node, selectOptions]) => injected.selectOptions(node, selectOptions), selectOptions);
+      progress.log('  selecting specified option(s)');
+      const poll = await this._evaluateHandleInUtility(([injected, node, selectOptions]) => injected.waitForOptionsAndSelect(node, selectOptions), selectOptions);
+      const pollHandler = new InjectedScriptPollHandler(progress, poll);
+      const result = throwFatalDOMError(await pollHandler.finish());
       await this._page._doSlowMo();
-      return throwFatalDOMError(value);
+      return result;
     });
   }
 
@@ -612,7 +638,42 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return result;
   }
 
-  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled', options: types.TimeoutOptions = {}): Promise<void> {
+  async isVisible(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Node as Element : node.parentElement;
+      return element ? injected.isVisible(element) : false;
+    }, {});
+  }
+
+  async isHidden(): Promise<boolean> {
+    return !(await this.isVisible());
+  }
+
+  async isEnabled(): Promise<boolean> {
+    return !(await this.isDisabled());
+  }
+
+  async isDisabled(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Node as Element : node.parentElement;
+      return element ? injected.isElementDisabled(element) : false;
+    }, {});
+  }
+
+  async isEditable(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      const element = node.nodeType === Node.ELEMENT_NODE ? node as Node as Element : node.parentElement;
+      return element ? !injected.isElementDisabled(element) && !injected.isElementReadOnly(element) : false;
+    }, {});
+  }
+
+  async isChecked(): Promise<boolean> {
+    return this._evaluateInUtility(([injected, node]) => {
+      return injected.isCheckboxChecked(node);
+    }, {});
+  }
+
+  async waitForElementState(state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable', options: types.TimeoutOptions = {}): Promise<void> {
     return runAbortableTask(async progress => {
       progress.log(`  waiting for element to be ${state}`);
       if (state === 'visible') {
@@ -647,6 +708,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assertDone(throwRetargetableDOMError(await pollHandler.finish()));
         return;
       }
+      if (state === 'editable') {
+        const poll = await this._evaluateHandleInUtility(([injected, node]) => {
+          return injected.waitForNodeEnabled(node, true /* waitForEnabled */);
+        }, {});
+        const pollHandler = new InjectedScriptPollHandler(progress, poll);
+        assertDone(throwRetargetableDOMError(await pollHandler.finish()));
+        return;
+      }
       if (state === 'stable') {
         const rafCount = this._page._delegate.rafCountForStablePosition();
         const poll = await this._evaluateHandleInUtility(([injected, node, rafOptions]) => {
@@ -656,7 +725,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         assertDone(throwRetargetableDOMError(await pollHandler.finish()));
         return;
       }
-      throw new Error(`state: expected one of (visible|hidden|stable|enabled)`);
+      throw new Error(`state: expected one of (visible|hidden|stable|enabled|disabled|editable)`);
     }, this._page._timeoutSettings.timeout(options));
   }
 
@@ -751,7 +820,7 @@ export class InjectedScriptPollHandler<T> {
 
   async finishHandle(): Promise<js.SmartHandle<T>> {
     try {
-      const result = await this._poll!.evaluateHandle(poll => poll.result);
+      const result = await this._poll!.evaluateHandle(poll => poll.run());
       await this._finishInternal();
       return result;
     } finally {
@@ -761,7 +830,7 @@ export class InjectedScriptPollHandler<T> {
 
   async finish(): Promise<T> {
     try {
-      const result = await this._poll!.evaluate(poll => poll.result);
+      const result = await this._poll!.evaluate(poll => poll.run());
       await this._finishInternal();
       return result;
     } finally {
@@ -937,4 +1006,52 @@ export function getAttributeTask(selector: SelectorInfo, name: string): Schedula
       return element.getAttribute(name);
     });
   }, { parsed: selector.parsed, name });
+}
+
+export function visibleTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return injected.isVisible(element);
+    });
+  }, selector.parsed);
+}
+
+export function disabledTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return injected.isElementDisabled(element);
+    });
+  }, selector.parsed);
+}
+
+export function editableTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return !injected.isElementDisabled(element) && !injected.isElementReadOnly(element);
+    });
+  }, selector.parsed);
+}
+
+export function checkedTask(selector: SelectorInfo): SchedulableTask<boolean> {
+  return injectedScript => injectedScript.evaluateHandle((injected, parsed) => {
+    return injected.pollRaf((progress, continuePolling) => {
+      const element = injected.querySelector(parsed, document);
+      if (!element)
+        return continuePolling;
+      progress.log(`  selector resolved to ${injected.previewNode(element)}`);
+      return injected.isCheckboxChecked(element);
+    });
+  }, selector.parsed);
 }

@@ -242,7 +242,11 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async addCookies(cookies: types.SetNetworkCookieParam[]) {
-    await this._browser._connection.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: network.rewriteCookies(cookies) });
+    const cc = network.rewriteCookies(cookies).map(c => ({
+      ...c,
+      expires: c.expires && c.expires !== -1 ? c.expires : undefined,
+    }));
+    await this._browser._connection.send('Browser.setCookies', { browserContextId: this._browserContextId, cookies: cc });
   }
 
   async clearCookies() {

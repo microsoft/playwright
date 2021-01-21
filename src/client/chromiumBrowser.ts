@@ -17,8 +17,19 @@
 import { Page } from './page';
 import { CDPSession } from './cdpSession';
 import { Browser } from './browser';
+import * as api from '../../types/types';
+import { ChromiumBrowserContext } from './chromiumBrowserContext';
+import { BrowserContextOptions } from './types';
 
-export class ChromiumBrowser extends Browser {
+export class ChromiumBrowser extends Browser implements api.ChromiumBrowser {
+  contexts(): ChromiumBrowserContext[] {
+    return super.contexts() as ChromiumBrowserContext[];
+  }
+
+  newContext(options?: BrowserContextOptions): Promise<ChromiumBrowserContext> {
+    return super.newContext(options) as Promise<ChromiumBrowserContext>;
+  }
+
   async newBrowserCDPSession(): Promise<CDPSession> {
     return this._wrapApiCall('chromiumBrowser.newBrowserCDPSession', async () => {
       return CDPSession.from((await this._channel.crNewBrowserCDPSession()).session);

@@ -31,6 +31,7 @@ import { Transport } from '../../protocol/transport';
 import { RecentLogsCollector } from '../../utils/debugLogger';
 import { TimeoutSettings } from '../../utils/timeoutSettings';
 import { AndroidWebView } from '../../protocol/channels';
+import { CRPage } from '../chromium/crPage';
 
 const readFileAsync = util.promisify(fs.readFile);
 
@@ -43,7 +44,7 @@ export interface DeviceBackend {
   status: string;
   close(): Promise<void>;
   init(): Promise<void>;
-  runCommand(command: string): Promise<string>;
+  runCommand(command: string): Promise<Buffer>;
   open(command: string): Promise<SocketBackend>;
 }
 
@@ -54,6 +55,7 @@ export interface SocketBackend extends EventEmitter {
 
 export class Android {
   private _backend: Backend;
+  private _devices = new Map<string, AndroidDevice>();
   readonly _timeoutSettings: TimeoutSettings;
 
   constructor(backend: Backend) {
@@ -67,7 +69,23 @@ export class Android {
 
   async devices(): Promise<AndroidDevice[]> {
     const devices = (await this._backend.devices()).filter(d => d.status === 'device');
-    return await Promise.all(devices.map(d => AndroidDevice.create(this, d)));
+    const newSerials = new Set<string>();
+    for (const d of devices) {
+      newSerials.add(d.serial);
+      if (this._devices.has(d.serial))
+        continue;
+      const device = await AndroidDevice.create(this, d);
+      this._devices.set(d.serial, device);
+    }
+    for (const d of this._devices.keys()) {
+      if (!newSerials.has(d))
+        this._devices.delete(d);
+    }
+    return [...this._devices.values()];
+  }
+
+  _deviceClosed(device: AndroidDevice) {
+    this._devices.delete(device.serial);
   }
 }
 
@@ -85,12 +103,16 @@ export class AndroidDevice extends EventEmitter {
   static Events = {
     WebViewAdded: 'webViewAdded',
     WebViewRemoved: 'webViewRemoved',
+    Closed: 'closed'
   };
 
   private _browserConnections = new Set<AndroidBrowser>();
+  private _android: Android;
+  private _isClosed = false;
 
   constructor(android: Android, backend: DeviceBackend, model: string) {
     super();
+    this._android = android;
     this._backend = backend;
     this.model = model;
     this.serial = backend.serial;
@@ -100,7 +122,7 @@ export class AndroidDevice extends EventEmitter {
   static async create(android: Android, backend: DeviceBackend): Promise<AndroidDevice> {
     await backend.init();
     const model = await backend.runCommand('shell:getprop ro.product.model');
-    const device = new AndroidDevice(android, backend, model.trim());
+    const device = new AndroidDevice(android, backend, model.toString().trim());
     await device._init();
     return device;
   }
@@ -117,18 +139,27 @@ export class AndroidDevice extends EventEmitter {
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  async shell(command: string): Promise<string> {
+  async shell(command: string): Promise<Buffer> {
     const result = await this._backend.runCommand(`shell:${command}`);
     await this._refreshWebViews();
     return result;
   }
 
-  private async _driver(): Promise<Transport> {
-    if (this._driverPromise)
-      return this._driverPromise;
-    let callback: any;
-    this._driverPromise = new Promise(f => callback = f);
+  async open(command: string): Promise<SocketBackend> {
+    return await this._backend.open(`${command}`);
+  }
 
+  async screenshot(): Promise<Buffer> {
+    return await this._backend.runCommand(`shell:screencap -p`);
+  }
+
+  private async _driver(): Promise<Transport> {
+    if (!this._driverPromise)
+      this._driverPromise = this._installDriver();
+    return this._driverPromise;
+  }
+
+  private async _installDriver(): Promise<Transport> {
     debug('pw:android')('Stopping the old driver');
     await this.shell(`am force-stop com.microsoft.playwright.androiddriver`);
 
@@ -137,31 +168,12 @@ export class AndroidDevice extends EventEmitter {
     await this.shell(`cmd package uninstall com.microsoft.playwright.androiddriver.test`);
 
     debug('pw:android')('Installing the new driver');
-    for (const file of ['android-driver.apk', 'android-driver-target.apk']) {
-      debug('pw:android')('Reading ' + require.resolve(`../../../bin/${file}`));
-      const driverFile = await readFileAsync(require.resolve(`../../../bin/${file}`));
-      debug('pw:android')('Opening install socket');
-      const installSocket = await this._backend.open(`shell:cmd package install -r -t -S ${driverFile.length}`);
-      debug('pw:android')('Writing driver bytes: ' + driverFile.length);
-      await installSocket.write(driverFile);
-      const success = await new Promise(f => installSocket.on('data', f));
-      debug('pw:android')('Written driver bytes: ' + success);
-    }
+    for (const file of ['android-driver.apk', 'android-driver-target.apk'])
+      await this.installApk(await readFileAsync(require.resolve(`../../../bin/${file}`)));
 
     debug('pw:android')('Starting the new driver');
-    this.shell(`am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner`);
-
-    debug('pw:android')('Polling the socket');
-    let socket;
-    while (!socket) {
-      try {
-        socket = await this._backend.open(`localabstract:playwright_android_driver_socket`);
-      } catch (e)  {
-        await new Promise(f => setTimeout(f, 100));
-      }
-    }
-
-    debug('pw:android')('Connected to driver');
+    this.shell('am instrument -w com.microsoft.playwright.androiddriver.test/androidx.test.runner.AndroidJUnitRunner');
+    const socket = await this._waitForLocalAbstract('playwright_android_driver_socket');
     const transport = new Transport(socket, socket, socket, 'be');
     transport.onmessage = message => {
       const response = JSON.parse(message);
@@ -175,12 +187,26 @@ export class AndroidDevice extends EventEmitter {
         callback.fulfill(result);
       this._callbacks.delete(id);
     };
-
-    callback(transport);
-    return this._driverPromise;
+    return transport;
   }
 
-  async send(method: string, params: any): Promise<any> {
+  private async _waitForLocalAbstract(socketName: string): Promise<SocketBackend> {
+    let socket: SocketBackend | undefined;
+    debug('pw:android')(`Polling the socket localabstract:${socketName}`);
+    while (!socket) {
+      try {
+        socket = await this._backend.open(`localabstract:${socketName}`);
+      } catch (e) {
+        await new Promise(f => setTimeout(f, 250));
+      }
+    }
+    debug('pw:android')(`Connected to localabstract:${socketName}`);
+    return socket;
+  }
+
+  async send(method: string, params: any = {}): Promise<any> {
+    // Patch the timeout in!
+    params.timeout = this._timeoutSettings.timeout(params);
     const driver = await this._driver();
     const id = ++this._lastId;
     const result = new Promise((fulfill, reject) => this._callbacks.set(id, { fulfill, reject }));
@@ -189,6 +215,7 @@ export class AndroidDevice extends EventEmitter {
   }
 
   async close() {
+    this._isClosed = true;
     if (this._pollingWebViews)
       clearTimeout(this._pollingWebViews);
     for (const connection of this._browserConnections)
@@ -198,43 +225,38 @@ export class AndroidDevice extends EventEmitter {
       driver.close();
     }
     await this._backend.close();
+    this._android._deviceClosed(this);
+    this.emit(AndroidDevice.Events.Closed);
   }
 
   async launchBrowser(pkg: string = 'com.android.chrome', options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
     await this._backend.runCommand(`shell:am force-stop ${pkg}`);
 
-    const socketName = createGuid();
+    const socketName = 'playwright-' + createGuid();
     const commandLine = `_ --disable-fre --no-default-browser-check --no-first-run --remote-debugging-socket-name=${socketName}`;
     debug('pw:android')('Starting', pkg, commandLine);
     await this._backend.runCommand(`shell:echo "${commandLine}" > /data/local/tmp/chrome-command-line`);
     await this._backend.runCommand(`shell:am start -n ${pkg}/com.google.android.apps.chrome.Main about:blank`);
-
-    debug('pw:android')('Polling for socket', socketName);
-    while (true) {
-      const net = await this._backend.runCommand(`shell:cat /proc/net/unix | grep ${socketName}$`);
-      if (net)
-        break;
-      await new Promise(f => setTimeout(f, 100));
-    }
-    debug('pw:android')('Got the socket, connecting');
     return await this._connectToBrowser(socketName, options);
   }
 
-  connectToWebView(pid: number): Promise<BrowserContext> {
+  async connectToWebView(pid: number): Promise<BrowserContext> {
     const webView = this._webViews.get(pid);
     if (!webView)
       throw new Error('WebView has been closed');
-    return this._connectToBrowser(`webview_devtools_remote_${pid}`);
+    return await this._connectToBrowser(`webview_devtools_remote_${pid}`);
   }
 
   private async _connectToBrowser(socketName: string, options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    const androidBrowser = new AndroidBrowser(this, socketName);
-    await androidBrowser._open();
+    const socket = await this._waitForLocalAbstract(socketName);
+    const androidBrowser = new AndroidBrowser(this, socket);
+    await androidBrowser._init();
     this._browserConnections.add(androidBrowser);
 
     const browserOptions: BrowserOptions = {
       name: 'clank',
+      isChromium: true,
       slowMo: 0,
       persistent: { ...options, noDefaultViewport: true },
       downloadsPath: undefined,
@@ -247,18 +269,64 @@ export class AndroidDevice extends EventEmitter {
 
     const browser = await CRBrowser.connect(androidBrowser, browserOptions);
     const controller = new ProgressController();
+    const defaultContext = browser._defaultContext!;
     await controller.run(async progress => {
-      await browser._defaultContext!._loadDefaultContextAsIs(progress);
+      await defaultContext._loadDefaultContextAsIs(progress);
     });
-    return browser._defaultContext!;
+    {
+      // TODO: remove after rolling to r838157
+      // Force page scale factor update.
+      const page = defaultContext.pages()[0];
+      const crPage = page._delegate as CRPage;
+      await crPage._mainFrameSession._client.send('Emulation.setDeviceMetricsOverride', { mobile: false, width: 0, height: 0, deviceScaleFactor: 0 });
+      await crPage._mainFrameSession._client.send('Emulation.clearDeviceMetricsOverride', {});
+    }
+    return defaultContext;
   }
 
   webViews(): AndroidWebView[] {
     return [...this._webViews.values()];
   }
 
+  async installApk(content: Buffer, options?: { args?: string[] }): Promise<void> {
+    const args = options && options.args ? options.args : ['-r', '-t', '-S'];
+    debug('pw:android')('Opening install socket');
+    const installSocket = await this._backend.open(`shell:cmd package install ${args.join(' ')} ${content.length}`);
+    debug('pw:android')('Writing driver bytes: ' + content.length);
+    await installSocket.write(content);
+    const success = await new Promise(f => installSocket.on('data', f));
+    debug('pw:android')('Written driver bytes: ' + success);
+    await installSocket.close();
+  }
+
+  async push(content: Buffer, path: string, mode = 0o644): Promise<void> {
+    const socket = await this._backend.open(`sync:`);
+    const sendHeader = async (command: string, length: number) => {
+      const buffer = Buffer.alloc(command.length + 4);
+      buffer.write(command, 0);
+      buffer.writeUInt32LE(length, command.length);
+      await socket.write(buffer);
+    };
+    const send = async (command: string, data: Buffer) => {
+      await sendHeader(command, data.length);
+      await socket.write(data);
+    };
+    await send('SEND', Buffer.from(`${path},${mode}`));
+    const maxChunk = 65535;
+    for (let i = 0; i < content.length; i += maxChunk)
+      await send('DATA', content.slice(i, i + maxChunk));
+    await sendHeader('DONE', (Date.now() / 1000) | 0);
+    const result = await new Promise<Buffer>(f => socket.once('data', f));
+    const code = result.slice(0, 4).toString();
+    if (code !== 'OKAY')
+      throw new Error('Could not push: ' + code);
+    await socket.close();
+  }
+
   private async _refreshWebViews() {
-    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).split('\n');
+    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
+    if (this._isClosed)
+      return;
 
     const newPids = new Set<number>();
     for (const line of sockets) {
@@ -272,7 +340,9 @@ export class AndroidDevice extends EventEmitter {
       if (this._webViews.has(pid))
         continue;
 
-      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).split('\n');
+      const procs = (await this._backend.runCommand(`shell:ps -A | grep ${pid}`)).toString().split('\n');
+      if (this._isClosed)
+        return;
       let pkg = '';
       for (const proc of procs) {
         const match = proc.match(/[^\s]+\s+(\d+).*$/);
@@ -299,17 +369,22 @@ export class AndroidDevice extends EventEmitter {
 
 class AndroidBrowser extends EventEmitter {
   readonly device: AndroidDevice;
-  readonly socketName: string;
-  private _socket: SocketBackend | undefined;
+  private _socket: SocketBackend;
   private _receiver: stream.Writable;
   private _waitForNextTask = makeWaitForNextTask();
   onmessage?: (message: any) => void;
   onclose?: () => void;
 
-  constructor(device: AndroidDevice, socketName: string) {
+  constructor(device: AndroidDevice, socket: SocketBackend) {
     super();
     this.device = device;
-    this.socketName = socketName;
+    this._socket = socket;
+    this._socket.on('close', () => {
+      this._waitForNextTask(() => {
+        if (this.onclose)
+          this.onclose();
+      });
+    });
     this._receiver = new (ws as any).Receiver() as stream.Writable;
     this._receiver.on('message', message => {
       this._waitForNextTask(() => {
@@ -319,14 +394,7 @@ class AndroidBrowser extends EventEmitter {
     });
   }
 
-  async _open() {
-    this._socket = await this.device._backend.open(`localabstract:${this.socketName}`);
-    this._socket.on('close', () => {
-      this._waitForNextTask(() => {
-        if (this.onclose)
-          this.onclose();
-      });
-    });
+  async _init() {
     await this._socket.write(Buffer.from(`GET /devtools/browser HTTP/1.1\r
 Upgrade: WebSocket\r
 Connection: Upgrade\r

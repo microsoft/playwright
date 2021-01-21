@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-export type SelectorType = 'default' | 'notext';
 export type SelectorRoot = Element | ShadowRoot | Document;
 
 export interface SelectorEngine {
-  create(root: SelectorRoot, target: Element, type?: SelectorType): string | undefined;
   query(root: SelectorRoot, selector: string): Element | undefined;
   queryAll(root: SelectorRoot, selector: string): Element[];
 }

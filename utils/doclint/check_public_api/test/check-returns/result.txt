@@ -1,4 +1,0 @@
-[MarkDown] foo.www() has mistyped 'return' type declaration: expected exactly 'returns: ', found 'returns '.
-[MarkDown] Method Foo.asyncFunction is missing return type description
-[MarkDown] Method Foo.return42 is missing return type description
-[MarkDown] Method Foo.returnNothing has unneeded description of return type

@@ -461,7 +461,7 @@ class FrameSession {
       promises.push(this._evaluateOnNewDocument(source, 'main'));
     for (const source of this._crPage._page._evaluateOnNewDocumentSources)
       promises.push(this._evaluateOnNewDocument(source, 'main'));
-    if (this._isMainFrame() && this._crPage._browserContext._options.recordVideo) {
+    if (this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
       const size = this._crPage._browserContext._options.recordVideo.size || this._crPage._browserContext._options.viewport || { width: 1280, height: 720 };
       const screencastId = createGuid();
       const outputFile = path.join(this._crPage._browserContext._options.recordVideo.dir, screencastId + '.webm');
@@ -700,6 +700,7 @@ class FrameSession {
 
   _onDialog(event: Protocol.Page.javascriptDialogOpeningPayload) {
     this._page.emit(Page.Events.Dialog, new dialog.Dialog(
+        this._page,
         event.type,
         event.message,
         async (accept: boolean, promptText?: string) => {

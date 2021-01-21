@@ -76,17 +76,13 @@ export class BrowserServerImpl extends EventEmitter implements BrowserServer {
     this._ready = new Promise<void>(f => readyCallback = f);
 
     const token = createGuid();
-    this._server = new ws.Server({ port }, () => {
+    this._server = new ws.Server({ port, path: '/' + token }, () => {
       const address = this._server.address();
       this._wsEndpoint = typeof address === 'string' ? `${address}/${token}` : `ws://127.0.0.1:${address.port}/${token}`;
       readyCallback();
     });
 
     this._server.on('connection', (socket: ws, req) => {
-      if (req.url !== '/' + token) {
-        socket.close();
-        return;
-      }
       this._clientAttached(socket);
     });
 

@@ -20,7 +20,7 @@ jobs:
     - uses: microsoft/playwright-github-action@v1
     - run: npm ci
     - run: npm run build
-    - run: node utils/update_version.js --next
+    # publish_all_packages.sh updates the version automatically
     - run: utils/publish_all_packages.sh --tip-of-tree
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

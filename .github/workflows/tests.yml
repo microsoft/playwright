@@ -38,7 +38,7 @@ jobs:
     # XVFB-RUN merges both STDOUT and STDERR, whereas we need only STDERR
     # Wrap `npm run` in a subshell to redirect STDERR to file.
     # Enable core dumps in the subshell.
-    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json && npm run coverage"
+    - run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- bash -c "ulimit -c unlimited && npx folio test/ --workers=1 --forbid-only --global-timeout=5400000 --retries=3 --reporter=dot,json && node test/checkCoverage.js"
       env:
         BROWSER: ${{ matrix.browser }}
         FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
@@ -51,7 +51,7 @@ jobs:
         path: test-results
 
   test_mac:
-    name: ${{ matrix.os }} (${{ matrix.browser }})
+    name: ${{ matrix.os }} (${{ matrix.browser }}-${{ matrix.shard }})
     strategy:
       fail-fast: false
       matrix:
@@ -230,4 +230,31 @@ jobs:
       if: ${{ always() }}
       with:
         name: video-${{ matrix.browser }}-linux-test-results
+        path: test-results
+
+  test_android:
+    name: Android Emulator
+    runs-on: macos-10.15
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: 14
+    - uses: microsoft/playwright-github-action@v1
+    - run: npm ci
+    - run: npm run build
+    - name: Create Android Emulator
+      run: utils/avd_recreate.sh
+    - name: Start Android Emulator
+      run: utils/avd_start.sh
+    - run: npx folio test/android -p browserName=chromium --workers=1 --forbid-only --timeout=120000 --global-timeout=5400000 --retries=3 --reporter=dot,json
+      env:
+        FOLIO_JSON_OUTPUT_NAME: "test-results/report.json"
+        PW_ANDROID_TESTS: 1
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always() && github.ref == 'refs/heads/master'
+    - uses: actions/upload-artifact@v1
+      if: ${{ always() }}
+      with:
+        name: android-test-results
         path: test-results

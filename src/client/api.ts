@@ -43,3 +43,4 @@ export { CDPSession } from './cdpSession';
 export { WebKitBrowser } from './webkitBrowser';
 
 export { FirefoxBrowser } from './firefoxBrowser';
+export { Playwright } from './playwright';

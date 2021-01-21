@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { Dispatcher, DispatcherScope } from './dispatcher';
-import { Android, AndroidDevice } from '../server/android/android';
+import { Dispatcher, DispatcherScope, existingDispatcher } from './dispatcher';
+import { Android, AndroidDevice, SocketBackend } from '../server/android/android';
 import * as channels from '../protocol/channels';
 import { BrowserContextDispatcher } from './browserContextDispatcher';
 
@@ -27,7 +27,7 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidIniti
   async devices(params: channels.AndroidDevicesParams): Promise<channels.AndroidDevicesResult> {
     const devices = await this._object.devices();
     return {
-      devices: devices.map(d => new AndroidDeviceDispatcher(this._scope, d))
+      devices: devices.map(d => AndroidDeviceDispatcher.from(this._scope, d))
     };
   }
 
@@ -37,6 +37,12 @@ export class AndroidDispatcher extends Dispatcher<Android, channels.AndroidIniti
 }
 
 export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.AndroidDeviceInitializer> implements channels.AndroidDeviceChannel {
+
+  static from(scope: DispatcherScope, device: AndroidDevice): AndroidDeviceDispatcher {
+    const result = existingDispatcher<AndroidDeviceDispatcher>(device);
+    return result || new AndroidDeviceDispatcher(scope, device);
+  }
+
   constructor(scope: DispatcherScope, device: AndroidDevice) {
     super(scope, device, 'AndroidDevice', {
       model: device.model,
@@ -53,10 +59,8 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
   }
 
   async fill(params: channels.AndroidDeviceFillParams) {
-    await Promise.all([
-      this._object.send('click', { selector: params.selector }),
-      this._object.send('fill', params)
-    ]);
+    await this._object.send('click', { selector: params.selector });
+    await this._object.send('fill', params);
   }
 
   async tap(params: channels.AndroidDeviceTapParams) {
@@ -95,6 +99,10 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     return { info: await this._object.send('info', params) };
   }
 
+  async tree(params: channels.AndroidDeviceTreeParams): Promise<channels.AndroidDeviceTreeResult> {
+    return { tree: await this._object.send('tree', params) };
+  }
+
   async inputType(params: channels.AndroidDeviceInputTypeParams) {
     const text = params.text;
     const keyCodes: number[] = [];
@@ -125,12 +133,29 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
     await this._object.send('inputDrag', params);
   }
 
-  async shell(params: channels.AndroidDeviceShellParams) {
-    return { result: await this._object.shell(params.command) };
+  async screenshot(params: channels.AndroidDeviceScreenshotParams): Promise<channels.AndroidDeviceScreenshotResult> {
+    return { binary: (await this._object.screenshot()).toString('base64') };
+  }
+
+  async shell(params: channels.AndroidDeviceShellParams): Promise<channels.AndroidDeviceShellResult> {
+    return { result: (await this._object.shell(params.command)).toString('base64') };
+  }
+
+  async open(params: channels.AndroidDeviceOpenParams, metadata?: channels.Metadata): Promise<channels.AndroidDeviceOpenResult> {
+    const socket = await this._object.open(params.command);
+    return { socket: new AndroidSocketDispatcher(this._scope, socket) };
+  }
+
+  async installApk(params: channels.AndroidDeviceInstallApkParams) {
+    await this._object.installApk(Buffer.from(params.file, 'base64'), { args: params.args });
+  }
+
+  async push(params: channels.AndroidDevicePushParams) {
+    await this._object.push(Buffer.from(params.file, 'base64'), params.path, params.mode);
   }
 
   async launchBrowser(params: channels.AndroidDeviceLaunchBrowserParams): Promise<channels.AndroidDeviceLaunchBrowserResult> {
-    const context = await this._object.launchBrowser(params.packageName, params);
+    const context = await this._object.launchBrowser(params.pkg, params);
     return { context: new BrowserContextDispatcher(this._scope, context) };
   }
 
@@ -144,6 +169,25 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
 
   async connectToWebView(params: channels.AndroidDeviceConnectToWebViewParams): Promise<channels.AndroidDeviceConnectToWebViewResult> {
     return { context: new BrowserContextDispatcher(this._scope, await this._object.connectToWebView(params.pid)) };
+  }
+}
+
+export class AndroidSocketDispatcher extends Dispatcher<SocketBackend, channels.AndroidSocketInitializer> implements channels.AndroidSocketChannel {
+  constructor(scope: DispatcherScope, socket: SocketBackend) {
+    super(scope, socket, 'AndroidSocket', {}, true);
+    socket.on('data', (data: Buffer) => this._dispatchEvent('data', { data: data.toString('base64') }));
+    socket.on('close', () => {
+      this._dispatchEvent('close');
+      this._dispose();
+    });
+  }
+
+  async write(params: channels.AndroidSocketWriteParams, metadata?: channels.Metadata): Promise<void> {
+    await this._object.write(Buffer.from(params.data, 'base64'));
+  }
+
+  async close(params: channels.AndroidSocketCloseParams, metadata?: channels.Metadata): Promise<void> {
+    await this._object.close();
   }
 }
 

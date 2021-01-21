@@ -1,0 +1,89 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.source-tab {
+  flex: auto;
+  position: relative;
+  overflow: hidden;
+  background: #fdfcfc;
+  font-family: var(--monospace-font);
+  white-space: nowrap;
+  display: flex;
+  flex-direction: row;
+}
+
+.source-content {
+  flex: 1 1 600px;
+  overflow: auto;
+}
+
+.source-stack {
+  flex: 1 1 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-y: auto;
+}
+
+.source-stack-frame {
+  flex: 0 0 20px;
+  font-size: smaller;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+}
+
+.source-stack-frame.selected,
+.source-stack-frame:hover {
+  background: var(--inactive-focus-ring);
+}
+
+.source-stack-frame-function {
+  flex: 1 1 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-stack-frame-location {
+  flex: 1 1 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: end;
+}
+
+.source-stack-frame-line {
+  flex: none;
+}
+
+.source-line-number {
+  width: 80px;
+  border-right: 1px solid var(--separator);
+  display: inline-block;
+  margin-right: 3px;
+  text-align: end;
+  padding-right: 4px;
+  color: var(--gray);
+}
+
+.source-code {
+  white-space: pre;
+  display: inline-block;
+}
+
+.source-line-highlight {
+  background-color: #ff69b460;
+}

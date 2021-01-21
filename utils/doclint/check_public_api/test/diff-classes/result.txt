@@ -1,3 +1,0 @@
-[MarkDown] Documented but not implemented class: Bar
-[MarkDown] Documented but not implemented class: Baz
-[MarkDown] Implemented but not documented class: Other

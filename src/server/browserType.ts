@@ -38,7 +38,7 @@ const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => f
 const DOWNLOADS_FOLDER = path.join(os.tmpdir(), 'playwright_downloads-');
 
 export abstract class BrowserType {
-  private _name: string;
+  private _name: browserPaths.BrowserName;
   private _executablePath: string;
   private _browserDescriptor: browserPaths.BrowserDescriptor;
   readonly _browserPath: string;
@@ -88,6 +88,7 @@ export abstract class BrowserType {
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
       name: this._name,
+      isChromium: this._name === 'chromium',
       slowMo: options.slowMo,
       persistent,
       headful: !options.headless,

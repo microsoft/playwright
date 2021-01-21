@@ -16,25 +16,29 @@
  * limitations under the License.
  */
 
+const fs = require('fs');
 const ts = require('typescript');
 const path = require('path');
-const Source = require('./doclint/Source');
 
 async function checkDeps() {
   const root = path.normalize(path.join(__dirname, '..'));
   const src = path.normalize(path.join(__dirname, '..', 'src'));
-  const sources = await Source.readdir(src);
   const program = ts.createProgram({
     options: {
       allowJs: true,
       target: ts.ScriptTarget.ESNext,
       strict: true,
     },
-    rootNames: sources.map(source => source.filePath()),
+    rootNames: listAllFiles(src),
   });
   const sourceFiles = program.getSourceFiles();
   const errors = [];
+  const usedDeps = new Set();
   sourceFiles.filter(x => !x.fileName.includes('node_modules')).map(x => visit(x, x.fileName));
+  for (const key of Object.keys(DEPS)) {
+    if (!usedDeps.has(key) && DEPS[key].length)
+      errors.push(`Stale DEPS entry "${key}"`);
+  }
   for (const error of errors)
     console.log(error);
   if (errors.length) {
@@ -56,10 +60,12 @@ async function checkDeps() {
   }
 
   function allowImport(from, to) {
-    if (!to.startsWith('src' + path.sep))
+    if (!to.startsWith(src + path.sep))
       return true;
-    from = from.substring(from.indexOf('src' + path.sep)).replace(/\\/g, '/');
-    to = to.substring(to.indexOf('src' + path.sep)).replace(/\\/g, '/');
+    if (!fs.existsSync(to))
+      return true;
+    from = path.relative(root, from).replace(/\\/g, '/');
+    to = path.relative(root, to).replace(/\\/g, '/');
     const fromDirectory = from.substring(0, from.lastIndexOf('/') + 1);
     const toDirectory = to.substring(0, to.lastIndexOf('/') + 1);
     if (fromDirectory === toDirectory)
@@ -73,6 +79,7 @@ async function checkDeps() {
       from = from.substring(0, from.lastIndexOf('/') + 1);
     }
 
+    usedDeps.add(from);
     for (const dep of DEPS[from]) {
       if (to === dep || toDirectory === dep)
         return true;
@@ -84,6 +91,19 @@ async function checkDeps() {
     }
     return false;
   }
+}
+
+function listAllFiles(dir) {
+  const dirs = fs.readdirSync(dir, { withFileTypes: true });
+  const  result = [];
+  dirs.map(d => {
+    const res = path.resolve(dir, d.name);
+    if (d.isDirectory())
+      result.push(...listAllFiles(res));
+    else
+      result.push(res);
+  });
+  return result;
 }
 
 const DEPS = {};
@@ -113,12 +133,11 @@ DEPS['src/server/common/'] = [];
 DEPS['src/server/injected/'] = ['src/server/common/'];
 
 // Electron and Clank use chromium internally.
-DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/transport.ts'];
+DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];
 DEPS['src/server/electron/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
-DEPS['src/server/clank/'] = [...DEPS['src/server/'], 'src/server/chromium/'];
 
 DEPS['src/server/playwright.ts'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/server/webkit/', 'src/server/firefox/', 'src/server/android/', 'src/server/electron/'];
-DEPS['src/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
+DEPS['src/cli/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerImpl.ts'] = ['src/**'];
 
 // Tracing is a client/server plugin, nothing should depend on it.
 DEPS['src/trace/'] = ['src/utils/', 'src/client/**', 'src/server/**'];
@@ -129,6 +148,9 @@ DEPS['src/debug/'] = ['src/utils/', 'src/generated/', 'src/server/**', 'src/debu
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
 DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/electron/', 'src/trace/'];
 DEPS['src/service.ts'] = ['src/remote/'];
+
+// CLI should only use client-side features.
+DEPS['src/cli/'] = ['src/cli/**', 'src/client/**', 'src/install/**', 'src/generated/', 'src/server/injected/', 'src/debug/injected/', 'src/trace/**', 'src/utils/**'];
 
 checkDeps().catch(e => {
   console.error(e && e.stack ? e.stack : e);

@@ -16,9 +16,6 @@
  */
 
 import { it, expect } from './fixtures';
-import * as path from 'path';
-
-const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
 
 it('should work with large DOM', async ({page, server}) => {
   await page.evaluate(() => {
@@ -242,7 +239,7 @@ it('should work with *', async ({page}) => {
   expect(await body.$$eval('div *', els => els.length)).toBe(2);
   // Selectors v2 matches jquery in the sense that matching starts with the element scope,
   // not the document scope.
-  expect(await body.$$eval('* > *', els => els.length)).toBe(selectorsV2Enabled() ? 2 : 4);
+  expect(await body.$$eval('* > *', els => els.length)).toBe(2);
   // Adding scope makes querySelectorAll work like jquery.
   expect(await body.$$eval(':scope * > *', els => els.length)).toBe(2);
   // Note that the following two selectors are following jquery logic even
@@ -312,18 +309,13 @@ it('should work with +', async ({page}) => {
   expect(await page.$$eval(`css=div + #div1`, els => els.length)).toBe(0);
   expect(await page.$$eval(`css=section > div + div ~ div`, els => els.length)).toBe(4);
   expect(await page.$$eval(`css=section > div + #div4 ~ div`, els => els.length)).toBe(2);
-  if (selectorsV2Enabled()) {
-    // Selectors v1 do not support this.
-    expect(await page.$$eval(`css=section:has(:scope > div + #div2)`, els => els.length)).toBe(1);
-    expect(await page.$$eval(`css=section:has(:scope > div + #div1)`, els => els.length)).toBe(0);
-  }
+  expect(await page.$$eval(`css=section:has(:scope > div + #div2)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`css=section:has(:scope > div + #div1)`, els => els.length)).toBe(0);
   // TODO: the following does not work. Should it?
   // expect(await page.$eval(`css=div:has(:scope + #div5)`, e => e.id)).toBe('div4');
 });
 
 it('should work with spaces in :nth-child and :not', async ({page, server}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=span:nth-child(23n +2)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span:nth-child(23n+ 2)`, els => els.length)).toBe(1);
@@ -334,11 +326,10 @@ it('should work with spaces in :nth-child and :not', async ({page, server}) => {
   expect(await page.$$eval(`css=div > :not(span)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=body :not(span, div)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=span, section:not(span, div)`, els => els.length)).toBe(5);
+  expect(await page.$$eval(`span:nth-child(23n+ 2) >> xpath=.`, els => els.length)).toBe(1);
 });
 
 it('should work with :is', async ({page, server}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:is(#root1)`, els => els.length)).toBe(1);
   expect(await page.$$eval(`css=div:is(#root1, #target)`, els => els.length)).toBe(1);
@@ -348,20 +339,25 @@ it('should work with :is', async ({page, server}) => {
   expect(await page.$$eval(`css=:is(div, span)`, els => els.length)).toBe(7);
   expect(await page.$$eval(`css=section:is(section) div:is(section div)`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=:is(div, span) > *`, els => els.length)).toBe(6);
+  expect(await page.$$eval(`css=#root1:has(:is(#root1))`, els => els.length)).toBe(0);
+  expect(await page.$$eval(`css=#root1:has(:is(:scope, #root1))`, els => els.length)).toBe(1);
 });
 
 it('should work with :has', async ({page, server}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   expect(await page.$$eval(`css=div:has(#target)`, els => els.length)).toBe(2);
   expect(await page.$$eval(`css=div:has([data-testid=foo])`, els => els.length)).toBe(3);
   expect(await page.$$eval(`css=div:has([attr*=value])`, els => els.length)).toBe(2);
+
+  await page.setContent(`<section><span></span><div></div></section><section><br></section>`);
+  expect(await page.$$eval(`section:has(span, div)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section:has(span, div)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section:has(br)`, els => els.length)).toBe(1);
+  expect(await page.$$eval(`section:has(span, br)`, els => els.length)).toBe(2);
+  expect(await page.$$eval(`section:has(span, br, div)`, els => els.length)).toBe(2);
 });
 
 it('should work with :scope', async ({page, server}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.goto(server.PREFIX + '/deep-shadow.html');
   // 'is' does not change the scope, so it remains 'html'.
   expect(await page.$$eval(`css=div:is(:scope#root1)`, els => els.length)).toBe(0);

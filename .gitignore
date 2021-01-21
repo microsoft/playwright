@@ -12,8 +12,9 @@ yarn.lock
 /node6
 /src/generated/*
 lib/
-/types/*
 jest-report.json
 drivers/
-/docs/api.json
 .android-sdk/
+.gradle/
+nohup.out
+api.json

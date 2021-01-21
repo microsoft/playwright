@@ -124,4 +124,12 @@ describe('electron app', (suite, { browserName }) => {
     const clipboardContentRead = await application.evaluate(async ({clipboard}) => clipboard.readText());
     await expect(clipboardContentRead).toEqual(clipboardContentToWrite);
   });
+
+  it('should be able to send CDP messages', async ({application, window}) => {
+    const context = await application.context();
+    const client = await context.newCDPSession(window);
+    await client.send('Runtime.enable');
+    const evalResponse = await client.send('Runtime.evaluate', {expression: '1 + 2', returnByValue: true});
+    expect(evalResponse.result.value).toBe(3);
+  });
 });

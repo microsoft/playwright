@@ -17,12 +17,14 @@
 import { Events } from './events';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
-import { assertMaxArguments, Func1, JSHandle, parseResult, serializeArgument, SmartHandle } from './jsHandle';
+import { assertMaxArguments, JSHandle, parseResult, serializeArgument } from './jsHandle';
 import { Page } from './page';
 import { BrowserContext } from './browserContext';
 import { ChromiumBrowserContext } from './chromiumBrowserContext';
+import * as api from '../../types/types';
+import * as structs from '../../types/structs';
 
-export class Worker extends ChannelOwner<channels.WorkerChannel, channels.WorkerInitializer> {
+export class Worker extends ChannelOwner<channels.WorkerChannel, channels.WorkerInitializer> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
 
@@ -45,19 +47,15 @@ export class Worker extends ChannelOwner<channels.WorkerChannel, channels.Worker
     return this._initializer.url;
   }
 
-  async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return parseResult(result.value);
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return JSHandle.from(result.handle) as SmartHandle<R>;
+    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
   }
 }

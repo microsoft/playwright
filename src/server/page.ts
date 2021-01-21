@@ -98,6 +98,7 @@ export class Page extends EventEmitter {
     Crash: 'crash',
     Console: 'console',
     Dialog: 'dialog',
+    InternalDialogClosed: 'internaldialogclosed',
     Download: 'download',
     FileChooser: 'filechooser',
     DOMContentLoaded: 'domcontentloaded',
@@ -110,7 +111,7 @@ export class Page extends EventEmitter {
     RequestFinished: 'requestfinished',
     FrameAttached: 'frameattached',
     FrameDetached: 'framedetached',
-    FrameNavigated: 'framenavigated',
+    InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
     Load: 'load',
     Popup: 'popup',
     WebSocket: 'websocket',
@@ -149,6 +150,7 @@ export class Page extends EventEmitter {
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super();
+    this.setMaxListeners(0);
     this._delegate = delegate;
     this._closedCallback = () => {};
     this._closedPromise = new Promise(f => this._closedCallback = f);
@@ -456,8 +458,8 @@ export class Page extends EventEmitter {
     this.emit(Page.Events.VideoStarted, video);
   }
 
-  frameNavigated(frame: frames.Frame) {
-    this.emit(Page.Events.FrameNavigated, frame);
+  frameNavigatedToNewDocument(frame: frames.Frame) {
+    this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
     const url = frame.url();
     if (!url.startsWith('http'))
       return;

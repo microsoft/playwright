@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-import { createAttributeEngine } from './attributeSelectorEngine';
-import { createCSSEngine } from './cssSelectorEngine';
 import { SelectorEngine, SelectorRoot } from './selectorEngine';
 import { createTextSelector } from './textSelectorEngine';
 import { XPathEngine } from './xpathSelectorEngine';
-import { ParsedSelector, ParsedSelectorV1, parseSelector, selectorsV2Enabled, selectorsV2EngineNames } from '../common/selectorParser';
+import { ParsedSelector, ParsedSelectorPart, parseSelector } from '../common/selectorParser';
 import { FatalDOMError } from '../common/domErrors';
-import { SelectorEvaluatorImpl, SelectorEngine as SelectorEngineV2, QueryContext, isVisible, parentElementOrShadowHost } from './selectorEvaluator';
+import { SelectorEvaluatorImpl, isVisible, parentElementOrShadowHost } from './selectorEvaluator';
+import { CSSComplexSelectorList } from '../common/cssParser';
 
 type Predicate<T> = (progress: InjectedScriptProgress, continuePolling: symbol) => T | symbol;
 
@@ -32,7 +31,7 @@ export type InjectedScriptProgress = {
 };
 
 export type InjectedScriptPoll<T> = {
-  result: Promise<T>,
+  run: () => Promise<T>,
   // Takes more logs, waiting until at least one message is available.
   takeNextLogs: () => Promise<string[]>,
   // Takes all current logs without waiting.
@@ -43,58 +42,50 @@ export type InjectedScriptPoll<T> = {
 export class InjectedScript {
   private _enginesV1: Map<string, SelectorEngine>;
   private _evaluator: SelectorEvaluatorImpl;
-  private _engineNames: Set<string>;
 
   constructor(customEngines: { name: string, engine: SelectorEngine}[]) {
     this._enginesV1 = new Map();
-    this._enginesV1.set('css', createCSSEngine(true));
-    this._enginesV1.set('css:light', createCSSEngine(false));
     this._enginesV1.set('xpath', XPathEngine);
     this._enginesV1.set('xpath:light', XPathEngine);
     this._enginesV1.set('text', createTextSelector(true));
     this._enginesV1.set('text:light', createTextSelector(false));
-    this._enginesV1.set('id', createAttributeEngine('id', true));
-    this._enginesV1.set('id:light', createAttributeEngine('id', false));
-    this._enginesV1.set('data-testid', createAttributeEngine('data-testid', true));
-    this._enginesV1.set('data-testid:light', createAttributeEngine('data-testid', false));
-    this._enginesV1.set('data-test-id', createAttributeEngine('data-test-id', true));
-    this._enginesV1.set('data-test-id:light', createAttributeEngine('data-test-id', false));
-    this._enginesV1.set('data-test', createAttributeEngine('data-test', true));
-    this._enginesV1.set('data-test:light', createAttributeEngine('data-test', false));
+    this._enginesV1.set('id', this._createAttributeEngine('id', true));
+    this._enginesV1.set('id:light', this._createAttributeEngine('id', false));
+    this._enginesV1.set('data-testid', this._createAttributeEngine('data-testid', true));
+    this._enginesV1.set('data-testid:light', this._createAttributeEngine('data-testid', false));
+    this._enginesV1.set('data-test-id', this._createAttributeEngine('data-test-id', true));
+    this._enginesV1.set('data-test-id:light', this._createAttributeEngine('data-test-id', false));
+    this._enginesV1.set('data-test', this._createAttributeEngine('data-test', true));
+    this._enginesV1.set('data-test:light', this._createAttributeEngine('data-test', false));
     for (const { name, engine } of customEngines)
       this._enginesV1.set(name, engine);
 
-    const wrapped = new Map<string, SelectorEngineV2>();
-    for (const { name, engine } of customEngines)
-      wrapped.set(name, wrapV2(name, engine));
-    this._evaluator = new SelectorEvaluatorImpl(wrapped);
-
-    this._engineNames = new Set(this._enginesV1.keys());
-    if (selectorsV2Enabled()) {
-      for (const name of selectorsV2EngineNames())
-        this._engineNames.add(name);
-    }
+    // No custom engines in V2 for now.
+    this._evaluator = new SelectorEvaluatorImpl(new Map());
   }
 
   parseSelector(selector: string): ParsedSelector {
-    return parseSelector(selector, this._engineNames);
+    const result = parseSelector(selector);
+    for (const part of result.parts) {
+      if (!Array.isArray(part) && !this._enginesV1.has(part.name))
+        throw new Error(`Unknown engine "${part.name}" while parsing selector ${selector}`);
+    }
+    return result;
   }
 
   querySelector(selector: ParsedSelector, root: Node): Element | undefined {
     if (!(root as any)['querySelector'])
       throw new Error('Node is not queryable.');
-    if (selector.v1)
-      return this._querySelectorRecursivelyV1(root as SelectorRoot, selector.v1, 0);
-    return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, selector.v2!)[0];
+    return this._querySelectorRecursively(root as SelectorRoot, selector, 0);
   }
 
-  private _querySelectorRecursivelyV1(root: SelectorRoot, selector: ParsedSelectorV1, index: number): Element | undefined {
+  private _querySelectorRecursively(root: SelectorRoot, selector: ParsedSelector, index: number): Element | undefined {
     const current = selector.parts[index];
     if (index === selector.parts.length - 1)
-      return this._enginesV1.get(current.name)!.query(root, current.body);
-    const all = this._enginesV1.get(current.name)!.queryAll(root, current.body);
+      return this._queryEngine(current, root);
+    const all = this._queryEngineAll(current, root);
     for (const next of all) {
-      const result = this._querySelectorRecursivelyV1(next, selector, index + 1);
+      const result = this._querySelectorRecursively(next, selector, index + 1);
       if (result)
         return selector.capture === index ? next : result;
     }
@@ -103,22 +94,16 @@ export class InjectedScript {
   querySelectorAll(selector: ParsedSelector, root: Node): Element[] {
     if (!(root as any)['querySelectorAll'])
       throw new Error('Node is not queryable.');
-    if (selector.v1)
-      return this._querySelectorAllV1(selector.v1, root as SelectorRoot);
-    return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, selector.v2!);
-  }
-
-  private _querySelectorAllV1(selector: ParsedSelectorV1, root: SelectorRoot): Element[] {
     const capture = selector.capture === undefined ? selector.parts.length - 1 : selector.capture;
     // Query all elements up to the capture.
-    const partsToQuerAll = selector.parts.slice(0, capture + 1);
+    const partsToQueryAll = selector.parts.slice(0, capture + 1);
     // Check they have a descendant matching everything after the capture.
     const partsToCheckOne = selector.parts.slice(capture + 1);
     let set = new Set<SelectorRoot>([ root as SelectorRoot ]);
-    for (const { name, body } of partsToQuerAll) {
+    for (const part of partsToQueryAll) {
       const newSet = new Set<Element>();
       for (const prev of set) {
-        for (const next of this._enginesV1.get(name)!.queryAll(prev, body)) {
+        for (const next of this._queryEngineAll(part, prev)) {
           if (newSet.has(next))
             continue;
           newSet.add(next);
@@ -130,11 +115,42 @@ export class InjectedScript {
     if (!partsToCheckOne.length)
       return candidates;
     const partial = { parts: partsToCheckOne };
-    return candidates.filter(e => !!this._querySelectorRecursivelyV1(e, partial, 0));
+    return candidates.filter(e => !!this._querySelectorRecursively(e, partial, 0));
+  }
+
+  private _queryEngine(part: ParsedSelectorPart, root: SelectorRoot): Element | undefined {
+    if (Array.isArray(part))
+      return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, part)[0];
+    return this._enginesV1.get(part.name)!.query(root, part.body);
+  }
+
+  private _queryEngineAll(part: ParsedSelectorPart, root: SelectorRoot): Element[] {
+    if (Array.isArray(part))
+      return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: true }, part);
+    return this._enginesV1.get(part.name)!.queryAll(root, part.body);
+  }
+
+  private _createAttributeEngine(attribute: string, shadow: boolean): SelectorEngine {
+    const toCSS = (selector: string): CSSComplexSelectorList => {
+      const css = `[${attribute}=${JSON.stringify(selector)}]`;
+      return [{ simples: [{ selector: { css, functions: [] }, combinator: '' }] }];
+    };
+    return {
+      query: (root: SelectorRoot, selector: string): Element | undefined => {
+        return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector))[0];
+      },
+      queryAll: (root: SelectorRoot, selector: string): Element[] => {
+        return this._evaluator.evaluate({ scope: root as Document | Element, pierceShadow: shadow }, toCSS(selector));
+      }
+    };
   }
 
   extend(source: string, params: any): any {
-    const constrFunction = global.eval(source);
+    const constrFunction = global.eval(`
+    (() => {
+      ${source}
+      return pwExport;
+    })()`);
     return new constrFunction(this, params);
   }
 
@@ -226,19 +242,23 @@ export class InjectedScript {
       },
     };
 
-    const result = task(progress);
+    const run = () => {
+      const result = task(progress);
 
-    // After the task has finished, there should be no more logs.
-    // Release any pending `takeNextLogs` call, and do not block any future ones.
-    // This prevents non-finished protocol evaluation calls and memory leaks.
-    result.finally(() => {
-      taskFinished = true;
-      logReady();
-    });
+      // After the task has finished, there should be no more logs.
+      // Release any pending `takeNextLogs` call, and do not block any future ones.
+      // This prevents non-finished protocol evaluation calls and memory leaks.
+      result.finally(() => {
+        taskFinished = true;
+        logReady();
+      });
+
+      return result;
+    };
 
     return {
       takeNextLogs,
-      result,
+      run,
       cancel: () => { progress.aborted = true; },
       takeLastLogs: () => unsentLogs,
     };
@@ -251,35 +271,52 @@ export class InjectedScript {
     return { left: parseInt(style.borderLeftWidth || '', 10), top: parseInt(style.borderTopWidth || '', 10) };
   }
 
-  selectOptions(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): string[] | 'error:notconnected' | FatalDOMError {
-    const element = this.findLabelTarget(node as Element);
-    if (!element || !element.isConnected)
-      return 'error:notconnected';
-    if (element.nodeName.toLowerCase() !== 'select')
-      return 'error:notselect';
-    const select = element as HTMLSelectElement;
-    const options = Array.from(select.options);
-    select.value = undefined as any;
-    for (let index = 0; index < options.length; index++) {
-      const option = options[index];
-      option.selected = optionsToSelect.some(optionToSelect => {
-        if (optionToSelect instanceof Node)
-          return option === optionToSelect;
-        let matches = true;
-        if (optionToSelect.value !== undefined)
-          matches = matches && optionToSelect.value === option.value;
-        if (optionToSelect.label !== undefined)
-          matches = matches && optionToSelect.label === option.label;
-        if (optionToSelect.index !== undefined)
-          matches = matches && optionToSelect.index === index;
-        return matches;
-      });
-      if (option.selected && !select.multiple)
-        break;
-    }
-    select.dispatchEvent(new Event('input', { 'bubbles': true }));
-    select.dispatchEvent(new Event('change', { 'bubbles': true }));
-    return options.filter(option => option.selected).map(option => option.value);
+  waitForOptionsAndSelect(node: Node, optionsToSelect: (Node | { value?: string, label?: string, index?: number })[]): InjectedScriptPoll<string[] | 'error:notconnected' | FatalDOMError> {
+    return this.pollRaf((progress, continuePolling) => {
+      const element = this.findLabelTarget(node as Element);
+      if (!element || !element.isConnected)
+        return 'error:notconnected';
+      if (element.nodeName.toLowerCase() !== 'select')
+        return 'error:notselect';
+      const select = element as HTMLSelectElement;
+      const options = Array.from(select.options);
+      const selectedOptions = [];
+      let remainingOptionsToSelect = optionsToSelect.slice();
+      for (let index = 0; index < options.length; index++) {
+        const option = options[index];
+        const filter = (optionToSelect: Node | { value?: string, label?: string, index?: number }) => {
+          if (optionToSelect instanceof Node)
+            return option === optionToSelect;
+          let matches = true;
+          if (optionToSelect.value !== undefined)
+            matches = matches && optionToSelect.value === option.value;
+          if (optionToSelect.label !== undefined)
+            matches = matches && optionToSelect.label === option.label;
+          if (optionToSelect.index !== undefined)
+            matches = matches && optionToSelect.index === index;
+          return matches;
+        };
+        if (!remainingOptionsToSelect.some(filter))
+          continue;
+        selectedOptions.push(option);
+        if (select.multiple) {
+          remainingOptionsToSelect = remainingOptionsToSelect.filter(o => !filter(o));
+        } else {
+          remainingOptionsToSelect = [];
+          break;
+        }
+      }
+      if (remainingOptionsToSelect.length) {
+        progress.logRepeating('    did not find some options - waiting... ');
+        return continuePolling;
+      }
+      select.value = undefined as any;
+      selectedOptions.forEach(option => option.selected = true);
+      progress.log('    selected specified option(s)');
+      select.dispatchEvent(new Event('input', { 'bubbles': true }));
+      select.dispatchEvent(new Event('change', { 'bubbles': true }));
+      return selectedOptions.map(option => option.value);
+    });
   }
 
   waitForEnabledAndFill(node: Node, value: string): InjectedScriptPoll<FatalDOMError | 'error:notconnected' | 'needsinput' | 'done'> {
@@ -418,13 +455,17 @@ export class InjectedScript {
     });
   }
 
-  waitForNodeEnabled(node: Node): InjectedScriptPoll<'error:notconnected' | 'done'> {
+  waitForNodeEnabled(node: Node, waitForEditable?: boolean): InjectedScriptPoll<'error:notconnected' | 'done'> {
     return this.pollRaf((progress, continuePolling) => {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
         return 'error:notconnected';
-      if (this._isElementDisabled(element)) {
+      if (this.isElementDisabled(element)) {
         progress.logRepeating('    element is not enabled - waiting...');
+        return continuePolling;
+      }
+      if (waitForEditable && this.isElementReadOnly(element)) {
+        progress.logRepeating('    element is readonly - waiting...');
         return continuePolling;
       }
       return 'done';
@@ -436,7 +477,7 @@ export class InjectedScript {
       const element = node.nodeType === Node.ELEMENT_NODE ? node as Element : node.parentElement;
       if (!node.isConnected || !element)
         return 'error:notconnected';
-      if (!this._isElementDisabled(element)) {
+      if (!this.isElementDisabled(element)) {
         progress.logRepeating('    element is enabled - waiting...');
         return continuePolling;
       }
@@ -545,7 +586,7 @@ export class InjectedScript {
       const style = element.ownerDocument && element.ownerDocument.defaultView ? element.ownerDocument.defaultView.getComputedStyle(element) : undefined;
       const isVisible = !!style && style.visibility !== 'hidden';
 
-      const isDisabled = waitForEnabled && this._isElementDisabled(element);
+      const isDisabled = waitForEnabled && this.isElementDisabled(element);
 
       if (isDisplayed && isStable && isVisible && !isDisabled)
         return 'done';
@@ -611,9 +652,14 @@ export class InjectedScript {
     node.dispatchEvent(event);
   }
 
-  private _isElementDisabled(element: Element): boolean {
+  isElementDisabled(element: Element): boolean {
     const elementOrButton = element.closest('button, [role=button]') || element;
-    return ['BUTTON', 'INPUT', 'SELECT'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+    return ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled');
+  }
+
+  isElementReadOnly(element: Element): boolean {
+    const target = this.findLabelTarget(element);
+    return !!target && ['INPUT', 'TEXTAREA'].includes(target.nodeName) && target.hasAttribute('readonly');
   }
 
   deepElementFromPoint(document: Document, x: number, y: number): Element | undefined {
@@ -665,16 +711,6 @@ export class InjectedScript {
       text = text.substring(0, 49) + '\u2026';
     return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${text}</${element.nodeName.toLowerCase()}>`);
   }
-}
-
-function wrapV2(name: string, engine: SelectorEngine): SelectorEngineV2 {
-  return {
-    query(context: QueryContext, args: string[]): Element[] {
-      if (args.length !== 1 || typeof args[0] !== 'string')
-        throw new Error(`engine "${name}" expects a single string`);
-      return engine.queryAll(context.scope, args[0]);
-    }
-  };
 }
 
 const autoClosingTags = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);

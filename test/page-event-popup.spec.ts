@@ -16,21 +16,16 @@
 
 import { it, expect } from './fixtures';
 
-it('should work', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work', async ({page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank')),
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-  await context.close();
 });
 
-it('should work with window features', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with window features', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -38,7 +33,6 @@ it('should work with window features', async ({browser, server}) => {
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-  await context.close();
 });
 
 it('should emit for immediately closed popups', async ({browser}) => {
@@ -55,9 +49,7 @@ it('should emit for immediately closed popups', async ({browser}) => {
   await context.close();
 });
 
-it('should emit for immediately closed popups 2', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should emit for immediately closed popups 2', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -67,7 +59,6 @@ it('should emit for immediately closed popups 2', async ({browser, server}) => {
     }),
   ]);
   expect(popup).toBeTruthy();
-  await context.close();
 });
 
 it('should be able to capture alert', async ({browser}) => {
@@ -85,21 +76,16 @@ it('should be able to capture alert', async ({browser}) => {
   await context.close();
 });
 
-it('should work with empty url', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with empty url', async ({page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('')),
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-  await context.close();
 });
 
-it('should work with noopener and no url', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with noopener and no url', async ({page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open(undefined, null, 'noopener')),
@@ -108,24 +94,18 @@ it('should work with noopener and no url', async ({browser}) => {
   expect(popup.url().split('#')[0]).toBe('about:blank');
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-  await context.close();
 });
 
-it('should work with noopener and about:blank', async ({browser}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with noopener and about:blank', async ({page}) => {
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => window['__popup'] = window.open('about:blank', null, 'noopener')),
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-  await context.close();
 });
 
-it('should work with noopener and url', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with noopener and url', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
@@ -133,12 +113,9 @@ it('should work with noopener and url', async ({browser, server}) => {
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-  await context.close();
 });
 
-it('should work with clicking target=_blank', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with clicking target=_blank', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel="opener" href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -147,12 +124,9 @@ it('should work with clicking target=_blank', async ({browser, server}) => {
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(true);
-  await context.close();
 });
 
-it('should work with fake-clicking target=_blank and rel=noopener', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with fake-clicking target=_blank and rel=noopener', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -161,12 +135,9 @@ it('should work with fake-clicking target=_blank and rel=noopener', async ({brow
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-  await context.close();
 });
 
-it('should work with clicking target=_blank and rel=noopener', async ({browser, server}) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
+it('should work with clicking target=_blank and rel=noopener', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');
   const [popup] = await Promise.all([
@@ -175,11 +146,9 @@ it('should work with clicking target=_blank and rel=noopener', async ({browser, 
   ]);
   expect(await page.evaluate(() => !!window.opener)).toBe(false);
   expect(await popup.evaluate(() => !!window.opener)).toBe(false);
-  await context.close();
 });
 
-it('should not treat navigations as new popups', async ({browser, server}) => {
-  const context = await browser.newContext();
+it('should not treat navigations as new popups', async ({context, server}) => {
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a target=_blank rel=noopener href="/one-style.html">yo</a>');

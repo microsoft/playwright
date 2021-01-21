@@ -63,3 +63,4 @@ fi
 
 git pull origin master
 ../checkout_build_archive_upload.sh webkit-mac-11.0-arm64 >/tmp/$(basename $0)--webkit-mac-11.0-arm64.log || true
+../checkout_build_archive_upload.sh firefox-mac-11.0-arm64 >/tmp/$(basename $0)--firefox-mac-11.0-arm64.log || true

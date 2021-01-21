@@ -78,7 +78,6 @@ class FFAXNode implements accessibility.AXNode {
     this._expanded = !!payload.expanded;
     this._name = this._payload.name;
     this._role = this._payload.role;
-    this._cachedHasFocusableChild;
   }
 
   _isPlainTextField(): boolean {

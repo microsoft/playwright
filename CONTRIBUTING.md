@@ -1,6 +1,5 @@
 # Contributing
 
-<!-- gen:toc -->
 - [How to Contribute](#how-to-contribute)
   * [Getting Code](#getting-code)
   * [Code reviews](#code-reviews)
@@ -13,7 +12,6 @@
   * [Public API Coverage](#public-api-coverage)
 - [Contributor License Agreement](#contributor-license-agreement)
   * [Code of Conduct](#code-of-conduct)
-<!-- gen:stop -->
 
 ## How to Contribute
 
@@ -108,7 +106,7 @@ Fixes #123, fixes #234
 
 ### Writing Documentation
 
-All public API should have a descriptive entry in [`docs/api.md`](https://github.com/microsoft/playwright/blob/master/docs/api.md). There's a [documentation linter](https://github.com/microsoft/playwright/tree/master/utils/doclint) which makes sure documentation is aligned with the codebase.
+All API classes, methods and events should have description in [`docs/src`](https://github.com/microsoft/playwright/blob/master/docs/src). There's a [documentation linter](https://github.com/microsoft/playwright/tree/master/utils/doclint) which makes sure documentation is aligned with the codebase.
 
 To run the documentation linter, use:
 
@@ -132,8 +130,7 @@ A barrier for introducing new installation dependencies is especially high:
 - Tests should be *hermetic*. Tests should not depend on external services.
 - Tests should work on all three platforms: Mac, Linux and Win. This is especially important for screenshot tests.
 
-Playwright tests are located in [`test/test.js`](https://github.com/microsoft/playwright/blob/master/test/test.js)
-and are written with a [TestRunner](https://github.com/microsoft/playwright/tree/master/utils/testrunner) framework.
+Playwright tests are located in [`test`](https://github.com/microsoft/playwright/blob/master/test) and use [Folio](https://github.com/microsoft/folio) test runner.
 These are integration tests, making sure public API methods and events work as expected.
 
 - To run all tests:
@@ -147,36 +144,23 @@ npm run test
 npm run ctest # also `ftest` for firefox and `wtest` for WebKit
 ```
 
-- To run tests in parallel, use `-j` flag:
-
-```bash
-npm run wtest -- -j 4
-```
-
-- To run tests in "verbose" mode or to stop testrunner on first failure:
-
-```bash
-npm run ftest -- --verbose
-npm run ftest -- --break-on-failure
-```
-
-- To run a specific test, substitute the `it` with `fit` (mnemonic rule: '*focus it*'):
+- To run a specific test, substitute `it` with `it.only`:
 
 ```js
 ...
-// Using "fit" to run specific test
-fit('should work', async ({server, page}) => {
+// Using "it.only" to run a specific test
+it.only('should work', async ({server, page}) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok).toBe(true);
 });
 ```
 
-- To disable a specific test, substitute the `it` with `xit` (mnemonic rule: '*cross it*'):
+- To disable a specific test, substitute `it` with `it.skip`:
 
 ```js
 ...
-// Using "xit" to skip specific test
-xit('should work', async ({server, page}) => {
+// Using "it.skip" to skip a specific test
+it.skip('should work', async ({server, page}) => {
   const response = await page.goto(server.EMPTY_PAGE);
   expect(response.ok).toBe(true);
 });
@@ -200,12 +184,6 @@ CRPATH=<path-to-executable> npm run ctest
 HEADLESS=false SLOW_MO=500 npm run wtest
 ```
 
-- To debug a test, "focus" a test first and then run:
-
-```bash
-BROWSER=chromium node --inspect-brk test/test.js
-```
-
 - When should a test be marked with `skip` or `fail`?
 
   - **`skip(condition)`**: This test *should ***never*** work* for `condition`
@@ -225,18 +203,6 @@ BROWSER=chromium node --inspect-brk test/test.js
     with `fail(CHROMIUM || WEBKIT)` since Playwright performing these actions
     currently diverges from what a user would experience driving a Chromium or
     WebKit.
-
-### Public API Coverage
-
-Every public API method or event should be called at least once in tests. To ensure this, there's a `coverage` command which tracks calls to public API and reports back if some methods/events were not called.
-
-Run all tests for all browsers with coverage enabled:
-
-```bash
-npm run coverage
-```
-
-There are also per-browser commands:" `npm run ccoverage`, `npm run fcoverage` and `npm run wcoverage`.
 
 ## Contributor License Agreement
 

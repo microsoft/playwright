@@ -265,8 +265,8 @@ export abstract class BrowserContext extends EventEmitter {
     if (!proxy)
       return;
     const { username, password } = proxy;
-    if (username && password)
-      this._options.httpCredentials = { username, password };
+    if (username)
+      this._options.httpCredentials = { username, password: password || '' };
   }
 
   async _setRequestInterceptor(handler: network.RouteHandler | undefined): Promise<void> {
@@ -377,6 +377,16 @@ export abstract class BrowserContext extends EventEmitter {
       }
       await page.close();
     }
+  }
+
+  async extendInjectedScript(source: string, arg?: any) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(e => {});
+    const installInPage = (page: Page) => {
+      page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
+      return Promise.all(page.frames().map(installInFrame));
+    };
+    this.on(BrowserContext.Events.Page, installInPage);
+    return Promise.all(this.pages().map(installInPage));
   }
 }
 

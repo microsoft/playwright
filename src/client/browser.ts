@@ -15,14 +15,15 @@
  */
 
 import * as channels from '../protocol/channels';
-import { BrowserContext, validateBrowserContextOptions } from './browserContext';
+import { BrowserContext, prepareBrowserContextOptions } from './browserContext';
 import { Page } from './page';
 import { ChannelOwner } from './channelOwner';
 import { Events } from './events';
 import { BrowserContextOptions } from './types';
 import { isSafeCloseError } from '../utils/errors';
+import * as api from '../../types/types';
 
-export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> {
+export class Browser extends ChannelOwner<channels.BrowserChannel, channels.BrowserInitializer> implements api.Browser {
   readonly _contexts = new Set<BrowserContext>();
   private _isConnected = true;
   private _closedPromise: Promise<void>;
@@ -44,9 +45,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   async newContext(options: BrowserContextOptions = {}): Promise<BrowserContext> {
     return this._wrapApiCall('browser.newContext', async () => {
-      if (this._isRemote && options._tracePath)
-        throw new Error(`"_tracePath" is not supported in connected browser`);
-      const contextOptions = validateBrowserContextOptions(options);
+      if (this._isRemote && options._traceDir)
+        throw new Error(`"_traceDir" is not supported in connected browser`);
+      const contextOptions = await prepareBrowserContextOptions(options);
       const context = BrowserContext.from((await this._channel.newContext(contextOptions)).context);
       context._options = contextOptions;
       this._contexts.add(context);

@@ -16,9 +16,6 @@
  */
 
 import { it, expect } from './fixtures';
-import * as path from 'path';
-
-const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
 
 it('should work for open shadow roots', async ({page, server}) => {
   await page.goto(server.PREFIX + '/deep-shadow.html');
@@ -31,8 +28,6 @@ it('should work for open shadow roots', async ({page, server}) => {
 });
 
 it('should work with :visible', async ({page}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
   await page.setContent(`
     <section>
       <div id=target1></div>
@@ -52,12 +47,7 @@ it('should work with :visible', async ({page}) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
-it('should work with proximity selectors', test => {
-  test.skip('Not ready yet');
-}, async ({page}) => {
-  if (!selectorsV2Enabled())
-    return; // Selectors v1 do not support this.
-
+it('should work with position selectors', async ({page}) => {
   /*
 
        +--+  +--+
@@ -112,44 +102,50 @@ it('should work with proximity selectors', test => {
     }
   }, boxes);
 
-  expect(await page.$eval('div:within(#id0)', e => e.id)).toBe('id6');
-  expect(await page.$eval('div:within(div)', e => e.id)).toBe('id6');
-  expect(await page.$('div:within(#id6)')).toBe(null);
-  expect(await page.$$eval('div:within(#id0)', els => els.map(e => e.id).join(','))).toBe('id6');
-
   expect(await page.$eval('div:right-of(#id6)', e => e.id)).toBe('id7');
   expect(await page.$eval('div:right-of(#id1)', e => e.id)).toBe('id2');
-  expect(await page.$eval('div:right-of(#id3)', e => e.id)).toBe('id2');
+  expect(await page.$eval('div:right-of(#id3)', e => e.id)).toBe('id4');
   expect(await page.$('div:right-of(#id4)')).toBe(null);
-  expect(await page.$eval('div:right-of(#id0)', e => e.id)).toBe('id4');
+  expect(await page.$eval('div:right-of(#id0)', e => e.id)).toBe('id7');
   expect(await page.$eval('div:right-of(#id8)', e => e.id)).toBe('id9');
-  expect(await page.$$eval('div:right-of(#id3)', els => els.map(e => e.id).join(','))).toBe('id2,id5');
+  expect(await page.$$eval('div:right-of(#id3)', els => els.map(e => e.id).join(','))).toBe('id4,id2,id5,id7,id8,id9');
 
   expect(await page.$eval('div:left-of(#id2)', e => e.id)).toBe('id1');
   expect(await page.$('div:left-of(#id0)')).toBe(null);
   expect(await page.$eval('div:left-of(#id5)', e => e.id)).toBe('id0');
   expect(await page.$eval('div:left-of(#id9)', e => e.id)).toBe('id8');
-  expect(await page.$eval('div:left-of(#id4)', e => e.id)).toBe('id0');
-  expect(await page.$$eval('div:left-of(#id5)', els => els.map(e => e.id).join(','))).toBe('id0,id3,id7');
+  expect(await page.$eval('div:left-of(#id4)', e => e.id)).toBe('id3');
+  expect(await page.$$eval('div:left-of(#id5)', els => els.map(e => e.id).join(','))).toBe('id0,id7,id3,id1,id6,id8');
 
-  expect(await page.$eval('div:above(#id0)', e => e.id)).toBe('id1');
-  expect(await page.$eval('div:above(#id5)', e => e.id)).toBe('id2');
-  expect(await page.$eval('div:above(#id7)', e => e.id)).toBe('id3');
+  expect(await page.$eval('div:above(#id0)', e => e.id)).toBe('id3');
+  expect(await page.$eval('div:above(#id5)', e => e.id)).toBe('id4');
+  expect(await page.$eval('div:above(#id7)', e => e.id)).toBe('id5');
   expect(await page.$eval('div:above(#id8)', e => e.id)).toBe('id0');
+  expect(await page.$eval('div:above(#id9)', e => e.id)).toBe('id8');
   expect(await page.$('div:above(#id2)')).toBe(null);
-  expect(await page.$('div:above(#id9)')).toBe(null);
-  expect(await page.$$eval('div:above(#id5)', els => els.map(e => e.id).join(','))).toBe('id2,id4');
+  expect(await page.$$eval('div:above(#id5)', els => els.map(e => e.id).join(','))).toBe('id4,id2,id3,id1');
 
   expect(await page.$eval('div:below(#id4)', e => e.id)).toBe('id5');
   expect(await page.$eval('div:below(#id3)', e => e.id)).toBe('id0');
   expect(await page.$eval('div:below(#id2)', e => e.id)).toBe('id4');
+  expect(await page.$eval('div:below(#id6)', e => e.id)).toBe('id8');
+  expect(await page.$eval('div:below(#id7)', e => e.id)).toBe('id8');
+  expect(await page.$eval('div:below(#id8)', e => e.id)).toBe('id9');
   expect(await page.$('div:below(#id9)')).toBe(null);
-  expect(await page.$('div:below(#id7)')).toBe(null);
-  expect(await page.$('div:below(#id8)')).toBe(null);
-  expect(await page.$('div:below(#id6)')).toBe(null);
-  expect(await page.$$eval('div:below(#id3)', els => els.map(e => e.id).join(','))).toBe('id0,id6,id7');
+  expect(await page.$$eval('div:below(#id3)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id6,id7,id8,id9');
 
-  expect(await page.$eval('div:near(#id0)', e => e.id)).toBe('id1');
-  expect(await page.$$eval('div:near(#id7)', els => els.map(e => e.id).join(','))).toBe('id0,id3,id4,id5,id6');
-  expect(await page.$$eval('div:near(#id0)', els => els.map(e => e.id).join(','))).toBe('id1,id2,id3,id4,id5,id7,id8,id9');
+  expect(await page.$eval('div:near(#id0)', e => e.id)).toBe('id3');
+  expect(await page.$$eval('div:near(#id7)', els => els.map(e => e.id).join(','))).toBe('id0,id5,id3,id6');
+  expect(await page.$$eval('div:near(#id0)', els => els.map(e => e.id).join(','))).toBe('id3,id6,id7,id8,id1,id5');
+  expect(await page.$$eval('div:near(#id6)', els => els.map(e => e.id).join(','))).toBe('id0,id3,id7');
+
+  expect(await page.$$eval('div:below(#id5):above(#id8)', els => els.map(e => e.id).join(','))).toBe('id7,id6');
+  expect(await page.$eval('div:below(#id5):above(#id8)', e => e.id)).toBe('id7');
+
+  expect(await page.$$eval('div:right-of(#id0) + div:above(#id8)', els => els.map(e => e.id).join(','))).toBe('id5,id6,id3');
+});
+
+it('should escape the scope with >>', async ({ page }) => {
+  await page.setContent(`<div><label>Test</label><input id='myinput'></div>`);
+  expect(await page.$eval(`label >> xpath=.. >> input`, e => e.id)).toBe('myinput');
 });

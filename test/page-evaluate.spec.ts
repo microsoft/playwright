@@ -554,3 +554,7 @@ it('should not use toJSON in jsonValue', async ({ page }) => {
   const resultHandle = await page.evaluateHandle(() => ({ toJSON: () => 'string', data: 'data' }));
   expect(await resultHandle.jsonValue()).toEqual({ data: 'data', toJSON: {} });
 });
+
+it('should not expose the injected script export', async ({ page }) => {
+  expect(await page.evaluate('typeof pwExport === "undefined"')).toBe(true);
+});

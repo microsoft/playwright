@@ -19,7 +19,7 @@ import { assert } from '../utils/utils';
 import * as channels from '../protocol/channels';
 import { ChannelOwner } from './channelOwner';
 import { ElementHandle, convertSelectOptionValues, convertInputFiles } from './elementHandle';
-import { assertMaxArguments, JSHandle, Func1, FuncOn, SmartHandle, serializeArgument, parseResult } from './jsHandle';
+import { assertMaxArguments, JSHandle, serializeArgument, parseResult } from './jsHandle';
 import * as fs from 'fs';
 import * as network from './network';
 import * as util from 'util';
@@ -29,6 +29,8 @@ import { Waiter } from './waiter';
 import { Events } from './events';
 import { LifecycleEvent, URLMatch, SelectOption, SelectOptionOptions, FilePayload, WaitForFunctionOptions, kLifecycleEvents } from './types';
 import { urlMatches } from './clientHelper';
+import * as api from '../../types/types';
+import * as structs from '../../types/structs';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -38,7 +40,7 @@ export type WaitForNavigationOptions = {
   url?: URLMatch,
 };
 
-export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameInitializer> {
+export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameInitializer> implements api.Frame {
   _eventEmitter: EventEmitter;
   _loadStates: Set<LifecycleEvent>;
   _parentFrame: Frame | null = null;
@@ -164,29 +166,25 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async evaluateHandle<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async evaluateHandle<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
+  async evaluateHandle<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     return this._wrapApiCall(this._apiName('evaluateHandle'), async () => {
       const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-      return JSHandle.from(result.handle) as SmartHandle<R>;
+      return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
     });
   }
 
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
-  async _evaluateHandleInUtility<R>(pageFunction: Func1<void, R>, arg?: any): Promise<SmartHandle<R>>;
-  async _evaluateHandleInUtility<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<SmartHandle<R>> {
+  async _evaluateHandleInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>>;
+  async _evaluateHandleInUtility<R>(pageFunction: structs.PageFunction<void, R>, arg?: any): Promise<structs.SmartHandle<R>>;
+  async _evaluateHandleInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<structs.SmartHandle<R>> {
     assertMaxArguments(arguments.length, 2);
     return this._wrapApiCall(this._apiName('_evaluateHandleInUtility'), async () => {
       const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: 'utility' });
-      return JSHandle.from(result.handle) as SmartHandle<R>;
+      return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
     });
   }
 
-  async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
-  async evaluate<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
-  async evaluate<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
+  async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._wrapApiCall(this._apiName('evaluate'), async () => {
       const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
@@ -194,9 +192,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async _evaluateInUtility<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R>;
-  async _evaluateInUtility<R>(pageFunction: Func1<void, R>, arg?: any): Promise<R>;
-  async _evaluateInUtility<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg): Promise<R> {
+  async _evaluateInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg: Arg): Promise<R>;
+  async _evaluateInUtility<R>(pageFunction: structs.PageFunction<void, R>, arg?: any): Promise<R>;
+  async _evaluateInUtility<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return this._wrapApiCall(this._apiName('evaluate'), async () => {
       const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg), world: 'utility' });
@@ -204,21 +202,23 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async $(selector: string): Promise<ElementHandle<Element> | null> {
+  async $(selector: string): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return this._wrapApiCall(this._apiName('$'), async () => {
       const result = await this._channel.querySelector({ selector });
-      return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
+      return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }
 
-  async waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions = {}): Promise<ElementHandle<Element> | null> {
+  waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions & { state: 'attached' | 'visible' }): Promise<ElementHandle<SVGElement | HTMLElement>>;
+  waitForSelector(selector: string, options?: channels.FrameWaitForSelectorOptions): Promise<ElementHandle<SVGElement | HTMLElement> | null>;
+  async waitForSelector(selector: string, options: channels.FrameWaitForSelectorOptions = {}): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return this._wrapApiCall(this._apiName('waitForSelector'), async () => {
       if ((options as any).visibility)
         throw new Error('options.visibility is not supported, did you mean options.state?');
       if ((options as any).waitFor && (options as any).waitFor !== 'visible')
         throw new Error('options.waitFor is not supported, did you mean options.state?');
       const result = await this._channel.waitForSelector({ selector, ...options });
-      return ElementHandle.fromNullable(result.element) as ElementHandle<Element> | null;
+      return ElementHandle.fromNullable(result.element) as ElementHandle<SVGElement | HTMLElement> | null;
     });
   }
 
@@ -228,9 +228,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R>;
-  async $eval<R>(selector: string, pageFunction: FuncOn<Element, void, R>, arg?: any): Promise<R>;
-  async $eval<R, Arg>(selector: string, pageFunction: FuncOn<Element, Arg, R>, arg: Arg): Promise<R> {
+  async $eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element, Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     return this._wrapApiCall(this._apiName('$eval'), async () => {
       const result = await this._channel.evalOnSelector({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
@@ -238,9 +236,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R>;
-  async $$eval<R>(selector: string, pageFunction: FuncOn<Element[], void, R>, arg?: any): Promise<R>;
-  async $$eval<R, Arg>(selector: string, pageFunction: FuncOn<Element[], Arg, R>, arg: Arg): Promise<R> {
+  async $$eval<R, Arg>(selector: string, pageFunction: structs.PageFunctionOn<Element[], Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 3);
     return this._wrapApiCall(this._apiName('$$eval'), async () => {
       const result = await this._channel.evalOnSelectorAll({ selector, expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
@@ -248,10 +244,10 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async $$(selector: string): Promise<ElementHandle<Element>[]> {
+  async $$(selector: string): Promise<ElementHandle<SVGElement | HTMLElement>[]> {
     return this._wrapApiCall(this._apiName('$$'), async () => {
       const result = await this._channel.querySelectorAll({ selector });
-      return result.elements.map(e => ElementHandle.from(e) as ElementHandle<Element>);
+      return result.elements.map(e => ElementHandle.from(e) as ElementHandle<SVGElement | HTMLElement>);
     });
   }
 
@@ -288,9 +284,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     return this._detached;
   }
 
-  async addScriptTag(script: { url?: string, path?: string, content?: string, type?: string }): Promise<ElementHandle> {
+  async addScriptTag(options: { url?: string, path?: string, content?: string, type?: string } = {}): Promise<ElementHandle> {
     return this._wrapApiCall(this._apiName('addScriptTag'), async () => {
-      const copy = { ...script };
+      const copy = { ...options };
       if (copy.path) {
         copy.content = (await fsReadFileAsync(copy.path)).toString();
         copy.content += '//# sourceURL=' + copy.path.replace(/\n/g, '');
@@ -299,9 +295,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
-  async addStyleTag(style: { url?: string; path?: string; content?: string; }): Promise<ElementHandle> {
+  async addStyleTag(options: { url?: string; path?: string; content?: string; } = {}): Promise<ElementHandle> {
     return this._wrapApiCall(this._apiName('addStyleTag'), async () => {
-      const copy = { ...style };
+      const copy = { ...options };
       if (copy.path) {
         copy.content = (await fsReadFileAsync(copy.path)).toString();
         copy.content += '/*# sourceURL=' + copy.path.replace(/\n/g, '') + '*/';
@@ -366,13 +362,49 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     });
   }
 
+  async isChecked(selector: string, options: channels.FrameIsCheckedOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isChecked'), async () => {
+      return (await this._channel.isChecked({ selector, ...options })).value;
+    });
+  }
+
+  async isDisabled(selector: string, options: channels.FrameIsDisabledOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isDisabled'), async () => {
+      return (await this._channel.isDisabled({ selector, ...options })).value;
+    });
+  }
+
+  async isEditable(selector: string, options: channels.FrameIsEditableOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isEditable'), async () => {
+      return (await this._channel.isEditable({ selector, ...options })).value;
+    });
+  }
+
+  async isEnabled(selector: string, options: channels.FrameIsEnabledOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isEnabled'), async () => {
+      return (await this._channel.isEnabled({ selector, ...options })).value;
+    });
+  }
+
+  async isHidden(selector: string, options: channels.FrameIsHiddenOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isHidden'), async () => {
+      return (await this._channel.isHidden({ selector, ...options })).value;
+    });
+  }
+
+  async isVisible(selector: string, options: channels.FrameIsVisibleOptions = {}): Promise<boolean> {
+    return this._wrapApiCall(this._apiName('isVisible'), async () => {
+      return (await this._channel.isVisible({ selector, ...options })).value;
+    });
+  }
+
   async hover(selector: string, options: channels.FrameHoverOptions = {}) {
     return this._wrapApiCall(this._apiName('hover'), async () => {
       await this._channel.hover({ selector, ...options });
     });
   }
 
-  async selectOption(selector: string, values: string | ElementHandle | SelectOption | string[] | ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
+  async selectOption(selector: string, values: string | api.ElementHandle | SelectOption | string[] | api.ElementHandle[] | SelectOption[] | null, options: SelectOptionOptions = {}): Promise<string[]> {
     return this._wrapApiCall(this._apiName('selectOption'), async () => {
       return (await this._channel.selectOption({ selector, ...convertSelectOptionValues(values), ...options })).values;
     });
@@ -412,9 +444,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     await new Promise(fulfill => setTimeout(fulfill, timeout));
   }
 
-  async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options?: WaitForFunctionOptions): Promise<SmartHandle<R>>;
-  async waitForFunction<R>(pageFunction: Func1<void, R>, arg?: any, options?: WaitForFunctionOptions): Promise<SmartHandle<R>>;
-  async waitForFunction<R, Arg>(pageFunction: Func1<Arg, R>, arg: Arg, options: WaitForFunctionOptions = {}): Promise<SmartHandle<R>> {
+  async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {
     return this._wrapApiCall(this._apiName('waitForFunction'), async () => {
       if (typeof options.polling === 'string')
         assert(options.polling === 'raf', 'Unknown polling option: ' + options.polling);
@@ -425,7 +455,7 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
         isFunction: typeof pageFunction === 'function',
         arg: serializeArgument(arg),
       });
-      return JSHandle.from(result.handle) as SmartHandle<R>;
+      return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
     });
   }
 
@@ -433,11 +463,6 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
     return this._wrapApiCall(this._apiName('title'), async () => {
       return (await this._channel.title()).value;
     });
-  }
-
-  async _extendInjectedScript<Arg>(source: string, arg?: Arg): Promise<JSHandle> {
-    const result = await this._channel.extendInjectedScript({ source, arg: serializeArgument(arg) });
-    return JSHandle.from(result.handle);
   }
 }
 

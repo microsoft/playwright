@@ -1,0 +1,68 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.network-tab {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
+  overflow: auto;
+}
+
+.network-tab:focus {
+  outline: none;
+}
+
+.network-request {
+  box-shadow: var(--box-shadow);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  margin-bottom: 10px;
+  background: #fdfcfc;
+  width: 100%;
+  border: 3px solid transparent;
+  flex: none;
+  outline: none;
+}
+
+.network-request-title {
+  height: 36px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.network-request-details {
+  font-family: var(--monospace-font);
+  white-space: pre;
+  overflow: hidden;
+}
+
+.network-request-title > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.network-request.selected,
+.network-request:hover {
+  border-color: var(--inactive-focus-ring);
+}
+
+.network-request.selected:focus {
+  border-color: var(--orange);
+}

@@ -16,8 +16,9 @@
  */
 
 import * as channels from '../protocol/channels';
+import * as api from '../../types/types';
 
-export class Keyboard {
+export class Keyboard implements api.Keyboard {
   private _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {
@@ -45,7 +46,7 @@ export class Keyboard {
   }
 }
 
-export class Mouse {
+export class Mouse implements api.Mouse {
   private _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {
@@ -73,7 +74,7 @@ export class Mouse {
   }
 }
 
-export class Touchscreen {
+export class Touchscreen implements api.Touchscreen {
   private _channel: channels.PageChannel;
 
   constructor(channel: channels.PageChannel) {

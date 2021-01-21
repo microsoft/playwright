@@ -16,9 +16,6 @@
  */
 
 import { it, expect } from './fixtures';
-import * as path from 'path';
-
-const { selectorsV2Enabled } = require(path.join(__dirname, '..', 'lib', 'server', 'common', 'selectorParser'));
 
 it('should throw for non-string selector', async ({page}) => {
   const error = await page.$(null).catch(e => e);
@@ -61,8 +58,6 @@ it('should auto-detect xpath selector with starting parenthesis', async ({page, 
 });
 
 it('should auto-detect xpath selector starting with ..', async ({page, server}) => {
-  if (selectorsV2Enabled())
-    return; // Selectors v2 do not support this.
   await page.setContent('<div><section>test</section><span></span></div>');
   const span = await page.$('"test" >> ../span');
   expect(await span.evaluate(e => e.nodeName)).toBe('SPAN');

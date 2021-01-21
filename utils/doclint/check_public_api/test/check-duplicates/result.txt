@@ -1,3 +1,0 @@
-[MarkDown] Duplicate declaration of method Foo.test()
-[MarkDown] Duplicate declaration of argument Foo.title "arg"
-[MarkDown] Duplicate declaration of class Bar
