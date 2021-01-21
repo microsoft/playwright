@@ -24,7 +24,7 @@ This installs Playwright and browser binaries for Chromium, Firefox and WebKit. 
 
 * [Getting started](https://playwright.dev/docs/intro)
 * [Installation configuration](https://playwright.dev/docs/installation)
-* [API reference](https://playwright.dev/docs/api/)
+* [API reference](https://playwright.dev/docs/api/class-playwright)
 
 ## Capabilities
 
