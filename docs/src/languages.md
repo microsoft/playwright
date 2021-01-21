@@ -20,12 +20,13 @@ npm i -D playwright
 
 ## Python
 
-Playwright for Python is available in preview.
+[Playwright for Python](https://playwright.dev/python/docs/intro/) is available.
 
 ```
-pip install playwright
+pip install playwright==1.8.0a1
 ```
-
+* [Documentation](https://playwright.dev/python/docs/intro/)
+* [API](https://playwright.dev/python/docs/api/class-playwright)
 * [Playwright on PyPI](https://pypi.org/project/playwright/)
 * [GitHub repo](https://github.com/microsoft/playwright-python)
 * [Pytest integration](https://github.com/microsoft/playwright-pytest)
