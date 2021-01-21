@@ -338,7 +338,7 @@ async function codegen(options: Options, url: string | undefined, target: string
   const { context, browserName, launchOptions, contextOptions } = await launchContext(options, false);
 
   if (process.env.PWTRACE)
-    contextOptions.recordVideo = { dir: path.join(process.cwd(), '.trace') };
+    (contextOptions as any)._traceDir = path.join(process.cwd(), '.trace');
 
   const outputs: CodeGeneratorOutput[] = [TerminalOutput.create(process.stdout, languageGenerator.highlighterType())];
   if (outputFile)

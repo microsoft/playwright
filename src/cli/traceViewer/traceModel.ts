@@ -51,6 +51,7 @@ export type PageEntry = {
 export type ActionEntry = {
   actionId: string;
   action: trace.ActionTraceEvent;
+  thumbnailUrl: string;
   resources: trace.NetworkResourceTraceEvent[];
 };
 
@@ -108,9 +109,11 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
       }
       case 'action': {
         const pageEntry = pageEntries.get(event.pageId!)!;
+        const actionId = event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length;
         const action: ActionEntry = {
-          actionId: event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length,
+          actionId,
           action: event,
+          thumbnailUrl: `action-preview/${actionId}.png`,
           resources: pageEntry.resources,
         };
         pageEntry.resources = [];

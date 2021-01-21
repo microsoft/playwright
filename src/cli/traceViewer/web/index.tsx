@@ -15,11 +15,11 @@
  */
 
 import { TraceModel, VideoMetaInfo, trace } from '../traceModel';
-import './common.css';
 import './third_party/vscode/codicon.css';
 import { Workbench } from './ui/workbench';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { applyTheme } from './theme';
 
 declare global {
   interface Window {
@@ -30,27 +30,8 @@ declare global {
   }
 }
 
-function platformName(): string {
-  if (window.navigator.userAgent.includes('Linux'))
-    return 'platform-linux';
-  if (window.navigator.userAgent.includes('Windows'))
-    return 'platform-windows';
-  if (window.navigator.userAgent.includes('Mac'))
-    return 'platform-mac';
-  return 'platform-generic';
-}
-
 (async () => {
-  document!.defaultView!.addEventListener('focus', (event: any) => {
-    if (event.target.document.nodeType === Node.DOCUMENT_NODE)
-      document.body.classList.remove('inactive');
-  }, false);
-  document!.defaultView!.addEventListener('blur', event => {
-    document.body.classList.add('inactive');
-  }, false);
-
-  document.documentElement.classList.add(platformName());
-
+  applyTheme();
   const traceModel = await window.getTraceModel();
   ReactDOM.render(<Workbench traceModel={traceModel} />, document.querySelector('#root'));
 })();

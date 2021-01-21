@@ -21,6 +21,7 @@ import { Timeline } from './timeline';
 import './workbench.css';
 import * as React from 'react';
 import { ContextSelector } from './contextSelector';
+import { GlobalStyles } from '../styles';
 
 export const Workbench: React.FunctionComponent<{
   traceModel: TraceModel,
@@ -39,6 +40,7 @@ export const Workbench: React.FunctionComponent<{
   const snapshotSize = context.created.viewportSize || { width: 1280, height: 720 };
 
   return <div className='vbox workbench'>
+    <GlobalStyles />
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>
@@ -60,10 +62,10 @@ export const Workbench: React.FunctionComponent<{
         highlightedAction={highlightedAction}
         onSelected={action => setSelectedAction(action)}
         onHighlighted={action => setHighlightedAction(action)}
-        />
+      />
     </div>
     <div className='hbox'>
-      <div style={{ display: 'flex', flex: 'none' }}>
+      <div style={{ display: 'flex', flex: 'none', overflow: 'auto' }}>
         <ActionList
           actions={actions}
           selectedAction={selectedAction}
