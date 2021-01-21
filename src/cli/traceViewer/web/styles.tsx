@@ -14,6 +14,9 @@
   limitations under the License.
 */
 
+import * as React from 'react';
+
+export const GlobalStyles = () => <style>{`
 :root {
   --light-background: #f3f2f1;
   --background: #edebe9;
@@ -51,6 +54,20 @@ html, body {
   overscroll-behavior-x: none;
 }
 
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--color);
+  font-size: 14px;
+  font-family: SegoeUI-SemiBold-final,Segoe UI Semibold,SegoeUI-Regular-final,Segoe UI,"Segoe UI Web (West European)",Segoe,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,Tahoma,Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
 * {
   box-sizing: border-box;
   min-width: 0;
@@ -67,20 +84,6 @@ html, body {
 
 svg {
   fill: currentColor;
-}
-
-body {
-  background-color: var(--background);
-  color: var(--color);
-  font-size: 14px;
-  font-family: SegoeUI-SemiBold-final,Segoe UI Semibold,SegoeUI-Regular-final,Segoe UI,"Segoe UI Web (West European)",Segoe,-apple-system,BlinkMacSystemFont,Roboto,Helvetica Neue,Tahoma,Helvetica,Arial,sans-serif;
-  -webkit-font-smoothing: antialiased;
-}
-
-#root {
-  width: 100%;
-  height: 100%;
-  display: flex;
 }
 
 .platform-windows {
@@ -121,3 +124,4 @@ body {
 ::-webkit-scrollbar-corner {
   background-color: var(--background);
 }
+`}</style>;
