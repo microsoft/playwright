@@ -17,6 +17,7 @@
 import { EventEmitter } from 'events';
 import { rewriteErrorMessage } from '../utils/stackTrace';
 import { TimeoutError } from '../utils/errors';
+import { debugLogger } from '../utils/debugLogger';
 
 export class Waiter {
   private _dispose: (() => void)[] = [];
@@ -63,6 +64,7 @@ export class Waiter {
 
   log(s: string) {
     this._logs.push(s);
+    debugLogger.log('api', s);
   }
 
   private _rejectOn(promise: Promise<any>, dispose?: () => void) {
