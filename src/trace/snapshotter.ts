@@ -18,6 +18,7 @@ import { BrowserContext } from '../server/browserContext';
 import { Page } from '../server/page';
 import * as network from '../server/network';
 import { helper, RegisteredListener } from '../server/helper';
+import { stripFragmentFromUrl } from '../server/network';
 import { Progress, runAbortableTask } from '../server/progress';
 import { debugLogger } from '../utils/debugLogger';
 import { Frame } from '../server/frames';
@@ -115,7 +116,7 @@ export class Snapshotter {
         return frameResult;
       const frameSnapshot = {
         frameId: frame._id,
-        url: removeHash(frame.url()),
+        url: stripFragmentFromUrl(frame.url()),
         html: '<body>Snapshot is not available</body>',
         resourceOverrides: [],
       };
@@ -190,7 +191,7 @@ export class Snapshotter {
 
     const snapshot: FrameSnapshot = {
       frameId: frame._id,
-      url: removeHash(frame.url()),
+      url: stripFragmentFromUrl(frame.url()),
       html: data.html,
       resourceOverrides: [],
     };
@@ -213,16 +214,6 @@ export class Snapshotter {
     }
 
     return { snapshot, mapping };
-  }
-}
-
-function removeHash(url: string) {
-  try {
-    const u = new URL(url);
-    u.hash = '';
-    return u.toString();
-  } catch (e) {
-    return url;
   }
 }
 

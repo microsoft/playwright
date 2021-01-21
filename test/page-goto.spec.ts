@@ -494,3 +494,8 @@ it('should report raw buffer for main resource', (test, { browserName, platform 
   const body = await response.body();
   expect(body.toString()).toBe('Ü (lowercase ü)');
 });
+
+it('should not throw unhandled rejections on invalid url', async ({page, server}) => {
+  const e = await page.goto('https://www.youtube Panel Title.com/').catch(e => e);
+  expect(e.toString()).toContain('Panel Title');
+});

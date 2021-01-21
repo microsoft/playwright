@@ -18,6 +18,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as util from 'util';
 import type { Route } from '../../..';
+import { parsedURL } from '../../client/clientHelper';
 import type { FrameSnapshot, NetworkResourceTraceEvent, PageSnapshot } from '../../trace/traceTypes';
 import { ContextEntry } from './traceModel';
 
@@ -112,11 +113,9 @@ export class SnapshotRouter {
 }
 
 function removeHash(url: string) {
-  try {
-    const u = new URL(url);
-    u.hash = '';
-    return u.toString();
-  } catch (e) {
+  const u = parsedURL(url);
+  if (!u)
     return url;
-  }
+  u.hash = '';
+  return u.toString();
 }

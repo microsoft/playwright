@@ -58,6 +58,14 @@ export async function evaluationScript(fun: Function | string | { path?: string,
   throw new Error('Either path or content property must be present');
 }
 
+export function parsedURL(url: string): URL | null {
+  try {
+    return new URL(url);
+  } catch (e) {
+    return null;
+  }
+}
+
 export function urlMatches(urlString: string, match: types.URLMatch | undefined): boolean {
   if (match === undefined || match === '')
     return true;
@@ -67,10 +75,11 @@ export function urlMatches(urlString: string, match: types.URLMatch | undefined)
     return match.test(urlString);
   if (typeof match === 'string' && match === urlString)
     return true;
-  const url = new URL(urlString);
+  const url = parsedURL(urlString);
+  if (!url)
+    return false;
   if (typeof match === 'string')
     return url.pathname === match;
-
   if (typeof match !== 'function')
     throw new Error('url parameter should be string, RegExp or function');
   return match(url);

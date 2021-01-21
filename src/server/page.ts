@@ -481,7 +481,9 @@ export class Page extends EventEmitter {
     const url = frame.url();
     if (!url.startsWith('http'))
       return;
-    this._browserContext.addVisitedOrigin(new URL(url).origin);
+    const purl = network.parsedURL(url);
+    if (purl)
+      this._browserContext.addVisitedOrigin(purl.origin);
   }
 
   allBindings() {

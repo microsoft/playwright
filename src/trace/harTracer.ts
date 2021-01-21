@@ -134,7 +134,9 @@ class HarContextTracer {
 
   private _onRequest(page: Page, request: network.Request) {
     const pageEntry = this._pageEntries.get(page)!;
-    const url = new URL(request.url());
+    const url = network.parsedURL(request.url());
+    if (!url)
+      return;
 
     const harEntry: har.Entry = {
       pageref: pageEntry.id,
