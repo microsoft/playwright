@@ -41,6 +41,15 @@ it('should set the page close state', async ({context}) => {
   expect(newPage.isClosed()).toBe(true);
 });
 
+it('should pass page to close event', async ({context}) => {
+  const newPage = await context.newPage();
+  const [closedPage] = await Promise.all([
+    newPage.waitForEvent('close'),
+    newPage.close()
+  ]);
+  expect(closedPage).toBe(newPage);
+});
+
 it('should terminate network waiters', async ({context, server}) => {
   const newPage = await context.newPage();
   const results = await Promise.all([
@@ -104,6 +113,22 @@ it('should fire domcontentloaded when expected', async ({page, server}) => {
   const navigatedPromise = page.goto('about:blank');
   await page.waitForEvent('domcontentloaded');
   await navigatedPromise;
+});
+
+it('should pass self as argument to domcontentloaded event', async ({page, server}) => {
+  const [eventArg] = await Promise.all([
+    new Promise(f => page.on('domcontentloaded', f)),
+    page.goto('about:blank')
+  ]);
+  expect(eventArg).toBe(page);
+});
+
+it('should pass self as argument to load event', async ({page, server}) => {
+  const [eventArg] = await Promise.all([
+    new Promise(f => page.on('load', f)),
+    page.goto('about:blank')
+  ]);
+  expect(eventArg).toBe(page);
 });
 
 it('should fail with error upon disconnect', async ({page, server}) => {

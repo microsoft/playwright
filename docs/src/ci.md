@@ -14,9 +14,24 @@ configurations for common CI providers.
 
 1. **Ensure CI agent can run browsers**: Use [our Docker image](./docker.md)
    in Linux agents. Windows and macOS agents do not require any additional dependencies.
-1. **Install Playwright**: In most projects, this would be done with `npm ci`
-   (or `npm install`). Playwright would install the relevant browsers automatically.
-1. **Run your tests**: Use `npm test` or equivalent to execute your tests.
+1. **Install Playwright**:
+   ```sh js
+   $ npm ci
+   # or
+   $ npm install
+   ```
+   ```sh python
+   $ pip install playwright==1.8.0a1
+   $ playwright install
+   ```
+
+1. **Run your tests**:
+   ```sh js
+   $ npm test
+   ```
+   ```sh python
+   $ pytest
+   ```
 
 ## CI configurations
 
@@ -24,11 +39,29 @@ configurations for common CI providers.
 
 The [Playwright GitHub Action](https://github.com/microsoft/playwright-github-action) can be used to run Playwright tests on GitHub Actions.
 
-```yml
+```yml js
 steps:
   - uses: microsoft/playwright-github-action@v1
   - name: Run your tests
     run: npm test
+```
+
+```yml python
+steps:
+  - uses: microsoft/playwright-github-action@v1
+  - name: Set up Python
+    uses: actions/setup-python@v2
+    with:
+      python-version: 3.8
+  - name: Install dependencies
+    run: |
+      python -m pip install --upgrade pip
+      pip install playwright==1.8.0a1
+      pip install -e .
+  - name: Ensure browsers are installed
+    run: python -m playwright install
+  - name: Run your tests
+    run: pytest
 ```
 
 We run [our tests](https://github.com/microsoft/playwright/blob/master/.github/workflows/tests.yml) on GitHub Actions, across a matrix of 3 platforms (Windows, Linux, macOS) and 3 browsers (Chromium, Firefox, WebKit).
@@ -51,15 +84,15 @@ Suggested configuration
    ```
 
    ```python async
-      browser = await playwright.chromium.launch(
-         args=['--disable-dev-shm-usage']
-      )
+   browser = await playwright.chromium.launch(
+      args=['--disable-dev-shm-usage']
+   )
    ```
 
    ```python sync
-      browser = playwright.chromium.launch({
-         args=['--disable-dev-shm-usage']
-      })
+   browser = playwright.chromium.launch({
+      args=['--disable-dev-shm-usage']
+   })
    ```
 
    This will write shared memory files into `/tmp` instead of `/dev/shm`. See
@@ -86,13 +119,10 @@ pool:
 container: mcr.microsoft.com/playwright:bionic
 
 steps:
-- script: npm install
-- script: npm run test
+...
 ```
 
 ### Travis CI
-
-We run our tests on Travis CI over a Linux agent (Ubuntu 18.04).
 
 Suggested configuration
 1. [User namespace cloning](http://man7.org/linux/man-pages/man7/user_namespaces.7.html)
@@ -148,7 +178,7 @@ before_install:
 
 ### CircleCI
 
-We run our tests on CircleCI, with our [pre-built Docker image](./docker.md). Running Playwright smoothly on CircleCI requires the following steps:
+Running Playwright on CircleCI requires the following steps:
 
 1. Use the pre-built [Docker image](./docker.md) in your config like so:
 
@@ -223,8 +253,7 @@ tests:
   stage: test
   image: mcr.microsoft.com/playwright:bionic
   script:
-    - npm install # This should install playwright
-    - npm run test
+  ...
 ```
 
 ## Caching browsers
@@ -236,7 +265,7 @@ binaries. This behavior can be [customized with environment variables](./install
 Caching browsers on CI is **strictly optional**: The `postinstall` hooks should
 execute and download the browser binaries on every run.
 
-#### Exception: `node_modules` are cached
+#### Exception: `node_modules` are cached (Node-specific)
 
 Most CI providers cache the [npm-cache](https://docs.npmjs.com/cli-commands/cache.html)
 directory (located at `$HOME/.npm`). If your CI pipelines caches the `node_modules`
@@ -273,8 +302,11 @@ configuration, against a hash of the Playwright version.
 
 Playwright supports the `DEBUG` environment variable to output debug logs during execution. Setting it to `pw:browser*` is helpful while debugging `Error: Failed to launch browser` errors.
 
-```
+```sh js
 DEBUG=pw:browser* npm run test
+```
+```sh python
+DEBUG=pw:browser* pytest
 ```
 
 ## Running headful
@@ -309,6 +341,9 @@ with sync_playwright() as p:
 
 On Linux agents, headful execution requires [Xvfb](https://en.wikipedia.org/wiki/Xvfb) to be installed. Our [Docker image](./docker.md) and GitHub Action have Xvfb pre-installed. To run browsers in headful mode with Xvfb, add `xvfb-run` before the Node.js command.
 
-```
+```sh js
 xvfb-run node index.js
+```
+```sh python
+xvfb-run python test.py
 ```

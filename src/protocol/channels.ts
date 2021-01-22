@@ -297,8 +297,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceResourcesPath?: string,
-  _tracePath?: string,
+  _traceDir?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -360,8 +359,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceResourcesPath?: string,
-  _tracePath?: string,
+  _traceDir?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -424,8 +422,7 @@ export type BrowserNewContextParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceResourcesPath?: string,
-  _tracePath?: string,
+  _traceDir?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -477,8 +474,7 @@ export type BrowserNewContextOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceResourcesPath?: string,
-  _tracePath?: string,
+  _traceDir?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -2772,8 +2768,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceResourcesPath?: string,
-  _tracePath?: string,
+  _traceDir?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -2817,8 +2812,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   hasTouch?: boolean,
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
-  _traceResourcesPath?: string,
-  _tracePath?: string,
+  _traceDir?: string,
   recordVideo?: {
     dir: string,
     size?: {

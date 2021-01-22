@@ -40,6 +40,7 @@ context.close()
 ```
 
 ## event: BrowserContext.close
+- type: <[BrowserContext]>
 
 Emitted when Browser context gets closed. This might happen because of one of the following:
 * Browser context is closed.

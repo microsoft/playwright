@@ -47,6 +47,41 @@ it('should work with :visible', async ({page}) => {
   expect(await page.$eval('div:visible', div => div.id)).toBe('target2');
 });
 
+it('should work with :nth-match', async ({page}) => {
+  await page.setContent(`
+    <section>
+      <div id=target1></div>
+      <div id=target2></div>
+    </section>
+  `);
+  expect(await page.$(':nth-match(div, 3)')).toBe(null);
+  expect(await page.$eval(':nth-match(div, 1)', e => e.id)).toBe('target1');
+  expect(await page.$eval(':nth-match(div, 2)', e => e.id)).toBe('target2');
+  expect(await page.$eval(':nth-match(section > div, 2)', e => e.id)).toBe('target2');
+  expect(await page.$eval(':nth-match(section, div, 2)', e => e.id)).toBe('target1');
+  expect(await page.$eval(':nth-match(div, section, 3)', e => e.id)).toBe('target2');
+  expect(await page.$$eval(':is(:nth-match(div, 1), :nth-match(div, 2))', els => els.length)).toBe(2);
+
+  let error;
+  error = await page.$(':nth-match(div, bar, 0)').catch(e => e);
+  expect(error.message).toContain(`"nth-match" engine expects a one-based index as the last argument`);
+
+  error = await page.$(':nth-match(2)').catch(e => e);
+  expect(error.message).toContain(`"nth-match" engine expects non-empty selector list and an index argument`);
+
+  error = await page.$(':nth-match(div, bar, foo)').catch(e => e);
+  expect(error.message).toContain(`"nth-match" engine expects a one-based index as the last argument`);
+
+  const promise = page.waitForSelector(`:nth-match(div, 3)`, { state: 'attached' });
+  await page.$eval('section', section => {
+    const div = document.createElement('div');
+    div.setAttribute('id', 'target3');
+    section.appendChild(div);
+  });
+  const element = await promise;
+  expect(await element.evaluate(e => e.id)).toBe('target3');
+});
+
 it('should work with position selectors', async ({page}) => {
   /*
 

@@ -441,7 +441,9 @@ export class Frame extends ChannelOwner<channels.FrameChannel, channels.FrameIni
   }
 
   async waitForTimeout(timeout: number) {
-    await new Promise(fulfill => setTimeout(fulfill, timeout));
+    return this._wrapApiCall(this._apiName('waitForTimeout'), async () => {
+      await new Promise(fulfill => setTimeout(fulfill, timeout));
+    });
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options: WaitForFunctionOptions = {}): Promise<structs.SmartHandle<R>> {

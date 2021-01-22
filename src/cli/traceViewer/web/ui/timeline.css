@@ -82,16 +82,28 @@
   box-shadow: 0 0 0 1px var(--action-color);
 }
 
-.timeline-bar.click {
+.timeline-bar.click,
+.timeline-bar.dblclick,
+.timeline-bar.hover,
+.timeline-bar.check,
+.timeline-bar.uncheck,
+.timeline-bar.tap {
   --action-color: var(--green);
 }
 
 .timeline-bar.fill,
-.timeline-bar.press {
+.timeline-bar.press,
+.timeline-bar.type,
+.timeline-bar.selectOption,
+.timeline-bar.setInputFiles {
   --action-color: var(--orange);
 }
 
-.timeline-bar.goto {
+.timeline-bar.goto,
+.timeline-bar.setContent,
+.timeline-bar.goBack,
+.timeline-bar.goForward,
+.timeline-bar.reload {
   --action-color: var(--blue);
 }
 

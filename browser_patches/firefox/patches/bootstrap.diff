@@ -603,7 +603,7 @@ index afa1eee3a6107067be52bf635e94be4271facee0..8d3e7bca533da4e55cc43843de552a12
     * This attempts to save any applicable layout history state (like
     * scroll position) in the nsISHEntry. This is normally done
 diff --git a/dom/base/Document.cpp b/dom/base/Document.cpp
-index 82f1f44f74433825c6f1fbdff74ee16a0ca3b7c0..0dfc0f95f019ff799a4f7ac003ef9e43f317274f 100644
+index a1d4304677356f1a340f155f24e78d06ae1c6f09..1d8bc991ff7fdca6d6ee1e691bccfcd2e6c637b0 100644
 --- a/dom/base/Document.cpp
 +++ b/dom/base/Document.cpp
 @@ -3514,6 +3514,9 @@ void Document::SendToConsole(nsCOMArray<nsISecurityConsoleMessage>& aMessages) {
@@ -628,7 +628,7 @@ index 82f1f44f74433825c6f1fbdff74ee16a0ca3b7c0..0dfc0f95f019ff799a4f7ac003ef9e43
    // If this is a data document - no need to set CSP.
    if (mLoadedAsData) {
      return NS_OK;
-@@ -4371,6 +4379,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
+@@ -4372,6 +4380,10 @@ bool Document::HasFocus(ErrorResult& rv) const {
      return false;
    }
  
@@ -639,7 +639,7 @@ index 82f1f44f74433825c6f1fbdff74ee16a0ca3b7c0..0dfc0f95f019ff799a4f7ac003ef9e43
    // Is there a focused DOMWindow?
    nsCOMPtr<mozIDOMWindowProxy> focusedWindow;
    fm->GetFocusedWindow(getter_AddRefs(focusedWindow));
-@@ -17075,6 +17087,19 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
+@@ -17121,6 +17133,19 @@ void Document::RemoveToplevelLoadingDocument(Document* aDoc) {
  
  StylePrefersColorScheme Document::PrefersColorScheme(
      IgnoreRFP aIgnoreRFP) const {
@@ -835,7 +835,7 @@ index 08c35f59d0e92851201cc9a2c97e1f3acbb243fa..21773f371c8c8a6d10e8b94b4ed9a315
      // care of lowering the present active window. This happens in
      // a separate runnable to avoid touching multiple windows in
 diff --git a/dom/base/nsGlobalWindowOuter.cpp b/dom/base/nsGlobalWindowOuter.cpp
-index 9752bfb41b7088fadcc06252c95769586726945d..be30f0413f45be565182a95590918c9e3a36c487 100644
+index 92bb1f68e50187c901049a9d1dbc21e7e8a2218d..8e7f0d4d1e5009e3b4de414848277cb8c1606a84 100644
 --- a/dom/base/nsGlobalWindowOuter.cpp
 +++ b/dom/base/nsGlobalWindowOuter.cpp
 @@ -2465,7 +2465,7 @@ nsresult nsGlobalWindowOuter::SetNewDocument(Document* aDocument,
@@ -1158,10 +1158,10 @@ index cb59e1bdcaaf0b923fab70ef75652dd8db4834da..53cdfbcd443b34779e82ee29dab914ab
    /** Synthesize a touch event. The event types supported are:
     *    touchstart, touchend, touchmove, and touchcancel
 diff --git a/dom/ipc/BrowserChild.cpp b/dom/ipc/BrowserChild.cpp
-index 66d80acd201018697ab0ef7fed15ac111735c1a4..3729e5683c83a6e0b789d7a12022a4b90da5401f 100644
+index 0c56a907d71fdab67df729442b483ac4c615b596..9d474bc6de60db8aa661dc4895a47ab52cc02b66 100644
 --- a/dom/ipc/BrowserChild.cpp
 +++ b/dom/ipc/BrowserChild.cpp
-@@ -3591,6 +3591,13 @@ NS_IMETHODIMP BrowserChild::OnStateChange(nsIWebProgress* aWebProgress,
+@@ -3583,6 +3583,13 @@ NS_IMETHODIMP BrowserChild::OnStateChange(nsIWebProgress* aWebProgress,
    return NS_OK;
  }
  
@@ -1264,10 +1264,10 @@ index 75995564e5438261a2886840ecad32d2f1d7663f..dfdabcedcda4e212ed0ffd7bc4def570
    // and the capturer thread. It is created prior to the capturer thread
    // starting and is destroyed after it is stopped.
 diff --git a/dom/script/ScriptSettings.cpp b/dom/script/ScriptSettings.cpp
-index b99568b6b25c6c91a73676eaf7dbdf0c3316c2ef..def5ad10d49c946629376854835a0bfc9cec09e1 100644
+index 589b46999c7f917c55e9e5e042f45a01cca7e9eb..128eb07822da31d1f6040b2505247c71fc9353b0 100644
 --- a/dom/script/ScriptSettings.cpp
 +++ b/dom/script/ScriptSettings.cpp
-@@ -193,6 +193,30 @@ ScriptSettingsStackEntry::~ScriptSettingsStackEntry() {
+@@ -195,6 +195,30 @@ ScriptSettingsStackEntry::~ScriptSettingsStackEntry() {
    MOZ_ASSERT_IF(mGlobalObject, mGlobalObject->HasJSGlobal());
  }
  
@@ -1298,7 +1298,7 @@ index b99568b6b25c6c91a73676eaf7dbdf0c3316c2ef..def5ad10d49c946629376854835a0bfc
  // If the entry or incumbent global ends up being something that the subject
  // principal doesn't subsume, we don't want to use it. This never happens on
  // the web, but can happen with asymmetric privilege relationships (i.e.
-@@ -220,7 +244,7 @@ static nsIGlobalObject* ClampToSubject(nsIGlobalObject* aGlobalOrNull) {
+@@ -222,7 +246,7 @@ static nsIGlobalObject* ClampToSubject(nsIGlobalObject* aGlobalOrNull) {
    NS_ENSURE_TRUE(globalPrin, GetCurrentGlobal());
    if (!nsContentUtils::SubjectPrincipalOrSystemIfNativeCaller()
             ->SubsumesConsideringDomain(globalPrin)) {
@@ -1989,7 +1989,7 @@ index 87701f8d2cfee8bd84acd28c62b3be4989c9474c..ae1aa85c019cb21d4f7e79c35e8afe72
 +                             [optional] in unsigned long aFlags);
  };
 diff --git a/uriloader/exthandler/nsExternalHelperAppService.cpp b/uriloader/exthandler/nsExternalHelperAppService.cpp
-index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c0e3b4756 100644
+index 1334ae4f197d3d067b36c59de568daa96b59925d..8ae9a013bbc1412deaf4cb26f5dd9a9f33195bbd 100644
 --- a/uriloader/exthandler/nsExternalHelperAppService.cpp
 +++ b/uriloader/exthandler/nsExternalHelperAppService.cpp
 @@ -101,6 +101,7 @@
@@ -2000,7 +2000,7 @@ index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c
  #include "mozilla/Preferences.h"
  #include "mozilla/ipc/URIUtils.h"
  
-@@ -919,6 +920,12 @@ NS_IMETHODIMP nsExternalHelperAppService::ApplyDecodingForExtension(
+@@ -922,6 +923,12 @@ NS_IMETHODIMP nsExternalHelperAppService::ApplyDecodingForExtension(
    return NS_OK;
  }
  
@@ -2013,7 +2013,7 @@ index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c
  nsresult nsExternalHelperAppService::GetFileTokenForPath(
      const char16_t* aPlatformAppPath, nsIFile** aFile) {
    nsDependentString platformAppPath(aPlatformAppPath);
-@@ -1568,7 +1575,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
+@@ -1572,7 +1579,12 @@ nsresult nsExternalAppHandler::SetUpTempFile(nsIChannel* aChannel) {
    // Strip off the ".part" from mTempLeafName
    mTempLeafName.Truncate(mTempLeafName.Length() - ArrayLength(".part") + 1);
  
@@ -2026,7 +2026,7 @@ index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c
    mSaver =
        do_CreateInstance(NS_BACKGROUNDFILESAVERSTREAMLISTENER_CONTRACTID, &rv);
    NS_ENSURE_SUCCESS(rv, rv);
-@@ -1744,7 +1756,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1748,7 +1760,36 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
      return NS_OK;
    }
  
@@ -2064,7 +2064,7 @@ index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c
    if (NS_FAILED(rv)) {
      nsresult transferError = rv;
  
-@@ -1797,6 +1838,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
+@@ -1801,6 +1842,11 @@ NS_IMETHODIMP nsExternalAppHandler::OnStartRequest(nsIRequest* request) {
  
    bool alwaysAsk = true;
    mMimeInfo->GetAlwaysAskBeforeHandling(&alwaysAsk);
@@ -2076,7 +2076,7 @@ index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c
    if (alwaysAsk) {
      // But we *don't* ask if this mimeInfo didn't come from
      // our user configuration datastore and the user has said
-@@ -2204,6 +2250,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
+@@ -2208,6 +2254,16 @@ nsExternalAppHandler::OnSaveComplete(nsIBackgroundFileSaver* aSaver,
      NotifyTransfer(aStatus);
    }
  
@@ -2093,7 +2093,7 @@ index 16b7be9b364a322d9d39defd56ae0c888252bd11..f8d2b6b5f6bedae78c7a014f6ed5c85c
    return NS_OK;
  }
  
-@@ -2584,6 +2640,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
+@@ -2588,6 +2644,15 @@ NS_IMETHODIMP nsExternalAppHandler::Cancel(nsresult aReason) {
      }
    }
  

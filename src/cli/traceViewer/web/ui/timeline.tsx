@@ -17,7 +17,6 @@
 
 import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../traceModel';
 import './timeline.css';
-import { FilmStrip } from './filmStrip';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
@@ -55,13 +54,16 @@ export const Timeline: React.FunctionComponent<{
     const bars: TimelineBar[] = [];
     for (const page of context.pages) {
       for (const entry of page.actions) {
+        let detail = entry.action.selector || '';
+        if (entry.action.action === 'goto')
+          detail = entry.action.value || '';
         bars.push({
           entry,
           leftTime: entry.action.startTime,
           rightTime: entry.action.endTime,
           leftPosition: timeToPosition(measure.width, boundaries, entry.action.startTime),
           rightPosition: timeToPosition(measure.width, boundaries, entry.action.endTime),
-          label: entry.action.action + ' ' + (entry.action.selector || entry.action.value || ''),
+          label: entry.action.action + ' ' + detail,
           type: entry.action.action,
           priority: 0,
         });
@@ -186,7 +188,6 @@ export const Timeline: React.FunctionComponent<{
         ></div>;
       })
     }</div>
-    <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
     <div className='timeline-marker timeline-marker-hover' style={{
       display: (previewX !== undefined) ? 'block' : 'none',
       left: (previewX || 0) + 'px',
@@ -248,12 +249,12 @@ function msToString(ms: number): string {
 
   const minutes = seconds / 60;
   if (minutes < 60)
-    return minutes.toFixed(1) + 's';
+    return minutes.toFixed(1) + 'm';
 
   const hours = minutes / 60;
   if (hours < 24)
     return hours.toFixed(1) + 'h';
 
   const days = hours / 24;
-  return days.toFixed(1) + 'h';
+  return days.toFixed(1) + 'd';
 }

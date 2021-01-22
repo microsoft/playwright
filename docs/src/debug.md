@@ -12,7 +12,7 @@ for browser automation.
 ## Run in headful mode
 
 Playwright runs browsers in headless mode by default. To change this behavior,
-use `headless: false` as a launch option. You can also use the `slowMo` option
+use `headless: false` as a launch option. You can also use the [`option: slowMo`] option
 to slow down execution and follow along while debugging.
 
 ```js

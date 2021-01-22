@@ -18,23 +18,31 @@ import { ActionEntry } from '../../traceModel';
 import './actionList.css';
 import * as React from 'react';
 
-export const ActionList: React.FunctionComponent<{
+export interface ActionListProps {
   actions: ActionEntry[],
   selectedAction: ActionEntry | undefined,
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
   onHighlighted: (action: ActionEntry | undefined) => void,
-}> = ({ actions, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
+}
+
+export const ActionList: React.FC<ActionListProps> = ({
+  actions = [],
+  selectedAction = undefined,
+  highlightedAction = undefined,
+  onSelected = () => {},
+  onHighlighted = () => {},
+}) => {
   const targetAction = highlightedAction || selectedAction;
   return <div className='action-list'>{actions.map(actionEntry => {
-    const { action, actionId } = actionEntry;
+    const { action, actionId, thumbnailUrl } = actionEntry;
     return <div
       className={'action-entry' + (actionEntry === targetAction ? ' selected' : '')}
       key={actionId}
       onClick={() => onSelected(actionEntry)}
       onMouseEnter={() => onHighlighted(actionEntry)}
       onMouseLeave={() => (highlightedAction === actionEntry) && onHighlighted(undefined)}
-      >
+    >
       <div className='action-header'>
         <div className={'action-error codicon codicon-issues'} hidden={!actionEntry.action.error} />
         <div className='action-title'>{action.action}</div>
@@ -42,7 +50,7 @@ export const ActionList: React.FunctionComponent<{
         {action.action === 'goto' && action.value && <div className='action-url' title={action.value}>{action.value}</div>}
       </div>
       <div className='action-thumbnail'>
-        {action.snapshot ? <img src={`action-preview/${actionId}.png`} /> : 'No snapshot available'}
+        <img src={thumbnailUrl} />
       </div>
     </div>;
   })}</div>;

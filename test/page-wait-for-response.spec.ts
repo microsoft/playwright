@@ -43,6 +43,11 @@ it('should respect default timeout', async ({page, playwright}) => {
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
+it('should log the url', async ({page}) => {
+  const error = await page.waitForResponse('foo.css', { timeout: 100 }).catch(e => e);
+  expect(error.message).toContain('waiting for response "foo.css"');
+});
+
 it('should work with predicate', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [response] = await Promise.all([

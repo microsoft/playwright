@@ -26,7 +26,9 @@
     "test-types": "node utils/generate_types/ && npx -p typescript@3.7.5 tsc -p utils/generate_types/test/tsconfig.json && tsc -p ./test/",
     "roll-browser": "node utils/roll_browser.js",
     "check-deps": "node utils/check_deps.js",
-    "build-android-driver": "./utils/build_android_driver.sh"
+    "build-android-driver": "./utils/build_android_driver.sh",
+    "storybook": "start-storybook -p 6006 -s public",
+    "build-storybook": "build-storybook -s public"
   },
   "author": {
     "name": "Microsoft Corporation"
@@ -84,6 +86,11 @@
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "socksv5": "0.0.6",
+    "@storybook/addon-actions": "^6.1.14",
+    "@storybook/addon-essentials": "^6.1.14",
+    "@storybook/addon-links": "^6.1.14",
+    "@storybook/node-logger": "^6.1.14",
+    "@storybook/react": "^6.1.14",
     "style-loader": "^1.2.1",
     "ts-loader": "^8.0.3",
     "typescript": "^4.0.2",

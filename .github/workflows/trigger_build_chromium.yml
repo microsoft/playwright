@@ -1,0 +1,24 @@
+name: "Chromium Builder"
+
+on:
+  push:
+    branches:
+      - master
+      - release-*
+    paths:
+      - browser_patches/chromium/BUILD_NUMBER
+      - .github/workflows/trigger_build_chromium.yml
+
+jobs:
+  trigger:
+    name: "trigger"
+    runs-on: ubuntu-18.04
+    steps:
+    - run: |
+        curl -X POST \
+          -H "Accept: application/vnd.github.v3+json" \
+          -H "Authorization: token ${GH_TOKEN}" \
+          --data '{"event_type": "build_chromium"}' \
+          https://api.github.com/repos/microsoft/playwright-internal/dispatches
+      env:
+        GH_TOKEN: ${{ secrets.REPOSITORY_DISPATCH_PERSONAL_ACCESS_TOKEN }}

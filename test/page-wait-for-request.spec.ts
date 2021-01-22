@@ -58,6 +58,11 @@ it('should respect default timeout', async ({page, playwright}) => {
   expect(error).toBeInstanceOf(playwright.errors.TimeoutError);
 });
 
+it('should log the url', async ({page}) => {
+  const error = await page.waitForRequest('long-long-long-long-long-long-long-long-long-long-long-long-long-long.css', { timeout: 100 }).catch(e => e);
+  expect(error.message).toContain('waiting for request "long-long-long-long-long-long-long-long-long-long-…"');
+});
+
 it('should work with no timeout', async ({page, server}) => {
   await page.goto(server.EMPTY_PAGE);
   const [request] = await Promise.all([

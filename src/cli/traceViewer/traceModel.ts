@@ -51,6 +51,7 @@ export type PageEntry = {
 export type ActionEntry = {
   actionId: string;
   action: trace.ActionTraceEvent;
+  thumbnailUrl: string;
   resources: trace.NetworkResourceTraceEvent[];
 };
 
@@ -66,7 +67,6 @@ export type VideoMetaInfo = {
 export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel, filePath: string) {
   const contextEntries = new Map<string, ContextEntry>();
   const pageEntries = new Map<string, PageEntry>();
-
   for (const event of events) {
     switch (event.type) {
       case 'context-created': {
@@ -109,9 +109,11 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
       }
       case 'action': {
         const pageEntry = pageEntries.get(event.pageId!)!;
+        const actionId = event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length;
         const action: ActionEntry = {
-          actionId: event.contextId + '/' + event.pageId + '/' + pageEntry.actions.length,
+          actionId,
           action: event,
+          thumbnailUrl: `action-preview/${actionId}.png`,
           resources: pageEntry.resources,
         };
         pageEntry.resources = [];

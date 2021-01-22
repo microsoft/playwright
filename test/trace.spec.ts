@@ -20,14 +20,13 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 it('should record trace', async ({browser, testInfo, server}) => {
-  const artifactsPath = testInfo.outputPath('');
-  const tracePath = path.join(artifactsPath, 'playwright.trace');
-  const context = await browser.newContext({ _tracePath: tracePath } as any);
+  const traceDir = testInfo.outputPath('trace');
+  const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
   const url = server.PREFIX + '/snapshot/snapshot-with-css.html';
   await page.goto(url);
   await context.close();
-
+  const tracePath = path.join(traceDir, fs.readdirSync(traceDir).find(n => n.endsWith('.trace')));
   const traceFileContent = await fs.promises.readFile(tracePath, 'utf8');
   const traceEvents = traceFileContent.split('\n').filter(line => !!line).map(line => JSON.parse(line)) as trace.TraceEvent[];
 
@@ -47,5 +46,5 @@ it('should record trace', async ({browser, testInfo, server}) => {
   expect(gotoEvent.value).toBe(url);
 
   expect(gotoEvent.snapshot).toBeTruthy();
-  expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', gotoEvent.snapshot!.sha1))).toBe(true);
+  expect(fs.existsSync(path.join(traceDir, 'resources', gotoEvent.snapshot!.sha1))).toBe(true);
 });

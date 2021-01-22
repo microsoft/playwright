@@ -36,7 +36,8 @@ describe('', (suite, { browserName, platform, mode }) => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page, toImpl, browserName);
-    await new Promise(f => page.on('crash', f));
+    const crashedPage = await new Promise(f => page.on('crash', f));
+    expect(crashedPage).toBe(page);
   });
 
   it('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {
