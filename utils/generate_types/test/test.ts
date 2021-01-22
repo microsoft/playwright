@@ -766,13 +766,25 @@ playwright.chromium.launch().then(async browser => {
 
 // Event listeners
 (async function() {
-  const eventEmitter = {} as (playwright.Page|playwright.BrowserContext|EventEmitter);
-  const listener = () => {};
-  eventEmitter.addListener('close', listener)
-              .on('close', listener)
-              .once('close', listener)
-              .removeListener('close', listener)
-              .off('close', listener);
+  {
+    const eventEmitter = {} as (playwright.Page | EventEmitter);
+    const listener = () => { };
+    eventEmitter.addListener('close', listener)
+      .on('close', listener)
+      .once('close', listener)
+      .removeListener('close', listener)
+      .off('close', listener);
+
+  }
+  {
+    const eventEmitter = {} as (playwright.BrowserContext | EventEmitter);
+    const listener = (c: playwright.BrowserContext) => { };
+    eventEmitter.addListener('close', listener)
+      .on('close', listener)
+      .once('close', listener)
+      .removeListener('close', listener)
+      .off('close', listener);
+  }
 });
 
 // waitForResponse callback predicate
