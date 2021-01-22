@@ -7357,27 +7357,27 @@ export interface BrowserServer {
   /**
    * Emitted when the browser server closes.
    */
-  on(event: 'close', listener: (browserServer: BrowserServer) => void): this;
+  on(event: 'close', listener: () => void): this;
 
   /**
    * Emitted when the browser server closes.
    */
-  once(event: 'close', listener: (browserServer: BrowserServer) => void): this;
+  once(event: 'close', listener: () => void): this;
 
   /**
    * Emitted when the browser server closes.
    */
-  addListener(event: 'close', listener: (browserServer: BrowserServer) => void): this;
+  addListener(event: 'close', listener: () => void): this;
 
   /**
    * Emitted when the browser server closes.
    */
-  removeListener(event: 'close', listener: (browserServer: BrowserServer) => void): this;
+  removeListener(event: 'close', listener: () => void): this;
 
   /**
    * Emitted when the browser server closes.
    */
-  off(event: 'close', listener: (browserServer: BrowserServer) => void): this;
+  off(event: 'close', listener: () => void): this;
 
   /**
    * Closes the browser gracefully and makes sure the process is terminated.

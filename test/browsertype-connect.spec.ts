@@ -85,6 +85,15 @@ describe('connect', (suite, { mode }) => {
     expect(disconnected2).toBe(1);
   });
 
+  it('disconnected event should have browser as argument', async ({browserType, remoteServer}) => {
+    const browser = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint() });
+    const [disconnected] = await Promise.all([
+      new Promise(f => browser.on('disconnected', f)),
+      browser.close(),
+    ]);
+    expect(disconnected).toBe(browser);
+  });
+
   it('should handle exceptions during connect', async ({browserType, remoteServer}) => {
     const __testHookBeforeCreateBrowser = () => { throw new Error('Dummy'); };
     const error = await browserType.connect({ wsEndpoint: remoteServer.wsEndpoint(), __testHookBeforeCreateBrowser } as any).catch(e => e);

@@ -141,6 +141,15 @@ it('close() should be callable twice', async ({browser}) => {
   await context.close();
 });
 
+it('should pass self to close event', async ({browser}) => {
+  const newContext = await browser.newContext();
+  const [closedContext] = await Promise.all([
+    newContext.waitForEvent('close'),
+    newContext.close()
+  ]);
+  expect(closedContext).toBe(newContext);
+});
+
 it('should not report frameless pages on error', async ({browser, server}) => {
   const context = await browser.newContext();
   const page = await context.newPage();

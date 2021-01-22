@@ -2,7 +2,6 @@
 * langs: js
 
 ## event: BrowserServer.close
-- type: <[BrowserServer]>
 
 Emitted when the browser server closes.
 

@@ -69,6 +69,22 @@ it('should emit frame events', async ({ page, server, isFirefox }) => {
   expect(log.join(':')).toBe('close:open:received<incoming>:sent<outgoing>');
 });
 
+it('should pass self as argument to close event', async ({ page, server, isFirefox }) => {
+  let socketClosed;
+  const socketClosePromise = new Promise(f => socketClosed = f);
+  let webSocket;
+  page.on('websocket', ws => {
+    webSocket = ws;
+    ws.on('close', socketClosed);
+  });
+  await page.evaluate(port => {
+    const ws = new WebSocket('ws://localhost:' + port + '/ws');
+    ws.addEventListener('open', () => ws.close());
+  }, server.PORT);
+  const eventArg = await socketClosePromise;
+  expect(eventArg).toBe(webSocket);
+});
+
 it('should emit binary frame events', async ({ page, server }) => {
   let doneCallback;
   const donePromise = new Promise(f => doneCallback = f);
