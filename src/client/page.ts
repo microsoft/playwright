@@ -359,27 +359,43 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async waitForRequest(urlOrPredicate: string | RegExp | ((r: Request) => boolean), options: { timeout?: number } = {}): Promise<Request> {
-    const predicate = (request: Request) => {
-      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
-        return urlMatches(request.url(), urlOrPredicate);
-      return urlOrPredicate(request);
-    };
-    return this.waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout });
+    return this._wrapApiCall('page.waitForRequest', async () => {
+      const predicate = (request: Request) => {
+        if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
+          return urlMatches(request.url(), urlOrPredicate);
+        return urlOrPredicate(request);
+      };
+      const trimmedUrl = trimUrl(urlOrPredicate);
+      const logLine = trimmedUrl ? `waiting for request "${trimmedUrl}"` : undefined;
+      return this._waitForEvent(Events.Page.Request, { predicate, timeout: options.timeout }, logLine);
+    });
   }
 
   async waitForResponse(urlOrPredicate: string | RegExp | ((r: Response) => boolean), options: { timeout?: number } = {}): Promise<Response> {
-    const predicate = (response: Response) => {
-      if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
-        return urlMatches(response.url(), urlOrPredicate);
-      return urlOrPredicate(response);
-    };
-    return this.waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout });
+    return this._wrapApiCall('page.waitForResponse', async () => {
+      const predicate = (response: Response) => {
+        if (isString(urlOrPredicate) || isRegExp(urlOrPredicate))
+          return urlMatches(response.url(), urlOrPredicate);
+        return urlOrPredicate(response);
+      };
+      const trimmedUrl = trimUrl(urlOrPredicate);
+      const logLine = trimmedUrl ? `waiting for response "${trimmedUrl}"` : undefined;
+      return this._waitForEvent(Events.Page.Response, { predicate, timeout: options.timeout }, logLine);
+    });
   }
 
   async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
+    return this._wrapApiCall('page.waitForEvent', async () => {
+      return this._waitForEvent(event, optionsOrPredicate, `waiting for event "${event}"`);
+    });
+  }
+
+  private async _waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions, logLine?: string): Promise<any> {
     const timeout = this._timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
     const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
     const waiter = new Waiter();
+    if (logLine)
+      waiter.log(logLine);
     waiter.rejectOnTimeout(timeout, `Timeout while waiting for event "${event}"`);
     if (event !== Events.Page.Crash)
       waiter.rejectOnEvent(this, Events.Page.Crash, new Error('Page crashed'));
@@ -584,7 +600,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async waitForTimeout(timeout: number) {
-    await this._mainFrame.waitForTimeout(timeout);
+    return this._attributeToPage(() => this._mainFrame.waitForTimeout(timeout));
   }
 
   async waitForFunction<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg, options?: WaitForFunctionOptions): Promise<structs.SmartHandle<R>> {
@@ -624,25 +640,27 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async _pdf(options: PDFOptions = {}): Promise<Buffer> {
-    const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;
-    if (transportOptions.margin)
-      transportOptions.margin = { ...transportOptions.margin };
-    if (typeof options.width === 'number')
-      transportOptions.width = options.width + 'px';
-    if (typeof options.height === 'number')
-      transportOptions.height  = options.height + 'px';
-    for (const margin of ['top', 'right', 'bottom', 'left']) {
-      const index = margin as 'top' | 'right' | 'bottom' | 'left';
-      if (options.margin && typeof options.margin[index] === 'number')
-        transportOptions.margin![index] = transportOptions.margin![index] + 'px';
-    }
-    const result = await this._channel.pdf(transportOptions);
-    const buffer = Buffer.from(result.pdf, 'base64');
-    if (options.path) {
-      await mkdirAsync(path.dirname(options.path), { recursive: true });
-      await fsWriteFileAsync(options.path, buffer);
-    }
-    return buffer;
+    return this._wrapApiCall('page.pdf', async () => {
+      const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;
+      if (transportOptions.margin)
+        transportOptions.margin = { ...transportOptions.margin };
+      if (typeof options.width === 'number')
+        transportOptions.width = options.width + 'px';
+      if (typeof options.height === 'number')
+        transportOptions.height  = options.height + 'px';
+      for (const margin of ['top', 'right', 'bottom', 'left']) {
+        const index = margin as 'top' | 'right' | 'bottom' | 'left';
+        if (options.margin && typeof options.margin[index] === 'number')
+          transportOptions.margin![index] = transportOptions.margin![index] + 'px';
+      }
+      const result = await this._channel.pdf(transportOptions);
+      const buffer = Buffer.from(result.pdf, 'base64');
+      if (options.path) {
+        await mkdirAsync(path.dirname(options.path), { recursive: true });
+        await fsWriteFileAsync(options.path, buffer);
+      }
+      return buffer;
+    });
   }
 }
 
@@ -672,5 +690,13 @@ export class BindingCall extends ChannelOwner<channels.BindingCallChannel, chann
     } catch (e) {
       this._channel.reject({ error: serializeError(e) }).catch(() => {});
     }
+  }
+}
+
+function trimUrl(param: any): string | undefined {
+  if (isString(param)) {
+    if (param.length > 50)
+      param = param.substring(0, 50) + '\u2026';
+    return param;
   }
 }

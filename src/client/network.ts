@@ -132,7 +132,9 @@ export class Request extends ChannelOwner<channels.RequestChannel, channels.Requ
   }
 
   async response(): Promise<Response | null> {
-    return Response.fromNullable((await this._channel.response()).response);
+    return this._wrapApiCall('request.response', async () => {
+      return Response.fromNullable((await this._channel.response()).response);
+    });
   }
 
   frame(): Frame {
@@ -182,53 +184,59 @@ export class Route extends ChannelOwner<channels.RouteChannel, channels.RouteIni
   }
 
   async abort(errorCode?: string) {
-    await this._channel.abort({ errorCode });
+    return this._wrapApiCall('route.abort', async () => {
+      await this._channel.abort({ errorCode });
+    });
   }
 
   async fulfill(options: { status?: number, headers?: Headers, contentType?: string, body?: string | Buffer, path?: string } = {}) {
-    let body = '';
-    let isBase64 = false;
-    let length = 0;
-    if (options.path) {
-      const buffer = await util.promisify(fs.readFile)(options.path);
-      body = buffer.toString('base64');
-      isBase64 = true;
-      length = buffer.length;
-    } else if (isString(options.body)) {
-      body = options.body;
-      isBase64 = false;
-      length = Buffer.byteLength(body);
-    } else if (options.body) {
-      body = options.body.toString('base64');
-      isBase64 = true;
-      length = options.body.length;
-    }
+    return this._wrapApiCall('route.fulfill', async () => {
+      let body = '';
+      let isBase64 = false;
+      let length = 0;
+      if (options.path) {
+        const buffer = await util.promisify(fs.readFile)(options.path);
+        body = buffer.toString('base64');
+        isBase64 = true;
+        length = buffer.length;
+      } else if (isString(options.body)) {
+        body = options.body;
+        isBase64 = false;
+        length = Buffer.byteLength(body);
+      } else if (options.body) {
+        body = options.body.toString('base64');
+        isBase64 = true;
+        length = options.body.length;
+      }
 
-    const headers: Headers = {};
-    for (const header of Object.keys(options.headers || {}))
-      headers[header.toLowerCase()] = String(options.headers![header]);
-    if (options.contentType)
-      headers['content-type'] = String(options.contentType);
-    else if (options.path)
-      headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
-    if (length && !('content-length' in headers))
-      headers['content-length'] = String(length);
+      const headers: Headers = {};
+      for (const header of Object.keys(options.headers || {}))
+        headers[header.toLowerCase()] = String(options.headers![header]);
+      if (options.contentType)
+        headers['content-type'] = String(options.contentType);
+      else if (options.path)
+        headers['content-type'] = mime.getType(options.path) || 'application/octet-stream';
+      if (length && !('content-length' in headers))
+        headers['content-length'] = String(length);
 
-    await this._channel.fulfill({
-      status: options.status || 200,
-      headers: headersObjectToArray(headers),
-      body,
-      isBase64
+      await this._channel.fulfill({
+        status: options.status || 200,
+        headers: headersObjectToArray(headers),
+        body,
+        isBase64
+      });
     });
   }
 
   async continue(options: { url?: string, method?: string, headers?: Headers, postData?: string | Buffer } = {}) {
-    const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
-    await this._channel.continue({
-      url: options.url,
-      method: options.method,
-      headers: options.headers ? headersObjectToArray(options.headers) : undefined,
-      postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+    return this._wrapApiCall('route.continue', async () => {
+      const postDataBuffer = isString(options.postData) ? Buffer.from(options.postData, 'utf8') : options.postData;
+      await this._channel.continue({
+        url: options.url,
+        method: options.method,
+        headers: options.headers ? headersObjectToArray(options.headers) : undefined,
+        postData: postDataBuffer ? postDataBuffer.toString('base64') : undefined,
+      });
     });
   }
 }
@@ -295,7 +303,9 @@ export class Response extends ChannelOwner<channels.ResponseChannel, channels.Re
   }
 
   async body(): Promise<Buffer> {
-    return Buffer.from((await this._channel.body()).binary, 'base64');
+    return this._wrapApiCall('response.body', async () => {
+      return Buffer.from((await this._channel.body()).binary, 'base64');
+    });
   }
 
   async text(): Promise<string> {

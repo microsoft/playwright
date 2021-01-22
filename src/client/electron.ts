@@ -86,14 +86,18 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async firstWindow(): Promise<electronApi.ElectronPage> {
-    if (this._windows.size)
-      return this._windows.values().next().value;
-    return this.waitForEvent('window');
+    return this._wrapApiCall('electronApplication.firstWindow', async () => {
+      if (this._windows.size)
+        return this._windows.values().next().value;
+      return this.waitForEvent('window');
+    });
   }
 
   async newBrowserWindow(options: any): Promise<electronApi.ElectronPage> {
-    const result = await this._channel.newBrowserWindow({ arg: serializeArgument(options) });
-    return Page.from(result.page) as any as electronApi.ElectronPage;
+    return this._wrapApiCall('electronApplication.newBrowserWindow', async () => {
+      const result = await this._channel.newBrowserWindow({ arg: serializeArgument(options) });
+      return Page.from(result.page) as any as electronApi.ElectronPage;
+    });
   }
 
   context(): ChromiumBrowserContext {
@@ -117,12 +121,16 @@ export class ElectronApplication extends ChannelOwner<channels.ElectronApplicati
   }
 
   async evaluate<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<R> {
-    const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return parseResult(result.value);
+    return this._wrapApiCall('electronApplication.evaluate', async () => {
+      const result = await this._channel.evaluateExpression({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+      return parseResult(result.value);
+    });
   }
 
   async evaluateHandle<R, Arg>(pageFunction: structs.PageFunctionOn<ElectronAppType, Arg, R>, arg: Arg): Promise<structs.SmartHandle<R>> {
-    const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
-    return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
+    return this._wrapApiCall('electronApplication.evaluateHandle', async () => {
+      const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
+      return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
+    });
   }
 }
