@@ -84,8 +84,8 @@ EOF
     echo 'target_cpu = "arm64"' >> ./out/Default/args.gn
   fi
 
-  # Compile Chromium.
-  gn gen out/Default
+  # Compile Chromium with correct Xcode version.
+  DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer gn gen out/Default
   DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer autoninja -C out/Default chrome
 
   # Prepare resulting archive similarly to how we do it in mirror_chromium.
