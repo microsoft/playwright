@@ -89,6 +89,7 @@ page.remove_listener("request", log_request)
 ```
 
 ## event: Page.close
+- type: <[Page]>
 
 Emitted when the page closes.
 
@@ -129,6 +130,7 @@ page.evaluate("console.log('hello', 5, {foo: 'bar'})")
 ```
 
 ## event: Page.crash
+- type: <[Page]>
 
 Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,
 ongoing and subsequent operations will throw.
@@ -173,6 +175,7 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 to the dialog via [`method: Dialog.accept`] or [`method: Dialog.dismiss`] methods.
 
 ## event: Page.domcontentloaded
+- type: <[Page]>
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
 event is dispatched.
@@ -221,6 +224,7 @@ Emitted when a frame is detached.
 Emitted when a frame is navigated to a new url.
 
 ## event: Page.load
+- type: <[Page]>
 
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 

@@ -340,7 +340,7 @@ export class WebSocket extends ChannelOwner<channels.WebSocketChannel, channels.
     this._channel.on('socketError', ({ error }) => this.emit(Events.WebSocket.Error, error));
     this._channel.on('close', () => {
       this._isClosed = true;
-      this.emit(Events.WebSocket.Close);
+      this.emit(Events.WebSocket.Close, this);
     });
   }
 

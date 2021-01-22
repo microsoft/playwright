@@ -91,6 +91,6 @@ export class Browser extends ChannelOwner<channels.BrowserChannel, channels.Brow
 
   _didClose() {
     this._isConnected = false;
-    this.emit(Events.Browser.Disconnected);
+    this.emit(Events.Browser.Disconnected, this);
   }
 }

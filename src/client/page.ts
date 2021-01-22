@@ -117,12 +117,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     this._channel.on('console', ({ message }) => this.emit(Events.Page.Console, ConsoleMessage.from(message)));
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('dialog', ({ dialog }) => this.emit(Events.Page.Dialog, Dialog.from(dialog)));
-    this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded));
+    this._channel.on('domcontentloaded', () => this.emit(Events.Page.DOMContentLoaded, this));
     this._channel.on('download', ({ download }) => this.emit(Events.Page.Download, Download.from(download)));
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
-    this._channel.on('load', () => this.emit(Events.Page.Load));
+    this._channel.on('load', () => this.emit(Events.Page.Load, this));
     this._channel.on('pageError', ({ error }) => this.emit(Events.Page.PageError, parseError(error)));
     this._channel.on('popup', ({ page }) => this.emit(Events.Page.Popup, Page.from(page)));
     this._channel.on('request', ({ request }) => this.emit(Events.Page.Request, Request.from(request)));
@@ -199,11 +199,11 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   _onClose() {
     this._closed = true;
     this._browserContext._pages.delete(this);
-    this.emit(Events.Page.Close);
+    this.emit(Events.Page.Close, this);
   }
 
   private _onCrash() {
-    this.emit(Events.Page.Crash);
+    this.emit(Events.Page.Crash, this);
   }
 
   context(): BrowserContext {
