@@ -24,7 +24,6 @@ import { applyTheme } from './theme';
 declare global {
   interface Window {
     getTraceModel(): Promise<TraceModel>;
-    getVideoMetaInfo(videoId: string): Promise<VideoMetaInfo | undefined>;
     readFile(filePath: string): Promise<string>;
     renderSnapshot(action: trace.ActionTraceEvent): void;
   }
