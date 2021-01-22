@@ -17,7 +17,6 @@
 
 import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../traceModel';
 import './timeline.css';
-import { FilmStrip } from './filmStrip';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
 import { useMeasure } from './helpers';
@@ -189,7 +188,6 @@ export const Timeline: React.FunctionComponent<{
         ></div>;
       })
     }</div>
-    <FilmStrip context={context} boundaries={boundaries} previewX={previewX} />
     <div className='timeline-marker timeline-marker-hover' style={{
       display: (previewX !== undefined) ? 'block' : 'none',
       left: (previewX || 0) + 'px',

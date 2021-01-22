@@ -22,7 +22,6 @@ import { ScreenshotGenerator } from './screenshotGenerator';
 import { SnapshotRouter } from './snapshotRouter';
 import { readTraceFile, TraceModel } from './traceModel';
 import type { ActionTraceEvent, PageSnapshot, TraceEvent } from '../../trace/traceTypes';
-import { VideoTileGenerator } from './videoTileGenerator';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -31,7 +30,6 @@ type TraceViewerDocument = {
   model: TraceModel;
   snapshotRouter: SnapshotRouter;
   screenshotGenerator: ScreenshotGenerator;
-  videoTileGenerator: VideoTileGenerator;
 };
 
 const emptyModel: TraceModel = {
@@ -75,7 +73,6 @@ class TraceViewer {
       resourcesDir,
       snapshotRouter: new SnapshotRouter(resourcesDir),
       screenshotGenerator: new ScreenshotGenerator(resourcesDir, model),
-      videoTileGenerator: new VideoTileGenerator(model)
     };
 
     for (const name of fs.readdirSync(traceDir)) {
@@ -119,7 +116,7 @@ class TraceViewer {
             console.error(e);
           return;
         }
-        const element = await snapshotFrame.$(action.selector || '*[__playwright_target__]');
+        const element = await snapshotFrame.$(action.selector || '*[__playwright_target__]').catch(e => undefined);
         if (element) {
           await element.evaluate(e => {
             e.style.backgroundColor = '#ff69b460';
@@ -130,9 +127,6 @@ class TraceViewer {
       }
     });
     await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
-    await uiPage.exposeBinding('getVideoMetaInfo', async (_, videoId: string) => {
-      return this._document ? this._document.videoTileGenerator.render(videoId) : null;
-    });
     await uiPage.route('**/*', (route, request) => {
       if (request.frame().parentFrame() && this._document) {
         this._document.snapshotRouter.route(route);
@@ -151,13 +145,7 @@ class TraceViewer {
           });
           return;
         }
-        let filePath: string;
-        if (this._document && request.url().includes('video-tile')) {
-          const fullPath = url.pathname.substring('/video-tile/'.length);
-          filePath = this._document.videoTileGenerator.tilePath(fullPath);
-        } else {
-          filePath = path.join(__dirname, 'web', url.pathname.substring(1));
-        }
+        const filePath = path.join(__dirname, 'web', url.pathname.substring(1));
         const body = fs.readFileSync(filePath);
         route.fulfill({
           contentType: extensionToMime[path.extname(url.pathname).substring(1)] || 'text/plain',
