@@ -26,7 +26,7 @@ export type ParsedSelector = {
   capture?: number,
 };
 
-const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'above', 'below', 'right-of', 'left-of', 'near']);
+export const customCSSNames = new Set(['not', 'is', 'where', 'has', 'scope', 'light', 'visible', 'text', 'text-matches', 'text-is', 'above', 'below', 'right-of', 'left-of', 'near', 'nth-match']);
 
 export function parseSelector(selector: string): ParsedSelector {
   const result = parseSelectorV1(selector);
