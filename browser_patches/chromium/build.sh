@@ -68,6 +68,7 @@ compile_chromium() {
   # script, but the `prepare_checkout.sh` is in fact designed to prepare a fork checkout, whereas
   # we don't fork Chromium.
   cd "${CR_CHECKOUT_PATH}/src"
+  git checkout master
   git pull origin master
   git checkout "${CRSHA}"
   gclient sync
