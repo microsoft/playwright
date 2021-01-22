@@ -312,6 +312,7 @@ page.
 ## async method: Page.$
 * langs:
   - alias-python: query_selector
+  - alias-csharp: QuerySelectorAsync
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector within the page. If no elements match the selector, the
@@ -324,6 +325,7 @@ Shortcut for main frame's [`method: Frame.$`].
 ## async method: Page.$$
 * langs:
   - alias-python: query_selector_all
+  - alias-csharp: QuerySelectorAllAsync
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector within the page. If no elements match the selector, the
@@ -336,6 +338,7 @@ Shortcut for main frame's [`method: Frame.$$`].
 ## async method: Page.$eval
 * langs:
   - alias-python: eval_on_selector
+  - alias-csharp: EvalOnSelectorAsync
 - returns: <[Serializable]>
 
 The method finds an element matching the specified selector within the page and passes it as a first argument to
@@ -379,6 +382,7 @@ Optional argument to pass to [`param: pageFunction`]
 ## async method: Page.$$eval
 * langs:
   - alias-python: eval_on_selector_all
+  - alias-csharp: EvalOnSelectorAllAsync
 - returns: <[Serializable]>
 
 The method finds all elements matching the specified selector within the page and passes an array of matched elements as

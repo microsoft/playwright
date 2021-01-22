@@ -77,6 +77,7 @@ with sync_playwright() as playwright:
 ## async method: Frame.$
 * langs:
   - alias-python: query_selector
+  - alias-csharp: QuerySelectorAsync
 - returns: <[null]|[ElementHandle]>
 
 Returns the ElementHandle pointing to the frame element.
@@ -90,6 +91,7 @@ returns `null`.
 ## async method: Frame.$$
 * langs:
   - alias-python: query_selector_all
+  - alias-csharp: QuerySelectorAllAsync
 - returns: <[Array]<[ElementHandle]>>
 
 Returns the ElementHandles pointing to the frame elements.
@@ -103,6 +105,7 @@ returns empty array.
 ## async method: Frame.$eval
 * langs:
   - alias-python: eval_on_selector
+  - alias-csharp: EvalOnSelectorAsync
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -146,6 +149,7 @@ Optional argument to pass to [`param: pageFunction`]
 ## async method: Frame.$$eval
 * langs:
   - alias-python: eval_on_selector_all
+  - alias-csharp: EvalOnSelectorAllAsync
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]

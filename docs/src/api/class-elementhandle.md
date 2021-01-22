@@ -59,6 +59,7 @@ ElementHandle instances can be used as an argument in [`method: Page.$eval`] and
 ## async method: ElementHandle.$
 * langs:
   - alias-python: query_selector
+  - alias-csharp: QuerySelectorAsync
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
@@ -70,6 +71,7 @@ returns `null`.
 ## async method: ElementHandle.$$
 * langs:
   - alias-python: query_selector_all
+  - alias-csharp: QuerySelectorAllAsync
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
@@ -81,6 +83,7 @@ returns empty array.
 ## async method: ElementHandle.$eval
 * langs:
   - alias-python: eval_on_selector
+  - alias-csharp: EvalOnSelectorAsync
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -124,6 +127,7 @@ Optional argument to pass to [`param: pageFunction`]
 ## async method: ElementHandle.$$eval
 * langs:
   - alias-python: eval_on_selector_all
+  - alias-csharp: EvalOnSelectorAllAsync
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
