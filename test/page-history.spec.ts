@@ -92,3 +92,67 @@ it('page.reload should work with data url', async ({page, server}) => {
   expect(await page.reload()).toBe(null);
   expect(await page.content()).toContain('hello');
 });
+
+it('page.reload during renderer-initiated navigation', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/one-style.html');
+  await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
+  server.setRoute('/post', (req, res) => {});
+
+  let callback;
+  const reloadFailedPromise = new Promise(f => callback = f);
+  page.once('request', async () => {
+    await page.reload().catch(e => {});
+    callback();
+  });
+  const clickPromise = page.click('input[type=submit]').catch(e => {});
+  await reloadFailedPromise;
+  await clickPromise;
+
+  // Form submit should be canceled, and reload should eventually arrive
+  // to the original one-style.html.
+  await page.waitForSelector('text=hello');
+});
+
+it('page.goBack during renderer-initiated navigation', async ({page, server}) => {
+  await page.goto(server.PREFIX + '/one-style.html');
+  await page.goto(server.EMPTY_PAGE);
+  await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
+  server.setRoute('/post', (req, res) => {});
+
+  let callback;
+  const reloadFailedPromise = new Promise(f => callback = f);
+  page.once('request', async () => {
+    await page.goBack().catch(e => {});
+    callback();
+  });
+  const clickPromise = page.click('input[type=submit]').catch(e => {});
+  await reloadFailedPromise;
+  await clickPromise;
+
+  // Form submit should be canceled, and goBack should eventually arrive
+  // to the original one-style.html.
+  await page.waitForSelector('text=hello');
+});
+
+it('page.goForward during renderer-initiated navigation', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+  await page.goto(server.PREFIX + '/one-style.html');
+  await page.goBack();
+
+  await page.setContent(`<form method='POST' action='/post'>Form is here<input type='submit'></form>`);
+  server.setRoute('/post', (req, res) => {});
+
+  let callback;
+  const reloadFailedPromise = new Promise(f => callback = f);
+  page.once('request', async () => {
+    await page.goForward().catch(e => {});
+    callback();
+  });
+  const clickPromise = page.click('input[type=submit]').catch(e => {});
+  await reloadFailedPromise;
+  await clickPromise;
+
+  // Form submit should be canceled, and goForward should eventually arrive
+  // to the original one-style.html.
+  await page.waitForSelector('text=hello');
+});

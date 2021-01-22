@@ -293,9 +293,13 @@ export class Page extends EventEmitter {
   async reload(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
-      await this._delegate.reload();
-      return waitPromise;
+      // Note: waitForNavigation may fail before we get response to reload(),
+      // so we should await it immediately.
+      const [response] = await Promise.all([
+        this.mainFrame()._waitForNavigation(progress, options),
+        this._delegate.reload(),
+      ]);
+      return response;
     }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
@@ -304,13 +308,20 @@ export class Page extends EventEmitter {
   async goBack(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
-      const result = await this._delegate.goBack();
-      if (!result) {
-        waitPromise.catch(() => {});
+      // Note: waitForNavigation may fail before we get response to goBack,
+      // so we should catch it immediately.
+      let error: Error | undefined;
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+        error = e;
         return null;
-      }
-      return waitPromise;
+      });
+      const result = await this._delegate.goBack();
+      if (!result)
+        return null;
+      const response = await waitPromise;
+      if (error)
+        throw error;
+      return response;
     }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
@@ -319,13 +330,20 @@ export class Page extends EventEmitter {
   async goForward(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
-      const result = await this._delegate.goForward();
-      if (!result) {
-        waitPromise.catch(() => {});
+      // Note: waitForNavigation may fail before we get response to goForward,
+      // so we should catch it immediately.
+      let error: Error | undefined;
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+        error = e;
         return null;
-      }
-      return waitPromise;
+      });
+      const result = await this._delegate.goForward();
+      if (!result)
+        return null;
+      const response = await waitPromise;
+      if (error)
+        throw error;
+      return response;
     }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
