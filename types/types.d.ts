@@ -369,7 +369,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: (page: Page) => void): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -408,7 +408,7 @@ export interface Page {
    * ```
    * 
    */
-  on(event: 'crash', listener: () => void): this;
+  on(event: 'crash', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
@@ -421,7 +421,7 @@ export interface Page {
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  on(event: 'domcontentloaded', listener: () => void): this;
+  on(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -466,7 +466,7 @@ export interface Page {
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  on(event: 'load', listener: () => void): this;
+  on(event: 'load', listener: (page: Page) => void): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -538,7 +538,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: (page: Page) => void): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -577,7 +577,7 @@ export interface Page {
    * ```
    * 
    */
-  once(event: 'crash', listener: () => void): this;
+  once(event: 'crash', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
@@ -590,7 +590,7 @@ export interface Page {
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  once(event: 'domcontentloaded', listener: () => void): this;
+  once(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -635,7 +635,7 @@ export interface Page {
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  once(event: 'load', listener: () => void): this;
+  once(event: 'load', listener: (page: Page) => void): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -707,7 +707,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: (page: Page) => void): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -746,7 +746,7 @@ export interface Page {
    * ```
    * 
    */
-  addListener(event: 'crash', listener: () => void): this;
+  addListener(event: 'crash', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
@@ -759,7 +759,7 @@ export interface Page {
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  addListener(event: 'domcontentloaded', listener: () => void): this;
+  addListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -804,7 +804,7 @@ export interface Page {
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  addListener(event: 'load', listener: () => void): this;
+  addListener(event: 'load', listener: (page: Page) => void): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -876,7 +876,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: (page: Page) => void): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -915,7 +915,7 @@ export interface Page {
    * ```
    * 
    */
-  removeListener(event: 'crash', listener: () => void): this;
+  removeListener(event: 'crash', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
@@ -928,7 +928,7 @@ export interface Page {
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  removeListener(event: 'domcontentloaded', listener: () => void): this;
+  removeListener(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -973,7 +973,7 @@ export interface Page {
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  removeListener(event: 'load', listener: () => void): this;
+  removeListener(event: 'load', listener: (page: Page) => void): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -1045,7 +1045,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: (page: Page) => void): this;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -1084,7 +1084,7 @@ export interface Page {
    * ```
    * 
    */
-  off(event: 'crash', listener: () => void): this;
+  off(event: 'crash', listener: (page: Page) => void): this;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
@@ -1097,7 +1097,7 @@ export interface Page {
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  off(event: 'domcontentloaded', listener: () => void): this;
+  off(event: 'domcontentloaded', listener: (page: Page) => void): this;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -1142,7 +1142,7 @@ export interface Page {
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  off(event: 'load', listener: () => void): this;
+  off(event: 'load', listener: (page: Page) => void): this;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -2814,7 +2814,7 @@ export interface Page {
   /**
    * Emitted when the page closes.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
    * Emitted when JavaScript within the page calls one of console API methods, e.g. `console.log` or `console.dir`. Also
@@ -2853,7 +2853,7 @@ export interface Page {
    * ```
    * 
    */
-  waitForEvent(event: 'crash', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'crash', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
    * Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` or `beforeunload`. Playwright can respond
@@ -2866,7 +2866,7 @@ export interface Page {
    * Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
    * event is dispatched.
    */
-  waitForEvent(event: 'domcontentloaded', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'domcontentloaded', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
    * Emitted when attachment download started. User can access basic file operations on downloaded content via the passed
@@ -2911,7 +2911,7 @@ export interface Page {
   /**
    * Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
    */
-  waitForEvent(event: 'load', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'load', optionsOrPredicate?: { predicate?: (page: Page) => boolean, timeout?: number } | ((page: Page) => boolean)): Promise<Page>;
 
   /**
    * Emitted when an uncaught exception happens within the page.
@@ -4513,7 +4513,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -4544,7 +4544,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -4575,7 +4575,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -4606,7 +4606,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -4637,7 +4637,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -5052,7 +5052,7 @@ export interface BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean, timeout?: number } | ((browserContext: BrowserContext) => boolean)): Promise<BrowserContext>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -6970,35 +6970,35 @@ export interface Browser extends EventEmitter {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  on(event: 'disconnected', listener: () => void): this;
+  on(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  once(event: 'disconnected', listener: () => void): this;
+  once(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  addListener(event: 'disconnected', listener: () => void): this;
+  addListener(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  removeListener(event: 'disconnected', listener: () => void): this;
+  removeListener(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the following:
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  off(event: 'disconnected', listener: () => void): this;
+  off(event: 'disconnected', listener: (browser: Browser) => void): this;
 
   /**
    * In case this browser is obtained using
@@ -7433,7 +7433,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -7476,7 +7476,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -7519,7 +7519,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -7562,7 +7562,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -7605,7 +7605,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: (browserContext: BrowserContext) => void): this;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -7664,7 +7664,7 @@ export interface ChromiumBrowserContext extends BrowserContext {
    * - Browser application is closed or crashed.
    * - The [browser.close()](https://playwright.dev/docs/api/class-browser#browserclose) method was called.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (browserContext: BrowserContext) => boolean, timeout?: number } | ((browserContext: BrowserContext) => boolean)): Promise<BrowserContext>;
 
   /**
    * The event is emitted when a new Page is created in the BrowserContext. The page may still be loading. The event will
@@ -8870,7 +8870,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  on(event: 'close', listener: () => void): this;
+  on(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
    * Fired when the websocket recieves a frame.
@@ -8900,7 +8900,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  once(event: 'close', listener: () => void): this;
+  once(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
    * Fired when the websocket recieves a frame.
@@ -8930,7 +8930,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  addListener(event: 'close', listener: () => void): this;
+  addListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
    * Fired when the websocket recieves a frame.
@@ -8960,7 +8960,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  removeListener(event: 'close', listener: () => void): this;
+  removeListener(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
    * Fired when the websocket recieves a frame.
@@ -8990,7 +8990,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  off(event: 'close', listener: () => void): this;
+  off(event: 'close', listener: (webSocket: WebSocket) => void): this;
 
   /**
    * Fired when the websocket recieves a frame.
@@ -9030,7 +9030,7 @@ export interface WebSocket {
   /**
    * Fired when the websocket closes.
    */
-  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: () => boolean, timeout?: number } | (() => boolean)): Promise<void>;
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (webSocket: WebSocket) => boolean, timeout?: number } | ((webSocket: WebSocket) => boolean)): Promise<WebSocket>;
 
   /**
    * Fired when the websocket recieves a frame.
