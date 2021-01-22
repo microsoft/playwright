@@ -7,7 +7,7 @@ on:
       - release-*
     paths:
       - browser_patches/chromium/BUILD_NUMBER
-      - .github/workflows/trigger_chromium_build.yml
+      - .github/workflows/trigger_build_chromium.yml
 
 jobs:
   trigger:
