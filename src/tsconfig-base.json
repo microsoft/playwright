@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "commonjs",
+    "lib": ["esnext", "dom", "DOM.Iterable"],
+    "rootDir": ".",
+    "sourceMap": true,
+    "strict": true,
+    "allowJs": true,
+    "composite": true,
+    "jsx": "react"
+  },
+  "compileOnSave": true,
+}

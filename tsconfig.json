@@ -1,17 +1,9 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "commonjs",
-    "lib": ["esnext", "dom", "DOM.Iterable"],
-    "sourceMap": true,
-    "rootDir": "./src",
-    "outDir": "./lib",
-    "strict": true,
-    "allowJs": true,
-    "declaration": false,
-    "jsx": "react"
-  },
-  "compileOnSave": true,
-  "include": ["src/**/*.ts", "src/**/*.js"],
-  "exclude": ["node_modules", "src/.eslintrc.js", "src/cli/traceViewer/web/**"]
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./src/utils/tsconfig.json" },
+    { "path": "./src/install/tsconfig.json" },
+    { "path": "./src/tsconfig.json" },
+  ],
 }

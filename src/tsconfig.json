@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "../lib",
+  },
+  "compileOnSave": true,
+  "include": ["**/*.ts", "**/*.js"],
+  "exclude": ["node_modules", ".eslintrc.js", "cli/traceViewer/web/**"],
+  "references": [
+    { "path": "./utils/tsconfig.json" },
+    { "path": "./install/tsconfig.json" },
+  ],
+}

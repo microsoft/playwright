@@ -30,7 +30,7 @@ export type CSSComplexSelector = { simples: { selector: CSSSimpleSelector, combi
 export type CSSComplexSelectorList = CSSComplexSelector[];
 
 export function parseCSS(selector: string, customNames: Set<string>): { selector: CSSComplexSelectorList, names: string[] } {
-  let tokens: css.CSSTokenInterface[];
+  let tokens: css.CSSParserToken[];
   try {
     tokens = css.tokenize(selector);
     if (!(tokens[tokens.length - 1] instanceof css.EOFToken))

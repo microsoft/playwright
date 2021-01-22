@@ -5,7 +5,4 @@
   },
   "include": ["./*.ts"],
   "exclude": ["node_modules"],
-  "references": [
-    { "path": "../utils/tsconfig.json" },
-  ],
 }

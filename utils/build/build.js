@@ -86,7 +86,7 @@ for (const file of webPackFiles) {
 // Run typescript.
 steps.push({
   command: 'npx',
-  args: ['tsc', ...(watchMode ? ['-w', '--preserveWatchOutput'] : []), '-p', filePath('.')],
+  args: ['tsc', '-b', filePath('.'), ...(watchMode ? ['-w', '--preserveWatchOutput'] : [])],
   shell: true,
 });
 
