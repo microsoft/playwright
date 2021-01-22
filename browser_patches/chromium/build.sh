@@ -22,7 +22,7 @@ main() {
   elif [[ $1 == "--mirror"* ]]; then
     mirror_chromium $1
   elif [[ $1 == "--compile"* ]]; then
-    compile_chromium
+    compile_chromium $1
   else
     echo "ERROR: unknown first argument. Use --help for details."
     exit 1
