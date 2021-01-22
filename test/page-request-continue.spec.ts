@@ -16,7 +16,6 @@
  */
 
 import { it, expect, describe } from './fixtures';
-import * as os from 'os';
 
 it('should work', async ({page, server}) => {
   await page.route('**/*', route => route.continue());
@@ -97,10 +96,7 @@ it('should amend method on main request', async ({page, server}) => {
   expect((await request).method).toBe('POST');
 });
 
-describe('', (suite, { browserName, platform }) => {
-  const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
-  suite.flaky(isBigSur && browserName === 'webkit', 'Flaky after roll');
-}, () => {
+describe('', () => {
   it('should amend post data', async ({page, server}) => {
     await page.goto(server.EMPTY_PAGE);
     await page.route('**/*', route => {

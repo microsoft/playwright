@@ -125,9 +125,7 @@ it('should authenticate', async ({contextFactory, contextOptions, server}) => {
   await browser.close();
 });
 
-it('should authenticate with empty password', (test, { browserName }) => {
-  test.flaky(browserName === 'firefox', 'Fails when runs afer previous test, see https://github.com/microsoft/playwright/issues/4789');
-}, async ({contextFactory, contextOptions, server}) => {
+it('should authenticate with empty password', async ({contextFactory, contextOptions, server}) => {
   server.setRoute('/target.html', async (req, res) => {
     const auth = req.headers['proxy-authorization'];
     if (!auth) {
@@ -228,9 +226,7 @@ it('should exclude patterns', (test, { browserName, headful }) => {
   await browser.close();
 });
 
-it('should use socks proxy', (test, { browserName, platform }) => {
-  test.flaky(platform === 'darwin' && browserName === 'webkit', 'Intermittent page.goto: The network connection was lost error on bots');
-}, async ({ contextFactory, contextOptions, socksPort }) => {
+it('should use socks proxy', async ({ contextFactory, contextOptions, socksPort }) => {
   const browser = await contextFactory({
     ...contextOptions,
     proxy: { server: `socks5://localhost:${socksPort}` }
@@ -241,9 +237,7 @@ it('should use socks proxy', (test, { browserName, platform }) => {
   await browser.close();
 });
 
-it('should use socks proxy in second page', (test, { browserName, platform }) => {
-  test.flaky(platform === 'darwin' && browserName === 'webkit', 'Intermittent page.goto: The network connection was lost error on bots');
-}, async ({ contextFactory, contextOptions, socksPort }) => {
+it('should use socks proxy in second page', async ({ contextFactory, contextOptions, socksPort }) => {
   const browser = await contextFactory({
     ...contextOptions,
     proxy: { server: `socks5://localhost:${socksPort}` }

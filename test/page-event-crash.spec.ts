@@ -29,7 +29,6 @@ function crash(page, toImpl, browserName) {
 
 describe('', (suite, { browserName, platform, mode }) => {
   suite.skip(mode !== 'default' && browserName !== 'chromium');
-  suite.flaky(browserName === 'firefox' && platform === 'win32');
   const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
   suite.fixme(isBigSur && browserName === 'webkit', 'Timing out after roll');
 }, () => {
