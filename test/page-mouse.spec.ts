@@ -27,9 +27,7 @@ function dimensions() {
   };
 }
 
-it('should click the document', (test, { browserName, platform }) => {
-  test.flaky(browserName === 'firefox' && platform === 'win32', 'Occasionally times out on options.FIREFOX on Windows: https://github.com/microsoft/playwright/pull/1911/checks?check_run_id=607149016');
-}, async ({page, server}) => {
+it('should click the document', async ({page, server}) => {
   await page.evaluate(() => {
     window['clickPromise'] = new Promise(resolve => {
       document.addEventListener('click', event => {

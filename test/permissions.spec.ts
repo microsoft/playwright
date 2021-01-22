@@ -104,7 +104,6 @@ describe('permissions', (suite, { browserName }) => {
   it('should trigger permission onchange', (test, { browserName, headful, platform }) => {
     test.fail(browserName === 'webkit');
     test.fail(browserName === 'chromium' && headful);
-    test.flaky(browserName === 'firefox' && platform === 'linux');
   }, async ({page, server, context}) => {
     // TODO: flaky
     // - Linux: https://github.com/microsoft/playwright/pull/1790/checks?check_run_id=587327883

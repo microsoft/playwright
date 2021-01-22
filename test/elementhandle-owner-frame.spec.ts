@@ -34,9 +34,7 @@ it('should work for cross-process iframes', async ({ page, server }) => {
   expect(await elementHandle.ownerFrame()).toBe(frame);
 });
 
-it('should work for document', (test, { browserName, platform }) => {
-  test.flaky(platform === 'win32' && browserName === 'webkit');
-}, async ({ page, server }) => {
+it('should work for document', async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await attachFrame(page, 'frame1', server.EMPTY_PAGE);
   const frame = page.frames()[1];
