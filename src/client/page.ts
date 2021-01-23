@@ -639,6 +639,12 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this;
   }
 
+  async _pause() {
+    return this._wrapApiCall('page.pause', async () => {
+      await this._channel.pause();
+    });
+  }
+
   async _pdf(options: PDFOptions = {}): Promise<Buffer> {
     return this._wrapApiCall('page.pdf', async () => {
       const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;

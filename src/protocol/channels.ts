@@ -770,6 +770,7 @@ export interface PageChannel extends Channel {
   mouseClick(params: PageMouseClickParams, metadata?: Metadata): Promise<PageMouseClickResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: Metadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
+  pause(params?: PagePauseParams, metadata?: Metadata): Promise<PagePauseResult>;
   pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
   crStartJSCoverage(params: PageCrStartJSCoverageParams, metadata?: Metadata): Promise<PageCrStartJSCoverageResult>;
   crStopJSCoverage(params?: PageCrStopJSCoverageParams, metadata?: Metadata): Promise<PageCrStopJSCoverageResult>;
@@ -1066,6 +1067,9 @@ export type PageAccessibilitySnapshotOptions = {
 export type PageAccessibilitySnapshotResult = {
   rootAXNode?: AXNode,
 };
+export type PagePauseParams = {};
+export type PagePauseOptions = {};
+export type PagePauseResult = void;
 export type PagePdfParams = {
   scale?: number,
   displayHeaderFooter?: boolean,
