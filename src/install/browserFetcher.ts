@@ -173,7 +173,16 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
   const url = revisionURL(browser);
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
   try {
-    await downloadFile(url, zipPath, progress);
+    for (let i = 1; i <= 10; ++i) {
+      await downloadFile(url, zipPath, progress).catch(error => {
+        if (!/ECONNRESET/.test(err.message))
+          throw error;
+
+        // maximum delay is 10th retry: ~3 seconds
+        const millis = (Math.random() * 200) + (50 * Math.pow(1.5, i));
+        await new Promise(c => setTimeout(c, millis));
+      });
+    }
     await extract(zipPath, { dir: browserPath});
     await chmodAsync(browserPaths.executablePath(browserPath, browser)!, 0o755);
   } catch (e) {
