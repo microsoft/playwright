@@ -19142,6 +19142,16 @@ index ddc2a96ac68cd51d5f4efeca78a118db91709aa2..57a78f54e72d264daa27faa53ac2a30c
  
          # WebInspectorUI must come after JavaScriptCore and WebCore but before WebKit and WebKit2
          my $webKitIndex = first { $projects[$_] eq "Source/WebKitLegacy" } 0..$#projects;
+diff --git a/Tools/Scripts/webkitpy/__init__.py b/Tools/Scripts/webkitpy/__init__.py
+index 8206d1581c32d615353b081b5ae72d863ced3b05..18e95263308a9574aff252690036f91a4c1bce52 100644
+--- a/Tools/Scripts/webkitpy/__init__.py
++++ b/Tools/Scripts/webkitpy/__init__.py
+@@ -66,5 +66,3 @@ AutoInstall.register(Package('zipp', Version(1, 2, 0)))
+ AutoInstall.register(Package('zope.interface', Version(5, 1, 0), aliases=['zope'], pypi_name='zope-interface'))
+ 
+ AutoInstall.register(Package('webkitscmpy', Version(0, 0, 1)), local=True)
+-
+-import webkitscmpy
 diff --git a/Tools/WebKitTestRunner/PlatformGTK.cmake b/Tools/WebKitTestRunner/PlatformGTK.cmake
 index 6f8366b63e43eca6b95b67bb47fee9e7a1970cf9..cc8299dfa4380b833e79a870779a222059579d3b 100644
 --- a/Tools/WebKitTestRunner/PlatformGTK.cmake
