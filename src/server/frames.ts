@@ -1057,10 +1057,13 @@ export class Frame extends EventEmitter {
         async rerun(context: dom.FrameExecutionContext) {
           try {
             resolve(await callback(context));
+            data.rerunnableTasks.delete(task);
           } catch (e) {}
         }
       };
       data.rerunnableTasks.add(task);
+      if (data.context)
+        task.rerun(data.context);
     });
   }
 

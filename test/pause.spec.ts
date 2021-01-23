@@ -42,3 +42,15 @@ it('should pause through a navigation', async ({page, server}) => {
   await resumePromise;
   expect(resolved).toBe(true);
 });
+
+it('should pause after a navigation', async ({page, server}) => {
+  await page.goto(server.EMPTY_PAGE);
+
+  let resolved = false;
+  const resumePromise = page.pause().then(() => resolved = true);
+  await new Promise(x => setTimeout(x, 0));
+  expect(resolved).toBe(false);
+  await page.click('playwright-resume');
+  await resumePromise;
+  expect(resolved).toBe(true);
+});
