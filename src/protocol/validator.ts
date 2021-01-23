@@ -335,10 +335,8 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     offline: tBoolean,
   });
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
-  scheme.BrowserContextExtendInjectedScriptParams = tObject({
-    source: tString,
-    arg: tType('SerializedArgument'),
-  });
+  scheme.BrowserContextExposeConsoleApiParams = tOptional(tObject({}));
+  scheme.BrowserContextEnableRecorderParams = tOptional(tObject({}));
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });

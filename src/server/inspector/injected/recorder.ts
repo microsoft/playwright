@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import type * as actions from '../codegen/recorderActions';
-import type InjectedScript from '../../server/injected/injectedScript';
-import { generateSelector } from '../../debug/injected/selectorGenerator';
+import type * as actions from '../../../cli/codegen/recorderActions';
+import type InjectedScript from '../../injected/injectedScript';
+import { generateSelector } from './selectorGenerator';
 import { html } from './html';
 
 declare global {

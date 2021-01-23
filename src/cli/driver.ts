@@ -18,7 +18,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { installDebugController } from '../debug/debugController';
+import { installInspectorController } from '../server/inspector/inspectorController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { installBrowsersWithProgressBar } from '../install/installer';
@@ -38,7 +38,7 @@ export function printProtocol() {
 }
 
 export function runServer() {
-  installDebugController();
+  installInspectorController();
   installTracer();
   installHarTracer();
 

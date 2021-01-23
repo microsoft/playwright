@@ -599,11 +599,11 @@ BrowserContext:
           type: array
           items: OriginStorage
 
-    extendInjectedScript:
+    exposeConsoleApi:
       experimental: True
-      parameters:
-        source: string
-        arg: SerializedArgument
+
+    enableRecorder:
+      experimental: True
 
     crNewCDPSession:
       parameters:

@@ -16,11 +16,10 @@
 
 import { folio } from './fixtures';
 import type { Page, Frame } from '..';
-import { source } from '../src/generated/consoleApiSource';
 
 const fixtures = folio.extend();
 fixtures.context.override(async ({ context }, run) => {
-  await (context as any)._extendInjectedScript(source);
+  await (context as any)._exposeConsoleApi();
   await run(context);
 });
 const { describe, it, expect } = fixtures.build();

@@ -18,7 +18,6 @@ import type { Page, BrowserContext, Frame, Download, Dialog } from '../../..';
 import * as actions from './recorderActions';
 import { CodeGenerator, ActionInContext } from './codeGenerator';
 import { toClickOptions, toModifiers } from './utils';
-import * as recorderSource from '../../generated/recorderSource';
 
 type BindingSource = { frame: Frame, page: Page };
 
@@ -30,7 +29,7 @@ export class RecorderController {
   private _timers = new Set<NodeJS.Timeout>();
 
   constructor(context: BrowserContext, generator: CodeGenerator) {
-    (context as any)._extendInjectedScript(recorderSource.source);
+    (context as any)._enableRecorder();
 
     this._generator = generator;
 

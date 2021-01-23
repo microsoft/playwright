@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type InjectedScript from '../../server/injected/injectedScript';
+import type InjectedScript from '../../injected/injectedScript';
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element): { selector: string, elements: Element[] } {
   const path: SelectorToken[] = [];

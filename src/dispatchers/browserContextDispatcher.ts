@@ -21,7 +21,6 @@ import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { parseArgument } from './jsHandleDispatcher';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -126,8 +125,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close();
   }
 
-  async extendInjectedScript(params: channels.BrowserContextExtendInjectedScriptParams): Promise<void> {
-    await this._context.extendInjectedScript(params.source, parseArgument(params.arg));
+  async exposeConsoleApi(): Promise<void> {
+    await this._context.exposeConsoleApi();
+  }
+
+  async enableRecorder(): Promise<void> {
+    await this._context.enableRecorder();
   }
 
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {

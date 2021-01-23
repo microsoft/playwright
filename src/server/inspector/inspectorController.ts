@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-import { BrowserContext, ContextListener, contextListeners } from '../server/browserContext';
-import { isDebugMode } from '../utils/utils';
-import * as consoleApiSource from '../generated/consoleApiSource';
+import { BrowserContext, ContextListener, contextListeners } from '../browserContext';
+import { isDebugMode } from '../../utils/utils';
 
-export function installDebugController() {
-  contextListeners.add(new DebugController());
+export function installInspectorController() {
+  contextListeners.add(new InspectorController());
 }
 
-class DebugController implements ContextListener {
+class InspectorController implements ContextListener {
   async onContextCreated(context: BrowserContext): Promise<void> {
     if (isDebugMode())
-      context.extendInjectedScript(consoleApiSource.source);
+      context.exposeConsoleApi();
   }
   async onContextWillDestroy(context: BrowserContext): Promise<void> {}
   async onContextDidDestroy(context: BrowserContext): Promise<void> {}
