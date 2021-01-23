@@ -174,8 +174,8 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
   try {
     for (let i = 1; i <= 10; ++i) {
-      await downloadFile(url, zipPath, progress).catch(error => {
-        if (!/ECONNRESET/.test(err.message))
+      await downloadFile(url, zipPath, progress).catch(async error => {
+        if (!/ECONNRESET/.test(error.message))
           throw error;
 
         // maximum delay is 10th retry: ~3 seconds
