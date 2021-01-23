@@ -623,7 +623,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     return this;
   }
 
-  async pause() {
+  async _pause() {
     return this._wrapApiCall('page.pause', async () => {
       await this._channel.pause();
     });
