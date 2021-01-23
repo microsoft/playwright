@@ -72,6 +72,16 @@ const SnapshotTab: React.FunctionComponent<{
 }> = ({ actionEntry, snapshotSize }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
+  let snapshots: { name: string, snapshotId?: string }[] = [];
+
+  snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
+  if (!snapshots.length || snapshots[0].name !== 'before')
+    snapshots.unshift({ name: 'before', snapshotId: undefined });
+  if (snapshots[snapshots.length - 1].name !== 'after')
+    snapshots.push({ name: 'after', snapshotId: undefined });
+
+  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
     if (iframeRef.current && !actionEntry)
@@ -80,17 +90,29 @@ const SnapshotTab: React.FunctionComponent<{
 
   React.useEffect(() => {
     if (actionEntry)
-      (window as any).renderSnapshot(actionEntry.action);
-  }, [actionEntry]);
+      (window as any).renderSnapshot({ action: actionEntry.action, snapshot: snapshots[snapshotIndex] });
+  }, [actionEntry, snapshotIndex]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
-  return <div ref={ref} className='snapshot-wrapper'>
-    <div className='snapshot-container' style={{
-      width: snapshotSize.width + 'px',
-      height: snapshotSize.height + 'px',
-      transform: `translate(${-snapshotSize.width * (1 - scale) / 2}px, ${-snapshotSize.height * (1 - scale) / 2}px) scale(${scale})`,
-    }}>
-      <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
+  return <div className='snapshot-tab'>
+    <div className='snapshot-controls'>{
+      snapshots.map((snapshot, index) => {
+        return <div
+          key={snapshot.name}
+          className={'snapshot-toggle' + (snapshotIndex === index ? ' toggled' : '')}
+          onClick={() => setSnapshotIndex(index)}>
+          {snapshot.name}
+        </div>
+      })
+    }</div>
+    <div ref={ref} className='snapshot-wrapper'>
+      <div className='snapshot-container' style={{
+        width: snapshotSize.width + 'px',
+        height: snapshotSize.height + 'px',
+        transform: `translate(${-snapshotSize.width * (1 - scale) / 2}px, ${-snapshotSize.height * (1 - scale) / 2}px) scale(${scale})`,
+      }}>
+        <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
+      </div>
     </div>
   </div>;
 };

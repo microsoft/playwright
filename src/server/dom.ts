@@ -378,6 +378,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard._ensureModifiers(options.modifiers);
       progress.log(`  performing ${actionName} action`);
+      await progress.checkpoint('before');
       await action(point);
       progress.log(`  ${actionName} action done`);
       progress.log('  waiting for scheduled navigations to finish');
@@ -447,6 +448,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
       progress.log('  selecting specified option(s)');
+      await progress.checkpoint('before');
       const poll = await this._evaluateHandleInUtility(([injected, node, selectOptions]) => injected.waitForOptionsAndSelect(node, selectOptions), selectOptions);
       const pollHandler = new InjectedScriptPollHandler(progress, poll);
       const result = throwFatalDOMError(await pollHandler.finish());
@@ -475,6 +477,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (filled === 'error:notconnected')
         return filled;
       progress.log('  element is visible, enabled and editable');
+      await progress.checkpoint('before');
       if (filled === 'needsinput') {
         progress.throwIfAborted();  // Avoid action that has side-effects.
         if (value)
@@ -521,6 +524,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     assert(multiple || files.length <= 1, 'Non-multiple file input can only accept single file!');
     await this._page._frameManager.waitForSignalsCreatedBy(progress, options.noWaitAfter, async () => {
       progress.throwIfAborted();  // Avoid action that has side-effects.
+      await progress.checkpoint('before');
       await this._page._delegate.setInputFiles(this as any as ElementHandle<HTMLInputElement>, files);
     });
     await this._page._doSlowMo();
@@ -555,6 +559,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
+      await progress.checkpoint('before');
       await this._page.keyboard.type(text, options);
       return 'done';
     }, 'input');
@@ -574,6 +579,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if (result !== 'done')
         return result;
       progress.throwIfAborted();  // Avoid action that has side-effects.
+      await progress.checkpoint('before');
       await this._page.keyboard.press(key, options);
       return 'done';
     }, 'input');

@@ -17,276 +17,334 @@
 export type SnapshotData = {
   html: string,
   resourceOverrides: { url: string, content: string }[],
-  frameUrls: string[],
+  viewport: { width: number, height: number },
+  url: string,
+  snapshotId?: string,
 };
 
-type SnapshotResult = {
-  data: SnapshotData,
-  frameElements: Element[],
-};
+export const kSnapshotStreamer = '__playwright_snapshot_streamer_';
+export const kSnapshotFrameIdAttribute = '__playwright_snapshot_frameid_';
+export const kSnapshotBinding = '__playwright_snapshot_binding_';
 
-export function takeSnapshotInFrame(guid: string, removeNoScript: boolean, target: Node | undefined): SnapshotResult {
-  const shadowAttribute = 'playwright-shadow-root';
-  const win = window;
-  const doc = win.document;
+export function frameSnapshotStreamer() {
+  const kSnapshotStreamer = '__playwright_snapshot_streamer_';
+  const kSnapshotFrameIdAttribute = '__playwright_snapshot_frameid_';
+  const kSnapshotBinding = '__playwright_snapshot_binding_';
+  const kShadowAttribute = '__playwright_shadow_root_';
 
-  const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
   const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
+  const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
 
-  const escapeAttribute = (s: string): string => {
-    return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
-  };
-  const escapeText = (s: string): string => {
-    return s.replace(/[&<]/ug, char => (escaped as any)[char]);
-  };
-  const escapeScriptString = (s: string): string => {
-    return s.replace(/'/g, '\\\'');
-  };
+  class Streamer {
+    private _removeNoScript = true;
+    private _needStyleOverrides = false;
+    private _timer: NodeJS.Timeout | undefined;
 
-  const chunks = new Map<string, string>();
-  const frameUrlToFrameElement = new Map<string, Element>();
-  const styleNodeToStyleSheetText = new Map<Node, string>();
-  const styleSheetUrlToContentOverride = new Map<string, string>();
+    constructor() {
+      this._streamSnapshot();
+      this._interceptCSSOM(window.CSSStyleSheet.prototype, 'insertRule');
+      this._interceptCSSOM(window.CSSStyleSheet.prototype, 'deleteRule');
+      this._interceptCSSOM(window.CSSStyleSheet.prototype, 'addRule');
+      this._interceptCSSOM(window.CSSStyleSheet.prototype, 'removeRule');
+      // TODO: should we also intercept setters like CSSRule.cssText and CSSStyleRule.selectorText?
+    }
 
-  let counter = 0;
-  const nextId = (): string => {
-    return guid + (++counter);
-  };
+    private _interceptCSSOM(obj: any, method: string) {
+      const self = this;
+      const native = obj[method] as Function;
+      if (!native)
+        return;
+      obj[method] = function(...args: any[]) {
+        self._needStyleOverrides = true;
+        native.call(this, ...args);
+      };
+    }
 
-  const resolve = (base: string, url: string): string => {
-    if (url === '')
-      return '';
-    try {
-      return new URL(url, base).href;
-    } catch (e) {
+    markIframe(iframeElement: HTMLIFrameElement | HTMLFrameElement, frameId: string) {
+      iframeElement.setAttribute(kSnapshotFrameIdAttribute, frameId);
+    }
+
+    forceSnapshot(snapshotId: string) {
+      this._streamSnapshot(snapshotId);
+    }
+
+    private _streamSnapshot(snapshotId?: string) {
+      if (this._timer) {
+        clearTimeout(this._timer);
+        this._timer = undefined;
+      }
+      const snapshot = this._captureSnapshot(snapshotId);
+      (window as any)[kSnapshotBinding](snapshot).catch((e: any) => {});
+      this._timer = setTimeout(() => this._streamSnapshot(), 100);
+    }
+
+    private _escapeAttribute(s: string): string {
+      return s.replace(/[&<>"']/ug, char => (escaped as any)[char]);
+    }
+
+    private _escapeText(s: string): string {
+      return s.replace(/[&<]/ug, char => (escaped as any)[char]);
+    }
+
+    private _sanitizeUrl(url: string): string {
+      if (url.startsWith('javascript:'))
+        return '';
       return url;
     }
-  };
 
-  const sanitizeUrl = (url: string): string => {
-    if (url.startsWith('javascript:'))
-      return '';
-    return url;
-  };
+    private _sanitizeSrcSet(srcset: string): string {
+      return srcset.split(',').map(src => {
+        src = src.trim();
+        const spaceIndex = src.lastIndexOf(' ');
+        if (spaceIndex === -1)
+          return this._sanitizeUrl(src);
+        return this._sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
+      }).join(',');
+    }
 
-  const sanitizeSrcSet = (srcset: string): string => {
-    return srcset.split(',').map(src => {
-      src = src.trim();
-      const spaceIndex = src.lastIndexOf(' ');
-      if (spaceIndex === -1)
-        return sanitizeUrl(src);
-      return sanitizeUrl(src.substring(0, spaceIndex).trim()) + src.substring(spaceIndex);
-    }).join(',');
-  };
-
-  const getSheetBase = (sheet: CSSStyleSheet): string => {
-    let rootSheet = sheet;
-    while (rootSheet.parentStyleSheet)
-      rootSheet = rootSheet.parentStyleSheet;
-    if (rootSheet.ownerNode)
-      return rootSheet.ownerNode.baseURI;
-    return document.baseURI;
-  };
-
-  const getSheetText = (sheet: CSSStyleSheet): string => {
-    const rules: string[] = [];
-    for (const rule of sheet.cssRules)
-      rules.push(rule.cssText);
-    return rules.join('\n');
-  };
-
-  const visitStyleSheet = (sheet: CSSStyleSheet) => {
-    try {
-      for (const rule of sheet.cssRules) {
-        if ((rule as CSSImportRule).styleSheet)
-          visitStyleSheet((rule as CSSImportRule).styleSheet);
+    private _resolveUrl(base: string, url: string): string {
+      if (url === '')
+        return '';
+      try {
+        return new URL(url, base).href;
+      } catch (e) {
+        return url;
       }
-
-      const cssText = getSheetText(sheet);
-      if (sheet.ownerNode && sheet.ownerNode.nodeName === 'STYLE') {
-        // Stylesheets with owner STYLE nodes will be rewritten.
-        styleNodeToStyleSheetText.set(sheet.ownerNode, cssText);
-      } else if (sheet.href !== null) {
-        // Other stylesheets will have resource overrides.
-        const base = getSheetBase(sheet);
-        const url = resolve(base, sheet.href);
-        styleSheetUrlToContentOverride.set(url, cssText);
-      }
-    } catch (e) {
-      // Sometimes we cannot access cross-origin stylesheets.
-    }
-  };
-
-  const visit = (node: Node | ShadowRoot, builder: string[]) => {
-    const nodeName = node.nodeName;
-    const nodeType = node.nodeType;
-
-    if (nodeType === Node.DOCUMENT_TYPE_NODE) {
-      const docType = node as DocumentType;
-      builder.push(`<!DOCTYPE ${docType.name}>`);
-      return;
     }
 
-    if (nodeType === Node.TEXT_NODE) {
-      builder.push(escapeText(node.nodeValue || ''));
-      return;
+    private _getSheetBase(sheet: CSSStyleSheet): string {
+      let rootSheet = sheet;
+      while (rootSheet.parentStyleSheet)
+        rootSheet = rootSheet.parentStyleSheet;
+      if (rootSheet.ownerNode)
+        return rootSheet.ownerNode.baseURI;
+      return document.baseURI;
     }
 
-    if (nodeType !== Node.ELEMENT_NODE &&
-        nodeType !== Node.DOCUMENT_NODE &&
-        nodeType !== Node.DOCUMENT_FRAGMENT_NODE)
-      return;
-
-    if (nodeType === Node.DOCUMENT_NODE || nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-      const documentOrShadowRoot = node as DocumentOrShadowRoot;
-      for (const sheet of documentOrShadowRoot.styleSheets)
-        visitStyleSheet(sheet);
+    private _getSheetText(sheet: CSSStyleSheet): string {
+      const rules: string[] = [];
+      for (const rule of sheet.cssRules)
+        rules.push(rule.cssText);
+      return rules.join('\n');
     }
 
-    if (nodeName === 'SCRIPT' || nodeName === 'BASE')
-      return;
+    private _captureSnapshot(snapshotId?: string): SnapshotData {
+      const win = window;
+      const doc = win.document;
 
-    if (removeNoScript && nodeName === 'NOSCRIPT')
-      return;
+      const shadowChunks: string[] = [];
+      const styleNodeToStyleSheetText = new Map<Node, string>();
+      const styleSheetUrlToContentOverride = new Map<string, string>();
 
-    if (nodeName === 'STYLE') {
-      const cssText = styleNodeToStyleSheetText.get(node) || node.textContent || '';
-      builder.push('<style>');
-      builder.push(cssText);
-      builder.push('</style>');
-      return;
-    }
+      const visitStyleSheet = (sheet: CSSStyleSheet) => {
+        // TODO: recalculate these upon changes, and only send them once.
+        if (!this._needStyleOverrides)
+          return;
 
-    if (nodeType === Node.ELEMENT_NODE) {
-      const element = node as Element;
-      builder.push('<');
-      builder.push(nodeName);
-      if (node === target)
-        builder.push(' __playwright_target__="true"');
-      for (let i = 0; i < element.attributes.length; i++) {
-        const name = element.attributes[i].name;
-        let value = element.attributes[i].value;
-        if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
-          continue;
-        if (name === 'checked' || name === 'disabled' || name === 'checked')
-          continue;
-        if (nodeName === 'LINK' && name === 'integrity')
-          continue;
-        if (name === 'src' && (nodeName === 'IFRAME' || nodeName === 'FRAME')) {
-          // TODO: handle srcdoc?
-          let protocol = win.location.protocol;
-          if (!protocol.startsWith('http'))
-            protocol = 'http:';
-          value = protocol + '//' + nextId() + '/';
-          frameUrlToFrameElement.set(value, element);
-        } else if (name === 'src' && (nodeName === 'IMG')) {
-          value = sanitizeUrl(value);
-        } else if (name === 'srcset' && (nodeName === 'IMG')) {
-          value = sanitizeSrcSet(value);
-        } else if (name === 'srcset' && (nodeName === 'SOURCE')) {
-          value = sanitizeSrcSet(value);
-        } else if (name === 'href' && (nodeName === 'LINK')) {
-          value = sanitizeUrl(value);
-        } else if (name.startsWith('on')) {
-          value = '';
+        try {
+          for (const rule of sheet.cssRules) {
+            if ((rule as CSSImportRule).styleSheet)
+              visitStyleSheet((rule as CSSImportRule).styleSheet);
+          }
+
+          const cssText = this._getSheetText(sheet);
+          if (sheet.ownerNode && sheet.ownerNode.nodeName === 'STYLE') {
+            // Stylesheets with owner STYLE nodes will be rewritten.
+            styleNodeToStyleSheetText.set(sheet.ownerNode, cssText);
+          } else if (sheet.href !== null) {
+            // Other stylesheets will have resource overrides.
+            const base = this._getSheetBase(sheet);
+            const url = this._resolveUrl(base, sheet.href);
+            styleSheetUrlToContentOverride.set(url, cssText);
+          }
+        } catch (e) {
+          // Sometimes we cannot access cross-origin stylesheets.
         }
-        builder.push(' ');
-        builder.push(name);
-        builder.push('="');
-        builder.push(escapeAttribute(value));
-        builder.push('"');
-      }
-      if (nodeName === 'INPUT') {
-        builder.push(' value="');
-        builder.push(escapeAttribute((element as HTMLInputElement).value));
-        builder.push('"');
-      }
-      if ((element as any).checked)
-        builder.push(' checked');
-      if ((element as any).disabled)
-        builder.push(' disabled');
-      if ((element as any).readOnly)
-        builder.push(' readonly');
-      if (element.shadowRoot) {
-        const b: string[] = [];
-        visit(element.shadowRoot, b);
-        const chunkId = nextId();
-        chunks.set(chunkId, b.join(''));
-        builder.push(' ');
-        builder.push(shadowAttribute);
-        builder.push('="');
-        builder.push(chunkId);
-        builder.push('"');
-      }
-      builder.push('>');
-    }
-    if (nodeName === 'HEAD') {
-      let baseHref = document.baseURI;
-      let baseTarget: string | undefined;
-      for (let child = node.firstChild; child; child = child.nextSibling) {
-        if (child.nodeName === 'BASE') {
-          baseHref = (child as HTMLBaseElement).href;
-          baseTarget = (child as HTMLBaseElement).target;
-        }
-      }
-      builder.push('<base href="');
-      builder.push(escapeAttribute(baseHref));
-      builder.push('"');
-      if (baseTarget) {
-        builder.push(' target="');
-        builder.push(escapeAttribute(baseTarget));
-        builder.push('"');
-      }
-      builder.push('>');
-    }
-    if (nodeName === 'TEXTAREA') {
-      builder.push(escapeText((node as HTMLTextAreaElement).value));
-    } else {
-      for (let child = node.firstChild; child; child = child.nextSibling)
-        visit(child, builder);
-    }
-    if (node.nodeName === 'BODY' && chunks.size) {
-      builder.push('<script>');
-      const shadowChunks = Array.from(chunks).map(([chunkId, html]) => {
-        return `  ['${chunkId}', '${escapeScriptString(html)}']`;
-      }).join(',\n');
-      const scriptContent = `\n(${applyShadowsInPage.toString()})('${shadowAttribute}', new Map([\n${shadowChunks}\n]))\n`;
-      builder.push(scriptContent);
-      builder.push('</script>');
-    }
-    if (nodeType === Node.ELEMENT_NODE && !autoClosing.has(nodeName)) {
-      builder.push('</');
-      builder.push(nodeName);
-      builder.push('>');
-    }
-  };
+      };
 
-  function applyShadowsInPage(shadowAttribute: string, shadowContent: Map<string, string>) {
-    const visitShadows = (root: Document | ShadowRoot) => {
-      const elements = root.querySelectorAll(`[${shadowAttribute}]`);
-      for (let i = 0; i < elements.length; i++) {
-        const host = elements[i];
-        const chunkId = host.getAttribute(shadowAttribute)!;
-        host.removeAttribute(shadowAttribute);
-        const shadow = host.attachShadow({ mode: 'open' });
-        const html = shadowContent.get(chunkId);
-        if (html) {
-          shadow.innerHTML = html;
-          visitShadows(shadow);
+      const visit = (node: Node | ShadowRoot, builder: string[]) => {
+        const nodeName = node.nodeName;
+        const nodeType = node.nodeType;
+
+        if (nodeType === Node.DOCUMENT_TYPE_NODE) {
+          const docType = node as DocumentType;
+          builder.push(`<!DOCTYPE ${docType.name}>`);
+          return;
         }
+
+        if (nodeType === Node.TEXT_NODE) {
+          builder.push(this._escapeText(node.nodeValue || ''));
+          return;
+        }
+
+        if (nodeType !== Node.ELEMENT_NODE &&
+            nodeType !== Node.DOCUMENT_NODE &&
+            nodeType !== Node.DOCUMENT_FRAGMENT_NODE)
+          return;
+
+        if (nodeType === Node.DOCUMENT_NODE || nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
+          const documentOrShadowRoot = node as DocumentOrShadowRoot;
+          for (const sheet of documentOrShadowRoot.styleSheets)
+            visitStyleSheet(sheet);
+        }
+
+        if (nodeName === 'SCRIPT' || nodeName === 'BASE')
+          return;
+
+        if (this._removeNoScript && nodeName === 'NOSCRIPT')
+          return;
+
+        if (nodeName === 'STYLE') {
+          const cssText = styleNodeToStyleSheetText.get(node) || node.textContent || '';
+          builder.push('<style>');
+          builder.push(cssText);
+          builder.push('</style>');
+          return;
+        }
+
+        if (nodeType === Node.ELEMENT_NODE) {
+          const element = node as Element;
+          builder.push('<');
+          builder.push(nodeName);
+          // if (node === target)
+          //   builder.push(' __playwright_target__="true"');
+          for (let i = 0; i < element.attributes.length; i++) {
+            const name = element.attributes[i].name;
+            if (name === kSnapshotFrameIdAttribute)
+              continue;
+
+            let value = element.attributes[i].value;
+            if (name === 'value' && (nodeName === 'INPUT' || nodeName === 'TEXTAREA'))
+              continue;
+            if (name === 'checked' || name === 'disabled' || name === 'checked')
+              continue;
+            if (nodeName === 'LINK' && name === 'integrity')
+              continue;
+            if (name === 'src' && (nodeName === 'IFRAME' || nodeName === 'FRAME')) {
+              // TODO: handle srcdoc?
+              const frameId = element.getAttribute(kSnapshotFrameIdAttribute);
+              if (frameId) {
+                let protocol = win.location.protocol;
+                if (!protocol.startsWith('http'))
+                  protocol = 'http:';
+                value = protocol + '//' + frameId + '/';
+              } else {
+                value = 'data:text/html,<body>Snapshot is not available</body>';
+              }
+            } else if (name === 'src' && (nodeName === 'IMG')) {
+              value = this._sanitizeUrl(value);
+            } else if (name === 'srcset' && (nodeName === 'IMG')) {
+              value = this._sanitizeSrcSet(value);
+            } else if (name === 'srcset' && (nodeName === 'SOURCE')) {
+              value = this._sanitizeSrcSet(value);
+            } else if (name === 'href' && (nodeName === 'LINK')) {
+              value = this._sanitizeUrl(value);
+            } else if (name.startsWith('on')) {
+              value = '';
+            }
+            builder.push(' ');
+            builder.push(name);
+            builder.push('="');
+            builder.push(this._escapeAttribute(value));
+            builder.push('"');
+          }
+          if (nodeName === 'INPUT') {
+            builder.push(' value="');
+            builder.push(this._escapeAttribute((element as HTMLInputElement).value));
+            builder.push('"');
+          }
+          if ((element as any).checked)
+            builder.push(' checked');
+          if ((element as any).disabled)
+            builder.push(' disabled');
+          if ((element as any).readOnly)
+            builder.push(' readonly');
+          if (element.shadowRoot) {
+            const b: string[] = [];
+            visit(element.shadowRoot, b);
+            const chunkId = shadowChunks.length;
+            shadowChunks.push(b.join(''));
+            builder.push(' ');
+            builder.push(kShadowAttribute);
+            builder.push('="');
+            builder.push('' + chunkId);
+            builder.push('"');
+          }
+          builder.push('>');
+        }
+        if (nodeName === 'HEAD') {
+          let baseHref = document.baseURI;
+          let baseTarget: string | undefined;
+          for (let child = node.firstChild; child; child = child.nextSibling) {
+            if (child.nodeName === 'BASE') {
+              baseHref = (child as HTMLBaseElement).href;
+              baseTarget = (child as HTMLBaseElement).target;
+            }
+          }
+          builder.push('<base href="');
+          builder.push(this._escapeAttribute(baseHref));
+          builder.push('"');
+          if (baseTarget) {
+            builder.push(' target="');
+            builder.push(this._escapeAttribute(baseTarget));
+            builder.push('"');
+          }
+          builder.push('>');
+        }
+        if (nodeName === 'TEXTAREA') {
+          builder.push(this._escapeText((node as HTMLTextAreaElement).value));
+        } else {
+          for (let child = node.firstChild; child; child = child.nextSibling)
+            visit(child, builder);
+        }
+        if (node.nodeName === 'BODY' && shadowChunks.length) {
+          builder.push('<script>');
+          const chunks = shadowChunks.map(html => {
+            return '`' + html.replace(/`/g, '\\\`') + '`';
+          }).join(',\n');
+          const scriptContent = `\n(${applyShadowsInPage.toString()})('${kShadowAttribute}', [\n${chunks}\n])\n`;
+          builder.push(scriptContent);
+          builder.push('</script>');
+        }
+        if (nodeType === Node.ELEMENT_NODE && !autoClosing.has(nodeName)) {
+          builder.push('</');
+          builder.push(nodeName);
+          builder.push('>');
+        }
+      };
+
+      function applyShadowsInPage(shadowAttribute: string, shadowContent: string[]) {
+        const visitShadows = (root: Document | ShadowRoot) => {
+          const elements = root.querySelectorAll(`[${shadowAttribute}]`);
+          for (let i = 0; i < elements.length; i++) {
+            const host = elements[i];
+            const chunkId = host.getAttribute(shadowAttribute)!;
+            host.removeAttribute(shadowAttribute);
+            const shadow = host.attachShadow({ mode: 'open' });
+            const html = shadowContent[+chunkId];
+            if (html) {
+              shadow.innerHTML = html;
+              visitShadows(shadow);
+            }
+          }
+        };
+        visitShadows(document);
       }
-    };
-    visitShadows(document);
+
+      const root: string[] = [];
+      visit(doc, root);
+      return {
+        html: root.join(''),
+        resourceOverrides: Array.from(styleSheetUrlToContentOverride).map(([url, content]) => ({ url, content })),
+        viewport: {
+          width: Math.max(doc.body ? doc.body.offsetWidth : 0, doc.documentElement ? doc.documentElement.offsetWidth : 0),
+          height: Math.max(doc.body ? doc.body.offsetHeight : 0, doc.documentElement ? doc.documentElement.offsetHeight : 0),
+        },
+        url: location.href,
+        snapshotId,
+      };
+    }
   }
 
-  const root: string[] = [];
-  visit(doc, root);
-  return {
-    data: {
-      html: root.join(''),
-      frameUrls: Array.from(frameUrlToFrameElement.keys()),
-      resourceOverrides: Array.from(styleSheetUrlToContentOverride).map(([url, content]) => ({ url, content })),
-    },
-    frameElements: Array.from(frameUrlToFrameElement.values()),
-  };
+  (window as any)[kSnapshotStreamer] = new Streamer();
 }

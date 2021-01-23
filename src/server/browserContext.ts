@@ -67,14 +67,22 @@ export type ActionMetadata = {
 };
 
 export interface ActionListener {
+  onActionCheckpoint(name: string, metadata: ActionMetadata): Promise<void>;
   onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void>;
 }
 
 export async function runAction<T>(task: (controller: ProgressController) => Promise<T>, metadata: ActionMetadata): Promise<T> {
   const controller = new ProgressController();
-  controller.setListener(async result => {
-    for (const listener of metadata.page._browserContext._actionListeners)
-      await listener.onAfterAction(result, metadata);
+  controller.setListener({
+    onProgressCheckpoint: async (name: string): Promise<void> => {
+      for (const listener of metadata.page._browserContext._actionListeners)
+        await listener.onActionCheckpoint(name, metadata);
+    },
+
+    onProgressDone: async (result: ProgressResult): Promise<void> => {
+      for (const listener of metadata.page._browserContext._actionListeners)
+        await listener.onAfterAction(result, metadata);
+    },
   });
   const result = await task(controller);
   return result;

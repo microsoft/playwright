@@ -19,8 +19,7 @@ import * as path from 'path';
 import * as playwright from '../../..';
 import * as util from 'util';
 import { SnapshotRouter } from './snapshotRouter';
-import { actionById, ActionEntry, ContextEntry, TraceModel } from './traceModel';
-import type { PageSnapshot } from '../../trace/traceTypes';
+import { actionById, ActionEntry, ContextEntry, PageEntry, TraceModel } from './traceModel';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
@@ -39,11 +38,9 @@ export class ScreenshotGenerator {
   }
 
   generateScreenshot(actionId: string): Promise<Buffer | undefined> {
-    const { context, action } = actionById(this._traceModel, actionId);
-    if (!action.action.snapshot)
-      return Promise.resolve(undefined);
+    const { context, action, page } = actionById(this._traceModel, actionId);
     if (!this._rendering.has(action)) {
-      this._rendering.set(action, this._render(context, action).then(body => {
+      this._rendering.set(action, this._render(context, page, action).then(body => {
         this._rendering.delete(action);
         return body;
       }));
@@ -51,8 +48,8 @@ export class ScreenshotGenerator {
     return this._rendering.get(action)!;
   }
 
-  private async _render(contextEntry: ContextEntry, actionEntry: ActionEntry): Promise<Buffer | undefined> {
-    const imageFileName = path.join(this._traceStorageDir, actionEntry.action.snapshot!.sha1 + '-screenshot.png');
+  private async _render(contextEntry: ContextEntry, pageEntry: PageEntry, actionEntry: ActionEntry): Promise<Buffer | undefined> {
+    const imageFileName = path.join(this._traceStorageDir, actionEntry.action.timestamp + '-screenshot.png');
     try {
       return await fsReadFileAsync(imageFileName);
     } catch (e) {
@@ -70,27 +67,24 @@ export class ScreenshotGenerator {
     });
 
     try {
-      const snapshotPath = path.join(this._traceStorageDir, action.snapshot!.sha1);
-      let snapshot;
-      try {
-        snapshot = await fsReadFileAsync(snapshotPath, 'utf8');
-      } catch (e) {
-        console.log(`Unable to read snapshot at ${snapshotPath}`); // eslint-disable-line no-console
-        return;
-      }
-      const snapshotObject = JSON.parse(snapshot) as PageSnapshot;
       const snapshotRouter = new SnapshotRouter(this._traceStorageDir);
-      snapshotRouter.selectSnapshot(snapshotObject, contextEntry);
+      const snapshots = action.snapshots || [];
+      const snapshotId = snapshots.length ? snapshots[0].snapshotId : undefined;
+      const snapshotTimestamp = action.startTime;
+      const pageUrl = await snapshotRouter.selectSnapshot(contextEntry, pageEntry, snapshotId, snapshotTimestamp);
       page.route('**/*', route => snapshotRouter.route(route));
-      const url = snapshotObject.frames[0].url;
-      console.log('Generating screenshot for ' + action.action, snapshotObject.frames[0].url); // eslint-disable-line no-console
-      await page.goto(url);
+      console.log('Generating screenshot for ' + action.action, pageUrl); // eslint-disable-line no-console
+      await page.goto(pageUrl);
 
-      const element = await page.$(action.selector || '*[__playwright_target__]');
-      if (element) {
-        await element.evaluate(e => {
-          e.style.backgroundColor = '#ff69b460';
-        });
+      try {
+        const element = await page.$(action.selector || '*[__playwright_target__]');
+        if (element) {
+          await element.evaluate(e => {
+            e.style.backgroundColor = '#ff69b460';
+          });
+        }
+      } catch (e) {
+        console.log(e); // eslint-disable-line no-console
       }
       const imageData = await page.screenshot();
       await fsWriteFileAsync(imageFileName, imageData);

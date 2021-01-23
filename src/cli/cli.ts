@@ -202,6 +202,8 @@ async function launchContext(options: Options, headless: boolean): Promise<{ bro
   if (contextOptions.isMobile && browserType.name() === 'firefox')
     contextOptions.isMobile = undefined;
 
+  if (process.env.PWTRACE)
+    (contextOptions as any)._traceDir = path.join(process.cwd(), '.trace');
 
   // Proxy
 

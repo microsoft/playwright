@@ -21,7 +21,7 @@ import * as util from 'util';
 import { ScreenshotGenerator } from './screenshotGenerator';
 import { SnapshotRouter } from './snapshotRouter';
 import { readTraceFile, TraceModel } from './traceModel';
-import type { ActionTraceEvent, PageSnapshot, TraceEvent } from '../../trace/traceTypes';
+import type { ActionTraceEvent, TraceEvent } from '../../trace/traceTypes';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -92,25 +92,20 @@ class TraceViewer {
     await uiPage.exposeBinding('readFile', async (_, path: string) => {
       return fs.readFileSync(path).toString();
     });
-    await uiPage.exposeBinding('renderSnapshot', async (_, action: ActionTraceEvent) => {
+    await uiPage.exposeBinding('renderSnapshot', async (_, arg: { action: ActionTraceEvent, snapshot: { name: string, snapshotId?: string } }) => {
+      const { action, snapshot } = arg;
       if (!this._document)
         return;
       try {
-        if (!action.snapshot) {
-          const snapshotFrame = uiPage.frames()[1];
-          await snapshotFrame.goto('data:text/html,No snapshot available');
-          return;
-        }
-
-        const snapshot = await fsReadFileAsync(path.join(this._document.resourcesDir, action.snapshot!.sha1), 'utf8');
-        const snapshotObject = JSON.parse(snapshot) as PageSnapshot;
         const contextEntry = this._document.model.contexts.find(entry => entry.created.contextId === action.contextId)!;
-        this._document.snapshotRouter.selectSnapshot(snapshotObject, contextEntry);
+        const pageEntry = contextEntry.pages.find(entry => entry.created.pageId === action.pageId)!;
+        const snapshotTime = snapshot.name === 'before' ? action.startTime : (snapshot.name === 'after' ? action.endTime : undefined);
+        const pageUrl = await this._document.snapshotRouter.selectSnapshot(contextEntry, pageEntry, snapshot.snapshotId, snapshotTime);
 
         // TODO: fix Playwright bug where frame.name is lost (empty).
         const snapshotFrame = uiPage.frames()[1];
         try {
-          await snapshotFrame.goto(snapshotObject.frames[0].url);
+          await snapshotFrame.goto(pageUrl);
         } catch (e) {
           if (!e.message.includes('frame was detached'))
             console.error(e);

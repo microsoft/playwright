@@ -33,6 +33,12 @@ export interface Progress {
   isRunning(): boolean;
   cleanupWhenAborted(cleanup: () => any): void;
   throwIfAborted(): void;
+  checkpoint(name: string): Promise<void>;
+}
+
+export interface ProgressListener {
+  onProgressCheckpoint(name: string): Promise<void>;
+  onProgressDone(result: ProgressResult): Promise<void>;
 }
 
 export async function runAbortableTask<T>(task: (progress: Progress) => Promise<T>, timeout: number): Promise<T> {
@@ -59,7 +65,7 @@ export class ProgressController {
   private _deadline: number = 0;
   private _timeout: number = 0;
   private _logRecording: string[] = [];
-  private _listener?: (result: ProgressResult) => Promise<void>;
+  private _listener?: ProgressListener;
 
   constructor() {
     this._forceAbortPromise = new Promise((resolve, reject) => this._forceAbort = reject);
@@ -71,7 +77,7 @@ export class ProgressController {
     this._logName = logName;
   }
 
-  setListener(listener: (result: ProgressResult) => Promise<void>) {
+  setListener(listener: ProgressListener) {
     this._listener = listener;
   }
 
@@ -103,6 +109,10 @@ export class ProgressController {
         if (this._state === 'aborted')
           throw new AbortedError();
       },
+      checkpoint: async (name: string) => {
+        if (this._listener)
+          await this._listener.onProgressCheckpoint(name);
+      },
     };
 
     const timeoutError = new TimeoutError(`Timeout ${this._timeout}ms exceeded.`);
@@ -114,7 +124,7 @@ export class ProgressController {
       clearTimeout(timer);
       this._state = 'finished';
       if (this._listener) {
-        await this._listener({
+        await this._listener.onProgressDone({
           startTime,
           endTime: monotonicTime(),
           logs: this._logRecording,
@@ -128,7 +138,7 @@ export class ProgressController {
       this._state = 'aborted';
       await Promise.all(this._cleanups.splice(0).map(cleanup => runCleanup(cleanup)));
       if (this._listener) {
-        await this._listener({
+        await this._listener.onProgressDone({
           startTime,
           endTime: monotonicTime(),
           logs: this._logRecording,

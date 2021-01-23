@@ -68,6 +68,28 @@
   font-weight: 600;
 }
 
+.snapshot-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.snapshot-controls {
+  flex: 0 0 24px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.snapshot-toggle {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.snapshot-toggle.toggled {
+  background: var(--inactive-focus-ring);
+}
+
 .snapshot-wrapper {
   flex: auto;
   margin: 1px;
