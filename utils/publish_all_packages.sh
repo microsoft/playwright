@@ -4,11 +4,11 @@ set -x
 
 function cleanup {
   # Cleanup all possibly created package tars.
-  [[ ! -z "${PLAYWRIGHT_TGZ}" ]] && rm -rf "${PLAYWRIGHT_TGZ}"
-  [[ ! -z "${PLAYWRIGHT_CORE_TGZ}" ]] && rm -rf "${PLAYWRIGHT_CORE_TGZ}"
-  [[ ! -z "${PLAYWRIGHT_WEBKIT_TGZ}" ]] && rm -rf "${PLAYWRIGHT_WEBKIT_TGZ}"
-  [[ ! -z "${PLAYWRIGHT_FIREFOX_TGZ}" ]] && rm -rf "${PLAYWRIGHT_FIREFOX_TGZ}"
-  [[ ! -z "${PLAYWRIGHT_CHROMIUM_TGZ}" ]] && rm -rf "${PLAYWRIGHT_CHROMIUM_TGZ}"
+  if [[ ! -z "${PLAYWRIGHT_TGZ}" ]]; then rm -rf "${PLAYWRIGHT_TGZ}"; fi
+  if [[ ! -z "${PLAYWRIGHT_CORE_TGZ}" ]]; then rm -rf "${PLAYWRIGHT_CORE_TGZ}"; fi
+  if [[ ! -z "${PLAYWRIGHT_WEBKIT_TGZ}" ]]; then rm -rf "${PLAYWRIGHT_WEBKIT_TGZ}"; fi
+  if [[ ! -z "${PLAYWRIGHT_FIREFOX_TGZ}" ]]; then rm -rf "${PLAYWRIGHT_FIREFOX_TGZ}"; fi
+  if [[ ! -z "${PLAYWRIGHT_CHROMIUM_TGZ}" ]]; then rm -rf "${PLAYWRIGHT_CHROMIUM_TGZ}"; fi
 }
 
 trap "cleanup; cd $(pwd -P)" EXIT
