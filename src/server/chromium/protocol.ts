@@ -808,11 +808,20 @@ some CSP errors in the future.
       violatingNodeId?: DOM.BackendNodeId;
     }
     /**
+     * Details for a request that has been blocked with the BLOCKED_BY_RESPONSE
+code. Currently only used for COEP/COOP, but may be extended to include
+some CSP errors in the future.
+     */
+    export interface SharedArrayBufferTransferIssueDetails {
+      sourceCodeLocation: SourceCodeLocation;
+      isWarning: boolean;
+    }
+    /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue";
+    export type InspectorIssueCode = "SameSiteCookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferTransferIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -824,6 +833,7 @@ add a new optional field to this type.
       blockedByResponseIssueDetails?: BlockedByResponseIssueDetails;
       heavyAdIssueDetails?: HeavyAdIssueDetails;
       contentSecurityPolicyIssueDetails?: ContentSecurityPolicyIssueDetails;
+      sharedArrayBufferTransferIssueDetails?: SharedArrayBufferTransferIssueDetails;
     }
     /**
      * An inspector issue reported from the back-end.
@@ -1023,7 +1033,7 @@ events afterwards if enabled and recording.
        */
       windowState?: WindowState;
     }
-    export type PermissionType = "accessibilityEvents"|"audioCapture"|"backgroundSync"|"backgroundFetch"|"clipboardReadWrite"|"clipboardSanitizedWrite"|"durableStorage"|"flash"|"geolocation"|"midi"|"midiSysex"|"nfc"|"notifications"|"paymentHandler"|"periodicBackgroundSync"|"protectedMediaIdentifier"|"sensors"|"videoCapture"|"videoCapturePanTiltZoom"|"idleDetection"|"wakeLockScreen"|"wakeLockSystem";
+    export type PermissionType = "accessibilityEvents"|"audioCapture"|"backgroundSync"|"backgroundFetch"|"clipboardReadWrite"|"clipboardSanitizedWrite"|"displayCapture"|"durableStorage"|"flash"|"geolocation"|"midi"|"midiSysex"|"nfc"|"notifications"|"paymentHandler"|"periodicBackgroundSync"|"protectedMediaIdentifier"|"sensors"|"videoCapture"|"videoCapturePanTiltZoom"|"idleDetection"|"wakeLockScreen"|"wakeLockSystem";
     export type PermissionSetting = "granted"|"denied"|"prompt";
     /**
      * Definition of PermissionDescriptor defined in the Permissions API:
@@ -2542,7 +2552,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button";
+    export type PseudoType = "first-line"|"first-letter"|"before"|"after"|"marker"|"backdrop"|"selection"|"target-text"|"spelling-error"|"grammar-error"|"first-line-inherited"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button";
     /**
      * Shadow root type.
      */
@@ -7167,6 +7177,10 @@ module) (0-based).
        * Cookie Priority
        */
       priority: CookiePriority;
+      /**
+       * True if cookie is SameParty.
+       */
+      sameParty: boolean;
     }
     /**
      * Types of reasons why a cookie may not be stored from a response.
@@ -7894,6 +7908,10 @@ this requestId will be the same as the requestId present in the requestWillBeSen
        */
       url: string;
       /**
+       * Timestamp.
+       */
+      timestamp: MonotonicTime;
+      /**
        * Request initiator.
        */
       initiator?: Initiator;
@@ -7903,6 +7921,10 @@ this requestId will be the same as the requestId present in the requestWillBeSen
        * WebTransport identifier.
        */
       transportId: RequestId;
+      /**
+       * Timestamp.
+       */
+      timestamp: MonotonicTime;
     }
     /**
      * Fired when additional information about a requestWillBeSent event is available from the
@@ -10807,6 +10829,99 @@ this method while metrics collection is enabled returns an error.
   }
   
   /**
+   * Reporting of performance timeline events, as specified in
+https://w3c.github.io/performance-timeline/#dom-performanceobserver.
+   */
+  export module PerformanceTimeline {
+    /**
+     * See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
+     */
+    export interface LargestContentfulPaint {
+      renderTime: Network.TimeSinceEpoch;
+      loadTime: Network.TimeSinceEpoch;
+      /**
+       * The number of pixels being painted.
+       */
+      size: number;
+      /**
+       * The id attribute of the element, if available.
+       */
+      elementId?: string;
+      /**
+       * The URL of the image (may be trimmed).
+       */
+      url?: string;
+      nodeId?: DOM.BackendNodeId;
+    }
+    export interface LayoutShiftAttribution {
+      previousRect: DOM.Rect;
+      currentRect: DOM.Rect;
+      nodeId?: DOM.BackendNodeId;
+    }
+    /**
+     * See https://wicg.github.io/layout-instability/#sec-layout-shift and layout_shift.idl
+     */
+    export interface LayoutShift {
+      /**
+       * Score increment produced by this event.
+       */
+      value: number;
+      hadRecentInput: boolean;
+      lastInputTime: Network.TimeSinceEpoch;
+      sources: LayoutShiftAttribution[];
+    }
+    export interface TimelineEvent {
+      /**
+       * Identifies the frame that this event is related to. Empty for non-frame targets.
+       */
+      frameId: Page.FrameId;
+      /**
+       * The event type, as specified in https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
+This determines which of the optional "details" fiedls is present.
+       */
+      type: string;
+      /**
+       * Name may be empty depending on the type.
+       */
+      name: string;
+      /**
+       * Time in seconds since Epoch, monotonically increasing within document lifetime.
+       */
+      time: Network.TimeSinceEpoch;
+      /**
+       * Event duration, if applicable.
+       */
+      duration?: number;
+      lcpDetails?: LargestContentfulPaint;
+      layoutShiftDetails?: LayoutShift;
+    }
+    
+    /**
+     * Sent when a performance timeline event is added. See reportPerformanceTimeline method.
+     */
+    export type timelineEventAddedPayload = {
+      event: TimelineEvent;
+    }
+    
+    /**
+     * Previously buffered events would be reported before method returns.
+See also: timelineEventAdded
+     */
+    export type enableParameters = {
+      /**
+       * The types of event to report, as specified in
+https://w3c.github.io/performance-timeline/#dom-performanceentry-entrytype
+The specified filter overrides any previous filters, passing empty
+filter disables recording.
+Note that not all types exposed to the web platform are currently supported.
+       */
+      eventTypes: string[];
+    }
+    export type enableReturnValue = {
+    }
+  }
+  
+  /**
    * Security
    */
   export module Security {
@@ -12269,6 +12384,12 @@ transfer mode (defaults to `none`)
        */
       streamCompression?: StreamCompression;
       traceConfig?: TraceConfig;
+      /**
+       * Base64-encoded serialized perfetto.protos.TraceConfig protobuf message
+When specified, the parameters `categories`, `options`, `traceConfig`
+are ignored.
+       */
+      perfettoConfig?: binary;
     }
     export type startReturnValue = {
     }
@@ -13625,33 +13746,6 @@ execution. Overrides `setPauseOnException` state.
       exceptionDetails?: Runtime.ExceptionDetails;
     }
     /**
-     * Execute a Wasm Evaluator module on a given call frame.
-     */
-    export type executeWasmEvaluatorParameters = {
-      /**
-       * WebAssembly call frame identifier to evaluate on.
-       */
-      callFrameId: CallFrameId;
-      /**
-       * Code of the evaluator module.
-       */
-      evaluator: binary;
-      /**
-       * Terminate execution after timing out (number of milliseconds).
-       */
-      timeout?: Runtime.TimeDelta;
-    }
-    export type executeWasmEvaluatorReturnValue = {
-      /**
-       * Object wrapper for the evaluation result.
-       */
-      result: Runtime.RemoteObject;
-      /**
-       * Exception details.
-       */
-      exceptionDetails?: Runtime.ExceptionDetails;
-    }
-    /**
      * Returns possible locations for breakpoint. scriptId in start and end range locations should be
 the same.
      */
@@ -14718,11 +14812,13 @@ other objects in their object group.
       /**
        * Object type.
        */
-      type: "object"|"function"|"undefined"|"string"|"number"|"boolean"|"symbol"|"bigint"|"wasm";
+      type: "object"|"function"|"undefined"|"string"|"number"|"boolean"|"symbol"|"bigint";
       /**
-       * Object subtype hint. Specified for `object` or `wasm` type values only.
+       * Object subtype hint. Specified for `object` type values only.
+NOTE: If you change anything here, make sure to also update
+`subtype` in `ObjectPreview` and `PropertyPreview` below.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"i32"|"i64"|"f32"|"f64"|"v128"|"externref";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory";
       /**
        * Object class (constructor) name. Specified for `object` type values only.
        */
@@ -14774,7 +14870,7 @@ The result value is json ML array.
       /**
        * Object subtype hint. Specified for `object` type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory";
       /**
        * String representation of the object.
        */
@@ -14812,7 +14908,7 @@ The result value is json ML array.
       /**
        * Object subtype hint. Specified for `object` type values only.
        */
-      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error";
+      subtype?: "array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"iterator"|"generator"|"error"|"proxy"|"promise"|"typedarray"|"arraybuffer"|"dataview"|"webassemblymemory";
     }
     export interface EntryPreview {
       /**
@@ -14948,6 +15044,12 @@ script evaluation should be performed.
        * Human readable name describing given context.
        */
       name: string;
+      /**
+       * A system-unique execution context identifier. Unlike the id, this is unique accross
+multiple processes, so can be reliably used to identify specific context while backend
+performs a cross-process navigation.
+       */
+      uniqueId: string;
       /**
        * Embedder-specific auxiliary data.
        */
@@ -15329,6 +15431,9 @@ execution. Overrides `setPauseOnException` state.
       /**
        * Specifies in which execution context to perform evaluation. If the parameter is omitted the
 evaluation will be performed in the context of the inspected page.
+This is mutually exclusive with `uniqueContextId`, which offers an
+alternative way to identify the execution context that is more reliable
+in a multi-process environment.
        */
       contextId?: ExecutionContextId;
       /**
@@ -15374,6 +15479,15 @@ when called with non-callable arguments. This flag bypasses CSP for this
 evaluation and allows unsafe-eval. Defaults to true.
        */
       allowUnsafeEvalBlockedByCSP?: boolean;
+      /**
+       * An alternative way to specify the execution context to evaluate in.
+Compared to contextId that may be reused accross processes, this is guaranteed to be
+system-unique, so it can be used to prevent accidental evaluation of the expression
+in context different than intended (e.g. as a result of navigation accross process
+boundaries).
+This is mutually exclusive with `contextId`.
+       */
+      uniqueContextId?: string;
     }
     export type evaluateReturnValue = {
       /**
@@ -15757,6 +15871,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Page.windowOpen": Page.windowOpenPayload;
     "Page.compilationCacheProduced": Page.compilationCacheProducedPayload;
     "Performance.metrics": Performance.metricsPayload;
+    "PerformanceTimeline.timelineEventAdded": PerformanceTimeline.timelineEventAddedPayload;
     "Security.certificateError": Security.certificateErrorPayload;
     "Security.visibleSecurityStateChanged": Security.visibleSecurityStateChangedPayload;
     "Security.securityStateChanged": Security.securityStateChangedPayload;
@@ -16161,6 +16276,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Performance.enable": Performance.enableParameters;
     "Performance.setTimeDomain": Performance.setTimeDomainParameters;
     "Performance.getMetrics": Performance.getMetricsParameters;
+    "PerformanceTimeline.enable": PerformanceTimeline.enableParameters;
     "Security.disable": Security.disableParameters;
     "Security.enable": Security.enableParameters;
     "Security.setIgnoreCertificateErrors": Security.setIgnoreCertificateErrorsParameters;
@@ -16245,7 +16361,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Debugger.disable": Debugger.disableParameters;
     "Debugger.enable": Debugger.enableParameters;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameParameters;
-    "Debugger.executeWasmEvaluator": Debugger.executeWasmEvaluatorParameters;
     "Debugger.getPossibleBreakpoints": Debugger.getPossibleBreakpointsParameters;
     "Debugger.getScriptSource": Debugger.getScriptSourceParameters;
     "Debugger.getWasmBytecode": Debugger.getWasmBytecodeParameters;
@@ -16666,6 +16781,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Performance.enable": Performance.enableReturnValue;
     "Performance.setTimeDomain": Performance.setTimeDomainReturnValue;
     "Performance.getMetrics": Performance.getMetricsReturnValue;
+    "PerformanceTimeline.enable": PerformanceTimeline.enableReturnValue;
     "Security.disable": Security.disableReturnValue;
     "Security.enable": Security.enableReturnValue;
     "Security.setIgnoreCertificateErrors": Security.setIgnoreCertificateErrorsReturnValue;
@@ -16750,7 +16866,6 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Debugger.disable": Debugger.disableReturnValue;
     "Debugger.enable": Debugger.enableReturnValue;
     "Debugger.evaluateOnCallFrame": Debugger.evaluateOnCallFrameReturnValue;
-    "Debugger.executeWasmEvaluator": Debugger.executeWasmEvaluatorReturnValue;
     "Debugger.getPossibleBreakpoints": Debugger.getPossibleBreakpointsReturnValue;
     "Debugger.getScriptSource": Debugger.getScriptSourceReturnValue;
     "Debugger.getWasmBytecode": Debugger.getWasmBytecodeReturnValue;

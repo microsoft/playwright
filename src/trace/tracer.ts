@@ -43,17 +43,11 @@ class Tracer implements ContextListener {
   private _contextTracers = new Map<BrowserContext, ContextTracer>();
 
   async onContextCreated(context: BrowserContext): Promise<void> {
-    let traceStorageDir: string;
-    let tracePath: string;
-    if (context._options._tracePath) {
-      traceStorageDir = context._options._traceResourcesPath || path.join(path.dirname(context._options._tracePath), 'trace-resources');
-      tracePath = context._options._tracePath;
-    } else if (envTrace) {
-      traceStorageDir = envTrace;
-      tracePath = path.join(envTrace, createGuid() + '.trace');
-    } else {
+    const traceDir = envTrace || context._options._traceDir;
+    if (!traceDir)
       return;
-    }
+    const traceStorageDir = path.join(traceDir, 'resources');
+    const tracePath = path.join(traceDir, createGuid() + '.trace');
     const contextTracer = new ContextTracer(context, traceStorageDir, tracePath);
     this._contextTracers.set(context, contextTracer);
   }
@@ -69,6 +63,8 @@ class Tracer implements ContextListener {
   }
 }
 
+const pageIdSymbol = Symbol('pageId');
+
 class ContextTracer implements SnapshotterDelegate, ActionListener {
   private _context: BrowserContext;
   private _contextId: string;
@@ -78,7 +74,6 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   private _snapshotter: Snapshotter;
   private _eventListeners: RegisteredListener[];
   private _disposed = false;
-  private _pageToId = new Map<Page, string>();
   private _traceFile: string;
 
   constructor(context: BrowserContext, traceStorageDir: string, traceFile: string) {
@@ -129,7 +124,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
   }
 
   pageId(page: Page): string {
-    return this._pageToId.get(page)!;
+    return (page as any)[pageIdSymbol];
   }
 
   async onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void> {
@@ -139,7 +134,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
         timestamp: monotonicTime(),
         type: 'action',
         contextId: this._contextId,
-        pageId: this._pageToId.get(metadata.page),
+        pageId: this.pageId(metadata.page),
         action: metadata.type,
         selector: typeof metadata.target === 'string' ? metadata.target : undefined,
         value: metadata.value,
@@ -157,7 +152,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
 
   private _onPage(page: Page) {
     const pageId = 'page@' + createGuid();
-    this._pageToId.set(page, pageId);
+    (page as any)[pageIdSymbol] = pageId;
 
     const event: trace.PageCreatedTraceEvent = {
       timestamp: monotonicTime(),
@@ -234,7 +229,6 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     });
 
     page.once(Page.Events.Close, () => {
-      this._pageToId.delete(page);
       if (this._disposed)
         return;
       const event: trace.PageDestroyedTraceEvent = {
@@ -267,7 +261,6 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     this._disposed = true;
     this._context._actionListeners.delete(this);
     helper.removeEventListeners(this._eventListeners);
-    this._pageToId.clear();
     this._snapshotter.dispose();
     const event: trace.ContextDestroyedTraceEvent = {
       timestamp: monotonicTime(),

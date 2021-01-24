@@ -89,6 +89,7 @@ page.remove_listener("request", log_request)
 ```
 
 ## event: Page.close
+- type: <[Page]>
 
 Emitted when the page closes.
 
@@ -129,6 +130,7 @@ page.evaluate("console.log('hello', 5, {foo: 'bar'})")
 ```
 
 ## event: Page.crash
+- type: <[Page]>
 
 Emitted when the page crashes. Browser pages might crash if they try to allocate too much memory. When the page crashes,
 ongoing and subsequent operations will throw.
@@ -173,6 +175,7 @@ Emitted when a JavaScript dialog appears, such as `alert`, `prompt`, `confirm` o
 to the dialog via [`method: Dialog.accept`] or [`method: Dialog.dismiss`] methods.
 
 ## event: Page.domcontentloaded
+- type: <[Page]>
 
 Emitted when the JavaScript [`DOMContentLoaded`](https://developer.mozilla.org/en-US/docs/Web/Events/DOMContentLoaded)
 event is dispatched.
@@ -221,6 +224,7 @@ Emitted when a frame is detached.
 Emitted when a frame is navigated to a new url.
 
 ## event: Page.load
+- type: <[Page]>
 
 Emitted when the JavaScript [`load`](https://developer.mozilla.org/en-US/docs/Web/Events/load) event is dispatched.
 
@@ -829,12 +833,12 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 
 Returns the value of the [`param: pageFunction`] invocation.
 
-If the function passed to the [`method: Page.evaluate`] returns a [Promise], then [`method: Page.evaluate`] would wait for the promise to
-resolve and return its value.
+If the function passed to the [`method: Page.evaluate`] returns a [Promise], then [`method: Page.evaluate`] would wait
+for the promise to resolve and return its value.
 
-If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then[ method: `Page.evaluate`] resolves to
-`undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-`-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+If the function passed to the [`method: Page.evaluate`] returns a non-[Serializable] value, then
+[`method: Page.evaluate`] resolves to `undefined`. DevTools Protocol also supports transferring some additional values
+that are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
 Passing argument to [`param: pageFunction`]:
 
@@ -925,7 +929,6 @@ aWindowHandle; // Handle for the window object.
 ```
 
 ```python async
-# FIXME
 a_window_handle = await page.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
 ```
@@ -1869,6 +1872,8 @@ Returns the array of option values that have been successfully selected.
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
 matching [`param: selector`], the method throws an error.
 
+Will wait until all specified options are present in the `<select>` element.
+
 ```js
 // single selection matching the value
 page.selectOption('select#colors', 'blue');
@@ -2205,7 +2210,7 @@ Either a predicate that receives an event or an options object. Optional.
 
 Returns when the [`param: pageFunction`] returns a truthy value. It resolves to a JSHandle of the truthy value.
 
-The `waitForFunction` can be used to observe viewport size change:
+The [`method: Page.waitForFunction`] can be used to observe viewport size change:
 
 ```js
 const { webkit } = require('playwright');  // Or 'chromium' or 'firefox'.

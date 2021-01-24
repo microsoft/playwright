@@ -45,7 +45,7 @@ Whether to bypass the [actionability](./actionability.md) checks. Defaults to `f
 - `selector` <[string]>
 
 A selector to search for element. If there are multiple elements satisfying the selector, the first will be used. See
-[working with selectors](./selectors.md#working-with-selectors) for more details.
+[working with selectors](./selectors.md) for more details.
 
 ## input-position
 - `position` <[Object]>
@@ -85,7 +85,7 @@ defaults to 1. See [UIEvent.detail].
 ## query-selector
 - `selector` <[string]>
 
-A selector to query for. See [working with selectors](./selectors.md#working-with-selectors) for more details.
+A selector to query for. See [working with selectors](./selectors.md) for more details.
 
 ## wait-for-selector-state
 - `state` <"attached"|"detached"|"visible"|"hidden">

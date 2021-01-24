@@ -27,45 +27,43 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class ScreenshotGenerator {
   private _traceStorageDir: string;
-  private _browserPromise: Promise<playwright.Browser> | undefined;
+  private _browserPromise: Promise<playwright.Browser>;
   private _traceModel: TraceModel;
   private _rendering = new Map<ActionEntry, Promise<Buffer | undefined>>();
+  private _lock = new Lock(3);
 
   constructor(traceStorageDir: string, traceModel: TraceModel) {
     this._traceStorageDir = traceStorageDir;
     this._traceModel = traceModel;
+    this._browserPromise = playwright.chromium.launch();
   }
 
-  async generateScreenshot(actionId: string): Promise<Buffer | undefined> {
+  generateScreenshot(actionId: string): Promise<Buffer | undefined> {
     const { context, action } = actionById(this._traceModel, actionId);
     if (!action.action.snapshot)
-      return;
-    const imageFileName = path.join(this._traceStorageDir, action.action.snapshot.sha1 + '-thumbnail.png');
-
-    let body: Buffer | undefined;
-    try {
-      body = await fsReadFileAsync(imageFileName);
-    } catch (e) {
-      if (!this._rendering.has(action)) {
-        this._rendering.set(action, this._render(context, action, imageFileName).then(body => {
-          this._rendering.delete(action);
-          return body;
-        }));
-      }
-      body = await this._rendering.get(action)!;
+      return Promise.resolve(undefined);
+    if (!this._rendering.has(action)) {
+      this._rendering.set(action, this._render(context, action).then(body => {
+        this._rendering.delete(action);
+        return body;
+      }));
     }
-    return body;
+    return this._rendering.get(action)!;
   }
 
-  private _browser() {
-    if (!this._browserPromise)
-      this._browserPromise = playwright.chromium.launch();
-    return this._browserPromise;
-  }
+  private async _render(contextEntry: ContextEntry, actionEntry: ActionEntry): Promise<Buffer | undefined> {
+    const imageFileName = path.join(this._traceStorageDir, actionEntry.action.snapshot!.sha1 + '-screenshot.png');
+    try {
+      return await fsReadFileAsync(imageFileName);
+    } catch (e) {
+      // fall through
+    }
 
-  private async _render(contextEntry: ContextEntry, actionEntry: ActionEntry, imageFileName: string): Promise<Buffer | undefined> {
     const { action } = actionEntry;
-    const browser = await this._browser();
+    const browser = await this._browserPromise;
+
+    await this._lock.obtain();
+
     const page = await browser.newPage({
       viewport: contextEntry.created.viewportSize,
       deviceScaleFactor: contextEntry.created.deviceScaleFactor
@@ -88,49 +86,44 @@ export class ScreenshotGenerator {
       console.log('Generating screenshot for ' + action.action, snapshotObject.frames[0].url); // eslint-disable-line no-console
       await page.goto(url);
 
-      let clip: any = undefined;
       const element = await page.$(action.selector || '*[__playwright_target__]');
       if (element) {
         await element.evaluate(e => {
           e.style.backgroundColor = '#ff69b460';
         });
-
-        clip = await element.boundingBox() || undefined;
-        if (clip) {
-          const thumbnailSize = {
-            width: 400,
-            height: 200
-          };
-          const insets = {
-            width: 60,
-            height: 30
-          };
-          clip.width = Math.min(thumbnailSize.width, clip.width);
-          clip.height = Math.min(thumbnailSize.height, clip.height);
-          if (clip.width < thumbnailSize.width) {
-            clip.x -= (thumbnailSize.width - clip.width) / 2;
-            clip.x = Math.max(0, clip.x);
-            clip.width = thumbnailSize.width;
-          } else {
-            clip.x = Math.max(0, clip.x - insets.width);
-          }
-          if (clip.height < thumbnailSize.height) {
-            clip.y -= (thumbnailSize.height - clip.height) / 2;
-            clip.y = Math.max(0, clip.y);
-            clip.height = thumbnailSize.height;
-          } else {
-            clip.y = Math.max(0, clip.y - insets.height);
-          }
-        }
       }
-
-      const imageData = await page.screenshot({ clip });
+      const imageData = await page.screenshot();
       await fsWriteFileAsync(imageFileName, imageData);
       return imageData;
     } catch (e) {
       console.log(e); // eslint-disable-line no-console
     } finally {
       await page.close();
+      this._lock.release();
     }
+  }
+}
+
+class Lock {
+  private _maxWorkers: number;
+  private _callbacks: (() => void)[] = [];
+  private _workers = 0;
+
+  constructor(maxWorkers: number) {
+    this._maxWorkers = maxWorkers;
+  }
+
+  async obtain() {
+    while (this._workers === this._maxWorkers)
+      await new Promise(f => this._callbacks.push(f));
+    ++this._workers;
+  }
+
+  release() {
+    --this._workers;
+    const callbacks = this._callbacks;
+    this._callbacks = [];
+    for (const callback of callbacks)
+      callback();
   }
 }

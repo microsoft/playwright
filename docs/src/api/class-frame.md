@@ -82,7 +82,7 @@ with sync_playwright() as playwright:
 Returns the ElementHandle pointing to the frame element.
 
 The method finds an element matching the specified selector within the frame. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+[Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
 ### param: Frame.$.selector = %%-query-selector-%%
@@ -95,7 +95,7 @@ returns `null`.
 Returns the ElementHandles pointing to the frame elements.
 
 The method finds all elements matching the specified selector within the frame. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+[Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
 ### param: Frame.$$.selector = %%-query-selector-%%
@@ -108,7 +108,7 @@ returns empty array.
 Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
-[`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more details. If no
+[`param: pageFunction`]. See [Working with selectors](./selectors.md) for more details. If no
 elements match the selector, the method throws an error.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its
@@ -155,7 +155,7 @@ Optional argument to pass to [`param: pageFunction`]
 Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for
+as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for
 more details.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its
@@ -416,9 +416,9 @@ Returns the return value of [`param: pageFunction`]
 If the function passed to the [`method: Frame.evaluate`] returns a [Promise], then [`method: Frame.evaluate`] would wait for the promise to
 resolve and return its value.
 
-If the function passed to the [`method: Frame.evaluate`] returns a non-[Serializable] value, then[ method: `Frame.evaluate`] returns
-`undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
-`-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
+If the function passed to the [`method: Frame.evaluate`] returns a non-[Serializable] value, then
+[`method: Frame.evaluate`] returns `undefined`. DevTools Protocol also supports transferring some additional values that
+are not serializable by `JSON`: `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
 ```js
 const result = await frame.evaluate(([x, y]) => {
@@ -493,11 +493,11 @@ Optional argument to pass to [`param: pageFunction`]
 
 Returns the return value of [`param: pageFunction`] as in-page object (JSHandle).
 
-The only difference between [`method: Frame.evaluate`] and [`method: Frame.evaluateHandle`] is that[ method: Fframe.evaluateHandle`] returns in-page
-object (JSHandle).
+The only difference between [`method: Frame.evaluate`] and [`method: Frame.evaluateHandle`] is that
+[method: Frame.evaluateHandle`] returns in-page object (JSHandle).
 
-If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Promise], then[ method: Fframe.evaluateHandle`] would wait for
-the promise to resolve and return its value.
+If the function, passed to the [`method: Frame.evaluateHandle`], returns a [Promise], then
+[`method: Frame.evaluateHandle`] would wait for the promise to resolve and return its value.
 
 ```js
 const aWindowHandle = await frame.evaluateHandle(() => Promise.resolve(window));
@@ -505,7 +505,6 @@ aWindowHandle; // Handle for the window object.
 ```
 
 ```python async
-# FIXME
 a_window_handle = await frame.evaluate_handle("Promise.resolve(window)")
 a_window_handle # handle for the window object.
 ```
@@ -842,6 +841,8 @@ Returns the array of option values that have been successfully selected.
 Triggers a `change` and `input` event once all the provided options have been selected. If there's no `<select>` element
 matching [`param: selector`], the method throws an error.
 
+Will wait until all specified options are present in the `<select>` element.
+
 ```js
 // single selection matching the value
 frame.selectOption('select#colors', 'blue');
@@ -1023,7 +1024,7 @@ Returns frame's url.
 
 Returns when the [`param: pageFunction`] returns a truthy value, returns that value.
 
-The `waitForFunction` can be used to observe viewport size change:
+The [`method: Frame.waitForFunction`] can be used to observe viewport size change:
 
 ```js
 const { firefox } = require('playwright');  // Or 'chromium' or 'webkit'.

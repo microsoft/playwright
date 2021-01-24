@@ -372,8 +372,7 @@ BrowserType:
           - dark
           - no-preference
         acceptDownloads: boolean?
-        _traceResourcesPath: string?
-        _tracePath: string?
+        _traceDir: string?
         recordVideo:
           type: object?
           properties:
@@ -445,8 +444,7 @@ Browser:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceResourcesPath: string?
-        _tracePath: string?
+        _traceDir: string?
         recordVideo:
           type: object?
           properties:
@@ -843,6 +841,8 @@ Page:
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
+
+    pause:
 
     pdf:
       parameters:
@@ -2336,8 +2336,7 @@ AndroidDevice:
           - light
           - no-preference
         acceptDownloads: boolean?
-        _traceResourcesPath: string?
-        _tracePath: string?
+        _traceDir: string?
         recordVideo:
           type: object?
           properties:

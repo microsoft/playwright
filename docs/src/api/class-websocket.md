@@ -3,6 +3,7 @@
 The [WebSocket] class represents websocket connections in the page.
 
 ## event: WebSocket.close
+- type: <[WebSocket]>
 
 Fired when the websocket closes.
 

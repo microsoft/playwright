@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { it, expect } from './fixtures';
+import { it, expect, folio } from './fixtures';
 
 it('should have default url when launching browser', async ({browserType, browserOptions, createUserDataDir}) => {
   const browserContext = await browserType.launchPersistentContext(await createUserDataDir(), {...browserOptions, headless: false });
@@ -24,8 +24,6 @@ it('should have default url when launching browser', async ({browserType, browse
 });
 
 it('headless should be able to read cookies written by headful', (test, { browserName, platform }) => {
-  test.fail(platform === 'win32' && browserName === 'chromium');
-  test.flaky(browserName === 'firefox');
   test.slow();
 }, async ({browserType, browserOptions, server, createUserDataDir}) => {
   // see https://github.com/microsoft/playwright/issues/717
@@ -167,4 +165,32 @@ it('Page.bringToFront should work', async ({browserType, browserOptions}) => {
       'visible'
   );
   await browser.close();
+});
+
+const fixtures = folio.extend();
+fixtures.testParametersPathSegment.override(async ({ browserName, platform }, run) => {
+  await run(browserName + '-' + platform);
+});
+fixtures.build().it('focused input should produce the same screenshot', (test, { browserName, platform }) => {
+  test.fail(browserName === 'firefox' && platform === 'darwin', 'headless has thinner outline');
+  test.fail(browserName === 'firefox' && platform === 'linux', 'headless has no outline');
+  test.skip(browserName === 'webkit' && platform === 'linux', 'gtk vs wpe');
+  test.fail(browserName === 'chromium', 'Different outline color');
+}, async ({browserType, browserOptions}) => {
+  const headful = await browserType.launch({...browserOptions, headless: false });
+  const headfulPage = await headful.newPage();
+  await headfulPage.setContent('<input>');
+  await headfulPage.focus('input');
+  const headfulScreenshot = await headfulPage.screenshot();
+  await headful.close();
+
+  const headless = await browserType.launch({...browserOptions, headless: true });
+  const headlessPage = await headless.newPage();
+  await headlessPage.setContent('<input>');
+  await headlessPage.focus('input');
+  const headlessScreenshot = await headlessPage.screenshot();
+  await headless.close();
+
+  expect(headfulScreenshot).toMatchSnapshot('focused-input.png');
+  expect(headlessScreenshot).toMatchSnapshot('focused-input.png');
 });

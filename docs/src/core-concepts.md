@@ -4,7 +4,7 @@ title: "Core concepts"
 ---
 
 Playwright provides a set of APIs to automate Chromium, Firefox and WebKit
-browsers. By using the Playwright API, you can write JavaScript code to create
+browsers. By using the Playwright API, you can write scripts to create
 new browser pages, navigate to URLs and then interact with elements on a page.
 
 Along with a test runner Playwright can be used to automate user interactions to
@@ -52,7 +52,7 @@ with sync_playwright() as p:
 Launching a browser instance can be expensive, and Playwright is designed to
 maximize what a single instance can do through multiple browser contexts.
 
-#### API reference
+### API reference
 
 - [Browser]
 
@@ -131,7 +131,7 @@ with sync_playwright() as p:
     browser.close()
 ```
 
-#### API reference
+### API reference
 
 - [BrowserContext]
 - [`method: Browser.newContext`]
@@ -249,7 +249,7 @@ frame = frame_element_handle.content_frame()
 frame.fill('#username-input', 'John')
 ```
 
-#### API reference
+### API reference
 
 - [Page]
 - [Frame]
@@ -475,7 +475,7 @@ page.wait_for_selector('#details', state='hidden')
 page.wait_for_selector('#promo', state='detached')
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.click`]
 - [`method: Page.fill`]
@@ -483,12 +483,12 @@ page.wait_for_selector('#promo', state='detached')
 
 <br/>
 
-## Execution contexts: Node.js and Browser
+## Execution contexts: Playwright and Browser
 
-Playwright scripts run in your Node.js environment. Your page scripts run in the browser page environment. Those environments don't intersect, they are running in different virtual machines in different processes and even potentially on different computers.
+Playwright scripts run in your Playwright environment. Your page scripts run in the browser page environment. Those environments don't intersect, they are running in different virtual machines in different processes and even potentially on different computers.
 
 The [`method: Page.evaluate`] API can run a JavaScript function in the context
-of the web page and bring results back to the Node.js environment. Browser globals like
+of the web page and bring results back to the Playwright environment. Browser globals like
 `window` and `document` can be used in `evaluate`.
 
 ```js
@@ -710,157 +710,10 @@ result = page.evaluate("""() => {
 }""")
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.evaluate`]
 - [`method: Frame.evaluate`]
 - [EvaluationArgument]
 
 <br/>
-
-## Object & Element handles
-
-Playwright can create Node-side handles to the page DOM elements or any other objects inside the page. These handles live in the Node.js process, whereas the actual objects reside in browser.
-
-There are two types of handles:
-- [JSHandle] to reference any JavaScript objects in the page
-- [ElementHandle] to reference DOM elements in the page
-
-Note that since any DOM element in the page is also a JavaScript object,
-Playwright's [ElementHandle] extends [JSHandle].
-
-### Handles Lifecycle
-- Handles can be acquired using the page methods [`method: Page.evaluateHandle`], [`method: Page.$`] or [`method: Page.$$`] or
-  their frame counterparts [`method: Frame.evaluateHandle`], [`method: Frame.$`] or [`method: Frame.$$`].
-- Once created, handles will retain object from [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management).
-- Handles will be **automatically disposed** once the page or frame they belong to navigates or closes.
-- Handles can be **manually disposed** using [`method: JSHandle.dispose`] method.
-
-### Example: ElementHandle
-
-```js
-// The first parameter of the elementHandle.evaluate callback is the element handle points to.
-const ulElementHandle = await page.$('ul');
-await ulElementHandle.evaluate(ulElement => getComputedStyle(ulElement).getPropertyValue('display'));
-```
-
-```python async
-# The first parameter of the elementHandle.evaluate callback is the element handle points to.
-ul_element_handle = await page.query_selector('ul')
-await ul_element_handle.evaluate("ulElement => getComputedStyle(ulElement).getPropertyValue('display')")
-```
-
-```python sync
-# The first parameter of the elementHandle.evaluate callback is the element handle points to.
-ul_element_handle = page.query_selector('ul')
-ul_element_handle.evaluate("ulElement => getComputedStyle(ulElement).getPropertyValue('display')")
-```
-
-Handles can also be passed as arguments to [`method: Page.evaluate`] function:
-
-```js
-// In the page API, you can pass handle as a parameter.
-const ulElementHandle = await page.$('ul');
-await page.evaluate(uiElement => getComputedStyle(uiElement).getPropertyValue('display'), uiElement);
-```
-
-```python async
-ul_element_handle = await page.query_selector('ul')
-await page.evaluate("uiElement => getComputedStyle(uiElement).getPropertyValue('display')", uiElement)
-```
-
-```python sync
-ul_element_handle = page.query_selector('ul')
-page.evaluate("uiElement => getComputedStyle(uiElement).getPropertyValue('display')", uiElement)
-```
-
-### Example: JSHandle
-
-```js
-// Create a new array in the page, write a reference to it in
-// window.myArray and get a handle to it.
-const myArrayHandle = await page.evaluateHandle(() => {
-  window.myArray = [1];
-  return myArray;
-});
-
-// Get current length of the array using the handle.
-const length = await page.evaluate(
-  (arg) => arg.myArray.length,
-  { myArray: myArrayHandle }
-);
-
-// Add one more element to the array using the handle
-await page.evaluate((arg) => arg.myArray.push(arg.newElement), {
-  myArray: myArrayHandle,
-  newElement: 2
-});
-
-// Get current length of the array using window.myArray reference.
-const newLength = await page.evaluate(() => window.myArray.length);
-
-// Release the object when it's no longer needed.
-await myArrayHandle.dispose();
-```
-
-```python async
-# Create a new array in the page, write a reference to it in
-# window.myArray and get a handle to it.
-my_array_handle = await page.evaluate_handle("""() => {
-  window.myArray = [1]
-  return myArray
-}""")
-
-# Get current length of the array using the handle.
-length = await page.evaluate("""
-  (arg) => arg.myArray.length""",
-  { 'myArray': my_array_handle }
-)
-
-# Add one more element to the array using the handle
-await page.evaluate("(arg) => arg.myArray.push(arg.newElement)", {
-  'myArray': my_array_handle,
-  'newElement': 2
-})
-
-# Get current length of the array using window.myArray reference.
-new_length = await page.evaluate("() => window.myArray.length")
-
-# Release the object when it's no longer needed.
-await my_array_handle.dispose()
-```
-
-```python sync
-# Create a new array in the page, write a reference to it in
-# window.myArray and get a handle to it.
-my_array_handle = page.evaluate_handle("""() => {
-  window.myArray = [1]
-  return myArray
-}""")
-
-# Get current length of the array using the handle.
-length = page.evaluate("""
-  (arg) => arg.myArray.length""",
-  { 'myArray': my_array_handle }
-)
-
-# Add one more element to the array using the handle
-page.evaluate("(arg) => arg.myArray.push(arg.newElement)", {
-  'myArray': my_array_handle,
-  'newElement': 2
-})
-
-# Get current length of the array using window.myArray reference.
-new_length = page.evaluate("() => window.myArray.length")
-
-# Release the object when it's no longer needed.
-my_array_handle.dispose()
-```
-
-#### API reference
-- [JSHandle]
-- [ElementHandle]
-- [`method: Page.evaluateHandle`]
-- [`method: Page.$`]
-- [`method: Page.$$`]
-- [`method: JSHandle.evaluate`]

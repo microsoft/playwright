@@ -17,10 +17,56 @@
 .source-tab {
   flex: auto;
   position: relative;
-  overflow: auto;
+  overflow: hidden;
   background: #fdfcfc;
   font-family: var(--monospace-font);
   white-space: nowrap;
+  display: flex;
+  flex-direction: row;
+}
+
+.source-content {
+  flex: 1 1 600px;
+  overflow: auto;
+}
+
+.source-stack {
+  flex: 1 1 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  overflow-y: auto;
+}
+
+.source-stack-frame {
+  flex: 0 0 20px;
+  font-size: smaller;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  cursor: pointer;
+}
+
+.source-stack-frame.selected,
+.source-stack-frame:hover {
+  background: var(--inactive-focus-ring);
+}
+
+.source-stack-frame-function {
+  flex: 1 1 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-stack-frame-location {
+  flex: 1 1 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: end;
+}
+
+.source-stack-frame-line {
+  flex: none;
 }
 
 .source-line-number {

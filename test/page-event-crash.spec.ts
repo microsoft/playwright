@@ -29,14 +29,14 @@ function crash(page, toImpl, browserName) {
 
 describe('', (suite, { browserName, platform, mode }) => {
   suite.skip(mode !== 'default' && browserName !== 'chromium');
-  suite.flaky(browserName === 'firefox' && platform === 'win32');
   const isBigSur = platform === 'darwin' && parseInt(os.release(), 10) >= 20;
   suite.fixme(isBigSur && browserName === 'webkit', 'Timing out after roll');
 }, () => {
   it('should emit crash event when page crashes', async ({page, browserName, toImpl}) => {
     await page.setContent(`<div>This page should crash</div>`);
     crash(page, toImpl, browserName);
-    await new Promise(f => page.on('crash', f));
+    const crashedPage = await new Promise(f => page.on('crash', f));
+    expect(crashedPage).toBe(page);
   });
 
   it('should throw on any action after page crashes', async ({page, browserName, toImpl}) => {

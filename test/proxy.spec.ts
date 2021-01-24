@@ -137,9 +137,7 @@ it('should exclude patterns', (test, { browserName, headful }) => {
   await browser.close();
 });
 
-it('should use socks proxy', (test, { browserName, platform }) => {
-  test.flaky(platform === 'darwin' && browserName === 'webkit', 'Intermittent page.goto: The network connection was lost error on bots');
-}, async ({ browserType, browserOptions, socksPort }) => {
+it('should use socks proxy', async ({ browserType, browserOptions, socksPort }) => {
   const browser = await browserType.launch({
     ...browserOptions,
     proxy: { server: `socks5://localhost:${socksPort}` }
@@ -150,9 +148,7 @@ it('should use socks proxy', (test, { browserName, platform }) => {
   await browser.close();
 });
 
-it('should use socks proxy in second page', (test, { browserName, platform }) => {
-  test.flaky(platform === 'darwin' && browserName === 'webkit', 'Intermittent page.goto: The network connection was lost error on bots');
-}, async ({ browserType, browserOptions, socksPort }) => {
+it('should use socks proxy in second page', async ({ browserType, browserOptions, socksPort }) => {
   const browser = await browserType.launch({
     ...browserOptions,
     proxy: { server: `socks5://localhost:${socksPort}` }

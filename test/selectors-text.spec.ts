@@ -26,7 +26,7 @@ it('should work', async ({page}) => {
   expect(await page.$eval(`text=ye`, e => e.outerHTML)).toBe('<div>\nye  </div>');
 
   await page.setContent(`<div> ye </div><div>ye</div>`);
-  expect(await page.$eval(`text="ye"`, e => e.outerHTML)).toBe('<div>ye</div>');
+  expect(await page.$eval(`text="ye"`, e => e.outerHTML)).toBe('<div> ye </div>');
 
   await page.setContent(`<div>yo</div><div>"ya</div><div> hello world! </div>`);
   expect(await page.$eval(`text="\\"ya"`, e => e.outerHTML)).toBe('<div>"ya</div>');
@@ -98,9 +98,9 @@ it('should work', async ({page}) => {
   await page.setContent(`<span>Sign&nbsp;in</span><span>Hello\n \nworld</span>`);
   expect(await page.$eval(`text=Sign in`, e => e.outerHTML)).toBe('<span>Sign&nbsp;in</span>');
   expect((await page.$$(`text=Sign \tin`)).length).toBe(1);
-  expect(await page.$(`text="Sign in"`)).toBe(null);
-  expect((await page.$$(`text="Sign in"`)).length).toBe(0);
+  expect((await page.$$(`text="Sign in"`)).length).toBe(1);
   expect(await page.$eval(`text=lo wo`, e => e.outerHTML)).toBe('<span>Hello\n \nworld</span>');
+  expect(await page.$eval(`text="Hello world"`, e => e.outerHTML)).toBe('<span>Hello\n \nworld</span>');
   expect(await page.$(`text="lo wo"`)).toBe(null);
   expect((await page.$$(`text=lo \nwo`)).length).toBe(1);
   expect((await page.$$(`text="lo wo"`)).length).toBe(0);

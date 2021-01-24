@@ -140,11 +140,10 @@ program
 
 if (process.env.PWTRACE) {
   program
-      .command('show-trace <trace>')
+      .command('show-trace [trace]')
       .description('Show trace viewer')
-      .option('--resources <dir>', 'Directory with the shared trace artifacts')
       .action(function(trace, command) {
-        showTraceViewer(command.resources, trace);
+        showTraceViewer(trace);
       }).on('--help', function() {
         console.log('');
         console.log('Examples:');
@@ -339,7 +338,7 @@ async function codegen(options: Options, url: string | undefined, target: string
   const { context, browserName, launchOptions, contextOptions } = await launchContext(options, false);
 
   if (process.env.PWTRACE)
-    contextOptions.recordVideo = { dir: path.join(process.cwd(), '.trace') };
+    (contextOptions as any)._traceDir = path.join(process.cwd(), '.trace');
 
   const outputs: CodeGeneratorOutput[] = [TerminalOutput.create(process.stdout, languageGenerator.highlighterType())];
   if (outputFile)

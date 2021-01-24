@@ -57,10 +57,13 @@ export async function installBrowsersWithProgressBar(packagePath: string, browse
   });
   const linksDir = path.join(browsersPath, '.links');
 
-  await fsMkdirAsync(linksDir,  { recursive: true });
-  await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
-  await validateCache(packagePath, browsersPath, linksDir, browserNames);
-  await releaseLock();
+  try {
+    await fsMkdirAsync(linksDir,  { recursive: true });
+    await fsWriteFileAsync(path.join(linksDir, sha1(packagePath)), packagePath);
+    await validateCache(packagePath, browsersPath, linksDir, browserNames);
+  } finally {
+    await releaseLock();
+  }
 }
 
 async function validateCache(packagePath: string, browsersPath: string, linksDir: string, browserNames?: browserPaths.BrowserName[]) {

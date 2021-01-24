@@ -17,7 +17,7 @@
 //@ts-check
 const path = require('path');
 const os = require('os');
-const {devices} = require('../..');
+const devices = require('../../src/server/deviceDescriptors');
 const Documentation = require('../doclint/documentation');
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
@@ -39,9 +39,9 @@ let hadChanges = false;
   documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   documentation.filterForLanguage('js');
   documentation.copyDocsFromSuperclasses([]);
-  const createMemberLink = (text) => {
+  const createMemberLink = (clazz, text) => {
     const anchor = text.toLowerCase().split(',').map(c => c.replace(/[^a-z]/g, '')).join('-');
-    return `[${text}](https://github.com/microsoft/playwright/blob/master/docs/api.md#${anchor})`;
+    return `[${text}](https://playwright.dev/docs/api/class-${clazz.name.toLowerCase()}#${anchor})`;
   };
   documentation.setLinkRenderer(item => {
     const { clazz, member, param, option } = item;
@@ -52,11 +52,11 @@ let hadChanges = false;
     if (clazz)
       return `[${clazz.name}]`;
     if (member.kind === 'method')
-      return createMemberLink(`${member.clazz.varName}.${member.name}(…)`);
+      return createMemberLink(member.clazz, `${member.clazz.varName}.${member.name}(${renderJSSignature(member.argsArray)})`);
     if (member.kind === 'event')
-      return createMemberLink(`${member.clazz.varName}.on('${member.name}')`);
+      return createMemberLink(member.clazz, `${member.clazz.varName}.on('${member.name}')`);
     if (member.kind === 'property')
-      return createMemberLink(`${member.clazz.varName}.${member.name}`);
+      return createMemberLink(member.clazz, `${member.clazz.varName}.${member.name}`);
     throw new Error('Unknown member kind ' + member.kind);
   });
   documentation.generateSourceCodeComments();
@@ -283,10 +283,9 @@ function writeComment(comment, indent = '') {
       pushLine(line);
   }
   comment = out.join('\n');
-  comment = comment.replace(/\[`([^`]+)`\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
-  comment = comment.replace(/\[([^\]]+)\]\(#([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/api.md#$2)');
-  comment = comment.replace(/\[`([^`]+)`\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
-  comment = comment.replace(/\[([^\]]+)\]\(\.\/([^\)]+)\)/g, '[$1](https://github.com/microsoft/playwright/blob/master/docs/$2)');
+  comment = comment.replace(/\[([^\]]+)\]\(\.\/([^\)]+)\)/g, (match, p1, p2) => {
+    return `[${p1}](https://playwright.dev/docs/${p2.replace('.md', '')})`;
+  });
 
   parts.push(indent + '/**');
   parts.push(...comment.split('\n').map(line => indent + ' * ' + line.replace(/\*\//g, '*\\/')));
@@ -391,4 +390,31 @@ function generateDevicesTypes() {
 ${namedDevices}
   [key: string]: DeviceDescriptor;
 }`;
+}
+
+/**
+ * @param {Documentation.Member[]} args
+ */
+function renderJSSignature(args) {
+  const tokens = [];
+  let hasOptional = false;
+  for (const arg of args) {
+    const name = arg.name;
+    const optional = !arg.required;
+    if (tokens.length) {
+      if (optional && !hasOptional)
+        tokens.push(`[, ${name}`);
+      else
+        tokens.push(`, ${name}`);
+    } else {
+      if (optional && !hasOptional)
+        tokens.push(`[${name}`);
+      else
+        tokens.push(`${name}`);
+    }
+    hasOptional = hasOptional || optional;
+  }
+  if (hasOptional)
+    tokens.push(']');
+  return tokens.join('');
 }

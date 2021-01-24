@@ -18,3 +18,4 @@ drivers/
 .gradle/
 nohup.out
 api.json
+.trace

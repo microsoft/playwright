@@ -239,7 +239,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   async _onClose() {
     if (this._browser)
       this._browser._contexts.delete(this);
-    this.emit(Events.BrowserContext.Close);
+    this.emit(Events.BrowserContext.Close, this);
   }
 
   async close(): Promise<void> {

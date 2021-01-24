@@ -293,9 +293,13 @@ export class Page extends EventEmitter {
   async reload(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
-      await this._delegate.reload();
-      return waitPromise;
+      // Note: waitForNavigation may fail before we get response to reload(),
+      // so we should await it immediately.
+      const [response] = await Promise.all([
+        this.mainFrame()._waitForNavigation(progress, options),
+        this._delegate.reload(),
+      ]);
+      return response;
     }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
@@ -304,13 +308,20 @@ export class Page extends EventEmitter {
   async goBack(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
-      const result = await this._delegate.goBack();
-      if (!result) {
-        waitPromise.catch(() => {});
+      // Note: waitForNavigation may fail before we get response to goBack,
+      // so we should catch it immediately.
+      let error: Error | undefined;
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+        error = e;
         return null;
-      }
-      return waitPromise;
+      });
+      const result = await this._delegate.goBack();
+      if (!result)
+        return null;
+      const response = await waitPromise;
+      if (error)
+        throw error;
+      return response;
     }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
@@ -319,13 +330,20 @@ export class Page extends EventEmitter {
   async goForward(controller: ProgressController, options: types.NavigateOptions): Promise<network.Response | null> {
     this.mainFrame().setupNavigationProgressController(controller);
     const response = await controller.run(async progress => {
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, options);
-      const result = await this._delegate.goForward();
-      if (!result) {
-        waitPromise.catch(() => {});
+      // Note: waitForNavigation may fail before we get response to goForward,
+      // so we should catch it immediately.
+      let error: Error | undefined;
+      const waitPromise = this.mainFrame()._waitForNavigation(progress, options).catch(e => {
+        error = e;
         return null;
-      }
-      return waitPromise;
+      });
+      const result = await this._delegate.goForward();
+      if (!result)
+        return null;
+      const response = await waitPromise;
+      if (error)
+        throw error;
+      return response;
     }, this._timeoutSettings.navigationTimeout(options));
     await this._doSlowMo();
     return response;
@@ -473,6 +491,31 @@ export class Page extends EventEmitter {
   getBinding(name: string, world: types.World) {
     const identifier = PageBinding.identifier(name, world);
     return this._pageBindings.get(identifier) || this._browserContext._pageBindings.get(identifier);
+  }
+
+  async pause() {
+    if (!this._browserContext._browser._options.headful)
+      throw new Error('Cannot pause in headless mode.');
+    await this.mainFrame().evaluateSurvivingNavigations(async context => {
+      await context.evaluateInternal(async () => {
+        const element = document.createElement('playwright-resume');
+        element.style.position = 'absolute';
+        element.style.top = '10px';
+        element.style.left = '10px';
+        element.style.zIndex = '2147483646';
+        element.style.opacity = '0.9';
+        element.setAttribute('role', 'button');
+        element.tabIndex = 0;
+        element.style.fontSize = '50px';
+        element.textContent = '▶️';
+        element.title = 'Resume script';
+        document.body.appendChild(element);
+        await new Promise(x => {
+          element.onclick = x;
+        });
+        element.remove();
+      });
+    }, 'utility');
   }
 }
 

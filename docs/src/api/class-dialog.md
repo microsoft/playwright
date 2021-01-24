@@ -43,7 +43,6 @@ asyncio.run(main())
 ```
 
 ```python sync
-# FIXME
 from playwright.sync_api import sync_playwright
 
 def handle_dialog(dialog):

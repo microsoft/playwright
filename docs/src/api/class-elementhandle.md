@@ -62,7 +62,7 @@ ElementHandle instances can be used as an argument in [`method: Page.$eval`] and
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+[Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
 ### param: ElementHandle.$.selector = %%-query-selector-%%
@@ -73,7 +73,7 @@ returns `null`.
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details. If no elements match the selector,
+[Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
 ### param: ElementHandle.$$.selector = %%-query-selector-%%
@@ -86,7 +86,7 @@ returns empty array.
 Returns the return value of [`param: pageFunction`]
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md#working-with-selectors) for more
+argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for more
 details. If no elements match the selector, the method throws an error.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its
@@ -134,7 +134,7 @@ Returns the return value of [`param: pageFunction`]
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
 matched elements as a first argument to [`param: pageFunction`]. See
-[Working with selectors](./selectors.md#working-with-selectors) for more details.
+[Working with selectors](./selectors.md) for more details.
 
 If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its
 value.
@@ -154,7 +154,6 @@ expect(await feedHandle.$$eval('.tweet', nodes => nodes.map(n => n.innerText))).
 ```
 
 ```python async
-# FIXME
 feed_handle = await page.query_selector(".feed")
 assert await feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.innerText)") == ["hello!", "hi!"]
 ```
@@ -545,6 +544,8 @@ Returns the array of option values that have been successfully selected.
 Triggers a `change` and `input` event once all the provided options have been selected. If element is not a `<select>`
 element, the method throws an error.
 
+Will wait until all specified options are present in the `<select>` element.
+
 ```js
 // single selection matching the value
 handle.selectOption('blue');
@@ -575,7 +576,6 @@ handle.select_option(value=["red", "green", "blue"])
 ```
 
 ```python sync
-# FIXME
 # single selection matching the value
 handle.select_option("blue")
 # single selection matching both the value and the label

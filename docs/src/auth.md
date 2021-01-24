@@ -112,10 +112,26 @@ storage_state = json.loads(os.environ["STORAGE"])
 context = browser.new_context(storage_state=storage_state)
 ```
 
-### Session storage
+Logging in via the UI and then reusing authentication state can be combined to
+implement **login once and run multiple scenarios**. The lifecycle looks like:
 
-Session storage ([`window.sessionStorage`](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage))
-is specific to a particular domain. Playwright does not provide API to persist session storage, but the following snippet can be used to save/load session storage.
+1. Run tests (for example, with `npm run test`).
+1. Login via UI and retrieve authentication state.
+    * In Jest, this can be executed in [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
+1. In each test, load authentication state in `beforeEach` or `beforeAll` step.
+
+This approach will also **work in CI environments**, since it does not rely on any external state.
+
+### API reference
+- [`method: BrowserContext.storageState`]
+- [`method: Browser.newContext`]
+
+## Session storage
+
+Rarely, [session storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage) is used for storing information
+associated with the logged-in state. Session storage is specific to a particular domain and is not persisted across page loads.
+Playwright does not provide API to persist session storage, but the following snippet can be used to
+save/load session storage.
 
 ```js
 // Get session storage and store as env variable
@@ -170,24 +186,6 @@ context.add_init_script(storage => {
 }, session_storage)
 ```
 
-### Lifecycle
-
-Logging in via the UI and then reusing authentication state can be combined to
-implement **login once and run multiple scenarios**. The lifecycle looks like:
-
-1. Run tests (for example, with `npm run test`).
-1. Login via UI and retrieve authentication state.
-    * In Jest, this can be executed in [`globalSetup`](https://jestjs.io/docs/en/configuration#globalsetup-string).
-1. In each test, load authentication state in `beforeEach` or `beforeAll` step.
-
-This approach will also **work in CI environments**, since it does not rely
-on any external state.
-
-### Example
-
-[This example script](https://github.com/microsoft/playwright/blob/master/docs/examples/authentication.js) logs in
-on GitHub.com with Chromium, and then reuses the logged in storage state in WebKit.
-
 ### API reference
 - [`method: BrowserContext.storageState`]
 - [`method: Browser.newContext`]
@@ -195,6 +193,7 @@ on GitHub.com with Chromium, and then reuses the logged in storage state in WebK
 - [`method: BrowserContext.addInitScript`]
 
 ## Multi-factor authentication
+
 Accounts with multi-factor authentication (MFA) cannot be fully automated, and need
 manual intervention. Persistent authentication can be used to partially automate
 MFA scenarios.

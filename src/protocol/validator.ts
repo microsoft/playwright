@@ -211,8 +211,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceResourcesPath: tOptional(tString),
-    _tracePath: tOptional(tString),
+    _traceDir: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -255,8 +254,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceResourcesPath: tOptional(tString),
-    _tracePath: tOptional(tString),
+    _traceDir: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -445,6 +443,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     interestingOnly: tOptional(tBoolean),
     root: tOptional(tChannel('ElementHandle')),
   });
+  scheme.PagePauseParams = tOptional(tObject({}));
   scheme.PagePdfParams = tObject({
     scale: tOptional(tNumber),
     displayHeaderFooter: tOptional(tBoolean),
@@ -1040,8 +1039,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     hasTouch: tOptional(tBoolean),
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
-    _traceResourcesPath: tOptional(tString),
-    _tracePath: tOptional(tString),
+    _traceDir: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({

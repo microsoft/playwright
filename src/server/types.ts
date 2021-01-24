@@ -248,8 +248,7 @@ export type BrowserContextOptions = {
     path: string
   },
   proxy?: ProxySettings,
-  _tracePath?: string,
-  _traceResourcesPath?: string,
+  _traceDir?: string,
 };
 
 export type EnvArray = { name: string, value: string }[];

@@ -95,7 +95,7 @@ $ python -m playwright wk example.com
 ```
 
 ### Emulate devices
-`open` can emulate mobile and tablet devices ([see all devices](https://github.com/microsoft/playwright/blob/master/src/server/deviceDescriptors.ts)).
+`open` can emulate mobile and tablet devices from the [`playwright.devices`](https://playwright.dev/docs/api/class-playwright#playwrightdevices) list.
 
 ```sh js
 # Emulate iPhone 11.

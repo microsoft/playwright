@@ -362,9 +362,7 @@ describe('element screenshot', (suite, parameters) => {
     await context.close();
   });
 
-  it('should wait for element to stop moving', (test, { browserName, headful, platform }) => {
-    test.flaky(browserName === 'webkit' && headful && platform === 'linux');
-  }, async ({ page, server }) => {
+  it('should wait for element to stop moving', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/grid.html');
     const elementHandle = await page.$('.box:nth-of-type(3)');

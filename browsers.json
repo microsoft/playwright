@@ -3,17 +3,17 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "833159",
+      "revision": "844399",
       "download": true
     },
     {
       "name": "firefox",
-      "revision": "1225",
+      "revision": "1226",
       "download": true
     },
     {
       "name": "webkit",
-      "revision": "1420",
+      "revision": "1423",
       "download": true
     }
   ]

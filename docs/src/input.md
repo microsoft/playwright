@@ -60,7 +60,7 @@ page.fill('#local', '2020-03-02T05:15')
 page.fill('text=First Name', 'Peter')
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.fill`]
 - [`method: Frame.fill`]
@@ -76,6 +76,9 @@ This is the easiest way to check and uncheck a checkbox or a radio button. This 
 // Check the checkbox
 await page.check('#agree');
 
+// Assert the checked state
+expect(await page.isChecked('#agree')).toBeTruthy()
+
 // Uncheck by input <label>.
 await page.uncheck('#subscribe-label');
 
@@ -86,6 +89,9 @@ await page.check('text=XL');
 ```python async
 # Check the checkbox
 await page.check('#agree')
+
+# Assert the checked state
+assert await page.is_checked('#agree') is True
 
 # Uncheck by input <label>.
 await page.uncheck('#subscribe-label')
@@ -98,6 +104,9 @@ await page.check('text=XL')
 # Check the checkbox
 page.check('#agree')
 
+# Assert the checked state
+assert page.is_checked('#agree') is True
+
 # Uncheck by input <label>.
 page.uncheck('#subscribe-label')
 
@@ -105,13 +114,13 @@ page.uncheck('#subscribe-label')
 page.check('text=XL')
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.check`]
+- [`method: Page.isChecked`]
 - [`method: Page.uncheck`]
-- [`method: Frame.check`]
-- [`method: Frame.uncheck`]
 - [`method: ElementHandle.check`]
+- [`method: ElementHandle.isChecked`]
 - [`method: ElementHandle.uncheck`]
 
 <br/>
@@ -166,7 +175,7 @@ option = page.query_selector('#best-option')
 page.select_option('select#colors', option)
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.selectOption`]
 - [`method: Frame.selectOption`]
@@ -279,7 +288,7 @@ await page.dispatch_event('button#submit', 'click')
 page.dispatch_event('button#submit', 'click')
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.click`]
 - [`method: Frame.click`]
@@ -321,7 +330,7 @@ This method will emit all the necessary keyboard events, with all the `keydown`,
 Most of the time, [`method: Page.fill`] will just work. You only need to type characters if there is special keyboard handling on the page.
 :::
 
-#### API reference
+### API reference
 
 - [`method: Page.type`]
 - [`method: Frame.type`]
@@ -409,7 +418,7 @@ Shortcuts such as `"Control+o"` or `"Control+Shift+T"` are supported as well. Wh
 Note that you still need to specify the capital `A` in `Shift-A` to produce the capital character. `Shift-a` produces a lower-case one as if you had the `CapsLock` toggled.
 
 
-#### API reference
+### API reference
 
 - [`method: Page.press`]
 - [`method: Frame.press`]
@@ -419,6 +428,8 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 <br/>
 
 ## Upload files
+
+You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
 
 ```js
 // Select one file
@@ -476,14 +487,33 @@ page.set_input_files(
 )
 ```
 
-You can select input files for upload using the [`method: Page.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the [current working directory](https://nodejs.org/api/process.html#process_process_cwd). Empty array clears the selected files.
+If you don't have input element in hand (it is created dynamically), you can handle the [`event: Page.filechooser`] event
+or use a corresponding waiting method upon your action:
 
-#### Example
+```js
+const [fileChooser] = await Promise.all([
+  page.waitForEvent('filechooser'),
+  page.click('upload')
+]);
+await fileChooser.setFiles('myfile.pdf');
+```
 
-[This script](https://github.com/microsoft/playwright/blob/master/utils/docs/examples/upload.js) uploads a file to an `input` element that accepts file uploads.
+```python async
+async with page.expect_file_chooser() as fc_info:
+    await page.click("upload")
+file_chooser = await fc_info.value
+await file_chooser.set_files("myfile.pdf")
+```
 
-#### API reference
+```python sync
+with page.expect_file_chooser() as fc_info:
+    page.click("upload")
+file_chooser = fc_info.value
+file_chooser.set_files("myfile.pdf")
+```
 
+### API reference
+- [FileChooser]
 - [`method: Page.setInputFiles`]
 - [`method: Frame.setInputFiles`]
 - [`method: ElementHandle.setInputFiles`]
@@ -506,7 +536,7 @@ await page.focus('input#name')
 page.focus('input#name')
 ```
 
-#### API reference
+### API reference
 
 - [`method: Page.focus`]
 - [`method: Frame.focus`]

@@ -14,32 +14,7 @@
   limitations under the License.
 */
 
-.film-strip {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-}
-
-.film-strip-lane {
-  flex: none;
-  display: flex;
-}
-
-.film-strip-frame {
-  flex: none;
-  pointer-events: none;
-  box-shadow: var(--box-shadow);
-}
-
-.film-strip-hover {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background-color: white;
-  box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
-  box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 10px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 10px 0px;
-  z-index: 10;
+declare module '*.png' {
+  const value: any;
+  export = value;
 }

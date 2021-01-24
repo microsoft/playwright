@@ -1,15 +1,17 @@
 ---
 id: mobile
-title: "Experimental support for Chrome for Android"
+title: "Mobile (experimental)"
 ---
 
 <!-- TOC -->
+:::warning
+Mobile support is experimental and uses prefixed provisional API.
+:::
 
 You can try Playwright against Chrome for Android today. This support is experimental. Support for devices is tracked in the issue [#1122](https://github.com/microsoft/playwright/issues/1122).
 
 ## Requirements
 
-- [Playwright 1.6](https://www.npmjs.com/package/playwright) or newer
 - [ADB daemon](https://developer.android.com/studio/command-line/adb) running and authenticated with your device.
 - [`Chrome 87`](https://play.google.com/store/apps/details?id=com.android.chrome) or newer installed on the device
 - "Enable command line on non-rooted devices" enabled in `chrome://flags`.
