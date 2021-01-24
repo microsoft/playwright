@@ -53,17 +53,17 @@
   margin-right: 5px;
 }
 
-.status-success {
-  background-color: rgb(124, 187, 62);
+.network-request-title-status.status-success {
+  background-color: var(--green);
 }
 
-.status-failure {
-  background-color: rgb(211, 35, 35);
-  color: white;
+.network-request-title-status.status-failure {
+  background-color: var(--red);
+  color: var(--white);
 }
 
-.status-neutral {
-  background-color: white;
+.network-request-title-status.status-neutral {
+  background-color: var(--white);
 }
 
 .network-request-title-method {
@@ -98,7 +98,7 @@
 .network-request-body {
   white-space: pre;
   overflow: scroll;
-  background-color: #dcdcdb;
+  background-color: var(--network-content-bg);
   border: black 1px solid;
   max-height: 500px;
 }
@@ -106,7 +106,7 @@
 .network-request-response-body {
   white-space: pre;
   overflow: scroll;
-  background-color: #dcdcdb;
+  background-color: var(--network-content-bg);
   border: black 1px solid;
   max-height: 500px;
 }
