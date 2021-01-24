@@ -96,7 +96,7 @@ class TraceViewer {
       if (!this._document)
         return;
 
-      return fs.readFileSync(path.join(this._document?.resourcesDir, sha1)).toString('base64');
+      return fs.readFileSync(path.join(this._document.resourcesDir, sha1)).toString('base64');
     });
     await uiPage.exposeBinding('renderSnapshot', async (_, action: ActionTraceEvent) => {
       if (!this._document)
