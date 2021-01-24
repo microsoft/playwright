@@ -17,7 +17,7 @@
 import * as debug from 'debug';
 import * as http from 'http';
 import * as WebSocket from 'ws';
-import { installInspectorController } from '../server/inspector/inspectorController';
+import { installInspectorController } from '../server/supplements/inspectorController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Playwright } from '../server/playwright';

@@ -18,7 +18,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { installInspectorController } from '../server/inspector/inspectorController';
+import { installInspectorController } from '../server/supplements/inspectorController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { installBrowsersWithProgressBar } from '../install/installer';

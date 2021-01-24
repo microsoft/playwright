@@ -335,8 +335,14 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     offline: tBoolean,
   });
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
-  scheme.BrowserContextExposeConsoleApiParams = tOptional(tObject({}));
-  scheme.BrowserContextEnableRecorderParams = tOptional(tObject({}));
+  scheme.BrowserContextConsoleSupplementExposeParams = tOptional(tObject({}));
+  scheme.BrowserContextRecorderSupplementEnableParams = tObject({
+    language: tString,
+    launchOptions: tAny,
+    contextOptions: tAny,
+    device: tOptional(tString),
+    saveStorage: tOptional(tString),
+  });
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
   });

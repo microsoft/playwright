@@ -535,6 +535,8 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
+  on(event: 'recorderSupplementPrintLn', callback: (params: BrowserContextRecorderSupplementPrintLnEvent) => void): this;
+  on(event: 'recorderSupplementPopLn', callback: (params: BrowserContextRecorderSupplementPopLnEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
   addInitScript(params: BrowserContextAddInitScriptParams, metadata?: Metadata): Promise<BrowserContextAddInitScriptResult>;
   clearCookies(params?: BrowserContextClearCookiesParams, metadata?: Metadata): Promise<BrowserContextClearCookiesResult>;
@@ -552,8 +554,8 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
-  exposeConsoleApi(params?: BrowserContextExposeConsoleApiParams, metadata?: Metadata): Promise<BrowserContextExposeConsoleApiResult>;
-  enableRecorder(params?: BrowserContextEnableRecorderParams, metadata?: Metadata): Promise<BrowserContextEnableRecorderResult>;
+  consoleSupplementExpose(params?: BrowserContextConsoleSupplementExposeParams, metadata?: Metadata): Promise<BrowserContextConsoleSupplementExposeResult>;
+  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -572,6 +574,12 @@ export type BrowserContextCrBackgroundPageEvent = {
 };
 export type BrowserContextCrServiceWorkerEvent = {
   worker: WorkerChannel,
+};
+export type BrowserContextRecorderSupplementPrintLnEvent = {
+  text: string,
+};
+export type BrowserContextRecorderSupplementPopLnEvent = {
+  text: string,
 };
 export type BrowserContextAddCookiesParams = {
   cookies: SetNetworkCookie[],
@@ -695,12 +703,21 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
-export type BrowserContextExposeConsoleApiParams = {};
-export type BrowserContextExposeConsoleApiOptions = {};
-export type BrowserContextExposeConsoleApiResult = void;
-export type BrowserContextEnableRecorderParams = {};
-export type BrowserContextEnableRecorderOptions = {};
-export type BrowserContextEnableRecorderResult = void;
+export type BrowserContextConsoleSupplementExposeParams = {};
+export type BrowserContextConsoleSupplementExposeOptions = {};
+export type BrowserContextConsoleSupplementExposeResult = void;
+export type BrowserContextRecorderSupplementEnableParams = {
+  language: string,
+  launchOptions: any,
+  contextOptions: any,
+  device?: string,
+  saveStorage?: string,
+};
+export type BrowserContextRecorderSupplementEnableOptions = {
+  device?: string,
+  saveStorage?: string,
+};
+export type BrowserContextRecorderSupplementEnableResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };

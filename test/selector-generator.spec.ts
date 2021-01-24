@@ -16,10 +16,11 @@
 
 import { folio } from './fixtures';
 import type { Page, Frame } from '..';
+import { ConsoleApiSupplement } from '../lib/client/supplements/consoleApiSupplement';
 
 const fixtures = folio.extend();
 fixtures.context.override(async ({ context }, run) => {
-  await (context as any)._exposeConsoleApi();
+  new ConsoleApiSupplement(context);
   await run(context);
 });
 const { describe, it, expect } = fixtures.build();

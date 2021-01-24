@@ -125,13 +125,15 @@ DEPS['src/server/'] = [
   // Can depend on any files in these subdirectories.
   'src/server/common/**',
   'src/server/injected/**',
+  'src/server/supplements/**',
 ];
 
 // No dependencies for code shared between node and page.
 DEPS['src/server/common/'] = [];
 // Strict dependencies for injected code.
 DEPS['src/server/injected/'] = ['src/server/common/'];
-DEPS['src/server/inspector/injected/'] = ['src/server/common/', 'src/cli/codegen/', 'src/server/injected/'];
+
+DEPS['src/client/supplements/'] = ['src/client/'];
 
 // Electron and Clank use chromium internally.
 DEPS['src/server/android/'] = [...DEPS['src/server/'], 'src/server/chromium/', 'src/protocol/'];
@@ -144,7 +146,7 @@ DEPS['src/cli/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerIm
 DEPS['src/trace/'] = ['src/utils/', 'src/client/**', 'src/server/**'];
 
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
-DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/inspector/', 'src/server/electron/', 'src/trace/'];
+DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/trace/'];
 DEPS['src/service.ts'] = ['src/remote/'];
 
 // CLI should only use client-side features.

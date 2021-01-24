@@ -18,11 +18,11 @@ import * as fs from 'fs';
 import * as querystring from 'querystring';
 import { Writable } from 'stream';
 import * as hljs from '../../third_party/highlightjs/highlightjs';
-import { CodeGeneratorOutput } from './codeGenerator';
+import { RecorderOutput } from './recorderSupplement';
 
-export class OutputMultiplexer implements CodeGeneratorOutput {
-  private _outputs: CodeGeneratorOutput[]
-  constructor(outputs: CodeGeneratorOutput[]) {
+export class OutputMultiplexer implements RecorderOutput {
+  private _outputs: RecorderOutput[]
+  constructor(outputs: RecorderOutput[]) {
     this._outputs = outputs;
   }
 
@@ -58,7 +58,7 @@ export class BufferOutput {
   }
 }
 
-export class FileOutput extends BufferOutput implements CodeGeneratorOutput {
+export class FileOutput extends BufferOutput implements RecorderOutput {
   private _fileName: string;
 
   constructor(fileName: string) {
@@ -71,7 +71,7 @@ export class FileOutput extends BufferOutput implements CodeGeneratorOutput {
   }
 }
 
-export class TerminalOutput implements CodeGeneratorOutput {
+export class TerminalOutput implements RecorderOutput {
   private _output: Writable
   private _language: string;
 
@@ -127,7 +127,7 @@ export class TerminalOutput implements CodeGeneratorOutput {
   flush() {}
 }
 
-export class FlushingTerminalOutput extends BufferOutput implements CodeGeneratorOutput {
+export class FlushingTerminalOutput extends BufferOutput implements RecorderOutput {
   private _output: Writable
 
   constructor(output: Writable) {

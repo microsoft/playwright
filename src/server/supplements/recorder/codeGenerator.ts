@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import type { LaunchOptions, Frame, BrowserContextOptions } from '../../..';
-import { LanguageGenerator } from './languages';
+import type { BrowserContextOptions, LaunchOptions } from '../../../..';
+import { Frame } from '../../frames';
+import { LanguageGenerator } from './language';
 import { Action, Signal } from './recorderActions';
 
 export type ActionInContext = {
@@ -28,7 +29,6 @@ export type ActionInContext = {
 export interface CodeGeneratorOutput {
   printLn(text: string): void;
   popLn(text: string): void;
-  flush(): void;
 }
 
 export class CodeGenerator {
@@ -48,10 +48,6 @@ export class CodeGenerator {
     this._output.printLn(header);
     this._footerText = '\n' + this._languageGenerator.generateFooter(saveStorage);
     this._output.printLn(this._footerText);
-  }
-
-  exit() {
-    this._output.flush();
   }
 
   addAction(action: ActionInContext) {

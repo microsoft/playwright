@@ -235,8 +235,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
       recorder.waitForOutput('check'),
       page.click('input')
     ]);
-    await recorder.waitForOutput('check');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Check input[name="accept"]
   await page.check('input[name="accept"]');`);
     expect(message.text()).toBe('true');
@@ -253,8 +252,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
       recorder.waitForOutput('check'),
       page.keyboard.press('Space')
     ]);
-    await recorder.waitForOutput('check');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Check input[name="accept"]
   await page.check('input[name="accept"]');`);
     expect(message.text()).toBe('true');
@@ -321,7 +319,6 @@ describe('cli codegen', (test, { browserName, headful }) => {
 
     const selector = await recorder.hoverOverElement('a');
     expect(selector).toBe('text="link"');
-
     await Promise.all([
       page.waitForNavigation(),
       recorder.waitForOutput('assert'),
@@ -398,8 +395,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await page.setInputFiles('input[type=file]', 'test/assets/file-to-upload.txt');
     await page.click('input[type=file]');
 
-    await recorder.waitForOutput('setInputFiles');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Upload file-to-upload.txt
   await page.setInputFiles('input[type="file"]', 'file-to-upload.txt');`);
   });
@@ -415,8 +411,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await page.setInputFiles('input[type=file]', ['test/assets/file-to-upload.txt', 'test/assets/file-to-upload-2.txt']);
     await page.click('input[type=file]');
 
-    await recorder.waitForOutput('setInputFiles');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Upload file-to-upload.txt, file-to-upload-2.txt
   await page.setInputFiles('input[type="file"]', ['file-to-upload.txt', 'file-to-upload-2.txt']);`);
   });
@@ -432,13 +427,14 @@ describe('cli codegen', (test, { browserName, headful }) => {
     await page.setInputFiles('input[type=file]', []);
     await page.click('input[type=file]');
 
-    await recorder.waitForOutput('setInputFiles');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Clear selected files
   await page.setInputFiles('input[type="file"]', []);`);
   });
 
-  it('should download files', async ({ page, recorder, httpServer }) => {
+  it('should download files', (test, {browserName}) => {
+    test.fixme(browserName === 'webkit', 'Generated page.waitForNavigation next to page.waitForEvent(download)');
+  }, async ({ page, recorder, httpServer }) => {
     httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
       const pathName = url.parse(req.url!).path;
       if (pathName === '/download') {
@@ -458,8 +454,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.waitForEvent('download'),
       page.click('text=Download')
     ]);
-    await recorder.waitForOutput('page.click');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Click text="Download"
   const [download] = await Promise.all([
     page.waitForEvent('download'),
@@ -476,8 +471,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
       await dialog.dismiss();
     });
     await page.click('text="click me"');
-    await recorder.waitForOutput('page.once');
-    expect(recorder.output()).toContain(`
+    await recorder.waitForOutput(`
   // Click text="click me"
   page.once('dialog', dialog => {
     console.log(\`Dialog message: $\{dialog.message()}\`);
@@ -500,8 +494,7 @@ describe('cli codegen', (test, { browserName, headful }) => {
     </script>`, httpServer.PREFIX);
     for (let i = 1; i < 3; ++i) {
       await page.evaluate('pushState()');
-      await recorder.waitForOutput(`seqNum=${i}`);
-      expect(recorder.output()).toContain(`await page.goto('${httpServer.PREFIX}/#seqNum=${i}');`);
+      await recorder.waitForOutput(`await page.goto('${httpServer.PREFIX}/#seqNum=${i}');`);
     }
   });
 
