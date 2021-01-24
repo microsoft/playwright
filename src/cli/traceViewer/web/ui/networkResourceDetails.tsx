@@ -98,8 +98,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         {resource.requestSha1 !== 'none' ? <h3>Request Body</h3> : ''}
         {resource.requestSha1 !== 'none' ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <h4>Response Body</h4>
-        {resource.responseSha1 !== 'none' && responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${responseBody}`} /> : ''}
-        {resource.responseSha1 !== 'none' && responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(responseBody, resource.contentType)}</div> : ''}
+        {responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${responseBody}`} /> : ''}
+        {responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(responseBody, resource.contentType)}</div> : ''}
       </div>
     }/>
   </div>;
