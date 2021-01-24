@@ -22,9 +22,10 @@ import { NetworkResourceTraceEvent } from '../../../../trace/traceTypes';
 
 export const NetworkResourceDetails: React.FunctionComponent<{
   resource: NetworkResourceTraceEvent,
-  selected: string,
-  setSelected: React.Dispatch<React.SetStateAction<string>>,
-}> = ({ resource, selected, setSelected }) => {
+  index: number,
+  selected: boolean,
+  setSelected: React.Dispatch<React.SetStateAction<number>>,
+}> = ({ resource, index, selected, setSelected }) => {
   const [expanded, setExpanded] = React.useState(false);
   const [requestBody, setRequestBody] = React.useState<string | null>(null);
   const [responseBody, setResponseBody] = React.useState<string | null>(null);
@@ -79,7 +80,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   const requestContentType = requestContentTypeHeader ? requestContentTypeHeader.value : '';
 
   return <div
-    className={'network-request ' + (selected === resource.url ? 'selected' : '')} onClick={() => setSelected(resource.url)}>
+    className={'network-request ' + (selected ? 'selected' : '')} onClick={() => setSelected(index)}>
     <Expandable expanded={expanded} setExpanded={setExpanded} style={{ width: '100%' }} title={
       <div className='network-request-title'>
         <div className={'network-request-title-status ' + formatStatus(resource.status)}>{resource.status}</div>

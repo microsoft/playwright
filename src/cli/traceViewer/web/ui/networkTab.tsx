@@ -22,11 +22,11 @@ import { NetworkResourceDetails } from './networkResourceDetails';
 export const NetworkTab: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
 }> = ({ actionEntry }) => {
-  const [selected, setSelected] = React.useState('');
+  const [selected, setSelected] = React.useState(0);
 
   return <div className='network-tab'>{
     (actionEntry ? actionEntry.resources : []).map((resource, index) => {
-      return <NetworkResourceDetails resource={resource} key={index} selected={selected} setSelected={setSelected} />;
+      return <NetworkResourceDetails resource={resource} key={index} index={index} selected={selected === index} setSelected={setSelected} />;
     })
   }</div>;
 };
