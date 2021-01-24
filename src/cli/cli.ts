@@ -22,7 +22,6 @@ import * as path from 'path';
 import * as program from 'commander';
 import * as os from 'os';
 import * as fs from 'fs';
-import * as consoleApiSource from '../generated/consoleApiSource';
 import { OutputMultiplexer, TerminalOutput, FileOutput } from './codegen/outputs';
 import { CodeGenerator, CodeGeneratorOutput } from './codegen/codeGenerator';
 import { JavaScriptLanguageGenerator, LanguageGenerator } from './codegen/languages';
@@ -318,7 +317,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, false);
-  (context as any)._extendInjectedScript(consoleApiSource.source);
+  (context as any)._exposeConsoleApi();
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
@@ -347,7 +346,7 @@ async function codegen(options: Options, url: string | undefined, target: string
 
   const generator = new CodeGenerator(browserName, launchOptions, contextOptions, output, languageGenerator, options.device, options.saveStorage);
   new RecorderController(context, generator);
-  (context as any)._extendInjectedScript(consoleApiSource.source);
+  (context as any)._exposeConsoleApi();
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));

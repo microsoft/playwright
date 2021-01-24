@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type InjectedScript from '../../server/injected/injectedScript';
+import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector } from './selectorGenerator';
 
 export class ConsoleAPI {

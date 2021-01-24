@@ -29,7 +29,6 @@ import { Waiter } from './waiter';
 import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState } from './types';
 import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
-import { serializeArgument } from './jsHandle';
 import * as api from '../../types/types';
 import * as structs from '../../types/structs';
 
@@ -255,8 +254,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     }
   }
 
-  async _extendInjectedScript<Arg>(source: string, arg?: Arg) {
-    await this._channel.extendInjectedScript({ source, arg: serializeArgument(arg) });
+  async _exposeConsoleApi() {
+    await this._channel.exposeConsoleApi();
+  }
+
+  async _enableRecorder<Arg>() {
+    await this._channel.enableRecorder();
   }
 }
 

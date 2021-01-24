@@ -82,26 +82,3 @@ it('exposeBindingHandle should work', async ({context}) => {
   expect(await target.evaluate(x => x.foo)).toBe(42);
   expect(result).toEqual(17);
 });
-
-it('extendInjectedScript should work', async ({ context, server }) => {
-  await (context as any)._extendInjectedScript(`var pwExport = (() => {
-    class Foo {
-      constructor() {
-        window._counter = (window._counter || 0) + 1;
-      }
-    }
-    return Foo;
-  })()`);
-
-  const page = await context.newPage();
-  await page.waitForFunction(() => (window as any)._counter === 1);
-
-  await page.goto(server.EMPTY_PAGE);
-  await page.waitForFunction(() => (window as any)._counter === 1);
-
-  await Promise.all([
-    page.waitForNavigation(),
-    page.evaluate(() => history.pushState({}, '', '/url.html'))
-  ]);
-  expect(await page.evaluate(() => (window as any)._counter)).toBe(1);
-});

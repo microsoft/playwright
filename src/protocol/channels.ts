@@ -552,7 +552,8 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
-  extendInjectedScript(params: BrowserContextExtendInjectedScriptParams, metadata?: Metadata): Promise<BrowserContextExtendInjectedScriptResult>;
+  exposeConsoleApi(params?: BrowserContextExposeConsoleApiParams, metadata?: Metadata): Promise<BrowserContextExposeConsoleApiResult>;
+  enableRecorder(params?: BrowserContextEnableRecorderParams, metadata?: Metadata): Promise<BrowserContextEnableRecorderResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -694,14 +695,12 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
-export type BrowserContextExtendInjectedScriptParams = {
-  source: string,
-  arg: SerializedArgument,
-};
-export type BrowserContextExtendInjectedScriptOptions = {
-
-};
-export type BrowserContextExtendInjectedScriptResult = void;
+export type BrowserContextExposeConsoleApiParams = {};
+export type BrowserContextExposeConsoleApiOptions = {};
+export type BrowserContextExposeConsoleApiResult = void;
+export type BrowserContextEnableRecorderParams = {};
+export type BrowserContextEnableRecorderOptions = {};
+export type BrowserContextEnableRecorderResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };

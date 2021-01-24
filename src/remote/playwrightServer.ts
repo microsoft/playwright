@@ -17,7 +17,7 @@
 import * as debug from 'debug';
 import * as http from 'http';
 import * as WebSocket from 'ws';
-import { installDebugController } from '../debug/debugController';
+import { installInspectorController } from '../server/inspector/inspectorController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
 import { Playwright } from '../server/playwright';
@@ -27,7 +27,7 @@ import { installHarTracer } from '../trace/harTracer';
 
 const debugLog = debug('pw:server');
 
-installDebugController();
+installInspectorController();
 installTracer();
 installHarTracer();
 

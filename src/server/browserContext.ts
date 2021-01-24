@@ -19,6 +19,8 @@ import { EventEmitter } from 'events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { mkdirIfNeeded } from '../utils/utils';
 import { Browser, BrowserOptions } from './browser';
+import * as consoleApiSource from '../generated/consoleApiSource';
+import * as recorderSource from '../generated/recorderSource';
 import * as dom from './dom';
 import { Download } from './download';
 import * as frames from './frames';
@@ -379,8 +381,16 @@ export abstract class BrowserContext extends EventEmitter {
     }
   }
 
-  async extendInjectedScript(source: string, arg?: any) {
-    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(e => {});
+  async exposeConsoleApi() {
+    await this._extendInjectedScript(consoleApiSource.source);
+  }
+
+  async enableRecorder() {
+    await this._extendInjectedScript(recorderSource.source);
+  }
+
+  private async _extendInjectedScript(source: string) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source).catch(e => {});
     const installInPage = (page: Page) => {
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));
