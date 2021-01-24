@@ -37,17 +37,19 @@ export class CodeGenerator {
   private _lastActionText: string | undefined;
   private _languageGenerator: LanguageGenerator;
   private _output: CodeGeneratorOutput;
-  private _footerText: string;
+  private _footerText = '';
 
-  constructor(browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, output: CodeGeneratorOutput, languageGenerator: LanguageGenerator, deviceName: string | undefined, saveStorage: string | undefined) {
+  constructor(browserName: string, generateHeaders: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, output: CodeGeneratorOutput, languageGenerator: LanguageGenerator, deviceName: string | undefined, saveStorage: string | undefined) {
     this._output = output;
     this._languageGenerator = languageGenerator;
 
     launchOptions = { headless: false, ...launchOptions };
-    const header = this._languageGenerator.generateHeader(browserName, launchOptions, contextOptions, deviceName);
-    this._output.printLn(header);
-    this._footerText = '\n' + this._languageGenerator.generateFooter(saveStorage);
-    this._output.printLn(this._footerText);
+    if (generateHeaders) {
+      const header = this._languageGenerator.generateHeader(browserName, launchOptions, contextOptions, deviceName);
+      this._output.printLn(header);
+      this._footerText = '\n' + this._languageGenerator.generateFooter(saveStorage);
+      this._output.printLn(this._footerText);
+    }
   }
 
   addAction(action: ActionInContext) {
@@ -94,7 +96,8 @@ export class CodeGenerator {
   }
 
   _printAction(actionInContext: ActionInContext, eraseLastAction: boolean) {
-    this._output.popLn(this._footerText);
+    if (this._footerText)
+      this._output.popLn(this._footerText);
     if (eraseLastAction && this._lastActionText)
       this._output.popLn(this._lastActionText);
     const performingAction = !!this._currentAction;
@@ -102,7 +105,8 @@ export class CodeGenerator {
     this._lastAction = actionInContext;
     this._lastActionText = this._languageGenerator.generateAction(actionInContext, performingAction);
     this._output.printLn(this._lastActionText);
-    this._output.printLn(this._footerText);
+    if (this._footerText)
+      this._output.printLn(this._footerText);
   }
 
   signal(pageAlias: string, frame: Frame, signal: Signal) {

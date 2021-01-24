@@ -15,14 +15,11 @@
  */
 
 import * as http from 'http';
-import { Writable } from 'stream';
 import * as path from 'path';
 import { ChildProcess, spawn } from 'child_process';
 import { folio as baseFolio } from '../fixtures';
 import type { Page, BrowserType, Browser, BrowserContext } from '../..';
 export { config } from 'folio';
-import { FlushingTerminalOutput } from '../../lib/client/supplements/recorderOutputs';
-import { RecorderSupplement } from '../../lib/client/supplements/recorderSupplement';
 
 type WorkerFixtures = {
   browserType: BrowserType<Browser>;
@@ -41,8 +38,8 @@ export const fixtures = baseFolio.extend<TestFixtures, WorkerFixtures>();
 fixtures.contextWrapper.init(async ({ browser }, runTest) => {
   const context = await browser.newContext() as BrowserContext;
   const outputBuffer = new WritableBuffer();
-  const output = new FlushingTerminalOutput(outputBuffer as any as Writable);
-  new RecorderSupplement(context, 'javascript', {}, {}, undefined, undefined, output);
+  (context as any)._stdout = outputBuffer;
+  await (context as any)._enableRecorder('javascript');
   await runTest({ context, output: outputBuffer });
   await context.close();
 });
@@ -88,14 +85,10 @@ class WritableBuffer {
     this._data = '';
   }
 
-  write(chunk: string) {
-    if (!chunk)
+  write(data: Buffer) {
+    if (!data)
       return;
-    if (chunk === '\u001B[F\u001B[2K') {
-      const index = this._data.lastIndexOf('\n');
-      this._data = this._data.substring(0, index);
-      return;
-    }
+    const chunk = data.toString('utf8');
     this._data += chunk;
     if (this._callback && chunk.includes(this._text))
       this._callback();

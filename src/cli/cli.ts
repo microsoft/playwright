@@ -30,9 +30,6 @@ import { Browser } from '../client/browser';
 import { Page } from '../client/page';
 import { BrowserType } from '../client/browserType';
 import { BrowserContextOptions, LaunchOptions } from '../client/types';
-import { RecorderOutput, RecorderSupplement } from '../client/supplements/recorderSupplement';
-import { ConsoleApiSupplement } from '../client/supplements/consoleApiSupplement';
-import { FileOutput, OutputMultiplexer, TerminalOutput } from '../client/supplements/recorderOutputs';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -318,7 +315,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, false);
-  new ConsoleApiSupplement(context);
+  await context._enableConsoleApi();
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
@@ -326,23 +323,9 @@ async function open(options: Options, url: string | undefined) {
 
 async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
   const { context, launchOptions, contextOptions } = await launchContext(options, false);
-  let highlighterType = language;
-  if (highlighterType === 'python-async')
-    highlighterType = 'python';
-  const outputs: RecorderOutput[] = [TerminalOutput.create(process.stdout, highlighterType)];
-  if (outputFile)
-    outputs.push(new FileOutput(outputFile));
-  const output = new OutputMultiplexer(outputs);
-
-  new ConsoleApiSupplement(context);
-  new RecorderSupplement(context,
-      language,
-      launchOptions,
-      contextOptions,
-      options.device,
-      options.saveStorage,
-      output);
-
+  if (process.env.PWTRACE)
+    contextOptions._traceDir = path.join(process.cwd(), '.trace');
+  await context._enableRecorder(language, launchOptions, contextOptions, options.device, options.saveStorage, !!process.stdout.columns, outputFile ? path.resolve(outputFile) : undefined);
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));

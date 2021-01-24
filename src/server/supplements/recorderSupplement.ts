@@ -15,7 +15,8 @@
  */
 
 import * as actions from './recorder/recorderActions';
-import { CodeGenerator, ActionInContext, CodeGeneratorOutput } from './recorder/codeGenerator';
+import type * as channels from '../../protocol/channels';
+import { CodeGenerator, ActionInContext } from './recorder/codeGenerator';
 import { toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
 import { Frame } from '../frames';
@@ -26,8 +27,15 @@ import { CSharpLanguageGenerator } from './recorder/csharp';
 import { PythonLanguageGenerator } from './recorder/python';
 import { ProgressController } from '../progress';
 import * as recorderSource from '../../generated/recorderSource';
+import * as consoleApiSource from '../../generated/consoleApiSource';
+import { FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
 
 type BindingSource = { frame: Frame, page: Page };
+type Tool = 'codegen' | 'pause';
+type Mode = 'inspecting' | 'recording' | 'none';
+
+const symbol = Symbol('RecorderSupplement');
+
 
 export class RecorderSupplement {
   private _generator: CodeGenerator;
@@ -36,11 +44,27 @@ export class RecorderSupplement {
   private _lastDialogOrdinal = 0;
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
+  private _resumeCallback: (() => void) | null = null;
+  private _recorderState: { mode: Mode };
+  private _paused = false;
+  private _tool: Tool;
+  private _output: OutputMultiplexer;
 
-  constructor(context: BrowserContext, params: { language: string, launchOptions: any, contextOptions: any, device?: string, saveStorage?: string}, output: CodeGeneratorOutput) {
+  static getOrCreate(context: BrowserContext, tool: Tool, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
+    let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
+    if (!recorderPromise) {
+      const recorder = new RecorderSupplement(context, tool, params);
+      recorderPromise = recorder.install().then(() => recorder);
+      (context as any)[symbol] = recorderPromise;
+    }
+    return recorderPromise;
+  }
+
+  constructor(context: BrowserContext, tool: Tool, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._context = context;
+    this._tool = tool;
+    this._recorderState = { mode: tool === 'codegen' ? 'recording' : 'none' };
     let languageGenerator: LanguageGenerator;
-
     switch (params.language) {
       case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
       case 'csharp': languageGenerator = new CSharpLanguageGenerator(); break;
@@ -48,7 +72,21 @@ export class RecorderSupplement {
       case 'python-async': languageGenerator = new PythonLanguageGenerator(params.language === 'python-async'); break;
       default: throw new Error(`Invalid target: '${params.language}'`);
     }
-    const generator = new CodeGenerator(context._browser._options.name, params.launchOptions, params.contextOptions, output, languageGenerator, params.device, params.saveStorage);
+    let highlighterType = params.language;
+    if (highlighterType === 'python-async')
+      highlighterType = 'python';
+
+    const writable: Writable = {
+      write: (text: string) => context.emit(BrowserContext.Events.StdOut, text)
+    };
+    const outputs: RecorderOutput[] = [params.terminal ? new TerminalOutput(writable, highlighterType) : new FlushingTerminalOutput(writable)];
+    if (params.outputFile)
+      outputs.push(new FileOutput(params.outputFile));
+    this._output = new OutputMultiplexer(outputs);
+    this._output.setEnabled(tool === 'codegen');
+    context.on(BrowserContext.Events.BeforeClose, () => this._output.flush());
+
+    const generator = new CodeGenerator(context._browser._options.name, tool === 'codegen', params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
     this._generator = generator;
   }
 
@@ -76,7 +114,34 @@ export class RecorderSupplement {
     await this._context.exposeBinding('playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
+    await this._context.exposeBinding('playwrightRecorderState', false, () => {
+      return {
+        state: this._recorderState,
+        tool: this._tool,
+        paused: this._paused
+      };
+    });
+
+    await this._context.exposeBinding('playwrightRecorderSetState', false, (source, state) => {
+      this._recorderState = state;
+      this._output.setEnabled(state.mode === 'recording');
+    });
+
+    await this._context.exposeBinding('playwrightRecorderResume', false, () => {
+      if (this._resumeCallback) {
+        this._resumeCallback();
+        this._resumeCallback = null;
+      }
+      this._paused = false;
+    });
+
     await this._context.extendInjectedScript(recorderSource.source);
+    await this._context.extendInjectedScript(consoleApiSource.source);
+  }
+
+  async pause() {
+    this._paused = true;
+    return new Promise(f => this._resumeCallback = f);
   }
 
   private async _onPage(page: Page) {

@@ -26,7 +26,7 @@ import { Browser } from './browser';
 import { Events } from './events';
 import { TimeoutSettings } from '../utils/timeoutSettings';
 import { Waiter } from './waiter';
-import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState } from './types';
+import { URLMatch, Headers, WaitForEventOptions, BrowserContextOptions, StorageState, LaunchOptions } from './types';
 import { isUnderTest, headersObjectToArray, mkdirIfNeeded } from '../utils/utils';
 import { isSafeCloseError } from '../utils/errors';
 import * as api from '../../types/types';
@@ -44,6 +44,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
   _ownerPage: Page | undefined;
   private _closedPromise: Promise<void>;
   _options: channels.BrowserNewContextParams = {};
+  private _stdout: NodeJS.WriteStream;
+  private _stderr: NodeJS.WriteStream;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -62,6 +64,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     this._channel.on('close', () => this._onClose());
     this._channel.on('page', ({page}) => this._onPage(Page.from(page)));
     this._channel.on('route', ({ route, request }) => this._onRoute(network.Route.from(route), network.Request.from(request)));
+    this._stdout = process.stdout;
+    this._stderr = process.stderr;
+    this._channel.on('stdout', ({ data }) => this._stdout.write(Buffer.from(data, 'base64')));
+    this._channel.on('stderr', ({ data }) => this._stderr.write(Buffer.from(data, 'base64')));
     this._closedPromise = new Promise(f => this.once(Events.BrowserContext.Close, f));
   }
 
@@ -252,6 +258,35 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
         return;
       throw e;
     }
+  }
+
+  async _pause() {
+    return this._wrapApiCall('browserContext.pause', async () => {
+      await this._channel.pause();
+    });
+  }
+
+  async _enableConsoleApi() {
+    await this._channel.consoleSupplementExpose();
+  }
+
+  async _enableRecorder(
+    language: string,
+    launchOptions?: LaunchOptions,
+    contextOptions?: BrowserContextOptions,
+    device?: string,
+    saveStorage?: string,
+    terminal?: boolean,
+    outputFile?: string) {
+    await this._channel.recorderSupplementEnable({
+      language,
+      launchOptions,
+      contextOptions,
+      device,
+      saveStorage,
+      terminal,
+      outputFile,
+    });
   }
 }
 
