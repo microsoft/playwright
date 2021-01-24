@@ -99,7 +99,7 @@ export class SnapshotRouter {
 
   private async _readResource(event: NetworkResourceTraceEvent, overrideSha1: string | undefined) {
     try {
-      const body = await fsReadFileAsync(path.join(this._traceStorageDir, overrideSha1 || event.sha1));
+      const body = await fsReadFileAsync(path.join(this._traceStorageDir, overrideSha1 || event.responseSha1));
       return {
         contentType: event.contentType,
         body,

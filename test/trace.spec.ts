@@ -96,8 +96,8 @@ it('should record trace with POST', async ({browser, testInfo, server}) => {
   expect(resourceEvent.requestHeaders).toBeTruthy();
   expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
   expect(resourceEvent.requestSha1).toBeTruthy();
-  expect(resourceEvent.sha1).toBeTruthy();
+  expect(resourceEvent.responseSha1).toBeTruthy();
 
   expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', resourceEvent.requestSha1))).toBe(true);
-  expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', resourceEvent.sha1))).toBe(true);
+  expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', resourceEvent.responseSha1))).toBe(true);
 });

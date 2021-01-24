@@ -43,7 +43,7 @@ export type NetworkResourceTraceEvent = {
   method: string,
   status: number,
   requestSha1: string,
-  sha1: string,
+  responseSha1: string,
 };
 
 export type PageCreatedTraceEvent = {

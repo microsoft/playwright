@@ -36,14 +36,14 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         setRequestBody(requestResource);
       }
 
-      if (resource.sha1 !== 'none') {
-        const responseResource = await window.readResource(resource.sha1);
+      if (resource.responseSha1 !== 'none') {
+        const responseResource = await window.readResource(resource.responseSha1);
         setResponseBody(responseResource);
       }
     };
 
     readResources();
-  }, [expanded, resource.sha1, resource.requestSha1]);
+  }, [expanded, resource.responseSha1, resource.requestSha1]);
 
   function formatBody(body: string | null, contentType: string): string {
     if (body === null)
@@ -98,8 +98,8 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         {resource.requestSha1 !== 'none' ? <h3>Request Body</h3> : ''}
         {resource.requestSha1 !== 'none' ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <h4>Response Body</h4>
-        {resource.sha1 !== 'none' && responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${responseBody}`} /> : ''}
-        {resource.sha1 !== 'none' && responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(responseBody, resource.contentType)}</div> : ''}
+        {resource.responseSha1 !== 'none' && responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${responseBody}`} /> : ''}
+        {resource.responseSha1 !== 'none' && responseBody !== null && !resource.contentType.includes('image') ? <div className='network-request-response-body'>{formatBody(responseBody, resource.contentType)}</div> : ''}
       </div>
     }/>
   </div>;

@@ -118,7 +118,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       method: resource.method,
       status: resource.status,
       requestSha1: resource.requestSha1,
-      sha1: resource.sha1,
+      responseSha1: resource.responseSha1,
     };
     this._appendTraceEvent(event);
   }
