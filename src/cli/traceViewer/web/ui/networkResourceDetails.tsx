@@ -31,6 +31,11 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   const [responseBody, setResponseBody] = React.useState<string | null>(null);
 
   React.useEffect(() => {
+    setExpanded(false);
+    setSelected(-1);
+  }, [resource, setSelected]);
+
+  React.useEffect(() => {
     const readResources = async  () => {
       if (resource.requestSha1 !== 'none') {
         const requestResource = await window.readResource(resource.requestSha1);
