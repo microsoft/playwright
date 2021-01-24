@@ -19,7 +19,7 @@ import type * as trace from '../src/trace/traceTypes';
 import * as path from 'path';
 import * as fs from 'fs';
 
-it('should record trace', test => test.fixme(), async ({browser, testInfo, server}) => {
+it.only('should record trace', async ({browser, testInfo, server}) => {
   const traceDir = testInfo.outputPath('trace');
   const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
@@ -59,16 +59,16 @@ it('should record trace', test => test.fixme(), async ({browser, testInfo, serve
   expect(fs.existsSync(path.join(traceDir, 'resources', gotoEvent.snapshot!.sha1))).toBe(true);
 });
 
-it('should record trace with POST', async ({browser, testInfo, server}) => {
-  const artifactsPath = testInfo.outputPath('');
-  const tracePath = path.join(artifactsPath, 'playwright.trace');
-  const context = await browser.newContext({ _tracePath: tracePath } as any);
+it.only('should record trace with POST', async ({browser, testInfo, server}) => {
+  const traceDir = testInfo.outputPath('trace');
+  const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
   const url = server.PREFIX + '/trace-resources.html';
   await page.goto(url);
   await page.click('text=Download');
   await context.close();
 
+  const tracePath = path.join(traceDir, fs.readdirSync(traceDir).find(n => n.endsWith('.trace')));
   const traceFileContent = await fs.promises.readFile(tracePath, 'utf8');
   const traceEvents = traceFileContent.split('\n').filter(line => !!line).map(line => JSON.parse(line)) as trace.TraceEvent[];
 
@@ -98,6 +98,6 @@ it('should record trace with POST', async ({browser, testInfo, server}) => {
   expect(resourceEvent.requestSha1).toBeTruthy();
   expect(resourceEvent.responseSha1).toBeTruthy();
 
-  expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', resourceEvent.requestSha1))).toBe(true);
-  expect(fs.existsSync(path.join(artifactsPath, 'trace-resources', resourceEvent.responseSha1))).toBe(true);
+  expect(fs.existsSync(path.join(traceDir, 'resources', resourceEvent.requestSha1))).toBe(true);
+  expect(fs.existsSync(path.join(traceDir, 'resources', resourceEvent.responseSha1))).toBe(true);
 });
