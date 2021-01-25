@@ -612,7 +612,7 @@ function patchLinks(spec, classesMap, membersMap, linkRenderer) {
       if (p1 === 'option')
         return linkRenderer({ option: p2 }) || match;
     });
-    node.text = node.text.replace(/\[([\w]+)\]/, (match, p1) => {
+    node.text = node.text.replace(/\[([\w]+)\]/g, (match, p1) => {
       const clazz = classesMap.get(p1);
       if (clazz)
         return linkRenderer({ clazz }) || match;
