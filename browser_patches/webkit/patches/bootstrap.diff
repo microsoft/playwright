@@ -2615,7 +2615,7 @@ index 3b00f3125085a72ca2884d2c0389380a4b882bcd..c05decbf1086c0407c9bc6490d9061a9
  {
      return context ? instrumentingAgents(*context) : nullptr;
 diff --git a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
-index fb9931d919992ff18681a45e1791fb96ace084ec..3e41c12e7f429c7c97585fdf9bc90e454edc4c0c 100644
+index fb9931d919992ff18681a45e1791fb96ace084ec..c614d9bb08e27528c2109f2063e790382a2fb1ae 100644
 --- a/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 +++ b/Source/WebCore/inspector/agents/InspectorDOMAgent.cpp
 @@ -61,12 +61,16 @@
@@ -2806,7 +2806,7 @@ index fb9931d919992ff18681a45e1791fb96ace084ec..3e41c12e7f429c7c97585fdf9bc90e45
 +        absoluteBounds.setWidth(LayoutUnit(std::max(*width, 1.0)));
 +        absoluteBounds.setHeight(LayoutUnit(std::max(*height, 1.0)));
 +    }
-+    ScrollAlignment alignment = ScrollAlignment::alignCenterIfNotVisible;
++    ScrollAlignment alignment = ScrollAlignment::alignCenterIfNeeded;
 +    alignment.m_disableMinThreshold = true; // Disable RenderLayer minium horizontal scroll threshold.
 +    renderer->scrollRectToVisible(absoluteBounds, insideFixed, { SelectionRevealMode::Reveal, alignment, alignment, ShouldAllowCrossOriginScrolling::Yes });
 +    return { };
