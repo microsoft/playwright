@@ -323,7 +323,15 @@ export class InjectedScript {
     return this.pollRaf((progress, continuePolling) => {
       if (node.nodeType !== Node.ELEMENT_NODE)
         return 'error:notelement';
+
+      if (node && node.nodeName.toLowerCase() !== 'input' &&
+          node.nodeName.toLowerCase() !== 'textarea' &&
+          !(node as any).isContentEditable) {
+        // Go up to the label that might be connected to the input/textarea.
+        node = (node as Element).closest('label') || node;
+      }
       const element = this.findLabelTarget(node as Element);
+
       if (element && !element.isConnected)
         return 'error:notconnected';
       if (!element || !this.isVisible(element)) {
