@@ -58,6 +58,7 @@ export class SelectorEvaluatorImpl implements SelectorEvaluator {
     this._engines.set('text', textEngine);
     this._engines.set('text-is', textIsEngine);
     this._engines.set('text-matches', textMatchesEngine);
+    this._engines.set('has-text', hasTextEngine);
     this._engines.set('right-of', createPositionEngine('right-of', boxRightOf));
     this._engines.set('left-of', createPositionEngine('left-of', boxLeftOf));
     this._engines.set('above', createPositionEngine('above', boxAbove));
@@ -408,7 +409,7 @@ const visibleEngine: SelectorEngine = {
 
 const textEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
-    if (args.length === 0 || typeof args[0] !== 'string')
+    if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text" engine expects a single string`);
     return elementMatchesText(element, context, textMatcher(args[0], true));
   },
@@ -416,7 +417,7 @@ const textEngine: SelectorEngine = {
 
 const textIsEngine: SelectorEngine = {
   matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
-    if (args.length === 0 || typeof args[0] !== 'string')
+    if (args.length !== 1 || typeof args[0] !== 'string')
       throw new Error(`"text-is" engine expects a single string`);
     return elementMatchesText(element, context, textMatcher(args[0], false));
   },
@@ -431,6 +432,17 @@ const textMatchesEngine: SelectorEngine = {
   },
 };
 
+const hasTextEngine: SelectorEngine = {
+  matches(element: Element, args: (string | number | Selector)[], context: QueryContext, evaluator: SelectorEvaluator): boolean {
+    if (args.length !== 1 || typeof args[0] !== 'string')
+      throw new Error(`"has-text" engine expects a single string`);
+    if (shouldSkipForTextMatching(element))
+      return false;
+    const matcher = textMatcher(args[0], true);
+    return matcher(element.textContent || '');
+  },
+};
+
 function textMatcher(text: string, substring: boolean): (s: string) => boolean {
   text = text.trim().replace(/\s+/g, ' ');
   text = text.toLowerCase();
@@ -441,8 +453,12 @@ function textMatcher(text: string, substring: boolean): (s: string) => boolean {
   };
 }
 
+function shouldSkipForTextMatching(element: Element) {
+  return element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element);
+}
+
 function elementMatchesText(element: Element, context: QueryContext, matcher: (s: string) => boolean) {
-  if (element.nodeName === 'SCRIPT' || element.nodeName === 'STYLE' || document.head && document.head.contains(element))
+  if (shouldSkipForTextMatching(element))
     return false;
   if ((element instanceof HTMLInputElement) && (element.type === 'submit' || element.type === 'button') && matcher(element.value))
     return true;

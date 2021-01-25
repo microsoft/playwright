@@ -134,44 +134,88 @@ selectors in a more compact form.
 
 ```js
 // Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.click('button:is(:text("Log in"), :text("Sign in"))');
+await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))');
 ```
 
 ```python async
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
-await page.click('button:is(:text("Log in"), :text("Sign in"))')
+await page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
 ```
 
 ```python sync
 # Clicks a <button> that has either a "Log in" or "Sign in" text.
-page.click('button:is(:text("Log in"), :text("Sign in"))')
+page.click(':is(button:has-text("Log in"), button:has-text("Sign in"))')
 ```
 
 ## Selecting elements by text
 
-The `:text` pseudo-class matches elements that have a text node child with specific text.
-It is similar to the [text] engine, but can be used in combination with other `css` selector extensions.
-There are a few variations that support different arguments:
+The `:has-text` pseudo-class matches elements that have specific text somewhere inside, possibly in a child or a descendant element. It is approximately equivalent to `element.textContent.includes(textToSearchFor)`.
 
-* `:text("substring")` - Matches when element's text contains "substring" somewhere. Matching is case-insensitive. Matching also normalizes whitespace, for example it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
-* `:text-is("string")` - Matches when element's text equals the "string". Matching is case-insensitive and normalizes whitespace.
-* `button:text("Sign in")` - Text selector may be combined with regular CSS.
-* `:text-matches("[+-]?\\d+")` - Matches text against a regular expression. Note that special characters like back-slash `\`, quotes `"`, square brackets `[]` and more should be escaped. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
-* `:text-matches("value", "i")` - Matches text against a regular expression with specified flags.
+The `:text` pseudo-class matches elements that have a text node child with specific text. It is similar to the [text] engine.
 
-Click a button with text "Sign in":
+`:has-text` and `:text` should be used differently. Consider the following page:
+```html
+<div class=nav-item>Home</div>
+<div class=nav-item>
+  <span class=bold>New</span> products
+</div>
+<div class=nav-item>
+  <span class=bold>All</span> products
+</div>
+<div class=nav-item>Contact us</div>
+```
 
+Use `:has-text()` to click a navigation item that contains text "All products".
 ```js
-await page.click('button:text("Sign in")');
+await page.click('.nav-item:has-text("All products")');
 ```
-
 ```python async
-await page.click('button:text("Sign in")')
+await page.click('.nav-item:has-text("All products")')
+```
+```python sync
+page.click('.nav-item:has-text("All products")')
+```
+`:has-text()` will match even though "All products" text is split between multiple elements. However, it will also match any parent element of this navigation item, including `<body>` and `<html>`, because each of them contains "All products" somewhere inside. Therefore, `:has-text()` must be used together with other `css` specifiers, like a tag name or a class name.
+```js
+// Wrong, will match many elements including <body>
+await page.click(':has-text("All products")');
+// Correct, only matches the navigation item
+await page.click('.nav-item:has-text("All products")');
+```
+```python async
+# Wrong, will match many elements including <body>
+await page.click(':has-text("All products")')
+# Correct, only matches the navigation item
+await page.click('.nav-item:has-text("All products")')
+```
+```python sync
+# Wrong, will match many elements including <body>
+page.click(':has-text("All products")')
+# Correct, only matches the navigation item
+page.click('.nav-item:has-text("All products")')
 ```
 
-```python sync
-page.click('button:text("Sign in")')
+Use `:text()` to click an element that directly contains text "Home".
+```js
+await page.click(':text("Home")');
 ```
+```python async
+await page.click(':text("Home")')
+```
+```python sync
+page.click(':text("Home")')
+```
+`:text()` only matches the element that contains the text directly inside, but not any parent elements. It is suitable to use without other `css` specifiers. However, it does not match text across elements. For example, `:text("All products")` will not match anything, because "All" and "products" belong to the different elements.
+
+:::note
+Both `:has-text()` and `:text()` perform case-insensitive match. They also normalize whitespace, for example turn multiple spaces into one, turn line breaks into spaces and ignore leading and trailing whitespace.
+:::
+
+There are a few `:text()` variations that support different arguments:
+* `:text("substring")` - Matches when a text node inside the element contains "substring". Matching is case-insensitive and normalizes whitespace.
+* `:text-is("string")` - Matches when all text nodes inside the element combined have the text value equal to "string". Matching is case-insensitive and normalizes whitespace.
+* `:text-matches("[+-]?\\d+")` - Matches text nodes against a regular expression. Note that special characters like back-slash `\`, quotes `"`, square brackets `[]` and more should be escaped. Learn more about [regular expressions](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp).
+* `:text-matches("value", "i")` - Matches text nodes against a regular expression with specified flags.
 
 ## Selecting elements in Shadow DOM
 
