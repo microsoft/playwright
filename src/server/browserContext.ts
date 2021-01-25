@@ -93,6 +93,9 @@ export abstract class BrowserContext extends EventEmitter {
     Close: 'close',
     Page: 'page',
     VideoStarted: 'videostarted',
+    BeforeClose: 'beforeclose',
+    StdOut: 'stdout',
+    StdErr: 'stderr',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
@@ -280,6 +283,7 @@ export abstract class BrowserContext extends EventEmitter {
 
   async close() {
     if (this._closedStatus === 'open') {
+      this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
       for (const listener of contextListeners)

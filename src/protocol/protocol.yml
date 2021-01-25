@@ -602,14 +602,19 @@ BrowserContext:
     consoleSupplementExpose:
       experimental: True
 
+    pause:
+      experimental: True
+
     recorderSupplementEnable:
       experimental: True
       parameters:
         language: string
-        launchOptions: json
-        contextOptions: json
+        launchOptions: json?
+        contextOptions: json?
         device: string?
         saveStorage: string?
+        terminal: boolean?
+        outputFile: string?
 
     crNewCDPSession:
       parameters:
@@ -634,6 +639,14 @@ BrowserContext:
         route: Route
         request: Request
 
+    stdout:
+      parameters:
+        data: binary
+
+    stderr:
+      parameters:
+        data: binary
+
     crBackgroundPage:
       parameters:
         page: Page
@@ -641,14 +654,6 @@ BrowserContext:
     crServiceWorker:
       parameters:
         worker: Worker
-
-    recorderSupplementPrintLn:
-      parameters:
-        text: string
-
-    recorderSupplementPopLn:
-      parameters:
-        text: string
 
 Page:
   type: interface
@@ -853,8 +858,6 @@ Page:
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
-
-    pause:
 
     pdf:
       parameters:
