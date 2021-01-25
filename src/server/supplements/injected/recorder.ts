@@ -24,7 +24,7 @@ declare global {
     playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
     playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
     playwrightRecorderCommitAction: () => Promise<void>;
-    playwrightRecorderState: () => Promise<{ state: any, paused: boolean, tool: 'codegen' | 'pause' }>;
+    playwrightRecorderState: () => Promise<{ state: any, paused: boolean, app: 'codegen' | 'debug' | 'pause' }>;
     playwrightRecorderSetState: (state: any) => Promise<void>;
     playwrightRecorderResume: () => Promise<boolean>;
   }
@@ -51,7 +51,7 @@ export class Recorder {
   private _recordElement: HTMLElement;
   private _resumeElement: HTMLElement;
   private _mode: 'inspecting' | 'recording' | 'none' = 'none';
-  private _tool: 'codegen' | 'pause' = 'pause';
+  private _app: 'codegen' | 'debug' | 'pause' = 'debug';
   private _paused = false;
 
   constructor(injectedScript: InjectedScript) {
@@ -130,7 +130,7 @@ export class Recorder {
       <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M24 24H0V0h24v24z" fill="none"/><circle cx="12" cy="12" r="8"/></svg>
       </x-pw-button>`;
     this._resumeElement = html`
-      <x-pw-button tabIndex=0 class="playwright-resume">
+      <x-pw-button tabIndex=0 class="playwright-resume hidden">
         <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M8 5v14l11-7z"/></svg>
       </x-pw-button>`;
 
@@ -179,6 +179,9 @@ export class Recorder {
         }
         x-pw-button.hidden {
           display: none;
+        }
+        x-pw-button svg {
+          pointer-events: none;
         }
     </style>`);
 
@@ -244,7 +247,7 @@ export class Recorder {
       clearTimeout(this._pollRecorderModeTimer);
     const result = await window.playwrightRecorderState().catch(e => null);
     if (result) {
-      const { state, paused, tool } = result;
+      const { state, paused, app } = result;
       if (state && state.mode !== this._mode) {
         this._mode = state.mode as any;
         this._inspectElement.classList.toggle('toggled', this._mode === 'inspecting');
@@ -255,11 +258,12 @@ export class Recorder {
       }
       if (paused !== this._paused) {
         this._paused = paused;
+        this._resumeElement.classList.toggle('hidden', false);
         this._resumeElement.classList.toggle('disabled', !this._paused);
       }
-      if (tool !== this._tool) {
-        this._tool = tool;
-        this._resumeElement.classList.toggle('hidden', this._tool !== 'pause');
+      if (app !== this._app) {
+        this._app = app;
+        this._resumeElement.classList.toggle('hidden', this._app !== 'pause');
       }
     }
     this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), 250);
@@ -295,6 +299,8 @@ export class Recorder {
   }
 
   private _onClick(event: MouseEvent) {
+    if (this._mode === 'inspecting' && !this._isInToolbar(event.target as HTMLElement))
+      console.log(this._hoveredModel ? this._hoveredModel.selector : ''); // eslint-disable-line no-console
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))

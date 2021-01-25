@@ -325,7 +325,15 @@ async function codegen(options: Options, url: string | undefined, language: stri
   const { context, launchOptions, contextOptions } = await launchContext(options, false);
   if (process.env.PWTRACE)
     contextOptions._traceDir = path.join(process.cwd(), '.trace');
-  await context._enableRecorder(language, launchOptions, contextOptions, options.device, options.saveStorage, !!process.stdout.columns, outputFile ? path.resolve(outputFile) : undefined);
+  await context._enableRecorder({
+    language,
+    launchOptions,
+    contextOptions,
+    device: options.device,
+    saveStorage: options.saveStorage,
+    terminal: !!process.stdout.columns,
+    outputFile: outputFile ? path.resolve(outputFile) : undefined
+  });
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
