@@ -564,10 +564,10 @@ Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Frame.fill
 
-This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks,
-focuses the element, fills it and triggers an `input` event after filling. If the element matching [`param: selector`]
-is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an
-empty string to clear the input field.
+This method waits for an element matching [`param: selector`], waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
+If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
+If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+Note that you can pass an empty string to clear the input field.
 
 To send fine-grained keyboard events, use [`method: Frame.type`].
 
