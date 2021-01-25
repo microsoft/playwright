@@ -25,6 +25,8 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { render } = require('../markdown');
 
+const maxDocumentationColumnWidth = 80;
+
 let documentation;
 
 {
@@ -38,13 +40,14 @@ let documentation;
 
   documentation.setLinkRenderer(item => {
     if (item.clazz) {
-      return `<seealso cref="${item.clazz.name}"/>`;
-    } else {
-      return "unknown";
+      return `<see cref="${translateMemberName("interface", item.clazz.name, null)}"/>`;
+    } else if (item.member) {
+      return `<see cref="${translateMemberName("interface", item.member.clazz.name, null)}.${translateMemberName(item.member.kind, item.member.name, item.member)}"/>`;
+    } else if (item.option) {
+      return "{OPTION}";
+    } else if (item.param) {
+      return "{PARAM}";
     }
-    // console.log(item);
-    // // TODO: this should probably do something smarter
-    // return "<a href=\"https://www.google.com\">Link</a>";
   });
 
   // get the template for a class
@@ -60,8 +63,8 @@ let documentation;
     // map the name to a C# friendly one (we prepend an I to denote an interface)
     let name = translateMemberName('interface', element.name, undefined);
 
-    documentation.renderLinksInText(element.spec);
-    let docs = renderXmlDoc(element.spec, 80);
+    // documentation.renderLinksInText(element.spec);
+    let docs = renderXmlDoc(element.spec, maxDocumentationColumnWidth);
 
     Array.prototype.push.apply(out, docs);
 
@@ -91,7 +94,12 @@ function renderXmlDoc(nodes, maxColumns) {
 
   summary.push('<summary>');
   for (let node of nodes) {
-    lastNode = innerRenderXmlNode('///', node, lastNode, summary, examples, maxColumns);
+    lastNode = innerRenderXmlNode(node, lastNode, summary, examples, maxColumns);
+  }
+
+  // we might have a stray list, if the <li> is the last element
+  if (lastNode && lastNode.type === 'li') {
+    summary.push('</list>');
   }
   summary.push('</summary>');
 
@@ -101,21 +109,18 @@ function renderXmlDoc(nodes, maxColumns) {
 }
 
 /**
- * @param {string} indent
  * @param {Documentation.MarkdownNode} node
  * @param {Documentation.MarkdownNode} lastNode
  * @param {number=} maxColumns
  * @param {string[]} summary
  * @param {string[]} examples
  */
-function innerRenderXmlNode(indent, node, lastNode, summary, examples, maxColumns) {
+function innerRenderXmlNode(node, lastNode, summary, examples, maxColumns) {
   /** @param {string[]} a */
   const newLine = (a) => {
     if (a[a.length - 1] !== '')
       a.push('');
   };
-
-  // documentation.renderLinksInText([ node ]);
 
   let escapedText = node.text;
   // resolve links (within [])
@@ -128,7 +133,7 @@ function innerRenderXmlNode(indent, node, lastNode, summary, examples, maxColumn
 
     summary.push(...wrapText(escapedText, maxColumns));
 
-    return lastNode;
+    return node;
   }
 
   if (node.type === 'li') {
@@ -136,7 +141,8 @@ function innerRenderXmlNode(indent, node, lastNode, summary, examples, maxColumn
       summary.push(...wrapText(`<seealso cref="${escapedText.substring(9)}"/>`, maxColumns));
       return undefined;
     }
-    // if the previous node was no li, start list
+
+    // if the previous node was not li, start list
     if (lastNode && lastNode.type !== 'li') {
       summary.push(`<list>`);
     }
@@ -144,7 +150,14 @@ function innerRenderXmlNode(indent, node, lastNode, summary, examples, maxColumn
     summary.push(...wrapText(`<item><description>${escapedText}</description></item>`, maxColumns));
   }
 
-  return lastNode;
+  // TODO: this should really move to the examples array
+  if (node.type == 'code' && node.codeLang == "csharp") {
+    summary.push('<![CDATA[');
+    summary.push(...node.lines);
+    summary.push(']]>');
+  }
+
+  return node;
 }
 
 /**
@@ -157,12 +170,19 @@ function wrapText(text, maxColumns = 0, prefix = '') {
     return prefix + text;
   }
 
+  // we'll apply some fixes, like rendering the links from markdown
+  // TODO: maybe we can move this to either markdown.js or documentation.js?
+  text = text.replace(/\[([^\[\]]*)\]\((.*?)\)/g, function (match, name, url) {
+    return `<a href="${url}">${name}</a>`;
+  });
+
   const lines = [];
 
   let insideTag = false;
   let escapeChar = false;
   let insideLink = false;
   let breakOnSpace = false;
+  let insideNode = false;
 
   let line = "";
   let currentWidth = 0;
@@ -173,9 +193,21 @@ function wrapText(text, maxColumns = 0, prefix = '') {
     let skipThisChar = true;
 
     if (['<', '['].includes(char)) {
+      // maybe we should break if a node starts, and we're almost at the end of the block
+      if (!insideNode && currentWidth >= maxColumns * 0.85) {
+        lines.push(line);
+        line = "";
+        currentWidth = 0;
+      }
+      insideNode = true;
       insideTag = true;
     } else if (['>', ']'].includes(char)) {
       insideTag = false;
+      if (prevChar === '/') { // self-closing tag
+        insideNode = false;
+      }
+    } else if (char === '/' && prevChar === '<') { // closing node
+      insideNode = false;
     } else if (char === '(' && prevChar === ']') {
       insideLink = true;
     } else if (char === ')' && insideLink) {
@@ -192,7 +224,7 @@ function wrapText(text, maxColumns = 0, prefix = '') {
       skipThisChar = false;
     }
 
-    if(currentWidth == 0 && char === " ") {
+    if (currentWidth == 0 && char === " ") {
       continue;
     }
 
@@ -207,13 +239,14 @@ function wrapText(text, maxColumns = 0, prefix = '') {
     if (currentWidth >= maxColumns
       && !insideTag
       && !escapeChar
-      && !insideLink) {
-        breakOnSpace = true;
+      && !insideLink
+      && !insideNode) {
+      breakOnSpace = true;
     }
   }
 
   // make sure we push the last line, if it hasn't been pushed yet
-  if(line !== "") {
+  if (line !== "") {
     lines.push(line);
   }
 
@@ -280,7 +313,7 @@ function generateMembers(member) {
       returnType = `Task<${translateType(method.type)}>`;
     }
 
-    // out.push(...generateXmlDoc(method.spec));
+    out.push(...renderXmlDoc(method.spec, maxDocumentationColumnWidth));
 
     out.push(`${returnType} ${name}();`);
     out.push('');
@@ -289,7 +322,7 @@ function generateMembers(member) {
   /**** EVENTS  ****/
   member.eventsArray.forEach(event => {
 
-    //  out.push(...generateXmlDoc(event.spec));
+    out.push(...renderXmlDoc(event.spec, maxDocumentationColumnWidth));
 
     let eventType = event.type.name !== 'void' ? `EventHandler<${event.type.name}>` : `EventHandler`;
     out.push(`public event ${eventType} ${translateMemberName(event.kind, event.name, event)};`);
