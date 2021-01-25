@@ -27,7 +27,7 @@ export class Dialog extends ChannelOwner<channels.DialogChannel, channels.Dialog
     super(parent, type, guid, initializer);
   }
 
-  type(): string {
+  type(): 'alert'|'beforeunload'|'confirm'|'prompt' {
     return this._initializer.type;
   }
 

@@ -24,13 +24,13 @@ export type DialogType = 'alert' | 'beforeunload' | 'confirm' | 'prompt';
 
 export class Dialog {
   private _page: Page;
-  private _type: string;
+  private _type: DialogType;
   private _message: string;
   private _onHandle: OnHandle;
   private _handled = false;
   private _defaultValue: string;
 
-  constructor(page: Page, type: string, message: string, onHandle: OnHandle, defaultValue?: string) {
+  constructor(page: Page, type: DialogType, message: string, onHandle: OnHandle, defaultValue?: string) {
     this._page = page;
     this._type = type;
     this._message = message;
@@ -38,7 +38,7 @@ export class Dialog {
     this._defaultValue = defaultValue || '';
   }
 
-  type(): string {
+  type(): DialogType {
     return this._type;
   }
 

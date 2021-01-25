@@ -85,6 +85,6 @@ Returns when the dialog has been dismissed.
 A message displayed in the dialog.
 
 ## method: Dialog.type
-- returns: <[string]>
+- returns: <"alert"|"beforeunload"|"confirm"|"prompt">
 
 Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.

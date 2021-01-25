@@ -1990,7 +1990,13 @@ Dialog:
   type: interface
 
   initializer:
-    type: string
+    type:
+      type: enum
+      literals:
+      - alert
+      - beforeunload
+      - confirm
+      - prompt
     message: string
     defaultValue: string
 

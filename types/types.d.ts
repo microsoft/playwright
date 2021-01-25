@@ -7902,7 +7902,7 @@ export interface Dialog {
   /**
    * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
    */
-  type(): string;
+  type(): "alert"|"beforeunload"|"confirm"|"prompt";
 }
 
 /**

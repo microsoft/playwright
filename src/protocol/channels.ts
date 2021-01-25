@@ -2329,7 +2329,7 @@ export type BindingCallResolveResult = void;
 
 // ----------- Dialog -----------
 export type DialogInitializer = {
-  type: string,
+  type: 'alert' | 'beforeunload' | 'confirm' | 'prompt',
   message: string,
   defaultValue: string,
 };
