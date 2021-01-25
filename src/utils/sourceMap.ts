@@ -24,23 +24,11 @@ type Position = {
   column: number;
 };
 
-let sourceUrlCounter = 0;
-const playwrightSourceUrlPrefix = '__playwright_evaluation_script__';
-const sourceUrlRegex = /^[\040\t]*\/\/[@#] sourceURL=\s*(\S*?)\s*$/m;
-
-export function ensureSourceUrl(expression: string): string {
-  return sourceUrlRegex.test(expression) ? expression : expression + generateSourceUrl();
-}
-
 export async function generateSourceMapUrl(functionText: string, generatedText: string): Promise<string> {
   if (!isDebugMode())
     return '';
   const sourceMapUrl = await innerGenerateSourceMapUrl(functionText, generatedText);
-  return sourceMapUrl || generateSourceUrl();
-}
-
-export function generateSourceUrl(): string {
-  return isDebugMode() ? `\n//# sourceURL=${playwrightSourceUrlPrefix}${sourceUrlCounter++}\n` : '';
+  return sourceMapUrl || '';
 }
 
 async function innerGenerateSourceMapUrl(functionText: string, generatedText: string): Promise<string | undefined> {

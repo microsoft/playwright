@@ -140,7 +140,7 @@ export class JSHandle<T = any> {
     if (!this._objectId)
       return this._value;
     const utilityScript = await this._context.utilityScript();
-    const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)` + sourceMap.generateSourceUrl();
+    const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)`;
     return this._context._delegate.evaluateWithArguments(script, true, utilityScript, [true], [this._objectId]);
   }
 
@@ -177,8 +177,8 @@ export async function evaluate(context: ExecutionContext, returnByValue: boolean
 export async function evaluateExpression(context: ExecutionContext, returnByValue: boolean, expression: string, isFunction: boolean, ...args: any[]): Promise<any> {
   const utilityScript = await context.utilityScript();
   if (!isFunction) {
-    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)` + sourceMap.generateSourceUrl();
-    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, sourceMap.ensureSourceUrl(expression)], []);
+    const script = `(utilityScript, ...args) => utilityScript.evaluate(...args)`;
+    return context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, [returnByValue, expression], []);
   }
 
   let functionText = expression;
@@ -232,7 +232,7 @@ export async function evaluateExpression(context: ExecutionContext, returnByValu
   // See UtilityScript for arguments.
   const utilityScriptValues = [returnByValue, functionText, args.length, ...args];
 
-  const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)` + sourceMap.generateSourceUrl();
+  const script = `(utilityScript, ...args) => utilityScript.callFunction(...args)`;
   try {
     return await context._delegate.evaluateWithArguments(script, returnByValue, utilityScript, utilityScriptValues, utilityScriptObjectIds);
   } finally {
