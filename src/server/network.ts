@@ -61,12 +61,18 @@ export function rewriteCookies(cookies: types.SetNetworkCookieParam[]): types.Se
   });
 }
 
-function stripFragmentFromUrl(url: string): string {
-  if (!url.indexOf('#'))
+export function parsedURL(url: string): URL | null {
+  try {
+    return new URL(url);
+  } catch (e) {
+    return null;
+  }
+}
+
+export function stripFragmentFromUrl(url: string): string {
+  if (!url.includes('#'))
     return url;
-  const parsed = new URL(url);
-  parsed.hash = '';
-  return parsed.href;
+  return url.substring(0, url.indexOf('#'));
 }
 
 export class Request {

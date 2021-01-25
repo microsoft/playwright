@@ -132,8 +132,8 @@ class TraceViewer {
         this._document.snapshotRouter.route(route);
         return;
       }
-      const url = new URL(request.url());
       try {
+        const url = new URL(request.url());
         if (this._document && request.url().includes('action-preview')) {
           const fullPath = url.pathname.substring('/action-preview/'.length);
           const actionId = fullPath.substring(0, fullPath.indexOf('.png'));
