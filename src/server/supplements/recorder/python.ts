@@ -15,11 +15,11 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import * as playwright from '../../../..';
-import { HighlighterType, LanguageGenerator } from '.';
-import { ActionInContext } from '../codeGenerator';
-import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from '../recorderActions';
-import { MouseClickOptions, toModifiers } from '../utils';
+import { LanguageGenerator, sanitizeDeviceOptions } from './language';
+import { ActionInContext } from './codeGenerator';
+import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from './recorderActions';
+import { MouseClickOptions, toModifiers } from './utils';
+import deviceDescriptors = require('../../deviceDescriptors');
 
 export class PythonLanguageGenerator implements LanguageGenerator {
   private _awaitPrefix: '' | 'await ';
@@ -30,10 +30,6 @@ export class PythonLanguageGenerator implements LanguageGenerator {
     this._isAsync = isAsync;
     this._awaitPrefix = isAsync ? 'await ' : '';
     this._asyncPrefix = isAsync ? 'async ' : '';
-  }
-
-  highlighterType(): HighlighterType {
-    return 'python';
   }
 
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
@@ -217,16 +213,10 @@ function formatOptions(value: any, hasArguments: boolean): string {
 }
 
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
-  const device = deviceName && playwright.devices[deviceName];
+  const device = deviceName && deviceDescriptors[deviceName];
   if (!device)
     return formatOptions(options, false);
-  // Filter out all the properties from the device descriptor.
-  const cleanedOptions: Record<string, any> = {};
-  for (const property in options) {
-    if ((device as any)[property] !== (options as any)[property])
-      cleanedOptions[property] = (options as any)[property];
-  }
-  return `**playwright.devices["${deviceName}"]` + formatOptions(cleanedOptions, true);
+  return `**playwright.devices["${deviceName}"]` + formatOptions(sanitizeDeviceOptions(device, options), true);
 }
 
 class PythonFormatter {

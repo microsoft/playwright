@@ -15,15 +15,20 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import { ActionInContext } from '../codeGenerator';
-
-export type HighlighterType = 'javascript' | 'csharp' | 'python';
+import { ActionInContext } from './codeGenerator';
 
 export interface LanguageGenerator {
   generateHeader(browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, deviceName?: string): string;
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string;
   generateFooter(saveStorage: string | undefined): string;
-  highlighterType(): HighlighterType;
 }
 
-export { JavaScriptLanguageGenerator } from './javascript';
+export function sanitizeDeviceOptions(device: any, options: BrowserContextOptions): BrowserContextOptions {
+  // Filter out all the properties from the device descriptor.
+  const cleanedOptions: Record<string, any> = {};
+  for (const property in options) {
+    if (JSON.stringify(device[property]) !== JSON.stringify((options as any)[property]))
+      cleanedOptions[property] = (options as any)[property];
+  }
+  return cleanedOptions;
+}

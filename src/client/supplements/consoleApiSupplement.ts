@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-import { BrowserContext, ContextListener, contextListeners } from '../browserContext';
-import { isDebugMode } from '../../utils/utils';
+import { BrowserContext } from '../browserContext';
 
-export function installInspectorController() {
-  contextListeners.add(new InspectorController());
-}
-
-class InspectorController implements ContextListener {
-  async onContextCreated(context: BrowserContext): Promise<void> {
-    if (isDebugMode())
-      context.exposeConsoleApi();
+export class ConsoleApiSupplement {
+  constructor(context: BrowserContext) {
+    context._channel.consoleSupplementExpose().catch(e => {});
   }
-  async onContextWillDestroy(context: BrowserContext): Promise<void> {}
-  async onContextDidDestroy(context: BrowserContext): Promise<void> {}
 }

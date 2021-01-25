@@ -599,11 +599,17 @@ BrowserContext:
           type: array
           items: OriginStorage
 
-    exposeConsoleApi:
+    consoleSupplementExpose:
       experimental: True
 
-    enableRecorder:
+    recorderSupplementEnable:
       experimental: True
+      parameters:
+        language: string
+        launchOptions: json
+        contextOptions: json
+        device: string?
+        saveStorage: string?
 
     crNewCDPSession:
       parameters:
@@ -636,7 +642,13 @@ BrowserContext:
       parameters:
         worker: Worker
 
+    recorderSupplementPrintLn:
+      parameters:
+        text: string
 
+    recorderSupplementPopLn:
+      parameters:
+        text: string
 
 Page:
   type: interface

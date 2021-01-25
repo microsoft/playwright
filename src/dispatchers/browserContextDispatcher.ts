@@ -21,6 +21,8 @@ import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { RecorderSupplement } from '../server/supplements/recorderSupplement';
+import { ConsoleApiSupplement } from '../server/supplements/consoleApiSupplement';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -125,12 +127,17 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close();
   }
 
-  async exposeConsoleApi(): Promise<void> {
-    await this._context.exposeConsoleApi();
+  async consoleSupplementExpose(): Promise<void> {
+    const consoleApi = new ConsoleApiSupplement(this._context);
+    await consoleApi.install();
   }
 
-  async enableRecorder(): Promise<void> {
-    await this._context.enableRecorder();
+  async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
+    const recorder = new RecorderSupplement(this._context, params, {
+      printLn: text => this._dispatchEvent('recorderSupplementPrintLn', { text }),
+      popLn: text => this._dispatchEvent('recorderSupplementPopLn', { text }),
+    });
+    await recorder.install();
   }
 
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {

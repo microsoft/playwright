@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
-import type * as actions from '../../../cli/codegen/recorderActions';
+import type * as actions from '../recorder/recorderActions';
 import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector } from './selectorGenerator';
 import { html } from './html';
 
 declare global {
   interface Window {
-    performPlaywrightAction: (action: actions.Action) => Promise<void>;
-    recordPlaywrightAction: (action: actions.Action) => Promise<void>;
-    commitLastAction: () => Promise<void>;
+    playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
+    playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
+    playwrightRecorderCommitAction: () => Promise<void>;
   }
 }
 
@@ -238,7 +238,7 @@ export class Recorder {
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement);
     if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
       return;
-    window.commitLastAction();
+    window.playwrightRecorderCommitAction();
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if ((window as any)._highlightUpdatedForTest)
@@ -331,7 +331,7 @@ export class Recorder {
       }
 
       if (elementType === 'file') {
-        window.recordPlaywrightAction({
+        window.playwrightRecorderRecordAction({
           name: 'setInputFiles',
           selector: this._activeModel!.selector,
           signals: [],
@@ -343,7 +343,7 @@ export class Recorder {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      window.recordPlaywrightAction({
+      window.playwrightRecorderRecordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -434,7 +434,7 @@ export class Recorder {
 
   private async _performAction(action: actions.Action) {
     this._performingAction = true;
-    await window.performPlaywrightAction(action);
+    await window.playwrightRecorderPerformAction(action);
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.

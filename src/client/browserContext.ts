@@ -253,14 +253,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
       throw e;
     }
   }
-
-  async _exposeConsoleApi() {
-    await this._channel.exposeConsoleApi();
-  }
-
-  async _enableRecorder<Arg>() {
-    await this._channel.enableRecorder();
-  }
 }
 
 export async function prepareBrowserContextOptions(options: BrowserContextOptions): Promise<channels.BrowserNewContextOptions> {

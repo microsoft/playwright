@@ -22,16 +22,17 @@ import * as path from 'path';
 import * as program from 'commander';
 import * as os from 'os';
 import * as fs from 'fs';
-import { OutputMultiplexer, TerminalOutput, FileOutput } from './codegen/outputs';
-import { CodeGenerator, CodeGeneratorOutput } from './codegen/codeGenerator';
-import { JavaScriptLanguageGenerator, LanguageGenerator } from './codegen/languages';
-import { PythonLanguageGenerator } from './codegen/languages/python';
-import { CSharpLanguageGenerator } from './codegen/languages/csharp';
-import { RecorderController } from './codegen/recorderController';
 import { runServer, printApiJson, installBrowsers } from './driver';
 import { showTraceViewer } from './traceViewer/traceViewer';
-import type { Browser, BrowserContext, Page, BrowserType, BrowserContextOptions, LaunchOptions } from '../..';
 import * as playwright from '../..';
+import { BrowserContext } from '../client/browserContext';
+import { Browser } from '../client/browser';
+import { Page } from '../client/page';
+import { BrowserType } from '../client/browserType';
+import { BrowserContextOptions, LaunchOptions } from '../client/types';
+import { RecorderOutput, RecorderSupplement } from '../client/supplements/recorderSupplement';
+import { ConsoleApiSupplement } from '../client/supplements/consoleApiSupplement';
+import { FileOutput, OutputMultiplexer, TerminalOutput } from '../client/supplements/recorderOutputs';
 
 program
     .version('Version ' + require('../../package.json').version)
@@ -317,36 +318,31 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, false);
-  (context as any)._exposeConsoleApi();
+  new ConsoleApiSupplement(context);
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
 }
 
-async function codegen(options: Options, url: string | undefined, target: string, outputFile?: string) {
-  let languageGenerator: LanguageGenerator;
-
-  switch (target) {
-    case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
-    case 'csharp': languageGenerator = new CSharpLanguageGenerator(); break;
-    case 'python':
-    case 'python-async': languageGenerator = new PythonLanguageGenerator(target === 'python-async'); break;
-    default: throw new Error(`Invalid target: '${target}'`);
-  }
-
-  const { context, browserName, launchOptions, contextOptions } = await launchContext(options, false);
-
-  if (process.env.PWTRACE)
-    (contextOptions as any)._traceDir = path.join(process.cwd(), '.trace');
-
-  const outputs: CodeGeneratorOutput[] = [TerminalOutput.create(process.stdout, languageGenerator.highlighterType())];
+async function codegen(options: Options, url: string | undefined, language: string, outputFile?: string) {
+  const { context, launchOptions, contextOptions } = await launchContext(options, false);
+  let highlighterType = language;
+  if (highlighterType === 'python-async')
+    highlighterType = 'python';
+  const outputs: RecorderOutput[] = [TerminalOutput.create(process.stdout, highlighterType)];
   if (outputFile)
     outputs.push(new FileOutput(outputFile));
   const output = new OutputMultiplexer(outputs);
 
-  const generator = new CodeGenerator(browserName, launchOptions, contextOptions, output, languageGenerator, options.device, options.saveStorage);
-  new RecorderController(context, generator);
-  (context as any)._exposeConsoleApi();
+  new ConsoleApiSupplement(context);
+  new RecorderSupplement(context,
+      language,
+      launchOptions,
+      contextOptions,
+      options.device,
+      options.saveStorage,
+      output);
+
   await openPage(context, url);
   if (process.env.PWCLI_EXIT_FOR_TEST)
     await Promise.all(context.pages().map(p => p.close()));
@@ -387,20 +383,23 @@ async function pdf(options: Options, captureOptions: CaptureOptions, url: string
   await browser.close();
 }
 
-function lookupBrowserType(options: Options): BrowserType<Browser> {
+function lookupBrowserType(options: Options): BrowserType {
   let name = options.browser;
   if (options.device) {
     const device = playwright.devices[options.device];
     name = device.defaultBrowserType;
   }
+  let browserType: any;
   switch (name) {
-    case 'chromium': return playwright.chromium!;
-    case 'webkit': return playwright.webkit!;
-    case 'firefox': return playwright.firefox!;
-    case 'cr': return playwright.chromium!;
-    case 'wk': return playwright.webkit!;
-    case 'ff': return playwright.firefox!;
+    case 'chromium': browserType = playwright.chromium; break;
+    case 'webkit': browserType = playwright.webkit; break;
+    case 'firefox': browserType = playwright.firefox; break;
+    case 'cr': browserType = playwright.chromium; break;
+    case 'wk': browserType = playwright.webkit; break;
+    case 'ff': browserType = playwright.firefox; break;
   }
+  if (browserType)
+    return browserType;
   program.help();
 }
 

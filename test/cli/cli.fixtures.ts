@@ -21,10 +21,8 @@ import { ChildProcess, spawn } from 'child_process';
 import { folio as baseFolio } from '../fixtures';
 import type { Page, BrowserType, Browser, BrowserContext } from '../..';
 export { config } from 'folio';
-import { RecorderController } from '../../src/cli/codegen/recorderController';
-import { TerminalOutput } from '../../src/cli/codegen/outputs';
-import { JavaScriptLanguageGenerator } from '../../src/cli/codegen/languages';
-import { CodeGenerator } from '../../src/cli/codegen/codeGenerator';
+import { FlushingTerminalOutput } from '../../lib/client/supplements/recorderOutputs';
+import { RecorderSupplement } from '../../lib/client/supplements/recorderSupplement';
 
 type WorkerFixtures = {
   browserType: BrowserType<Browser>;
@@ -41,12 +39,10 @@ type TestFixtures = {
 export const fixtures = baseFolio.extend<TestFixtures, WorkerFixtures>();
 
 fixtures.contextWrapper.init(async ({ browser }, runTest) => {
-  const context = await browser.newContext();
+  const context = await browser.newContext() as BrowserContext;
   const outputBuffer = new WritableBuffer();
-  const output = new TerminalOutput(outputBuffer as any as Writable, 'javascript');
-  const languageGenerator = new JavaScriptLanguageGenerator();
-  const generator = new CodeGenerator('chromium', {}, {}, output, languageGenerator, undefined, undefined);
-  new RecorderController(context, generator);
+  const output = new FlushingTerminalOutput(outputBuffer as any as Writable);
+  new RecorderSupplement(context, 'javascript', {}, {}, undefined, undefined, output);
   await runTest({ context, output: outputBuffer });
   await context.close();
 });
