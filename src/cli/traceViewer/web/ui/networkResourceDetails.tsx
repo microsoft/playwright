@@ -101,7 +101,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
         <div className='network-request-headers'>{resource.requestHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
         <h4>Response Headers</h4>
         <div className='network-request-headers'>{resource.responseHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-        {resource.requestSha1 !== 'none' ? <h3>Request Body</h3> : ''}
+        {resource.requestSha1 !== 'none' ? <h4>Request Body</h4> : ''}
         {resource.requestSha1 !== 'none' ? <div className='network-request-body'>{formatBody(requestBody, requestContentType)}</div> : ''}
         <h4>Response Body</h4>
         {responseBody !== null && resource.contentType.includes('image') ? <img src={`data:${resource.contentType};base64,${responseBody}`} /> : ''}
