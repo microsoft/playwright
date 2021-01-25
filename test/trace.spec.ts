@@ -66,6 +66,7 @@ it('should record trace with POST', async ({browser, testInfo, server}) => {
   const url = server.PREFIX + '/trace-resources.html';
   await page.goto(url);
   await page.click('text=Download');
+  await page.waitForSelector(`#response-status:text("404")`);
   await context.close();
 
   const tracePath = path.join(traceDir, fs.readdirSync(traceDir).find(n => n.endsWith('.trace')));
