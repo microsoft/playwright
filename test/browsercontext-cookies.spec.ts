@@ -199,3 +199,14 @@ it('should work with subdomain cookie', async ({context, page, server}) => {
     sameSite: 'None',
   }]);
 });
+
+it('should not return cookies with empty value', async ({context, page, server}) => {
+  server.setRoute('/empty.html', (req, res) => {
+    res.setHeader('Set-Cookie', 'name=;Path=/');
+    res.end();
+  });
+  await page.goto(server.EMPTY_PAGE);
+  const cookies = await context.cookies();
+  expect(cookies.length).toBe(0);
+});
+

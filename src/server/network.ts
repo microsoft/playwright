@@ -23,6 +23,9 @@ export function filterCookies(cookies: types.NetworkCookie[], urls: string[]): t
   const parsedURLs = urls.map(s => new URL(s));
   // Chromiums's cookies are missing sameSite when it is 'None'
   return cookies.filter(c => {
+    // Firefox and WebKit can return cookies with empty values.
+    if (!c.value)
+      return false;
     if (!parsedURLs.length)
       return true;
     for (const parsedURL of parsedURLs) {
