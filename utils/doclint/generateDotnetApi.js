@@ -25,7 +25,7 @@ const fs = require('fs');
 const { parseApi } = require('./api_parser');
 const { render } = require('../markdown');
 
-const maxDocumentationColumnWidth = 80;
+const maxDocumentationColumnWidth = 120;
 
 let documentation;
 
@@ -276,17 +276,20 @@ function translateMemberName(memberKind, name, member) {
     case "event":
       return `On${assumedName}`;
     default:
-      return `${name}-UN`;
+      return `${assumedName}`;
   }
 }
 
-/** @param {Documentation.Type} type */
+/**
+ *  @param {Documentation.Type} type 
+ *  @returns {string}
+ * */
 function translateType(type) {
   if (type.union) {
     if (type.union[0].name === 'null') {
       // for dotnet, this is a nullable type
       // unless it's something like a string
-      const typeName = type.union[1].name;
+      const typeName = translateType(type.union[1]);
 
       if (typeName === 'string'
         || typeName === 'int') {
@@ -297,7 +300,33 @@ function translateType(type) {
     }
   }
 
+  // apply some basic rules
+  if (type.name === 'boolean') {
+    return 'bool';
+  }
+
+  if (type.name === 'Array') {
+    return `${type.templates[0].name}[]`;
+  }
+
+  /** @param {string} */
   return type.name;
+}
+
+/**
+ *    @param {Documentation.Member} member 
+ *    @returns {string}
+*/
+function generateReturnType(member) {
+  let innerReturnType = translateType(member.type);
+
+  if (innerReturnType && innerReturnType.startsWith('Object')) {
+    // if the return type is an Object, we should generate a new one where the name is a combination of
+    // the onwer class, method and Result, i.e. [Accessibility][Snapshot][Result].  
+    innerReturnType = innerReturnType.replace('Object', `${member.clazz.name}${translateMemberName('', member.name, null)}Result`);
+  }
+
+  return innerReturnType;
 }
 
 /** @param {Documentation.Class} member */
@@ -309,11 +338,30 @@ function generateMembers(member) {
     let name = translateMemberName(method.kind, method.name, method);
     let returnType = "Task";
 
+
+    if (method.deprecated) {
+      out.push(`[Obsolete]`);
+    }
+
     if (method.type.name !== 'void') {
-      returnType = `Task<${translateType(method.type)}>`;
+      returnType = `Task<${generateReturnType(method)}>`;
     }
 
     out.push(...renderXmlDoc(method.spec, maxDocumentationColumnWidth));
+
+    method.argsArray.forEach(arg => {
+      if (arg.type.name !== "options") {
+        if (arg.type.properties) {
+          arg.type.properties.forEach(opt => {
+            out.push(`// ---- ${opt.alias || opt.type.name} ${opt.name}`);
+          });
+        }
+      } else {
+        out.push(`// ${arg.alias || arg.type.name} ${arg.name}`);
+      }
+      // console.log(arg);
+      // console.log(arg.spec);
+    });
 
     out.push(`${returnType} ${name}();`);
     out.push('');
