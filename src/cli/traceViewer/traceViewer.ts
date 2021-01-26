@@ -98,15 +98,14 @@ class TraceViewer {
 
       return fs.readFileSync(path.join(this._document.resourcesDir, sha1)).toString('base64');
     });
-    await uiPage.exposeBinding('renderSnapshot', async (_, arg: { action: ActionTraceEvent, snapshot: { name: string, snapshotId?: string } }) => {
+    await uiPage.exposeBinding('renderSnapshot', async (_, arg: { action: ActionTraceEvent, snapshot: { snapshotId?: string, snapshotTime?: number } }) => {
       const { action, snapshot } = arg;
       if (!this._document)
         return;
       try {
         const contextEntry = this._document.model.contexts.find(entry => entry.created.contextId === action.contextId)!;
         const pageEntry = contextEntry.pages.find(entry => entry.created.pageId === action.pageId)!;
-        const snapshotTime = snapshot.name === 'before' ? action.startTime : (snapshot.name === 'after' ? action.endTime : undefined);
-        const pageUrl = await this._document.snapshotRouter.selectSnapshot(contextEntry, pageEntry, snapshot.snapshotId, snapshotTime);
+        const pageUrl = await this._document.snapshotRouter.selectSnapshot(contextEntry, pageEntry, snapshot.snapshotId, snapshot.snapshotTime);
 
         // TODO: fix Playwright bug where frame.name is lost (empty).
         const snapshotFrame = uiPage.frames()[1];

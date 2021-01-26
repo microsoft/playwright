@@ -63,6 +63,7 @@
 }
 
 .timeline-lane.timeline-bars {
+  pointer-events: auto;
   margin-bottom: 10px;
   overflow: visible;
 }

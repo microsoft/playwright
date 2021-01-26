@@ -19,7 +19,7 @@ import { ContextEntry, InterestingPageEvent, ActionEntry, trace } from '../../tr
 import './timeline.css';
 import { Boundaries } from '../geometry';
 import * as React from 'react';
-import { useMeasure } from './helpers';
+import { msToString, useMeasure } from './helpers';
 
 type TimelineBar = {
   entry?: ActionEntry;
@@ -40,7 +40,8 @@ export const Timeline: React.FunctionComponent<{
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
   onHighlighted: (action: ActionEntry | undefined) => void,
-}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted }) => {
+  onTimeSelected: (time: number) => void,
+}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted, onTimeSelected }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
   const [hoveredBar, setHoveredBar] = React.useState<TimelineBar | undefined>();
@@ -147,16 +148,25 @@ export const Timeline: React.FunctionComponent<{
   const onMouseLeave = () => {
     setPreviewX(undefined);
   };
-  const onClick = (event: React.MouseEvent) => {
+  const onActionClick = (event: React.MouseEvent) => {
     if (ref.current) {
       const x = event.clientX - ref.current.getBoundingClientRect().left;
       const bar = findHoveredBar(x);
       if (bar && bar.entry)
         onSelected(bar.entry);
+      event.stopPropagation();
+    }
+  };
+  const onTimeClick = (event: React.MouseEvent) => {
+    if (ref.current) {
+      const x = event.clientX - ref.current.getBoundingClientRect().left;
+      const time = positionToTime(measure.width, boundaries, x);
+      onTimeSelected(time);
+      event.stopPropagation();
     }
   };
 
-  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onClick}>
+  return <div ref={ref} className='timeline-view' onMouseMove={onMouseMove} onMouseOver={onMouseMove} onMouseLeave={onMouseLeave} onClick={onTimeClick}>
     <div className='timeline-grid'>{
       offsets.map((offset, index) => {
         return <div key={index} className='timeline-divider' style={{ left: offset.position + 'px' }}>
@@ -177,7 +187,7 @@ export const Timeline: React.FunctionComponent<{
         </div>;
       })
     }</div>
-    <div className='timeline-lane timeline-bars'>{
+    <div className='timeline-lane timeline-bars' onClick={onActionClick}>{
       bars.map((bar, index) => {
         return <div key={index}
           className={'timeline-bar ' + bar.type + (targetBar === bar ? ' selected' : '')}
@@ -233,28 +243,3 @@ function positionToTime(clientWidth: number, boundaries: Boundaries, x: number):
   return x / clientWidth * (boundaries.maximum - boundaries.minimum) + boundaries.minimum;
 }
 
-function msToString(ms: number): string {
-  if (!isFinite(ms))
-    return '-';
-
-  if (ms === 0)
-    return '0';
-
-  if (ms < 1000)
-    return ms.toFixed(0) + 'ms';
-
-  const seconds = ms / 1000;
-  if (seconds < 60)
-    return seconds.toFixed(1) + 's';
-
-  const minutes = seconds / 60;
-  if (minutes < 60)
-    return minutes.toFixed(1) + 'm';
-
-  const hours = minutes / 60;
-  if (hours < 24)
-    return hours.toFixed(1) + 'h';
-
-  const days = hours / 24;
-  return days.toFixed(1) + 'd';
-}
