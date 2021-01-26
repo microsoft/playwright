@@ -169,7 +169,7 @@ export class SnapshotRouter {
   }
 
   private async _readResource(event: trace.NetworkResourceTraceEvent, overrideSha1: string | undefined) {
-    const body = await this._readSha1(overrideSha1 || event.sha1);
+    const body = await this._readSha1(overrideSha1 || event.responseSha1);
     if (!body)
       return;
     return {

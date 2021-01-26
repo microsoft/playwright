@@ -17,23 +17,18 @@
 import { ActionEntry } from '../../traceModel';
 import './networkTab.css';
 import * as React from 'react';
-import { Expandable } from './helpers';
+import { NetworkResourceDetails } from './networkResourceDetails';
 
 export const NetworkTab: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
 }> = ({ actionEntry }) => {
   const [selected, setSelected] = React.useState(0);
+
   return <div className='network-tab'>{
     (actionEntry ? actionEntry.resources : []).map((resource, index) => {
-      return <div key={index}
-        className={'network-request ' + (index === selected ? 'selected' : '')}
-        onClick={() => setSelected(index)}>
-        <Expandable style={{ width: '100%' }} title={
-          <div className='network-request-title'><div>{resource.url}</div></div>
-        } body={
-          <div className='network-request-details'>{resource.responseHeaders.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-        }/>
-      </div>;
+      return <NetworkResourceDetails resource={resource} key={index} index={index} selected={selected === index} setSelected={setSelected} />;
     })
   }</div>;
 };
+
+

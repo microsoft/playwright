@@ -19,7 +19,7 @@ import type * as trace from '../src/trace/traceTypes';
 import * as path from 'path';
 import * as fs from 'fs';
 
-it('should record trace', test => test.fixme(), async ({browser, testInfo, server}) => {
+it('should record trace', async ({browser, testInfo, server}) => {
   const traceDir = testInfo.outputPath('trace');
   const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
@@ -46,6 +46,16 @@ it('should record trace', test => test.fixme(), async ({browser, testInfo, serve
   expect(gotoEvent.pageId).toBe(pageId);
   expect(gotoEvent.value).toBe(url);
 
+  const resourceEvent = traceEvents.find(event => event.type === 'resource' && event.url.endsWith('/frames/style.css')) as trace.NetworkResourceTraceEvent;
+  expect(resourceEvent).toBeTruthy();
+  expect(resourceEvent.contextId).toBe(contextId);
+  expect(resourceEvent.pageId).toBe(pageId);
+  expect(resourceEvent.method).toBe('GET');
+  expect(resourceEvent.status).toBe(200);
+  expect(resourceEvent.requestHeaders).toBeTruthy();
+  expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
+  expect(resourceEvent.requestSha1).toBe('none');
+
   const clickEvent = traceEvents.find(event => event.type === 'action' && event.action === 'click') as trace.ActionTraceEvent;
   expect(clickEvent).toBeTruthy();
   expect(clickEvent.snapshots.length).toBe(2);
@@ -53,4 +63,48 @@ it('should record trace', test => test.fixme(), async ({browser, testInfo, serve
   const snapshotEvent = traceEvents.find(event => event.type === 'snapshot' && event.snapshotId === snapshotId) as trace.FrameSnapshotTraceEvent;
 
   expect(fs.existsSync(path.join(traceDir, 'resources', snapshotEvent.sha1))).toBe(true);
+});
+
+it('should record trace with POST', async ({browser, testInfo, server}) => {
+  const traceDir = testInfo.outputPath('trace');
+  const context = await browser.newContext({ _traceDir: traceDir } as any);
+  const page = await context.newPage();
+  const url = server.PREFIX + '/trace-resources.html';
+  await page.goto(url);
+  await page.click('text=Download');
+  await page.waitForSelector(`#response-status:text("404")`);
+  await context.close();
+
+  const tracePath = path.join(traceDir, fs.readdirSync(traceDir).find(n => n.endsWith('.trace')));
+  const traceFileContent = await fs.promises.readFile(tracePath, 'utf8');
+  const traceEvents = traceFileContent.split('\n').filter(line => !!line).map(line => JSON.parse(line)) as trace.TraceEvent[];
+
+  const contextEvent = traceEvents.find(event => event.type === 'context-created') as trace.ContextCreatedTraceEvent;
+  expect(contextEvent).toBeTruthy();
+  const contextId = contextEvent.contextId;
+
+  const pageEvent = traceEvents.find(event => event.type === 'page-created') as trace.PageCreatedTraceEvent;
+  expect(pageEvent).toBeTruthy();
+  expect(pageEvent.contextId).toBe(contextId);
+  const pageId = pageEvent.pageId;
+
+  const gotoEvent = traceEvents.find(event => event.type === 'action' && event.action === 'goto') as trace.ActionTraceEvent;
+  expect(gotoEvent).toBeTruthy();
+  expect(gotoEvent.contextId).toBe(contextId);
+  expect(gotoEvent.pageId).toBe(pageId);
+  expect(gotoEvent.value).toBe(url);
+
+  const resourceEvent = traceEvents.find(event => event.type === 'resource' && event.url.endsWith('/file.json')) as trace.NetworkResourceTraceEvent;
+  expect(resourceEvent).toBeTruthy();
+  expect(resourceEvent.contextId).toBe(contextId);
+  expect(resourceEvent.pageId).toBe(pageId);
+  expect(resourceEvent.method).toBe('POST');
+  expect(resourceEvent.status).toBe(404);
+  expect(resourceEvent.requestHeaders).toBeTruthy();
+  expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
+  expect(resourceEvent.requestSha1).toBeTruthy();
+  expect(resourceEvent.responseSha1).toBeTruthy();
+
+  expect(fs.existsSync(path.join(traceDir, 'resources', resourceEvent.requestSha1))).toBe(true);
+  expect(fs.existsSync(path.join(traceDir, 'resources', resourceEvent.responseSha1))).toBe(true);
 });

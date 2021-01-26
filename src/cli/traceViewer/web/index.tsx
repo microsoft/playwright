@@ -25,6 +25,7 @@ declare global {
   interface Window {
     getTraceModel(): Promise<TraceModel>;
     readFile(filePath: string): Promise<string>;
+    readResource(sha1: string): Promise<string>;
     renderSnapshot(arg: { action: trace.ActionTraceEvent, snapshot: { name: string, snapshotId?: string } }): void;
   }
 }

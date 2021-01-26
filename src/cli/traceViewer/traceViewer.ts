@@ -92,6 +92,12 @@ class TraceViewer {
     await uiPage.exposeBinding('readFile', async (_, path: string) => {
       return fs.readFileSync(path).toString();
     });
+    await uiPage.exposeBinding('readResource', async (_, sha1: string) => {
+      if (!this._document)
+        return;
+
+      return fs.readFileSync(path.join(this._document.resourcesDir, sha1)).toString('base64');
+    });
     await uiPage.exposeBinding('renderSnapshot', async (_, arg: { action: ActionTraceEvent, snapshot: { name: string, snapshotId?: string } }) => {
       const { action, snapshot } = arg;
       if (!this._document)

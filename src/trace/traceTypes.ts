@@ -39,7 +39,11 @@ export type NetworkResourceTraceEvent = {
   url: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
-  sha1: string,
+  requestHeaders: { name: string, value: string }[],
+  method: string,
+  status: number,
+  requestSha1: string,
+  responseSha1: string,
 };
 
 export type PageCreatedTraceEvent = {

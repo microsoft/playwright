@@ -30,7 +30,11 @@ export type SnapshotterResource = {
   url: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
-  sha1: string,
+  requestHeaders: { name: string, value: string }[],
+  method: string,
+  status: number,
+  requestSha1: string,
+  responseSha1: string,
 };
 
 export type SnapshotterBlob = {
@@ -132,18 +136,29 @@ export class Snapshotter {
         contentType = value;
     }
 
+    const method = original.method();
+    const status = response.status();
+    const requestBody = original.postDataBuffer();
+    const requestSha1 = requestBody ? calculateSha1(requestBody) : 'none';
+    const requestHeaders = original.headers();
     const body = await response.body().catch(e => debugLogger.log('error', e));
-    const sha1 = body ? calculateSha1(body) : 'none';
+    const responseSha1 = body ? calculateSha1(body) : 'none';
     const resource: SnapshotterResource = {
       pageId: this._delegate.pageId(page),
       frameId: response.frame()._id,
       url,
       contentType,
       responseHeaders: response.headers(),
-      sha1,
+      requestHeaders,
+      method,
+      status,
+      requestSha1,
+      responseSha1,
     };
     this._delegate.onResource(resource);
+    if (requestBody)
+      this._delegate.onBlob({ sha1: requestSha1, buffer: requestBody });
     if (body)
-      this._delegate.onBlob({ sha1, buffer: body });
+      this._delegate.onBlob({ sha1: responseSha1, buffer: body });
   }
 }

@@ -26,6 +26,7 @@ export const GlobalStyles = () => <style>{`
   --green: #4CAF50;
   --purple: #9C27B0;
   --yellow: #FFC107;
+  --white: #FFFFFF;
   --blue: #2196F3;
   --transparent-blue: #2196F355;
   --orange: #d24726;
@@ -40,6 +41,7 @@ export const GlobalStyles = () => <style>{`
   --settings: #E7E7E7;
   --sidebar-width: 250px;
   --light-pink: #ff69b460;
+  --network-content-bg: #dcdcdb;
   --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
 }
 
