@@ -17,6 +17,9 @@
 import { BrowserContext, ContextListener, contextListeners } from '../browserContext';
 import { isDebugMode } from '../../utils/utils';
 import { ConsoleApiSupplement } from './consoleApiSupplement';
+import { RecorderSupplement } from './recorderSupplement';
+import { Page } from '../page';
+import { ConsoleMessage } from '../console';
 
 export function installInspectorController() {
   contextListeners.add(new InspectorController());
@@ -27,6 +30,13 @@ class InspectorController implements ContextListener {
     if (isDebugMode()) {
       const consoleApi = new ConsoleApiSupplement(context);
       await consoleApi.install();
+      RecorderSupplement.getOrCreate(context, 'debug', {
+        language: 'javascript',
+        terminal: true,
+      });
+      context.on(BrowserContext.Events.Page, (page: Page) => {
+        page.on(Page.Events.Console, (message: ConsoleMessage) => context.emit(BrowserContext.Events.StdOut, message.text() + '\n'));
+      });
     }
   }
   async onContextWillDestroy(context: BrowserContext): Promise<void> {}

@@ -31,7 +31,7 @@ import * as consoleApiSource from '../../generated/consoleApiSource';
 import { FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
 
 type BindingSource = { frame: Frame, page: Page };
-type Tool = 'codegen' | 'pause';
+type App = 'codegen' | 'debug' | 'pause';
 type Mode = 'inspecting' | 'recording' | 'none';
 
 const symbol = Symbol('RecorderSupplement');
@@ -47,23 +47,23 @@ export class RecorderSupplement {
   private _resumeCallback: (() => void) | null = null;
   private _recorderState: { mode: Mode };
   private _paused = false;
-  private _tool: Tool;
+  private _app: App;
   private _output: OutputMultiplexer;
 
-  static getOrCreate(context: BrowserContext, tool: Tool, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
+  static getOrCreate(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
     if (!recorderPromise) {
-      const recorder = new RecorderSupplement(context, tool, params);
+      const recorder = new RecorderSupplement(context, app, params);
       recorderPromise = recorder.install().then(() => recorder);
       (context as any)[symbol] = recorderPromise;
     }
     return recorderPromise;
   }
 
-  constructor(context: BrowserContext, tool: Tool, params: channels.BrowserContextRecorderSupplementEnableParams) {
+  constructor(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._context = context;
-    this._tool = tool;
-    this._recorderState = { mode: tool === 'codegen' ? 'recording' : 'none' };
+    this._app = app;
+    this._recorderState = { mode: app === 'codegen' ? 'recording' : 'none' };
     let languageGenerator: LanguageGenerator;
     switch (params.language) {
       case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
@@ -83,10 +83,10 @@ export class RecorderSupplement {
     if (params.outputFile)
       outputs.push(new FileOutput(params.outputFile));
     this._output = new OutputMultiplexer(outputs);
-    this._output.setEnabled(tool === 'codegen');
+    this._output.setEnabled(app === 'codegen');
     context.on(BrowserContext.Events.BeforeClose, () => this._output.flush());
 
-    const generator = new CodeGenerator(context._browser._options.name, tool === 'codegen', params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
+    const generator = new CodeGenerator(context._browser._options.name, app === 'codegen', params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
     this._generator = generator;
   }
 
@@ -117,7 +117,7 @@ export class RecorderSupplement {
     await this._context.exposeBinding('playwrightRecorderState', false, () => {
       return {
         state: this._recorderState,
-        tool: this._tool,
+        app: this._app,
         paused: this._paused
       };
     });

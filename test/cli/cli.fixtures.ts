@@ -39,7 +39,7 @@ fixtures.contextWrapper.init(async ({ browser }, runTest) => {
   const context = await browser.newContext() as BrowserContext;
   const outputBuffer = new WritableBuffer();
   (context as any)._stdout = outputBuffer;
-  await (context as any)._enableRecorder('javascript');
+  await (context as any)._enableRecorder({ language: 'javascript' });
   await runTest({ context, output: outputBuffer });
   await context.close();
 });

@@ -270,23 +270,16 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel,
     await this._channel.consoleSupplementExpose();
   }
 
-  async _enableRecorder(
-    language: string,
-    launchOptions?: LaunchOptions,
-    contextOptions?: BrowserContextOptions,
-    device?: string,
-    saveStorage?: string,
-    terminal?: boolean,
-    outputFile?: string) {
-    await this._channel.recorderSupplementEnable({
-      language,
-      launchOptions,
-      contextOptions,
-      device,
-      saveStorage,
-      terminal,
-      outputFile,
-    });
+  async _enableRecorder(params: {
+      language: string,
+      launchOptions?: LaunchOptions,
+      contextOptions?: BrowserContextOptions,
+      device?: string,
+      saveStorage?: string,
+      terminal?: boolean,
+      outputFile?: string
+  }) {
+    await this._channel.recorderSupplementEnable(params);
   }
 }
 
