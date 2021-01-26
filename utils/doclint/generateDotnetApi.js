@@ -17,23 +17,28 @@
 // @ts-check
 
 const path = require('path');
-const os = require('os');
-const devices = require('../../src/server/deviceDescriptors');
 const Documentation = require('./documentation');
+const XmlDoc = require('./xmlDocumentation')
 const PROJECT_DIR = path.join(__dirname, '..', '..');
 const fs = require('fs');
 const { parseApi } = require('./api_parser');
-const { render } = require('../markdown');
+// const { visitAll } = require('../markdown'); // TODO: consider using this instead of manual parsing
 
 const maxDocumentationColumnWidth = 120;
+
+/** @type {Map<string, Documentation.Type>} */
+const additionalTypes = new Map(); // this will hold types that we discover, because of .NET specifics, like results
+/** @type {Map<string, string[]>} */
+const enumTypes = new Map();
 
 let documentation;
 
 {
-  const typesDir = path.join(PROJECT_DIR, 'types');
+  const typesDir = process.argv[2] || '../generate_types/csharp/';
+  console.log(typesDir);
   if (!fs.existsSync(typesDir))
     fs.mkdirSync(typesDir)
-  // writeFile(path.join(typesDir, 'protocol.d.ts'), fs.readFileSync(path.join(PROJECT_DIR, 'src', 'server', 'chromium', 'protocol.ts'), 'utf8'));
+
   documentation = parseApi(path.join(PROJECT_DIR, 'docs', 'src', 'api'));
   documentation.filterForLanguage('csharp');
   documentation.copyDocsFromSuperclasses([]);
@@ -54,7 +59,9 @@ let documentation;
   const template = fs.readFileSync("./templates/interface.cs", 'utf-8')
     .replace('[PW_TOOL_VERSION]', `${__filename.substring(path.join(__dirname, '..', '..').length).split(path.sep).join(path.posix.sep)}`);
 
-  // fs.mkdirSync('../generate_types/csharp');
+  // we have some "predefined" types, like the mixed state enum, that we can map in advance
+  enumTypes.set("MixedState", ["On", "Off", "Mixed"]);
+
   documentation.classes.forEach(element => {
     console.log(`Generating ${element.name}`);
 
@@ -64,7 +71,7 @@ let documentation;
     let name = translateMemberName('interface', element.name, undefined);
 
     // documentation.renderLinksInText(element.spec);
-    let docs = renderXmlDoc(element.spec, maxDocumentationColumnWidth);
+    let docs = XmlDoc.renderXmlDoc(element.spec, maxDocumentationColumnWidth);
 
     Array.prototype.push.apply(out, docs);
 
@@ -72,185 +79,51 @@ let documentation;
     out.push('{');
 
     const members = generateMembers(element);
-    // generate the members
     out.push(...members);
 
     out.push('}');
 
 
     let content = template.replace('[CONTENT]', out.join("\n\t"));
-    fs.writeFileSync(`../generate_types/csharp/${name}.cs`, content);
-  });
-}
-
-/**
- * @param {Documentation.MarkdownNode[]} nodes
- * @param {number=} maxColumns
- */
-function renderXmlDoc(nodes, maxColumns) {
-  const summary = [];
-  const examples = [];
-  let lastNode;
-
-  summary.push('<summary>');
-  for (let node of nodes) {
-    lastNode = innerRenderXmlNode(node, lastNode, summary, examples, maxColumns);
-  }
-
-  // we might have a stray list, if the <li> is the last element
-  if (lastNode && lastNode.type === 'li') {
-    summary.push('</list>');
-  }
-  summary.push('</summary>');
-
-  // add examples
-  summary.push(...examples);
-  return summary.map(n => `/// ${n}`);
-}
-
-/**
- * @param {Documentation.MarkdownNode} node
- * @param {Documentation.MarkdownNode} lastNode
- * @param {number=} maxColumns
- * @param {string[]} summary
- * @param {string[]} examples
- */
-function innerRenderXmlNode(node, lastNode, summary, examples, maxColumns) {
-  /** @param {string[]} a */
-  const newLine = (a) => {
-    if (a[a.length - 1] !== '')
-      a.push('');
-  };
-
-  let escapedText = node.text;
-  // resolve links (within [])
-
-  if (node.type === 'text') {
-    // clear up the list, if there was one
-    if (lastNode && lastNode.type === 'li') {
-      summary.push('</list>');
-    }
-
-    summary.push(...wrapText(escapedText, maxColumns));
-
-    return node;
-  }
-
-  if (node.type === 'li') {
-    if (escapedText.startsWith('extends: ')) {
-      summary.push(...wrapText(`<seealso cref="${escapedText.substring(9)}"/>`, maxColumns));
-      return undefined;
-    }
-
-    // if the previous node was not li, start list
-    if (lastNode && lastNode.type !== 'li') {
-      summary.push(`<list>`);
-    }
-
-    summary.push(...wrapText(`<item><description>${escapedText}</description></item>`, maxColumns));
-  }
-
-  // TODO: this should really move to the examples array
-  if (node.type == 'code' && node.codeLang == "csharp") {
-    summary.push('<![CDATA[');
-    summary.push(...node.lines);
-    summary.push(']]>');
-  }
-
-  return node;
-}
-
-/**
- * @param {string} text
- * @param {number=} maxColumns
- * @param {string=} prefix
- */
-function wrapText(text, maxColumns = 0, prefix = '') {
-  if (!maxColumns) {
-    return prefix + text;
-  }
-
-  // we'll apply some fixes, like rendering the links from markdown
-  // TODO: maybe we can move this to either markdown.js or documentation.js?
-  text = text.replace(/\[([^\[\]]*)\]\((.*?)\)/g, function (match, name, url) {
-    return `<a href="${url}">${name}</a>`;
+    fs.writeFileSync(`${path.join(typesDir, name)}.cs`, content);
   });
 
-  const lines = [];
+  // go over the additional types that we registered in the process
+  additionalTypes.forEach((type, name) => {
+    console.log(`Generating ${name}`);
 
-  let insideTag = false;
-  let escapeChar = false;
-  let insideLink = false;
-  let breakOnSpace = false;
-  let insideNode = false;
+    const out = [];
 
-  let line = "";
-  let currentWidth = 0;
+    out.push(`public partial class ${name}`);
+    out.push(`{`);
 
-  let prevChar = '';
-  for (let i = 0; i < text.length; i++) {
-    const char = text.charAt(i);
-    let skipThisChar = true;
 
-    if (['<', '['].includes(char)) {
-      // maybe we should break if a node starts, and we're almost at the end of the block
-      if (!insideNode && currentWidth >= maxColumns * 0.85) {
-        lines.push(line);
-        line = "";
-        currentWidth = 0;
-      }
-      insideNode = true;
-      insideTag = true;
-    } else if (['>', ']'].includes(char)) {
-      insideTag = false;
-      if (prevChar === '/') { // self-closing tag
-        insideNode = false;
-      }
-    } else if (char === '/' && prevChar === '<') { // closing node
-      insideNode = false;
-    } else if (char === '(' && prevChar === ']') {
-      insideLink = true;
-    } else if (char === ')' && insideLink) {
-      insideLink = false;
-    } else if (char === `\\`) {
-      escapeChar = true;
-    } else if (char === " " && breakOnSpace) {
-      breakOnSpace = false;
-      lines.push(line);
-      line = "";
-      currentWidth = 0;
-      continue;
-    } else {
-      skipThisChar = false;
-    }
+    const properties = type.name === 'Array' && type.templates ? generateProperties(type.templates[0]) : generateProperties(type);
+    out.push(...properties);
 
-    if (currentWidth == 0 && char === " ") {
-      continue;
-    }
+    out.push(`}`);
 
-    line += char;
-    currentWidth++;
+    let content = template.replace('[CONTENT]', out.join("\n\t"));
+    fs.writeFileSync(`${path.join(typesDir, name)}.cs`, content);
+  });
 
-    prevChar = char;
-    if (skipThisChar) {
-      continue;
-    }
+  enumTypes.forEach((values, enumName) => {
+    console.log(`Generating ${enumName}`);
 
-    if (currentWidth >= maxColumns
-      && !insideTag
-      && !escapeChar
-      && !insideLink
-      && !insideNode) {
-      breakOnSpace = true;
-    }
-  }
+    const out = [];
 
-  // make sure we push the last line, if it hasn't been pushed yet
-  if (line !== "") {
-    lines.push(line);
-  }
+    out.push(`public enum ${enumName}`);
+    out.push(`{`);
 
-  return lines;
+    values.forEach(val => {
+      out.push(`\t${val},`);
+    });
+
+    out.push(`}`);
+
+    let content = template.replace('[CONTENT]', out.join("\n\t"));
+    fs.writeFileSync(`${path.join(typesDir, enumName)}.cs`, content);
+  });
 }
 
 /**
@@ -258,7 +131,6 @@ function wrapText(text, maxColumns = 0, prefix = '') {
  * @param {string} name 
  * @param {Documentation.Member} member */
 function translateMemberName(memberKind, name, member) {
-
   // check if there's an alias in the docs, in which case
   // we return that, otherwise, we apply our dotnet magic to it
   if (member) {
@@ -275,6 +147,8 @@ function translateMemberName(memberKind, name, member) {
       return `${assumedName}Async`;
     case "event":
       return `On${assumedName}`;
+    case "enum":
+      return `${assumedName}`;
     default:
       return `${assumedName}`;
   }
@@ -282,14 +156,15 @@ function translateMemberName(memberKind, name, member) {
 
 /**
  *  @param {Documentation.Type} type 
+ *  @param {Documentation.Member} parent
  *  @returns {string}
  * */
-function translateType(type) {
+function translateType(type, parent) {
   if (type.union) {
     if (type.union[0].name === 'null') {
       // for dotnet, this is a nullable type
       // unless it's something like a string
-      const typeName = translateType(type.union[1]);
+      const typeName = translateType(type.union[1], parent);
 
       if (typeName === 'string'
         || typeName === 'int') {
@@ -297,7 +172,22 @@ function translateType(type) {
       }
 
       return `${typeName}?`;
+    } else {
+      return translateAndRegisterUnion(type, parent);
     }
+  } 
+
+  if (type.name === 'Array') {
+    return `${type.templates[0].name}[]`;
+  }
+
+  if (type.templates) {
+    if (type.templates.length == 2 && type.templates[0].name === "string" && type.templates[1].name === "string") {
+      return "IList<KeyValuePair<string, string>>";
+    }
+    console.log(`${parent.name}:`);
+    console.log(type.templates);
+    return "AAAARRRGH";
   }
 
   // apply some basic rules
@@ -305,12 +195,43 @@ function translateType(type) {
     return 'bool';
   }
 
-  if (type.name === 'Array') {
-    return `${type.templates[0].name}[]`;
-  }
-
   /** @param {string} */
   return type.name;
+}
+
+/**
+ * A union in dotnet world, when it's a mix of strings only, maps to an enum. Otherwise, 
+ * it most likely maps to a nullable object (Union of null and object).
+ * @param {Documentation.Type} parentType
+ * @param {Documentation.Member} parentMember
+ */
+function translateAndRegisterUnion(parentType, parentMember) {
+  let union = parentType.union;
+
+  // we have some predetermined unions that we can map to "smarter" objects
+  if (union.length == 2 && union[0].name === 'boolean' && union[1].name === '"mixed"') {
+    return "MixedState";
+  }
+
+  if (union.filter(x => x.name.startsWith('"')).length == union.length) { // this is an enum 
+    // check if there's an enum already registered with this name
+    let enumName = translateMemberName('enum', parentMember ? parentMember.name : `${parentType.name}`, null);
+    let potentialEnum = enumTypes.get(enumName);
+    if (!potentialEnum) {
+      enumTypes.set(enumName, union.map(x => x.name));
+    } else {
+      // we should double check the enum exists, and if it's not the same, we panic (merge?)
+      if (potentialEnum.join(',') !== [...union.map(u => u.name)].join(',')) {
+        throw "Enums have the same name, but not the same values.";
+      }
+    }
+
+    // return `Union<${union.map(x => x.name).join(", ")}>`;
+    return enumName;
+  }
+
+  //return `SomethingSpecial<${union.map(u => u.name).join(', ')}>`;
+  return null;
 }
 
 /**
@@ -318,12 +239,23 @@ function translateType(type) {
  *    @returns {string}
 */
 function generateReturnType(member) {
-  let innerReturnType = translateType(member.type);
+  let innerReturnType = translateType(member.type, member);
 
   if (innerReturnType && innerReturnType.startsWith('Object')) {
     // if the return type is an Object, we should generate a new one where the name is a combination of
     // the onwer class, method and Result, i.e. [Accessibility][Snapshot][Result].  
-    innerReturnType = innerReturnType.replace('Object', `${member.clazz.name}${translateMemberName('', member.name, null)}Result`);
+    const typeName = `${member.clazz.name}${translateMemberName('', member.name, null)}Result`;
+    innerReturnType = innerReturnType.replace('Object', typeName);
+    // we need to register
+    if (member.type.name === 'union') {
+      if (member.type.union[0].name === 'null') {
+        additionalTypes.set(typeName, member.type.union[1]);
+      } else {
+        console.log(`Not sure what to do here. Investigate: ${typeName} with ${member.type.union[0].name}`);
+      }
+    } else {
+      additionalTypes.set(typeName, member.type);
+    }
   }
 
   return innerReturnType;
@@ -347,20 +279,19 @@ function generateMembers(member) {
       returnType = `Task<${generateReturnType(method)}>`;
     }
 
-    out.push(...renderXmlDoc(method.spec, maxDocumentationColumnWidth));
+    out.push(...XmlDoc.renderXmlDoc(method.spec, maxDocumentationColumnWidth));
 
     method.argsArray.forEach(arg => {
       if (arg.type.name !== "options") {
         if (arg.type.properties) {
           arg.type.properties.forEach(opt => {
-            out.push(`// ---- ${opt.alias || opt.type.name} ${opt.name}`);
+            let paramType = translateType(opt.type, opt);
+            out.push(`// ---- ${paramType} ${opt.name}`);
           });
         }
       } else {
         out.push(`// ${arg.alias || arg.type.name} ${arg.name}`);
       }
-      // console.log(arg);
-      // console.log(arg.spec);
     });
 
     out.push(`${returnType} ${name}();`);
@@ -370,11 +301,42 @@ function generateMembers(member) {
   /**** EVENTS  ****/
   member.eventsArray.forEach(event => {
 
-    out.push(...renderXmlDoc(event.spec, maxDocumentationColumnWidth));
+    out.push(...XmlDoc.renderXmlDoc(event.spec, maxDocumentationColumnWidth));
 
     let eventType = event.type.name !== 'void' ? `EventHandler<${event.type.name}>` : `EventHandler`;
     out.push(`public event ${eventType} ${translateMemberName(event.kind, event.name, event)};`);
     out.push(''); // we want an empty line in between
+  });
+
+  return out.map(e => `\t${e}`);
+}
+
+/** @param {Documentation.Type} type */
+function generateProperties(type) {
+  const out = [];
+
+  if (!type.properties) {
+    return out;
+  }
+
+  type.properties.forEach(property => {
+    if (out.length > 0) {
+      out.push(``);
+    }
+
+    const name = translateMemberName('property', property.name, null);
+
+    const docs = XmlDoc.renderXmlDoc(property.spec, maxDocumentationColumnWidth);
+    if (property.type.union && property.type.union[0].name !== "null" && !property.type.union[1].name.startsWith('"')) {
+      // we need to actually split this into multiple properties
+      property.type.union.forEach(unionType => {
+        out.push(...docs);
+        out.push(`public ${translateType(unionType, property)} ${name}As${translateMemberName('union', unionType.name, null)} { get; set; }`)
+      });
+    } else {
+      out.push(...docs);
+      out.push(`public ${translateType(property.type, property)} ${name} { get; set; }`)
+    }
   });
 
   return out.map(e => `\t${e}`);
