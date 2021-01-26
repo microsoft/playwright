@@ -39,9 +39,8 @@ export const Timeline: React.FunctionComponent<{
   selectedAction: ActionEntry | undefined,
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
-  onHighlighted: (action: ActionEntry | undefined) => void,
   onTimeSelected: (time: number) => void,
-}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onHighlighted, onTimeSelected }) => {
+}> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onTimeSelected }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
   const [hoveredBar, setHoveredBar] = React.useState<TimelineBar | undefined>();
@@ -140,13 +139,13 @@ export const Timeline: React.FunctionComponent<{
     if (ref.current) {
       const x = event.clientX - ref.current.getBoundingClientRect().left;
       setPreviewX(x);
-      const bar = findHoveredBar(x);
-      setHoveredBar(bar);
-      onHighlighted(bar && bar.entry ? bar.entry : undefined);
+      onTimeSelected(positionToTime(measure.width, boundaries, x));
+      setHoveredBar(findHoveredBar(x));
     }
   };
   const onMouseLeave = () => {
     setPreviewX(undefined);
+    // onTimeSelected(undefined);
   };
   const onActionClick = (event: React.MouseEvent) => {
     if (ref.current) {
@@ -242,4 +241,3 @@ function timeToPosition(clientWidth: number, boundaries: Boundaries, time: numbe
 function positionToTime(clientWidth: number, boundaries: Boundaries, x: number): number {
   return x / clientWidth * (boundaries.maximum - boundaries.minimum) + boundaries.minimum;
 }
-

@@ -75,6 +75,7 @@ const SnapshotTab: React.FunctionComponent<{
   boundaries: Boundaries,
 }> = ({ actionEntry, snapshotSize, selectedTime, boundaries }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
+  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
 
   let snapshots: { name: string, snapshotId?: string, snapshotTime?: number }[] = [];
   snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
@@ -82,29 +83,24 @@ const SnapshotTab: React.FunctionComponent<{
     snapshots.unshift({ name: 'before', snapshotTime: actionEntry ? actionEntry.action.startTime : 0 });
   if (snapshots[snapshots.length - 1].name !== 'after')
     snapshots.push({ name: 'after', snapshotTime: actionEntry ? actionEntry.action.endTime : 0 });
-  if (selectedTime)
-    snapshots = [{ name: msToString(selectedTime - boundaries.minimum), snapshotTime: selectedTime }];
-
-  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
-  React.useEffect(() => {
-    setSnapshotIndex(0);
-  }, [selectedTime]);
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
-    if (iframeRef.current && !actionEntry)
-      iframeRef.current.src = 'about:blank';
-  }, [actionEntry, iframeRef]);
-
-  React.useEffect(() => {
-    if (actionEntry && snapshots[snapshotIndex])
+    if (!actionEntry)
+      return;
+    if (selectedTime)
+      (window as any).renderSnapshot({ action: actionEntry.action, snapshot: { snapshotTime: selectedTime } });
+    else
       (window as any).renderSnapshot({ action: actionEntry.action, snapshot: snapshots[snapshotIndex] });
   }, [actionEntry, snapshotIndex, selectedTime]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   return <div className='snapshot-tab'>
     <div className='snapshot-controls'>{
-      snapshots.map((snapshot, index) => {
+      selectedTime && <div key='selectedTime' className='snapshot-toggle'>
+        {msToString(selectedTime - boundaries.minimum)}
+      </div>
+    }{!selectedTime && snapshots.map((snapshot, index) => {
         return <div
           key={snapshot.name}
           className={'snapshot-toggle' + (snapshotIndex === index ? ' toggled' : '')}

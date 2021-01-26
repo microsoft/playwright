@@ -238,7 +238,6 @@ export class SnapshotServer {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/javascript');
-    console.log(`sw size: ${JSON.stringify(this._traceModel).length}`);
     response.end(`(${serviceWorkerMain.toString()})(self)`);
   }
 

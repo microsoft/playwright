@@ -106,7 +106,8 @@ class TraceViewer {
       try {
         await snapshotPage.goto(server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime));
       } catch (e) {
-        console.log(e); // eslint-disable-line no-console
+        if (!e.message.includes('Navigation interrupted by another one'))
+          console.log(e); // eslint-disable-line no-console
       }
     });
     await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
