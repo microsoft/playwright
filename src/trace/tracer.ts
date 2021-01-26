@@ -20,7 +20,7 @@ import * as trace from './traceTypes';
 import * as path from 'path';
 import * as util from 'util';
 import * as fs from 'fs';
-import { calculateSha1, createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../utils/utils';
+import { createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../utils/utils';
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';
 import { helper, RegisteredListener } from '../server/helper';
@@ -117,6 +117,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       contextId: this._contextId,
       pageId: resource.pageId,
       frameId: resource.frameId,
+      resourceId: 'resource@' + createGuid(),
       url: resource.url,
       contentType: resource.contentType,
       responseHeaders: resource.responseHeaders,
@@ -129,18 +130,15 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     this._appendTraceEvent(event);
   }
 
-  onFrameSnapshot(frame: Frame, snapshot: trace.FrameSnapshot, snapshotId?: string): void {
-    const buffer = Buffer.from(JSON.stringify(snapshot));
-    const sha1 = calculateSha1(buffer);
-    this._writeArtifact(sha1, buffer);
+  onFrameSnapshot(frame: Frame, frameUrl: string, snapshot: trace.FrameSnapshot, snapshotId?: string): void {
     const event: trace.FrameSnapshotTraceEvent = {
       timestamp: monotonicTime(),
       type: 'snapshot',
       contextId: this._contextId,
       pageId: this.pageId(frame._page),
       frameId: frame._page.mainFrame() === frame ? '' : frame._id,
-      sha1,
-      frameUrl: snapshot.url,
+      snapshot: snapshot,
+      frameUrl,
       snapshotId,
     };
     this._appendTraceEvent(event);

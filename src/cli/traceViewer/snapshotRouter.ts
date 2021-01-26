@@ -42,7 +42,7 @@ export class SnapshotRouter {
       return 'data:text/html,Snapshot is not available';
 
     const lastSnapshotEvent = new Map<string, trace.FrameSnapshotTraceEvent>();
-    for (const [frameId, snapshots] of pageEntry.snapshotsByFrameId) {
+    for (const [frameId, snapshots] of Object.entries(pageEntry.snapshotsByFrameId)) {
       for (const snapshot of snapshots) {
         const current = lastSnapshotEvent.get(frameId);
         // Prefer snapshot with exact id.
@@ -56,17 +56,8 @@ export class SnapshotRouter {
     }
 
     this._snapshotFrameIdToSnapshot.clear();
-    for (const [frameId, event] of lastSnapshotEvent) {
-      const buffer = await this._readSha1(event.sha1);
-      if (!buffer)
-        continue;
-      try {
-        const snapshot = JSON.parse(buffer.toString('utf8')) as trace.FrameSnapshot;
-        // Request url could come lower case, so we always normalize to lower case.
-        this._snapshotFrameIdToSnapshot.set(frameId.toLowerCase(), snapshot);
-      } catch (e) {
-      }
-    }
+    for (const [frameId, event] of lastSnapshotEvent)
+      this._snapshotFrameIdToSnapshot.set(frameId.toLowerCase(), event.snapshot);
 
     if (!lastSnapshotEvent.get(''))
       return 'data:text/html,Snapshot is not available';

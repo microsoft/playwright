@@ -225,14 +225,10 @@ export function frameSnapshotStreamer() {
             if (name === 'src' && (nodeName === 'IFRAME' || nodeName === 'FRAME')) {
               // TODO: handle srcdoc?
               const frameId = element.getAttribute(kSnapshotFrameIdAttribute);
-              if (frameId) {
-                let protocol = win.location.protocol;
-                if (!protocol.startsWith('http'))
-                  protocol = 'http:';
-                value = protocol + '//' + frameId + '/';
-              } else {
+              if (frameId)
+                value = './' + frameId;
+              else
                 value = 'data:text/html,<body>Snapshot is not available</body>';
-              }
             } else if (name === 'src' && (nodeName === 'IMG')) {
               value = this._sanitizeUrl(value);
             } else if (name === 'srcset' && (nodeName === 'IMG')) {

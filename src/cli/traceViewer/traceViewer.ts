@@ -22,6 +22,7 @@ import { ScreenshotGenerator } from './screenshotGenerator';
 import { SnapshotRouter } from './snapshotRouter';
 import { readTraceFile, TraceModel } from './traceModel';
 import type { ActionTraceEvent, TraceEvent } from '../../trace/traceTypes';
+import { SnapshotServer } from './snapshotServer';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 
@@ -103,31 +104,14 @@ class TraceViewer {
       if (!this._document)
         return;
       try {
-        const contextEntry = this._document.model.contexts.find(entry => entry.created.contextId === action.contextId)!;
-        const pageEntry = contextEntry.pages.find(entry => entry.created.pageId === action.pageId)!;
-        const pageUrl = await this._document.snapshotRouter.selectSnapshot(contextEntry, pageEntry, snapshot.snapshotId, snapshot.snapshotTime);
-
-        // TODO: fix Playwright bug where frame.name is lost (empty).
-        const snapshotFrame = uiPage.frames()[1];
-        try {
-          await snapshotFrame.goto(pageUrl);
-        } catch (e) {
-          if (!e.message.includes('frame was detached'))
-            console.error(e);
-          return;
-        }
-        const element = await snapshotFrame.$(action.selector || '*[__playwright_target__]').catch(e => undefined);
-        if (element) {
-          await element.evaluate(e => {
-            e.style.backgroundColor = '#ff69b460';
-          });
-        }
+        await snapshotPage.goto(server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime));
       } catch (e) {
         console.log(e); // eslint-disable-line no-console
       }
     });
     await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
     await uiPage.route('**/*', (route, request) => {
+      debugger;
       if (request.frame().parentFrame() && this._document) {
         this._document.snapshotRouter.route(route);
         return;
@@ -158,6 +142,12 @@ class TraceViewer {
         });
       }
     });
+
+    const snapshotPage = await browser.newPage({ viewport: null });
+    const server = await SnapshotServer.create(this._document!.resourcesDir, this._document!.model);
+    await snapshotPage.goto(server.initialUrl());
+    await snapshotPage.evaluate(() => (window as any).readyPromise);
+
     await uiPage.goto('http://trace-viewer/index.html');
   }
 }
