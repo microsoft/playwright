@@ -77,6 +77,7 @@ with sync_playwright() as playwright:
 ## async method: Frame.$
 * langs:
   - alias-python: query_selector
+  - alias-java: querySelector
 - returns: <[null]|[ElementHandle]>
 
 Returns the ElementHandle pointing to the frame element.
@@ -90,6 +91,7 @@ returns `null`.
 ## async method: Frame.$$
 * langs:
   - alias-python: query_selector_all
+  - alias-java: querySelectorAll
 - returns: <[Array]<[ElementHandle]>>
 
 Returns the ElementHandles pointing to the frame elements.
@@ -103,6 +105,7 @@ returns empty array.
 ## async method: Frame.$eval
 * langs:
   - alias-python: eval_on_selector
+  - alias-java: evalOnSelector
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -137,7 +140,9 @@ html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + s
 ### param: Frame.$eval.selector = %%-query-selector-%%
 
 ### param: Frame.$eval.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]\([Element]\)>
 
 Function to be evaluated in browser context
@@ -150,6 +155,7 @@ Optional argument to pass to [`param: pageFunction`]
 ## async method: Frame.$$eval
 * langs:
   - alias-python: eval_on_selector_all
+  - alias-java: evalOnSelectorAll
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -178,7 +184,9 @@ divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= m
 ### param: Frame.$$eval.selector = %%-query-selector-%%
 
 ### param: Frame.$$eval.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]\([Array]<[Element]>\)>
 
 Function to be evaluated in browser context
@@ -478,7 +486,9 @@ body_handle.dispose()
 ```
 
 ### param: Frame.evaluate.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in browser context
@@ -552,7 +562,9 @@ result_handle.dispose()
 ```
 
 ### param: Frame.evaluateHandle.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in the page context
@@ -634,6 +646,8 @@ Attribute name to get the value for.
 ### option: Frame.getAttribute.timeout = %%-input-timeout-%%
 
 ## async method: Frame.goto
+* langs:
+  - alias-java: navigate
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -1090,7 +1104,9 @@ frame.wait_for_function("selector => !!document.querySelector(selector)", select
 ```
 
 ### param: Frame.waitForFunction.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in browser context

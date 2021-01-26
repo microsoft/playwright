@@ -311,6 +311,7 @@ page.
 
 ## async method: Page.$
 * langs:
+  - alias-java: querySelector
   - alias-python: query_selector
 - returns: <[null]|[ElementHandle]>
 
@@ -323,6 +324,7 @@ Shortcut for main frame's [`method: Frame.$`].
 
 ## async method: Page.$$
 * langs:
+  - alias-java: querySelectorAll
   - alias-python: query_selector_all
 - returns: <[Array]<[ElementHandle]>>
 
@@ -335,6 +337,7 @@ Shortcut for main frame's [`method: Frame.$$`].
 
 ## async method: Page.$eval
 * langs:
+  - alias-java: evalOnSelector
   - alias-python: eval_on_selector
 - returns: <[Serializable]>
 
@@ -370,7 +373,9 @@ Shortcut for main frame's [`method: Frame.$eval`].
 ### param: Page.$eval.selector = %%-query-selector-%%
 
 ### param: Page.$eval.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]\([Element]\)>
 
 Function to be evaluated in browser context
@@ -382,6 +387,7 @@ Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Page.$$eval
 * langs:
+  - alias-java: evalOnSelectorAll
   - alias-python: eval_on_selector_all
 - returns: <[Serializable]>
 
@@ -408,7 +414,9 @@ div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min
 ### param: Page.$$eval.selector = %%-query-selector-%%
 
 ### param: Page.$$eval.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]\([Array]<[Element]>\)>
 
 Function to be evaluated in browser context
@@ -819,7 +827,7 @@ page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
 ### param: Page.emulateMedia.params
-* langs: js
+* langs: js,java
 - `params` <[Object]>
   - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are
     `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing
@@ -902,7 +910,9 @@ body_handle.dispose()
 Shortcut for main frame's [`method: Frame.evaluate`].
 
 ### param: Page.evaluate.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in the page context
@@ -976,7 +986,9 @@ result_handle.dispose()
 ```
 
 ### param: Page.evaluateHandle.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in the page context
@@ -1298,7 +1310,7 @@ frame = page.frame(url=r".*domain.*")
 ```
 
 ### param: Page.frame.frameSelector
-* langs: js
+* langs: js,java
 - `frameSelector` <[string]|[Object]>
   - `name` <[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
   - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
@@ -1350,6 +1362,8 @@ Navigate to the next page in history.
 ### option: Page.goForward.waitUntil = %%-navigation-wait-until-%%
 
 ## async method: Page.goto
+* langs:
+  - alias-java: navigate
 - returns: <[null]|[Response]>
 
 Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of the
@@ -2168,7 +2182,7 @@ Video object associated with this page.
   - `height` <[int]> page height in pixels.
 
 ## async method: Page.waitForEvent
-* langs:
+* langs: js,python
   - alias-python: expect_event
 - returns: <[any]>
 
@@ -2278,7 +2292,9 @@ page.wait_for_function("selector => !!document.querySelector(selector)", selecto
 Shortcut for main frame's [`method: Frame.waitForFunction`].
 
 ### param: Page.waitForFunction.pageFunction
-* langs: js
+* langs:
+  - alias-java: expression
+  - alias-python: expression
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in browser context
