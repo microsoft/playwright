@@ -68,8 +68,8 @@ function runBuild() {
 const webPackFiles = [
   'src/server/injected/injectedScript.webpack.config.js',
   'src/server/injected/utilityScript.webpack.config.js',
-  'src/debug/injected/consoleApi.webpack.config.js',
-  'src/cli/injected/recorder.webpack.config.js',
+  'src/server/supplements/injected/consoleApi.webpack.config.js',
+  'src/server/supplements/injected/recorder.webpack.config.js',
   'src/cli/traceViewer/web/web.webpack.config.js',
 ];
 for (const file of webPackFiles) {

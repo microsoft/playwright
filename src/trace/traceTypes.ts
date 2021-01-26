@@ -80,12 +80,9 @@ export type ActionTraceEvent = {
   startTime: number,
   endTime: number,
   logs?: string[],
-  snapshot?: {
-    sha1: string,
-    duration: number,
-  },
   stack?: string,
   error?: string,
+  snapshots?: { name: string, snapshotId: string }[],
 };
 
 export type DialogOpenedEvent = {
@@ -121,6 +118,17 @@ export type LoadEvent = {
   pageId: string,
 };
 
+export type FrameSnapshotTraceEvent = {
+  timestamp: number,
+  type: 'snapshot',
+  contextId: string,
+  pageId: string,
+  frameId: string,  // Empty means main frame.
+  sha1: string,
+  frameUrl: string,
+  snapshotId?: string,
+};
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ContextDestroyedTraceEvent |
@@ -132,18 +140,13 @@ export type TraceEvent =
     DialogOpenedEvent |
     DialogClosedEvent |
     NavigationEvent |
-    LoadEvent;
+    LoadEvent |
+    FrameSnapshotTraceEvent;
 
 
 export type FrameSnapshot = {
-  frameId: string,
-  url: string,
   html: string,
   resourceOverrides: { url: string, sha1: string }[],
-};
-
-export type PageSnapshot = {
-  viewportSize?: { width: number, height: number },
-  // First frame is the main frame.
-  frames: FrameSnapshot[],
+  viewport: { width: number, height: number },
+  url: string,
 };

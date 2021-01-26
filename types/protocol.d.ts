@@ -9164,6 +9164,14 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
     export type setShowHitTestBordersReturnValue = {
     }
     /**
+     * Request that backend shows an overlay with web vital metrics.
+     */
+    export type setShowWebVitalsParameters = {
+      show: boolean;
+    }
+    export type setShowWebVitalsReturnValue = {
+    }
+    /**
      * Paints viewport size upon main frame resize.
      */
     export type setShowViewportSizeOnResizeParameters = {
@@ -11373,6 +11381,14 @@ For cached script it is the last time the cache entry was validated.
        */
       usage: number;
     }
+    /**
+     * Pair of issuer origin and number of available (signed, but not used) Trust
+Tokens from that issuer.
+     */
+    export interface TrustTokens {
+      issuerOrigin: string;
+      count: number;
+    }
     
     /**
      * A cache's contents have been modified.
@@ -11570,6 +11586,15 @@ disabled (called without a quotaSize).
       origin: string;
     }
     export type untrackIndexedDBForOriginReturnValue = {
+    }
+    /**
+     * Returns the number of stored Trust Tokens per issuer for the
+current browsing context.
+     */
+    export type getTrustTokensParameters = {
+    }
+    export type getTrustTokensReturnValue = {
+      tokens: TrustTokens[];
     }
   }
   
@@ -16216,6 +16241,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsParameters;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsParameters;
     "Overlay.setShowHitTestBorders": Overlay.setShowHitTestBordersParameters;
+    "Overlay.setShowWebVitals": Overlay.setShowWebVitalsParameters;
     "Overlay.setShowViewportSizeOnResize": Overlay.setShowViewportSizeOnResizeParameters;
     "Overlay.setShowHinge": Overlay.setShowHingeParameters;
     "Page.addScriptToEvaluateOnLoad": Page.addScriptToEvaluateOnLoadParameters;
@@ -16305,6 +16331,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.trackIndexedDBForOrigin": Storage.trackIndexedDBForOriginParameters;
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginParameters;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginParameters;
+    "Storage.getTrustTokens": Storage.getTrustTokensParameters;
     "SystemInfo.getInfo": SystemInfo.getInfoParameters;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoParameters;
     "Target.activateTarget": Target.activateTargetParameters;
@@ -16721,6 +16748,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Overlay.setShowLayoutShiftRegions": Overlay.setShowLayoutShiftRegionsReturnValue;
     "Overlay.setShowScrollBottleneckRects": Overlay.setShowScrollBottleneckRectsReturnValue;
     "Overlay.setShowHitTestBorders": Overlay.setShowHitTestBordersReturnValue;
+    "Overlay.setShowWebVitals": Overlay.setShowWebVitalsReturnValue;
     "Overlay.setShowViewportSizeOnResize": Overlay.setShowViewportSizeOnResizeReturnValue;
     "Overlay.setShowHinge": Overlay.setShowHingeReturnValue;
     "Page.addScriptToEvaluateOnLoad": Page.addScriptToEvaluateOnLoadReturnValue;
@@ -16810,6 +16838,7 @@ unsubscribes current runtime agent from Runtime.bindingCalled notifications.
     "Storage.trackIndexedDBForOrigin": Storage.trackIndexedDBForOriginReturnValue;
     "Storage.untrackCacheStorageForOrigin": Storage.untrackCacheStorageForOriginReturnValue;
     "Storage.untrackIndexedDBForOrigin": Storage.untrackIndexedDBForOriginReturnValue;
+    "Storage.getTrustTokens": Storage.getTrustTokensReturnValue;
     "SystemInfo.getInfo": SystemInfo.getInfoReturnValue;
     "SystemInfo.getProcessInfo": SystemInfo.getProcessInfoReturnValue;
     "Target.activateTarget": Target.activateTargetReturnValue;

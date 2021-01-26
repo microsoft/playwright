@@ -18,7 +18,6 @@
 import * as js from '../javascript';
 import { FFSession } from './ffConnection';
 import { Protocol } from './protocol';
-import * as sourceMap from '../../utils/sourceMap';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
 
@@ -33,7 +32,7 @@ export class FFExecutionContext implements js.ExecutionContextDelegate {
 
   async rawEvaluate(expression: string): Promise<string> {
     const payload = await this._session.send('Runtime.evaluate', {
-      expression: sourceMap.ensureSourceUrl(expression),
+      expression,
       returnByValue: false,
       executionContextId: this._executionContextId,
     }).catch(rewriteError);

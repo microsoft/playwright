@@ -46,6 +46,7 @@ export type PageEntry = {
   actions: ActionEntry[];
   interestingEvents: InterestingPageEvent[];
   resources: trace.NetworkResourceTraceEvent[];
+  snapshotsByFrameId: Map<string, trace.FrameSnapshotTraceEvent[]>;
 }
 
 export type ActionEntry = {
@@ -93,6 +94,7 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
           actions: [],
           resources: [],
           interestingEvents: [],
+          snapshotsByFrameId: new Map(),
         };
         pageEntries.set(event.pageId, pageEntry);
         contextEntries.get(event.contextId)!.pages.push(pageEntry);
@@ -142,6 +144,13 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
       case 'load': {
         const pageEntry = pageEntries.get(event.pageId)!;
         pageEntry.interestingEvents.push(event);
+        break;
+      }
+      case 'snapshot': {
+        const pageEntry = pageEntries.get(event.pageId!)!;
+        if (!pageEntry.snapshotsByFrameId.has(event.frameId))
+          pageEntry.snapshotsByFrameId.set(event.frameId, []);
+        pageEntry.snapshotsByFrameId.get(event.frameId)!.push(event);
         break;
       }
     }

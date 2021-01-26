@@ -16,27 +16,46 @@
 
 import * as fs from 'fs';
 import * as querystring from 'querystring';
-import { Writable } from 'stream';
-import * as hljs from '../../third_party/highlightjs/highlightjs';
-import { CodeGeneratorOutput } from './codeGenerator';
+import * as hljs from '../../../third_party/highlightjs/highlightjs';
 
-export class OutputMultiplexer implements CodeGeneratorOutput {
-  private _outputs: CodeGeneratorOutput[]
-  constructor(outputs: CodeGeneratorOutput[]) {
+export interface RecorderOutput {
+  printLn(text: string): void;
+  popLn(text: string): void;
+  flush(): void;
+}
+
+export interface Writable {
+  write(data: string): void;
+}
+
+export class OutputMultiplexer implements RecorderOutput {
+  private _outputs: RecorderOutput[]
+  private _enabled = true;
+  constructor(outputs: RecorderOutput[]) {
     this._outputs = outputs;
   }
 
+  setEnabled(enabled: boolean) {
+    this._enabled = enabled;
+  }
+
   printLn(text: string) {
+    if (!this._enabled)
+      return;
     for (const output of this._outputs)
       output.printLn(text);
   }
 
   popLn(text: string) {
+    if (!this._enabled)
+      return;
     for (const output of this._outputs)
       output.popLn(text);
   }
 
   flush() {
+    if (!this._enabled)
+      return;
     for (const output of this._outputs)
       output.flush();
   }
@@ -58,12 +77,13 @@ export class BufferOutput {
   }
 }
 
-export class FileOutput extends BufferOutput implements CodeGeneratorOutput {
+export class FileOutput extends BufferOutput implements RecorderOutput {
   private _fileName: string;
 
   constructor(fileName: string) {
     super();
     this._fileName = fileName;
+    process.on('exit', () => this.flush());
   }
 
   flush() {
@@ -71,8 +91,8 @@ export class FileOutput extends BufferOutput implements CodeGeneratorOutput {
   }
 }
 
-export class TerminalOutput implements CodeGeneratorOutput {
-  private _output: Writable
+export class TerminalOutput implements RecorderOutput {
+  private _output: Writable;
   private _language: string;
 
   static create(output: Writable, language: string) {
@@ -127,7 +147,7 @@ export class TerminalOutput implements CodeGeneratorOutput {
   flush() {}
 }
 
-export class FlushingTerminalOutput extends BufferOutput implements CodeGeneratorOutput {
+export class FlushingTerminalOutput extends BufferOutput implements RecorderOutput {
   private _output: Writable
 
   constructor(output: Writable) {

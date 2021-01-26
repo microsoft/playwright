@@ -20,7 +20,7 @@ import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
-import { installDebugController } from './debug/debugController';
+import { installInspectorController } from './server/supplements/inspectorController';
 import { installTracer } from './trace/tracer';
 import { installHarTracer } from './trace/harTracer';
 import * as path from 'path';
@@ -28,7 +28,7 @@ import * as path from 'path';
 function setupInProcess(): PlaywrightAPI {
   const playwright = new PlaywrightImpl(path.join(__dirname, '..'), require('../browsers.json')['browsers']);
 
-  installDebugController();
+  installInspectorController();
   installTracer();
   installHarTracer();
 

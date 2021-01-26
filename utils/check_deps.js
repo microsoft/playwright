@@ -125,6 +125,8 @@ DEPS['src/server/'] = [
   // Can depend on any files in these subdirectories.
   'src/server/common/**',
   'src/server/injected/**',
+  'src/server/supplements/**',
+  'src/protocol/**',
 ];
 
 // No dependencies for code shared between node and page.
@@ -142,11 +144,8 @@ DEPS['src/cli/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerIm
 // Tracing is a client/server plugin, nothing should depend on it.
 DEPS['src/trace/'] = ['src/utils/', 'src/client/**', 'src/server/**'];
 
-// Debug is a server plugin, nothing should depend on it.
-DEPS['src/debug/'] = ['src/utils/', 'src/generated/', 'src/server/**', 'src/debug/**'];
-
 // The service is a cross-cutting feature, and so it depends on a bunch of things.
-DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/electron/', 'src/trace/'];
+DEPS['src/remote/'] = ['src/client/', 'src/debug/', 'src/dispatchers/', 'src/server/', 'src/server/supplements/', 'src/server/electron/', 'src/trace/'];
 DEPS['src/service.ts'] = ['src/remote/'];
 
 // CLI should only use client-side features.

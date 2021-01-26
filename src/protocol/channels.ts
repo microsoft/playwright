@@ -533,6 +533,8 @@ export interface BrowserContextChannel extends Channel {
   on(event: 'close', callback: (params: BrowserContextCloseEvent) => void): this;
   on(event: 'page', callback: (params: BrowserContextPageEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
+  on(event: 'stdout', callback: (params: BrowserContextStdoutEvent) => void): this;
+  on(event: 'stderr', callback: (params: BrowserContextStderrEvent) => void): this;
   on(event: 'crBackgroundPage', callback: (params: BrowserContextCrBackgroundPageEvent) => void): this;
   on(event: 'crServiceWorker', callback: (params: BrowserContextCrServiceWorkerEvent) => void): this;
   addCookies(params: BrowserContextAddCookiesParams, metadata?: Metadata): Promise<BrowserContextAddCookiesResult>;
@@ -552,7 +554,9 @@ export interface BrowserContextChannel extends Channel {
   setNetworkInterceptionEnabled(params: BrowserContextSetNetworkInterceptionEnabledParams, metadata?: Metadata): Promise<BrowserContextSetNetworkInterceptionEnabledResult>;
   setOffline(params: BrowserContextSetOfflineParams, metadata?: Metadata): Promise<BrowserContextSetOfflineResult>;
   storageState(params?: BrowserContextStorageStateParams, metadata?: Metadata): Promise<BrowserContextStorageStateResult>;
-  extendInjectedScript(params: BrowserContextExtendInjectedScriptParams, metadata?: Metadata): Promise<BrowserContextExtendInjectedScriptResult>;
+  consoleSupplementExpose(params?: BrowserContextConsoleSupplementExposeParams, metadata?: Metadata): Promise<BrowserContextConsoleSupplementExposeResult>;
+  pause(params?: BrowserContextPauseParams, metadata?: Metadata): Promise<BrowserContextPauseResult>;
+  recorderSupplementEnable(params: BrowserContextRecorderSupplementEnableParams, metadata?: Metadata): Promise<BrowserContextRecorderSupplementEnableResult>;
   crNewCDPSession(params: BrowserContextCrNewCDPSessionParams, metadata?: Metadata): Promise<BrowserContextCrNewCDPSessionResult>;
 }
 export type BrowserContextBindingCallEvent = {
@@ -565,6 +569,12 @@ export type BrowserContextPageEvent = {
 export type BrowserContextRouteEvent = {
   route: RouteChannel,
   request: RequestChannel,
+};
+export type BrowserContextStdoutEvent = {
+  data: Binary,
+};
+export type BrowserContextStderrEvent = {
+  data: Binary,
 };
 export type BrowserContextCrBackgroundPageEvent = {
   page: PageChannel,
@@ -694,14 +704,30 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
-export type BrowserContextExtendInjectedScriptParams = {
-  source: string,
-  arg: SerializedArgument,
+export type BrowserContextConsoleSupplementExposeParams = {};
+export type BrowserContextConsoleSupplementExposeOptions = {};
+export type BrowserContextConsoleSupplementExposeResult = void;
+export type BrowserContextPauseParams = {};
+export type BrowserContextPauseOptions = {};
+export type BrowserContextPauseResult = void;
+export type BrowserContextRecorderSupplementEnableParams = {
+  language: string,
+  launchOptions?: any,
+  contextOptions?: any,
+  device?: string,
+  saveStorage?: string,
+  terminal?: boolean,
+  outputFile?: string,
 };
-export type BrowserContextExtendInjectedScriptOptions = {
-
+export type BrowserContextRecorderSupplementEnableOptions = {
+  launchOptions?: any,
+  contextOptions?: any,
+  device?: string,
+  saveStorage?: string,
+  terminal?: boolean,
+  outputFile?: string,
 };
-export type BrowserContextExtendInjectedScriptResult = void;
+export type BrowserContextRecorderSupplementEnableResult = void;
 export type BrowserContextCrNewCDPSessionParams = {
   page: PageChannel,
 };
@@ -770,7 +796,6 @@ export interface PageChannel extends Channel {
   mouseClick(params: PageMouseClickParams, metadata?: Metadata): Promise<PageMouseClickResult>;
   touchscreenTap(params: PageTouchscreenTapParams, metadata?: Metadata): Promise<PageTouchscreenTapResult>;
   accessibilitySnapshot(params: PageAccessibilitySnapshotParams, metadata?: Metadata): Promise<PageAccessibilitySnapshotResult>;
-  pause(params?: PagePauseParams, metadata?: Metadata): Promise<PagePauseResult>;
   pdf(params: PagePdfParams, metadata?: Metadata): Promise<PagePdfResult>;
   crStartJSCoverage(params: PageCrStartJSCoverageParams, metadata?: Metadata): Promise<PageCrStartJSCoverageResult>;
   crStopJSCoverage(params?: PageCrStopJSCoverageParams, metadata?: Metadata): Promise<PageCrStopJSCoverageResult>;
@@ -1067,9 +1092,6 @@ export type PageAccessibilitySnapshotOptions = {
 export type PageAccessibilitySnapshotResult = {
   rootAXNode?: AXNode,
 };
-export type PagePauseParams = {};
-export type PagePauseOptions = {};
-export type PagePauseResult = void;
 export type PagePdfParams = {
   scale?: number,
   displayHeaderFooter?: boolean,

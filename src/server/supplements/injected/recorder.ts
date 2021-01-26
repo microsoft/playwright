@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-import type * as actions from '../codegen/recorderActions';
-import type InjectedScript from '../../server/injected/injectedScript';
-import { generateSelector } from '../../debug/injected/selectorGenerator';
+import type * as actions from '../recorder/recorderActions';
+import type InjectedScript from '../../injected/injectedScript';
+import { generateSelector } from './selectorGenerator';
 import { html } from './html';
 
 declare global {
   interface Window {
-    performPlaywrightAction: (action: actions.Action) => Promise<void>;
-    recordPlaywrightAction: (action: actions.Action) => Promise<void>;
-    commitLastAction: () => Promise<void>;
+    playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
+    playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
+    playwrightRecorderCommitAction: () => Promise<void>;
+    playwrightRecorderState: () => Promise<{ state: any, paused: boolean, app: 'codegen' | 'debug' | 'pause' }>;
+    playwrightRecorderSetState: (state: any) => Promise<void>;
+    playwrightRecorderResume: () => Promise<boolean>;
   }
 }
 
@@ -37,11 +40,19 @@ export class Recorder {
   private _innerGlassPaneElement: HTMLElement;
   private _highlightElements: HTMLElement[] = [];
   private _tooltipElement: HTMLElement;
-  private _listeners: RegisteredListener[] = [];
+  private _listeners: (() => void)[] = [];
   private _hoveredModel: HighlightModel | null = null;
   private _hoveredElement: HTMLElement | null = null;
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
+  private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
+  private _toolbarElement: HTMLElement;
+  private _inspectElement: HTMLElement;
+  private _recordElement: HTMLElement;
+  private _resumeElement: HTMLElement;
+  private _mode: 'inspecting' | 'recording' | 'none' = 'none';
+  private _app: 'codegen' | 'debug' | 'pause' = 'debug';
+  private _paused = false;
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
@@ -53,7 +64,7 @@ export class Recorder {
         right: 0;
         bottom: 0;
         left: 0;
-        z-index: 2147483647;
+        z-index: 2147483646;
         pointer-events: none;
         display: flex;
       ">
@@ -94,11 +105,111 @@ export class Recorder {
           position: absolute;
           top: 0;
         }
-    </style>
+      </style>
     `);
+
+    this._toolbarElement = html`
+      <x-pw-toolbar style="
+        position: fixed;
+        top: 100px;
+        left: 10px;
+        z-index: 2147483647;
+        background-color: #ffffffe6;
+        padding: 4px;
+        border-radius: 22px;
+        box-shadow: rgba(0, 0, 0, 0.1) 0px 0.25em 0.5em;
+        flex-direction: column;"
+      ></x-pw-toolbar>`;
+
+    this._inspectElement = html`
+      <x-pw-button tabIndex=0>
+        <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+      </x-pw-button>`;
+    this._recordElement = html`
+      <x-pw-button class="record" tabIndex=0>
+      <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M24 24H0V0h24v24z" fill="none"/><circle cx="12" cy="12" r="8"/></svg>
+      </x-pw-button>`;
+    this._resumeElement = html`
+      <x-pw-button tabIndex=0 class="playwright-resume hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M8 5v14l11-7z"/></svg>
+      </x-pw-button>`;
+
+    this._populateToolbar();
+    this._pollRecorderMode();
+
     setInterval(() => {
       this._refreshListenersIfNeeded();
-    }, 100);
+    }, 500);
+  }
+
+  private _populateToolbar() {
+    const toolbarShadow = this._toolbarElement.attachShadow({ mode: 'open' });
+    toolbarShadow.appendChild(html`
+      <style>
+        x-pw-button {
+          width: 36px;
+          height: 36px;
+          background-position: center;
+          background-repeat: no-repeat;
+          border-radius: 16px;
+          cursor: pointer;
+          outline: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-left: 2px;
+          fill: #333;
+        }
+        x-pw-button.logo {
+          cursor: inherit;
+          margin: 0;
+        }
+        x-pw-button.toggled {
+          fill: #468fd2;
+        }
+        x-pw-button:hover:not(.logo):not(.disabled) {
+          background-color: #f2f2f2;
+        }
+        x-pw-button.record.toggled {
+          fill: red;
+        }
+        x-pw-button.disabled {
+          fill: #777777 !important;
+          cursor: inherit;
+        }
+        x-pw-button.hidden {
+          display: none;
+        }
+        x-pw-button svg {
+          pointer-events: none;
+        }
+    </style>`);
+
+    const iconElement = html`<x-pw-button class="logo" tabIndex=0 style="background-size: 32px 32px;"></x-pw-button>`;
+    iconElement.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTM2IDIyMmMtMTIgMy0yMSAxMC0yNiAxNiA1LTUgMTItOSAyMi0xMiAxMC0yIDE4LTIgMjUtMXYtNmMtNiAwLTEzIDAtMjEgM3ptLTI3LTQ2bC00OCAxMiAzIDMgNDAtMTBzMCA3LTUgMTRjOS03IDEwLTE5IDEwLTE5em00MCAxMTJDODIgMzA2IDQ2IDIyOCAzNSAxODhhMjI3IDIyNyAwIDAxLTctNDVjLTQgMS02IDItNSA4IDAgOSAyIDIzIDcgNDIgMTEgNDAgNDcgMTE4IDExNCAxMDAgMTUtNCAyNi0xMSAzNC0yMC03IDctMTcgMTItMjkgMTV6bTEzLTE2MHY1aDI2bC0yLTVoLTI0eiIgZmlsbD0iIzJENDU1MiIvPjxwYXRoIGQ9Ik0xOTQgMTY4YzEyIDMgMTggMTEgMjEgMTlsMTQgM3MtMi0yNS0yNS0zMmMtMjItNi0zNiAxMi0zNyAxNCA2LTQgMTUtOCAyNy00em0xMDUgMTljLTIxLTYtMzUgMTItMzYgMTQgNi00IDE1LTggMjctNSAxMiA0IDE4IDEyIDIxIDE5bDE0IDRzLTItMjYtMjYtMzJ6bS0xMyA2OGwtMTEwLTMxczEgNiA2IDE0bDkzIDI2IDExLTl6bS03NiA2NmMtODctMjMtNzctMTM0LTYzLTE4NyA2LTIyIDEyLTM4IDE3LTQ5LTMgMC01IDEtOCA2LTUgMTEtMTIgMjgtMTggNTItMTQgNTMtMjUgMTY0IDYyIDE4OCA0MSAxMSA3My02IDk3LTMyYTkwIDkwIDAgMDEtODcgMjJ6IiBmaWxsPSIjMkQ0NTUyIi8+PHBhdGggZD0iTTE2MiAyNjJ2LTIybC02MyAxOHM1LTI3IDM3LTM2YzEwLTMgMTktMyAyNi0ydi05MmgzMWwtMTAtMjRjLTQtOS05LTMtMTkgNi04IDYtMjcgMTktNTUgMjctMjkgOC01MiA2LTYxIDQtMTQtMi0yMS01LTIwIDUgMCA5IDIgMjMgNyA0MiAxMSA0MCA0NyAxMTggMTE0IDEwMCAxOC00IDMwLTE0IDM5LTI2aC0yNnpNNjEgMTg4bDQ4LTEycy0xIDE4LTE5IDIzLTI5LTExLTI5LTExeiIgZmlsbD0iI0UyNTc0QyIvPjxwYXRoIGQ9Ik0zNDIgMTI5Yy0xMyAyLTQzIDUtNzktNS0zNy0xMC02Mi0yNy03MS0zNS0xNC0xMi0yMC0yMC0yNi04LTUgMTEtMTIgMjktMTkgNTMtMTQgNTMtMjQgMTY0IDYzIDE4N3MxMzQtNzggMTQ4LTEzMWM2LTI0IDktNDIgMTAtNTQgMS0xNC05LTEwLTI2LTd6bS0xNzYgNDRzMTQtMjIgMzgtMTVjMjMgNyAyNSAzMiAyNSAzMmwtNjMtMTd6bTU3IDk2Yy00MS0xMi00Ny00NS00Ny00NWwxMTAgMzFzLTIyIDI2LTYzIDE0em0zOS02OHMxNC0yMSAzNy0xNGMyNCA2IDI2IDMyIDI2IDMybC02My0xOHoiIGZpbGw9IiMyRUFEMzMiLz48cGF0aCBkPSJNMTQwIDI0NmwtNDEgMTJzNS0yNiAzNS0zNmwtMjMtODYtMiAxYy0yOSA4LTUyIDYtNjEgNC0xNC0yLTIxLTUtMjAgNSAwIDkgMiAyMyA3IDQyIDExIDQwIDQ3IDExOCAxMTQgMTAwaDJsLTExLTQyem0tNzktNThsNDgtMTJzLTEgMTgtMTkgMjMtMjktMTEtMjktMTF6IiBmaWxsPSIjRDY1MzQ4Ii8+PHBhdGggZD0iTTIyNSAyNjloLTJjLTQxLTEyLTQ3LTQ1LTQ3LTQ1bDU3IDE2IDMwLTExNmMtMzctMTAtNjItMjctNzEtMzUtMTQtMTItMjAtMjAtMjYtOC01IDExLTEyIDI5LTE5IDUzLTE0IDUzLTI0IDE2NCA2MyAxODdsMiAxIDEzLTUzem0tNTktOTZzMTQtMjIgMzgtMTVjMjMgNyAyNSAzMiAyNSAzMmwtNjMtMTd6IiBmaWxsPSIjMUQ4RDIyIi8+PHBhdGggZD0iTTE0MiAyNDVsLTExIDRjMyAxNCA3IDI4IDE0IDQwbDQtMSA5LTNjLTgtMTItMTMtMjUtMTYtNDB6bS00LTEwMmMtNiAyMS0xMSA1MS0xMCA4MWw4LTIgMi0xYTI3MyAyNzMgMCAwMTE0LTEwM2wtOCA1LTYgMjB6IiBmaWxsPSIjQzA0QjQxIi8+PC9zdmc+')`;
+    toolbarShadow.appendChild(iconElement);
+    toolbarShadow.appendChild(this._inspectElement);
+    toolbarShadow.appendChild(this._recordElement);
+    toolbarShadow.appendChild(this._resumeElement);
+
+    this._inspectElement.addEventListener('click', () => {
+      if (this._inspectElement.classList.contains('disabled'))
+        return;
+      this._inspectElement.classList.toggle('toggled');
+      this._setMode(this._inspectElement.classList.contains('toggled') ? 'inspecting' : 'none');
+    });
+    this._recordElement.addEventListener('click', () => {
+      if (this._recordElement.classList.contains('disabled'))
+        return;
+      this._recordElement.classList.toggle('toggled');
+      this._setMode(this._recordElement.classList.contains('toggled') ? 'recording' : 'none');
+    });
+    this._resumeElement.addEventListener('click', () => {
+      if (!this._resumeElement.classList.contains('disabled')) {
+        this._setMode('none');
+        window.playwrightRecorderResume().catch(e => {});
+      }
+    });
   }
 
   private _refreshListenersIfNeeded() {
@@ -122,8 +233,46 @@ export class Recorder {
       }, true),
     ];
     document.documentElement.appendChild(this._outerGlassPaneElement);
+    document.documentElement.appendChild(this._toolbarElement);
     if ((window as any)._recorderScriptReadyForTest)
       (window as any)._recorderScriptReadyForTest();
+  }
+
+  private async _setMode(mode: 'inspecting' | 'recording' | 'paused' | 'none') {
+    window.playwrightRecorderSetState({ mode }).then(() => this._pollRecorderMode());
+  }
+
+  private async _pollRecorderMode() {
+    if (this._pollRecorderModeTimer)
+      clearTimeout(this._pollRecorderModeTimer);
+    const result = await window.playwrightRecorderState().catch(e => null);
+    if (result) {
+      const { state, paused, app } = result;
+      if (state && state.mode !== this._mode) {
+        this._mode = state.mode as any;
+        this._inspectElement.classList.toggle('toggled', this._mode === 'inspecting');
+        this._recordElement.classList.toggle('toggled', this._mode === 'recording');
+        this._inspectElement.classList.toggle('disabled', this._mode === 'recording');
+        this._resumeElement.classList.toggle('disabled', this._mode === 'recording');
+        this._clearHighlight();
+      }
+      if (paused !== this._paused) {
+        this._paused = paused;
+        this._resumeElement.classList.toggle('hidden', false);
+        this._resumeElement.classList.toggle('disabled', !this._paused);
+      }
+      if (app !== this._app) {
+        this._app = app;
+        this._resumeElement.classList.toggle('hidden', this._app !== 'pause');
+      }
+    }
+    this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), 250);
+  }
+
+  private _clearHighlight() {
+    this._hoveredModel = null;
+    this._activeModel = null;
+    this._updateHighlight();
   }
 
   private _actionInProgress(event: Event): boolean {
@@ -143,13 +292,15 @@ export class Recorder {
   }
 
   private _consumedDueWrongTarget(event: Event): boolean {
-    if (this._activeModel && this._activeModel.elements[0] === deepEventTarget(event))
+    if (this._activeModel && this._activeModel.elements[0] === this._deepEventTarget(event))
       return false;
     consumeEvent(event);
     return true;
   }
 
   private _onClick(event: MouseEvent) {
+    if (this._mode === 'inspecting' && !this._isInToolbar(event.target as HTMLElement))
+      console.log(this._hoveredModel ? this._hoveredModel.selector : ''); // eslint-disable-line no-console
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -157,7 +308,7 @@ export class Recorder {
     if (this._consumedDueToNoModel(event, this._hoveredModel))
       return;
 
-    const checkbox = asCheckbox(deepEventTarget(event));
+    const checkbox = asCheckbox(this._deepEventTarget(event));
     if (checkbox) {
       // Interestingly, inputElement.checked is reversed inside this event handler.
       this._performAction({
@@ -178,8 +329,20 @@ export class Recorder {
     });
   }
 
+  private _isInToolbar(element: Element | undefined | null): boolean {
+    return !!element && element.nodeName.toLowerCase().startsWith('x-pw-');
+  }
+
   private _shouldIgnoreMouseEvent(event: MouseEvent): boolean {
-    const target = deepEventTarget(event);
+    const target = this._deepEventTarget(event);
+    if (this._isInToolbar(target))
+      return true;
+    if (this._mode === 'none')
+      return true;
+    if (this._mode === 'inspecting') {
+      consumeEvent(event);
+      return true;
+    }
     const nodeName = target.nodeName;
     if (nodeName === 'SELECT')
       return true;
@@ -204,7 +367,11 @@ export class Recorder {
   }
 
   private _onMouseMove(event: MouseEvent) {
-    const target = deepEventTarget(event);
+    if (this._mode === 'none')
+      return;
+    const target = this._deepEventTarget(event);
+    if (this._isInToolbar(target))
+      return;
     if (this._hoveredElement === target)
       return;
     this._hoveredElement = target;
@@ -214,14 +381,14 @@ export class Recorder {
 
   private _onMouseLeave(event: MouseEvent) {
     // Leaving iframe.
-    if (deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
+    if (this._deepEventTarget(event).nodeType === Node.DOCUMENT_NODE) {
       this._hoveredElement = null;
       this._commitActionAndUpdateModelForHoveredElement();
     }
   }
 
   private _onFocus() {
-    const activeElement = deepActiveElement(document);
+    const activeElement = this._deepActiveElement(document);
     const result = activeElement ? generateSelector(this._injectedScript, activeElement) : null;
     this._activeModel = result && result.selector ? result : null;
     if ((window as any)._highlightUpdatedForTest)
@@ -238,7 +405,7 @@ export class Recorder {
     const { selector, elements } = generateSelector(this._injectedScript, hoveredElement);
     if ((this._hoveredModel && this._hoveredModel.selector === selector) || this._hoveredElement !== hoveredElement)
       return;
-    window.commitLastAction();
+    window.playwrightRecorderCommitAction();
     this._hoveredModel = selector ? { selector, elements } : null;
     this._updateHighlight();
     if ((window as any)._highlightUpdatedForTest)
@@ -290,7 +457,7 @@ export class Recorder {
     this._highlightElements = [];
     for (const box of boxes) {
       const highlightElement = pool.length ? pool.shift()! : this._createHighlightElement();
-      highlightElement.style.borderColor = this._highlightElements.length ? 'hotpink' : '#8929ff';
+      highlightElement.style.backgroundColor = this._highlightElements.length ? '#f6b26b7f' : '#6fa8dc7f';
       highlightElement.style.left = box.x + 'px';
       highlightElement.style.top = box.y + 'px';
       highlightElement.style.width = box.width + 'px';
@@ -313,7 +480,6 @@ export class Recorder {
         left: 0;
         width: 0;
         height: 0;
-        border: 1px solid;
         box-sizing: border-box;">
       </x-pw-highlight>`;
     this._glassPaneShadow.appendChild(highlightElement);
@@ -321,7 +487,9 @@ export class Recorder {
   }
 
   private _onInput(event: Event) {
-    const target = deepEventTarget(event);
+    if (this._mode !== 'recording')
+      return true;
+    const target = this._deepEventTarget(event);
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
       const inputElement = target as HTMLInputElement;
       const elementType = (inputElement.type || '').toLowerCase();
@@ -331,7 +499,7 @@ export class Recorder {
       }
 
       if (elementType === 'file') {
-        window.recordPlaywrightAction({
+        window.playwrightRecorderRecordAction({
           name: 'setInputFiles',
           selector: this._activeModel!.selector,
           signals: [],
@@ -343,7 +511,7 @@ export class Recorder {
       // Non-navigating actions are simply recorded by Playwright.
       if (this._consumedDueWrongTarget(event))
         return;
-      window.recordPlaywrightAction({
+      window.playwrightRecorderRecordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
         signals: [],
@@ -385,11 +553,17 @@ export class Recorder {
       return false;
     const hasModifier = event.ctrlKey || event.altKey || event.metaKey;
     if (event.key.length === 1 && !hasModifier)
-      return !!asCheckbox(deepEventTarget(event));
+      return !!asCheckbox(this._deepEventTarget(event));
     return true;
   }
 
   private _onKeyDown(event: KeyboardEvent) {
+    if (this._mode === 'inspecting') {
+      consumeEvent(event);
+      return;
+    }
+    if (this._mode !== 'recording')
+      return true;
     if (!this._shouldGenerateKeyPressFor(event))
       return;
     if (this._actionInProgress(event)) {
@@ -400,7 +574,7 @@ export class Recorder {
       return;
     // Similarly to click, trigger checkbox on key event, not input.
     if (event.key === ' ') {
-      const checkbox = asCheckbox(deepEventTarget(event));
+      const checkbox = asCheckbox(this._deepEventTarget(event));
       if (checkbox) {
         this._performAction({
           name: checkbox.checked ? 'uncheck' : 'check',
@@ -434,7 +608,7 @@ export class Recorder {
 
   private async _performAction(action: actions.Action) {
     this._performingAction = true;
-    await window.performPlaywrightAction(action);
+    await window.playwrightRecorderPerformAction(action);
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.
@@ -449,17 +623,17 @@ export class Recorder {
       });
     }
   }
-}
 
-function deepEventTarget(event: Event): HTMLElement {
-  return event.composedPath()[0] as HTMLElement;
-}
+  private _deepEventTarget(event: Event): HTMLElement {
+    return event.composedPath()[0] as HTMLElement;
+  }
 
-function deepActiveElement(document: Document): Element | null {
-  let activeElement = document.activeElement;
-  while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement)
-    activeElement = activeElement.shadowRoot.activeElement;
-  return activeElement;
+  private _deepActiveElement(document: Document): Element | null {
+    let activeElement = document.activeElement;
+    while (activeElement && activeElement.shadowRoot && activeElement.shadowRoot.activeElement)
+      activeElement = activeElement.shadowRoot.activeElement;
+    return activeElement;
+  }
 }
 
 function modifiersForEvent(event: MouseEvent | KeyboardEvent): number {
@@ -500,14 +674,17 @@ type RegisteredListener = {
   useCapture?: boolean;
 };
 
-function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): RegisteredListener {
+function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): () => void {
   target.addEventListener(eventName, listener, useCapture);
-  return { target, eventName, listener, useCapture };
+  const remove = () => {
+    target.removeEventListener(eventName, listener, useCapture);
+  };
+  return remove;
 }
 
-function removeEventListeners(listeners: RegisteredListener[]) {
+function removeEventListeners(listeners: (() => void)[]) {
   for (const listener of listeners)
-    listener.target.removeEventListener(listener.eventName, listener.listener, listener.useCapture);
+    listener();
   listeners.splice(0, listeners.length);
 }
 

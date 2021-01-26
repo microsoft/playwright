@@ -15,7 +15,7 @@
  */
 
 const path = require('path');
-const InlineSource = require('../../server/injected/webpack-inline-source-plugin');
+const InlineSource = require('../../injected/webpack-inline-source-plugin');
 
 /** @type {import('webpack').Configuration} */
 module.exports = {
@@ -45,6 +45,6 @@ module.exports = {
     path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },
   plugins: [
-    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'consoleApiSource.ts')),
+    new InlineSource(path.join(__dirname, '..', '..', '..', 'generated', 'consoleApiSource.ts')),
   ]
 };

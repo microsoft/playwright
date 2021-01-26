@@ -23,9 +23,7 @@ import * as fs from 'fs';
 import { calculateSha1, createGuid, getFromENV, mkdirIfNeeded, monotonicTime } from '../utils/utils';
 import { Page } from '../server/page';
 import { Snapshotter } from './snapshotter';
-import { ElementHandle } from '../server/dom';
 import { helper, RegisteredListener } from '../server/helper';
-import { DEFAULT_TIMEOUT } from '../utils/timeoutSettings';
 import { ProgressResult } from '../server/progress';
 import { Dialog } from '../server/dialog';
 import { Frame, NavigationEvent } from '../server/frames';
@@ -64,6 +62,14 @@ class Tracer implements ContextListener {
 }
 
 const pageIdSymbol = Symbol('pageId');
+const snapshotsSymbol = Symbol('snapshots');
+
+// TODO: this is a hacky way to pass snapshots between onActionCheckpoint and onAfterAction.
+function snapshotsForMetadata(metadata: ActionMetadata): { name: string, snapshotId: string }[] {
+  if (!(metadata as any)[snapshotsSymbol])
+    (metadata as any)[snapshotsSymbol] = [];
+  return (metadata as any)[snapshotsSymbol];
+}
 
 class ContextTracer implements SnapshotterDelegate, ActionListener {
   private _context: BrowserContext;
@@ -123,31 +129,50 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
     this._appendTraceEvent(event);
   }
 
+  onFrameSnapshot(frame: Frame, snapshot: trace.FrameSnapshot, snapshotId?: string): void {
+    const buffer = Buffer.from(JSON.stringify(snapshot));
+    const sha1 = calculateSha1(buffer);
+    this._writeArtifact(sha1, buffer);
+    const event: trace.FrameSnapshotTraceEvent = {
+      timestamp: monotonicTime(),
+      type: 'snapshot',
+      contextId: this._contextId,
+      pageId: this.pageId(frame._page),
+      frameId: frame._page.mainFrame() === frame ? '' : frame._id,
+      sha1,
+      frameUrl: snapshot.url,
+      snapshotId,
+    };
+    this._appendTraceEvent(event);
+  }
+
   pageId(page: Page): string {
     return (page as any)[pageIdSymbol];
   }
 
+  async onActionCheckpoint(name: string, metadata: ActionMetadata): Promise<void> {
+    const snapshotId = createGuid();
+    snapshotsForMetadata(metadata).push({ name, snapshotId });
+    await this._snapshotter.forceSnapshot(metadata.page, snapshotId);
+  }
+
   async onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void> {
-    try {
-      const snapshot = await this._takeSnapshot(metadata.page, typeof metadata.target === 'string' ? undefined : metadata.target);
-      const event: trace.ActionTraceEvent = {
-        timestamp: monotonicTime(),
-        type: 'action',
-        contextId: this._contextId,
-        pageId: this.pageId(metadata.page),
-        action: metadata.type,
-        selector: typeof metadata.target === 'string' ? metadata.target : undefined,
-        value: metadata.value,
-        snapshot,
-        startTime: result.startTime,
-        endTime: result.endTime,
-        stack: metadata.stack,
-        logs: result.logs.slice(),
-        error: result.error ? result.error.stack : undefined,
-      };
-      this._appendTraceEvent(event);
-    } catch (e) {
-    }
+    const event: trace.ActionTraceEvent = {
+      timestamp: monotonicTime(),
+      type: 'action',
+      contextId: this._contextId,
+      pageId: this.pageId(metadata.page),
+      action: metadata.type,
+      selector: typeof metadata.target === 'string' ? metadata.target : undefined,
+      value: metadata.value,
+      startTime: result.startTime,
+      endTime: result.endTime,
+      stack: metadata.stack,
+      logs: result.logs.slice(),
+      error: result.error ? result.error.stack : undefined,
+      snapshots: snapshotsForMetadata(metadata),
+    };
+    this._appendTraceEvent(event);
   }
 
   private _onPage(page: Page) {
@@ -239,22 +264,6 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       };
       this._appendTraceEvent(event);
     });
-  }
-
-  private async _takeSnapshot(page: Page, target: ElementHandle | undefined, timeout: number = 0): Promise<{ sha1: string, duration: number } | undefined> {
-    if (!timeout) {
-      // Never use zero timeout to avoid stalling because of snapshot.
-      // Use 20% of the default timeout.
-      timeout = (page._timeoutSettings.timeout({}) || DEFAULT_TIMEOUT) / 5;
-    }
-    const startTime = monotonicTime();
-    const snapshot = await this._snapshotter.takeSnapshot(page, target, timeout);
-    if (!snapshot)
-      return;
-    const buffer = Buffer.from(JSON.stringify(snapshot));
-    const sha1 = calculateSha1(buffer);
-    this._writeArtifact(sha1, buffer);
-    return { sha1, duration: monotonicTime() - startTime };
   }
 
   async dispose() {

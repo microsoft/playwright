@@ -15,17 +15,13 @@
  */
 
 import type { BrowserContextOptions, LaunchOptions } from '../../../..';
-import * as playwright from '../../../..';
-import { HighlighterType, LanguageGenerator } from '.';
-import { ActionInContext } from '../codeGenerator';
-import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from '../recorderActions';
-import { MouseClickOptions, toModifiers } from '../utils';
+import { LanguageGenerator, sanitizeDeviceOptions } from './language';
+import { ActionInContext } from './codeGenerator';
+import { actionTitle, NavigationSignal, PopupSignal, DownloadSignal, DialogSignal, Action } from './recorderActions';
+import { MouseClickOptions, toModifiers } from './utils';
+import deviceDescriptors = require('../../deviceDescriptors');
 
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
-
-  highlighterType(): HighlighterType {
-    return 'javascript';
-  }
 
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
     const { action, pageAlias, frame } = actionInContext;
@@ -195,16 +191,11 @@ function formatObjectOrVoid(value: any, indent = '  '): string {
 }
 
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined): string {
-  const device = deviceName && playwright.devices[deviceName];
+  const device = deviceName && deviceDescriptors[deviceName];
   if (!device)
     return formatObjectOrVoid(options);
   // Filter out all the properties from the device descriptor.
-  const cleanedOptions: Record<string, any> = {};
-  for (const property in options) {
-    if ((device as any)[property] !== (options as any)[property])
-      cleanedOptions[property] = (options as any)[property];
-  }
-  let serializedObject = formatObjectOrVoid(cleanedOptions);
+  let serializedObject = formatObjectOrVoid(sanitizeDeviceOptions(device, options));
   // When there are no additional context options, we still want to spread the device inside.
   if (!serializedObject)
     serializedObject = '{\n}';

@@ -25,6 +25,7 @@ it('should record trace', async ({browser, testInfo, server}) => {
   const page = await context.newPage();
   const url = server.PREFIX + '/snapshot/snapshot-with-css.html';
   await page.goto(url);
+  await page.click('textarea');
   await context.close();
   const tracePath = path.join(traceDir, fs.readdirSync(traceDir).find(n => n.endsWith('.trace')));
   const traceFileContent = await fs.promises.readFile(tracePath, 'utf8');
@@ -55,8 +56,13 @@ it('should record trace', async ({browser, testInfo, server}) => {
   expect(resourceEvent.requestHeaders.length).toBeGreaterThan(0);
   expect(resourceEvent.requestSha1).toBe('none');
 
-  expect(gotoEvent.snapshot).toBeTruthy();
-  expect(fs.existsSync(path.join(traceDir, 'resources', gotoEvent.snapshot!.sha1))).toBe(true);
+  const clickEvent = traceEvents.find(event => event.type === 'action' && event.action === 'click') as trace.ActionTraceEvent;
+  expect(clickEvent).toBeTruthy();
+  expect(clickEvent.snapshots.length).toBe(2);
+  const snapshotId = clickEvent.snapshots[0].snapshotId;
+  const snapshotEvent = traceEvents.find(event => event.type === 'snapshot' && event.snapshotId === snapshotId) as trace.FrameSnapshotTraceEvent;
+
+  expect(fs.existsSync(path.join(traceDir, 'resources', snapshotEvent.sha1))).toBe(true);
 });
 
 it('should record trace with POST', async ({browser, testInfo, server}) => {

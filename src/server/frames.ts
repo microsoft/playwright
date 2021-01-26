@@ -32,10 +32,7 @@ type ContextData = {
   contextPromise: Promise<dom.FrameExecutionContext>;
   contextResolveCallback: (c: dom.FrameExecutionContext) => void;
   context: dom.FrameExecutionContext | null;
-  rerunnableTasks: Set<{
-    rerun(context: dom.FrameExecutionContext): Promise<void>;
-    terminate(error: Error): void;
-  }>;
+  rerunnableTasks: Set<RerunnableTask>;
 };
 
 type DocumentInfo = {
@@ -134,8 +131,11 @@ export class FrameManager {
     if (progress)
       progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
     const result = await action();
-    if (source === 'input')
+    if (source === 'input') {
       await this._page._delegate.inputActionEpilogue();
+      if (progress)
+        await progress.checkpoint('after');
+    }
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
@@ -1047,24 +1047,6 @@ export class Frame extends EventEmitter {
     if (this._parentFrame)
       this._parentFrame._childFrames.delete(this);
     this._parentFrame = null;
-  }
-
-  async evaluateSurvivingNavigations<T>(callback: (context: dom.FrameExecutionContext) => Promise<T>, world: types.World) {
-    return new Promise<T>((resolve, terminate) => {
-      const data = this._contextData.get(world)!;
-      const task = {
-        terminate,
-        async rerun(context: dom.FrameExecutionContext) {
-          try {
-            resolve(await callback(context));
-            data.rerunnableTasks.delete(task);
-          } catch (e) {}
-        }
-      };
-      data.rerunnableTasks.add(task);
-      if (data.context)
-        task.rerun(data.context);
-    });
   }
 
   private _scheduleRerunnableTask<T>(progress: Progress, world: types.World, task: dom.SchedulableTask<T>): Promise<T> {

@@ -21,7 +21,8 @@ import * as channels from '../protocol/channels';
 import { RouteDispatcher, RequestDispatcher } from './networkDispatchers';
 import { CRBrowserContext } from '../server/chromium/crBrowser';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
-import { parseArgument } from './jsHandleDispatcher';
+import { RecorderSupplement } from '../server/supplements/recorderSupplement';
+import { ConsoleApiSupplement } from '../server/supplements/consoleApiSupplement';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextInitializer> implements channels.BrowserContextChannel {
   private _context: BrowserContext;
@@ -37,6 +38,8 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('close');
       this._dispose();
     });
+    context.on(BrowserContext.Events.StdOut, data => this._dispatchEvent('stdout', { data: Buffer.from(data, 'utf8').toString('base64') }));
+    context.on(BrowserContext.Events.StdErr, data => this._dispatchEvent('stderr', { data: Buffer.from(data, 'utf8').toString('base64') }));
 
     if (context._browser._options.name === 'chromium') {
       for (const page of (context as CRBrowserContext).backgroundPages())
@@ -126,8 +129,23 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.close();
   }
 
-  async extendInjectedScript(params: channels.BrowserContextExtendInjectedScriptParams): Promise<void> {
-    await this._context.extendInjectedScript(params.source, parseArgument(params.arg));
+  async consoleSupplementExpose(): Promise<void> {
+    const consoleApi = new ConsoleApiSupplement(this._context);
+    await consoleApi.install();
+  }
+
+  async recorderSupplementEnable(params: channels.BrowserContextRecorderSupplementEnableParams): Promise<void> {
+    await RecorderSupplement.getOrCreate(this._context, 'codegen', params);
+  }
+
+  async pause() {
+    if (!this._context._browser._options.headful)
+      return;
+    const recorder = await RecorderSupplement.getOrCreate(this._context, 'pause', {
+      language: 'javascript',
+      terminal: true
+    });
+    await recorder.pause();
   }
 
   async crNewCDPSession(params: channels.BrowserContextCrNewCDPSessionParams): Promise<channels.BrowserContextCrNewCDPSessionResult> {

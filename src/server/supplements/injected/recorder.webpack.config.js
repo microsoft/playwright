@@ -15,7 +15,7 @@
  */
 
 const path = require('path');
-const InlineSource = require('../../server/injected/webpack-inline-source-plugin');
+const InlineSource = require('../../injected/webpack-inline-source-plugin');
 
 /** @type {import('webpack').Configuration} */
 module.exports = {
@@ -39,12 +39,12 @@ module.exports = {
   },
   output: {
     libraryTarget: 'var',
-    libraryExport: 'default',
     library: 'pwExport',
+    libraryExport: 'default',
     filename: 'recorderSource.js',
     path: path.resolve(__dirname, '../../../lib/server/injected/packed')
   },
   plugins: [
-    new InlineSource(path.join(__dirname, '..', '..', 'generated', 'recorderSource.ts')),
+    new InlineSource(path.join(__dirname, '..', '..', '..', 'generated', 'recorderSource.ts')),
   ]
 };

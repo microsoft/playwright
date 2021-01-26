@@ -599,11 +599,22 @@ BrowserContext:
           type: array
           items: OriginStorage
 
-    extendInjectedScript:
+    consoleSupplementExpose:
+      experimental: True
+
+    pause:
+      experimental: True
+
+    recorderSupplementEnable:
       experimental: True
       parameters:
-        source: string
-        arg: SerializedArgument
+        language: string
+        launchOptions: json?
+        contextOptions: json?
+        device: string?
+        saveStorage: string?
+        terminal: boolean?
+        outputFile: string?
 
     crNewCDPSession:
       parameters:
@@ -628,6 +639,14 @@ BrowserContext:
         route: Route
         request: Request
 
+    stdout:
+      parameters:
+        data: binary
+
+    stderr:
+      parameters:
+        data: binary
+
     crBackgroundPage:
       parameters:
         page: Page
@@ -635,8 +654,6 @@ BrowserContext:
     crServiceWorker:
       parameters:
         worker: Worker
-
-
 
 Page:
   type: interface
@@ -841,8 +858,6 @@ Page:
         root: ElementHandle?
       returns:
         rootAXNode: AXNode?
-
-    pause:
 
     pdf:
       parameters:

@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type { Page } from '../../..';
+import { Frame } from '../../frames';
 import * as actions from './recorderActions';
 
-export type MouseClickOptions = Parameters<Page['click']>[1];
+export type MouseClickOptions = Parameters<Frame['click']>[2];
 
 export function toClickOptions(action: actions.ClickAction): { method: 'click' | 'dblclick', options: MouseClickOptions } {
   let method: 'click' | 'dblclick' = 'click';

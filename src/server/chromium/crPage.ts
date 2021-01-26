@@ -35,7 +35,6 @@ import { CRPDF } from './crPdf';
 import { CRBrowserContext } from './crBrowser';
 import * as types from '../types';
 import { ConsoleMessage } from '../console';
-import * as sourceMap from '../../utils/sourceMap';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { assert, headersArrayToObject, createGuid } from '../../utils/utils';
 import { VideoRecorder } from './videoRecorder';
@@ -425,7 +424,7 @@ class FrameSession {
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
       this._client.send('Runtime.enable', {}),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
-        source: sourceMap.generateSourceUrl(),
+        source: '',
         worldName: UTILITY_WORLD_NAME,
       }),
       this._networkManager.initialize(),

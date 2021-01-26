@@ -67,14 +67,22 @@ export type ActionMetadata = {
 };
 
 export interface ActionListener {
+  onActionCheckpoint(name: string, metadata: ActionMetadata): Promise<void>;
   onAfterAction(result: ProgressResult, metadata: ActionMetadata): Promise<void>;
 }
 
 export async function runAction<T>(task: (controller: ProgressController) => Promise<T>, metadata: ActionMetadata): Promise<T> {
   const controller = new ProgressController();
-  controller.setListener(async result => {
-    for (const listener of metadata.page._browserContext._actionListeners)
-      await listener.onAfterAction(result, metadata);
+  controller.setListener({
+    onProgressCheckpoint: async (name: string): Promise<void> => {
+      for (const listener of metadata.page._browserContext._actionListeners)
+        await listener.onActionCheckpoint(name, metadata);
+    },
+
+    onProgressDone: async (result: ProgressResult): Promise<void> => {
+      for (const listener of metadata.page._browserContext._actionListeners)
+        await listener.onAfterAction(result, metadata);
+    },
   });
   const result = await task(controller);
   return result;
@@ -93,6 +101,9 @@ export abstract class BrowserContext extends EventEmitter {
     Close: 'close',
     Page: 'page',
     VideoStarted: 'videostarted',
+    BeforeClose: 'beforeclose',
+    StdOut: 'stdout',
+    StdErr: 'stderr',
   };
 
   readonly _timeoutSettings = new TimeoutSettings();
@@ -280,6 +291,7 @@ export abstract class BrowserContext extends EventEmitter {
 
   async close() {
     if (this._closedStatus === 'open') {
+      this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
       for (const listener of contextListeners)
@@ -379,8 +391,8 @@ export abstract class BrowserContext extends EventEmitter {
     }
   }
 
-  async extendInjectedScript(source: string, arg?: any) {
-    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source, arg).catch(e => {});
+  async extendInjectedScript(source: string) {
+    const installInFrame = (frame: frames.Frame) => frame.extendInjectedScript(source).catch(e => {});
     const installInPage = (page: Page) => {
       page.on(Page.Events.InternalFrameNavigatedToNewDocument, installInFrame);
       return Promise.all(page.frames().map(installInFrame));

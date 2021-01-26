@@ -363,9 +363,10 @@ Optional event-specific initialization properties.
 
 ## async method: ElementHandle.fill
 
-This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input`
-event after filling. If the element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws
-an error. Note that you can pass an empty string to clear the input field.
+This method waits for [actionability](./actionability.md) checks, focuses the element, fills it and triggers an `input` event after filling.
+If the element is inside the `<label>` element that has associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled instead.
+If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws an error.
+Note that you can pass an empty string to clear the input field.
 
 ### param: ElementHandle.fill.value
 - `value` <[string]>

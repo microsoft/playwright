@@ -237,10 +237,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageInitializer> i
     return { entries: await coverage.stopCSSCoverage() };
   }
 
-  async pause() {
-    await this._page.pause();
-  }
-
   _onFrameAttached(frame: Frame) {
     this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this._scope, frame) });
   }

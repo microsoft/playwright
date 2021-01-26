@@ -335,9 +335,16 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     offline: tBoolean,
   });
   scheme.BrowserContextStorageStateParams = tOptional(tObject({}));
-  scheme.BrowserContextExtendInjectedScriptParams = tObject({
-    source: tString,
-    arg: tType('SerializedArgument'),
+  scheme.BrowserContextConsoleSupplementExposeParams = tOptional(tObject({}));
+  scheme.BrowserContextPauseParams = tOptional(tObject({}));
+  scheme.BrowserContextRecorderSupplementEnableParams = tObject({
+    language: tString,
+    launchOptions: tOptional(tAny),
+    contextOptions: tOptional(tAny),
+    device: tOptional(tString),
+    saveStorage: tOptional(tString),
+    terminal: tOptional(tBoolean),
+    outputFile: tOptional(tString),
   });
   scheme.BrowserContextCrNewCDPSessionParams = tObject({
     page: tChannel('Page'),
@@ -443,7 +450,6 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     interestingOnly: tOptional(tBoolean),
     root: tOptional(tChannel('ElementHandle')),
   });
-  scheme.PagePauseParams = tOptional(tObject({}));
   scheme.PagePdfParams = tObject({
     scale: tOptional(tNumber),
     displayHeaderFooter: tOptional(tBoolean),

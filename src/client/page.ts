@@ -640,9 +640,7 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
   }
 
   async _pause() {
-    return this._wrapApiCall('page.pause', async () => {
-      await this._channel.pause();
-    });
+    await this.context()._pause();
   }
 
   async _pdf(options: PDFOptions = {}): Promise<Buffer> {

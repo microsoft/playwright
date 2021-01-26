@@ -1668,9 +1668,10 @@ export interface Page {
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
-   * element, fills it and triggers an `input` event after filling. If the element matching `selector` is not an `<input>`,
-   * `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to
-   * clear the input field.
+   * element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has
+   * associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be
+   * filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this
+   * method throws an error. Note that you can pass an empty string to clear the input field.
    * 
    * To send fine-grained keyboard events, use
    * [page.type(selector, text[, options])](https://playwright.dev/docs/api/class-page#pagetypeselector-text-options).
@@ -3678,9 +3679,10 @@ export interface Frame {
 
   /**
    * This method waits for an element matching `selector`, waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the
-   * element, fills it and triggers an `input` event after filling. If the element matching `selector` is not an `<input>`,
-   * `<textarea>` or `[contenteditable]` element, this method throws an error. Note that you can pass an empty string to
-   * clear the input field.
+   * element, fills it and triggers an `input` event after filling. If the element is inside the `<label>` element that has
+   * associated [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be
+   * filled instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this
+   * method throws an error. Note that you can pass an empty string to clear the input field.
    * 
    * To send fine-grained keyboard events, use
    * [frame.type(selector, text[, options])](https://playwright.dev/docs/api/class-frame#frametypeselector-text-options).
@@ -5630,8 +5632,10 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
   /**
    * This method waits for [actionability](https://playwright.dev/docs/actionability) checks, focuses the element, fills it and triggers an `input`
-   * event after filling. If the element is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method throws
-   * an error. Note that you can pass an empty string to clear the input field.
+   * event after filling. If the element is inside the `<label>` element that has associated
+   * [control](https://developer.mozilla.org/en-US/docs/Web/API/HTMLLabelElement/control), that control will be filled
+   * instead. If the element to be filled is not an `<input>`, `<textarea>` or `[contenteditable]` element, this method
+   * throws an error. Note that you can pass an empty string to clear the input field.
    * @param value Value to set for the `<input>`, `<textarea>` or `[contenteditable]` element.
    * @param options 
    */
