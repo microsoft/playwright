@@ -131,8 +131,11 @@ export class FrameManager {
     if (progress)
       progress.cleanupWhenAborted(() => this._signalBarriers.delete(barrier));
     const result = await action();
-    if (source === 'input')
+    if (source === 'input') {
       await this._page._delegate.inputActionEpilogue();
+      if (progress)
+        await progress.checkpoint('after');
+    }
     await barrier.waitFor();
     this._signalBarriers.delete(barrier);
     // Resolve in the next task, after all waitForNavigations.
