@@ -135,17 +135,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 If `true`, Playwright does not pass its own configurations args and only uses the ones from [`option: args`]. If an
 array is given, then filters out the given default arguments. Dangerous option; use with care. Defaults to `false`.
 
-### option: BrowserType.launch.proxy
-- `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
-    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
-    proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org,
-    .domain.com"`.
-  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-
-Network proxy settings.
+### option: BrowserType.launch.proxy = %%-browser-option-proxy-%%
 
 ### option: BrowserType.launch.downloadsPath
 - `downloadsPath` <[path]>
@@ -249,17 +239,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default
 arguments. Dangerous option; use with care. Defaults to `false`.
 
-### option: BrowserType.launchPersistentContext.proxy
-- `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
-    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
-    proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org,
-    .domain.com"`.
-  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-
-Network proxy settings.
+### option: BrowserType.launchPersistentContext.proxy = %%-browser-option-proxy-%%
 
 ### option: BrowserType.launchPersistentContext.downloadsPath
 - `downloadsPath` <[path]>
@@ -366,17 +346,7 @@ Additional arguments to pass to the browser instance. The list of Chromium flags
 If `true`, then do not use any of the default arguments. If an array is given, then filter out the given default
 arguments. Dangerous option; use with care. Defaults to `false`.
 
-### option: BrowserType.launchServer.proxy
-- `proxy` <[Object]>
-  - `server` <[string]> Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example
-    `http://myproxy.com:3128` or `socks5://myproxy.com:3128`. Short form `myproxy.com:3128` is considered an HTTP
-    proxy.
-  - `bypass` <[string]> Optional coma-separated domains to bypass proxy, for example `".com, chromium.org,
-    .domain.com"`.
-  - `username` <[string]> Optional username to use if HTTP proxy requires authentication.
-  - `password` <[string]> Optional password to use if HTTP proxy requires authentication.
-
-Network proxy settings.
+### option: BrowserType.launchServer.proxy = %%-browser-option-proxy-%%
 
 ### option: BrowserType.launchServer.downloadsPath
 - `downloadsPath` <[path]>
