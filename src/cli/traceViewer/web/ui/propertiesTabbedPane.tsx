@@ -15,18 +15,20 @@
  */
 
 import { ActionEntry } from '../../traceModel';
-import { Size } from '../geometry';
+import { Boundaries, Size } from '../geometry';
 import { NetworkTab } from './networkTab';
 import { SourceTab } from './sourceTab';
 import './propertiesTabbedPane.css';
 import * as React from 'react';
-import { useMeasure } from './helpers';
+import { msToString, useMeasure } from './helpers';
 import { LogsTab } from './logsTab';
 
 export const PropertiesTabbedPane: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
   snapshotSize: Size,
-}> = ({ actionEntry, snapshotSize }) => {
+  selectedTime: number | undefined,
+  boundaries: Boundaries,
+}> = ({ actionEntry, snapshotSize, selectedTime, boundaries }) => {
   const [selected, setSelected] = React.useState<'snapshot' | 'source' | 'network' | 'logs'>('snapshot');
   return <div className='properties-tabbed-pane'>
     <div className='vbox'>
@@ -51,7 +53,7 @@ export const PropertiesTabbedPane: React.FunctionComponent<{
         </div>
       </div>
       <div className='properties-tab-content' style={{ display: selected === 'snapshot' ? 'flex' : 'none' }}>
-        <SnapshotTab actionEntry={actionEntry} snapshotSize={snapshotSize} />
+        <SnapshotTab actionEntry={actionEntry} snapshotSize={snapshotSize} selectedTime={selectedTime} boundaries={boundaries} />
       </div>
       <div className='properties-tab-content' style={{ display: selected === 'source' ? 'flex' : 'none' }}>
         <SourceTab actionEntry={actionEntry} />
@@ -69,18 +71,24 @@ export const PropertiesTabbedPane: React.FunctionComponent<{
 const SnapshotTab: React.FunctionComponent<{
   actionEntry: ActionEntry | undefined,
   snapshotSize: Size,
-}> = ({ actionEntry, snapshotSize }) => {
+  selectedTime: number | undefined,
+  boundaries: Boundaries,
+}> = ({ actionEntry, snapshotSize, selectedTime, boundaries }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
-  let snapshots: { name: string, snapshotId?: string }[] = [];
-
+  let snapshots: { name: string, snapshotId?: string, snapshotTime?: number }[] = [];
   snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
   if (!snapshots.length || snapshots[0].name !== 'before')
-    snapshots.unshift({ name: 'before', snapshotId: undefined });
+    snapshots.unshift({ name: 'before', snapshotTime: actionEntry ? actionEntry.action.startTime : 0 });
   if (snapshots[snapshots.length - 1].name !== 'after')
-    snapshots.push({ name: 'after', snapshotId: undefined });
+    snapshots.push({ name: 'after', snapshotTime: actionEntry ? actionEntry.action.endTime : 0 });
+  if (selectedTime)
+    snapshots = [{ name: msToString(selectedTime - boundaries.minimum), snapshotTime: selectedTime }];
 
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  React.useEffect(() => {
+    setSnapshotIndex(0);
+  }, [selectedTime]);
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
@@ -89,9 +97,9 @@ const SnapshotTab: React.FunctionComponent<{
   }, [actionEntry, iframeRef]);
 
   React.useEffect(() => {
-    if (actionEntry)
+    if (actionEntry && snapshots[snapshotIndex])
       (window as any).renderSnapshot({ action: actionEntry.action, snapshot: snapshots[snapshotIndex] });
-  }, [actionEntry, snapshotIndex]);
+  }, [actionEntry, snapshotIndex, selectedTime]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   return <div className='snapshot-tab'>

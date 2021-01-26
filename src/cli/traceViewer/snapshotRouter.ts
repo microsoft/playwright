@@ -68,14 +68,9 @@ export class SnapshotRouter {
       }
     }
 
-    const mainFrameSnapshot = lastSnapshotEvent.get('');
-    if (!mainFrameSnapshot)
+    if (!lastSnapshotEvent.get(''))
       return 'data:text/html,Snapshot is not available';
-
-    if (!mainFrameSnapshot.frameUrl.startsWith('http'))
-      this._pageUrl = 'http://playwright.snapshot/';
-    else
-      this._pageUrl = mainFrameSnapshot.frameUrl;
+    this._pageUrl = 'http://playwright.snapshot/?cachebusting=' + Date.now();
     return this._pageUrl;
   }
 

@@ -31,6 +31,8 @@ export function frameSnapshotStreamer() {
   const kSnapshotFrameIdAttribute = '__playwright_snapshot_frameid_';
   const kSnapshotBinding = '__playwright_snapshot_binding_';
   const kShadowAttribute = '__playwright_shadow_root_';
+  const kScrollTopAttribute = '__playwright_scroll_top_';
+  const kScrollLeftAttribute = '__playwright_scroll_left_';
 
   const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
   const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
@@ -41,12 +43,12 @@ export function frameSnapshotStreamer() {
     private _timer: NodeJS.Timeout | undefined;
 
     constructor() {
-      this._streamSnapshot();
       this._interceptCSSOM(window.CSSStyleSheet.prototype, 'insertRule');
       this._interceptCSSOM(window.CSSStyleSheet.prototype, 'deleteRule');
       this._interceptCSSOM(window.CSSStyleSheet.prototype, 'addRule');
       this._interceptCSSOM(window.CSSStyleSheet.prototype, 'removeRule');
       // TODO: should we also intercept setters like CSSRule.cssText and CSSStyleRule.selectorText?
+      this._streamSnapshot();
     }
 
     private _interceptCSSOM(obj: any, method: string) {
@@ -132,7 +134,7 @@ export function frameSnapshotStreamer() {
       const win = window;
       const doc = win.document;
 
-      const shadowChunks: string[] = [];
+      let needScript = false;
       const styleNodeToStyleSheetText = new Map<Node, string>();
       const styleSheetUrlToContentOverride = new Map<string, string>();
 
@@ -259,18 +261,26 @@ export function frameSnapshotStreamer() {
             builder.push(' disabled');
           if ((element as any).readOnly)
             builder.push(' readonly');
-          if (element.shadowRoot) {
-            const b: string[] = [];
-            visit(element.shadowRoot, b);
-            const chunkId = shadowChunks.length;
-            shadowChunks.push(b.join(''));
-            builder.push(' ');
-            builder.push(kShadowAttribute);
-            builder.push('="');
-            builder.push('' + chunkId);
-            builder.push('"');
+          if (element.scrollTop) {
+            needScript = true;
+            builder.push(` ${kScrollTopAttribute}="${element.scrollTop}"`);
+          }
+          if (element.scrollLeft) {
+            needScript = true;
+            builder.push(` ${kScrollLeftAttribute}="${element.scrollLeft}"`);
           }
           builder.push('>');
+
+          if (element.shadowRoot) {
+            needScript = true;
+            const b: string[] = [];
+            visit(element.shadowRoot, b);
+            builder.push('<template ');
+            builder.push(kShadowAttribute);
+            builder.push('="open">');
+            builder.push(b.join(''));
+            builder.push('</template>');
+          }
         }
         if (nodeName === 'HEAD') {
           let baseHref = document.baseURI;
@@ -297,12 +307,9 @@ export function frameSnapshotStreamer() {
           for (let child = node.firstChild; child; child = child.nextSibling)
             visit(child, builder);
         }
-        if (node.nodeName === 'BODY' && shadowChunks.length) {
+        if (node.nodeName === 'BODY' && needScript) {
           builder.push('<script>');
-          const chunks = shadowChunks.map(html => {
-            return '`' + html.replace(/`/g, '\\\`') + '`';
-          }).join(',\n');
-          const scriptContent = `\n(${applyShadowsInPage.toString()})('${kShadowAttribute}', [\n${chunks}\n])\n`;
+          const scriptContent = `\n(${applyPlaywrightAttributes.toString()})('${kShadowAttribute}', '${kScrollTopAttribute}', '${kScrollLeftAttribute}')`;
           builder.push(scriptContent);
           builder.push('</script>');
         }
@@ -313,22 +320,35 @@ export function frameSnapshotStreamer() {
         }
       };
 
-      function applyShadowsInPage(shadowAttribute: string, shadowContent: string[]) {
-        const visitShadows = (root: Document | ShadowRoot) => {
-          const elements = root.querySelectorAll(`[${shadowAttribute}]`);
-          for (let i = 0; i < elements.length; i++) {
-            const host = elements[i];
-            const chunkId = host.getAttribute(shadowAttribute)!;
-            host.removeAttribute(shadowAttribute);
-            const shadow = host.attachShadow({ mode: 'open' });
-            const html = shadowContent[+chunkId];
-            if (html) {
-              shadow.innerHTML = html;
-              visitShadows(shadow);
-            }
+      function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string) {
+        const scrollTops = document.querySelectorAll(`[${scrollTopAttribute}]`);
+        const scrollLefts = document.querySelectorAll(`[${scrollLeftAttribute}]`);
+        for (const element of document.querySelectorAll(`template[${shadowAttribute}]`)) {
+          const template = element as HTMLTemplateElement;
+          const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
+          shadowRoot.appendChild(template.content);
+          template.remove();
+        }
+        const onDOMContentLoaded = () => {
+          window.removeEventListener('DOMContentLoaded', onDOMContentLoaded);
+          for (const element of scrollTops)
+            element.scrollTop = +element.getAttribute(scrollTopAttribute)!;
+          for (const element of scrollLefts)
+            element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
+        };
+        window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
+        const onLoad = () => {
+          window.removeEventListener('load', onLoad);
+          for (const element of scrollTops) {
+            element.scrollTop = +element.getAttribute(scrollTopAttribute)!;
+            element.removeAttribute(scrollTopAttribute);
+          }
+          for (const element of scrollLefts) {
+            element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
+            element.removeAttribute(scrollLeftAttribute);
           }
         };
-        visitShadows(document);
+        window.addEventListener('load', onLoad);
       }
 
       const root: string[] = [];

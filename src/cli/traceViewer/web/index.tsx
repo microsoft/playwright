@@ -26,7 +26,7 @@ declare global {
     getTraceModel(): Promise<TraceModel>;
     readFile(filePath: string): Promise<string>;
     readResource(sha1: string): Promise<string>;
-    renderSnapshot(arg: { action: trace.ActionTraceEvent, snapshot: { name: string, snapshotId?: string } }): void;
+    renderSnapshot(arg: { action: trace.ActionTraceEvent, snapshot: { snapshotId?: string, snapshotTime?: number } }): void;
   }
 }
 
