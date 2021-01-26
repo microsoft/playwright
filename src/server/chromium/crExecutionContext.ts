@@ -19,7 +19,6 @@ import { CRSession } from './crConnection';
 import { getExceptionMessage, releaseObject } from './crProtocolHelper';
 import { Protocol } from './protocol';
 import * as js from '../javascript';
-import * as sourceMap from '../../utils/sourceMap';
 import { rewriteErrorMessage } from '../../utils/stackTrace';
 import { parseEvaluationResultValue } from '../common/utilityScriptSerializers';
 
@@ -34,7 +33,7 @@ export class CRExecutionContext implements js.ExecutionContextDelegate {
 
   async rawEvaluate(expression: string): Promise<string> {
     const { exceptionDetails, result: remoteObject } = await this._client.send('Runtime.evaluate', {
-      expression: sourceMap.ensureSourceUrl(expression),
+      expression,
       contextId: this._contextId,
     }).catch(rewriteError);
     if (exceptionDetails)
