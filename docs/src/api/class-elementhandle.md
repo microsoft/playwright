@@ -58,7 +58,6 @@ ElementHandle instances can be used as an argument in [`method: Page.$eval`] and
 
 ## async method: ElementHandle.$
 * langs:
-  - alias-java: querySelector
   - alias-python: query_selector
 - returns: <[null]|[ElementHandle]>
 
@@ -70,7 +69,6 @@ returns `null`.
 
 ## async method: ElementHandle.$$
 * langs:
-  - alias-java: querySelectorAll
   - alias-python: query_selector_all
 - returns: <[Array]<[ElementHandle]>>
 
@@ -82,7 +80,6 @@ returns empty array.
 
 ## async method: ElementHandle.$eval
 * langs:
-  - alias-java: evalOnSelector
   - alias-python: eval_on_selector
 - returns: <[Serializable]>
 
@@ -118,9 +115,7 @@ assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "1
 ### param: ElementHandle.$eval.selector = %%-query-selector-%%
 
 ### param: ElementHandle.$eval.pageFunction
-* langs:
-  - alias-java: expression
-  - alias-python: expression
+* langs: js
 - `pageFunction` <[function]\([Element]\)>
 
 Function to be evaluated in browser context
@@ -132,7 +127,6 @@ Optional argument to pass to [`param: pageFunction`]
 
 ## async method: ElementHandle.$$eval
 * langs:
-  - alias-java: evalOnSelectorAll
   - alias-python: eval_on_selector_all
 - returns: <[Serializable]>
 
@@ -172,9 +166,7 @@ assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.inn
 ### param: ElementHandle.$$eval.selector = %%-query-selector-%%
 
 ### param: ElementHandle.$$eval.pageFunction
-* langs:
-  - alias-java: expression
-  - alias-python: expression
+* langs: js
 - `pageFunction` <[function]\([Array]<[Element]>\)>
 
 Function to be evaluated in browser context

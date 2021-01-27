@@ -35,7 +35,7 @@ Indicates that the web socket has been closed.
 Contains the URL of the WebSocket.
 
 ## async method: WebSocket.waitForEvent
-* langs: js,python
+* langs:
   - alias-python: expect_event
 - returns: <[any]>
 

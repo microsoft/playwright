@@ -62,9 +62,7 @@ assert tweet_handle.evaluate("node => node.innerText") == "10 retweets"
 ```
 
 ### param: JSHandle.evaluate.pageFunction
-* langs:
-  - alias-java: expression
-  - alias-python: expression
+* langs: js
 - `pageFunction` <[function]>
 
 Function to be evaluated in browser context
@@ -90,9 +88,7 @@ for the promise to resolve and return its value.
 See [`method: Page.evaluateHandle`] for more details.
 
 ### param: JSHandle.evaluateHandle.pageFunction
-* langs:
-  - alias-java: expression
-  - alias-python: expression
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated

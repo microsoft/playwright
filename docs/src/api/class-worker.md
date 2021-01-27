@@ -45,9 +45,7 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
 ### param: Worker.evaluate.pageFunction
-* langs:
-  - alias-java: expression
-  - alias-python: expression
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in the worker context
@@ -69,9 +67,7 @@ If the function passed to the `worker.evaluateHandle` returns a [Promise], then 
 the promise to resolve and return its value.
 
 ### param: Worker.evaluateHandle.pageFunction
-* langs:
-  - alias-java: expression
-  - alias-python: expression
+* langs: js
 - `pageFunction` <[function]|[string]>
 
 Function to be evaluated in the page context
