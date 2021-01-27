@@ -44,11 +44,7 @@ If the function passed to the `worker.evaluate` returns a non-[Serializable] val
 `undefined`. DevTools Protocol also supports transferring some additional values that are not serializable by `JSON`:
 `-0`, `NaN`, `Infinity`, `-Infinity`, and bigint literals.
 
-### param: Worker.evaluate.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in the worker context
+### param: Worker.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: Worker.evaluate.arg
 - `arg` <[EvaluationArgument]>
@@ -66,11 +62,7 @@ in-page object (JSHandle).
 If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for
 the promise to resolve and return its value.
 
-### param: Worker.evaluateHandle.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in the page context
+### param: Worker.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: Worker.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>

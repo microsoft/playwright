@@ -204,7 +204,7 @@ export interface Page {
    * Shortcut for main frame's
    * [frame.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevalselector-pagefunction-arg).
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
@@ -227,7 +227,7 @@ export interface Page {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
@@ -266,7 +266,7 @@ export interface Page {
    * 
    * Shortcut for main frame's
    * [frame.waitForFunction(pageFunction[, arg, options])](https://playwright.dev/docs/api/class-frame#framewaitforfunctionpagefunction-arg-options).
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    * @param options 
    */
@@ -3215,7 +3215,7 @@ export interface Frame {
    * await bodyHandle.dispose();
    * ```
    * 
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
@@ -3300,7 +3300,7 @@ export interface Frame {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
@@ -3323,7 +3323,7 @@ export interface Frame {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;
@@ -3358,7 +3358,7 @@ export interface Frame {
    * await frame.waitForFunction(selector => !!document.querySelector(selector), selector);
    * ```
    * 
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    * @param options 
    */
@@ -5120,7 +5120,7 @@ export interface Worker {
    * 
    * If the function passed to the `worker.evaluateHandle` returns a [Promise], then `worker.evaluateHandle` would wait for
    * the promise to resolve and return its value.
-   * @param pageFunction Function to be evaluated in the page context
+   * @param pageFunction Function to be evaluated in the worker context
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluateHandle<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -5188,7 +5188,7 @@ export interface JSHandle<T = any> {
    * expect(await tweetHandle.evaluate(node => node.innerText)).toBe('10 retweets');
    * ```
    * 
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluate<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<R>;
@@ -5208,7 +5208,7 @@ export interface JSHandle<T = any> {
    * See
    * [page.evaluateHandle(pageFunction[, arg])](https://playwright.dev/docs/api/class-page#pageevaluatehandlepagefunction-arg)
    * for more details.
-   * @param pageFunction Function to be evaluated
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   evaluateHandle<R, Arg, O extends T = T>(pageFunction: PageFunctionOn<O, Arg, R>, arg: Arg): Promise<SmartHandle<R>>;
@@ -5313,7 +5313,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   $eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K], Arg, R>, arg: Arg): Promise<R>;
@@ -5344,7 +5344,7 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * ```
    * 
    * @param selector A selector to query for. See [working with selectors](https://playwright.dev/docs/selectors) for more details.
-   * @param pageFunction Function to be evaluated in browser context
+   * @param pageFunction Function to be evaluated in the page context
    * @param arg Optional argument to pass to `pageFunction`
    */
   $$eval<K extends keyof HTMLElementTagNameMap, R, Arg>(selector: K, pageFunction: PageFunctionOn<HTMLElementTagNameMap[K][], Arg, R>, arg: Arg): Promise<R>;

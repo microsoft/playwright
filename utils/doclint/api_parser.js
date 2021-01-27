@@ -122,7 +122,18 @@ class ApiParser {
     if (!method)
       throw new Error('Invalid method ' + match[2] + '.' + match[3]);
     if (match[1] === 'param') {
-      method.argsArray.push(this.parseProperty(spec));
+      const arg = this.parseProperty(spec);
+      const existingArg = method.argsArray.find(m => m.name === arg.name || m.langs.aliases && Object.values(m.langs.aliases).indexOf(arg.name) !== -1);
+      if (existingArg) {
+        for (const lang of arg.langs.only) {
+          if (existingArg.name !== arg.name && existingArg.langs.aliases[lang] !== arg.name)
+            throw new Error(`Argument override ${arg.name} is not listed as ${lang} alias for ${clazz.name}.${method.name}.${existingArg.name}`);
+          existingArg.langs.overrides = existingArg.langs.overrides || {};
+          existingArg.langs.overrides[lang] = arg;
+        }
+      } else {
+        method.argsArray.push(arg);
+      }
     } else {
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
@@ -302,7 +313,8 @@ function extractLangs(spec) {
     return {
       only: only ? only.split(',') : undefined,
       aliases,
-      types: {}
+      types: {},
+      overrides: {}
     };
   }
   return {};

@@ -35,7 +35,7 @@ const PROJECT_DIR = path.join(__dirname, '..', '..');
   });
   documentation.generateSourceCodeComments();
   const result = serialize(documentation);
-  fs.writeFileSync(path.join(PROJECT_DIR, 'api.json'), JSON.stringify(result));
+  fs.writeFileSync(path.join(PROJECT_DIR, 'api.json'), JSON.stringify(result, null, 2));
 }
 
 /**

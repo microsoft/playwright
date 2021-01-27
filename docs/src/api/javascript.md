@@ -1,0 +1,16 @@
+### param: ElementHandle.$eval.pageFunction = %%-js-evalonselector-pagefunction-%%
+### param: ElementHandle.$$eval.pageFunction = %%-js-evalonselectorall-pagefunction-%%
+### param: Frame.$eval.pageFunction = %%-js-evalonselector-pagefunction-%%
+### param: Frame.$$eval.pageFunction = %%-js-evalonselectorall-pagefunction-%%
+### param: Frame.evaluate.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: Frame.evaluateHandle.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: Frame.waitForFunction.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: JSHandle.evaluate.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: JSHandle.evaluateHandle.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: Page.$eval.pageFunction = %%-js-evalonselector-pagefunction-%%
+### param: Page.$$eval.pageFunction = %%-js-evalonselectorall-pagefunction-%%
+### param: Page.evaluate.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: Page.evaluateHandle.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: Page.waitForFunction.pageFunction = %%-js-evaluate-pagefunction-%%
+### param: Worker.evaluate.pageFunction = %%-js-worker-evaluate-workerfunction-%%
+### param: Worker.evaluateHandle.pageFunction = %%-js-worker-evaluate-workerfunction-%%

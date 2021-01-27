@@ -369,11 +369,7 @@ Shortcut for main frame's [`method: Frame.$eval`].
 
 ### param: Page.$eval.selector = %%-query-selector-%%
 
-### param: Page.$eval.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Element]\)>
-
-Function to be evaluated in browser context
+### param: Page.$eval.expression = %%-evaluate-expression-%%
 
 ### param: Page.$eval.arg
 - `arg` <[EvaluationArgument]>
@@ -407,11 +403,7 @@ div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min
 
 ### param: Page.$$eval.selector = %%-query-selector-%%
 
-### param: Page.$$eval.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
-
-Function to be evaluated in browser context
+### param: Page.$$eval.expression = %%-evaluate-expression-%%
 
 ### param: Page.$$eval.arg
 - `arg` <[EvaluationArgument]>
@@ -459,7 +451,6 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 :::
 
 ### param: Page.addInitScript.script
-* langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.
@@ -903,11 +894,7 @@ body_handle.dispose()
 
 Shortcut for main frame's [`method: Frame.evaluate`].
 
-### param: Page.evaluate.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in the page context
+### param: Page.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: Page.evaluate.arg
 - `arg` <[EvaluationArgument]>
@@ -977,11 +964,7 @@ print(result_handle.json_value())
 result_handle.dispose()
 ```
 
-### param: Page.evaluateHandle.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in the page context
+### param: Page.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: Page.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
@@ -2279,11 +2262,7 @@ page.wait_for_function("selector => !!document.querySelector(selector)", selecto
 
 Shortcut for main frame's [`method: Frame.waitForFunction`].
 
-### param: Page.waitForFunction.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in browser context
+### param: Page.waitForFunction.expression = %%-evaluate-expression-%%
 
 ### param: Page.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
