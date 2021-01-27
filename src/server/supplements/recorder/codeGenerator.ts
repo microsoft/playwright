@@ -64,6 +64,11 @@ export class CodeGenerator {
     this._currentAction = action;
   }
 
+  performedActionFailed(action: ActionInContext) {
+    if (this._currentAction === action)
+      this._currentAction = undefined;
+  }
+
   didPerformAction(actionInContext: ActionInContext) {
     const { action, pageAlias } = actionInContext;
     let eraseLastAction = false;
