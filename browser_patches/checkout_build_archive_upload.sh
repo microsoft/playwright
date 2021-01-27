@@ -72,6 +72,12 @@ elif [[ "$BUILD_FLAVOR" == "chromium-mac-arm64" ]]; then
   EXPECTED_HOST_OS="Darwin"
   EXPECTED_HOST_OS_VERSION="10.15"
   BUILD_BLOB_NAME="chromium-mac-arm64.zip"
+elif [[ "$BUILD_FLAVOR" == "chromium-linux" ]]; then
+  BROWSER_NAME="chromium"
+  EXTRA_BUILD_ARGS="--compile-linux"
+  EXPECTED_HOST_OS="Ubuntu"
+  EXPECTED_HOST_OS_VERSION="18.04"
+  BUILD_BLOB_NAME="chromium-linux.zip"
 elif [[ "$BUILD_FLAVOR" == "chromium-linux-mirror-to-cdn" ]]; then
   BROWSER_NAME="chromium"
   EXTRA_BUILD_ARGS="--mirror-linux"
