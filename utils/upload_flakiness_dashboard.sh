@@ -48,6 +48,7 @@ export COMMIT_AUTHOR_EMAIL=$(git show -s --format=%ae HEAD)
 export COMMIT_TIMESTAMP=$(git show -s --format=%ct HEAD)
 
 export HOST_OS_NAME="$(uname)"
+export HOST_ARCH="$(uname -m)"
 export HOST_OS_VERSION=""
 if [[ "$HOST_OS_NAME" == "Darwin" ]]; then
   HOST_OS_VERSION=$(sw_vers -productVersion | grep -o '^\d\+.\d\+')
@@ -62,6 +63,7 @@ EMBED_METADATA_SCRIPT=$(cat <<EOF
   json.metadata = {
     runURL: process.env.BUILD_URL,
     osName: process.env.HOST_OS_NAME,
+    arch: prcoess.env.HOST_ARCH,
     osVersion: process.env.HOST_OS_VERSION,
     commitSHA: process.env.COMMIT_SHA,
     commitTimestamp: process.env.COMMIT_TIMESTAMP,
