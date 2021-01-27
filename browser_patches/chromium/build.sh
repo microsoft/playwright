@@ -67,6 +67,11 @@ compile_chromium() {
   # Update Chromium checkout. One might think that this step should go to `prepare_checkout.sh`
   # script, but the `prepare_checkout.sh` is in fact designed to prepare a fork checkout, whereas
   # we don't fork Chromium.
+  if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
+    mkdir "${CR_CHECKOUT_PATH}"
+    cd "${CR_CHECKOUT_PATH}"
+    fetch chromium
+  fi
   cd "${CR_CHECKOUT_PATH}/src"
   git checkout master
   git pull origin master
