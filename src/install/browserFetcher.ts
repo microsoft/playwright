@@ -42,12 +42,7 @@ const existsAsync = (path: string): Promise<boolean> => new Promise(resolve => f
 
 export type OnProgressCallback = (downloadedBytes: number, totalBytes: number) => void;
 
-const CHROMIUM_MOVE_TO_AZURE_CDN_REVISION = 792639;
-
 function getDownloadHost(browserName: BrowserName, revision: number): string {
-  // Only old chromium revisions are downloaded from gbucket.
-  const defaultDownloadHost = browserName === 'chromium' && revision < CHROMIUM_MOVE_TO_AZURE_CDN_REVISION ?  'https://storage.googleapis.com' : 'https://playwright.azureedge.net';
-
   const envDownloadHost: { [key: string]: string } = {
     chromium: 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST',
     firefox: 'PLAYWRIGHT_FIREFOX_DOWNLOAD_HOST',
@@ -55,85 +50,50 @@ function getDownloadHost(browserName: BrowserName, revision: number): string {
   };
   return getFromENV(envDownloadHost[browserName]) ||
          getFromENV('PLAYWRIGHT_DOWNLOAD_HOST') ||
-         defaultDownloadHost;
+         'https://playwright.azureedge.net';
 }
 
 function getDownloadUrl(browserName: BrowserName, revision: number, platform: BrowserPlatform): string | undefined {
   if (browserName === 'chromium') {
-    return revision < CHROMIUM_MOVE_TO_AZURE_CDN_REVISION ?
-      new Map<BrowserPlatform, string>([
-        ['ubuntu18.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
-        ['ubuntu20.04', '%s/chromium-browser-snapshots/Linux_x64/%d/chrome-linux.zip'],
-        ['mac10.13', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['mac10.14', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['mac10.15', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['mac11', '%s/chromium-browser-snapshots/Mac/%d/chrome-mac.zip'],
-        ['win32', '%s/chromium-browser-snapshots/Win/%d/chrome-win.zip'],
-        ['win64', '%s/chromium-browser-snapshots/Win_x64/%d/chrome-win.zip'],
-      ]).get(platform) :
-      new Map<BrowserPlatform, string>([
-        ['ubuntu18.04', '%s/builds/chromium/%s/chromium-linux.zip'],
-        ['ubuntu20.04', '%s/builds/chromium/%s/chromium-linux.zip'],
-        ['mac10.13', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac10.14', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac11', '%s/builds/chromium/%s/chromium-mac.zip'],
-        ['mac11-arm64', '%s/builds/chromium/%s/chromium-mac-arm64.zip'],
-        ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
-        ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
-      ]).get(platform);
+    return new Map<BrowserPlatform, string>([
+      ['ubuntu18.04', '%s/builds/chromium/%s/chromium-linux.zip'],
+      ['ubuntu20.04', '%s/builds/chromium/%s/chromium-linux.zip'],
+      ['mac10.13', '%s/builds/chromium/%s/chromium-mac.zip'],
+      ['mac10.14', '%s/builds/chromium/%s/chromium-mac.zip'],
+      ['mac10.15', '%s/builds/chromium/%s/chromium-mac.zip'],
+      ['mac11', '%s/builds/chromium/%s/chromium-mac.zip'],
+      ['mac11-arm64', '%s/builds/chromium/%s/chromium-mac-arm64.zip'],
+      ['win32', '%s/builds/chromium/%s/chromium-win32.zip'],
+      ['win64', '%s/builds/chromium/%s/chromium-win64.zip'],
+    ]).get(platform);
   }
 
   if (browserName === 'firefox') {
-    const FIREFOX_NORMALIZE_CDN_NAMES_REVISION = 1140;
-    return revision < FIREFOX_NORMALIZE_CDN_NAMES_REVISION ?
-      new Map<BrowserPlatform, string>([
-        ['ubuntu18.04', '%s/builds/firefox/%s/firefox-linux.zip'],
-        ['ubuntu20.04', '%s/builds/firefox/%s/firefox-linux.zip'],
-        ['mac10.13', '%s/builds/firefox/%s/firefox-mac.zip'],
-        ['mac10.14', '%s/builds/firefox/%s/firefox-mac.zip'],
-        ['mac10.15', '%s/builds/firefox/%s/firefox-mac.zip'],
-        ['mac11', '%s/builds/firefox/%s/firefox-mac.zip'],
-        ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
-        ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
-      ]).get(platform) :
-      new Map<BrowserPlatform, string>([
-        ['ubuntu18.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
-        ['ubuntu20.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
-        ['mac10.13', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-        ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-        ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-        ['mac11', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
-        ['mac11-arm64', '%s/builds/firefox/%s/firefox-mac-11.0-arm64.zip'],
-        ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
-        ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
-      ]).get(platform);
+    return new Map<BrowserPlatform, string>([
+      ['ubuntu18.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+      ['ubuntu20.04', '%s/builds/firefox/%s/firefox-ubuntu-18.04.zip'],
+      ['mac10.13', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+      ['mac10.14', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+      ['mac10.15', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+      ['mac11', '%s/builds/firefox/%s/firefox-mac-10.14.zip'],
+      ['mac11-arm64', '%s/builds/firefox/%s/firefox-mac-11.0-arm64.zip'],
+      ['win32', '%s/builds/firefox/%s/firefox-win32.zip'],
+      ['win64', '%s/builds/firefox/%s/firefox-win64.zip'],
+    ]).get(platform);
   }
 
   if (browserName === 'webkit') {
-    const WEBKIT_NORMALIZE_CDN_NAMES_REVISION = 1317;
-    return revision < WEBKIT_NORMALIZE_CDN_NAMES_REVISION ?
-      new Map<BrowserPlatform, string | undefined>([
-        ['ubuntu18.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
-        ['ubuntu20.04', '%s/builds/webkit/%s/minibrowser-gtk-wpe.zip'],
-        ['mac10.13', undefined],
-        ['mac10.14', '%s/builds/webkit/%s/minibrowser-mac-10.14.zip'],
-        ['mac10.15', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
-        ['mac11', '%s/builds/webkit/%s/minibrowser-mac-10.15.zip'],
-        ['win32', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-        ['win64', '%s/builds/webkit/%s/minibrowser-win64.zip'],
-      ]).get(platform) :
-      new Map<BrowserPlatform, string | undefined>([
-        ['ubuntu18.04', '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip'],
-        ['ubuntu20.04', '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip'],
-        ['mac10.13', undefined],
-        ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
-        ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
-        ['mac11', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
-        ['mac11-arm64', '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip'],
-        ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
-        ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
-      ]).get(platform);
+    return new Map<BrowserPlatform, string | undefined>([
+      ['ubuntu18.04', '%s/builds/webkit/%s/webkit-ubuntu-18.04.zip'],
+      ['ubuntu20.04', '%s/builds/webkit/%s/webkit-ubuntu-20.04.zip'],
+      ['mac10.13', undefined],
+      ['mac10.14', '%s/builds/webkit/%s/webkit-mac-10.14.zip'],
+      ['mac10.15', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
+      ['mac11', '%s/builds/webkit/%s/webkit-mac-10.15.zip'],
+      ['mac11-arm64', '%s/builds/webkit/%s/webkit-mac-11.0-arm64.zip'],
+      ['win32', '%s/builds/webkit/%s/webkit-win64.zip'],
+      ['win64', '%s/builds/webkit/%s/webkit-win64.zip'],
+    ]).get(platform);
   }
 }
 
