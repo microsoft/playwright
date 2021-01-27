@@ -66,7 +66,7 @@ it('should record trace', async ({browser, testInfo, server}) => {
 });
 
 it('should record trace with POST', (test, { browserName, platform }) => {
-  test.fail();
+  test.fixme();
 }, async ({browser, testInfo, server}) => {
   const traceDir = testInfo.outputPath('trace');
   const context = await browser.newContext({ _traceDir: traceDir } as any);
