@@ -103,16 +103,10 @@ class TraceViewer {
       const { action, snapshot } = arg;
       if (!this._document)
         return;
-      try {
-        await snapshotPage.goto(server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime));
-      } catch (e) {
-        if (!e.message.includes('Navigation interrupted by another one'))
-          console.log(e); // eslint-disable-line no-console
-      }
+      await snapshotPage.goto(server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime)).catch(e => {});
     });
     await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
     await uiPage.route('**/*', (route, request) => {
-      debugger;
       if (request.frame().parentFrame() && this._document) {
         this._document.snapshotRouter.route(route);
         return;
