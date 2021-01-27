@@ -63,7 +63,7 @@ EMBED_METADATA_SCRIPT=$(cat <<EOF
   json.metadata = {
     runURL: process.env.BUILD_URL,
     osName: process.env.HOST_OS_NAME,
-    arch: prcoess.env.HOST_ARCH,
+    arch: process.env.HOST_ARCH,
     osVersion: process.env.HOST_OS_VERSION,
     commitSHA: process.env.COMMIT_SHA,
     commitTimestamp: process.env.COMMIT_TIMESTAMP,
