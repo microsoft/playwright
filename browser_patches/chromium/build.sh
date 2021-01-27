@@ -49,6 +49,7 @@ compile_chromium() {
       echo "in the Applications folder!"
       exit 1
     fi
+    export DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer
     # As of Jan, 2021 Chromium mac compilation is only possible on Intel macbooks.
     # See https://chromium.googlesource.com/chromium/src.git/+/master/docs/mac_arm64.md
     if [[ $(uname -m) != "x86_64" ]]; then
@@ -56,7 +57,34 @@ compile_chromium() {
       exit 1
     fi
     CHROMIUM_FOLDER_NAME="chrome-mac"
-    CHROMIUM_FILES_TO_ARCHIVE+=("Chromium.app")
+    CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
+  elif [[ $1 == "--compile-linux" ]]; then
+    CHROMIUM_FOLDER_NAME="chrome-linux"
+    CHROMIUM_FILES_TO_ARCHIVE=( 
+      "chrome"
+      "chrome_100_percent.pak"
+      "chrome_200_percent.pak"
+      "chrome_sandbox"
+      "chrome-wrapper"
+      "ClearKeyCdm"
+      "crashpad_handler"
+      "icudtl.dat"
+      "libEGL.so"
+      "libGLESv2.so"
+      "locales"
+      "MEIPreload"
+      "nacl_helper"
+      "nacl_helper_bootstrap"
+      "nacl_helper_nonsfi"
+      "nacl_irt_x86_64.nexe"
+      "product_logo_48.png"
+      "resources"
+      "resources.pak"
+      "swiftshader"
+      "v8_context_snapshot.bin"
+      "xdg-mime"
+      "xdg-settings"
+    )
   fi
 
   # Get chromium SHA from the build revision.
@@ -85,15 +113,21 @@ EOF
   fi
 
   # Compile Chromium with correct Xcode version.
-  DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer gn gen out/Default
-  DEVELOPER_DIR=/Applications/Xcode12.2.app/Contents/Developer autoninja -C out/Default chrome
+  gn gen out/Default
+  autoninja -C out/Default chrome
 
-  # Prepare resulting archive similarly to how we do it in mirror_chromium.
+  # Prepare resulting archive.
   cd "$SCRIPT_PATH"
   rm -rf output
   mkdir -p "output/${CHROMIUM_FOLDER_NAME}"
+
+  # On Mac, use 'ditto' to copy directories instead of 'cp'.
+  COPY_COMMAND="cp -R"
+  if [[ $(uname) == "Darwin" ]]; then
+    COPY_COMMAND="ditto"
+  fi
   for file in ${CHROMIUM_FILES_TO_ARCHIVE[@]}; do
-    ditto "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
+    $COPY_COMMAND "${CR_CHECKOUT_PATH}/src/out/Default/${file}" "output/${CHROMIUM_FOLDER_NAME}/${file}"
   done
   cd output
   zip --symlinks -r build.zip "${CHROMIUM_FOLDER_NAME}"
