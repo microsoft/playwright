@@ -61,23 +61,44 @@ export class OutputMultiplexer implements RecorderOutput {
   }
 }
 
-export class BufferOutput {
-  lines: string[] = [];
+export class BufferedOutput implements RecorderOutput {
+  private _lines: string[] = [];
+  private _buffer: string | null = null;
+  private _language: string | null = null;
+
+  constructor(language?: string) {
+    this._language = language || null;
+  }
 
   printLn(text: string) {
-    this.lines.push(...text.trimEnd().split('\n'));
+    this._buffer = null;
+    this._lines.push(...text.trimEnd().split('\n'));
   }
 
   popLn(text: string) {
-    this.lines.length -= text.trimEnd().split('\n').length;
+    this._buffer = null;
+    this._lines.length -= text.trimEnd().split('\n').length;
   }
 
   buffer(): string {
-    return this.lines.join('\n');
+    if (this._buffer === null) {
+      this._buffer = this._lines.join('\n');
+      if (this._language)
+        this._buffer = hljs.highlight(this._language, this._buffer).value;
+    }
+    return this._buffer;
+  }
+
+  clear() {
+    this._lines = [];
+    this._buffer = null;
+  }
+
+  flush() {
   }
 }
 
-export class FileOutput extends BufferOutput implements RecorderOutput {
+export class FileOutput extends BufferedOutput implements RecorderOutput {
   private _fileName: string;
 
   constructor(fileName: string) {
@@ -147,7 +168,7 @@ export class TerminalOutput implements RecorderOutput {
   flush() {}
 }
 
-export class FlushingTerminalOutput extends BufferOutput implements RecorderOutput {
+export class FlushingTerminalOutput extends BufferedOutput implements RecorderOutput {
   private _output: Writable
 
   constructor(output: Writable) {

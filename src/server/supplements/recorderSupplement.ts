@@ -28,11 +28,11 @@ import { PythonLanguageGenerator } from './recorder/python';
 import { ProgressController } from '../progress';
 import * as recorderSource from '../../generated/recorderSource';
 import * as consoleApiSource from '../../generated/consoleApiSource';
-import { FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
+import { BufferedOutput, FileOutput, FlushingTerminalOutput, OutputMultiplexer, RecorderOutput, TerminalOutput, Writable } from './recorder/outputs';
+import type { State, UIState } from './recorder/state';
 
 type BindingSource = { frame: Frame, page: Page };
 type App = 'codegen' | 'debug' | 'pause';
-type Mode = 'inspecting' | 'recording' | 'none';
 
 const symbol = Symbol('RecorderSupplement');
 
@@ -45,10 +45,11 @@ export class RecorderSupplement {
   private _timers = new Set<NodeJS.Timeout>();
   private _context: BrowserContext;
   private _resumeCallback: (() => void) | null = null;
-  private _recorderState: { mode: Mode };
+  private _recorderUIState: UIState;
   private _paused = false;
   private _app: App;
   private _output: OutputMultiplexer;
+  private _bufferedOutput: BufferedOutput;
 
   static getOrCreate(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams): Promise<RecorderSupplement> {
     let recorderPromise = (context as any)[symbol] as Promise<RecorderSupplement>;
@@ -63,7 +64,10 @@ export class RecorderSupplement {
   constructor(context: BrowserContext, app: App, params: channels.BrowserContextRecorderSupplementEnableParams) {
     this._context = context;
     this._app = app;
-    this._recorderState = { mode: app === 'codegen' ? 'recording' : 'none' };
+    this._recorderUIState = {
+      mode: app === 'codegen' ? 'recording' : 'none',
+      drawerVisible: false
+    };
     let languageGenerator: LanguageGenerator;
     switch (params.language) {
       case 'javascript': languageGenerator = new JavaScriptLanguageGenerator(); break;
@@ -80,6 +84,8 @@ export class RecorderSupplement {
       write: (text: string) => context.emit(BrowserContext.Events.StdOut, text)
     };
     const outputs: RecorderOutput[] = [params.terminal ? new TerminalOutput(writable, highlighterType) : new FlushingTerminalOutput(writable)];
+    this._bufferedOutput = new BufferedOutput(highlighterType);
+    outputs.push(this._bufferedOutput);
     if (params.outputFile)
       outputs.push(new FileOutput(params.outputFile));
     this._output = new OutputMultiplexer(outputs);
@@ -114,16 +120,33 @@ export class RecorderSupplement {
     await this._context.exposeBinding('playwrightRecorderCommitAction', false,
         (source: BindingSource, action: actions.Action) => this._generator.commitLastAction());
 
-    await this._context.exposeBinding('playwrightRecorderState', false, () => {
-      return {
-        state: this._recorderState,
-        app: this._app,
-        paused: this._paused
+    await this._context.exposeBinding('playwrightRecorderClearScript', false,
+        (source: BindingSource, action: actions.Action) => {
+          this._bufferedOutput.clear();
+          this._generator.restart();
+          if (this._app === 'codegen') {
+            for (const page of this._context.pages())
+              this._onFrameNavigated(page.mainFrame(), page);
+          }
+        });
+
+    await this._context.exposeBinding('playwrightRecorderState', false, ({ page }) => {
+      const state: State = {
+        isController: page === this._context.pages()[0],
+        uiState: this._recorderUIState,
+        canResume: this._app === 'pause',
+        isPaused: this._paused,
+        codegenScript: this._bufferedOutput.buffer()
       };
+      return state;
     });
 
-    await this._context.exposeBinding('playwrightRecorderSetState', false, (source, state) => {
-      this._recorderState = state;
+    await this._context.exposeBinding('playwrightRecorderSetUIState', false, (source, state: UIState) => {
+      const isController = source.page === this._context.pages()[0];
+      if (isController)
+        this._recorderUIState = { ...this._recorderUIState, ...state };
+      else
+        this._recorderUIState = { ...this._recorderUIState, mode: state.mode };
       this._output.setEnabled(state.mode === 'recording');
     });
 

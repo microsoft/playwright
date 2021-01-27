@@ -35,11 +35,12 @@ export interface CodeGeneratorOutput {
 }
 
 export class CodeGenerator {
-  private _currentAction: ActionInContext | undefined;
-  private _lastAction: ActionInContext | undefined;
+  private _currentAction: ActionInContext | null = null;
+  private _lastAction: ActionInContext | null = null;
   private _lastActionText: string | undefined;
   private _languageGenerator: LanguageGenerator;
   private _output: CodeGeneratorOutput;
+  private _headerText = '';
   private _footerText = '';
 
   constructor(browserName: string, generateHeaders: boolean, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, output: CodeGeneratorOutput, languageGenerator: LanguageGenerator, deviceName: string | undefined, saveStorage: string | undefined) {
@@ -48,9 +49,17 @@ export class CodeGenerator {
 
     launchOptions = { headless: false, ...launchOptions };
     if (generateHeaders) {
-      const header = this._languageGenerator.generateHeader(browserName, launchOptions, contextOptions, deviceName);
-      this._output.printLn(header);
+      this._headerText = this._languageGenerator.generateHeader(browserName, launchOptions, contextOptions, deviceName);
       this._footerText = '\n' + this._languageGenerator.generateFooter(saveStorage);
+    }
+    this.restart();
+  }
+
+  restart() {
+    this._currentAction = null;
+    this._lastAction = null;
+    if (this._headerText) {
+      this._output.printLn(this._headerText);
       this._output.printLn(this._footerText);
     }
   }
@@ -66,7 +75,7 @@ export class CodeGenerator {
 
   performedActionFailed(action: ActionInContext) {
     if (this._currentAction === action)
-      this._currentAction = undefined;
+      this._currentAction = null;
   }
 
   didPerformAction(actionInContext: ActionInContext) {
@@ -109,7 +118,7 @@ export class CodeGenerator {
     if (eraseLastAction && this._lastActionText)
       this._output.popLn(this._lastActionText);
     const performingAction = !!this._currentAction;
-    this._currentAction = undefined;
+    this._currentAction = null;
     this._lastAction = actionInContext;
     this._lastActionText = this._languageGenerator.generateAction(actionInContext, performingAction);
     this._output.printLn(this._lastActionText);

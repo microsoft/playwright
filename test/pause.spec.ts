@@ -27,7 +27,7 @@ it('should pause and resume the script', async ({page}) => {
   const resumePromise = (page as any)._pause().then(() => resolved = true);
   await new Promise(x => setTimeout(x, 0));
   expect(resolved).toBe(false);
-  await page.click('.playwright-resume');
+  await page.click('#pw-button-resume');
   await resumePromise;
   expect(resolved).toBe(true);
 });
@@ -38,7 +38,7 @@ it('should pause through a navigation', async ({page, server}) => {
   await new Promise(x => setTimeout(x, 0));
   expect(resolved).toBe(false);
   await page.goto(server.EMPTY_PAGE);
-  await page.click('.playwright-resume');
+  await page.click('#pw-button-resume');
   await resumePromise;
   expect(resolved).toBe(true);
 });
@@ -50,7 +50,7 @@ it('should pause after a navigation', async ({page, server}) => {
   const resumePromise = (page as any)._pause().then(() => resolved = true);
   await new Promise(x => setTimeout(x, 0));
   expect(resolved).toBe(false);
-  await page.click('.playwright-resume');
+  await page.click('#pw-button-resume');
   await resumePromise;
   expect(resolved).toBe(true);
 });
