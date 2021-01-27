@@ -1607,21 +1607,20 @@ export interface Page {
    * // → false
    * ```
    * 
-   * @param params 
+   * @param options 
    */
-  emulateMedia(params: {
-    /**
-     * Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null`
-     * disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value. Optional.
-     */
-    media?: null|"screen"|"print";
-
+  emulateMedia(options?: {
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-     * `null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated
-     * value. Optional.
+     * `null` disables color scheme emulation.
      */
     colorScheme?: null|"light"|"dark"|"no-preference";
+
+    /**
+     * Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`. Passing `null`
+     * disables CSS media emulation.
+     */
+    media?: null|"screen"|"print";
   }): Promise<void>;
 
   /**
@@ -2062,7 +2061,7 @@ export interface Page {
    * > NOTE: Generating a pdf is currently only supported in Chromium headless.
    * 
    * `page.pdf()` generates a pdf of the page with `print` css media. To generate a pdf with `screen` media, call
-   * [page.emulateMedia(params)](https://playwright.dev/docs/api/class-page#pageemulatemediaparams) before calling
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) before calling
    * `page.pdf()`:
    * 
    * > NOTE: By default, `page.pdf()` generates a pdf with modified colors for printing. Use the
@@ -6264,7 +6263,7 @@ export interface BrowserType<Browser> {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia(params)](https://playwright.dev/docs/api/class-page#pageemulatemediaparams) for more details.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
      * Defaults to '`light`'.
      */
     colorScheme?: "light"|"dark"|"no-preference";
@@ -7076,7 +7075,7 @@ export interface Browser extends EventEmitter {
 
     /**
      * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-     * [page.emulateMedia(params)](https://playwright.dev/docs/api/class-page#pageemulatemediaparams) for more details.
+     * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
      * Defaults to '`light`'.
      */
     colorScheme?: "light"|"dark"|"no-preference";
@@ -9096,7 +9095,7 @@ export interface BrowserContextOptions {
 
   /**
    * Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. See
-   * [page.emulateMedia(params)](https://playwright.dev/docs/api/class-page#pageemulatemediaparams) for more details.
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#pageemulatemediaoptions) for more details.
    * Defaults to '`light`'.
    */
   colorScheme?: "light"|"dark"|"no-preference";

@@ -57,22 +57,6 @@ Script to be evaluated in all pages in the browser context. Optional.
 ### param: Page.selectOption.value = %%-python-select-options-value-%%
 ### param: Page.selectOption.label = %%-python-select-options-label-%%
 
-### param: Page.emulateMedia.params
-* langs: python
-- `media` <[null]|"screen"|"print">
-
-Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
-Passing `null` disables CSS media emulation. Omitting `media` or passing `undefined` does not change the emulated value.
-Optional.
-
-### param: Page.emulateMedia.params
-* langs: python
-- `colorScheme` <[null]|"light"|"dark"|"no-preference">
-
-Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
-`null` disables color scheme emulation. Omitting `colorScheme` or passing `undefined` does not change the emulated
-value. Optional.
-
 ### option: Page.frame.name
 * langs: python
 - `name` <[string]>
