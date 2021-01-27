@@ -101,9 +101,8 @@ class TraceViewer {
     });
     await uiPage.exposeBinding('renderSnapshot', async (_, arg: { action: ActionTraceEvent, snapshot: { snapshotId?: string, snapshotTime?: number } }) => {
       const { action, snapshot } = arg;
-      if (!this._document)
-        return;
-      await snapshotPage.goto(server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime)).catch(e => {});
+      const url = server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime);
+      await snapshotPage.evaluate(url => (window as any).showSnapshot(url), url).catch(e => {});
     });
     await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
     await uiPage.route('**/*', (route, request) => {

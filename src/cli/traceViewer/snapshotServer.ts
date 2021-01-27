@@ -87,10 +87,52 @@ export class SnapshotServer {
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'text/html');
     response.end(`
-      <script>
-        navigator.serviceWorker.register('service-worker.js');
-        window.readyPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
-      </script>
+      <style>
+        html, body {
+          margin: 0;
+          padding: 0;
+        }
+        iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+        }
+      </style>
+      <body>
+        <script>
+          navigator.serviceWorker.register('service-worker.js');
+          window.readyPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+
+          let current = document.createElement('iframe');
+          document.body.appendChild(current);
+          let next = document.createElement('iframe');
+          document.body.appendChild(next);
+          next.style.visibility = 'hidden';
+
+          let showPromise = Promise.resolve();
+          let nextUrl;
+          window.showSnapshot = url => {
+            if (!nextUrl) {
+              showPromise = showPromise.then(async () => {
+                const url = nextUrl;
+                nextUrl = undefined;
+                const loaded = new Promise(f => next.onload = f);
+                next.src = url;
+                await loaded;
+                let temp = current;
+                current = next;
+                next = temp;
+                current.style.visibility = 'visible';
+                next.style.visibility = 'hidden';
+              });
+            }
+            nextUrl = url;
+          };
+        </script>
+      </body>
     `);
   }
 
