@@ -70,7 +70,7 @@ compile_chromium() {
   if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
     mkdir "${CR_CHECKOUT_PATH}"
     cd "${CR_CHECKOUT_PATH}"
-    fetch chromium
+    fetch chromium --no-hooks 
   fi
   cd "${CR_CHECKOUT_PATH}/src"
   git checkout master
