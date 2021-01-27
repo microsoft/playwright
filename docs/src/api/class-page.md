@@ -818,15 +818,17 @@ page.evaluate("matchMedia('(prefers-color-scheme: light)').matches")
 page.evaluate("matchMedia('(prefers-color-scheme: no-preference)').matches")
 ```
 
-### param: Page.emulateMedia.params
-* langs: js
-- `params` <[Object]>
-  - `media` <[null]|"screen"|"print"> Changes the CSS media type of the page. The only allowed values are
-    `'screen'`, `'print'` and `null`. Passing `null` disables CSS media emulation. Omitting `media` or passing
-    `undefined` does not change the emulated value. Optional.
-  - `colorScheme` <[null]|"light"|"dark"|"no-preference"> Emulates `'prefers-colors-scheme'` media feature,
-    supported values are `'light'`, `'dark'`, `'no-preference'`. Passing `null` disables color scheme emulation.
-    Omitting `colorScheme` or passing `undefined` does not change the emulated value. Optional.
+### option: Page.emulateMedia.media
+- `media` <[null]|"screen"|"print">
+
+Changes the CSS media type of the page. The only allowed values are `'screen'`, `'print'` and `null`.
+Passing `null` disables CSS media emulation.
+
+### option: Page.emulateMedia.colorScheme
+- `colorScheme` <[null]|"light"|"dark"|"no-preference">
+
+Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
+`null` disables color scheme emulation.
 
 ## async method: Page.evaluate
 - returns: <[Serializable]>

@@ -1,5 +1,5 @@
 # class: CDPSession
-* langs: js, python
+* langs: js,python
 * extends: [EventEmitter]
 
 The `CDPSession` instances are used to talk raw Chrome Devtools Protocol:

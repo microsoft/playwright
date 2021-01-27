@@ -420,11 +420,11 @@ export class Page extends ChannelOwner<channels.PageChannel, channels.PageInitia
     });
   }
 
-  async emulateMedia(params: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null } = {}) {
+  async emulateMedia(options: { media?: 'screen' | 'print' | null, colorScheme?: 'dark' | 'light' | 'no-preference' | null } = {}) {
     return this._wrapApiCall('page.emulateMedia', async () => {
       await this._channel.emulateMedia({
-        media: params.media === null ? 'null' : params.media,
-        colorScheme: params.colorScheme === null ? 'null' : params.colorScheme,
+        media: options.media === null ? 'null' : options.media,
+        colorScheme: options.colorScheme === null ? 'null' : options.colorScheme,
       });
     });
   }
