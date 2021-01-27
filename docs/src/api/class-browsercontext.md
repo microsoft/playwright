@@ -737,7 +737,7 @@ A glob pattern, regex pattern or predicate receiving [URL] used to register a ro
 Optional handler function used to register a routing with [`method: BrowserContext.route`].
 
 ## async method: BrowserContext.waitForEvent
-* langs:
+* langs: js,python
   - alias-python: expect_event
 - returns: <[any]>
 

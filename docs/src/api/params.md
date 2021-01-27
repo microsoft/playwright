@@ -147,7 +147,7 @@ Whether to ignore HTTPS errors during navigation. Defaults to `false`.
 Toggles bypassing page's Content-Security-Policy.
 
 ## context-option-viewport
-* langs: js
+* langs: js,java
 - `viewport` <[null]|[Object]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
@@ -262,7 +262,7 @@ Logger sink for Playwright logging.
 **DEPRECATED** Use [`option: recordVideo`] instead.
 
 ## context-option-recordhar
-* langs: js
+* langs: js,java
 - `recordHar` <[Object]>
   - `omitContent` <[boolean]> Optional setting to control whether to omit request content from the HAR. Defaults to
     `false`.
@@ -285,7 +285,7 @@ Optional setting to control whether to omit request content from the HAR. Defaul
 Path on the filesystem to write the HAR file to.
 
 ## context-option-recordvideo
-* langs: js
+* langs: js,java
 - `recordVideo` <[Object]>
   - `dir` <[path]> Path to the directory to put videos into.
   - `size` <[Object]> Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport`.
@@ -326,7 +326,7 @@ option to work. If all contexts override the proxy, global proxy will be never u
 `launch({ proxy: { server: 'per-context' } })`.
 
 ## select-options-values
-* langs: js
+* langs: js,java
 - `values` <[null]|[string]|[ElementHandle]|[Array]<[string]>|[Object]|[Array]<[ElementHandle]>|[Array]<[Object]>>
   - `value` <[string]> Matches by `option.value`. Optional.
   - `label` <[string]> Matches by `option.label`. Optional.
@@ -354,6 +354,13 @@ method resolves immediately. Can be one of:
   * `'load'` - wait for the `load` event to be fired.
   * `'domcontentloaded'` - wait for the `DOMContentLoaded` event to be fired.
   * `'networkidle'` - wait until there are no network connections for at least `500` ms.
+
+## java-evaluate-expression
+* langs: java
+- `expression` <[string]>
+
+JavaScript expression to be evaluated in the browser context. If it looks like a function declaration,
+it is interpreted as a function. Otherwise, evaluated as an expression.
 
 ## python-select-options-element
 * langs: python
