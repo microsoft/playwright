@@ -65,7 +65,9 @@ it('should record trace', async ({browser, testInfo, server}) => {
   expect(fs.existsSync(path.join(traceDir, 'resources', snapshotEvent.sha1))).toBe(true);
 });
 
-it('should record trace with POST', async ({browser, testInfo, server}) => {
+it('should record trace with POST', (test, { browserName, platform }) => {
+  test.fail();
+}, async ({browser, testInfo, server}) => {
   const traceDir = testInfo.outputPath('trace');
   const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
