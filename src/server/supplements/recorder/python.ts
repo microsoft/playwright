@@ -33,7 +33,7 @@ export class PythonLanguageGenerator implements LanguageGenerator {
   }
 
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
-    const { action, pageAlias, frame } = actionInContext;
+    const { action, pageAlias } = actionInContext;
     const formatter = new PythonFormatter(4);
     formatter.newLine();
     formatter.add('# ' + actionTitle(action));
@@ -45,8 +45,10 @@ export class PythonLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const subject = !frame.parentFrame() ? pageAlias :
-      `${pageAlias}.frame(${formatOptions({ url: frame.url() }, false)})`;
+    const subject = actionInContext.isMainFrame ? pageAlias :
+      (actionInContext.frameName ?
+        `${pageAlias}.frame(${formatOptions({ name: actionInContext.frameName }, false)})` :
+        `${pageAlias}.frame(${formatOptions({ url: actionInContext.frameUrl }, false)})`);
 
     let navigationSignal: NavigationSignal | undefined;
     let popupSignal: PopupSignal | undefined;

@@ -597,4 +597,45 @@ describe('cli codegen', (test, { browserName, headful }) => {
       page.click('input[id=checkbox]')
     ]);
   });
+
+  it('should prefer frame name', async ({ page, recorder, server }) => {
+    await recorder.setContentAndWait(`
+      <iframe src='./frames/frame.html' name='one'></iframe>
+      <iframe src='./frames/frame.html' name='two'></iframe>
+      <iframe src='./frames/frame.html'></iframe>
+    `, server.EMPTY_PAGE, 4);
+    const frameOne = page.frame({ name: 'one' });
+    const frameTwo = page.frame({ name: 'two' });
+    const otherFrame = page.frames().find(f => f !== page.mainFrame() && !f.name());
+
+    await Promise.all([
+      recorder.waitForOutput('one'),
+      frameOne.click('div'),
+    ]);
+    expect(recorder.output()).toContain(`
+  // Click text="Hi, I'm frame"
+  await page.frame({
+    name: 'one'
+  }).click('text="Hi, I\\'m frame"');`);
+
+    await Promise.all([
+      recorder.waitForOutput('two'),
+      frameTwo.click('div'),
+    ]);
+    expect(recorder.output()).toContain(`
+  // Click text="Hi, I'm frame"
+  await page.frame({
+    name: 'two'
+  }).click('text="Hi, I\\'m frame"');`);
+
+    await Promise.all([
+      recorder.waitForOutput('url: \''),
+      otherFrame.click('div'),
+    ]);
+    expect(recorder.output()).toContain(`
+  // Click text="Hi, I'm frame"
+  await page.frame({
+    url: '${otherFrame.url()}'
+  }).click('text="Hi, I\\'m frame"');`);
+  });
 });

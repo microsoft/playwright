@@ -24,7 +24,7 @@ import deviceDescriptors = require('../../deviceDescriptors');
 export class CSharpLanguageGenerator implements LanguageGenerator {
 
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
-    const { action, pageAlias, frame } = actionInContext;
+    const { action, pageAlias } = actionInContext;
     const formatter = new CSharpFormatter(0);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
@@ -36,8 +36,10 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const subject = !frame.parentFrame() ? pageAlias :
-      `${pageAlias}.GetFrame(url: '${frame.url()}')`;
+    const subject = actionInContext.isMainFrame ? pageAlias :
+      (actionInContext.frameName ?
+        `${pageAlias}.GetFrame(name: ${quote(actionInContext.frameName)})` :
+        `${pageAlias}.GetFrame(url: ${quote(actionInContext.frameUrl)})`);
 
     let navigationSignal: NavigationSignal | undefined;
     let popupSignal: PopupSignal | undefined;

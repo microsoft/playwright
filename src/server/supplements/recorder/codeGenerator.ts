@@ -18,10 +18,13 @@ import type { BrowserContextOptions, LaunchOptions } from '../../../..';
 import { Frame } from '../../frames';
 import { LanguageGenerator } from './language';
 import { Action, Signal } from './recorderActions';
+import { describeFrame } from './utils';
 
 export type ActionInContext = {
   pageAlias: string;
-  frame: Frame;
+  frameName?: string;
+  frameUrl: string;
+  isMainFrame: boolean;
   action: Action;
   committed?: boolean;
 }
@@ -124,7 +127,7 @@ export class CodeGenerator {
     if (signal.name === 'navigation') {
       this.addAction({
         pageAlias,
-        frame,
+        ...describeFrame(frame),
         committed: true,
         action: {
           name: 'navigate',

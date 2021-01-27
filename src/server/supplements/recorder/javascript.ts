@@ -24,7 +24,7 @@ import deviceDescriptors = require('../../deviceDescriptors');
 export class JavaScriptLanguageGenerator implements LanguageGenerator {
 
   generateAction(actionInContext: ActionInContext, performingAction: boolean): string {
-    const { action, pageAlias, frame } = actionInContext;
+    const { action, pageAlias } = actionInContext;
     const formatter = new JavaScriptFormatter(2);
     formatter.newLine();
     formatter.add('// ' + actionTitle(action));
@@ -36,8 +36,10 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
       return formatter.format();
     }
 
-    const subject = !frame.parentFrame() ? pageAlias :
-      `${pageAlias}.frame(${formatObject({ url: frame.url() })})`;
+    const subject = actionInContext.isMainFrame ? pageAlias :
+      (actionInContext.frameName ?
+        `${pageAlias}.frame(${formatObject({ name: actionInContext.frameName })})` :
+        `${pageAlias}.frame(${formatObject({ url: actionInContext.frameUrl })})`);
 
     let navigationSignal: NavigationSignal | undefined;
     let popupSignal: PopupSignal | undefined;
