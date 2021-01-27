@@ -608,7 +608,7 @@ export class Recorder {
 
   private async _performAction(action: actions.Action) {
     this._performingAction = true;
-    await window.playwrightRecorderPerformAction(action);
+    await window.playwrightRecorderPerformAction(action).catch(e => {});
     this._performingAction = false;
 
     // Action could have changed DOM, update hovered model selectors.

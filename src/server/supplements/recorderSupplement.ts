@@ -194,21 +194,27 @@ export class RecorderSupplement {
       action
     };
     this._generator.willPerformAction(actionInContext);
-    if (action.name === 'click') {
-      const { options } = toClickOptions(action);
-      await frame.click(controller, action.selector, options);
+    try {
+      const kActionTimeout = 5000;
+      if (action.name === 'click') {
+        const { options } = toClickOptions(action);
+        await frame.click(controller, action.selector, { ...options, timeout: kActionTimeout });
+      }
+      if (action.name === 'press') {
+        const modifiers = toModifiers(action.modifiers);
+        const shortcut = [...modifiers, action.key].join('+');
+        await frame.press(controller, action.selector, shortcut, { timeout: kActionTimeout });
+      }
+      if (action.name === 'check')
+        await frame.check(controller, action.selector, { timeout: kActionTimeout });
+      if (action.name === 'uncheck')
+        await frame.uncheck(controller, action.selector, { timeout: kActionTimeout });
+      if (action.name === 'select')
+        await frame.selectOption(controller, action.selector, [], action.options.map(value => ({ value })), { timeout: kActionTimeout });
+    } catch (e) {
+      this._generator.performedActionFailed(actionInContext);
+      return;
     }
-    if (action.name === 'press') {
-      const modifiers = toModifiers(action.modifiers);
-      const shortcut = [...modifiers, action.key].join('+');
-      await frame.press(controller, action.selector, shortcut);
-    }
-    if (action.name === 'check')
-      await frame.check(controller, action.selector);
-    if (action.name === 'uncheck')
-      await frame.uncheck(controller, action.selector);
-    if (action.name === 'select')
-      await frame.selectOption(controller, action.selector, [], action.options.map(value => ({ value })));
     const timer = setTimeout(() => {
       actionInContext.committed = true;
       this._timers.delete(timer);
