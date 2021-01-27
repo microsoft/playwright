@@ -17,7 +17,7 @@
 import * as actions from './recorder/recorderActions';
 import type * as channels from '../../protocol/channels';
 import { CodeGenerator, ActionInContext } from './recorder/codeGenerator';
-import { toClickOptions, toModifiers } from './recorder/utils';
+import { describeFrame, toClickOptions, toModifiers } from './recorder/utils';
 import { Page } from '../page';
 import { Frame } from '../frames';
 import { BrowserContext } from '../browserContext';
@@ -151,7 +151,7 @@ export class RecorderSupplement {
       this._pageAliases.delete(page);
       this._generator.addAction({
         pageAlias,
-        frame: page.mainFrame(),
+        ...describeFrame(page.mainFrame()),
         committed: true,
         action: {
           name: 'closePage',
@@ -174,7 +174,7 @@ export class RecorderSupplement {
     if (!isPopup) {
       this._generator.addAction({
         pageAlias,
-        frame: page.mainFrame(),
+        ...describeFrame(page.mainFrame()),
         committed: true,
         action: {
           name: 'openPage',
@@ -190,7 +190,7 @@ export class RecorderSupplement {
     const controller = new ProgressController();
     const actionInContext: ActionInContext = {
       pageAlias: this._pageAliases.get(page)!,
-      frame,
+      ...describeFrame(frame),
       action
     };
     this._generator.willPerformAction(actionInContext);
@@ -218,10 +218,9 @@ export class RecorderSupplement {
   }
 
   private async _recordAction(frame: Frame, action: actions.Action) {
-    // We are lacking frame.page() in
     this._generator.addAction({
       pageAlias: this._pageAliases.get(frame._page)!,
-      frame,
+      ...describeFrame(frame),
       action
     });
   }

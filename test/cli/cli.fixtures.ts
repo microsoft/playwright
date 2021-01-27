@@ -127,15 +127,20 @@ class Recorder {
     this._actionPerformedCallback = () => { };
   }
 
-  async setContentAndWait(content: string, url: string = 'about:blank') {
-    await this.setPageContentAndWait(this.page, content, url);
+  async setContentAndWait(content: string, url: string = 'about:blank', frameCount: number = 1) {
+    await this.setPageContentAndWait(this.page, content, url, frameCount);
   }
 
-  async setPageContentAndWait(page: Page, content: string, url: string = 'about:blank') {
+  async setPageContentAndWait(page: Page, content: string, url: string = 'about:blank', frameCount: number = 1) {
     let callback;
     const result = new Promise(f => callback = f);
     await page.goto(url);
-    await page.exposeBinding('_recorderScriptReadyForTest', (source, arg) => callback(arg));
+    const frames = new Set<any>();
+    await page.exposeBinding('_recorderScriptReadyForTest', (source, arg) => {
+      frames.add(source.frame);
+      if (frames.size === frameCount)
+        callback(arg);
+    });
     await Promise.all([
       result,
       page.setContent(content)
