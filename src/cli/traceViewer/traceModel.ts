@@ -46,7 +46,7 @@ export type PageEntry = {
   actions: ActionEntry[];
   interestingEvents: InterestingPageEvent[];
   resources: trace.NetworkResourceTraceEvent[];
-  snapshotsByFrameId: Map<string, trace.FrameSnapshotTraceEvent[]>;
+  snapshotsByFrameId: { [key: string]: trace.FrameSnapshotTraceEvent[] };
 }
 
 export type ActionEntry = {
@@ -94,7 +94,7 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
           actions: [],
           resources: [],
           interestingEvents: [],
-          snapshotsByFrameId: new Map(),
+          snapshotsByFrameId: {},
         };
         pageEntries.set(event.pageId, pageEntry);
         contextEntries.get(event.contextId)!.pages.push(pageEntry);
@@ -115,7 +115,7 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
         const action: ActionEntry = {
           actionId,
           action: event,
-          thumbnailUrl: `action-preview/${actionId}.png`,
+          thumbnailUrl: `/action-preview/${actionId}.png`,
           resources: pageEntry.resources,
         };
         pageEntry.resources = [];
@@ -148,9 +148,9 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
       }
       case 'snapshot': {
         const pageEntry = pageEntries.get(event.pageId!)!;
-        if (!pageEntry.snapshotsByFrameId.has(event.frameId))
-          pageEntry.snapshotsByFrameId.set(event.frameId, []);
-        pageEntry.snapshotsByFrameId.get(event.frameId)!.push(event);
+        if (!(event.frameId in pageEntry.snapshotsByFrameId))
+          pageEntry.snapshotsByFrameId[event.frameId] = [];
+        pageEntry.snapshotsByFrameId[event.frameId]!.push(event);
         break;
       }
     }

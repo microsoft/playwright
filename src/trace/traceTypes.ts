@@ -36,6 +36,7 @@ export type NetworkResourceTraceEvent = {
   contextId: string,
   pageId: string,
   frameId: string,
+  resourceId: string,
   url: string,
   contentType: string,
   responseHeaders: { name: string, value: string }[],
@@ -124,7 +125,7 @@ export type FrameSnapshotTraceEvent = {
   contextId: string,
   pageId: string,
   frameId: string,  // Empty means main frame.
-  sha1: string,
+  snapshot: FrameSnapshot,
   frameUrl: string,
   snapshotId?: string,
 };
@@ -148,5 +149,4 @@ export type FrameSnapshot = {
   html: string,
   resourceOverrides: { url: string, sha1: string }[],
   viewport: { width: number, height: number },
-  url: string,
 };

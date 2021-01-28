@@ -226,10 +226,8 @@ export function frameSnapshotStreamer() {
               // TODO: handle srcdoc?
               const frameId = element.getAttribute(kSnapshotFrameIdAttribute);
               if (frameId) {
-                let protocol = win.location.protocol;
-                if (!protocol.startsWith('http'))
-                  protocol = 'http:';
-                value = protocol + '//' + frameId + '/';
+                needScript = true;
+                value = frameId;
               } else {
                 value = 'data:text/html,<body>Snapshot is not available</body>';
               }
@@ -321,22 +319,42 @@ export function frameSnapshotStreamer() {
       };
 
       function applyPlaywrightAttributes(shadowAttribute: string, scrollTopAttribute: string, scrollLeftAttribute: string) {
-        const scrollTops = document.querySelectorAll(`[${scrollTopAttribute}]`);
-        const scrollLefts = document.querySelectorAll(`[${scrollLeftAttribute}]`);
-        for (const element of document.querySelectorAll(`template[${shadowAttribute}]`)) {
-          const template = element as HTMLTemplateElement;
-          const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
-          shadowRoot.appendChild(template.content);
-          template.remove();
-        }
-        const onDOMContentLoaded = () => {
-          window.removeEventListener('DOMContentLoaded', onDOMContentLoaded);
-          for (const element of scrollTops)
-            element.scrollTop = +element.getAttribute(scrollTopAttribute)!;
-          for (const element of scrollLefts)
-            element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
+        const scrollTops: Element[] = [];
+        const scrollLefts: Element[] = [];
+
+        const visit = (root: Document | ShadowRoot) => {
+          for (const e of root.querySelectorAll(`[${scrollTopAttribute}]`))
+            scrollTops.push(e);
+          for (const e of root.querySelectorAll(`[${scrollLeftAttribute}]`))
+            scrollLefts.push(e);
+
+          for (const iframe of root.querySelectorAll('iframe')) {
+            const src = iframe.getAttribute('src') || '';
+            if (src.startsWith('data:text/html'))
+              continue;
+            const index = location.pathname.lastIndexOf('/');
+            if (index === -1)
+              continue;
+            const pathname = location.pathname.substring(0, index + 1) + src;
+            const href = location.href.substring(0, location.href.indexOf(location.pathname)) + pathname;
+            iframe.setAttribute('src', href);
+          }
+
+          for (const element of root.querySelectorAll(`template[${shadowAttribute}]`)) {
+            const template = element as HTMLTemplateElement;
+            const shadowRoot = template.parentElement!.attachShadow({ mode: 'open' });
+            shadowRoot.appendChild(template.content);
+            template.remove();
+            visit(shadowRoot);
+          }
         };
-        window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
+        visit(document);
+
+        for (const element of scrollTops)
+          element.scrollTop = +element.getAttribute(scrollTopAttribute)!;
+        for (const element of scrollLefts)
+          element.scrollLeft = +element.getAttribute(scrollLeftAttribute)!;
+
         const onLoad = () => {
           window.removeEventListener('load', onLoad);
           for (const element of scrollTops) {

@@ -45,7 +45,7 @@ export type SnapshotterBlob = {
 export interface SnapshotterDelegate {
   onBlob(blob: SnapshotterBlob): void;
   onResource(resource: SnapshotterResource): void;
-  onFrameSnapshot(frame: Frame, snapshot: FrameSnapshot, snapshotId?: string): void;
+  onFrameSnapshot(frame: Frame, frameUrl: string, snapshot: FrameSnapshot, snapshotId?: string): void;
   pageId(page: Page): string;
 }
 
@@ -65,7 +65,6 @@ export class Snapshotter {
         html: data.html,
         viewport: data.viewport,
         resourceOverrides: [],
-        url: data.url,
       };
       for (const { url, content } of data.resourceOverrides) {
         const buffer = Buffer.from(content);
@@ -73,7 +72,7 @@ export class Snapshotter {
         this._delegate.onBlob({ sha1, buffer });
         snapshot.resourceOverrides.push({ url, sha1 });
       }
-      this._delegate.onFrameSnapshot(source.frame, snapshot, data.snapshotId);
+      this._delegate.onFrameSnapshot(source.frame, data.url, snapshot, data.snapshotId);
     });
     this._context._doAddInitScript('(' + frameSnapshotStreamer.toString() + ')()');
   }

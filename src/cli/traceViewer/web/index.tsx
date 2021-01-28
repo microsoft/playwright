@@ -14,24 +14,17 @@
  * limitations under the License.
  */
 
-import { TraceModel, VideoMetaInfo, trace } from '../traceModel';
 import './third_party/vscode/codicon.css';
 import { Workbench } from './ui/workbench';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import { applyTheme } from './theme';
 
-declare global {
-  interface Window {
-    getTraceModel(): Promise<TraceModel>;
-    readFile(filePath: string): Promise<string>;
-    readResource(sha1: string): Promise<string>;
-    renderSnapshot(arg: { action: trace.ActionTraceEvent, snapshot: { snapshotId?: string, snapshotTime?: number } }): void;
-  }
-}
-
 (async () => {
+  navigator.serviceWorker.register('/service-worker.js');
+  if (!navigator.serviceWorker.controller)
+    await new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
   applyTheme();
-  const traceModel = await window.getTraceModel();
+  const traceModel = await fetch('/tracemodel').then(response => response.json());
   ReactDOM.render(<Workbench traceModel={traceModel} />, document.querySelector('#root'));
 })();

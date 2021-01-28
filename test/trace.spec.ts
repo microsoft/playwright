@@ -61,8 +61,7 @@ it('should record trace', async ({browser, testInfo, server}) => {
   expect(clickEvent.snapshots.length).toBe(2);
   const snapshotId = clickEvent.snapshots[0].snapshotId;
   const snapshotEvent = traceEvents.find(event => event.type === 'snapshot' && event.snapshotId === snapshotId) as trace.FrameSnapshotTraceEvent;
-
-  expect(fs.existsSync(path.join(traceDir, 'resources', snapshotEvent.sha1))).toBe(true);
+  expect(snapshotEvent).toBeTruthy();
 });
 
 it('should record trace with POST', async ({browser, testInfo, server}) => {

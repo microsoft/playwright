@@ -38,12 +38,12 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   React.useEffect(() => {
     const readResources = async  () => {
       if (resource.requestSha1 !== 'none') {
-        const requestResource = await window.readResource(resource.requestSha1);
+        const requestResource = await fetch(`/sha1/${resource.requestSha1}`).then(response => response.text());
         setRequestBody(requestResource);
       }
 
       if (resource.responseSha1 !== 'none') {
-        const responseResource = await window.readResource(resource.responseSha1);
+        const responseResource = await fetch(`/sha1/${resource.responseSha1}`).then(response => response.text());
         setResponseBody(responseResource);
       }
     };
@@ -55,7 +55,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
     if (body === null)
       return 'Loading...';
 
-    const bodyStr = atob(body);
+    const bodyStr = body;
 
     if (bodyStr === '')
       return '<Empty>';

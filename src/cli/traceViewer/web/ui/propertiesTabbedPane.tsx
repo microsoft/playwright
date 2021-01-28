@@ -75,6 +75,9 @@ const SnapshotTab: React.FunctionComponent<{
   boundaries: Boundaries,
 }> = ({ actionEntry, snapshotSize, selectedTime, boundaries }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
+  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  const origin = location.href.substring(0, location.href.indexOf(location.pathname));
+  const snapshotIframeUrl = origin + '/snapshot/';
 
   let snapshots: { name: string, snapshotId?: string, snapshotTime?: number }[] = [];
   snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
@@ -82,29 +85,36 @@ const SnapshotTab: React.FunctionComponent<{
     snapshots.unshift({ name: 'before', snapshotTime: actionEntry ? actionEntry.action.startTime : 0 });
   if (snapshots[snapshots.length - 1].name !== 'after')
     snapshots.push({ name: 'after', snapshotTime: actionEntry ? actionEntry.action.endTime : 0 });
-  if (selectedTime)
-    snapshots = [{ name: msToString(selectedTime - boundaries.minimum), snapshotTime: selectedTime }];
-
-  const [snapshotIndex, setSnapshotIndex] = React.useState(0);
-  React.useEffect(() => {
-    setSnapshotIndex(0);
-  }, [selectedTime]);
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
-    if (iframeRef.current && !actionEntry)
-      iframeRef.current.src = 'about:blank';
-  }, [actionEntry, iframeRef]);
+    if (!actionEntry || !iframeRef.current)
+      return;
 
-  React.useEffect(() => {
-    if (actionEntry && snapshots[snapshotIndex])
-      (window as any).renderSnapshot({ action: actionEntry.action, snapshot: snapshots[snapshotIndex] });
+    let snapshotUrl = 'data:text/html,Snapshot is not available';
+    if (selectedTime) {
+      snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${selectedTime}/main`;
+    } else {
+      const snapshot = snapshots[snapshotIndex];
+      if (snapshot && snapshot.snapshotTime)
+        snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${snapshot.snapshotTime}/main`;
+      else if (snapshot && snapshot.snapshotId)
+        snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/snapshotId/${snapshot.snapshotId}/main`;
+    }
+
+    try {
+      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl);
+    } catch (e) {
+    }
   }, [actionEntry, snapshotIndex, selectedTime]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
   return <div className='snapshot-tab'>
     <div className='snapshot-controls'>{
-      snapshots.map((snapshot, index) => {
+      selectedTime && <div key='selectedTime' className='snapshot-toggle'>
+        {msToString(selectedTime - boundaries.minimum)}
+      </div>
+    }{!selectedTime && snapshots.map((snapshot, index) => {
         return <div
           key={snapshot.name}
           className={'snapshot-toggle' + (snapshotIndex === index ? ' toggled' : '')}
@@ -119,7 +129,7 @@ const SnapshotTab: React.FunctionComponent<{
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2}px, ${-snapshotSize.height * (1 - scale) / 2}px) scale(${scale})`,
       }}>
-        <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
+        <iframe ref={iframeRef} id='snapshot' name='snapshot' src={snapshotIframeUrl}></iframe>
       </div>
     </div>
   </div>;

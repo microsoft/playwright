@@ -63,11 +63,7 @@ export const Workbench: React.FunctionComponent<{
         boundaries={boundaries}
         selectedAction={selectedAction}
         highlightedAction={highlightedAction}
-        onSelected={action => {
-          setSelectedAction(action);
-          setSelectedTime(undefined);
-        }}
-        onHighlighted={action => setHighlightedAction(action)}
+        onSelected={action => setSelectedAction(action)}
         onTimeSelected={time => setSelectedTime(time)}
       />
     </div>
