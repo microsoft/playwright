@@ -18,24 +18,27 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { TraceModel, trace } from './traceModel';
+import type { ScreenshotGenerator } from './screenshotGenerator';
 
 export class SnapshotServer {
-  static async create(traceViewerDir: string, resourcesDir: string | undefined, traceModel: TraceModel): Promise<SnapshotServer> {
-    const server = new SnapshotServer(traceViewerDir, resourcesDir, traceModel);
+  static async create(traceViewerDir: string | undefined, resourcesDir: string | undefined, traceModel: TraceModel, screenshotGenerator: ScreenshotGenerator | undefined): Promise<SnapshotServer> {
+    const server = new SnapshotServer(traceViewerDir, resourcesDir, traceModel, screenshotGenerator);
     await new Promise(cb => server._server.once('listening', cb));
     return server;
   }
 
-  private _traceViewerDir: string;
+  private _traceViewerDir: string | undefined;
   private _resourcesDir: string | undefined;
   private _traceModel: TraceModel;
   private _server: http.Server;
   private _resourceById: Map<string, trace.NetworkResourceTraceEvent>;
+  private _screenshotGenerator: ScreenshotGenerator | undefined;
 
-  constructor(traceViewerDir: string, resourcesDir: string | undefined, traceModel: TraceModel) {
+  constructor(traceViewerDir: string | undefined, resourcesDir: string | undefined, traceModel: TraceModel, screenshotGenerator: ScreenshotGenerator | undefined) {
     this._traceViewerDir = traceViewerDir;
     this._resourcesDir = resourcesDir;
     this._traceModel = traceModel;
+    this._screenshotGenerator = screenshotGenerator;
     this._server = http.createServer(this._onRequest.bind(this));
     this._server.listen();
 
@@ -58,15 +61,43 @@ export class SnapshotServer {
     return this._urlPrefix() + '/traceviewer/' + relative;
   }
 
+  snapshotRootUrl() {
+    return this._urlPrefix() + '/snapshot/';
+  }
+
+  snapshotUrl(pageId: string, snapshotId?: string, timestamp?: number) {
+    if (snapshotId)
+      return this._urlPrefix() + `/snapshot/pageId/${pageId}/snapshotId/${snapshotId}/main`;
+    if (timestamp)
+      return this._urlPrefix() + `/snapshot/pageId/${pageId}/timestamp/${timestamp}/main`;
+    return 'data:text/html,Snapshot is not available';
+  }
+
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
+    // This server serves:
+    // - "/traceviewer/..." - our frontend;
+    // - "/sha1/<sha1>" - trace resources;
+    // - "/tracemodel" - json with trace model;
+    // - "/resources/<resourceId>" - network resources from the trace;
+    // - "/file?filePath" - local files for sources tab;
+    // - "/action-preview/..." - lazily generated action previews;
+    // - "/snapshot/" - root for snapshot frame;
+    // - "/snapshot/pageId/..." - actual snapshot html;
+    // - "/service-worker.js" - service worker that intercepts snapshot resources
+    //   and translates them into "/resources/<resourceId>".
+
     request.on('error', () => response.end());
     if (!request.url)
       return response.end();
 
     const url = new URL('http://localhost' + request.url);
+    // These two entry points do not require referrer check.
     if (url.pathname.startsWith('/traceviewer/') && this._serveTraceViewer(request, response, url.pathname))
       return;
+    if (url.pathname === '/snapshot/' && this._serveSnapshotRoot(request, response))
+      return;
 
+    // Only serve the rest when referrer is present to avoid exposure.
     const hasReferrer = request.headers['referer'] && request.headers['referer'].startsWith(this._urlPrefix());
     if (!hasReferrer)
       return response.end();
@@ -74,9 +105,9 @@ export class SnapshotServer {
       return;
     if (url.pathname.startsWith('/sha1/') && this._serveSha1(request, response, url.pathname))
       return;
-    if (url.pathname === '/file' && this._serveFile(request, response, url.search))
+    if (url.pathname.startsWith('/action-preview/') && this._serveActionPreview(request, response, url.pathname))
       return;
-    if (url.pathname === '/snapshot/' && this._serveSnapshotRoot(request, response))
+    if (url.pathname === '/file' && this._serveFile(request, response, url.search))
       return;
     if (url.pathname === '/service-worker.js' && this._serveServiceWorker(request, response))
       return;
@@ -132,6 +163,7 @@ export class SnapshotServer {
               });
             }
             nextUrl = url;
+            return showPromise;
           };
         </script>
       </body>
@@ -211,7 +243,7 @@ export class SnapshotServer {
       }
 
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
-        for (const prefix of ['/traceviewer/', '/sha1/', '/resources/', '/file?']) {
+        for (const prefix of ['/traceviewer/', '/sha1/', '/resources/', '/file?', '/action-preview/']) {
           if (event.request.url.startsWith(urlPrefix + prefix))
             return fetch(event.request);
         }
@@ -352,6 +384,25 @@ export class SnapshotServer {
     }
   }
 
+  private _serveActionPreview(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
+    if (!this._screenshotGenerator)
+      return false;
+    const fullPath = pathname.substring('/action-preview/'.length);
+    const actionId = fullPath.substring(0, fullPath.indexOf('.png'));
+    this._screenshotGenerator.generateScreenshot(actionId).then(body => {
+      if (!body) {
+        response.statusCode = 404;
+        response.end();
+      } else {
+        response.statusCode = 200;
+        response.setHeader('Content-Type', 'image/png');
+        response.setHeader('Content-Length', body.byteLength);
+        response.end(body);
+      }
+    });
+    return true;
+  }
+
   private _serveSha1(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
     if (!this._resourcesDir)
       return false;
@@ -373,6 +424,8 @@ export class SnapshotServer {
   }
 
   private _serveTraceViewer(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
+    if (!this._traceViewerDir)
+      return false;
     const relativePath = pathname.substring('/traceviewer/'.length);
     const absolutePath = path.join(this._traceViewerDir, ...relativePath.split('/'));
     return this._serveStaticFile(response, absolutePath, { 'Service-Worker-Allowed': '/' });

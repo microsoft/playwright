@@ -18,8 +18,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as playwright from '../../..';
 import * as util from 'util';
-import { SnapshotRouter } from './snapshotRouter';
 import { actionById, ActionEntry, ContextEntry, PageEntry, TraceModel } from './traceModel';
+import { SnapshotServer } from './snapshotServer';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
@@ -27,14 +27,16 @@ const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 export class ScreenshotGenerator {
   private _traceStorageDir: string;
   private _browserPromise: Promise<playwright.Browser>;
+  private _serverPromise: Promise<SnapshotServer>;
   private _traceModel: TraceModel;
   private _rendering = new Map<ActionEntry, Promise<Buffer | undefined>>();
   private _lock = new Lock(3);
 
-  constructor(traceStorageDir: string, traceModel: TraceModel) {
-    this._traceStorageDir = traceStorageDir;
+  constructor(resourcesDir: string, traceModel: TraceModel) {
+    this._traceStorageDir = resourcesDir;
     this._traceModel = traceModel;
     this._browserPromise = playwright.chromium.launch();
+    this._serverPromise = SnapshotServer.create(undefined, resourcesDir, traceModel, undefined);
   }
 
   generateScreenshot(actionId: string): Promise<Buffer | undefined> {
@@ -58,6 +60,7 @@ export class ScreenshotGenerator {
 
     const { action } = actionEntry;
     const browser = await this._browserPromise;
+    const server = await this._serverPromise;
 
     await this._lock.obtain();
 
@@ -67,14 +70,17 @@ export class ScreenshotGenerator {
     });
 
     try {
-      const snapshotRouter = new SnapshotRouter(this._traceStorageDir);
+      await page.goto(server.snapshotRootUrl());
+      await page.evaluate(async () => {
+        navigator.serviceWorker.register('/service-worker.js');
+        await new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+      });
+
       const snapshots = action.snapshots || [];
       const snapshotId = snapshots.length ? snapshots[0].snapshotId : undefined;
-      const snapshotTimestamp = action.startTime;
-      const pageUrl = await snapshotRouter.selectSnapshot(contextEntry, pageEntry, snapshotId, snapshotTimestamp);
-      page.route('**/*', route => snapshotRouter.route(route));
-      console.log('Generating screenshot for ' + action.action, pageUrl); // eslint-disable-line no-console
-      await page.goto(pageUrl);
+      const snapshotUrl = server.snapshotUrl(action.pageId!, snapshotId, action.endTime);
+      console.log('Generating screenshot for ' + action.action); // eslint-disable-line no-console
+      await page.evaluate(snapshotUrl => (window as any).showSnapshot(snapshotUrl), snapshotUrl);
 
       try {
         const element = await page.$(action.selector || '*[__playwright_target__]');

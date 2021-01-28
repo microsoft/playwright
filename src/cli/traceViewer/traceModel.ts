@@ -115,7 +115,7 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
         const action: ActionEntry = {
           actionId,
           action: event,
-          thumbnailUrl: `action-preview/${actionId}.png`,
+          thumbnailUrl: `/action-preview/${actionId}.png`,
           resources: pageEntry.resources,
         };
         pageEntry.resources = [];

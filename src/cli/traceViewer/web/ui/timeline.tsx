@@ -39,7 +39,7 @@ export const Timeline: React.FunctionComponent<{
   selectedAction: ActionEntry | undefined,
   highlightedAction: ActionEntry | undefined,
   onSelected: (action: ActionEntry) => void,
-  onTimeSelected: (time: number) => void,
+  onTimeSelected: (time: number | undefined) => void,
 }> = ({ context, boundaries, selectedAction, highlightedAction, onSelected, onTimeSelected }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [previewX, setPreviewX] = React.useState<number | undefined>();
