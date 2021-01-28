@@ -17,20 +17,24 @@
 import type * as actions from '../recorder/recorderActions';
 import type InjectedScript from '../../injected/injectedScript';
 import { generateSelector } from './selectorGenerator';
-import { html } from './html';
+import { Element$, html } from './html';
+import type { State, SetUIState } from '../recorder/state';
 
 declare global {
   interface Window {
     playwrightRecorderPerformAction: (action: actions.Action) => Promise<void>;
     playwrightRecorderRecordAction: (action: actions.Action) => Promise<void>;
     playwrightRecorderCommitAction: () => Promise<void>;
-    playwrightRecorderState: () => Promise<{ state: any, paused: boolean, app: 'codegen' | 'debug' | 'pause' }>;
-    playwrightRecorderSetState: (state: any) => Promise<void>;
+    playwrightRecorderState: () => Promise<State>;
+    playwrightRecorderSetUIState: (state: SetUIState) => Promise<void>;
     playwrightRecorderResume: () => Promise<boolean>;
+    playwrightRecorderClearScript: () => Promise<void>;
   }
 }
 
 const scriptSymbol = Symbol('scriptSymbol');
+const pressRecordMessageElement = html`<span>Press <span id="pw-button-record">⬤</span> to start recording</span>`;
+const performActionsMessageElement = html`<span>Perform actions to record</span>`;
 
 export class Recorder {
   private _injectedScript: InjectedScript;
@@ -46,17 +50,24 @@ export class Recorder {
   private _activeModel: HighlightModel | null = null;
   private _expectProgrammaticKeyUp = false;
   private _pollRecorderModeTimer: NodeJS.Timeout | undefined;
-  private _toolbarElement: HTMLElement;
-  private _inspectElement: HTMLElement;
-  private _recordElement: HTMLElement;
-  private _resumeElement: HTMLElement;
-  private _mode: 'inspecting' | 'recording' | 'none' = 'none';
-  private _app: 'codegen' | 'debug' | 'pause' = 'debug';
-  private _paused = false;
+  private _outerToolbarElement: HTMLElement;
+  private _outerDrawerElement: HTMLElement;
+  private _toolbar: Element$;
+  private _drawer: Element$;
+  private _drawerTimeout: NodeJS.Timeout | undefined;
+  private _state: State = {
+    codegenScript: '',
+    canResume: false,
+    uiState: {
+      mode: 'none',
+      drawerVisible: false
+    },
+    isController: true,
+    isPaused: false
+  };
 
   constructor(injectedScript: InjectedScript) {
     this._injectedScript = injectedScript;
-
     this._outerGlassPaneElement = html`
       <x-pw-glass style="
         position: fixed;
@@ -64,7 +75,7 @@ export class Recorder {
         right: 0;
         bottom: 0;
         left: 0;
-        z-index: 2147483646;
+        z-index: 2147483647;
         pointer-events: none;
         display: flex;
       ">
@@ -108,108 +119,143 @@ export class Recorder {
       </style>
     `);
 
-    this._toolbarElement = html`
-      <x-pw-toolbar style="
-        position: fixed;
-        top: 100px;
-        left: 10px;
-        z-index: 2147483647;
-        background-color: #ffffffe6;
-        padding: 4px;
-        border-radius: 22px;
-        box-shadow: rgba(0, 0, 0, 0.1) 0px 0.25em 0.5em;
-        flex-direction: column;"
-      ></x-pw-toolbar>`;
+    this._toolbar = html`
+      <x-pw-toolbar class="vertical">
+        ${commonStyles()}
+        <x-pw-button-group class="vertical">
+          <x-pw-icon>
+            <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" fill="none"><path d="M136 222c-12 3-21 10-26 16 5-5 12-9 22-12 10-2 18-2 25-1v-6c-6 0-13 0-21 3zm-27-46l-48 12 3 3 40-10s0 7-5 14c9-7 10-19 10-19zm40 112C82 306 46 228 35 188a227 227 0 01-7-45c-4 1-6 2-5 8 0 9 2 23 7 42 11 40 47 118 114 100 15-4 26-11 34-20-7 7-17 12-29 15zm13-160v5h26l-2-5h-24z" fill="#2D4552"/><path d="M194 168c12 3 18 11 21 19l14 3s-2-25-25-32c-22-6-36 12-37 14 6-4 15-8 27-4zm105 19c-21-6-35 12-36 14 6-4 15-8 27-5 12 4 18 12 21 19l14 4s-2-26-26-32zm-13 68l-110-31s1 6 6 14l93 26 11-9zm-76 66c-87-23-77-134-63-187 6-22 12-38 17-49-3 0-5 1-8 6-5 11-12 28-18 52-14 53-25 164 62 188 41 11 73-6 97-32a90 90 0 01-87 22z" fill="#2D4552"/><path d="M162 262v-22l-63 18s5-27 37-36c10-3 19-3 26-2v-92h31l-10-24c-4-9-9-3-19 6-8 6-27 19-55 27-29 8-52 6-61 4-14-2-21-5-20 5 0 9 2 23 7 42 11 40 47 118 114 100 18-4 30-14 39-26h-26zM61 188l48-12s-1 18-19 23-29-11-29-11z" fill="#E2574C"/><path d="M342 129c-13 2-43 5-79-5-37-10-62-27-71-35-14-12-20-20-26-8-5 11-12 29-19 53-14 53-24 164 63 187s134-78 148-131c6-24 9-42 10-54 1-14-9-10-26-7zm-176 44s14-22 38-15c23 7 25 32 25 32l-63-17zm57 96c-41-12-47-45-47-45l110 31s-22 26-63 14zm39-68s14-21 37-14c24 6 26 32 26 32l-63-18z" fill="#2EAD33"/><path d="M140 246l-41 12s5-26 35-36l-23-86-2 1c-29 8-52 6-61 4-14-2-21-5-20 5 0 9 2 23 7 42 11 40 47 118 114 100h2l-11-42zm-79-58l48-12s-1 18-19 23-29-11-29-11z" fill="#D65348"/><path d="M225 269h-2c-41-12-47-45-47-45l57 16 30-116c-37-10-62-27-71-35-14-12-20-20-26-8-5 11-12 29-19 53-14 53-24 164 63 187l2 1 13-53zm-59-96s14-22 38-15c23 7 25 32 25 32l-63-17z" fill="#1D8D22"/><path d="M142 245l-11 4c3 14 7 28 14 40l4-1 9-3c-8-12-13-25-16-40zm-4-102c-6 21-11 51-10 81l8-2 2-1a273 273 0 0114-103l-8 5-6 20z" fill="#C04B41"/></svg>
+          </x-pw-icon>
+          <x-pw-button id="pw-button-inspect" tabIndex=0 title="Inspect selectors">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
+          </x-pw-button>
+          <x-pw-button id="pw-button-record" class="record" tabIndex=0 title="Record script">
+            <div class="record-button">
+              <div class="record-button-glow"></div>
+            </div>
+          </x-pw-button>
+        </x-pw-button-group>
+        <x-pw-button-group id="pw-button-resume-group" class="hidden" title="Resume execution">
+          <x-pw-button id="pw-button-resume" tabIndex=0>
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M8 5v14l11-7z"/></svg>
+          </x-pw-button>
+        </x-pw-button-group>
+        <x-pw-button-group id="pw-button-drawer-group">
+          <x-pw-button id="pw-button-drawer" tabIndex=0 title="Display script">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0V0z" fill="none"/><path d="M4 15h16v-2H4v2zm0 4h16v-2H4v2zm0-8h16V9H4v2zm0-6v2h16V5H4z"/></svg>
+          </x-pw-button>
+        </x-pw-button-group>
+      </x-pw-toolbar>`;
 
-    this._inspectElement = html`
-      <x-pw-button tabIndex=0>
-        <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8.94 3c-.46-4.17-3.77-7.48-7.94-7.94V1h-2v2.06C6.83 3.52 3.52 6.83 3.06 11H1v2h2.06c.46 4.17 3.77 7.48 7.94 7.94V23h2v-2.06c4.17-.46 7.48-3.77 7.94-7.94H23v-2h-2.06zM12 19c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z"/></svg>
-      </x-pw-button>`;
-    this._recordElement = html`
-      <x-pw-button class="record" tabIndex=0>
-      <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M24 24H0V0h24v24z" fill="none"/><circle cx="12" cy="12" r="8"/></svg>
-      </x-pw-button>`;
-    this._resumeElement = html`
-      <x-pw-button tabIndex=0 class="playwright-resume hidden">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M8 5v14l11-7z"/></svg>
-      </x-pw-button>`;
+    this._outerToolbarElement = html`<x-pw-div style="position: fixed; top: 100px; left: 10px; flex-direction: column; z-index: 2147483647;"></x-pw-div>`;
+    const toolbarShadow = this._outerToolbarElement.attachShadow({ mode: 'open' });
+    toolbarShadow.appendChild(this._toolbar);
 
-    this._populateToolbar();
-    this._pollRecorderMode();
+    this._drawer = html`
+      <x-pw-drawer>
+        ${commonStyles()}
+        ${highlighterStyles()}
+        <style>
+        x-pw-drawer {
+          position: relative;
+          background: white;
+          background-color: #1d1f21;
+          border-left: 1px solid gray;
+          flex: auto;
+          display: flex;
+          flex-direction: column;
+        }
+        x-pw-toolbar {
+          position: absolute;
+          top: 0;
+          right: 0;
+          background-color: #00000060;
+        }
+        x-pw-code {
+          flex: auto;
+          color: #9cdcfe;
+          font-family: "SF Mono", Monaco, Menlo, Consolas, "Droid Sans Mono", Inconsolata, "Courier New", monospace;
+          font-size: 14px;
+          white-space: pre;
+          overflow: auto;
+          padding: 8px;
+        }
+        #pw-button-record {
+          cursor: pointer;
+        }
+        </style>
+        <x-pw-code>${pressRecordMessageElement}</x-pw-code>
+        <x-pw-toolbar class="dark">
+          <x-pw-button id="pw-button-copy" tabIndex=0 title="Copy into clipboard">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+          </x-pw-button>
+          <x-pw-button id="pw-button-clear" tabIndex=0 title="Clear script">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+          </x-pw-button>
+          <x-pw-button id="pw-button-close" tabIndex=0 title="Hide sidebar">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+          </x-pw-button>
+        </x-pw-toolbar>
+      </x-pw-drawer>`;
+    this._outerDrawerElement = html`<x-pw-div style="
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 400px;
+      display: none;
+      z-index: 2147483647;
+      transition: transform 0.2s;
+      transform: translateX(400px);
+    "></x-pw-div>`;
+    const drawerShadow = this._outerDrawerElement.attachShadow({ mode: 'open' });
+    drawerShadow.appendChild(this._drawer);
 
+    this._hydrate();
+    this._refreshListenersIfNeeded();
     setInterval(() => {
       this._refreshListenersIfNeeded();
+      if ((window as any)._recorderScriptReadyForTest)
+        (window as any)._recorderScriptReadyForTest();
     }, 500);
+    this._pollRecorderMode(true).catch(e => {});
   }
 
-  private _populateToolbar() {
-    const toolbarShadow = this._toolbarElement.attachShadow({ mode: 'open' });
-    toolbarShadow.appendChild(html`
-      <style>
-        x-pw-button {
-          width: 36px;
-          height: 36px;
-          background-position: center;
-          background-repeat: no-repeat;
-          border-radius: 16px;
-          cursor: pointer;
-          outline: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-left: 2px;
-          fill: #333;
-        }
-        x-pw-button.logo {
-          cursor: inherit;
-          margin: 0;
-        }
-        x-pw-button.toggled {
-          fill: #468fd2;
-        }
-        x-pw-button:hover:not(.logo):not(.disabled) {
-          background-color: #f2f2f2;
-        }
-        x-pw-button.record.toggled {
-          fill: red;
-        }
-        x-pw-button.disabled {
-          fill: #777777 !important;
-          cursor: inherit;
-        }
-        x-pw-button.hidden {
-          display: none;
-        }
-        x-pw-button svg {
-          pointer-events: none;
-        }
-    </style>`);
-
-    const iconElement = html`<x-pw-button class="logo" tabIndex=0 style="background-size: 32px 32px;"></x-pw-button>`;
-    iconElement.style.backgroundImage = `url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTM2IDIyMmMtMTIgMy0yMSAxMC0yNiAxNiA1LTUgMTItOSAyMi0xMiAxMC0yIDE4LTIgMjUtMXYtNmMtNiAwLTEzIDAtMjEgM3ptLTI3LTQ2bC00OCAxMiAzIDMgNDAtMTBzMCA3LTUgMTRjOS03IDEwLTE5IDEwLTE5em00MCAxMTJDODIgMzA2IDQ2IDIyOCAzNSAxODhhMjI3IDIyNyAwIDAxLTctNDVjLTQgMS02IDItNSA4IDAgOSAyIDIzIDcgNDIgMTEgNDAgNDcgMTE4IDExNCAxMDAgMTUtNCAyNi0xMSAzNC0yMC03IDctMTcgMTItMjkgMTV6bTEzLTE2MHY1aDI2bC0yLTVoLTI0eiIgZmlsbD0iIzJENDU1MiIvPjxwYXRoIGQ9Ik0xOTQgMTY4YzEyIDMgMTggMTEgMjEgMTlsMTQgM3MtMi0yNS0yNS0zMmMtMjItNi0zNiAxMi0zNyAxNCA2LTQgMTUtOCAyNy00em0xMDUgMTljLTIxLTYtMzUgMTItMzYgMTQgNi00IDE1LTggMjctNSAxMiA0IDE4IDEyIDIxIDE5bDE0IDRzLTItMjYtMjYtMzJ6bS0xMyA2OGwtMTEwLTMxczEgNiA2IDE0bDkzIDI2IDExLTl6bS03NiA2NmMtODctMjMtNzctMTM0LTYzLTE4NyA2LTIyIDEyLTM4IDE3LTQ5LTMgMC01IDEtOCA2LTUgMTEtMTIgMjgtMTggNTItMTQgNTMtMjUgMTY0IDYyIDE4OCA0MSAxMSA3My02IDk3LTMyYTkwIDkwIDAgMDEtODcgMjJ6IiBmaWxsPSIjMkQ0NTUyIi8+PHBhdGggZD0iTTE2MiAyNjJ2LTIybC02MyAxOHM1LTI3IDM3LTM2YzEwLTMgMTktMyAyNi0ydi05MmgzMWwtMTAtMjRjLTQtOS05LTMtMTkgNi04IDYtMjcgMTktNTUgMjctMjkgOC01MiA2LTYxIDQtMTQtMi0yMS01LTIwIDUgMCA5IDIgMjMgNyA0MiAxMSA0MCA0NyAxMTggMTE0IDEwMCAxOC00IDMwLTE0IDM5LTI2aC0yNnpNNjEgMTg4bDQ4LTEycy0xIDE4LTE5IDIzLTI5LTExLTI5LTExeiIgZmlsbD0iI0UyNTc0QyIvPjxwYXRoIGQ9Ik0zNDIgMTI5Yy0xMyAyLTQzIDUtNzktNS0zNy0xMC02Mi0yNy03MS0zNS0xNC0xMi0yMC0yMC0yNi04LTUgMTEtMTIgMjktMTkgNTMtMTQgNTMtMjQgMTY0IDYzIDE4N3MxMzQtNzggMTQ4LTEzMWM2LTI0IDktNDIgMTAtNTQgMS0xNC05LTEwLTI2LTd6bS0xNzYgNDRzMTQtMjIgMzgtMTVjMjMgNyAyNSAzMiAyNSAzMmwtNjMtMTd6bTU3IDk2Yy00MS0xMi00Ny00NS00Ny00NWwxMTAgMzFzLTIyIDI2LTYzIDE0em0zOS02OHMxNC0yMSAzNy0xNGMyNCA2IDI2IDMyIDI2IDMybC02My0xOHoiIGZpbGw9IiMyRUFEMzMiLz48cGF0aCBkPSJNMTQwIDI0NmwtNDEgMTJzNS0yNiAzNS0zNmwtMjMtODYtMiAxYy0yOSA4LTUyIDYtNjEgNC0xNC0yLTIxLTUtMjAgNSAwIDkgMiAyMyA3IDQyIDExIDQwIDQ3IDExOCAxMTQgMTAwaDJsLTExLTQyem0tNzktNThsNDgtMTJzLTEgMTgtMTkgMjMtMjktMTEtMjktMTF6IiBmaWxsPSIjRDY1MzQ4Ii8+PHBhdGggZD0iTTIyNSAyNjloLTJjLTQxLTEyLTQ3LTQ1LTQ3LTQ1bDU3IDE2IDMwLTExNmMtMzctMTAtNjItMjctNzEtMzUtMTQtMTItMjAtMjAtMjYtOC01IDExLTEyIDI5LTE5IDUzLTE0IDUzLTI0IDE2NCA2MyAxODdsMiAxIDEzLTUzem0tNTktOTZzMTQtMjIgMzgtMTVjMjMgNyAyNSAzMiAyNSAzMmwtNjMtMTd6IiBmaWxsPSIjMUQ4RDIyIi8+PHBhdGggZD0iTTE0MiAyNDVsLTExIDRjMyAxNCA3IDI4IDE0IDQwbDQtMSA5LTNjLTgtMTItMTMtMjUtMTYtNDB6bS00LTEwMmMtNiAyMS0xMSA1MS0xMCA4MWw4LTIgMi0xYTI3MyAyNzMgMCAwMTE0LTEwM2wtOCA1LTYgMjB6IiBmaWxsPSIjQzA0QjQxIi8+PC9zdmc+')`;
-    toolbarShadow.appendChild(iconElement);
-    toolbarShadow.appendChild(this._inspectElement);
-    toolbarShadow.appendChild(this._recordElement);
-    toolbarShadow.appendChild(this._resumeElement);
-
-    this._inspectElement.addEventListener('click', () => {
-      if (this._inspectElement.classList.contains('disabled'))
+  private _hydrate() {
+    this._toolbar.$('#pw-button-inspect').addEventListener('click', () => {
+      if (this._toolbar.$('#pw-button-inspect').classList.contains('disabled'))
         return;
-      this._inspectElement.classList.toggle('toggled');
-      this._setMode(this._inspectElement.classList.contains('toggled') ? 'inspecting' : 'none');
+      this._toolbar.$('#pw-button-inspect').classList.toggle('toggled');
+      this._updateUIState({
+        mode: this._toolbar.$('#pw-button-inspect').classList.contains('toggled') ? 'inspecting' : 'none'
+      });
     });
-    this._recordElement.addEventListener('click', () => {
-      if (this._recordElement.classList.contains('disabled'))
+    this._toolbar.$('#pw-button-record').addEventListener('click', () => this._toggleRecording());
+    this._toolbar.$('#pw-button-resume').addEventListener('click', () => {
+      if (this._toolbar.$('#pw-button-resume').classList.contains('disabled'))
         return;
-      this._recordElement.classList.toggle('toggled');
-      this._setMode(this._recordElement.classList.contains('toggled') ? 'recording' : 'none');
+      this._updateUIState({ mode: 'none' });
+      window.playwrightRecorderResume().catch(() => {});
     });
-    this._resumeElement.addEventListener('click', () => {
-      if (!this._resumeElement.classList.contains('disabled')) {
-        this._setMode('none');
-        window.playwrightRecorderResume().catch(e => {});
-      }
+    this._toolbar.$('#pw-button-drawer').addEventListener('click', () => {
+      if (this._toolbar.$('#pw-button-drawer').classList.contains('disabled'))
+        return;
+      this._toolbar.$('#pw-button-drawer').classList.toggle('toggled');
+      this._updateUIState({ drawerVisible: this._toolbar.$('#pw-button-drawer').classList.contains('toggled') });
     });
+    this._drawer.$('#pw-button-copy').addEventListener('click', () => {
+      if (this._drawer.$('#pw-button-copy').classList.contains('disabled'))
+        return;
+      copy(this._drawer.$('x-pw-code').textContent || '');
+    });
+    this._drawer.$('#pw-button-clear').addEventListener('click', () => {
+      window.playwrightRecorderClearScript().catch(() => {});
+    });
+    this._drawer.$('#pw-button-close').addEventListener('click', () => {
+      this._toolbar.$('#pw-button-drawer').classList.toggle('toggled', false);
+      this._updateUIState({ drawerVisible: false });
+    });
+    this._drawer.$('x-pw-code span').addEventListener('click', () => this._toggleRecording());
   }
 
   private _refreshListenersIfNeeded() {
@@ -233,40 +279,94 @@ export class Recorder {
       }, true),
     ];
     document.documentElement.appendChild(this._outerGlassPaneElement);
-    document.documentElement.appendChild(this._toolbarElement);
-    if ((window as any)._recorderScriptReadyForTest)
-      (window as any)._recorderScriptReadyForTest();
+    document.documentElement.appendChild(this._outerToolbarElement);
+    document.documentElement.appendChild(this._outerDrawerElement);
   }
 
-  private async _setMode(mode: 'inspecting' | 'recording' | 'paused' | 'none') {
-    window.playwrightRecorderSetState({ mode }).then(() => this._pollRecorderMode());
+  private _toggleRecording() {
+    this._toolbar.$('#pw-button-record').classList.toggle('toggled');
+    this._updateUIState({
+      ...this._state.uiState,
+      mode: this._toolbar.$('#pw-button-record').classList.contains('toggled') ? 'recording' : 'none',
+    });
   }
 
-  private async _pollRecorderMode() {
+  private async _updateUIState(uiState: SetUIState) {
+    window.playwrightRecorderSetUIState(uiState).then(() => this._pollRecorderMode());
+  }
+
+  private async _pollRecorderMode(skipAnimations: boolean = false) {
     if (this._pollRecorderModeTimer)
       clearTimeout(this._pollRecorderModeTimer);
-    const result = await window.playwrightRecorderState().catch(e => null);
-    if (result) {
-      const { state, paused, app } = result;
-      if (state && state.mode !== this._mode) {
-        this._mode = state.mode as any;
-        this._inspectElement.classList.toggle('toggled', this._mode === 'inspecting');
-        this._recordElement.classList.toggle('toggled', this._mode === 'recording');
-        this._inspectElement.classList.toggle('disabled', this._mode === 'recording');
-        this._resumeElement.classList.toggle('disabled', this._mode === 'recording');
-        this._clearHighlight();
-      }
-      if (paused !== this._paused) {
-        this._paused = paused;
-        this._resumeElement.classList.toggle('hidden', false);
-        this._resumeElement.classList.toggle('disabled', !this._paused);
-      }
-      if (app !== this._app) {
-        this._app = app;
-        this._resumeElement.classList.toggle('hidden', this._app !== 'pause');
+    const state = await window.playwrightRecorderState().catch(e => null);
+    if (!state) {
+      this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), 250);
+      return;
+    }
+
+    const { canResume, isController, isPaused, uiState, codegenScript } = state;
+    if (uiState.mode !== this._state.uiState.mode) {
+      this._state.uiState.mode = uiState.mode;
+      this._toolbar.$('#pw-button-inspect').classList.toggle('toggled', uiState.mode === 'inspecting');
+      this._toolbar.$('#pw-button-record').classList.toggle('toggled', uiState.mode === 'recording');
+      this._toolbar.$('#pw-button-resume').classList.toggle('disabled', uiState.mode === 'recording');
+      this._updateDrawerMessage();
+      this._clearHighlight();
+    }
+
+    if (isController !== this._state.isController)
+      this._toolbar.$('#pw-button-drawer-group').classList.toggle('hidden', !isController);
+
+    if (isController  && uiState.drawerVisible !== this._state.uiState.drawerVisible) {
+      this._state.uiState.drawerVisible = uiState.drawerVisible;
+      this._toolbar.$('#pw-button-drawer').classList.toggle('toggled', uiState.drawerVisible);
+      if (this._drawerTimeout)
+        clearTimeout(this._drawerTimeout);
+      if (uiState.drawerVisible) {
+        this._outerDrawerElement.style.display = 'flex';
+        const show = () => this._outerDrawerElement.style.transform = 'translateX(0)';
+        if (skipAnimations)
+          show();
+        else
+          window.requestAnimationFrame(show);
+      } else {
+        this._outerDrawerElement.style.transform = 'translateX(400px)';
+        if (!skipAnimations) {
+          this._drawerTimeout = setTimeout(() => {
+            this._outerDrawerElement.style.display = 'none';
+          }, 300);
+        }
       }
     }
+    if (isPaused !== this._state.isPaused) {
+      this._state.isPaused = isPaused;
+      this._toolbar.$('#pw-button-resume-group').classList.toggle('hidden', false);
+      this._toolbar.$('#pw-button-resume').classList.toggle('disabled', !isPaused);
+    }
+
+    if (canResume !== this._state.canResume) {
+      this._state.canResume = canResume;
+      this._toolbar.$('#pw-button-resume-group').classList.toggle('hidden', !canResume);
+    }
+
+    if (codegenScript !== this._state.codegenScript) {
+      this._state.codegenScript = codegenScript;
+      this._updateDrawerMessage();
+    }
+    this._state = state;
     this._pollRecorderModeTimer = setTimeout(() => this._pollRecorderMode(), 250);
+  }
+
+  private _updateDrawerMessage() {
+    if (!this._state.codegenScript) {
+      this._drawer.$('x-pw-code').textContent = '';
+      if (this._state.uiState.mode === 'recording')
+        this._drawer.$('x-pw-code').appendChild(performActionsMessageElement);
+      else
+        this._drawer.$('x-pw-code').appendChild(pressRecordMessageElement);
+    } else {
+      this._drawer.$('x-pw-code').innerHTML = this._state.codegenScript;
+    }
   }
 
   private _clearHighlight() {
@@ -299,8 +399,10 @@ export class Recorder {
   }
 
   private _onClick(event: MouseEvent) {
-    if (this._mode === 'inspecting' && !this._isInToolbar(event.target as HTMLElement))
-      console.log(this._hoveredModel ? this._hoveredModel.selector : ''); // eslint-disable-line no-console
+    if (this._state.uiState.mode === 'inspecting' && !this._isInToolbar(event.target as HTMLElement)) {
+      if (this._hoveredModel)
+        copy(this._hoveredModel.selector);
+    }
     if (this._shouldIgnoreMouseEvent(event))
       return;
     if (this._actionInProgress(event))
@@ -330,6 +432,8 @@ export class Recorder {
   }
 
   private _isInToolbar(element: Element | undefined | null): boolean {
+    if (element && element.parentElement && element.parentElement.nodeName.toLowerCase().startsWith('x-pw-'))
+      return true;
     return !!element && element.nodeName.toLowerCase().startsWith('x-pw-');
   }
 
@@ -337,9 +441,9 @@ export class Recorder {
     const target = this._deepEventTarget(event);
     if (this._isInToolbar(target))
       return true;
-    if (this._mode === 'none')
+    if (this._state.uiState.mode === 'none')
       return true;
-    if (this._mode === 'inspecting') {
+    if (this._state.uiState.mode === 'inspecting') {
       consumeEvent(event);
       return true;
     }
@@ -367,7 +471,7 @@ export class Recorder {
   }
 
   private _onMouseMove(event: MouseEvent) {
-    if (this._mode === 'none')
+    if (this._state.uiState.mode === 'none')
       return;
     const target = this._deepEventTarget(event);
     if (this._isInToolbar(target))
@@ -487,7 +591,7 @@ export class Recorder {
   }
 
   private _onInput(event: Event) {
-    if (this._mode !== 'recording')
+    if (this._state.uiState.mode !== 'recording')
       return true;
     const target = this._deepEventTarget(event);
     if (['INPUT', 'TEXTAREA'].includes(target.nodeName)) {
@@ -558,11 +662,11 @@ export class Recorder {
   }
 
   private _onKeyDown(event: KeyboardEvent) {
-    if (this._mode === 'inspecting') {
+    if (this._state.uiState.mode === 'inspecting') {
       consumeEvent(event);
       return;
     }
-    if (this._mode !== 'recording')
+    if (this._state.uiState.mode !== 'recording')
       return true;
     if (!this._shouldGenerateKeyPressFor(event))
       return;
@@ -667,13 +771,6 @@ function asCheckbox(node: Node | null): HTMLInputElement | null {
   return inputElement.type === 'checkbox' ? inputElement : null;
 }
 
-type RegisteredListener = {
-  target: EventTarget;
-  eventName: string;
-  listener: EventListener;
-  useCapture?: boolean;
-};
-
 function addEventListener(target: EventTarget, eventName: string, listener: EventListener, useCapture?: boolean): () => void {
   target.addEventListener(eventName, listener, useCapture);
   const remove = () => {
@@ -686,6 +783,167 @@ function removeEventListeners(listeners: (() => void)[]) {
   for (const listener of listeners)
     listener();
   listeners.splice(0, listeners.length);
+}
+
+function copy(text: string) {
+  const input = html`<textarea style="position: absolute; z-index: -1000;"></textarea>` as any as HTMLInputElement;
+  input.value = text;
+  document.body.appendChild(input);
+  input.select();
+  document.execCommand('copy');
+  input.remove();
+}
+
+function commonStyles() {
+  return html`
+<style>
+* {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+}
+x-pw-toolbar {
+  display: flex;
+  align-items: center;
+  fill: #333;
+  flex: none;
+}
+x-pw-toolbar.vertical {
+  flex-direction: column;
+}
+x-pw-button-group {
+  display: flex;
+  align-items: center;
+  background-color: #ffffffe6;
+  padding: 4px;
+  border-radius: 22px;
+  box-shadow: rgba(0, 0, 0, 0.1) 0px 0.25em 0.5em;
+  margin: 4px 0px;
+}
+x-pw-button-group.vertical {
+  flex-direction: column;
+}
+x-pw-button {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  background-position: center;
+  background-repeat: no-repeat;
+  border-radius: 16px;
+  cursor: pointer;
+  outline: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+x-pw-button:hover:not(.disabled) {
+  background-color: #f2f2f2;
+}
+x-pw-toolbar.dark x-pw-button {
+  fill: #ccc;
+}
+x-pw-toolbar.dark x-pw-button:hover:not(.disabled) {
+  background-color: inherit;
+}
+x-pw-toolbar.dark x-pw-button:hover:not(.disabled) {
+  fill: #eee;
+}
+x-pw-toolbar.dark x-pw-button:active:not(.disabled) {
+  fill: #fff;
+}
+x-pw-icon {
+  width: 32px;
+  height: 32px;
+}
+x-pw-button.toggled {
+  fill: #468fd2;
+}
+.record-button {
+  position: relative;
+  background: #333;
+  border-radius: 8px;
+  width: 16px;
+  height: 16px;
+  pointer-events: none;
+}
+.record-button-glow {
+  opacity: 0;
+  background: red;
+  border-radius: 9px;
+  width: 18px;
+  height: 18px;
+  margin: -1px;
+}
+x-pw-button.record.toggled .record-button {
+  background: red;
+}
+x-pw-button.record.toggled .record-button-glow {
+  transition: opacity 0.3s;
+  opacity: 0.7;
+}
+x-pw-button.disabled {
+  fill: #777777 !important;
+  cursor: inherit;
+}
+.hidden {
+  display: none;
+}
+x-pw-button svg {
+  pointer-events: none;
+}
+x-pw-icon svg {
+  transform: scale(0.08);
+  margin-left: -182px;
+  margin-top: -182px;
+}
+</style>`;
+}
+
+function highlighterStyles() {
+  return  html`
+<style>
+.hljs-comment,
+.hljs-quote {
+  color: #6a9955;
+}
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+  color: #4fc1ff;
+}
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+  color: #de935f;
+}
+.hljs-attribute {
+  color: #cc6666;
+}
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+  color: #ce9178;
+}
+.hljs-title,
+.hljs-section {
+  color: #4271ae;
+}
+.hljs-keyword,
+.hljs-selector-tag {
+  color: #c586c0;
+}
+</style>`;
 }
 
 export default Recorder;
