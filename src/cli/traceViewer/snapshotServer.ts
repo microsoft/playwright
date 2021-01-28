@@ -18,29 +18,16 @@ import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
 import type { TraceModel, trace } from './traceModel';
-import type { ScreenshotGenerator } from './screenshotGenerator';
+import { TraceServer } from './traceServer';
 
 export class SnapshotServer {
-  static async create(traceViewerDir: string | undefined, resourcesDir: string | undefined, traceModel: TraceModel, screenshotGenerator: ScreenshotGenerator | undefined): Promise<SnapshotServer> {
-    const server = new SnapshotServer(traceViewerDir, resourcesDir, traceModel, screenshotGenerator);
-    await new Promise(cb => server._server.once('listening', cb));
-    return server;
-  }
-
-  private _traceViewerDir: string | undefined;
   private _resourcesDir: string | undefined;
-  private _traceModel: TraceModel;
-  private _server: http.Server;
+  private _server: TraceServer;
   private _resourceById: Map<string, trace.NetworkResourceTraceEvent>;
-  private _screenshotGenerator: ScreenshotGenerator | undefined;
 
-  constructor(traceViewerDir: string | undefined, resourcesDir: string | undefined, traceModel: TraceModel, screenshotGenerator: ScreenshotGenerator | undefined) {
-    this._traceViewerDir = traceViewerDir;
+  constructor(server: TraceServer, traceModel: TraceModel, resourcesDir: string | undefined) {
     this._resourcesDir = resourcesDir;
-    this._traceModel = traceModel;
-    this._screenshotGenerator = screenshotGenerator;
-    this._server = http.createServer(this._onRequest.bind(this));
-    this._server.listen();
+    this._server = server;
 
     this._resourceById = new Map();
     for (const contextEntry of traceModel.contexts) {
@@ -50,72 +37,23 @@ export class SnapshotServer {
         pageEntry.resources.forEach(r => this._resourceById.set(r.resourceId, r));
       }
     }
-  }
 
-  private _urlPrefix() {
-    const address = this._server.address();
-    return typeof address === 'string' ? address : `http://127.0.0.1:${address.port}`;
-  }
-
-  traceViewerUrl(relative: string) {
-    return this._urlPrefix() + '/traceviewer/' + relative;
+    server.routePath('/snapshot/', this._serveSnapshotRoot.bind(this), true);
+    server.routePath('/snapshot/service-worker.js', this._serveServiceWorker.bind(this));
+    server.routePrefix('/resources/', this._serveResource.bind(this));
   }
 
   snapshotRootUrl() {
-    return this._urlPrefix() + '/snapshot/';
+    return this._server.urlPrefix() + '/snapshot/';
   }
 
   snapshotUrl(pageId: string, snapshotId?: string, timestamp?: number) {
+    // Prefer snapshotId over timestamp.
     if (snapshotId)
-      return this._urlPrefix() + `/snapshot/pageId/${pageId}/snapshotId/${snapshotId}/main`;
+      return this._server.urlPrefix() + `/snapshot/pageId/${pageId}/snapshotId/${snapshotId}/main`;
     if (timestamp)
-      return this._urlPrefix() + `/snapshot/pageId/${pageId}/timestamp/${timestamp}/main`;
+      return this._server.urlPrefix() + `/snapshot/pageId/${pageId}/timestamp/${timestamp}/main`;
     return 'data:text/html,Snapshot is not available';
-  }
-
-  private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-    // This server serves:
-    // - "/traceviewer/..." - our frontend;
-    // - "/sha1/<sha1>" - trace resources;
-    // - "/tracemodel" - json with trace model;
-    // - "/resources/<resourceId>" - network resources from the trace;
-    // - "/file?filePath" - local files for sources tab;
-    // - "/action-preview/..." - lazily generated action previews;
-    // - "/snapshot/" - root for snapshot frame;
-    // - "/snapshot/pageId/..." - actual snapshot html;
-    // - "/service-worker.js" - service worker that intercepts snapshot resources
-    //   and translates them into "/resources/<resourceId>".
-
-    request.on('error', () => response.end());
-    if (!request.url)
-      return response.end();
-
-    const url = new URL('http://localhost' + request.url);
-    // These two entry points do not require referrer check.
-    if (url.pathname.startsWith('/traceviewer/') && this._serveTraceViewer(request, response, url.pathname))
-      return;
-    if (url.pathname === '/snapshot/' && this._serveSnapshotRoot(request, response))
-      return;
-
-    // Only serve the rest when referrer is present to avoid exposure.
-    const hasReferrer = request.headers['referer'] && request.headers['referer'].startsWith(this._urlPrefix());
-    if (!hasReferrer)
-      return response.end();
-    if (url.pathname.startsWith('/resources/') && this._serveResource(request, response, url.pathname))
-      return;
-    if (url.pathname.startsWith('/sha1/') && this._serveSha1(request, response, url.pathname))
-      return;
-    if (url.pathname.startsWith('/action-preview/') && this._serveActionPreview(request, response, url.pathname))
-      return;
-    if (url.pathname === '/file' && this._serveFile(request, response, url.search))
-      return;
-    if (url.pathname === '/service-worker.js' && this._serveServiceWorker(request, response))
-      return;
-    if (url.pathname === '/tracemodel' && this._serveTraceModel(request, response))
-      return;
-
-    response.statusCode = 404;
-    response.end();
   }
 
   private _serveSnapshotRoot(request: http.IncomingMessage, response: http.ServerResponse): boolean {
@@ -139,13 +77,18 @@ export class SnapshotServer {
       </style>
       <body>
         <script>
+          navigator.serviceWorker.register('./service-worker.js');
+
+          let showPromise = Promise.resolve();
+          if (!navigator.serviceWorker.controller)
+            showPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
+
           let current = document.createElement('iframe');
           document.body.appendChild(current);
           let next = document.createElement('iframe');
           document.body.appendChild(next);
           next.style.visibility = 'hidden';
 
-          let showPromise = Promise.resolve();
           let nextUrl;
           window.showSnapshot = url => {
             if (!nextUrl) {
@@ -172,7 +115,7 @@ export class SnapshotServer {
   }
 
   private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */, urlPrefix: string) {
+    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
       let traceModel: TraceModel;
 
       function preprocessModel() {
@@ -195,7 +138,7 @@ export class SnapshotServer {
       }
 
       self.addEventListener('install', function(event: any) {
-        event.waitUntil(fetch('./tracemodel').then(async response => {
+        event.waitUntil(fetch('/tracemodel').then(async response => {
           traceModel = await response.json();
           preprocessModel();
         }));
@@ -212,8 +155,8 @@ export class SnapshotServer {
           parts.shift();
         if (!parts[parts.length - 1])
           parts.pop();
-        // snapshot/pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
-        // snapshot/pageId/<pageId>/timestamp/<timestamp>/<frameId>
+        // - /snapshot/pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
+        // - /snapshot/pageId/<pageId>/timestamp/<timestamp>/<frameId>
         if (parts.length !== 6 || parts[0] !== 'snapshot' || parts[1] !== 'pageId' || (parts[3] !== 'snapshotId' && parts[3] !== 'timestamp'))
           throw new Error(`Unexpected url "${urlString}"`);
         return {
@@ -243,13 +186,11 @@ export class SnapshotServer {
       }
 
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
-        for (const prefix of ['/traceviewer/', '/sha1/', '/resources/', '/file?', '/action-preview/']) {
-          if (event.request.url.startsWith(urlPrefix + prefix))
+        try {
+          const pathname = new URL(event.request.url).pathname;
+          if (pathname === '/snapshot/service-worker.js' || pathname === '/snapshot/')
             return fetch(event.request);
-        }
-        for (const exact of ['/tracemodel', '/service-worker.js', '/snapshot/']) {
-          if (event.request.url === urlPrefix + exact)
-            return fetch(event.request);
+        } catch (e) {
         }
 
         const request = event.request;
@@ -308,9 +249,20 @@ export class SnapshotServer {
           return respond404();
         const resourceOverride = snapshotEvent.snapshot.resourceOverrides.find(o => o.url === request.url);
         const overrideSha1 = resourceOverride ? resourceOverride.sha1 : undefined;
-        if (overrideSha1)
-          return fetch(`/resources/${resource.resourceId}/override/${overrideSha1}`);
-        return fetch(`/resources/${resource.resourceId}`);
+
+        const response = overrideSha1 ?
+          await fetch(`/resources/${resource.resourceId}/override/${overrideSha1}`) :
+          await fetch(`/resources/${resource.resourceId}`);
+        // We make a copy of the response, instead of just forwarding,
+        // so that response url is not inherited as "/resources/...", but instead
+        // as the original request url.
+        // Response url turns into resource base uri that is used to resolve
+        // relative links, e.g. url(/foo/bar) in style sheets.
+        return new Response(response.body, {
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+        });
       }
 
       self.addEventListener('fetch', function(event: any) {
@@ -321,22 +273,17 @@ export class SnapshotServer {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/javascript');
-    response.end(`(${serviceWorkerMain.toString()})(self, '${this._urlPrefix()}')`);
+    response.end(`(${serviceWorkerMain.toString()})(self)`);
     return true;
   }
 
-  private _serveTraceModel(request: http.IncomingMessage, response: http.ServerResponse): boolean {
-    response.statusCode = 200;
-    response.setHeader('Content-Type', 'application/json');
-    response.end(JSON.stringify(this._traceModel));
-    return true;
-  }
-
-  private _serveResource(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
+  private _serveResource(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     if (!this._resourcesDir)
       return false;
 
-    const parts = pathname.split('/');
+    // - /resources/<resourceId>
+    // - /resources/<resourceId>/override/<overrideSha1>
+    const parts = request.url!.split('/');
     if (!parts[0])
       parts.shift();
     if (!parts[parts.length - 1])
@@ -360,7 +307,6 @@ export class SnapshotServer {
       return false;
     const sha1 = overrideSha1 || resource.responseSha1;
     try {
-      // console.log(`reading ${sha1} as ${resource.contentType}...`);
       const content = fs.readFileSync(path.join(this._resourcesDir, sha1));
       response.statusCode = 200;
       let contentType = resource.contentType;
@@ -377,87 +323,9 @@ export class SnapshotServer {
       response.removeHeader('Content-Length');
       response.setHeader('Content-Length', content.byteLength);
       response.end(content);
-      // console.log(`done`);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  private _serveActionPreview(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
-    if (!this._screenshotGenerator)
-      return false;
-    const fullPath = pathname.substring('/action-preview/'.length);
-    const actionId = fullPath.substring(0, fullPath.indexOf('.png'));
-    this._screenshotGenerator.generateScreenshot(actionId).then(body => {
-      if (!body) {
-        response.statusCode = 404;
-        response.end();
-      } else {
-        response.statusCode = 200;
-        response.setHeader('Content-Type', 'image/png');
-        response.setHeader('Content-Length', body.byteLength);
-        response.end(body);
-      }
-    });
-    return true;
-  }
-
-  private _serveSha1(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
-    if (!this._resourcesDir)
-      return false;
-    const parts = pathname.split('/');
-    if (!parts[0])
-      parts.shift();
-    if (!parts[parts.length - 1])
-      parts.pop();
-    if (parts.length !== 2 || parts[0] !== 'sha1')
-      return false;
-    const sha1 = parts[1];
-    return this._serveStaticFile(response, path.join(this._resourcesDir, sha1));
-  }
-
-  private _serveFile(request: http.IncomingMessage, response: http.ServerResponse, search: string): boolean {
-    if (search[0] !== '?')
-      return false;
-    return this._serveStaticFile(response, search.substring(1));
-  }
-
-  private _serveTraceViewer(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
-    if (!this._traceViewerDir)
-      return false;
-    const relativePath = pathname.substring('/traceviewer/'.length);
-    const absolutePath = path.join(this._traceViewerDir, ...relativePath.split('/'));
-    return this._serveStaticFile(response, absolutePath, { 'Service-Worker-Allowed': '/' });
-  }
-
-  private _serveStaticFile(response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
-    try {
-      const content = fs.readFileSync(absoluteFilePath);
-      response.statusCode = 200;
-      const contentType = extensionToMime[path.extname(absoluteFilePath).substring(1)] || 'application/octet-stream';
-      response.setHeader('Content-Type', contentType);
-      response.setHeader('Content-Length', content.byteLength);
-      for (const [name, value] of Object.entries(headers || {}))
-        response.setHeader(name, value);
-      response.end(content);
       return true;
     } catch (e) {
       return false;
     }
   }
 }
-
-const extensionToMime: { [key: string]: string } = {
-  'css': 'text/css',
-  'html': 'text/html',
-  'jpeg': 'image/jpeg',
-  'jpg': 'image/jpeg',
-  'js': 'application/javascript',
-  'png': 'image/png',
-  'ttf': 'font/ttf',
-  'svg': 'image/svg+xml',
-  'webp': 'image/webp',
-  'woff': 'font/woff',
-  'woff2': 'font/woff2',
-};

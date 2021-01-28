@@ -18,31 +18,31 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as playwright from '../../..';
 import * as util from 'util';
-import { actionById, ActionEntry, ContextEntry, PageEntry, TraceModel } from './traceModel';
+import { actionById, ActionEntry, ContextEntry, TraceModel } from './traceModel';
 import { SnapshotServer } from './snapshotServer';
 
 const fsReadFileAsync = util.promisify(fs.readFile.bind(fs));
 const fsWriteFileAsync = util.promisify(fs.writeFile.bind(fs));
 
 export class ScreenshotGenerator {
-  private _traceStorageDir: string;
+  private _resourcesDir: string;
   private _browserPromise: Promise<playwright.Browser>;
-  private _serverPromise: Promise<SnapshotServer>;
+  private _snapshotServer: SnapshotServer;
   private _traceModel: TraceModel;
   private _rendering = new Map<ActionEntry, Promise<Buffer | undefined>>();
   private _lock = new Lock(3);
 
-  constructor(resourcesDir: string, traceModel: TraceModel) {
-    this._traceStorageDir = resourcesDir;
+  constructor(snapshotServer: SnapshotServer, resourcesDir: string, traceModel: TraceModel) {
+    this._snapshotServer = snapshotServer;
+    this._resourcesDir = resourcesDir;
     this._traceModel = traceModel;
     this._browserPromise = playwright.chromium.launch();
-    this._serverPromise = SnapshotServer.create(undefined, resourcesDir, traceModel, undefined);
   }
 
   generateScreenshot(actionId: string): Promise<Buffer | undefined> {
-    const { context, action, page } = actionById(this._traceModel, actionId);
+    const { context, action } = actionById(this._traceModel, actionId);
     if (!this._rendering.has(action)) {
-      this._rendering.set(action, this._render(context, page, action).then(body => {
+      this._rendering.set(action, this._render(context, action).then(body => {
         this._rendering.delete(action);
         return body;
       }));
@@ -50,8 +50,8 @@ export class ScreenshotGenerator {
     return this._rendering.get(action)!;
   }
 
-  private async _render(contextEntry: ContextEntry, pageEntry: PageEntry, actionEntry: ActionEntry): Promise<Buffer | undefined> {
-    const imageFileName = path.join(this._traceStorageDir, actionEntry.action.timestamp + '-screenshot.png');
+  private async _render(contextEntry: ContextEntry, actionEntry: ActionEntry): Promise<Buffer | undefined> {
+    const imageFileName = path.join(this._resourcesDir, actionEntry.action.timestamp + '-screenshot.png');
     try {
       return await fsReadFileAsync(imageFileName);
     } catch (e) {
@@ -60,7 +60,6 @@ export class ScreenshotGenerator {
 
     const { action } = actionEntry;
     const browser = await this._browserPromise;
-    const server = await this._serverPromise;
 
     await this._lock.obtain();
 
@@ -70,15 +69,11 @@ export class ScreenshotGenerator {
     });
 
     try {
-      await page.goto(server.snapshotRootUrl());
-      await page.evaluate(async () => {
-        navigator.serviceWorker.register('/service-worker.js');
-        await new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
-      });
+      await page.goto(this._snapshotServer.snapshotRootUrl());
 
       const snapshots = action.snapshots || [];
       const snapshotId = snapshots.length ? snapshots[0].snapshotId : undefined;
-      const snapshotUrl = server.snapshotUrl(action.pageId!, snapshotId, action.endTime);
+      const snapshotUrl = this._snapshotServer.snapshotUrl(action.pageId!, snapshotId, action.endTime);
       console.log('Generating screenshot for ' + action.action); // eslint-disable-line no-console
       await page.evaluate(snapshotUrl => (window as any).showSnapshot(snapshotUrl), snapshotUrl);
 

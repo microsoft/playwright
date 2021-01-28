@@ -76,8 +76,6 @@ const SnapshotTab: React.FunctionComponent<{
 }> = ({ actionEntry, snapshotSize, selectedTime, boundaries }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
-  const origin = location.href.substring(0, location.href.indexOf(location.pathname));
-  const snapshotIframeUrl = origin + '/snapshot/';
 
   let snapshots: { name: string, snapshotId?: string, snapshotTime?: number }[] = [];
   snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
@@ -91,15 +89,16 @@ const SnapshotTab: React.FunctionComponent<{
     if (!actionEntry || !iframeRef.current)
       return;
 
+    // TODO: this logic is copied from SnapshotServer. Find a way to share.
     let snapshotUrl = 'data:text/html,Snapshot is not available';
     if (selectedTime) {
-      snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${selectedTime}/main`;
+      snapshotUrl = `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${selectedTime}/main`;
     } else {
       const snapshot = snapshots[snapshotIndex];
       if (snapshot && snapshot.snapshotTime)
-        snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${snapshot.snapshotTime}/main`;
+        snapshotUrl = `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${snapshot.snapshotTime}/main`;
       else if (snapshot && snapshot.snapshotId)
-        snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/snapshotId/${snapshot.snapshotId}/main`;
+        snapshotUrl = `/snapshot/pageId/${actionEntry.action.pageId!}/snapshotId/${snapshot.snapshotId}/main`;
     }
 
     try {
@@ -129,7 +128,7 @@ const SnapshotTab: React.FunctionComponent<{
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2}px, ${-snapshotSize.height * (1 - scale) / 2}px) scale(${scale})`,
       }}>
-        <iframe ref={iframeRef} id='snapshot' name='snapshot' src={snapshotIframeUrl}></iframe>
+        <iframe ref={iframeRef} id='snapshot' name='snapshot' src='/snapshot/'></iframe>
       </div>
     </div>
   </div>;

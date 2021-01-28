@@ -22,9 +22,6 @@ import { applyTheme } from '../theme';
 import '../common.css';
 
 (async () => {
-  navigator.serviceWorker.register('/service-worker.js');
-  if (!navigator.serviceWorker.controller)
-    await new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
   applyTheme();
   const traceModel = await fetch('/tracemodel').then(response => response.json());
   ReactDOM.render(<Workbench traceModel={traceModel} />, document.querySelector('#root'));
