@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../traceModel';
+import { ActionEntry } from '../../../cli/traceViewer/traceModel';
 import * as React from 'react';
 import { useAsyncMemo } from './helpers';
 import './sourceTab.css';
-import '../../../../third_party/highlightjs/highlightjs/tomorrow.css';
-import * as highlightjs from '../../../../third_party/highlightjs/highlightjs';
+import '../../../third_party/highlightjs/highlightjs/tomorrow.css';
+import * as highlightjs from '../../../third_party/highlightjs/highlightjs';
 
 type StackInfo = string | {
   frames: {

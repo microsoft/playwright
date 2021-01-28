@@ -14,21 +14,19 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../traceModel';
-import './networkTab.css';
+import '../third_party/vscode/codicon.css';
 import * as React from 'react';
-import { NetworkResourceDetails } from './networkResourceDetails';
+import * as ReactDOM from 'react-dom';
+import { applyTheme } from '../theme';
+import '../common.css';
 
-export const NetworkTab: React.FunctionComponent<{
-  actionEntry: ActionEntry | undefined,
-}> = ({ actionEntry }) => {
-  const [selected, setSelected] = React.useState(0);
+declare global {
+  interface Window {
+  }
+}
 
-  return <div className='network-tab'>{
-    (actionEntry ? actionEntry.resources : []).map((resource, index) => {
-      return <NetworkResourceDetails resource={resource} key={index} index={index} selected={selected === index} setSelected={setSelected} />;
-    })
-  }</div>;
-};
-
-
+(async () => {
+  applyTheme();
+  ReactDOM.render(<div>
+  </div>, document.querySelector('#root'));
+})();

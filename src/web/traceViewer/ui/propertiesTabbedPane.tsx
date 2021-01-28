@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ActionEntry } from '../../traceModel';
+import { ActionEntry } from '../../../cli/traceViewer/traceModel';
 import { Boundaries, Size } from '../geometry';
 import { NetworkTab } from './networkTab';
 import { SourceTab } from './sourceTab';

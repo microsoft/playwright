@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import './third_party/vscode/codicon.css';
+import '../third_party/vscode/codicon.css';
 import { Workbench } from './ui/workbench';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { applyTheme } from './theme';
+import { applyTheme } from '../theme';
+import '../common.css';
 
 (async () => {
   navigator.serviceWorker.register('/service-worker.js');
