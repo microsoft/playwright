@@ -94,7 +94,7 @@ export class CodeGenerator {
       }
       if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate') {
         if (action.url === lastAction.url) {
-          this._currentAction = undefined;
+          this._currentAction = null;
           return;
         }
       }
