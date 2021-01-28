@@ -662,7 +662,9 @@ export class InjectedScript {
 
   isElementDisabled(element: Element): boolean {
     const elementOrButton = element.closest('button, [role=button]') || element;
-    return ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled') || elementOrButton.getAttribute('aria-disabled') === 'true';
+    const ariaDisabled = elementOrButton.getAttribute('aria-disabled')
+    return ['BUTTON', 'INPUT', 'SELECT', 'TEXTAREA'].includes(elementOrButton.nodeName) && elementOrButton.hasAttribute('disabled') ||
+      ariaDisabled != null && ariaDisabled.toLowerCase() !== 'false';
   }
 
   isElementReadOnly(element: Element): boolean {
