@@ -63,9 +63,6 @@ const emptyModel: TraceModel = {
 class TraceViewer {
   private _document: TraceViewerDocument | undefined;
 
-  constructor() {
-  }
-
   async load(traceDir: string) {
     const resourcesDir = path.join(traceDir, 'resources');
     const model = { contexts: [] };
@@ -88,61 +85,42 @@ class TraceViewer {
 
   async show() {
     const browser = await playwright.chromium.launch({ headless: false });
+    const server = await SnapshotServer.create(path.join(__dirname, 'web'), this._document ? this._document.resourcesDir : undefined, this._document ? this._document.model : emptyModel);
     const uiPage = await browser.newPage({ viewport: null });
     uiPage.on('close', () => process.exit(0));
-    await uiPage.exposeBinding('readFile', async (_, path: string) => {
-      return fs.readFileSync(path).toString();
-    });
-    await uiPage.exposeBinding('readResource', async (_, sha1: string) => {
-      if (!this._document)
-        return;
+    await uiPage.goto(server.traceViewerUrl('index.html'));
 
-      return fs.readFileSync(path.join(this._document.resourcesDir, sha1)).toString('base64');
-    });
-    await uiPage.exposeBinding('renderSnapshot', async (_, arg: { action: ActionTraceEvent, snapshot: { snapshotId?: string, snapshotTime?: number } }) => {
-      const { action, snapshot } = arg;
-      const url = server.urlForSnapshot(action.pageId!, snapshot.snapshotId, snapshot.snapshotTime);
-      await snapshotPage.evaluate(url => (window as any).showSnapshot(url), url).catch(e => {});
-    });
-    await uiPage.exposeBinding('getTraceModel', () => this._document ? this._document.model : emptyModel);
-    await uiPage.route('**/*', (route, request) => {
-      if (request.frame().parentFrame() && this._document) {
-        this._document.snapshotRouter.route(route);
-        return;
-      }
-      try {
-        const url = new URL(request.url());
-        if (this._document && request.url().includes('action-preview')) {
-          const fullPath = url.pathname.substring('/action-preview/'.length);
-          const actionId = fullPath.substring(0, fullPath.indexOf('.png'));
-          this._document.screenshotGenerator.generateScreenshot(actionId).then(body => {
-            if (body)
-              route.fulfill({ contentType: 'image/png', body });
-            else
-              route.fulfill({ status: 404 });
-          });
-          return;
-        }
-        const filePath = path.join(__dirname, 'web', url.pathname.substring(1));
-        const body = fs.readFileSync(filePath);
-        route.fulfill({
-          contentType: extensionToMime[path.extname(url.pathname).substring(1)] || 'text/plain',
-          body,
-        });
-      } catch (e) {
-        console.log(e); // eslint-disable-line no-console
-        route.fulfill({
-          status: 404
-        });
-      }
-    });
-
-    const snapshotPage = await browser.newPage({ viewport: null });
-    const server = await SnapshotServer.create(this._document!.resourcesDir, this._document!.model);
-    await snapshotPage.goto(server.initialUrl());
-    await snapshotPage.evaluate(() => (window as any).readyPromise);
-
-    await uiPage.goto('http://trace-viewer/index.html');
+    // await uiPage.route('**/*', (route, request) => {
+    //   if (request.frame().parentFrame() && this._document) {
+    //     this._document.snapshotRouter.route(route);
+    //     return;
+    //   }
+    //   try {
+    //     const url = new URL(request.url());
+    //     if (this._document && request.url().includes('action-preview')) {
+    //       const fullPath = url.pathname.substring('/action-preview/'.length);
+    //       const actionId = fullPath.substring(0, fullPath.indexOf('.png'));
+    //       this._document.screenshotGenerator.generateScreenshot(actionId).then(body => {
+    //         if (body)
+    //           route.fulfill({ contentType: 'image/png', body });
+    //         else
+    //           route.fulfill({ status: 404 });
+    //       });
+    //       return;
+    //     }
+    //     const filePath = path.join(__dirname, 'web', url.pathname.substring(1));
+    //     const body = fs.readFileSync(filePath);
+    //     route.fulfill({
+    //       contentType: extensionToMime[path.extname(url.pathname).substring(1)] || 'text/plain',
+    //       body,
+    //     });
+    //   } catch (e) {
+    //     console.log(e); // eslint-disable-line no-console
+    //     route.fulfill({
+    //       status: 404
+    //     });
+    //   }
+    // });
   }
 }
 
@@ -152,17 +130,3 @@ export async function showTraceViewer(traceDir: string) {
     await traceViewer.load(traceDir);
   await traceViewer.show();
 }
-
-const extensionToMime: { [key: string]: string } = {
-  'css': 'text/css',
-  'html': 'text/html',
-  'jpeg': 'image/jpeg',
-  'jpg': 'image/jpeg',
-  'js': 'application/javascript',
-  'png': 'image/png',
-  'ttf': 'font/ttf',
-  'svg': 'image/svg+xml',
-  'webp': 'image/webp',
-  'woff': 'font/woff',
-  'woff2': 'font/woff2',
-};

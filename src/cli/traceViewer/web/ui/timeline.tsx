@@ -145,7 +145,7 @@ export const Timeline: React.FunctionComponent<{
   };
   const onMouseLeave = () => {
     setPreviewX(undefined);
-    // onTimeSelected(undefined);
+    onTimeSelected(undefined);
   };
   const onActionClick = (event: React.MouseEvent) => {
     if (ref.current) {

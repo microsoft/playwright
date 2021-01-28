@@ -20,18 +20,20 @@ import * as path from 'path';
 import type { TraceModel, trace } from './traceModel';
 
 export class SnapshotServer {
-  static async create(resourcesDir: string, traceModel: TraceModel): Promise<SnapshotServer> {
-    const server = new SnapshotServer(resourcesDir, traceModel);
+  static async create(traceViewerDir: string, resourcesDir: string | undefined, traceModel: TraceModel): Promise<SnapshotServer> {
+    const server = new SnapshotServer(traceViewerDir, resourcesDir, traceModel);
     await new Promise(cb => server._server.once('listening', cb));
     return server;
   }
 
-  private _resourcesDir: string;
+  private _traceViewerDir: string;
+  private _resourcesDir: string | undefined;
   private _traceModel: TraceModel;
   private _server: http.Server;
   private _resourceById: Map<string, trace.NetworkResourceTraceEvent>;
 
-  constructor(resourcesDir: string, traceModel: TraceModel) {
+  constructor(traceViewerDir: string, resourcesDir: string | undefined, traceModel: TraceModel) {
+    this._traceViewerDir = traceViewerDir;
     this._resourcesDir = resourcesDir;
     this._traceModel = traceModel;
     this._server = http.createServer(this._onRequest.bind(this));
@@ -52,37 +54,40 @@ export class SnapshotServer {
     return typeof address === 'string' ? address : `http://127.0.0.1:${address.port}`;
   }
 
-  urlForSnapshot(pageId: string, snapshotId?: string, timestamp?: number) {
-    if (!snapshotId && !timestamp)
-      return 'data:text/html,Snapshot is not available';
-    const suffix = snapshotId ? `/snapshotId/${snapshotId}` : `/timestamp/${timestamp}`;
-    return this._urlPrefix() + `/pageId/${pageId}` + suffix + '/main';
-  }
-
-  initialUrl() {
-    return this._urlPrefix() + '/';
+  traceViewerUrl(relative: string) {
+    return this._urlPrefix() + '/traceviewer/' + relative;
   }
 
   private _onRequest(request: http.IncomingMessage, response: http.ServerResponse) {
     request.on('error', () => response.end());
     if (!request.url)
       return response.end();
+
     const url = new URL('http://localhost' + request.url);
-    if (url.pathname === '/')
-      return this._serveRoot(request, response);
-    if (url.pathname === '/service-worker.js')
-      return this._serveServiceWorker(request, response);
-    if (url.pathname === '/tracemodel')
-      return this._serveTraceModel(request, response);
-    if (url.pathname.startsWith('/resources/')) {
-      if (this._serveResource(request, response, url.pathname))
-        return;
-    }
+    if (url.pathname.startsWith('/traceviewer/') && this._serveTraceViewer(request, response, url.pathname))
+      return;
+
+    const hasReferrer = request.headers['referer'] && request.headers['referer'].startsWith(this._urlPrefix());
+    if (!hasReferrer)
+      return response.end();
+    if (url.pathname.startsWith('/resources/') && this._serveResource(request, response, url.pathname))
+      return;
+    if (url.pathname.startsWith('/sha1/') && this._serveSha1(request, response, url.pathname))
+      return;
+    if (url.pathname === '/file' && this._serveFile(request, response, url.search))
+      return;
+    if (url.pathname === '/snapshot/' && this._serveSnapshotRoot(request, response))
+      return;
+    if (url.pathname === '/service-worker.js' && this._serveServiceWorker(request, response))
+      return;
+    if (url.pathname === '/tracemodel' && this._serveTraceModel(request, response))
+      return;
+
     response.statusCode = 404;
     response.end();
   }
 
-  private _serveRoot(request: http.IncomingMessage, response: http.ServerResponse) {
+  private _serveSnapshotRoot(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'text/html');
@@ -103,9 +108,6 @@ export class SnapshotServer {
       </style>
       <body>
         <script>
-          navigator.serviceWorker.register('service-worker.js');
-          window.readyPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
-
           let current = document.createElement('iframe');
           document.body.appendChild(current);
           let next = document.createElement('iframe');
@@ -134,10 +136,11 @@ export class SnapshotServer {
         </script>
       </body>
     `);
+    return true;
   }
 
-  private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse) {
-    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
+  private _serveServiceWorker(request: http.IncomingMessage, response: http.ServerResponse): boolean {
+    function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */, urlPrefix: string) {
       let traceModel: TraceModel;
 
       function preprocessModel() {
@@ -177,15 +180,15 @@ export class SnapshotServer {
           parts.shift();
         if (!parts[parts.length - 1])
           parts.pop();
-        // pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
-        // pageId/<pageId>/timestamp/<timestamp>/<frameId>
-        if (parts.length !== 5 || parts[0] !== 'pageId' || (parts[2] !== 'snapshotId' && parts[2] !== 'timestamp'))
+        // snapshot/pageId/<pageId>/snapshotId/<snapshotId>/<frameId>
+        // snapshot/pageId/<pageId>/timestamp/<timestamp>/<frameId>
+        if (parts.length !== 6 || parts[0] !== 'snapshot' || parts[1] !== 'pageId' || (parts[3] !== 'snapshotId' && parts[3] !== 'timestamp'))
           throw new Error(`Unexpected url "${urlString}"`);
         return {
-          pageId: parts[1],
-          frameId: parts[4] === 'main' ? '' : parts[4],
-          snapshotId: (parts[2] === 'snapshotId' ? parts[3] : undefined),
-          timestamp: (parts[2] === 'timestamp' ? +parts[3] : undefined),
+          pageId: parts[2],
+          frameId: parts[5] === 'main' ? '' : parts[5],
+          snapshotId: (parts[3] === 'snapshotId' ? parts[4] : undefined),
+          timestamp: (parts[3] === 'timestamp' ? +parts[4] : undefined),
         };
       }
 
@@ -208,8 +211,14 @@ export class SnapshotServer {
       }
 
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
-        if (new URL(event.request.url).pathname === '/')
-          return fetch(event.request);
+        for (const prefix of ['/traceviewer/', '/sha1/', '/resources/', '/file?']) {
+          if (event.request.url.startsWith(urlPrefix + prefix))
+            return fetch(event.request);
+        }
+        for (const exact of ['/tracemodel', '/service-worker.js', '/snapshot/']) {
+          if (event.request.url === urlPrefix + exact)
+            return fetch(event.request);
+        }
 
         const request = event.request;
         let parsed;
@@ -280,16 +289,21 @@ export class SnapshotServer {
     response.statusCode = 200;
     response.setHeader('Cache-Control', 'public, max-age=31536000');
     response.setHeader('Content-Type', 'application/javascript');
-    response.end(`(${serviceWorkerMain.toString()})(self)`);
+    response.end(`(${serviceWorkerMain.toString()})(self, '${this._urlPrefix()}')`);
+    return true;
   }
 
-  private _serveTraceModel(request: http.IncomingMessage, response: http.ServerResponse) {
+  private _serveTraceModel(request: http.IncomingMessage, response: http.ServerResponse): boolean {
     response.statusCode = 200;
     response.setHeader('Content-Type', 'application/json');
     response.end(JSON.stringify(this._traceModel));
+    return true;
   }
 
   private _serveResource(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
+    if (!this._resourcesDir)
+      return false;
+
     const parts = pathname.split('/');
     if (!parts[0])
       parts.shift();
@@ -314,7 +328,7 @@ export class SnapshotServer {
       return false;
     const sha1 = overrideSha1 || resource.responseSha1;
     try {
-      console.log(`reading ${sha1} as ${resource.contentType}...`);
+      // console.log(`reading ${sha1} as ${resource.contentType}...`);
       const content = fs.readFileSync(path.join(this._resourcesDir, sha1));
       response.statusCode = 200;
       let contentType = resource.contentType;
@@ -331,10 +345,66 @@ export class SnapshotServer {
       response.removeHeader('Content-Length');
       response.setHeader('Content-Length', content.byteLength);
       response.end(content);
-      console.log(`done`);
+      // console.log(`done`);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  private _serveSha1(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
+    if (!this._resourcesDir)
+      return false;
+    const parts = pathname.split('/');
+    if (!parts[0])
+      parts.shift();
+    if (!parts[parts.length - 1])
+      parts.pop();
+    if (parts.length !== 2 || parts[0] !== 'sha1')
+      return false;
+    const sha1 = parts[1];
+    return this._serveStaticFile(response, path.join(this._resourcesDir, sha1));
+  }
+
+  private _serveFile(request: http.IncomingMessage, response: http.ServerResponse, search: string): boolean {
+    if (search[0] !== '?')
+      return false;
+    return this._serveStaticFile(response, search.substring(1));
+  }
+
+  private _serveTraceViewer(request: http.IncomingMessage, response: http.ServerResponse, pathname: string): boolean {
+    const relativePath = pathname.substring('/traceviewer/'.length);
+    const absolutePath = path.join(this._traceViewerDir, ...relativePath.split('/'));
+    return this._serveStaticFile(response, absolutePath, { 'Service-Worker-Allowed': '/' });
+  }
+
+  private _serveStaticFile(response: http.ServerResponse, absoluteFilePath: string, headers?: { [name: string]: string }): boolean {
+    try {
+      const content = fs.readFileSync(absoluteFilePath);
+      response.statusCode = 200;
+      const contentType = extensionToMime[path.extname(absoluteFilePath).substring(1)] || 'application/octet-stream';
+      response.setHeader('Content-Type', contentType);
+      response.setHeader('Content-Length', content.byteLength);
+      for (const [name, value] of Object.entries(headers || {}))
+        response.setHeader(name, value);
+      response.end(content);
       return true;
     } catch (e) {
       return false;
     }
   }
 }
+
+const extensionToMime: { [key: string]: string } = {
+  'css': 'text/css',
+  'html': 'text/html',
+  'jpeg': 'image/jpeg',
+  'jpg': 'image/jpeg',
+  'js': 'application/javascript',
+  'png': 'image/png',
+  'ttf': 'font/ttf',
+  'svg': 'image/svg+xml',
+  'webp': 'image/webp',
+  'woff': 'font/woff',
+  'woff2': 'font/woff2',
+};

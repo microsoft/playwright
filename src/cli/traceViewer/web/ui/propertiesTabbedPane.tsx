@@ -76,6 +76,8 @@ const SnapshotTab: React.FunctionComponent<{
 }> = ({ actionEntry, snapshotSize, selectedTime, boundaries }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [snapshotIndex, setSnapshotIndex] = React.useState(0);
+  const origin = location.href.substring(0, location.href.indexOf(location.pathname));
+  const snapshotIframeUrl = origin + '/snapshot/';
 
   let snapshots: { name: string, snapshotId?: string, snapshotTime?: number }[] = [];
   snapshots = (actionEntry ? (actionEntry.action.snapshots || []) : []).slice();
@@ -86,12 +88,24 @@ const SnapshotTab: React.FunctionComponent<{
 
   const iframeRef = React.createRef<HTMLIFrameElement>();
   React.useEffect(() => {
-    if (!actionEntry)
+    if (!actionEntry || !iframeRef.current)
       return;
-    if (selectedTime)
-      (window as any).renderSnapshot({ action: actionEntry.action, snapshot: { snapshotTime: selectedTime } });
-    else
-      (window as any).renderSnapshot({ action: actionEntry.action, snapshot: snapshots[snapshotIndex] });
+
+    let snapshotUrl = 'data:text/html,Snapshot is not available';
+    if (selectedTime) {
+      snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${selectedTime}/main`;
+    } else {
+      const snapshot = snapshots[snapshotIndex];
+      if (snapshot && snapshot.snapshotTime)
+        snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/timestamp/${snapshot.snapshotTime}/main`;
+      else if (snapshot && snapshot.snapshotId)
+        snapshotUrl = origin + `/snapshot/pageId/${actionEntry.action.pageId!}/snapshotId/${snapshot.snapshotId}/main`;
+    }
+
+    try {
+      (iframeRef.current.contentWindow as any).showSnapshot(snapshotUrl);
+    } catch (e) {
+    }
   }, [actionEntry, snapshotIndex, selectedTime]);
 
   const scale = Math.min(measure.width / snapshotSize.width, measure.height / snapshotSize.height);
@@ -115,7 +129,7 @@ const SnapshotTab: React.FunctionComponent<{
         height: snapshotSize.height + 'px',
         transform: `translate(${-snapshotSize.width * (1 - scale) / 2}px, ${-snapshotSize.height * (1 - scale) / 2}px) scale(${scale})`,
       }}>
-        <iframe ref={iframeRef} id='snapshot' name='snapshot'></iframe>
+        <iframe ref={iframeRef} id='snapshot' name='snapshot' src={snapshotIframeUrl}></iframe>
       </div>
     </div>
   </div>;
