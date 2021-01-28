@@ -93,8 +93,10 @@ export class CodeGenerator {
           eraseLastAction = true;
       }
       if (lastAction && action.name === 'navigate' && lastAction.name === 'navigate') {
-        if (action.url === lastAction.url)
+        if (action.url === lastAction.url) {
+          this._currentAction = undefined;
           return;
+        }
       }
       for (const name of ['check', 'uncheck']) {
         if (lastAction && action.name === name && lastAction.name === 'click') {

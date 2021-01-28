@@ -638,4 +638,22 @@ describe('cli codegen', (test, { browserName, headful }) => {
     url: '${otherFrame.url()}'
   }).click('text="Hi, I\\'m frame"');`);
   });
+
+  it('should record navigations after identical pushState', async ({ page, recorder, httpServer }) => {
+    httpServer.setHandler((req: http.IncomingMessage, res: http.ServerResponse) => {
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.end('Hello world');
+    });
+    await recorder.setContentAndWait(`
+    <script>
+    function pushState() {
+      history.pushState({}, 'title', '${httpServer.PREFIX}');
+    }
+    </script>`, httpServer.PREFIX);
+    for (let i = 1; i < 3; ++i)
+      await page.evaluate('pushState()');
+
+    await page.goto(httpServer.PREFIX + '/page2.html');
+    await recorder.waitForOutput(`await page.goto('${httpServer.PREFIX}/page2.html');`);
+  });
 });
