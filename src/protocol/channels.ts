@@ -298,6 +298,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
+  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -360,6 +361,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   colorScheme?: 'light' | 'dark' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
+  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -423,6 +425,7 @@ export type BrowserNewContextParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
+  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -475,6 +478,7 @@ export type BrowserNewContextOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
+  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -2795,6 +2799,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
+  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {
@@ -2839,6 +2844,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   colorScheme?: 'dark' | 'light' | 'no-preference',
   acceptDownloads?: boolean,
   _traceDir?: string,
+  _debugName?: string,
   recordVideo?: {
     dir: string,
     size?: {

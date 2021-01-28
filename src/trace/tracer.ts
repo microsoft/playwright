@@ -97,6 +97,7 @@ class ContextTracer implements SnapshotterDelegate, ActionListener {
       isMobile: !!context._options.isMobile,
       deviceScaleFactor: context._options.deviceScaleFactor || 1,
       viewportSize: context._options.viewport || undefined,
+      debugName: context._options._debugName,
     };
     this._appendTraceEvent(event);
     this._snapshotter = new Snapshotter(context, this);

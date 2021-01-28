@@ -73,7 +73,7 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
       case 'context-created': {
         contextEntries.set(event.contextId, {
           filePath,
-          name: filePath.substring(filePath.lastIndexOf('/') + 1),
+          name: event.debugName || filePath.substring(filePath.lastIndexOf('/') + 1),
           startTime: Number.MAX_VALUE,
           endTime: Number.MIN_VALUE,
           created: event,

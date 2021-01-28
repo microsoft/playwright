@@ -212,6 +212,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['light', 'dark', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _traceDir: tOptional(tString),
+    _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -255,6 +256,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _traceDir: tOptional(tString),
+    _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
@@ -1046,6 +1048,7 @@ export function createScheme(tChannel: (name: string) => Validator): Scheme {
     colorScheme: tOptional(tEnum(['dark', 'light', 'no-preference'])),
     acceptDownloads: tOptional(tBoolean),
     _traceDir: tOptional(tString),
+    _debugName: tOptional(tString),
     recordVideo: tOptional(tObject({
       dir: tString,
       size: tOptional(tObject({
