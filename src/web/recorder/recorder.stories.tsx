@@ -14,17 +14,24 @@
   limitations under the License.
 */
 
-.toolbar-button {
-  border: none;
-  outline: none;
-  color: #999;
-  background: transparent;
-  padding: 0;
-  margin-left: 10px;
-  height: 40px;
-  cursor: pointer;
-}
+import { Story, Meta } from '@storybook/react/types-6-0';
+import React from 'react';
+import { Recorder, RecorderProps } from './recorder';
+import { exampleText } from '../components/exampleText';
 
-.toolbar-button:hover {
-  color: #1ea7fd;
-}
+export default {
+  title: 'Recorder/Recorder',
+  component: Recorder,
+  parameters: {
+    viewport: {
+      defaultViewport: 'recorder'
+    }
+  }
+} as Meta;
+
+const Template: Story<RecorderProps> = args => <Recorder {...args} />;
+
+export const Primary = Template.bind({});
+Primary.args = {
+  text: exampleText()
+};

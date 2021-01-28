@@ -29,6 +29,6 @@ export const ToolbarButton: React.FC<ToolbarButtonProps> = ({
   icon = '',
   onClick = () => {},
 }) => {
-  const className = `pw-toolbar-button codicon codicon-${icon}`;
+  const className = `toolbar-button codicon codicon-${icon}`;
   return <button className={className} onClick={onClick} title={title}></button>;
 };

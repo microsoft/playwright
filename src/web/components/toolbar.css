@@ -14,10 +14,17 @@
   limitations under the License.
 */
 
-.pw-toolbar {
+.toolbar {
+  display: flex;
   box-shadow: rgba(0, 0, 0, 0.1) 0px -1px 0px 0px inset;
   background: rgb(255, 255, 255);
   height: 40px;
   align-items: center;
   padding-right: 10px;
+  flex: none;
+}
+
+.toolbar-linewrap {
+  display: block;
+  flex: auto;
 }

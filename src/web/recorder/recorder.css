@@ -14,17 +14,8 @@
   limitations under the License.
 */
 
-.toolbar-button {
-  border: none;
-  outline: none;
-  color: #999;
-  background: transparent;
-  padding: 0;
-  margin-left: 10px;
-  height: 40px;
-  cursor: pointer;
-}
-
-.toolbar-button:hover {
-  color: #1ea7fd;
+.recorder {
+  display: flex;
+  flex-direction: column;
+  flex: auto;
 }
