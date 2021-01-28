@@ -176,6 +176,8 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
     <button disabled>button1</button>
     <button>button2</button>
     <div>div</div>
+    <div role="button" aria-disabled="true">role=button1</div>
+    <div role="button" aria-disabled="false">role=button2</div>
   `);
   const div = await page.$('div');
   expect(await div.isEnabled()).toBe(true);
@@ -192,6 +194,16 @@ it('isEnabled and isDisabled should work', async ({ page }) => {
   expect(await button2.isDisabled()).toBe(false);
   expect(await page.isEnabled(':text("button2")')).toBe(true);
   expect(await page.isDisabled(':text("button2")')).toBe(false);
+  const roleButton1 = await page.$(':text("role=button1")');
+  expect(await roleButton1.isEnabled()).toBe(false);
+  expect(await roleButton1.isDisabled()).toBe(true);
+  expect(await page.isEnabled(':text("role=button1")')).toBe(false);
+  expect(await page.isDisabled(':text("role=button1")')).toBe(true);
+  const roleButton2 = await page.$(':text("role=button2")');
+  expect(await roleButton2.isEnabled()).toBe(true);
+  expect(await roleButton2.isDisabled()).toBe(false);
+  expect(await page.isEnabled(':text("role=button2")')).toBe(true);
+  expect(await page.isDisabled(':text("role=button2")')).toBe(false);
 });
 
 it('isEditable should work', async ({ page }) => {
