@@ -101,8 +101,9 @@ compile_chromium() {
   # we don't fork Chromium.
   #
   # This is based on https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md#get-the-code
-  if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
-    mkdir "${CR_CHECKOUT_PATH}"
+  if [[ ! -d "${CR_CHECKOUT_PATH}/src" ]]; then
+    rm -rf "${CR_CHECKOUT_PATH}"
+    mkdir -p "${CR_CHECKOUT_PATH}"
     cd "${CR_CHECKOUT_PATH}"
     fetch --nohooks chromium
     cd src
