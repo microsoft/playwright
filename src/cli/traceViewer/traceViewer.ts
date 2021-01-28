@@ -81,13 +81,13 @@ class TraceViewer {
   async show() {
     const browser = await playwright.chromium.launch({ headless: false });
     const server = await SnapshotServer.create(
-        path.join(__dirname, 'web'),
+        path.join(__dirname, '..', '..', 'web'),
         this._document ? this._document.resourcesDir : undefined,
         this._document ? this._document.model : emptyModel,
         this._document ? new ScreenshotGenerator(this._document.resourcesDir, this._document.model) : undefined);
     const uiPage = await browser.newPage({ viewport: null });
     uiPage.on('close', () => process.exit(0));
-    await uiPage.goto(server.traceViewerUrl('index.html'));
+    await uiPage.goto(server.traceViewerUrl('traceViewer/index.html'));
   }
 }
 

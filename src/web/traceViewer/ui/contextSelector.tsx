@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { ContextEntry } from '../../traceModel';
+import { ContextEntry } from '../../../cli/traceViewer/traceModel';
 import './contextSelector.css';
 
 export const ContextSelector: React.FunctionComponent<{

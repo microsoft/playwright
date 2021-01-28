@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-function platformName(): string {
-  if (window.navigator.userAgent.includes('Linux'))
-    return 'platform-linux';
-  if (window.navigator.userAgent.includes('Windows'))
-    return 'platform-windows';
-  if (window.navigator.userAgent.includes('Mac'))
-    return 'platform-mac';
-  return 'platform-generic';
-}
-
 export function applyTheme() {
   if ((document as any).playwrightThemeInitialized)
     return;
@@ -35,5 +25,4 @@ export function applyTheme() {
   document!.defaultView!.addEventListener('blur', event => {
     document.body.classList.add('inactive');
   }, false);
-  document.documentElement.classList.add(platformName());
 }

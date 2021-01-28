@@ -14,14 +14,13 @@
   limitations under the License.
 */
 
-import { ActionEntry, TraceModel } from '../../traceModel';
+import { ActionEntry, TraceModel } from '../../../cli/traceViewer/traceModel';
 import { ActionList } from './actionList';
 import { PropertiesTabbedPane } from './propertiesTabbedPane';
 import { Timeline } from './timeline';
 import './workbench.css';
 import * as React from 'react';
 import { ContextSelector } from './contextSelector';
-import { GlobalStyles } from '../styles';
 
 export const Workbench: React.FunctionComponent<{
   traceModel: TraceModel,
@@ -42,7 +41,6 @@ export const Workbench: React.FunctionComponent<{
   const boundaries = { minimum: context.startTime, maximum: context.endTime };
 
   return <div className='vbox workbench'>
-    <GlobalStyles />
     <div className='hbox header'>
       <div className='logo'>🎭</div>
       <div className='product'>Playwright</div>

@@ -13,7 +13,7 @@ module.exports = {
   output: {
     globalObject: 'self',
     filename: '[name].bundle.js',
-    path: path.resolve(__dirname, '../../../../lib/cli/traceViewer/web')
+    path: path.resolve(__dirname, '../../../lib/web/recorder')
   },
   module: {
     rules: [
@@ -34,7 +34,7 @@ module.exports = {
   },
   plugins: [
     new HtmlWebPackPlugin({
-      title: 'Playwright Trace Viewer',
+      title: 'Playwright Recorder',
       template: path.join(__dirname, 'index.html'),
     })
   ]

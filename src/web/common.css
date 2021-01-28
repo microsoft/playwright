@@ -14,9 +14,6 @@
   limitations under the License.
 */
 
-import * as React from 'react';
-
-export const GlobalStyles = () => <style>{`
 :root {
   --light-background: #f3f2f1;
   --background: #edebe9;
@@ -43,6 +40,7 @@ export const GlobalStyles = () => <style>{`
   --light-pink: #ff69b460;
   --network-content-bg: #dcdcdb;
   --box-shadow: rgba(0, 0, 0, 0.133) 0px 1.6px 3.6px 0px, rgba(0, 0, 0, 0.11) 0px 0.3px 0.9px 0px;
+  --monospace-font: "SF Mono", Monaco, Consolas, "Droid Sans Mono", Inconsolata, "Courier New",monospace;
 }
 
 html, body {
@@ -88,18 +86,6 @@ svg {
   fill: currentColor;
 }
 
-.platform-windows {
-  --monospace-font: Consolas, Inconsolata, "Courier New", monospace;
-}
-
-.platform-linux {
-  --monospace-font:"Droid Sans Mono", Inconsolata, "Courier New", monospace, "Droid Sans Fallback";
-}
-
-.platform-mac {
-  --monospace-font: "SF Mono",Monaco,Menlo,Inconsolata,"Courier New",monospace;
-}
-
 .vbox {
   display: flex;
   flex-direction: column;
@@ -126,4 +112,3 @@ svg {
 ::-webkit-scrollbar-corner {
   background-color: var(--background);
 }
-`}</style>;

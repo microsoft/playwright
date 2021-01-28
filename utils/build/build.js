@@ -70,7 +70,8 @@ const webPackFiles = [
   'src/server/injected/utilityScript.webpack.config.js',
   'src/server/supplements/injected/consoleApi.webpack.config.js',
   'src/server/supplements/injected/recorder.webpack.config.js',
-  'src/cli/traceViewer/web/web.webpack.config.js',
+  'src/web/traceViewer/webpack.config.js',
+  'src/web/recorder/webpack.config.js',
 ];
 for (const file of webPackFiles) {
   steps.push({

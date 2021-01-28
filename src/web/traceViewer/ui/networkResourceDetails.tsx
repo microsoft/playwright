@@ -17,7 +17,7 @@
 import './networkResourceDetails.css';
 import * as React from 'react';
 import { Expandable } from './helpers';
-import { NetworkResourceTraceEvent } from '../../../../trace/traceTypes';
+import { NetworkResourceTraceEvent } from '../../../trace/traceTypes';
 
 
 export const NetworkResourceDetails: React.FunctionComponent<{
