@@ -1,7 +1,7 @@
 /*
   Copyright (c) Microsoft Corporation.
 
-  Licensed under the Apache License, Version 2.0 (the "License");
+  Licensed under the Apache License, Version 2.0 (the 'License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
 
@@ -16,16 +16,15 @@
 
 import './toolbar.css';
 import * as React from 'react';
-import { ToolbarButton, ToolbarButtonProps } from './toolbarButton';
 
 export interface ToolbarProps {
-  buttons: ToolbarButtonProps[],
-  icon: string,
-  onClick: () => void
+  lineWrap?: boolean
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
-  buttons = [],
+  lineWrap = false,
+  children
 }) => {
-  return <div className="pw-toolbar">{buttons.map(props => <ToolbarButton key={props.title} {...props}></ToolbarButton>)}</div>;
+  const className = lineWrap ? 'toolbar toolbar-linewrap' : 'toolbar';
+  return <div className={className}>{children}</div>;
 };

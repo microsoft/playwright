@@ -144,7 +144,7 @@ DEPS['src/cli/driver.ts'] = DEPS['src/inprocess.ts'] = DEPS['src/browserServerIm
 // Tracing is a client/server plugin, nothing should depend on it.
 DEPS['src/trace/'] = ['src/utils/', 'src/client/**', 'src/server/**'];
 DEPS['src/web/'] = [];
-DEPS['src/web/recorder/'] = ['src/web/'];
+DEPS['src/web/recorder/'] = ['src/web/', 'src/web/components/'];
 DEPS['src/web/traceViewer/'] = ['src/web/', 'src/cli/traceViewer/'];
 DEPS['src/web/traceViewer/ui/'] = ['src/web/traceViewer/', 'src/web/', 'src/cli/traceViewer/', 'src/trace/'];
 // The service is a cross-cutting feature, and so it depends on a bunch of things.

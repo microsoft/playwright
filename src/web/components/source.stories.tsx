@@ -17,84 +17,27 @@
 import { Story, Meta } from '@storybook/react/types-6-0';
 import React from 'react';
 import { Source, SourceProps } from './source';
+import { exampleText } from './exampleText';
 
 export default {
   title: 'Components/Source',
   component: Source,
+  parameters: {
+    viewport: {
+      defaultViewport: 'recorder'
+    }
+  }
 } as Meta;
 
 const Template: Story<SourceProps> = args => <Source {...args} />;
 
 export const Primary = Template.bind({});
 Primary.args = {
-  text: `const { chromium, devices } = require('.');
+  text: exampleText()
+};
 
-(async () => {
-  const browser = await chromium.launch({
-    headless: false
-  });
-  const context = await browser.newContext({
-    // ...devices['iPhone 11']
-  });
-
-  // Open new page
-  const page = await context.newPage();
-
-  // Go to https://github.com/microsoft
-  await page.goto('https://github.com/microsoft');
-  await page._pause();
-
-  // Click input[aria-label="Find a repository…"]
-  await page.click('input[aria-label="Find a repository…"]');
-
-  // Fill input[aria-label="Find a repository…"]
-  await Promise.all([
-    page.waitForNavigation(/*{ url: 'https://github.com/microsoft?q=playwright&type=&language=' }*/),
-    page.fill('input[aria-label="Find a repository…"]', 'playwright')
-  ]);
-
-  // Click //a[normalize-space(.)='playwright']
-  await page.click('//a[normalize-space(.)=\'playwright\']');
-  // assert.equal(page.url(), 'https://github.com/microsoft/playwright');
-
-  // Click text="Issues"
-  await Promise.all([
-    page.waitForNavigation(/*{ url: 'https://github.com/microsoft/playwright/issues' }*/),
-    page.click('text="Issues"')
-  ]);
-
-  // Click text="triaging"
-  await Promise.all([
-    page.waitForNavigation(/*{ url: 'https://github.com/microsoft/playwright/issues?q=is:issue+is:open+label:triaging' }*/),
-    page.click('text="triaging"')
-  ]);
-
-  // Click text=/.*\[BUG\]\[Electron\] page\.waitForSe.*/
-  await Promise.all([
-    page.waitForNavigation(/*{ url: 'https://github.com/microsoft/playwright/issues/4961' }*/),
-    page.click('text=/.*\\\[BUG\\\]\\\[Electron\\\] page\.waitForSe.*/')
-  ]);
-  await page._pause();
-
-  // Click div[id="partial-users-participants"] img[alt="@pavelfeldman"]
-  await page.click('div[id="partial-users-participants"] img[alt="@pavelfeldman"]');
-  // assert.equal(page.url(), 'https://github.com/pavelfeldman');
-  await page._pause();
-
-  // Click text=/.*Repositories.*/
-  await Promise.all([
-    page.waitForNavigation(/*{ url: 'https://github.com/pavelfeldman?tab=repositories' }*/),
-    page.click('text=/.*Repositories.*/')
-  ]);
-  await page._pause();
-
-  // Click text=/.*playwright.*/
-  await page.click('text=/.*playwright.*/');
-  // assert.equal(page.url(), 'https://github.com/pavelfeldman/playwright');
-  await page._pause();
-
-  // ---------------------
-  await context.close();
-  await browser.close();
-})();`
+export const HighlightLine = Template.bind({});
+HighlightLine.args = {
+  text: exampleText(),
+  highlightedLine: 11
 };

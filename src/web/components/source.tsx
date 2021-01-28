@@ -16,30 +16,43 @@
 
 import './source.css';
 import * as React from 'react';
-import highlightjs from '../../third_party/highlightjs/highlightjs';
+import * as highlightjs from '../../third_party/highlightjs/highlightjs';
 import '../../third_party/highlightjs/highlightjs/tomorrow.css';
 
 export interface SourceProps {
   text: string,
-  targetLine: number
+  highlightedLine?: number
 }
 
 export const Source: React.FC<SourceProps> = ({
   text = '',
+  highlightedLine = -1
 }) => {
-  const result = [];
-  let continuation: any;
-  for (const line of text.split('\n')) {
-    const highlighted = highlightjs.highlight('javascript', line, true, continuation);
-    continuation = highlighted.top;
-    result.push(highlighted.value);
-  }
+  const lines = React.useMemo<string[]>(() => {
+    const result = [];
+    let continuation: any;
+    for (const line of text.split('\n')) {
+      const highlighted = highlightjs.highlight('javascript', line, true, continuation);
+      continuation = highlighted.top;
+      result.push(highlighted.value);
+    }
+    return result;
+  }, [text]);
 
-  return <div className='pw-source'>{
-      result.map((markup, index) => {
-        return <div key={index} className='pw-source-line'>
-          <div className='pw-source-line-number'>{index + 1}</div>
-          <div className='pw-source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
+
+  const highlightedLineRef = React.createRef<HTMLDivElement>();
+  React.useLayoutEffect(() => {
+    if (highlightedLine && highlightedLineRef.current)
+      highlightedLineRef.current.scrollIntoView({ block: 'center', inline: 'nearest' });
+  }, [highlightedLineRef]);
+
+  return <div className='source'>{
+      lines.map((markup, index) => {
+        const isHighlighted = index === highlightedLine;
+        const className = isHighlighted ? 'source-line source-line-highlighted' : 'source-line';
+        return <div key={index} className={className} ref={isHighlighted ? highlightedLineRef : null}>
+          <div className='source-line-number'>{index + 1}</div>
+          <div className='source-code' dangerouslySetInnerHTML={{ __html: markup }}></div>
         </div>;
       })
     }</div>

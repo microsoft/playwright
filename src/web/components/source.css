@@ -14,23 +14,32 @@
   limitations under the License.
 */
 
-.pw-source {
+.source {
+  display: flex;
+  flex: auto;
+  flex-direction: column;
   white-space: pre;
   overflow: auto;
   font-family: var(--monospace-font);
   font-size: 11px;
   line-height: 16px;
-  background: white;  
+  background: white;
 }
 
-.pw-source-line {
+.source-line {
   display: flex;
+  flex: none;
 }
 
-.pw-source-line-number {
+.source-line-number {
+  color: #555;
   padding: 0 8px;
   width: 30px;
   text-align: right;
   background: #edebe9;
   user-select: none;
+}
+
+.source-line-highlighted {
+  background-color: #ffc0cb7f;
 }
