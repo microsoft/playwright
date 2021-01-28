@@ -19,7 +19,9 @@ import type * as trace from '../src/trace/traceTypes';
 import * as path from 'path';
 import * as fs from 'fs';
 
-it('should record trace', async ({browser, testInfo, server}) => {
+it('should record trace', (test, { browserName, platform }) => {
+  test.fixme();
+}, async ({browser, testInfo, server}) => {
   const traceDir = testInfo.outputPath('trace');
   const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
