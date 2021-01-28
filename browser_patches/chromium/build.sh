@@ -58,6 +58,9 @@ compile_chromium() {
     fi
     CHROMIUM_FOLDER_NAME="chrome-mac"
     CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
+  elif [[ $1 == "--compile-mac" ]]; then
+    CHROMIUM_FOLDER_NAME="chrome-mac"
+    CHROMIUM_FILES_TO_ARCHIVE=("Chromium.app")
   elif [[ $1 == "--compile-linux" ]]; then
     CHROMIUM_FOLDER_NAME="chrome-linux"
     CHROMIUM_FILES_TO_ARCHIVE=( 
