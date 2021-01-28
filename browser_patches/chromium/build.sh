@@ -34,10 +34,11 @@ compile_chromium() {
     echo "ERROR: chromium compilation requires CR_CHECKOUT_PATH to be set to reuse checkout."
     exit 1
   fi
-  if ! command -v gclient >/dev/null; then
-    echo "ERROR: chromium compilation requires depot_tools to be installed!"
-    exit 1
+
+  if [[ ! -d "${SCRIPT_PATH}/depot_tools" ]]; then
+    git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git "${SCRIPT_PATH}/depot_tools"
   fi
+  export PATH="${SCRIPT_PATH}/depot_tools:$PATH"
 
   CHROMIUM_FOLDER_NAME=""
   CHROMIUM_FILES_TO_ARCHIVE=()
