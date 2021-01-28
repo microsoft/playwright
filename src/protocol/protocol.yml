@@ -373,6 +373,7 @@ BrowserType:
           - no-preference
         acceptDownloads: boolean?
         _traceDir: string?
+        _debugName: string?
         recordVideo:
           type: object?
           properties:
@@ -445,6 +446,7 @@ Browser:
           - no-preference
         acceptDownloads: boolean?
         _traceDir: string?
+        _debugName: string?
         recordVideo:
           type: object?
           properties:
@@ -2352,6 +2354,7 @@ AndroidDevice:
           - no-preference
         acceptDownloads: boolean?
         _traceDir: string?
+        _debugName: string?
         recordVideo:
           type: object?
           properties:

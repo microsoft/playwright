@@ -249,6 +249,7 @@ export type BrowserContextOptions = {
   },
   proxy?: ProxySettings,
   _traceDir?: string,
+  _debugName?: string,
 };
 
 export type EnvArray = { name: string, value: string }[];

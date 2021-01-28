@@ -35,6 +35,7 @@ it('should record trace', (test, { browserName, platform }) => {
 
   const contextEvent = traceEvents.find(event => event.type === 'context-created') as trace.ContextCreatedTraceEvent;
   expect(contextEvent).toBeTruthy();
+  expect(contextEvent.debugName).toBeUndefined();
   const contextId = contextEvent.contextId;
 
   const pageEvent = traceEvents.find(event => event.type === 'page-created') as trace.PageCreatedTraceEvent;
@@ -84,6 +85,7 @@ it('should record trace with POST', (test, { browserName, platform }) => {
 
   const contextEvent = traceEvents.find(event => event.type === 'context-created') as trace.ContextCreatedTraceEvent;
   expect(contextEvent).toBeTruthy();
+  expect(contextEvent.debugName).toBeUndefined();
   const contextId = contextEvent.contextId;
 
   const pageEvent = traceEvents.find(event => event.type === 'page-created') as trace.PageCreatedTraceEvent;
@@ -110,4 +112,20 @@ it('should record trace with POST', (test, { browserName, platform }) => {
 
   expect(fs.existsSync(path.join(traceDir, 'resources', resourceEvent.requestSha1))).toBe(true);
   expect(fs.existsSync(path.join(traceDir, 'resources', resourceEvent.responseSha1))).toBe(true);
+});
+
+it('should record trace with a debugName', (test, { browserName, platform }) => {
+  test.fixme();
+}, async ({browser, testInfo, server}) => {
+  const traceDir = testInfo.outputPath('trace');
+  const debugName = 'Custom testcase name';
+  const context = await browser.newContext({ _traceDir: traceDir, _debugName: debugName } as any);
+  await context.close();
+  const tracePath = path.join(traceDir, fs.readdirSync(traceDir).find(n => n.endsWith('.trace')));
+  const traceFileContent = await fs.promises.readFile(tracePath, 'utf8');
+  const traceEvents = traceFileContent.split('\n').filter(line => !!line).map(line => JSON.parse(line)) as trace.TraceEvent[];
+
+  const contextEvent = traceEvents.find(event => event.type === 'context-created') as trace.ContextCreatedTraceEvent;
+  expect(contextEvent).toBeTruthy();
+  expect(contextEvent.debugName).toBe(debugName);
 });

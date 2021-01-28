@@ -22,6 +22,7 @@ export type ContextCreatedTraceEvent = {
   deviceScaleFactor: number,
   isMobile: boolean,
   viewportSize?: { width: number, height: number },
+  debugName?: string,
 };
 
 export type ContextDestroyedTraceEvent = {
