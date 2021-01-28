@@ -121,13 +121,15 @@ class ApiParser {
     const method = clazz.membersArray.find(m => m.kind === 'method' && m.name === match[3]);
     if (!method)
       throw new Error('Invalid method ' + match[2] + '.' + match[3]);
+    const name = match[4];
+    if (!name)
+      throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
       const arg = this.parseProperty(spec);
-      const existingArg = method.argsArray.find(m => m.name === arg.name || m.langs.aliases && Object.values(m.langs.aliases).indexOf(arg.name) !== -1);
+      arg.name = name;
+      const existingArg = method.argsArray.find(m => m.name === arg.name);
       if (existingArg) {
         for (const lang of arg.langs.only) {
-          if (existingArg.name !== arg.name && existingArg.langs.aliases[lang] !== arg.name)
-            throw new Error(`Argument override ${arg.name} is not listed as ${lang} alias for ${clazz.name}.${method.name}.${existingArg.name}`);
           existingArg.langs.overrides = existingArg.langs.overrides || {};
           existingArg.langs.overrides[lang] = arg;
         }

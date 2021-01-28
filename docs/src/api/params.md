@@ -155,8 +155,6 @@ Toggles bypassing page's Content-Security-Policy.
 Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
 
 ## evaluate-expression
-* langs:
-  - alias-js: pageFunction
 - `expression` <[string]>
 
 JavaScript expression to be evaluated in the browser context. If it looks like a function declaration,

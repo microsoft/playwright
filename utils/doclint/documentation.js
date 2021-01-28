@@ -321,11 +321,8 @@ Documentation.Member = class {
     for (const arg of this.argsArray) {
       if (arg.langs.only && !arg.langs.only.includes(lang))
         continue;
-      if (arg.langs.aliases && arg.langs.aliases[lang])
-        arg.alias = arg.langs.aliases[lang];
       const overriddenArg = (arg.langs.overrides && arg.langs.overrides[lang]) || arg;
       overriddenArg.filterForLanguage(lang);
-      overriddenArg.type.filterForLanguage(lang);
       if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
         continue;
       argsArray.push(overriddenArg);
