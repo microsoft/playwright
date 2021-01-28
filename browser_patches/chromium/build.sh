@@ -104,7 +104,7 @@ compile_chromium() {
   if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
     mkdir "${CR_CHECKOUT_PATH}"
     cd "${CR_CHECKOUT_PATH}"
-    fetch --no-hooks chromium
+    fetch --nohooks chromium
     cd src
     if [[ $(uname) == "Linux" ]]; then
       ./build/install-build-deps.sh
