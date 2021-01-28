@@ -67,10 +67,17 @@ compile_chromium() {
   # Update Chromium checkout. One might think that this step should go to `prepare_checkout.sh`
   # script, but the `prepare_checkout.sh` is in fact designed to prepare a fork checkout, whereas
   # we don't fork Chromium.
+  #
+  # This is based on https://chromium.googlesource.com/chromium/src/+/master/docs/linux/build_instructions.md#get-the-code
   if [[ ! -d "${CR_CHECKOUT_PATH}" ]]; then
     mkdir "${CR_CHECKOUT_PATH}"
     cd "${CR_CHECKOUT_PATH}"
-    fetch chromium --no-hooks 
+    fetch --no-hooks chromium
+    cd src
+    if [[ $(uname) == "Linux" ]]; then
+      ./build/install-build-deps.sh
+    fi
+    gclient runhooks
   fi
   cd "${CR_CHECKOUT_PATH}/src"
   git checkout master
