@@ -133,7 +133,18 @@ export async function downloadBrowserWithProgressBar(browsersPath: string, brows
   const url = revisionURL(browser);
   const zipPath = path.join(os.tmpdir(), `playwright-download-${browser.name}-${browserPaths.hostPlatform}-${browser.revision}.zip`);
   try {
-    await downloadFile(url, zipPath, progress);
+    for (let attempt = 1, N = 3; attempt <= N; ++attempt) {
+      const {error} = await downloadFile(url, zipPath, progress);
+      if (!error)
+        break;
+      if (attempt < N && error && typeof error === 'object' && typeof error.message === 'string' && error.message.includes('ECONNRESET')) {
+        // Maximum delay is 3rd retry: 1337.5ms
+        const millis = (Math.random() * 200) + (250 * Math.pow(1.5, attempt));
+        await new Promise(c => setTimeout(c, millis));
+      } else {
+        throw error;
+      }
+    }
     await extract(zipPath, { dir: browserPath});
     await chmodAsync(browserPaths.executablePath(browserPath, browser)!, 0o755);
   } catch (e) {
@@ -152,31 +163,30 @@ function toMegabytes(bytes: number) {
   return `${Math.round(mb * 10) / 10} Mb`;
 }
 
-function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<any> {
-  let fulfill: () => void = () => {};
-  let reject: (error: any) => void = () => {};
+function downloadFile(url: string, destinationPath: string, progressCallback: OnProgressCallback | undefined): Promise<{error: any}> {
+  let fulfill: ({error}: {error: any}) => void = ({error}) => {};
   let downloadedBytes = 0;
   let totalBytes = 0;
 
-  const promise = new Promise((x, y) => { fulfill = x; reject = y; });
+  const promise: Promise<{error: any}> = new Promise(x => { fulfill = x; });
 
   const request = httpRequest(url, 'GET', response => {
     if (response.statusCode !== 200) {
       const error = new Error(`Download failed: server returned code ${response.statusCode}. URL: ${url}`);
       // consume response data to free up memory
       response.resume();
-      reject(error);
+      fulfill({error});
       return;
     }
     const file = fs.createWriteStream(destinationPath);
-    file.on('finish', () => fulfill());
-    file.on('error', error => reject(error));
+    file.on('finish', () => fulfill({error: null}));
+    file.on('error', error => fulfill({error}));
     response.pipe(file);
     totalBytes = parseInt(response.headers['content-length'], 10);
     if (progressCallback)
       response.on('data', onData);
   });
-  request.on('error', (error: any) => reject(error));
+  request.on('error', (error: any) => fulfill({error}));
   return promise;
 
   function onData(chunk: string) {
