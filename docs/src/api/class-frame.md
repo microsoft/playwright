@@ -74,10 +74,10 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
-## async method: Frame.$
+## async method: Frame.querySelector
 * langs:
   - alias-python: query_selector
-  - alias-csharp: QuerySelectorAsync
+  - alias-js: $ 
 - returns: <[null]|[ElementHandle]>
 
 Returns the ElementHandle pointing to the frame element.
@@ -86,12 +86,12 @@ The method finds an element matching the specified selector within the frame. Se
 [Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
-### param: Frame.$.selector = %%-query-selector-%%
+### param: Frame.querySelector.selector = %%-query-selector-%%
 
-## async method: Frame.$$
+## async method: Frame.querySelectorAll
 * langs:
   - alias-python: query_selector_all
-  - alias-csharp: QuerySelectorAllAsync
+  - alias-js: $$
 - returns: <[Array]<[ElementHandle]>>
 
 Returns the ElementHandles pointing to the frame elements.
@@ -100,12 +100,12 @@ The method finds all elements matching the specified selector within the frame. 
 [Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
-### param: Frame.$$.selector = %%-query-selector-%%
+### param: Frame.querySelectorAll.selector = %%-query-selector-%%
 
-## async method: Frame.$eval
+## async method: Frame.evalOnSelector
 * langs:
   - alias-python: eval_on_selector
-  - alias-csharp: EvalOnSelectorAsync
+  - alias-js: $eval
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -137,19 +137,23 @@ preload_href = frame.eval_on_selector("link[rel=preload]", "el => el.href")
 html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + suffix", "hello")
 ```
 
-### param: Frame.$eval.selector = %%-query-selector-%%
+### param: Frame.evalOnSelector.selector = %%-query-selector-%%
 
-### param: Frame.$eval.expression = %%-evaluate-expression-%%
+### param: Frame.evalOnSelector.pageFunction
+* langs: js
+- `pageFunction` <[function]\([Element]\)>
 
-### param: Frame.$eval.arg
+Function to be evaluated in browser context
+
+### param: Frame.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
 Optional argument to pass to [`param: pageFunction`]
 
-## async method: Frame.$$eval
+## async method: Frame.evalOnSelectorAll
 * langs:
   - alias-python: eval_on_selector_all
-  - alias-csharp: EvalOnSelectorAllAsync
+  - alias-js: $$eval
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -175,11 +179,15 @@ divs_counts = await frame.eval_on_selector_all("div", "(divs, min) => divs.lengt
 divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
 ```
 
-### param: Frame.$$eval.selector = %%-query-selector-%%
+### param: Frame.evalOnSelectorAll.selector = %%-query-selector-%%
 
-### param: Frame.$$eval.expression = %%-evaluate-expression-%%
+### param: Frame.evalOnSelectorAll.pageFunction
+* langs: js
+- `pageFunction` <[function]\([Array]<[Element]>\)>
 
-### param: Frame.$$eval.arg
+Function to be evaluated in browser context
+
+### param: Frame.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
 Optional argument to pass to [`param: pageFunction`]

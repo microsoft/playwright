@@ -22,7 +22,7 @@ JSHandle prevents the referenced JavaScript object being garbage collected unles
 [`method: JSHandle.dispose`]. JSHandles are auto-disposed when their origin frame gets navigated or the parent context
 gets destroyed.
 
-JSHandle instances can be used as an argument in [`method: Page.$eval`], [`method: Page.evaluate`] and
+JSHandle instances can be used as an argument in [`method: Page.evalOnSelector`], [`method: Page.evaluate`] and
 [`method: Page.evaluateHandle`] methods.
 
 ## method: JSHandle.asElement

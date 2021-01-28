@@ -1,7 +1,7 @@
 # class: ElementHandle
 * extends: [JSHandle]
 
-ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.$`] method.
+ElementHandle represents an in-page DOM element. ElementHandles can be created with the [`method: Page.querySelector`] method.
 
 ```js
 const { chromium } = require('playwright');  // Or 'firefox' or 'webkit'.
@@ -54,36 +54,36 @@ with sync_playwright() as playwright:
 ElementHandle prevents DOM element from garbage collection unless the handle is disposed with
 [`method: JSHandle.dispose`]. ElementHandles are auto-disposed when their origin frame gets navigated.
 
-ElementHandle instances can be used as an argument in [`method: Page.$eval`] and [`method: Page.evaluate`] methods.
+ElementHandle instances can be used as an argument in [`method: Page.evalOnSelector`] and [`method: Page.evaluate`] methods.
 
-## async method: ElementHandle.$
+## async method: ElementHandle.querySelector
 * langs:
   - alias-python: query_selector
-  - alias-csharp: QuerySelectorAsync
+  - alias-js: $
 - returns: <[null]|[ElementHandle]>
 
 The method finds an element matching the specified selector in the `ElementHandle`'s subtree. See
 [Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns `null`.
 
-### param: ElementHandle.$.selector = %%-query-selector-%%
+### param: ElementHandle.querySelector.selector = %%-query-selector-%%
 
-## async method: ElementHandle.$$
+## async method: ElementHandle.querySelectorAll
 * langs:
   - alias-python: query_selector_all
-  - alias-csharp: QuerySelectorAllAsync
+  - alias-js: $$
 - returns: <[Array]<[ElementHandle]>>
 
 The method finds all elements matching the specified selector in the `ElementHandle`s subtree. See
 [Working with selectors](./selectors.md) for more details. If no elements match the selector,
 returns empty array.
 
-### param: ElementHandle.$$.selector = %%-query-selector-%%
+### param: ElementHandle.querySelectorAll.selector = %%-query-selector-%%
 
-## async method: ElementHandle.$eval
+## async method: ElementHandle.evalOnSelector
 * langs:
   - alias-python: eval_on_selector
-  - alias-csharp: EvalOnSelectorAsync
+  - alias-js: $eval
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -92,7 +92,7 @@ The method finds an element matching the specified selector in the `ElementHandl
 argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for more
 details. If no elements match the selector, the method throws an error.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then `frame.evalOnSelector` would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -115,19 +115,23 @@ assert tweet_handle.eval_on_selector(".like", "node => node.innerText") == "100"
 assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "10"
 ```
 
-### param: ElementHandle.$eval.selector = %%-query-selector-%%
+### param: ElementHandle.evalOnSelector.selector = %%-query-selector-%%
 
-### param: ElementHandle.$eval.expression = %%-evaluate-expression-%%
+### param: ElementHandle.evalOnSelector.pageFunction
+* langs: js
+- `pageFunction` <[function]\([Element]\)>
 
-### param: ElementHandle.$eval.arg
+Function to be evaluated in browser context
+
+### param: ElementHandle.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
 Optional argument to pass to [`param: pageFunction`]
 
-## async method: ElementHandle.$$eval
+## async method: ElementHandle.evalOnSelectorAll
 * langs:
   - alias-python: eval_on_selector_all
-  - alias-csharp: EvalOnSelectorAllAsync
+  - alias-js: $$eval
 - returns: <[Serializable]>
 
 Returns the return value of [`param: pageFunction`]
@@ -136,7 +140,7 @@ The method finds all elements matching the specified selector in the `ElementHan
 matched elements as a first argument to [`param: pageFunction`]. See
 [Working with selectors](./selectors.md) for more details.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then `frame.evalOnSelectorAll` would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -163,11 +167,15 @@ feed_handle = page.query_selector(".feed")
 assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.innerText)") == ["hello!", "hi!"]
 ```
 
-### param: ElementHandle.$$eval.selector = %%-query-selector-%%
+### param: ElementHandle.evalOnSelectorAll.selector = %%-query-selector-%%
 
-### param: ElementHandle.$$eval.expression = %%-evaluate-expression-%%
+### param: ElementHandle.evalOnSelectorAll.pageFunction
+* langs: js
+- `pageFunction` <[function]\([Array]<[Element]>\)>
 
-### param: ElementHandle.$$eval.arg
+Function to be evaluated in browser context
+
+### param: ElementHandle.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
 Optional argument to pass to [`param: pageFunction`]

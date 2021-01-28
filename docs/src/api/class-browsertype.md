@@ -182,6 +182,13 @@ Maximum time in milliseconds to wait for the browser instance to start. Defaults
 disable timeout.
 
 ### option: BrowserType.launch.env
+* langs: csharp, java
+- `env` <[Object]<[string], [string]>>
+
+Specify environment variables that will be visible to the browser. Defaults to `process.env`.
+
+### option: BrowserType.launch.env
+* langs: js, python
 - `env` <[Object]<[string], [string]|[float]|[boolean]>>
 
 Specify environment variables that will be visible to the browser. Defaults to `process.env`.
