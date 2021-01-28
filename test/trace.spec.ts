@@ -64,7 +64,9 @@ it('should record trace', async ({browser, testInfo, server}) => {
   expect(snapshotEvent).toBeTruthy();
 });
 
-it('should record trace with POST', async ({browser, testInfo, server}) => {
+it('should record trace with POST', (test, { browserName, platform }) => {
+  test.fixme();
+}, async ({browser, testInfo, server}) => {
   const traceDir = testInfo.outputPath('trace');
   const context = await browser.newContext({ _traceDir: traceDir } as any);
   const page = await context.newPage();
