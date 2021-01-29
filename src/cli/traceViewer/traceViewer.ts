@@ -44,6 +44,7 @@ const emptyModel: TraceModel = {
         deviceScaleFactor: 1,
         isMobile: false,
         viewportSize: { width: 800, height: 600 },
+        snapshotScript: '',
       },
       destroyed: {
         timestamp: Date.now(),

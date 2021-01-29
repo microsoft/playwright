@@ -19,6 +19,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type { TraceModel, trace } from './traceModel';
 import { TraceServer } from './traceServer';
+import { NodeSnapshot } from '../../trace/traceTypes';
 
 export class SnapshotServer {
   private _resourcesDir: string | undefined;
@@ -185,6 +186,69 @@ export class SnapshotServer {
         }
       }
 
+      const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
+
+      function snapshotNodes(snapshot: trace.FrameSnapshot): NodeSnapshot[] {
+        if (!(snapshot as any)._nodes) {
+          const nodes: NodeSnapshot[] = [];
+          const visit = (n: trace.NodeSnapshot) => {
+            if (typeof n === 'string') {
+              nodes.push(n);
+            } else if (typeof n[0] === 'string') {
+              nodes.push(n);
+              for (let i = 2; i < n.length; i++)
+                visit(n[i]);
+            }
+          };
+          visit(snapshot.html);
+          (snapshot as any)._nodes = nodes;
+        }
+        return (snapshot as any)._nodes;
+      }
+
+      function serializeSnapshot(snapshots: trace.FrameSnapshotTraceEvent[], initialSnapshotIndex: number): string {
+        const visit = (n: trace.NodeSnapshot, snapshotIndex: number): string => {
+          // Text node.
+          if (typeof n === 'string')
+            return n;
+
+          if (!(n as any)._string) {
+            if (Array.isArray(n[0])) {
+              // Node reference.
+              const referenceIndex = snapshotIndex - n[0][0];
+              if (referenceIndex >= 0 && referenceIndex < snapshotIndex) {
+                const nodes = snapshotNodes(snapshots[referenceIndex].snapshot);
+                const nodeIndex = n[0][1];
+                if (nodeIndex >= 0 && nodeIndex < nodes.length)
+                  (n as any)._string = visit(nodes[nodeIndex], referenceIndex);
+              }
+            } else if (typeof n[0] === 'string') {
+              // Element node.
+              const builder: string[] = [];
+              builder.push('<', n[0]);
+              for (const [attr, value] of Object.entries(n[1] || {}))
+                builder.push(' ', attr, '="', value, '"');
+              builder.push('>');
+              for (let i = 2; i < n.length; i++)
+                builder.push(visit(n[i], snapshotIndex));
+              if (!autoClosing.has(n[0]))
+                builder.push('</', n[0], '>');
+              (n as any)._string = builder.join('');
+            } else {
+              // Why are we here? Let's not throw, just in case.
+              (n as any)._string = '';
+            }
+          }
+          return (n as any)._string;
+        };
+
+        const snapshot = snapshots[initialSnapshotIndex].snapshot;
+        let html = visit(snapshot.html, initialSnapshotIndex);
+        if (snapshot.doctype)
+          html = `<!DOCTYPE ${snapshot.doctype}>` + html;
+        return html;
+      }
+
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
         try {
           const pathname = new URL(event.request.url).pathname;
@@ -215,26 +279,29 @@ export class SnapshotServer {
         if (!contextEntry || !pageEntry)
           return request.mode === 'navigate' ? respondNotAvailable() : respond404();
 
-        const lastSnapshotEvent = new Map<string, trace.FrameSnapshotTraceEvent>();
-        for (const [frameId, snapshots] of Object.entries(pageEntry.snapshotsByFrameId)) {
-          for (const snapshot of snapshots) {
-            const current = lastSnapshotEvent.get(frameId);
-            // Prefer snapshot with exact id.
-            const exactMatch = parsed.snapshotId && snapshot.snapshotId === parsed.snapshotId;
-            const currentExactMatch = current && parsed.snapshotId && current.snapshotId === parsed.snapshotId;
-            // If not available, prefer the latest snapshot before the timestamp.
-            const timestampMatch = parsed.timestamp && snapshot.timestamp <= parsed.timestamp;
-            if (exactMatch || (timestampMatch && !currentExactMatch))
-              lastSnapshotEvent.set(frameId, snapshot);
-          }
+        const frameSnapshots = pageEntry.snapshotsByFrameId[parsed.frameId] || [];
+        let snapshotIndex = -1;
+        for (let index = 0; index < frameSnapshots.length; index++) {
+          const current = snapshotIndex === -1 ? undefined : frameSnapshots[snapshotIndex];
+          const snapshot = frameSnapshots[index];
+          // Prefer snapshot with exact id.
+          const exactMatch = parsed.snapshotId && snapshot.snapshotId === parsed.snapshotId;
+          const currentExactMatch = current && parsed.snapshotId && current.snapshotId === parsed.snapshotId;
+          // If not available, prefer the latest snapshot before the timestamp.
+          const timestampMatch = parsed.timestamp && snapshot.timestamp <= parsed.timestamp;
+          if (exactMatch || (timestampMatch && !currentExactMatch))
+            snapshotIndex = index;
         }
-
-        const snapshotEvent = lastSnapshotEvent.get(parsed.frameId);
+        const snapshotEvent = snapshotIndex === -1 ? undefined : frameSnapshots[snapshotIndex];
         if (!snapshotEvent)
           return request.mode === 'navigate' ? respondNotAvailable() : respond404();
 
-        if (request.mode === 'navigate')
-          return new Response(snapshotEvent.snapshot.html, { status: 200, headers: { 'Content-Type': 'text/html' } });
+        if (request.mode === 'navigate') {
+          let html = serializeSnapshot(frameSnapshots, snapshotIndex);
+          html += `<script>${contextEntry.created.snapshotScript}</script>`;
+          const response = new Response(html, { status: 200, headers: { 'Content-Type': 'text/html' } });
+          return response;
+        }
 
         let resource: trace.NetworkResourceTraceEvent | null = null;
         const resourcesWithUrl = contextEntry.resourcesByUrl.get(removeHash(request.url)) || [];
