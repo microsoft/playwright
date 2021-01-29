@@ -300,13 +300,13 @@ Optional event-specific initialization properties.
   - alias-js: $eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]
+Returns the return value of [`param: expression`]
 
 The method finds an element matching the specified selector within the frame and passes it as a first argument to
-[`param: pageFunction`]. See [Working with selectors](./selectors.md) for more details. If no
+[`param: expression`]. See [Working with selectors](./selectors.md) for more details. If no
 elements match the selector, the method throws an error.
 
-If [`param: pageFunction`] returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and return its
+If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -336,7 +336,7 @@ html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + s
 ### param: Frame.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Frame.evalOnSelectorAll
 * langs:
@@ -344,13 +344,13 @@ Optional argument to pass to [`param: pageFunction`]
   - alias-js: $$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]
+Returns the return value of [`param: expression`]
 
 The method finds all elements matching the specified selector within the frame and passes an array of matched elements
-as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for
+as a first argument to [`param: expression`]. See [Working with selectors](./selectors.md) for
 more details.
 
-If [`param: pageFunction`] returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and return its
+If [`param: expression`] returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -374,12 +374,12 @@ divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= m
 ### param: Frame.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Frame.evaluate
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]
+Returns the return value of [`param: expression`]
 
 If the function passed to the [`method: Frame.evaluate`] returns a [Promise], then [`method: Frame.evaluate`] would wait for the promise to
 resolve and return its value.
@@ -450,12 +450,12 @@ body_handle.dispose()
 ### param: Frame.evaluate.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Frame.evaluateHandle
 - returns: <[JSHandle]>
 
-Returns the return value of [`param: pageFunction`] as in-page object (JSHandle).
+Returns the return value of [`param: expression`] as in-page object (JSHandle).
 
 The only difference between [`method: Frame.evaluate`] and [`method: Frame.evaluateHandle`] is that
 [method: Frame.evaluateHandle`] returns in-page object (JSHandle).
@@ -520,7 +520,7 @@ result_handle.dispose()
 ### param: Frame.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: Frame.fill
 
@@ -1010,7 +1010,7 @@ Returns frame's url.
 ## async method: Frame.waitForFunction
 - returns: <[JSHandle]>
 
-Returns when the [`param: pageFunction`] returns a truthy value, returns that value.
+Returns when the [`param: expression`] returns a truthy value, returns that value.
 
 The [`method: Frame.waitForFunction`] can be used to observe viewport size change:
 
@@ -1082,12 +1082,12 @@ frame.wait_for_function("selector => !!document.querySelector(selector)", select
 ### param: Frame.waitForFunction.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ### option: Frame.waitForFunction.polling
 - `polling` <[float]|"raf">
 
-If [`option: polling`] is `'raf'`, then [`param: pageFunction`] is constantly executed in `requestAnimationFrame`
+If [`option: polling`] is `'raf'`, then [`param: expression`] is constantly executed in `requestAnimationFrame`
 callback. If [`option: polling`] is a number, then it is treated as an interval in milliseconds at which the function
 would be executed. Defaults to `raf`.
 

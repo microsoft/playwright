@@ -247,13 +247,13 @@ Optional event-specific initialization properties.
   - alias-js: $eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]
+Returns the return value of [`param: expression`]
 
 The method finds an element matching the specified selector in the `ElementHandle`s subtree and passes it as a first
-argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for more
+argument to [`param: expression`]. See [Working with selectors](./selectors.md) for more
 details. If no elements match the selector, the method throws an error.
 
-If [`param: pageFunction`] returns a [Promise], then [`method: ElementHandle.evalOnSelector`] would wait for the promise to resolve and return its
+If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelector`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -283,7 +283,7 @@ assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "1
 ### param: ElementHandle.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: ElementHandle.evalOnSelectorAll
 * langs:
@@ -291,13 +291,13 @@ Optional argument to pass to [`param: pageFunction`]
   - alias-js: $$eval
 - returns: <[Serializable]>
 
-Returns the return value of [`param: pageFunction`]
+Returns the return value of [`param: expression`]
 
 The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
-matched elements as a first argument to [`param: pageFunction`]. See
+matched elements as a first argument to [`param: expression`]. See
 [Working with selectors](./selectors.md) for more details.
 
-If [`param: pageFunction`] returns a [Promise], then [`method: ElementHandle.evalOnSelectorAll`] would wait for the promise to resolve and return its
+If [`param: expression`] returns a [Promise], then [`method: ElementHandle.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -331,7 +331,7 @@ assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.inn
 ### param: ElementHandle.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
 
-Optional argument to pass to [`param: pageFunction`]
+Optional argument to pass to [`param: expression`]
 
 ## async method: ElementHandle.fill
 
