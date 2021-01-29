@@ -117,11 +117,7 @@ assert tweet_handle.eval_on_selector(".retweets", "node => node.innerText") = "1
 
 ### param: ElementHandle.evalOnSelector.selector = %%-query-selector-%%
 
-### param: ElementHandle.evalOnSelector.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Element]\)>
-
-Function to be evaluated in browser context
+### param: ElementHandle.evalOnSelector.expression = %%-evaluate-expression-%%
 
 ### param: ElementHandle.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
@@ -169,11 +165,7 @@ assert feed_handle.eval_on_selector_all(".tweet", "nodes => nodes.map(n => n.inn
 
 ### param: ElementHandle.evalOnSelectorAll.selector = %%-query-selector-%%
 
-### param: ElementHandle.evalOnSelectorAll.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
-
-Function to be evaluated in browser context
+### param: ElementHandle.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 
 ### param: ElementHandle.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
