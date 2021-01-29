@@ -115,10 +115,12 @@ class ApiParser {
    */
   parseArgument(spec) {
     const match = spec.text.match(/(param|option): ([^.]+)\.([^.]+)\.(.*)/);
+    if(!match)
+      throw `Something went wrong with matching ${spec.text}`;
     const clazz = this.classes.get(match[2]);
     if (!clazz)
       throw new Error('Invalid class ' + match[2]);
-    const method = clazz.membersArray.find(m => m.kind === 'method' && m.name === match[3]);
+    const method = clazz.membersArray.find(m => m.kind === 'method' && m.alias === match[3]);
     if (!method)
       throw new Error('Invalid method ' + match[2] + '.' + match[3]);
     const name = match[4];

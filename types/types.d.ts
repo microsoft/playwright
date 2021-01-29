@@ -3289,7 +3289,9 @@ export interface Frame {
    * `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the selector, the
    * method throws an error.
    * 
-   * If `pageFunction` returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its value.
+   * If `pageFunction` returns a [Promise], then
+   * [frame.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevalselector-pagefunction-arg)
+   * would wait for the promise to resolve and return its value.
    * 
    * Examples:
    * 
@@ -3314,7 +3316,9 @@ export interface Frame {
    * The method finds all elements matching the specified selector within the frame and passes an array of matched elements
    * as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
    * 
-   * If `pageFunction` returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its value.
+   * If `pageFunction` returns a [Promise], then
+   * [frame.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-frame#frameevalselector-pagefunction-arg)
+   * would wait for the promise to resolve and return its value.
    * 
    * Examples:
    * 
@@ -5302,7 +5306,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details. If no elements match the
    * selector, the method throws an error.
    * 
-   * If `pageFunction` returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its value.
+   * If `pageFunction` returns a [Promise], then
+   * [elementHandle.$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#elementhandleevalselector-pagefunction-arg)
+   * would wait for the promise to resolve and return its value.
    * 
    * Examples:
    * 
@@ -5327,7 +5333,9 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
    * The method finds all elements matching the specified selector in the `ElementHandle`'s subtree and passes an array of
    * matched elements as a first argument to `pageFunction`. See [Working with selectors](https://playwright.dev/docs/selectors) for more details.
    * 
-   * If `pageFunction` returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its value.
+   * If `pageFunction` returns a [Promise], then
+   * [elementHandle.$$eval(selector, pageFunction[, arg])](https://playwright.dev/docs/api/class-elementhandle#elementhandleevalselector-pagefunction-arg)
+   * would wait for the promise to resolve and return its value.
    * 
    * Examples:
    * 

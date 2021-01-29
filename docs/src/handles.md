@@ -172,8 +172,8 @@ my_array_handle.dispose()
 ## Handle Lifecycle
 
 Handles can be acquired using the page methods such as [`method: Page.evaluateHandle`],
-[`method: Page.$`] or [`method: Page.$$`] or their frame counterparts
-[`method: Frame.evaluateHandle`], [`method: Frame.$`] or [`method: Frame.$$`]. Once
+[`method: Page.querySelector`] or [`method: Page.querySelectorAll`] or their frame counterparts
+[`method: Frame.evaluateHandle`], [`method: Frame.querySelector`] or [`method: Frame.querySelectorAll`]. Once
 created, handles will retain object from
 [garbage collection](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Memory_Management)
 unless page navigates or the handle is manually disposed via the [`method: JSHandle.dispose`] method.
@@ -189,5 +189,5 @@ unless page navigates or the handle is manually disposed via the [`method: JSHan
 - [`method: ElementHandle.textContent`]
 - [`method: JSHandle.evaluate`]
 - [`method: Page.evaluateHandle`]
-- [`method: Page.$`]
-- [`method: Page.$$`]
+- [`method: Page.querySelector`]
+- [`method: Page.querySelectorAll`]

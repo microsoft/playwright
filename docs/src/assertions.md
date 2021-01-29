@@ -107,7 +107,7 @@ assert content == "home"
 ```
 
 ### API reference
-- [`method: Page.$eval`]
+- [`method: Page.evalOnSelector`]
 - [`method: JSHandle.evaluate`]
 
 ## Inner HTML
@@ -238,11 +238,11 @@ assert length == 3
 
 ### API reference
 - [`method: Page.evaluate`]
-- [`method: Page.$eval`]
-- [`method: Page.$$eval`]
+- [`method: Page.evalOnSelector`]
+- [`method: Page.evalOnSelectorAll`]
 - [`method: Frame.evaluate`]
-- [`method: Frame.$eval`]
-- [`method: Frame.$$eval`]
-- [`method: ElementHandle.$eval`]
-- [`method: ElementHandle.$$eval`]
+- [`method: Frame.evalOnSelector`]
+- [`method: Frame.evalOnSelectorAll`]
+- [`method: ElementHandle.evalOnSelector`]
+- [`method: ElementHandle.evalOnSelectorAll`]
 - [EvaluationArgument]

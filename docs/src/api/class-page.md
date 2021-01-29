@@ -309,107 +309,6 @@ Emitted when <[WebSocket]> request is sent.
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
 
-## async method: Page.$
-* langs:
-  - alias-python: query_selector
-- returns: <[null]|[ElementHandle]>
-
-The method finds an element matching the specified selector within the page. If no elements match the selector, the
-return value resolves to `null`.
-
-Shortcut for main frame's [`method: Frame.$`].
-
-### param: Page.$.selector = %%-query-selector-%%
-
-## async method: Page.$$
-* langs:
-  - alias-python: query_selector_all
-- returns: <[Array]<[ElementHandle]>>
-
-The method finds all elements matching the specified selector within the page. If no elements match the selector, the
-return value resolves to `[]`.
-
-Shortcut for main frame's [`method: Frame.$$`].
-
-### param: Page.$$.selector = %%-query-selector-%%
-
-## async method: Page.$eval
-* langs:
-  - alias-python: eval_on_selector
-- returns: <[Serializable]>
-
-The method finds an element matching the specified selector within the page and passes it as a first argument to
-[`param: pageFunction`]. If no elements match the selector, the method throws an error. Returns the value of
-[`param: pageFunction`].
-
-If [`param: pageFunction`] returns a [Promise], then [`method: Page.$eval`] would wait for the promise to resolve and
-return its value.
-
-Examples:
-
-```js
-const searchValue = await page.$eval('#search', el => el.value);
-const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
-const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
-```
-
-```python async
-search_value = await page.eval_on_selector("#search", "el => el.value")
-preload_href = await page.eval_on_selector("link[rel=preload]", "el => el.href")
-html = await page.eval_on_selector(".main-container", "(e, suffix) => e.outer_html + suffix", "hello")
-```
-
-```python sync
-search_value = page.eval_on_selector("#search", "el => el.value")
-preload_href = page.eval_on_selector("link[rel=preload]", "el => el.href")
-html = page.eval_on_selector(".main-container", "(e, suffix) => e.outer_html + suffix", "hello")
-```
-
-Shortcut for main frame's [`method: Frame.$eval`].
-
-### param: Page.$eval.selector = %%-query-selector-%%
-
-### param: Page.$eval.expression = %%-evaluate-expression-%%
-
-### param: Page.$eval.arg
-- `arg` <[EvaluationArgument]>
-
-Optional argument to pass to [`param: pageFunction`]
-
-## async method: Page.$$eval
-* langs:
-  - alias-python: eval_on_selector_all
-- returns: <[Serializable]>
-
-The method finds all elements matching the specified selector within the page and passes an array of matched elements as
-a first argument to [`param: pageFunction`]. Returns the result of [`param: pageFunction`] invocation.
-
-If [`param: pageFunction`] returns a [Promise], then [`method: Page.$$eval`] would wait for the promise to resolve and
-return its value.
-
-Examples:
-
-```js
-const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
-```
-
-```python async
-div_counts = await page.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
-```
-
-```python sync
-div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
-```
-
-### param: Page.$$eval.selector = %%-query-selector-%%
-
-### param: Page.$$eval.expression = %%-evaluate-expression-%%
-
-### param: Page.$$eval.arg
-- `arg` <[EvaluationArgument]>
-
-Optional argument to pass to [`param: pageFunction`]
-
 ## property: Page.accessibility
 - type: <[Accessibility]>
 
@@ -820,6 +719,85 @@ Passing `null` disables CSS media emulation.
 
 Emulates `'prefers-colors-scheme'` media feature, supported values are `'light'`, `'dark'`, `'no-preference'`. Passing
 `null` disables color scheme emulation.
+
+## async method: Page.evalOnSelector
+* langs:
+  - alias-python: eval_on_selector
+  - alias-js: $eval
+- returns: <[Serializable]>
+
+The method finds an element matching the specified selector within the page and passes it as a first argument to
+[`param: pageFunction`]. If no elements match the selector, the method throws an error. Returns the value of
+[`param: pageFunction`].
+
+If [`param: pageFunction`] returns a [Promise], then [`method: Page.evalOnSelector`] would wait for the promise to resolve and
+return its value.
+
+Examples:
+
+```js
+const searchValue = await page.$eval('#search', el => el.value);
+const preloadHref = await page.$eval('link[rel=preload]', el => el.href);
+const html = await page.$eval('.main-container', (e, suffix) => e.outerHTML + suffix, 'hello');
+```
+
+```python async
+search_value = await page.eval_on_selector("#search", "el => el.value")
+preload_href = await page.eval_on_selector("link[rel=preload]", "el => el.href")
+html = await page.eval_on_selector(".main-container", "(e, suffix) => e.outer_html + suffix", "hello")
+```
+
+```python sync
+search_value = page.eval_on_selector("#search", "el => el.value")
+preload_href = page.eval_on_selector("link[rel=preload]", "el => el.href")
+html = page.eval_on_selector(".main-container", "(e, suffix) => e.outer_html + suffix", "hello")
+```
+
+Shortcut for main frame's [`method: Frame.evalOnSelector`].
+
+### param: Page.evalOnSelector.selector = %%-query-selector-%%
+
+### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
+
+### param: Page.evalOnSelector.arg
+- `arg` <[EvaluationArgument]>
+
+Optional argument to pass to [`param: pageFunction`]
+
+## async method: Page.evalOnSelectorAll
+* langs:
+  - alias-python: eval_on_selector_all
+  - alias-js: $$eval
+- returns: <[Serializable]>
+
+The method finds all elements matching the specified selector within the page and passes an array of matched elements as
+a first argument to [`param: pageFunction`]. Returns the result of [`param: pageFunction`] invocation.
+
+If [`param: pageFunction`] returns a [Promise], then [`method: Page.evalOnSelectorAll`] would wait for the promise to resolve and
+return its value.
+
+Examples:
+
+```js
+const divCounts = await page.$$eval('div', (divs, min) => divs.length >= min, 10);
+```
+
+```python async
+div_counts = await page.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
+```
+
+```python sync
+div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min", 10)
+```
+
+### param: Page.evalOnSelectorAll.selector = %%-query-selector-%%
+
+### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
+
+### param: Page.evalOnSelectorAll.arg
+- `arg` <[EvaluationArgument]>
+
+Optional argument to pass to [`param: pageFunction`]
 
 ## async method: Page.evaluate
 - returns: <[Serializable]>
@@ -1716,6 +1694,32 @@ Time to wait between `keydown` and `keyup` in milliseconds. Defaults to 0.
 ### option: Page.press.noWaitAfter = %%-input-no-wait-after-%%
 
 ### option: Page.press.timeout = %%-input-timeout-%%
+
+## async method: Page.querySelector
+* langs:
+  - alias-python: query_selector
+  - alias-js: $
+- returns: <[null]|[ElementHandle]>
+
+The method finds an element matching the specified selector within the page. If no elements match the selector, the
+return value resolves to `null`.
+
+Shortcut for main frame's [`method: Frame.querySelector`].
+
+### param: Page.querySelector.selector = %%-query-selector-%%
+
+## async method: Page.querySelectorAll
+* langs:
+  - alias-python: query_selector_all
+  - alias-js: $$
+- returns: <[Array]<[ElementHandle]>>
+
+The method finds all elements matching the specified selector within the page. If no elements match the selector, the
+return value resolves to `[]`.
+
+Shortcut for main frame's [`method: Frame.querySelectorAll`].
+
+### param: Page.querySelectorAll.selector = %%-query-selector-%%
 
 ## async method: Page.reload
 - returns: <[null]|[Response]>
