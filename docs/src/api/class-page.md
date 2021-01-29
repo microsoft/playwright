@@ -372,11 +372,7 @@ Shortcut for main frame's [`method: Frame.evalOnSelector`].
 
 ### param: Page.evalOnSelector.selector = %%-query-selector-%%
 
-### param: Page.evalOnSelector.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Element]\)>
-
-Function to be evaluated in browser context
+### param: Page.evalOnSelector.expression = %%-evaluate-expression-%%
 
 ### param: Page.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
@@ -411,11 +407,7 @@ div_counts = page.eval_on_selector_all("div", "(divs, min) => divs.length >= min
 
 ### param: Page.evalOnSelectorAll.selector = %%-query-selector-%%
 
-### param: Page.evalOnSelectorAll.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
-
-Function to be evaluated in browser context
+### param: Page.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 
 ### param: Page.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
