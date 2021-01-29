@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import { NodeSnapshot } from './snapshotterInjected';
+export { NodeSnapshot } from './snapshotterInjected';
+
 export type ContextCreatedTraceEvent = {
   timestamp: number,
   type: 'context-created',
@@ -23,6 +26,7 @@ export type ContextCreatedTraceEvent = {
   isMobile: boolean,
   viewportSize?: { width: number, height: number },
   debugName?: string,
+  snapshotScript: string,
 };
 
 export type ContextDestroyedTraceEvent = {
@@ -145,9 +149,9 @@ export type TraceEvent =
     LoadEvent |
     FrameSnapshotTraceEvent;
 
-
 export type FrameSnapshot = {
-  html: string,
+  doctype?: string,
+  html: NodeSnapshot,
   resourceOverrides: { url: string, sha1: string }[],
   viewport: { width: number, height: number },
 };
