@@ -127,7 +127,7 @@ let classNameMap;
       }
 
       if (type.name === 'Array') {
-        out.push('// Array');
+        throw 'Array at this stage is unexpected.';
       } else if (type.properties) {
         for (const member of type.properties) {
           renderMember(member, null, out);
@@ -158,6 +158,11 @@ let classNameMap;
  * @param {string} name 
  * @param {Documentation.Member} member */
 function translateMemberName(memberKind, name, member = null) {
+
+  // we strip it for special chars, like @ because we might get called back with it in some special cases
+  // like, when generating classes inside methods for params
+  name = name.replace(/[@-]/g, '');
+
   if (memberKind === 'argument') {
     if (['params', 'event'].includes(name)) { // just in case we want to add others
       return `@${name}`;
@@ -235,6 +240,9 @@ function generateNameDefault(member, name, t, parent) {
   let enumName = generateEnumNameIfApplicable(member, name, t, parent);
   if (!enumName && member) {
     if (member.kind === 'method') {
+      if (t.expression === '[Object]')
+        return 'object';
+
       // this should be easy to name... let's call it the same as the argument (eternal optimist)
       let probableName = `${parent.name}${translateMemberName(``, name, null)}`;
       let probableType = additionalTypes.get(probableName);
