@@ -32,7 +32,7 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
       continue;
     }
     for (const [methodName, params] of methods) {
-      const member = docClass.members.get(methodName);
+      const member = docClass.membersArray.find(m => m.alias === methodName && m.kind !== 'event');
       if (!member) {
         errors.push(`Missing documentation for "${className}.${methodName}"`);
         continue;
@@ -53,15 +53,15 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
     for (const member of cls.membersArray) {
       if (member.kind === 'event')
         continue;
-      const params = methods.get(member.name);
+      const params = methods.get(member.alias);
       if (!params) {
-        errors.push(`Documented "${cls.name}.${member.name}" not found is sources`);
+        errors.push(`Documented "${cls.name}.${member.alias}" not found is sources`);
         continue;
       }
       const memberParams = paramsForMember(member);
       for (const paramName of memberParams) {
         if (!params.has(paramName) && paramName !== 'options')
-          errors.push(`Documented "${cls.name}.${member.name}.${paramName}" not found is sources`);
+          errors.push(`Documented "${cls.name}.${member.alias}.${paramName}" not found is sources`);
       }
     }
   }
@@ -74,7 +74,7 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
 function paramsForMember(member) {
   if (member.kind !== 'method')
     return new Set();
-  return new Set(member.argsArray.map(a => a.name));
+  return new Set(member.argsArray.map(a => a.alias));
 }
 
 /**
