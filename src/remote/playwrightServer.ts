@@ -17,19 +17,12 @@
 import * as debug from 'debug';
 import * as http from 'http';
 import * as WebSocket from 'ws';
-import { installInspectorController } from '../server/supplements/inspectorController';
 import { DispatcherConnection } from '../dispatchers/dispatcher';
 import { PlaywrightDispatcher } from '../dispatchers/playwrightDispatcher';
-import { Playwright } from '../server/playwright';
+import { createPlaywright } from '../server/playwright';
 import { gracefullyCloseAll } from '../server/processLauncher';
-import { installTracer } from '../trace/tracer';
-import { installHarTracer } from '../trace/harTracer';
 
 const debugLog = debug('pw:server');
-
-installInspectorController();
-installTracer();
-installHarTracer();
 
 export class PlaywrightServer {
   private _server: http.Server | undefined;
@@ -62,8 +55,7 @@ export class PlaywrightServer {
         this._onDisconnect();
       });
       dispatcherConnection.onmessage = message => ws.send(JSON.stringify(message));
-      const playwright = new Playwright(__dirname, require('../../browsers.json')['browsers']);
-      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), playwright);
+      new PlaywrightDispatcher(dispatcherConnection.rootDispatcher(), createPlaywright());
     });
   }
 

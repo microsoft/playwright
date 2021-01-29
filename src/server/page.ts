@@ -198,7 +198,7 @@ export class Page extends EventEmitter {
   }
 
   async _doSlowMo() {
-    const slowMo = this._browserContext._browser._options.slowMo;
+    const slowMo = this._browserContext._browser.options.slowMo;
     if (!slowMo)
       return;
     await new Promise(x => setTimeout(x, slowMo));

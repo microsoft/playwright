@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import * as path from 'path';
+import { Tracer } from '../trace/tracer';
 import * as browserPaths from '../utils/browserPaths';
 import { Android } from './android/android';
 import { AdbBackend } from './android/backendAdb';
@@ -21,6 +23,8 @@ import { Chromium } from './chromium/chromium';
 import { Electron } from './electron/electron';
 import { Firefox } from './firefox/firefox';
 import { serverSelectors } from './selectors';
+import { HarTracer } from './supplements/har/harTracer';
+import { InspectorController } from './supplements/inspectorController';
 import { WebKit } from './webkit/webkit';
 
 export class Playwright {
@@ -30,18 +34,29 @@ export class Playwright {
   readonly electron: Electron;
   readonly firefox: Firefox;
   readonly webkit: WebKit;
+  readonly options = {
+    contextListeners: [
+      new InspectorController(),
+      new Tracer(),
+      new HarTracer()
+    ]
+  };
 
   constructor(packagePath: string, browsers: browserPaths.BrowserDescriptor[]) {
     const chromium = browsers.find(browser => browser.name === 'chromium');
-    this.chromium = new Chromium(packagePath, chromium!);
+    this.chromium = new Chromium(packagePath, chromium!, this.options);
 
     const firefox = browsers.find(browser => browser.name === 'firefox');
-    this.firefox = new Firefox(packagePath, firefox!);
+    this.firefox = new Firefox(packagePath, firefox!, this.options);
 
     const webkit = browsers.find(browser => browser.name === 'webkit');
-    this.webkit = new WebKit(packagePath, webkit!);
+    this.webkit = new WebKit(packagePath, webkit!, this.options);
 
-    this.electron = new Electron();
-    this.android = new Android(new AdbBackend());
+    this.electron = new Electron(this.options);
+    this.android = new Android(new AdbBackend(), this.options);
   }
+}
+
+export function createPlaywright() {
+  return new Playwright(path.join(__dirname, '..', '..'), require('../../browsers.json')['browsers']);
 }

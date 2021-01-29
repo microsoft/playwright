@@ -29,7 +29,7 @@ import type {BrowserWindow} from 'electron';
 import { Progress, ProgressController, runAbortableTask } from '../progress';
 import { EventEmitter } from 'events';
 import { helper } from '../helper';
-import { BrowserOptions, BrowserProcess } from '../browser';
+import { BrowserOptions, BrowserProcess, PlaywrightOptions } from '../browser';
 import * as childProcess from 'child_process';
 import * as readline from 'readline';
 import { RecentLogsCollector } from '../../utils/debugLogger';
@@ -139,6 +139,12 @@ export class ElectronApplication extends EventEmitter {
 }
 
 export class Electron  {
+  private _playwrightOptions: PlaywrightOptions;
+
+  constructor(playwrightOptions: PlaywrightOptions) {
+    this._playwrightOptions = playwrightOptions;
+  }
+
   async launch(executablePath: string, options: ElectronLaunchOptionsBase = {}): Promise<ElectronApplication> {
     const {
       args = [],
@@ -190,6 +196,7 @@ export class Electron  {
         kill
       };
       const browserOptions: BrowserOptions = {
+        ...this._playwrightOptions,
         name: 'electron',
         isChromium: true,
         headful: true,

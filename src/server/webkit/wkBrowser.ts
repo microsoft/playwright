@@ -74,7 +74,7 @@ export class WKBrowser extends Browser {
   }
 
   async newContext(options: types.BrowserContextOptions = {}): Promise<BrowserContext> {
-    validateBrowserContextOptions(options, this._options);
+    validateBrowserContextOptions(options, this.options);
     const createOptions = options.proxy ? {
       proxyServer: options.proxy.server,
       proxyBypassList: options.proxy.bypass
@@ -208,10 +208,10 @@ export class WKBrowserContext extends BrowserContext {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [ super._initialize() ];
-    if (this._browser._options.downloadsPath) {
+    if (this._browser.options.downloadsPath) {
       promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
         behavior: this._options.acceptDownloads ? 'allow' : 'deny',
-        downloadPath: this._browser._options.downloadsPath,
+        downloadPath: this._browser.options.downloadsPath,
         browserContextId
       }));
     }

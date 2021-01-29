@@ -845,7 +845,7 @@ class FrameSession {
     ];
     if (this._windowId) {
       let insets = { width: 0, height: 0 };
-      if (this._crPage._browserContext._browser._options.headful) {
+      if (this._crPage._browserContext._browser.options.headful) {
         // TODO: popup windows have their own insets.
         insets = { width: 24, height: 88 };
         if (process.platform === 'win32')

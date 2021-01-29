@@ -92,7 +92,7 @@ export class RecorderSupplement {
     this._output.setEnabled(app === 'codegen');
     context.on(BrowserContext.Events.BeforeClose, () => this._output.flush());
 
-    const generator = new CodeGenerator(context._browser._options.name, app === 'codegen', params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
+    const generator = new CodeGenerator(context._browser.options.name, app === 'codegen', params.launchOptions || {}, params.contextOptions || {}, this._output, languageGenerator, params.device, params.saveStorage);
     this._generator = generator;
   }
 

@@ -15,22 +15,14 @@
  */
 
 import { DispatcherConnection } from './dispatchers/dispatcher';
-import { Playwright as PlaywrightImpl } from './server/playwright';
+import { createPlaywright } from './server/playwright';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
 import { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
 import { Connection } from './client/connection';
 import { BrowserServerLauncherImpl } from './browserServerImpl';
-import { installInspectorController } from './server/supplements/inspectorController';
-import { installTracer } from './trace/tracer';
-import { installHarTracer } from './trace/harTracer';
-import * as path from 'path';
 
 function setupInProcess(): PlaywrightAPI {
-  const playwright = new PlaywrightImpl(path.join(__dirname, '..'), require('../browsers.json')['browsers']);
-
-  installInspectorController();
-  installTracer();
-  installHarTracer();
+  const playwright = createPlaywright();
 
   const clientConnection = new Connection();
   const dispatcherConnection = new DispatcherConnection();

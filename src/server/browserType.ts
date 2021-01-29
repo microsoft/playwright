@@ -21,7 +21,7 @@ import * as util from 'util';
 import { BrowserContext, normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
 import * as browserPaths from '../utils/browserPaths';
 import { ConnectionTransport } from './transport';
-import { BrowserOptions, Browser, BrowserProcess } from './browser';
+import { BrowserOptions, Browser, BrowserProcess, PlaywrightOptions } from './browser';
 import { launchProcess, Env, envArrayToObject } from './processLauncher';
 import { PipeTransport } from './pipeTransport';
 import { Progress, ProgressController } from './progress';
@@ -42,8 +42,10 @@ export abstract class BrowserType {
   private _executablePath: string;
   private _browserDescriptor: browserPaths.BrowserDescriptor;
   readonly _browserPath: string;
+  readonly _playwrightOptions: PlaywrightOptions;
 
-  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor) {
+  constructor(packagePath: string, browser: browserPaths.BrowserDescriptor, playwrightOptions: PlaywrightOptions) {
+    this._playwrightOptions = playwrightOptions;
     this._name = browser.name;
     const browsersPath = browserPaths.browsersPath(packagePath);
     this._browserDescriptor = browser;
@@ -87,6 +89,7 @@ export abstract class BrowserType {
     if ((options as any).__testHookBeforeCreateBrowser)
       await (options as any).__testHookBeforeCreateBrowser();
     const browserOptions: BrowserOptions = {
+      ...this._playwrightOptions,
       name: this._name,
       isChromium: this._name === 'chromium',
       slowMo: options.slowMo,
