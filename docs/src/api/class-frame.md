@@ -77,7 +77,7 @@ with sync_playwright() as playwright:
 ## async method: Frame.querySelector
 * langs:
   - alias-python: query_selector
-  - alias-js: $ 
+  - alias-js: $
 - returns: <[null]|[ElementHandle]>
 
 Returns the ElementHandle pointing to the frame element.
@@ -114,7 +114,7 @@ The method finds an element matching the specified selector within the frame and
 [`param: pageFunction`]. See [Working with selectors](./selectors.md) for more details. If no
 elements match the selector, the method throws an error.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.$eval` would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then [`method: Frame.evalOnSelector`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -162,7 +162,7 @@ The method finds all elements matching the specified selector within the frame a
 as a first argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for
 more details.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.$$eval` would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then [`method: Frame.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
 
 Examples:

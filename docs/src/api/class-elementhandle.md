@@ -92,7 +92,7 @@ The method finds an element matching the specified selector in the `ElementHandl
 argument to [`param: pageFunction`]. See [Working with selectors](./selectors.md) for more
 details. If no elements match the selector, the method throws an error.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.evalOnSelector` would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then [`method: ElementHandle.evalOnSelector`] would wait for the promise to resolve and return its
 value.
 
 Examples:
@@ -140,7 +140,7 @@ The method finds all elements matching the specified selector in the `ElementHan
 matched elements as a first argument to [`param: pageFunction`]. See
 [Working with selectors](./selectors.md) for more details.
 
-If [`param: pageFunction`] returns a [Promise], then `frame.evalOnSelectorAll` would wait for the promise to resolve and return its
+If [`param: pageFunction`] returns a [Promise], then [`method: ElementHandle.evalOnSelectorAll`] would wait for the promise to resolve and return its
 value.
 
 Examples:

@@ -79,7 +79,7 @@ let hadChanges = false;
     return writeComment(docClassForName(className).comment) + '\n';
   }, (className, methodName) => {
     const docClass = docClassForName(className);
-    const method = docClass.methods.get(methodName);
+    const method = docClass.methodsArray.find(m => m.alias === methodName);
     handledMethods.add(`${className}.${methodName}`);
     if (!method) {
       if (new Set(['on', 'addListener', 'off', 'removeListener', 'once']).has(methodName))
