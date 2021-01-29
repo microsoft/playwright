@@ -136,11 +136,7 @@ html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + s
 
 ### param: Frame.$eval.selector = %%-query-selector-%%
 
-### param: Frame.$eval.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Element]\)>
-
-Function to be evaluated in browser context
+### param: Frame.$eval.expression = %%-evaluate-expression-%%
 
 ### param: Frame.$eval.arg
 - `arg` <[EvaluationArgument]>
@@ -177,11 +173,7 @@ divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= m
 
 ### param: Frame.$$eval.selector = %%-query-selector-%%
 
-### param: Frame.$$eval.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
-
-Function to be evaluated in browser context
+### param: Frame.$$eval.expression = %%-evaluate-expression-%%
 
 ### param: Frame.$$eval.arg
 - `arg` <[EvaluationArgument]>
@@ -477,11 +469,7 @@ html = frame.evaluate("([body, suffix]) => body.innerHTML + suffix", [body_handl
 body_handle.dispose()
 ```
 
-### param: Frame.evaluate.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in browser context
+### param: Frame.evaluate.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evaluate.arg
 - `arg` <[EvaluationArgument]>
@@ -551,11 +539,7 @@ print(result_handle.json_value())
 result_handle.dispose()
 ```
 
-### param: Frame.evaluateHandle.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in the page context
+### param: Frame.evaluateHandle.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evaluateHandle.arg
 - `arg` <[EvaluationArgument]>
@@ -1089,11 +1073,7 @@ selector = ".foo"
 frame.wait_for_function("selector => !!document.querySelector(selector)", selector)
 ```
 
-### param: Frame.waitForFunction.pageFunction
-* langs: js
-- `pageFunction` <[function]|[string]>
-
-Function to be evaluated in browser context
+### param: Frame.waitForFunction.expression = %%-evaluate-expression-%%
 
 ### param: Frame.waitForFunction.arg
 - `arg` <[EvaluationArgument]>

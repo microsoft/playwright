@@ -153,7 +153,6 @@ The order of evaluation of multiple scripts installed via [`method: BrowserConte
 :::
 
 ### param: BrowserContext.addInitScript.script
-* langs: js
 - `script` <[function]|[string]|[Object]>
   - `path` <[path]> Path to the JavaScript file. If `path` is a relative path, then it is resolved relative to the
     current working directory. Optional.

@@ -121,8 +121,21 @@ class ApiParser {
     const method = clazz.membersArray.find(m => m.kind === 'method' && m.name === match[3]);
     if (!method)
       throw new Error('Invalid method ' + match[2] + '.' + match[3]);
+    const name = match[4];
+    if (!name)
+      throw new Error('Invalid member name ' + spec.text);
     if (match[1] === 'param') {
-      method.argsArray.push(this.parseProperty(spec));
+      const arg = this.parseProperty(spec);
+      arg.name = name;
+      const existingArg = method.argsArray.find(m => m.name === arg.name);
+      if (existingArg) {
+        for (const lang of arg.langs.only) {
+          existingArg.langs.overrides = existingArg.langs.overrides || {};
+          existingArg.langs.overrides[lang] = arg;
+        }
+      } else {
+        method.argsArray.push(arg);
+      }
     } else {
       let options = method.argsArray.find(o => o.name === 'options');
       if (!options) {
@@ -302,7 +315,8 @@ function extractLangs(spec) {
     return {
       only: only ? only.split(',') : undefined,
       aliases,
-      types: {}
+      types: {},
+      overrides: {}
     };
   }
   return {};

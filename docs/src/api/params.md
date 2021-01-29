@@ -154,6 +154,36 @@ Toggles bypassing page's Content-Security-Policy.
 
 Sets a consistent viewport for each page. Defaults to an 1280x720 viewport. `null` disables the default viewport.
 
+## evaluate-expression
+- `expression` <[string]>
+
+JavaScript expression to be evaluated in the browser context. If it looks like a function declaration,
+it is interpreted as a function. Otherwise, evaluated as an expression.
+
+## js-evaluate-pagefunction
+* langs: js
+- `pageFunction` <[function]|[string]>
+
+Function to be evaluated in the page context
+
+## js-evalonselector-pagefunction
+* langs: js
+- `pageFunction` <[function]\([Element]\)>
+
+Function to be evaluated in the page context
+
+## js-evalonselectorall-pagefunction
+* langs: js
+- `pageFunction` <[function]\([Array]<[Element]>\)>
+
+Function to be evaluated in the page context
+
+## js-worker-evaluate-workerfunction
+* langs: js
+- `pageFunction` <[function]|[string]>
+
+Function to be evaluated in the worker context
+
 ## python-context-option-viewport
 * langs: python
 - `viewport` <[null]|[Object]>
@@ -393,13 +423,6 @@ Receives the event data and resolves to truthy value when the waiting should res
 
 Maximum time to wait for in milliseconds. Defaults to `30000` (30 seconds). Pass `0` to disable timeout.
 The default value can be changed by using the [`method: BrowserContext.setDefaultTimeout`].
-
-## python-evaluate-expression
-* langs: python
-- `expression` <string>
-
-JavaScript expression to be evaluated in the browser context. If it looks like a function declaration,
-it is interpreted as a function. Otherwise, evaluated as an expression.
 
 ## python-evaluate-force-expression
 * langs: python

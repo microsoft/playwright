@@ -35,7 +35,8 @@ const md = require('../markdown');
  * @typedef {{
  *   only?: string[],
  *   aliases?: Object<string, string>,
-  *  types?: Object<string, Documentation.Type>,
+ *   types?: Object<string, Documentation.Type>,
+ *   overrides?: Object<string, Documentation.Member>,
  * }} Langs
  */
 
@@ -320,13 +321,11 @@ Documentation.Member = class {
     for (const arg of this.argsArray) {
       if (arg.langs.only && !arg.langs.only.includes(lang))
         continue;
-      if (arg.langs.aliases && arg.langs.aliases[lang])
-        arg.alias = arg.langs.aliases[lang];
-      arg.filterForLanguage(lang);
-      arg.type.filterForLanguage(lang);
-      if (arg.name === 'options' && !arg.type.properties.length)
+      const overriddenArg = (arg.langs.overrides && arg.langs.overrides[lang]) || arg;
+      overriddenArg.filterForLanguage(lang);
+      if (overriddenArg.name === 'options' && !overriddenArg.type.properties.length)
         continue;
-      argsArray.push(arg);
+      argsArray.push(overriddenArg);
     }
     this.argsArray = argsArray;
   }
