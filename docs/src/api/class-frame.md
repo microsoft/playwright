@@ -139,11 +139,7 @@ html = frame.eval_on_selector(".main-container", "(e, suffix) => e.outerHTML + s
 
 ### param: Frame.evalOnSelector.selector = %%-query-selector-%%
 
-### param: Frame.evalOnSelector.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Element]\)>
-
-Function to be evaluated in browser context
+### param: Frame.evalOnSelector.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evalOnSelector.arg
 - `arg` <[EvaluationArgument]>
@@ -181,11 +177,7 @@ divs_counts = frame.eval_on_selector_all("div", "(divs, min) => divs.length >= m
 
 ### param: Frame.evalOnSelectorAll.selector = %%-query-selector-%%
 
-### param: Frame.evalOnSelectorAll.pageFunction
-* langs: js
-- `pageFunction` <[function]\([Array]<[Element]>\)>
-
-Function to be evaluated in browser context
+### param: Frame.evalOnSelectorAll.expression = %%-evaluate-expression-%%
 
 ### param: Frame.evalOnSelectorAll.arg
 - `arg` <[EvaluationArgument]>
