@@ -334,6 +334,19 @@ function renderMethod(member, parent, output, name) {
       return;
     }
 
+    if (arg.type.expression === '[boolean]|[Array]<[string]>') {
+      // HACK: this hurts my brain too
+      // we split this into two args, one boolean, with the logical name
+      let argName = translateMemberName('argument', arg.name, null);
+      let leftArgType = translateType(arg.type.union[0], parent, (t) => { throw 'Not supported'; });
+      let rightArgType = translateType(arg.type.union[1], parent, (t) => { throw 'Not supported'; });
+
+      args.push(`${leftArgType} ${argName}`);
+      args.push(`${rightArgType} ${argName}Values`);
+      
+      return;
+    }
+
     const argName = translateMemberName('argument', arg.name, null);
     const argType = translateType(arg.type, parent, (t) => generateNameDefault(member, argName, t, parent));
 
@@ -409,7 +422,9 @@ function translateType(type, parent, generateNameCallback = null) {
 
     if (type.expression === '[string]|[Buffer]')
       return `byte[]`; // TODO: make sure we implement extension methods for this!
-    else if (type.expression === '[string]|[float]' || type.expression === '[string]|[float]|[boolean]')
+    else if (type.expression === '[string]|[float]'
+      || type.expression === '[string]|[float]|[boolean]'
+      || (type.union && type.union[0].name === 'string' && type.union[1].name === 'float' && type.union[2].name === 'boolean'))
       return 'string'; // because users can send either 100 or 100px for most of these arguments
     else if (type.union.length == 2 && type.union[1].name === 'Array' && type.union[1].templates[0].name === type.union[0].name)
       return `${type.union[0].name}[]`; // an example of this is [string]|[Array]<[string]>
@@ -417,7 +432,8 @@ function translateType(type, parent, generateNameCallback = null) {
       // we don't support path, but we know it's usually an object on the other end, and we expect
       // the dotnet folks to use [NameOfTheObject].LoadFromPath(); method which we can provide separately
       return translateType(type.union[1], parent, generateNameCallback);
-
+    else if (type.expression === '[float]|"raf"')
+      return `Polling`; // hardcoded because there's no other way to denote this
     console.log(`Not sure how to parse union ${type.name} in ${parent.name}:`);
     console.log(type);
 
