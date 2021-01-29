@@ -29,7 +29,6 @@ export type ContextEntry = {
   created: trace.ContextCreatedTraceEvent;
   destroyed: trace.ContextDestroyedTraceEvent;
   pages: PageEntry[];
-  resourcesByUrl: Map<string, trace.NetworkResourceTraceEvent[]>;
 }
 
 export type VideoEntry = {
@@ -79,7 +78,6 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
           created: event,
           destroyed: undefined as any,
           pages: [],
-          resourcesByUrl: new Map(),
         });
         break;
       }
@@ -123,19 +121,12 @@ export function readTraceFile(events: trace.TraceEvent[], traceModel: TraceModel
         break;
       }
       case 'resource': {
-        const contextEntry = contextEntries.get(event.contextId)!;
         const pageEntry = pageEntries.get(event.pageId!)!;
         const action = pageEntry.actions[pageEntry.actions.length - 1];
         if (action)
           action.resources.push(event);
         else
           pageEntry.resources.push(event);
-        let responseEvents = contextEntry.resourcesByUrl.get(event.url);
-        if (!responseEvents) {
-          responseEvents = [];
-          contextEntry.resourcesByUrl.set(event.url, responseEvents);
-        }
-        responseEvents.push(event);
         break;
       }
       case 'dialog-opened':

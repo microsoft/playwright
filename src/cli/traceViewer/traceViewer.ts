@@ -54,7 +54,6 @@ const emptyModel: TraceModel = {
       name: '<empty>',
       filePath: '',
       pages: [],
-      resourcesByUrl: new Map()
     }
   ]
 };

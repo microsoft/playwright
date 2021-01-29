@@ -67,10 +67,14 @@ export class Snapshotter {
         resourceOverrides: [],
       };
       for (const { url, content } of data.resourceOverrides) {
-        const buffer = Buffer.from(content);
-        const sha1 = calculateSha1(buffer);
-        this._delegate.onBlob({ sha1, buffer });
-        snapshot.resourceOverrides.push({ url, sha1 });
+        if (typeof content === 'string') {
+          const buffer = Buffer.from(content);
+          const sha1 = calculateSha1(buffer);
+          this._delegate.onBlob({ sha1, buffer });
+          snapshot.resourceOverrides.push({ url, sha1 });
+        } else {
+          snapshot.resourceOverrides.push({ url, ref: content });
+        }
       }
       this._delegate.onFrameSnapshot(source.frame, data.url, snapshot, data.snapshotId);
     });

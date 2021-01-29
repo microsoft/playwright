@@ -17,7 +17,7 @@
 import * as http from 'http';
 import * as fs from 'fs';
 import * as path from 'path';
-import type { TraceModel, trace } from './traceModel';
+import type { TraceModel, trace, ContextEntry } from './traceModel';
 import { TraceServer } from './traceServer';
 import { NodeSnapshot } from '../../trace/traceTypes';
 
@@ -119,14 +119,23 @@ export class SnapshotServer {
     function serviceWorkerMain(self: any /* ServiceWorkerGlobalScope */) {
       let traceModel: TraceModel;
 
+      type ContextData = {
+        resourcesByUrl: Map<string, trace.NetworkResourceTraceEvent[]>,
+        overridenUrls: Set<string>
+      };
+      const contextToData = new Map<ContextEntry, ContextData>();
+
       function preprocessModel() {
         for (const contextEntry of traceModel.contexts) {
-          contextEntry.resourcesByUrl = new Map();
+          const contextData: ContextData = {
+            resourcesByUrl: new Map(),
+            overridenUrls: new Set(),
+          };
           const appendResource = (event: trace.NetworkResourceTraceEvent) => {
-            let responseEvents = contextEntry.resourcesByUrl.get(event.url);
+            let responseEvents = contextData.resourcesByUrl.get(event.url);
             if (!responseEvents) {
               responseEvents = [];
-              contextEntry.resourcesByUrl.set(event.url, responseEvents);
+              contextData.resourcesByUrl.set(event.url, responseEvents);
             }
             responseEvents.push(event);
           };
@@ -134,7 +143,14 @@ export class SnapshotServer {
             for (const action of pageEntry.actions)
               action.resources.forEach(appendResource);
             pageEntry.resources.forEach(appendResource);
+            for (const snapshots of Object.values(pageEntry.snapshotsByFrameId)) {
+              for (const snapshot of snapshots) {
+                for (const { url } of snapshot.snapshot.resourceOverrides)
+                  contextData.overridenUrls.add(url);
+              }
+            }
           }
+          contextToData.set(contextEntry, contextData);
         }
       }
 
@@ -249,6 +265,23 @@ export class SnapshotServer {
         return html;
       }
 
+      function findResourceOverride(snapshots: trace.FrameSnapshotTraceEvent[], snapshotIndex: number, url: string): string | undefined {
+        while (true) {
+          const snapshot = snapshots[snapshotIndex].snapshot;
+          const override = snapshot.resourceOverrides.find(o => o.url === url);
+          if (!override)
+            return;
+          if (override.sha1 !== undefined)
+            return override.sha1;
+          if (override.ref === undefined)
+            return;
+          const referenceIndex = snapshotIndex - override.ref!;
+          if (referenceIndex < 0 || referenceIndex >= snapshotIndex)
+            return;
+          snapshotIndex = referenceIndex;
+        }
+      }
+
       async function doFetch(event: any /* FetchEvent */): Promise<Response> {
         try {
           const pathname = new URL(event.request.url).pathname;
@@ -278,6 +311,7 @@ export class SnapshotServer {
         }
         if (!contextEntry || !pageEntry)
           return request.mode === 'navigate' ? respondNotAvailable() : respond404();
+        const contextData = contextToData.get(contextEntry)!;
 
         const frameSnapshots = pageEntry.snapshotsByFrameId[parsed.frameId] || [];
         let snapshotIndex = -1;
@@ -304,7 +338,8 @@ export class SnapshotServer {
         }
 
         let resource: trace.NetworkResourceTraceEvent | null = null;
-        const resourcesWithUrl = contextEntry.resourcesByUrl.get(removeHash(request.url)) || [];
+        const urlWithoutHash = removeHash(request.url);
+        const resourcesWithUrl = contextData.resourcesByUrl.get(urlWithoutHash) || [];
         for (const resourceEvent of resourcesWithUrl) {
           if (resource && resourceEvent.frameId !== parsed.frameId)
             continue;
@@ -314,22 +349,28 @@ export class SnapshotServer {
         }
         if (!resource)
           return respond404();
-        const resourceOverride = snapshotEvent.snapshot.resourceOverrides.find(o => o.url === request.url);
-        const overrideSha1 = resourceOverride ? resourceOverride.sha1 : undefined;
 
-        const response = overrideSha1 ?
-          await fetch(`/resources/${resource.resourceId}/override/${overrideSha1}`) :
-          await fetch(`/resources/${resource.resourceId}`);
+        const overrideSha1 = findResourceOverride(frameSnapshots, snapshotIndex, urlWithoutHash);
+        const fetchUrl = overrideSha1 ?
+          `/resources/${resource.resourceId}/override/${overrideSha1}` :
+          `/resources/${resource.resourceId}`;
+        const fetchedResponse = await fetch(fetchUrl);
+        const headers = new Headers(fetchedResponse.headers);
         // We make a copy of the response, instead of just forwarding,
         // so that response url is not inherited as "/resources/...", but instead
         // as the original request url.
         // Response url turns into resource base uri that is used to resolve
         // relative links, e.g. url(/foo/bar) in style sheets.
-        return new Response(response.body, {
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
+        if (contextData.overridenUrls.has(urlWithoutHash)) {
+          // No cache, so that we refetch overridden resources.
+          headers.set('Cache-Control', 'no-cache');
+        }
+        const response = new Response(fetchedResponse.body, {
+          status: fetchedResponse.status,
+          statusText: fetchedResponse.statusText,
+          headers,
         });
+        return response;
       }
 
       self.addEventListener('fetch', function(event: any) {
