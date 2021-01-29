@@ -152,6 +152,6 @@ export type TraceEvent =
 export type FrameSnapshot = {
   doctype?: string,
   html: NodeSnapshot,
-  resourceOverrides: { url: string, sha1: string }[],
+  resourceOverrides: { url: string, sha1?: string, ref?: number }[],
   viewport: { width: number, height: number },
 };

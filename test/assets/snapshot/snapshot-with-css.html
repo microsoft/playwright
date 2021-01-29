@@ -7,14 +7,11 @@
   }
 </style>
 <div>hello, world!</div>
-<textarea>Before edit</textarea>
 <div class=root></div>
 <script>
   let shadow;
 
   window.addEventListener('DOMContentLoaded', () => {
-    document.querySelector('textarea').value = 'After edit';
-
     const root = document.querySelector('.root');
     shadow = root.attachShadow({ mode: 'open' });
 
@@ -27,6 +24,11 @@
     imaged.className = 'imaged';
     shadow.appendChild(imaged);
 
+    const textarea = document.createElement('textarea');
+    textarea.textContent = 'Before edit';
+    textarea.style.display = 'block';
+    shadow.appendChild(textarea);
+
     const iframe = document.createElement('iframe');
     iframe.width = '600px';
     iframe.height = '600px';
@@ -35,13 +37,22 @@
   });
 
   window.addEventListener('load', () => {
-    for (const rule of shadow.styleSheets[0].cssRules) {
-      if (rule.styleSheet) {
-        for (const rule2 of rule.styleSheet.cssRules) {
-          if (rule2.cssText.includes('width: 200px'))
-            rule2.style.width = '400px';
+    setTimeout(() => {
+      shadow.querySelector('textarea').value = 'After edit';
+
+      for (const rule of document.styleSheets[1].cssRules) {
+        if (rule.cssText.includes('background: cyan'))
+          rule.style.background = 'magenta';
+      }
+
+      for (const rule of shadow.styleSheets[0].cssRules) {
+        if (rule.styleSheet) {
+          for (const rule2 of rule.styleSheet.cssRules) {
+            if (rule2.cssText.includes('width: 200px'))
+              rule2.style.width = '400px';
+          }
         }
       }
-    }
+    }, 500);
   });
 </script>

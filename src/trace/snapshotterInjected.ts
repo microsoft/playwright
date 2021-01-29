@@ -29,7 +29,11 @@ export type NodeSnapshot =
 export type SnapshotData = {
   doctype?: string,
   html: NodeSnapshot,
-  resourceOverrides: { url: string, content: string }[],
+  resourceOverrides: {
+    url: string,
+    // String is the content. Number is "x snapshots ago", same url.
+    content: string | number,
+  }[],
   viewport: { width: number, height: number },
   url: string,
   snapshotId?: string,
@@ -48,17 +52,19 @@ export function frameSnapshotStreamer() {
   const kScrollTopAttribute = '__playwright_scroll_top_';
   const kScrollLeftAttribute = '__playwright_scroll_left_';
 
-  // Symbols for our own info on Nodes.
+  // Symbols for our own info on Nodes/StyleSheets.
   const kSnapshotFrameId = Symbol('__playwright_snapshot_frameid_');
   const kCachedData = Symbol('__playwright_snapshot_cache_');
   type CachedData = {
     ref?: [number, number], // Previous snapshotNumber and nodeIndex.
     value?: string, // Value for input/textarea elements.
+    cssText?: string, // Text for stylesheets.
+    cssRef?: number, // Previous snapshotNumber for overridden stylesheets.
   };
-  function ensureCachedData(node: Node): CachedData {
-    if (!(node as any)[kCachedData])
-      (node as any)[kCachedData] = {};
-    return (node as any)[kCachedData];
+  function ensureCachedData(obj: any): CachedData {
+    if (!obj[kCachedData])
+      obj[kCachedData] = {};
+    return obj[kCachedData];
   }
 
   const escaped = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' };
@@ -69,32 +75,45 @@ export function frameSnapshotStreamer() {
     return s.replace(/[&<]/ug, char => (escaped as any)[char]);
   }
 
+  function removeHash(url: string) {
+    try {
+      const u = new URL(url);
+      u.hash = '';
+      return u.toString();
+    } catch (e) {
+      return url;
+    }
+  }
+
   class Streamer {
     private _removeNoScript = true;
-    private _needStyleOverrides = false;
     private _timer: NodeJS.Timeout | undefined;
     private _lastSnapshotNumber = 0;
     private _observer: MutationObserver;
+    private _staleStyleSheets = new Set<CSSStyleSheet>();
+    private _allStyleSheetsWithUrlOverride = new Set<CSSStyleSheet>();
+    private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
 
     constructor() {
-      // TODO: should we also intercept setters like CSSRule.cssText and CSSStyleRule.selectorText?
-      this._interceptNative(window.CSSStyleSheet.prototype, 'insertRule', () => this._needStyleOverrides = true);
-      this._interceptNative(window.CSSStyleSheet.prototype, 'deleteRule', () => this._needStyleOverrides = true);
-      this._interceptNative(window.CSSStyleSheet.prototype, 'addRule', () => this._needStyleOverrides = true);
-      this._interceptNative(window.CSSStyleSheet.prototype, 'removeRule', () => this._needStyleOverrides = true);
+      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'insertRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'deleteRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'addRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeMethod(window.CSSStyleSheet.prototype, 'removeRule', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'rules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
+      this._interceptNativeGetter(window.CSSStyleSheet.prototype, 'cssRules', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
 
       this._observer = new MutationObserver(list => this._handleMutations(list));
       const observerConfig = { attributes: true, childList: true, subtree: true, characterData: true };
       this._observer.observe(document, observerConfig);
-      this._interceptNative(window.Element.prototype, 'attachShadow', (node: Node, shadowRoot: ShadowRoot) => {
-        this._invalidateCache(node);
+      this._interceptNativeMethod(window.Element.prototype, 'attachShadow', (node: Node, shadowRoot: ShadowRoot) => {
+        this._invalidateNode(node);
         this._observer.observe(shadowRoot, observerConfig);
       });
 
       this._streamSnapshot();
     }
 
-    private _interceptNative(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
+    private _interceptNativeMethod(obj: any, method: string, cb: (thisObj: any, result: any) => void) {
       const native = obj[method] as Function;
       if (!native)
         return;
@@ -105,7 +124,58 @@ export function frameSnapshotStreamer() {
       };
     }
 
-    private _invalidateCache(node: Node | null) {
+    private _interceptNativeGetter(obj: any, prop: string, cb: (thisObj: any, result: any) => void) {
+      const descriptor = Object.getOwnPropertyDescriptor(obj, prop)!;
+      Object.defineProperty(obj, prop, {
+        ...descriptor,
+        get: function() {
+          const result = descriptor.get!.call(this);
+          cb(this, result);
+          return result;
+        },
+      });
+    }
+
+    private _invalidateStyleSheet(sheet: CSSStyleSheet) {
+      if (this._readingStyleSheet)
+        return;
+      this._staleStyleSheets.add(sheet);
+      if (sheet.href !== null)
+        this._allStyleSheetsWithUrlOverride.add(sheet);
+      if (sheet.ownerNode && sheet.ownerNode.nodeName === 'STYLE')
+        this._invalidateNode(sheet.ownerNode);
+    }
+
+    private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet): string | undefined {
+      const data = ensureCachedData(sheet);
+      if (this._staleStyleSheets.has(sheet)) {
+        this._staleStyleSheets.delete(sheet);
+        try {
+          data.cssText = this._getSheetText(sheet);
+        } catch (e) {
+          // Sometimes we cannot access cross-origin stylesheets.
+        }
+      }
+      return data.cssText;
+    }
+
+    // Returns either content, ref, or no override.
+    private _updateLinkStyleSheetTextIfNeeded(sheet: CSSStyleSheet, snapshotNumber: number): string | number | undefined {
+      const data = ensureCachedData(sheet);
+      if (this._staleStyleSheets.has(sheet)) {
+        this._staleStyleSheets.delete(sheet);
+        try {
+          data.cssText = this._getSheetText(sheet);
+          data.cssRef = snapshotNumber;
+          return data.cssText;
+        } catch (e) {
+          // Sometimes we cannot access cross-origin stylesheets.
+        }
+      }
+      return data.cssRef === undefined ? undefined : snapshotNumber - data.cssRef;
+    }
+
+    private _invalidateNode(node: Node | null) {
       while (node) {
         ensureCachedData(node).ref = undefined;
         if (node.nodeType === Node.DOCUMENT_FRAGMENT_NODE && (node as ShadowRoot).host)
@@ -117,7 +187,7 @@ export function frameSnapshotStreamer() {
 
     private _handleMutations(list: MutationRecord[]) {
       for (const mutation of list)
-        this._invalidateCache(mutation.target);
+        this._invalidateNode(mutation.target);
     }
 
     markIframe(iframeElement: HTMLIFrameElement | HTMLFrameElement, frameId: string) {
@@ -177,10 +247,15 @@ export function frameSnapshotStreamer() {
     }
 
     private _getSheetText(sheet: CSSStyleSheet): string {
-      const rules: string[] = [];
-      for (const rule of sheet.cssRules)
-        rules.push(rule.cssText);
-      return rules.join('\n');
+      this._readingStyleSheet = true;
+      try {
+        const rules: string[] = [];
+        for (const rule of sheet.cssRules)
+          rules.push(rule.cssText);
+        return rules.join('\n');
+      } finally {
+        this._readingStyleSheet = false;
+      }
     }
 
     private _captureSnapshot(snapshotId?: string): SnapshotData {
@@ -194,37 +269,8 @@ export function frameSnapshotStreamer() {
         const value = (input as HTMLInputElement | HTMLTextAreaElement).value;
         const data = ensureCachedData(input);
         if (data.value !== value)
-          this._invalidateCache(input);
+          this._invalidateNode(input);
       }
-
-      const styleNodeToStyleSheetText = new Map<Node, string>();
-      const styleSheetUrlToContentOverride = new Map<string, string>();
-
-      const visitStyleSheet = (sheet: CSSStyleSheet) => {
-        // TODO: recalculate these upon changes, and only send them once.
-        if (!this._needStyleOverrides)
-          return;
-
-        try {
-          for (const rule of sheet.cssRules) {
-            if ((rule as CSSImportRule).styleSheet)
-              visitStyleSheet((rule as CSSImportRule).styleSheet);
-          }
-
-          const cssText = this._getSheetText(sheet);
-          if (sheet.ownerNode && sheet.ownerNode.nodeName === 'STYLE') {
-            // Stylesheets with owner STYLE nodes will be rewritten.
-            styleNodeToStyleSheetText.set(sheet.ownerNode, cssText);
-          } else if (sheet.href !== null) {
-            // Other stylesheets will have resource overrides.
-            const base = this._getSheetBase(sheet);
-            const url = this._resolveUrl(base, sheet.href);
-            styleSheetUrlToContentOverride.set(url, cssText);
-          }
-        } catch (e) {
-          // Sometimes we cannot access cross-origin stylesheets.
-        }
-      };
 
       let nodeCounter = 0;
 
@@ -253,18 +299,19 @@ export function frameSnapshotStreamer() {
           return escapeText(node.nodeValue || '');
 
         if (nodeName === 'STYLE') {
-          const cssText = styleNodeToStyleSheetText.get(node) || node.textContent || '';
-          return ['style', {}, escapeText(cssText)];
+          const sheet = (node as HTMLStyleElement).sheet;
+          let cssText: string | undefined;
+          if (sheet)
+            cssText = this._updateStyleElementStyleSheetTextIfNeeded(sheet);
+          nodeCounter++;  // Compensate for the extra text node in the list.
+          return ['style', {}, escapeText(cssText || node.textContent || '')];
         }
 
         const attrs: { [attr: string]: string } = {};
         const result: NodeSnapshot = [nodeName, attrs];
 
-        if (nodeType === Node.DOCUMENT_FRAGMENT_NODE) {
-          for (const sheet of (node as ShadowRoot).styleSheets)
-            visitStyleSheet(sheet);
+        if (nodeType === Node.DOCUMENT_FRAGMENT_NODE)
           attrs[kShadowAttribute] = 'open';
-        }
 
         if (nodeType === Node.ELEMENT_NODE) {
           const element = node as Element;
@@ -349,14 +396,11 @@ export function frameSnapshotStreamer() {
         return result;
       };
 
-      for (const sheet of doc.styleSheets)
-        visitStyleSheet(sheet);
       const html = doc.documentElement ? visit(doc.documentElement)! : (['html', {}] as NodeSnapshot);
-
-      return {
+      const result: SnapshotData = {
         html,
         doctype: doc.doctype ? doc.doctype.name : undefined,
-        resourceOverrides: Array.from(styleSheetUrlToContentOverride).map(([url, content]) => ({ url, content })),
+        resourceOverrides: [],
         viewport: {
           width: Math.max(doc.body ? doc.body.offsetWidth : 0, doc.documentElement ? doc.documentElement.offsetWidth : 0),
           height: Math.max(doc.body ? doc.body.offsetHeight : 0, doc.documentElement ? doc.documentElement.offsetHeight : 0),
@@ -364,6 +408,19 @@ export function frameSnapshotStreamer() {
         url: location.href,
         snapshotId,
       };
+
+      for (const sheet of this._allStyleSheetsWithUrlOverride) {
+        const content = this._updateLinkStyleSheetTextIfNeeded(sheet, snapshotNumber);
+        if (content === undefined) {
+          // Unable to capture stylsheet contents.
+          continue;
+        }
+        const base = this._getSheetBase(sheet);
+        const url = removeHash(this._resolveUrl(base, sheet.href!));
+        result.resourceOverrides.push({ url, content });
+      }
+
+      return result;
     }
   }
 
